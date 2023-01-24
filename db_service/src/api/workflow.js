@@ -1,5 +1,7 @@
 const joi = require('joi');
 const db = require('@arangodb').db;
+const errors = require('@arangodb').errors;
+const CONFLICTING_REV = errors.ERROR_ARANGO_CONFLICT.code;
 const graphModule = require('@arangodb/general-graph');
 const defs = require('../defs');
 const JobStatus = require('../defs').JobStatus;
@@ -90,8 +92,26 @@ router.post('/workflow/initialize_jobs', function(req, res) {
 router.post('/workflow/prepare_jobs_for_submission', function(req, res) {
   const resources = req.body;
   const qp = req.queryParams == null ? {} : req.queryParams;
-  const jobs = query.prepareJobsForSubmission(resources, qp.limit);
-  res.send(jobs);
+  const numTries = 5;
+  for (let i = 0; i < numTries; i++) {
+    try {
+      const jobs = query.prepareJobsForSubmission(resources, qp.limit);
+      console.log(`prepared these jobs ${JSON.stringify(jobs)}`);
+      res.send(jobs);
+      break;
+    } catch (e) {
+      if (e.isArangoError && e.errorNum !== CONFLICTING_REV) {
+        console.log(`Conflicting revision error in prepare_jobs_for_submission on i=${i}`);
+        if (i < numTries - 1) {
+          continue;
+        } else {
+          res.throw(500, 'Retries exhausted getting revision in prepare_jobs_for_submission');
+        }
+      } else {
+        res.throw(400, 'Failed to prepare_jobs_for_submission', e);
+      }
+    }
+  }
 })
     .body(schemas.workerResources, 'Available worker resources.')
     .response(joi.array().items(schemas.job), 'Jobs that are ready for submission.')

@@ -92,7 +92,6 @@ router.get('/files', function(req, res) {
     .description('Retrieves all files from the "files" collection.');
 
 router.get('/files/produced_by_job/:name', function(req, res) {
-  console.log(`in get files by job`);
   const qp = req.queryParams == null ? {} : req.queryParams;
   try {
     let cursor = query.getFilesProducedByJob(req.pathParams.produced_by);

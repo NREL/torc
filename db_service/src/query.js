@@ -555,21 +555,14 @@ function prepareJobsForSubmission(workerResources, limit) {
         continue;
       }
     }
-    if (
-      jobResources.num_cpus <= availableCpus &&
-      jobMemory <= availableMemory
-    ) {
+    if (jobResources.num_cpus <= availableCpus && jobMemory <= availableMemory) {
       jobs.push(job);
       job.status = JobStatus.SubmittedPending;
       const meta = graph.jobs.update(job, job);
       Object.assign(job, meta);
       availableCpus -= jobResources.num_cpus;
       availableMemory -= jobMemory;
-      if (
-        availableCpus == 0 ||
-        availableMemory == 0 ||
-        (limit != null && jobs.length >= limit)
-      ) {
+      if (availableCpus == 0 || availableMemory == 0 || (limit != null && jobs.length >= limit)) {
         break;
       }
     }
