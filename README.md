@@ -30,27 +30,30 @@ Features:
 - User defines a workflow through the API.
   - API exists in common programming languages, HTTP, and JSON.
 
-### Database schema
+### Database layout/schema
 
 Nodes:
 - jobs
 - files
 - job resource requirements
+- results
 - scheduler configurations (SLURM, AWS, etc.)
+- user data (any number of arbitrary objects)
 
 Edges:
 - blocks: job blocks another job
 - needs: job needs a file
 - produces: job produces a file
 - requires: job has a set of resource requirements
+- returned: job returned a result
 - scheduled_by: job is scheduled by a specific scheduler, like SLURM or AWS Batch
+- stores: job stores one or more user data objects
 
 Documents:
 - events: Orchestration software posts events when starting and completing worker nodes and jobs.
-- results: Orchestration software posts result information for each job: return code, duration,
 etc.
 
-Users can post their own events and results. Common structure is TBD.
+Users can post their own events. Common structure is TBD.
 
 
 ### Worker nodes
@@ -99,7 +102,7 @@ https://www.arangodb.com/download-major/docker/
 Verify the installation by logging into the ArangoDB web server at `http://localhost:8529`. You can
 also use Arango's JavaScript REPL via `arangodb/bin/arangosh`.
 
-2. Create a database called `workflows` in the web UI or `arangosh`. 
+2. Create a database called `workflows` in the web UI or `arangosh`.
 
 3. Create the service that will implement the API endpoint. Change to the `db_service` directory
 after cloning this repository.
