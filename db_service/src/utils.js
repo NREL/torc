@@ -1,6 +1,6 @@
 const parse = require('tinyduration').parse;
 
-const {KiB, MiB, GiB, TiB} = require('./defs');
+const {KiB, MiB, GiB, TiB, MAX_TRANSFER_RECORDS} = require('./defs');
 const product = (...a) => a.reduce((a, b) => a.flatMap((d) => b.map((e) => [d, e].flat())));
 
 
@@ -64,4 +64,39 @@ function getTimeDurationInSeconds(duration) {
   return durationSeconds;
 }
 
-module.exports = {getTimeDurationInSeconds, getMemoryInBytes, product};
+/**
+ * Return the number of records to send.
+ * @param {string} limit
+ * @return {number}
+ */
+function getItemsLimit(limit) {
+  return limit <= MAX_TRANSFER_RECORDS ? limit : MAX_TRANSFER_RECORDS;
+}
+
+/**
+ * Return the number of records to send.
+ * @param {Object} items
+ * @param {number} skip
+ * @param {number} limit
+ * @param {number} totalCount
+ * @return {Object}
+ */
+function makeCursorResult(items, skip, limit, totalCount) {
+  return {
+    items: items,
+    skip: skip,
+    limit: limit,
+    max_limit: MAX_TRANSFER_RECORDS,
+    count: items.length,
+    total_count: totalCount,
+    has_more: skip + items.length < totalCount,
+  };
+}
+
+module.exports = {
+  getItemsLimit,
+  getTimeDurationInSeconds,
+  getMemoryInBytes,
+  makeCursorResult,
+  product,
+};

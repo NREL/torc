@@ -4,6 +4,8 @@ const errors = require('@arangodb').errors;
 const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
 const graphModule = require('@arangodb/general-graph');
 const defs = require('../../defs');
+const {MAX_TRANSFER_RECORDS} = require('../../defs');
+const {getItemsLimit, makeCursorResult} = require('../../utils');
 const graph = graphModule._graph(defs.GRAPH_NAME);
 const schemas = require('../schemas');
 const createRouter = require('@arangodb/foxx/router');
@@ -38,8 +40,10 @@ router.get('/blocks/:key', function(req, res) {
 
 router.get('/blocks', function(req, res) {
   try {
-    const data = graph.blocks.toArray();
-    res.send(data);
+    const qp = req.queryParams;
+    const limit = getItemsLimit(qp.limit);
+    const items = graph.blocks.all().skip(qp.skip).limit(limit).toArray();
+    res.send(makeCursorResult(items, qp.skip, limit, graph.blocks.count()));
   } catch (e) {
     if (!e.isArangoError) {
       throw e;
@@ -47,7 +51,9 @@ router.get('/blocks', function(req, res) {
     res.throw(404, 'Unknown error', e);
   }
 })
-    .response(joi.array().items(schemas.edge))
+    .queryParam('skip', joi.number().default(0))
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .response(schemas.batchEdges)
     .summary('Retrieve all blocks edges')
     .description('Retrieves all blocks edges from the "blocks" collection.');
 
@@ -64,6 +70,7 @@ router.delete('/blocks/:key', function(req, res) {
   }
 })
     .pathParam('key', joi.string().required(), 'Key of the block.')
+    .body(joi.object().optional())
     .response(schemas.edge, 'block stored in the collection.')
     .summary('Delete a block')
     .description('Deletes a blocks edge from the "blocks" collection by key.');
@@ -79,6 +86,7 @@ router.delete('/blocks', function(req, res) {
     res.throw(404, 'Error occurred', e);
   }
 })
+    .body(joi.object().optional())
     .response(joi.object(), 'message')
     .summary('Delete all blocks edges')
     .description('Deletes all edges from the "blocks" collection.');

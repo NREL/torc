@@ -3,8 +3,9 @@ const db = require('@arangodb').db;
 const errors = require('@arangodb').errors;
 const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
 const graphModule = require('@arangodb/general-graph');
-const defs = require('../../defs');
-const graph = graphModule._graph(defs.GRAPH_NAME);
+const {GRAPH_NAME, MAX_TRANSFER_RECORDS} = require('../../defs');
+const {getItemsLimit, makeCursorResult} = require('../../utils');
+const graph = graphModule._graph(GRAPH_NAME);
 const query = require('../../query');
 const schemas = require('../schemas');
 const createRouter = require('@arangodb/foxx/router');
@@ -22,6 +23,7 @@ router.post('/hpc_configs', function(req, res) {
 
 router.get('/hpc_configs/:name', function(req, res) {
   const exists = graph.hpc_configs.exists(req.pathParams.name);
+  console.log(`TODO: exists=${exists}`);
   if (!exists) {
     if (req.pathParams.name == 'default') {
       const config = {
@@ -31,21 +33,24 @@ router.get('/hpc_configs/:name', function(req, res) {
       };
       res.send(schemas.hpcConfig.validate(config).value);
     } else {
-      res.throw(404, 'Document does not exist', e);
+      res.throw(404, 'Document does not exist');
     }
   } else {
     const data = graph.hpc_configs.document(req.pathParams.name);
+    console.log(`TODO data is ${JSON.stringify(data)}`);
     res.send(data);
   }
 })
-    .response(schemas.resourceRequirements)
+    .response(schemas.hpcConfig)
     .summary('Retrieve an hpc_config document by name')
     .description('Retrieves an hpc_config document from the "hpc_configs" collection.');
 
 router.get('/hpc_configs', function(req, res) {
   try {
-    const data = db.hpc_configs.toArray();
-    res.send(data);
+    const qp = req.queryParams;
+    const limit = getItemsLimit(qp.limit);
+    const items = graph.hpc_configs.all().skip(qp.skip).limit(limit).toArray();
+    res.send(makeCursorResult(items, qp.skip, limit, graph.hpc_configs.count()));
   } catch (e) {
     if (!e.isArangoError) {
       throw e;
@@ -53,7 +58,9 @@ router.get('/hpc_configs', function(req, res) {
     res.throw(404, 'Unknown error', e);
   }
 })
-    .response(joi.array().items(schemas.hpcConfig))
+    .queryParam('skip', joi.number().default(0))
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .response(schemas.batchHpcConfigs)
     .summary('Retrieve all hpc_configs')
     .description('Retrieves all hpc_configs from the "hpc_configs" collection.');
 
@@ -70,6 +77,7 @@ router.delete('/hpc_configs/:name', function(req, res) {
   }
 })
     .pathParam('name', joi.string().required(), 'Name of the hpc_config.')
+    .body(joi.object().optional())
     .response(schemas.hpcConfig, 'hpc_config stored in the collection.')
     .summary('Delete a hpc_config')
     .description('Deletes a hpc_config from the "hpc_configs" collection by name.');
@@ -85,6 +93,7 @@ router.delete('/hpc_configs', function(req, res) {
     res.throw(404, 'Error occurred', e);
   }
 })
+    .body(joi.object().optional())
     .response(joi.object(), 'message')
     .summary('Delete all hpc_configs')
     .description('Deletes all hpc_configs from the "hpc_configs" collection.');

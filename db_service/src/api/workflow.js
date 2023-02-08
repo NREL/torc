@@ -49,13 +49,17 @@ router.delete('/workflow', function(req, res) {
   db._truncate('blocks');
   db._truncate('events');
   db._truncate('files');
+  db._truncate('hpc_configs');
   db._truncate('jobs');
   db._truncate('needs');
   db._truncate('produces');
   db._truncate('requires');
   db._truncate('resource_requirements');
   db._truncate('results');
+  db._truncate('returned');
   db._truncate('scheduled_bys');
+  db._truncate('stores');
+  db._truncate('user_data');
   console.log(`Deleted all database objects.`);
   res.send({message: 'Deleted the workflow'});
 })
@@ -77,7 +81,7 @@ router.post('/workflow/estimate', function(req, res) {
 })
     .response(schemas.workflowEstimate, 'result')
     .summary('Perform a dry run of all jobs to estimate required resources.')
-    .description(`Perform a dry run of all jobs to estimate required resources. 
+    .description(`Perform a dry run of all jobs to estimate required resources.
       Only valid if jobs have similar runtimes`);
 
 router.post('/workflow/initialize_jobs', function(req, res) {
@@ -96,7 +100,6 @@ router.post('/workflow/prepare_jobs_for_submission', function(req, res) {
   for (let i = 0; i < numTries; i++) {
     try {
       const jobs = query.prepareJobsForSubmission(resources, qp.limit);
-      console.log(`prepared these jobs ${JSON.stringify(jobs)}`);
       res.send(jobs);
       break;
     } catch (e) {
@@ -120,11 +123,11 @@ router.post('/workflow/prepare_jobs_for_submission', function(req, res) {
 
 router.post('/workflow/reset_status', function(req, res) {
   query.resetJobStatus();
-  res.send({message: `Reset job status to ${JobStatus.NotSubmitted}`});
+  res.send({message: `Reset job status to ${JobStatus.Uninitialized}`});
 })
     .response(joi.object(), 'message')
     .summary('Reset job status.')
-    .description(`Reset status for all jobs to ${JobStatus.NotSubmitted}.`);
+    .description(`Reset status for all jobs to ${JobStatus.Uninitialized}.`);
 
 router.get('/workflow/example', function(req, res) {
   const workflow = {

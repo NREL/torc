@@ -3,8 +3,10 @@ const db = require('@arangodb').db;
 const errors = require('@arangodb').errors;
 const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
 const graphModule = require('@arangodb/general-graph');
-const defs = require('../../defs');
-const graph = graphModule._graph(defs.GRAPH_NAME);
+const {GRAPH_NAME} = require('../../defs');
+const {MAX_TRANSFER_RECORDS} = require('../../defs');
+const {getItemsLimit, makeCursorResult} = require('../../utils');
+const graph = graphModule._graph(GRAPH_NAME);
 const query = require('../../query');
 const schemas = require('../schemas');
 const createRouter = require('@arangodb/foxx/router');
@@ -30,8 +32,9 @@ router.put('/jobs/:name', function(req, res) {
     if (req.pathParams.name != doc.name) {
       throw new Error(`name=${req.pathParams.name} does not match ${doc.name}`);
     }
-    const updatedDoc = query.updateJobStatus(doc);
-    res.send(updatedDoc);
+    const meta = db.jobs.update(doc, doc);
+    Object.assign(doc, meta);
+    res.send(doc);
   } catch (e) {
     if (!e.isArangoError || e.errorNum !== DOC_NOT_FOUND) {
       throw e;
@@ -60,21 +63,15 @@ router.get('/jobs/:name', function(req, res) {
     .summary('Retrieve a job')
     .description('Retrieves a job from the "jobs" collection by name.');
 
-// TODO: provide a way to change the starting point.
 router.get('/jobs', function(req, res) {
-  const qp = req.queryParams == null ? {} : req.queryParams;
-  const skip = qp.skip == null ? 0 : parseInt(qp.skip);
-  if (skip > graph.jobs.count()) {
-    res.throw(400, `skip=${qp.skip} is greater than count=${graph.jobs.count()}`);
-  }
-
-  const cursor = graph.jobs.all().skip(skip);
-  if (qp.limit != null) {
-    cursor = cursor.limit(qp.limit);
-  }
-  res.send(cursor);
+  const qp = req.queryParams;
+  const limit = getItemsLimit(qp.limit);
+  const items = graph.jobs.all().skip(qp.skip).limit(limit).toArray();
+  res.send(makeCursorResult(items, qp.skip, limit, graph.jobs.count()));
 })
-    .response(joi.array().items(schemas.job))
+    .queryParam('skip', joi.number().default(0))
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .response(schemas.batchJobs)
     .summary('Retrieve all jobs')
     .description('Retrieve all jobs. Limit output with skip and limit.');
 
@@ -84,25 +81,54 @@ router.get('/job_names', function(req, res) {
   for (const job of jobs) {
     names.push(job.name);
   }
-  res.send(names);
+  res.send({items: names});
 })
-    .response(joi.array().items(joi.string()))
+    .response(joi.object())
     .summary('Retrieve all job names')
     .description('Retrieves all job names from the "jobs" collection.');
 
 router.get('/jobs/find_by_status/:status', function(req, res) {
-  const qp = req.queryParams == null ? {} : req.queryParams;
-
-  let cursor = graph.jobs.byExample({status: req.pathParams.status});
-  if (qp.limit != null) {
-    cursor = cursor.limit(qp.limit);
-  }
-  res.send(cursor);
+  const qp = req.queryParams;
+  const limit = getItemsLimit(qp.limit);
+  const cursor = graph.jobs.byExample({status: req.pathParams.status});
+  const items = cursor.skip(qp.skip).limit(limit).toArray();
+  res.send(makeCursorResult(items, qp.skip, limit, cursor.count()));
 })
     .pathParam('status', joi.string().required(), 'Job status.')
-    .response(joi.array().items(schemas.job))
+    .queryParam('skip', joi.number().default(0))
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .response(schemas.batchJobs)
     .summary('Retrieve all jobs with a specific status')
     .description('Retrieves all jobs from the "jobs" collection with a specific status.');
+
+router.get('/jobs/find_by_needs_file/:name', function(req, res) {
+  if (!graph.files.exists(req.pathParams.name)) {
+    res.throw(404, `File ${req.pathParams.name} is not stored`);
+  }
+  const qp = req.queryParams;
+  const limit = getItemsLimit(qp.limit);
+  const cursor = query.getJobsThatNeedFile(req.pathParams.name);
+  // TODO: how to do this with Arango cursor?
+  const items = [];
+  let i = 0;
+  for (const item of cursor) {
+    if (i > qp.skip) {
+      i++;
+      continue;
+    }
+    items.push(item);
+    if (items.length == limit) {
+      break;
+    }
+  }
+  res.send(makeCursorResult(items, qp.skip, limit, cursor.count()));
+})
+    .pathParam('name', joi.string().required(), 'File name.')
+    .queryParam('skip', joi.number().default(0))
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .response(schemas.batchJobs)
+    .summary('Retrieve all jobs that need a file')
+    .description('Retrieves all jobs connected to a file by the needs edge.');
 
 router.delete('/jobs/:name', function(req, res) {
   try {
@@ -117,6 +143,7 @@ router.delete('/jobs/:name', function(req, res) {
   }
 })
     .pathParam('name', joi.string().required(), 'Name of the job.')
+    .body(joi.object().optional())
     .response(schemas.job, 'Job stored in the collection.')
     .summary('Delete a job')
     .description('Deletes a job from the "jobs" collection by name.');
@@ -132,6 +159,7 @@ router.delete('/jobs', function(req, res) {
     res.throw(404, 'Error occurred', e);
   }
 })
+    .body(joi.object().optional())
     .response(joi.object(), 'message')
     .summary('Delete all jobs')
     .description('Deletes all jobs from the "jobs" collection.');
@@ -152,3 +180,78 @@ router.get('/jobs/resource_requirements/:name', function(req, res) {
     .response(schemas.resourceRequirements, 'Resource requirements for job.')
     .summary('Retrieve the resource requirements for a job.')
     .description('Retrieve the resource requirements for a job by its name.');
+
+router.post('jobs/complete_job/:name/:status/:rev', function(req, res) {
+  const status = req.pathParams.status;
+  if (!query.isJobStatusComplete(status)) {
+    res.throw(400, `status=${status} does not indicate completion`);
+    return;
+  }
+  const job = graph.jobs.document(req.pathParams.name);
+  if (job._rev != req.pathParams.rev) {
+    res.throw(400, `Revision conflict for ${job.name}: _rev=${job._rev}`);
+    return;
+  }
+
+  if (job.status == status) {
+    res.throw(400, `Job ${job.name} already has status=${status}`);
+    return;
+  }
+
+  const meta = {name: req.pathParams.name, status: status};
+  Object.assign(job, meta);
+
+  // This order is required.
+  const result = query.addResult(req.body);
+  graph.returned.save({_from: job._id, _to: result._id});
+  const updatedJob = query.manageJobStatusChange(job);
+  res.send(updatedJob);
+})
+    .body(schemas.result, 'Result of the job.')
+    .response(schemas.job, 'job completed in the collection.')
+    .summary('Complete a job and add a result.')
+    .description('Complete a job, connect it to a result, and manage side effects.');
+
+router.put('jobs/manage_status_change/:name/:status/:rev', function(req, res) {
+  const status = req.pathParams.status;
+  if (query.isJobStatusComplete(status)) {
+    res.throw(400, `status=${status} indicates completion. Post complete_job status instead.`);
+    return;
+  }
+  const job = graph.jobs.document(req.pathParams.name);
+  if (job._rev != req.pathParams.rev) {
+    res.throw(400, `Revision conflict for ${job.name}: _rev=${job._rev}`);
+    return;
+  }
+  job.status = status;
+  const updatedJob = query.manageJobStatusChange(job);
+  res.send(updatedJob);
+})
+    .response(schemas.job, 'Updated job.')
+    .summary('Change the status of a job and manage side effects.')
+    .description('Change the status of a job and manage side effects.');
+
+router.post('jobs/store_user_data/:name', function(req, res) {
+  const job = graph.jobs.document(req.pathParams.name);
+  const userData = req.pathParams.user_data;
+  const doc = query.addUserData(userData);
+  graph.stores.save({_from: job._id, _to: doc._id});
+  res.send(doc);
+})
+    .body(schemas.result, 'User data for the job.')
+    .response(joi.object().required(), 'Database information for the user data.')
+    .summary('Store user data for a job.')
+    .description('Store user data for a job and connect the two vertexes.');
+
+router.get('jobs/get_user_data/:name', function(req, res) {
+  // Shouldn't need skip and limit, but that could be added.
+  if (!graph.jobs.document(req.pathParams.name)) {
+    res.throw(404, `Job ${req.pathParams.name} is not stored`);
+  } else {
+    res.send(query.getUserDataStoredByJob(req.pathParams.name).toArray());
+  }
+})
+    .pathParam('name', joi.string().required(), 'Job name.')
+    .response(joi.object().required(), 'All user data stored for the job.')
+    .summary('Retrieve all user data for a job.')
+    .description('Retrieve all user data for a job.');

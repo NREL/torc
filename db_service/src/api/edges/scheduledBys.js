@@ -4,6 +4,8 @@ const errors = require('@arangodb').errors;
 const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
 const graphModule = require('@arangodb/general-graph');
 const defs = require('../../defs');
+const {MAX_TRANSFER_RECORDS} = require('../../defs');
+const {getItemsLimit, makeCursorResult} = require('../../utils');
 const graph = graphModule._graph(defs.GRAPH_NAME);
 const schemas = require('../schemas');
 const createRouter = require('@arangodb/foxx/router');
@@ -38,8 +40,10 @@ router.get('/scheduled_bys/:key', function(req, res) {
 
 router.get('/scheduled_bys', function(req, res) {
   try {
-    const data = graph.scheduled_bys.toArray();
-    res.send(data);
+    const qp = req.queryParams;
+    const limit = getItemsLimit(qp.limit);
+    const items = graph.scheduled_bys.all().skip(qp.skip).limit(limit).toArray();
+    res.send(makeCursorResult(items, qp.skip, limit, graph.scheduled_bys.count()));
   } catch (e) {
     if (!e.isArangoError) {
       throw e;
@@ -47,7 +51,9 @@ router.get('/scheduled_bys', function(req, res) {
     res.throw(404, 'Unknown error', e);
   }
 })
-    .response(joi.array().items(schemas.edge))
+    .queryParam('skip', joi.number().default(0))
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .response(schemas.batchEdges)
     .summary('Retrieve all scheduled_by edges')
     .description('Retrieves all edges from the "scheduled_by" collection.');
 
@@ -64,6 +70,7 @@ router.delete('/scheduled_bys/:key', function(req, res) {
   }
 })
     .pathParam('key', joi.string().required(), 'Key of the scheduled_by.')
+    .body(joi.object().optional())
     .response(schemas.edge, 'scheduled_by stored in the collection.')
     .summary('Delete a scheduled_by')
     .description('Deletes a scheduled_by edge from the "scheduled_by" collection by key.');
@@ -79,6 +86,7 @@ router.delete('/scheduled_bys', function(req, res) {
     res.throw(404, 'Error occurred', e);
   }
 })
+    .body(joi.object().optional())
     .response(joi.object(), 'message')
     .summary('Delete all scheduled_by edges')
     .description('Deletes all edges from the "scheduled_by" collection.');

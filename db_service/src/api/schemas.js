@@ -12,35 +12,11 @@ const file = joi.object().required().keys({
   name: joi.string().required(),
   path: joi.string().required(),
   file_hash: joi.string().optional(),
-  st_mtime: joi.string().optional(),
+  st_mtime: joi.number().optional(),
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),
   // Keep changes in sync with getDocumentIfAlreadyStored
-});
-
-const job = joi.object().required().keys({
-  name: joi.string().required(),
-  command: joi.string().required(),
-  status: joi.string(),
-  cancel_on_blocking_job_failure: joi.boolean().default(true),
-  return_code: joi.number().default(0),
-  // TODO container information
-  _key: joi.string(),
-  _id: joi.string(),
-  _rev: joi.string(),
-});
-
-// This schema is used in the user workflow construction but is never stored.
-const jobDefinition = joi.object().required().keys({
-  name: joi.string().required(),
-  command: joi.string().required(),
-  cancel_on_blocking_job_failure: joi.boolean().default(true),
-  scheduler: joi.string().optional(),
-  resource_requirements: joi.string().optional(),
-  input_files: joi.array().items(joi.string()).default([]),
-  output_files: joi.array().items(joi.string()).default([]),
-  blocked_by: joi.array().items(joi.string()).default([]),
 });
 
 const hpcConfig = joi.object().required().keys({
@@ -53,6 +29,38 @@ const hpcConfig = joi.object().required().keys({
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),
+});
+
+const job = joi.object().required().keys({
+  name: joi.string().required(),
+  command: joi.string().required(),
+  status: joi.string(),
+  cancel_on_blocking_job_failure: joi.boolean().default(true),
+  interruptible: joi.boolean().default(false),
+  // TODO container information
+  _key: joi.string(),
+  _id: joi.string(),
+  _rev: joi.string(),
+});
+
+// This schema is used in the user workflow construction but is never stored.
+const jobDefinition = joi.object().required().keys({
+  name: joi.string().required(),
+  command: joi.string().required(),
+  user_data: joi.array().items(joi.object()).default([]),
+  cancel_on_blocking_job_failure: joi.boolean().default(true),
+  interruptible: joi.boolean().default(false),
+  scheduler: joi.string().optional(),
+  resource_requirements: joi.string().optional(),
+  input_files: joi.array().items(joi.string()).default([]),
+  output_files: joi.array().items(joi.string()).default([]),
+  blocked_by: joi.array().items(joi.string()).default([]),
+});
+
+const jobUserData = joi.object().required().keys({
+  items: joi.array().items(joi.object()),
+  name: joi.string(),
+  count: joi.number(),
 });
 
 const jobEstimate = joi.object().required().keys({
@@ -111,14 +119,105 @@ const workflow = joi.object().required().keys({
   schedulers: joi.array().items(hpcConfig).default([]),
 });
 
+const batchJobDefinitions = joi.object().required().keys({
+  items: joi.array().items(jobDefinition),
+  skip: joi.number().required(),
+  max_limit: joi.number().required(),
+  count: joi.number().required(),
+  total_count: joi.number().required(),
+  has_more: joi.boolean().required(),
+});
+
+const batchJobs = joi.object().required().keys({
+  items: joi.array().items(job),
+  skip: joi.number().required(),
+  max_limit: joi.number().required(),
+  count: joi.number().required(),
+  total_count: joi.number().required(),
+  has_more: joi.boolean().required(),
+});
+
+const batchEdges = joi.object().required().keys({
+  items: joi.array().items(edge),
+  skip: joi.number().required(),
+  max_limit: joi.number().required(),
+  count: joi.number().required(),
+  total_count: joi.number().required(),
+  has_more: joi.boolean().required(),
+});
+
+const batchEvents = joi.object().required().keys({
+  items: joi.array().items(joi.object()),
+  skip: joi.number().required(),
+  max_limit: joi.number().required(),
+  count: joi.number().required(),
+  total_count: joi.number().required(),
+  has_more: joi.boolean().required(),
+});
+
+const batchFiles = joi.object().required().keys({
+  items: joi.array().items(file),
+  skip: joi.number().required(),
+  max_limit: joi.number().required(),
+  count: joi.number().required(),
+  total_count: joi.number().required(),
+  has_more: joi.boolean().required(),
+});
+
+const batchHpcConfigs = joi.object().required().keys({
+  items: joi.array().items(hpcConfig),
+  skip: joi.number().required(),
+  max_limit: joi.number().required(),
+  count: joi.number().required(),
+  total_count: joi.number().required(),
+  has_more: joi.boolean().required(),
+});
+
+const batchResourceRequirements = joi.object().required().keys({
+  items: joi.array().items(resourceRequirements),
+  skip: joi.number().required(),
+  max_limit: joi.number().required(),
+  count: joi.number().required(),
+  total_count: joi.number().required(),
+  has_more: joi.boolean().required(),
+});
+
+const batchResults = joi.object().required().keys({
+  items: joi.array().items(result),
+  skip: joi.number().required(),
+  max_limit: joi.number().required(),
+  count: joi.number().required(),
+  total_count: joi.number().required(),
+  has_more: joi.boolean().required(),
+});
+
+const batchUserData = joi.object().required().keys({
+  items: joi.array().items(joi.object()),
+  skip: joi.number().required(),
+  max_limit: joi.number().required(),
+  count: joi.number().required(),
+  total_count: joi.number().required(),
+  has_more: joi.boolean().required(),
+});
+
 module.exports = {
+  batchEdges,
+  batchEvents,
+  batchFiles,
+  batchHpcConfigs,
+  batchJobDefinitions,
+  batchJobs,
+  batchResourceRequirements,
+  batchResults,
+  batchUserData,
   edge,
   file,
+  hpcConfig,
   isComplete,
   job,
   jobDefinition,
-  hpcConfig,
   jobEstimate,
+  jobUserData,
   resourceRequirements,
   result,
   workerResources,

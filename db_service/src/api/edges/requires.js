@@ -4,6 +4,8 @@ const errors = require('@arangodb').errors;
 const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
 const graphModule = require('@arangodb/general-graph');
 const defs = require('../../defs');
+const {MAX_TRANSFER_RECORDS} = require('../../defs');
+const {getItemsLimit, makeCursorResult} = require('../../utils');
 const graph = graphModule._graph(defs.GRAPH_NAME);
 const schemas = require('../schemas');
 const createRouter = require('@arangodb/foxx/router');
@@ -34,12 +36,14 @@ router.get('/requires/:key', function(req, res) {
     .pathParam('key', joi.string().required(), 'Key of the require.')
     .response(schemas.edge, 'require stored in the collection.')
     .summary('Retrieve a require')
-    .description('Retrieves a requires edge edge from the "requires" collection by key.');
+    .description('Retrieves a requires edge from the "requires" collection by key.');
 
 router.get('/requires', function(req, res) {
   try {
-    const data = graph.requires.toArray();
-    res.send(data);
+    const qp = req.queryParams;
+    const limit = getItemsLimit(qp.limit);
+    const items = graph.requires.all().skip(qp.skip).limit(limit).toArray();
+    res.send(makeCursorResult(items, qp.skip, limit, graph.requires.count()));
   } catch (e) {
     if (!e.isArangoError) {
       throw e;
@@ -47,7 +51,9 @@ router.get('/requires', function(req, res) {
     res.throw(404, 'Unknown error', e);
   }
 })
-    .response(joi.array().items(schemas.edge))
+    .queryParam('skip', joi.number().default(0))
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .response(schemas.batchEdges)
     .summary('Retrieve all requires')
     .description('Retrieves all requires edges from the "requires" collection.');
 
@@ -64,6 +70,7 @@ router.delete('/requires/:key', function(req, res) {
   }
 })
     .pathParam('key', joi.string().required(), 'Key of the require.')
+    .body(joi.object().optional())
     .response(schemas.edge, 'requires edge stored in the collection.')
     .summary('Delete a require')
     .description('Deletes a requires edge from the "requires" collection by key.');
@@ -79,6 +86,7 @@ router.delete('/requires', function(req, res) {
     res.throw(404, 'Error occurred', e);
   }
 })
+    .body(joi.object().optional())
     .response(joi.object(), 'message')
     .summary('Delete all requires edges')
     .description('Deletes all edges from the "requires" collection.');

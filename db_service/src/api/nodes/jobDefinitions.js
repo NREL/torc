@@ -3,6 +3,8 @@ const errors = require('@arangodb').errors;
 const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
 const graphModule = require('@arangodb/general-graph');
 const defs = require('../../defs');
+const {MAX_TRANSFER_RECORDS} = require('../../defs');
+const {getItemsLimit, makeCursorResult} = require('../../utils');
 const graph = graphModule._graph(defs.GRAPH_NAME);
 const query = require('../../query');
 const schemas = require('../schemas');
@@ -45,22 +47,17 @@ router.get('/job_definitions/:name', function(req, res) {
     .description('Retrieves a job from the "jobs" collection by name.');
 
 router.get('/job_definitions', function(req, res) {
-  const qp = req.queryParams == null ? {} : req.queryParams;
-  const skip = qp.skip == null ? 0 : parseInt(qp.skip);
-  if (skip > graph.jobs.count()) {
-    res.throw(400, `skip=${qp.skip} is greater than count=${graph.jobs.count()}`);
-  }
-
-  let cursor = graph.jobs.all().skip(skip);
-  if (qp.limit != null) {
-    cursor = cursor.limit(qp.limit);
-  }
+  const qp = req.queryParams;
+  const limit = getItemsLimit(qp.limit);
+  const cursor = graph.jobs.all().skip(qp.skip).limit(limit);
   const jobDefinitions = [];
   for (const job of cursor) {
     jobDefinitions.push(query.getJobDefinition(job));
   }
-  res.send(jobDefinitions);
+  res.send(makeCursorResult(jobDefinitions, qp.skip, limit, graph.jobs.count()));
 })
-    .response(joi.array().items(schemas.jobDefinition))
+    .queryParam('skip', joi.number().default(0))
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .response(schemas.batchJobDefinitions)
     .summary('Retrieve all job definitions')
     .description('Retrieves all job definitions. Limit output with skip and limit.');

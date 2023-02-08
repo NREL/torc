@@ -3,11 +3,11 @@ const KiB = 1024;
 const MiB = KiB * KiB;
 const GiB = MiB * KiB;
 const TiB = GiB * KiB;
+const MAX_TRANSFER_RECORDS = 100;
 
 const JobStatus = {
   // Initial state. Not yet known if it is blocked or ready.
-  // 'Uninitialized' may be better.
-  NotSubmitted: 'not_submitted',
+  Uninitialized: 'uninitialized',
   // The job cannot start because of dependencies.
   Blocked: 'blocked',
   // A blocking job failed and so the job never ran.
@@ -27,6 +27,7 @@ const JobStatus = {
 
 module.exports = {
   GRAPH_NAME,
+  MAX_TRANSFER_RECORDS,
   KiB,
   MiB,
   GiB,

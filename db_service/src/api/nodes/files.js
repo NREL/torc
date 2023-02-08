@@ -5,6 +5,8 @@ const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
 const CONFLICTING_REV = errors.ERROR_ARANGO_CONFLICT.code;
 const graphModule = require('@arangodb/general-graph');
 const defs = require('../../defs');
+const {MAX_TRANSFER_RECORDS} = require('../../defs');
+const {getItemsLimit, makeCursorResult} = require('../../utils');
 const graph = graphModule._graph(defs.GRAPH_NAME);
 const schemas = require('../schemas');
 const query = require('../../query');
@@ -68,46 +70,46 @@ router.get('/files/:name', function(req, res) {
     .description('Retrieves a file from the "files" collection by name.');
 
 router.get('/files', function(req, res) {
-  const qp = req.queryParams == null ? {} : req.queryParams;
-  const skip = qp.skip == null ? 0 : parseInt(qp.skip);
-  if (skip > graph.files.count()) {
-    res.throw(400, `skip=${qp.skip} is greater than count=${graph.files.count()}`);
-  }
-
-  try {
-    let cursor = graph.files.all().skip(skip);
-    if (qp.limit != null) {
-      cursor = cursor.limit(qp.limit);
-    }
-    res.send(cursor);
-  } catch (e) {
-    if (!e.isArangoError) {
-      throw e;
-    }
-    res.throw(404, 'Unknown error', e);
-  }
+  const qp = req.queryParams;
+  const limit = getItemsLimit(qp.limit);
+  const items = graph.files.all().skip(qp.skip).limit(limit).toArray();
+  res.send(makeCursorResult(items, qp.skip, limit, graph.files.count()));
 })
-    .response(joi.array().items(schemas.file))
+    .queryParam('skip', joi.number().default(0))
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .response(schemas.batchFiles)
     .summary('Retrieve all files')
     .description('Retrieves all files from the "files" collection.');
 
 router.get('/files/produced_by_job/:name', function(req, res) {
-  const qp = req.queryParams == null ? {} : req.queryParams;
   try {
-    let cursor = query.getFilesProducedByJob(req.pathParams.produced_by);
-    if (qp.limit != null) {
-      cursor = cursor.limit(qp.limit);
+    const qp = req.queryParams;
+    const limit = getItemsLimit(qp.limit);
+    const cursor = query.getFilesProducedByJob(req.pathParams.name);
+    // TODO: how to do this with Arango cursor?
+    const items = [];
+    let i = 0;
+    for (const item of cursor) {
+      if (i > qp.skip) {
+        i++;
+        continue;
+      }
+      items.push(item);
+      if (items.length == limit) {
+        break;
+      }
     }
-    res.send(cursor);
+    res.send(makeCursorResult(items, qp.skip, limit, cursor.count()));
   } catch (e) {
     if (!e.isArangoError) {
       throw e;
     }
-    // TODO: do better
     res.throw(404, 'Unknown error', e);
   }
 })
-    .response(joi.array().items(schemas.file))
+    .queryParam('skip', joi.number().default(0))
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .response(schemas.batchFiles)
     .summary('Retrieve files produced by a job')
     .description('Retrieves files from the "files" collection produced by a job.');
 
@@ -124,6 +126,7 @@ router.delete('/files/:name', function(req, res) {
   }
 })
     .pathParam('name', joi.string().required(), 'Name of the file.')
+    .body(joi.object().optional())
     .response(schemas.file, 'file stored in the collection.')
     .summary('Delete a file')
     .description('Deletes a file from the "files" collection by name.');
@@ -139,6 +142,7 @@ router.delete('/files', function(req, res) {
     res.throw(404, 'Error occurred', e);
   }
 })
+    .body(joi.object().optional())
     .response(joi.object(), 'message')
     .summary('Delete all files')
     .description('Deletes all files from the "files" collection.');

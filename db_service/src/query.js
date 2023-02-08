@@ -1,8 +1,6 @@
 const {query} = require('@arangodb');
 const db = require('@arangodb').db;
 const graphModule = require('@arangodb/general-graph');
-const errors = require('@arangodb').errors;
-const CONFLICTING_REV = errors.ERROR_ARANGO_CONFLICT.code;
 const {GiB, GRAPH_NAME, JobStatus} = require('./defs');
 const graph = graphModule._graph(GRAPH_NAME);
 const schemas = require('./api/schemas');
@@ -98,7 +96,7 @@ function addJob(doc) {
 
   doc._key = doc.name;
   if (doc.status == null) {
-    doc.status = JobStatus.NotSubmitted;
+    doc.status = JobStatus.Uninitialized;
   }
   const meta = db.jobs.save(doc);
   Object.assign(doc, meta);
@@ -138,7 +136,9 @@ function addJobDefinition(jobDef) {
   const job = addJob({
     name: jobDef.name,
     command: jobDef.command,
+    user_data: jobDef.user_data,
     cancel_on_blocking_job_failure: jobDef.cancel_on_blocking_job_failure,
+    interruptible: jobDef.interruptible,
   });
   for (const filename of jobDef.input_files) {
     const file = graph.files.document(filename);
@@ -165,6 +165,10 @@ function addJobDefinition(jobDef) {
     const edge = {_from: job._id, _to: scheduler._id};
     graph.scheduled_bys.save(edge);
   }
+  for (const userData of jobDef.user_data) {
+    const doc = addUserData(userData);
+    graph.stores.save({_from: job._id, _to: doc._id});
+  }
   return job;
 }
 
@@ -183,6 +187,28 @@ function addResourceRequirements(doc) {
   const meta = db.resource_requirements.save(doc);
   Object.assign(doc, meta);
   console.log(`Added resource_requirements ${doc.name}`);
+  return doc;
+}
+
+/**
+ * Add a result to the database.
+ * @param {Object} doc
+ * @return {Object}
+ */
+function addResult(doc) {
+  const meta = db.results.save(doc);
+  Object.assign(doc, meta);
+  return doc;
+}
+
+/**
+ * Add a user data object to the database.
+ * @param {Object} doc
+ * @return {Object}
+ */
+function addUserData(doc) {
+  const meta = db.user_data.save(doc);
+  Object.assign(doc, meta);
   return doc;
 }
 
@@ -222,9 +248,8 @@ function estimateWorkflow() {
     });
     for (const jobId of readyJobs) {
       const job = graph.jobs.document(jobId);
-      job.return_code = 0;
       job.status = JobStatus.Done;
-      updateJobStatus(job);
+      manageJobStatusChange(job);
     }
   } while (!isWorkflowComplete());
   resetJobStatus();
@@ -262,7 +287,6 @@ const jobsFields = [
   'command',
   'status',
   'cancel_on_blocking_job_failure',
-  'return_code',
 ];
 const hpcConfigsFields = [
   'name',
@@ -330,7 +354,7 @@ function getDocumentIfAlreadyStored(doc, collectionName) {
  */
 function getFilesNeededByJob(name) {
   const jobId = `jobs/${name}`;
-  return query`
+  return query({count: true})`
       FOR v
           IN 1
           OUTBOUND ${jobId}
@@ -347,7 +371,7 @@ function getFilesNeededByJob(name) {
  */
 function getFilesProducedByJob(name) {
   const jobId = `jobs/${name}`;
-  return query`
+  return query({count: true})`
       FOR v
           IN 1
           OUTBOUND ${jobId}
@@ -366,6 +390,7 @@ function getJobDefinition(job) {
   const blockingJobs = [];
   const inputFiles = [];
   const outputFiles = [];
+  const userData = [];
 
   for (const blockingJob of getBlockingJobs(job)) {
     blockingJobs.push(blockingJob.name);
@@ -375,6 +400,12 @@ function getJobDefinition(job) {
   }
   for (const file of getFilesProducedByJob(job.name)) {
     outputFiles.push(file.name);
+  }
+  for (const data of getUserDataStoredByJob(job.name)) {
+    delete(data._id);
+    delete(data._key);
+    delete(data._rev);
+    userData.push(data);
   }
 
   const scheduler = getJobScheduler(job);
@@ -444,11 +475,92 @@ function getJobScheduler(job) {
 }
 
 /**
- * Perform actions after detecting a job completion, such as unblocking blocked jobs.
- * @param {Object} job
+ * Return jobs that need the file.
+ * @param {string} name - file name
+ * @return {ArangoQueryCursor}
  */
-function handleJobCompletion(job) {
-  updateBlockedJobsFromCompletion(job);
+function getJobsThatNeedFile(name) {
+  const fileId = `files/${name}`;
+  return query({count: true})`
+      FOR v
+          IN 1
+          INBOUND ${fileId}
+          GRAPH ${GRAPH_NAME}
+          OPTIONS { edgeCollections: 'needs' }
+          RETURN v
+    `;
+}
+
+/**
+ * Return all result documents connected to the job, sorted by completion time.
+ * Return null if the job does not have a result.
+ * @param {string} jobName
+ * @return {Object}
+ */
+function getJobResults(jobName) {
+  const jobId = `jobs/${jobName}`;
+  const cursor = query({count: true})`
+    FOR v, e, p
+      IN 1
+      OUTBOUND ${jobId}
+      GRAPH ${GRAPH_NAME}
+      OPTIONS { edgeCollections: 'returned' }
+      RETURN p.vertices[1]
+  `;
+  const count = cursor.count();
+  if (count == 0) {
+    return null;
+  }
+
+  results = cursor.toArray();
+  if (results.length > 1) {
+    results.sort(compareTimestamp);
+  }
+  return results;
+}
+
+/**
+ * Comparison function for sorting timestamp strings.
+ * @param {Object} result1
+ * @param {Object} result2
+ * @return {number}
+ */
+function compareTimestamp(result1, result2) {
+  t1 = new Date(result1.completion_time).getTime();
+  t2 = new Date(result2.completion_time).getTime();
+  return t1 - t2;
+}
+
+/**
+ * Return the latest job result.
+ * Return null if the job does not have a result.
+ * @param {string} jobName
+ * @return {Object}
+ */
+function getLatestJobResult(jobName) {
+  const results = getJobResults(jobName);
+  if (results == null) {
+    return results;
+  }
+
+  return results.slice(-1)[0];
+}
+
+/**
+ * Return the user data that is connected to the job.
+ * @param {string} jobName
+ * @return {ArangoQueryCursor}
+ */
+function getUserDataStoredByJob(jobName) {
+  const jobId = `jobs/${jobName}`;
+  return query({count: true})`
+    FOR v, e, p
+      IN 1
+      OUTBOUND ${jobId}
+      GRAPH ${GRAPH_NAME}
+      OPTIONS { edgeCollections: 'stores' }
+      RETURN p.vertices[1]
+  `;
 }
 
 /** Set initial job status. */
@@ -457,13 +569,13 @@ function initializeJobStatus() {
   for (const job of graph.jobs.all()) {
     if (isJobInitiallyBlocked(job._id)) {
       job.status = JobStatus.Blocked;
-    } else {
+    } else if (job.status != JobStatus.Done) {
       job.status = JobStatus.Ready;
     }
     graph.jobs.update(job, job);
   }
   console.log(
-      `Initialized all job status to ${JobStatus.Ready} or ${JobStatus.Blocked}`,
+      `Initialized all incomplete job status to ${JobStatus.Ready} or ${JobStatus.Blocked}`,
   );
 }
 
@@ -504,6 +616,7 @@ function isJobInitiallyBlocked(jobId) {
         INBOUND ${jobId}
         GRAPH ${GRAPH_NAME}
         OPTIONS { edgeCollections: 'blocks' }
+        FILTER v.status != ${JobStatus.Done}
         RETURN v._id
   `;
   return cursor.count() > 0;
@@ -530,6 +643,33 @@ function isWorkflowComplete() {
         RETURN job.name
   `;
   return cursor.count() == 0;
+}
+
+/**
+ * Update a job status and manage all downstream consequences.
+ * @param {Object} job
+ * @return {Object}
+ */
+function manageJobStatusChange(job) {
+  const oldStatus = graph.jobs.document(job.name).status;
+  if (job.status == oldStatus) {
+    return job;
+  }
+  const meta = db.jobs.update(job, job);
+  Object.assign(job, meta);
+
+  if (!isJobStatusComplete(oldStatus) && isJobStatusComplete(job.status)) {
+    const result = getLatestJobResult(job.name);
+    if (result == null) {
+      throw new Error(
+          `A job must have a result before it is completed: ${job.name}.`,
+      );
+    }
+    updateBlockedJobsFromCompletion(job);
+  } else if (isJobStatusComplete(oldStatus) && job.status == JobStatus.Uninitialized) {
+    updateJobsFromCompletionReversal(job);
+  }
+  return job;
 }
 
 /**
@@ -572,13 +712,13 @@ function prepareJobsForSubmission(workerResources, limit) {
   return jobs;
 }
 
-/** Reset job status to not_submitted. */
+/** Reset job status to uninitialized. */
 function resetJobStatus() {
   for (const job of graph.jobs.all()) {
     job.status = JobStatus.Unknown;
     graph.jobs.update(job, job);
   }
-  console.log(`Reset all job status to ${JobStatus.NotSubmitted}`);
+  console.log(`Reset all job status to ${JobStatus.Uninitialized}`);
 }
 
 /**
@@ -595,51 +735,42 @@ function updateBlockedJobsFromCompletion(job) {
       OPTIONS { edgeCollections: 'blocks', uniqueVertices: 'global', order: 'bfs' }
       RETURN p.vertices[1]
   `;
+  const result = getLatestJobResult(job.name);
   // TODO: should other queries use bfs?
   for (const blockedJob of cursor) {
     if (!isJobBlocked(blockedJob._id)) {
-      // TODO: canceling needs to be configurable.
-      if (job.return_code != 0 && job.cancel_on_blocking_job_failure) {
+      if (result.return_code != 0 && blockedJob.cancel_on_blocking_job_failure) {
         blockedJob.status = JobStatus.Canceled;
       } else {
         blockedJob.status = JobStatus.Ready;
       }
       graph.jobs.update(blockedJob, blockedJob);
-      console.log(`Job ${blockedJob.name} is now ${blockedJob.status}`);
     }
   }
 }
 
 /**
- * Update a job status.
+ * Update jobs after a job completion reversal.
  * @param {Object} job
- * @return {Object}
  */
-function updateJobStatus(job) {
-  const existing = graph.jobs.document(job.name);
-  const oldStatus = existing.status;
-  try {
-    const meta = db.jobs.update(job, job);
-    Object.assign(job, meta);
-  } catch (e) {
-    if (e.errorNum === CONFLICTING_REV) {
-      const old = existing._rev;
-      throw new Error(
-          `Update contains a conflicting revision: ${job._rev} existing=${old}`,
-      );
+function updateJobsFromCompletionReversal(job) {
+  const jobId = job._id;
+  const numJobs = graph.jobs.count();
+  const cursor = query`
+    FOR v, e, p
+      IN 1..${numJobs}
+      OUTBOUND ${jobId}
+      GRAPH ${GRAPH_NAME}
+      OPTIONS { edgeCollections: 'blocks', uniqueVertices: 'global', order: 'bfs' }
+      RETURN v
+  `;
+  for (const downstreamJob of cursor) {
+    if (downstreamJob.status != JobStatus.Uninitialized) {
+      downstreamJob.status = JobStatus.Uninitialized;
+      graph.jobs.update(downstreamJob, downstreamJob);
+      console.log(`Reset job=${downstreamJob.name} status to ${JobStatus.Uninitialized}`);
     }
-    throw e;
   }
-
-  if (!isJobStatusComplete(oldStatus) && isJobStatusComplete(job.status)) {
-    if (job.return_code == null) {
-      throw new Error(
-          `A job completion must specify the return code: ${job.name}.`,
-      );
-    }
-    handleJobCompletion(job);
-  }
-  return job;
 }
 
 module.exports = {
@@ -649,6 +780,8 @@ module.exports = {
   addJob,
   addJobDefinition,
   addResourceRequirements,
+  addResult,
+  addUserData,
   estimateWorkflow,
   getBlockingJobs,
   getDocumentIfAlreadyStored,
@@ -657,14 +790,17 @@ module.exports = {
   getJobDefinition,
   getJobResourceRequirements,
   getJobScheduler,
-  handleJobCompletion,
+  getJobsThatNeedFile,
+  getJobResults,
+  getLatestJobResult,
+  getUserDataStoredByJob,
   initializeJobStatus,
   isJobBlocked,
   isJobInitiallyBlocked,
   isJobStatusComplete,
   isWorkflowComplete,
+  manageJobStatusChange,
   prepareJobsForSubmission,
   resetJobStatus,
   updateBlockedJobsFromCompletion,
-  updateJobStatus,
 };

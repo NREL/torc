@@ -4,6 +4,8 @@ const errors = require('@arangodb').errors;
 const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
 const graphModule = require('@arangodb/general-graph');
 const defs = require('../../defs');
+const {MAX_TRANSFER_RECORDS} = require('../../defs');
+const {getItemsLimit, makeCursorResult} = require('../../utils');
 const graph = graphModule._graph(defs.GRAPH_NAME);
 const schemas = require('../schemas');
 const createRouter = require('@arangodb/foxx/router');
@@ -38,9 +40,10 @@ router.get('/needs/:key', function(req, res) {
 
 router.get('/needs', function(req, res) {
   try {
-    // TODO limit
-    const data = graph.needs.toArray();
-    res.send(data);
+    const qp = req.queryParams;
+    const limit = getItemsLimit(qp.limit);
+    const items = graph.needs.all().skip(qp.skip).limit(limit).toArray();
+    res.send(makeCursorResult(items, qp.skip, limit, graph.needs.count()));
   } catch (e) {
     if (!e.isArangoError) {
       throw e;
@@ -48,7 +51,9 @@ router.get('/needs', function(req, res) {
     res.throw(404, 'Unknown error', e);
   }
 })
-    .response(joi.array().items(schemas.edge))
+    .queryParam('skip', joi.number().default(0))
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .response(schemas.batchEdges)
     .summary('Retrieve all needs')
     .description('Retrieves all needs from the "needs" collection.');
 
@@ -65,6 +70,7 @@ router.delete('/needs/:key', function(req, res) {
   }
 })
     .pathParam('key', joi.string().required(), 'Key of the need.')
+    .body(joi.object().optional())
     .response(schemas.edge, 'need stored in the collection.')
     .summary('Delete a need')
     .description('Deletes a need from the "needs" collection by key.');
@@ -80,6 +86,7 @@ router.delete('/needs', function(req, res) {
     res.throw(404, 'Error occurred', e);
   }
 })
+    .body(joi.object().optional())
     .response(joi.object(), 'message')
     .summary('Delete all needs edges')
     .description('Deletes all edges from the "needs" collection.');
