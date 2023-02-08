@@ -3,10 +3,11 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**jobs** | [**list[JobDefinition]**](JobDefinition.md) |  | [optional] 
-**files** | [**list[FileModel]**](FileModel.md) |  | [optional] 
-**resource_requirements** | [**list[ResourceRequirementsModel]**](ResourceRequirementsModel.md) |  | [optional] 
-**schedulers** | [**list[HpcConfigModel]**](HpcConfigModel.md) |  | [optional] 
+**items** | **list[object]** |  | [optional]
+**skip** | **float** |  |
+**max_limit** | **float** |  |
+**count** | **float** |  |
+**total_count** | **float** |  |
+**has_more** | **bool** |  |
 
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
-

@@ -23,7 +23,7 @@ pip install git+https://github.com/GIT_USER_ID/GIT_REPO_ID.git
 
 Then import the package:
 ```python
-import swagger_client 
+import swagger_client
 ```
 
 ### Setuptools
@@ -53,10 +53,11 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = NULL # object |  (optional)
 
 try:
     # Delete all blocks edges
-    api_response = api_instance.delete_blocks()
+    api_response = api_instance.delete_blocks(body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_blocks: %s\n" % e)
@@ -64,10 +65,11 @@ except ApiException as e:
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
 key = 'key_example' # str | Key of the block.
+body = NULL # object |  (optional)
 
 try:
     # Delete a block
-    api_response = api_instance.delete_blocks_key(key)
+    api_response = api_instance.delete_blocks_key(key, body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_blocks_key: %s\n" % e)
@@ -84,10 +86,23 @@ except ApiException as e:
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+key = 'key_example' # str | Key of the event.
+body = NULL # object |  (optional)
+
+try:
+    # Delete an event
+    api_response = api_instance.delete_events_key(key, body=body)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->delete_events_key: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = NULL # object |  (optional)
 
 try:
     # Delete all files
-    api_response = api_instance.delete_files()
+    api_response = api_instance.delete_files(body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_files: %s\n" % e)
@@ -95,20 +110,22 @@ except ApiException as e:
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
 name = 'name_example' # str | Name of the file.
+body = NULL # object |  (optional)
 
 try:
     # Delete a file
-    api_response = api_instance.delete_files_name(name)
+    api_response = api_instance.delete_files_name(name, body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_files_name: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = NULL # object |  (optional)
 
 try:
     # Delete all hpc_configs
-    api_response = api_instance.delete_hpc_configs()
+    api_response = api_instance.delete_hpc_configs(body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_hpc_configs: %s\n" % e)
@@ -116,20 +133,22 @@ except ApiException as e:
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
 name = 'name_example' # str | Name of the hpc_config.
+body = NULL # object |  (optional)
 
 try:
     # Delete a hpc_config
-    api_response = api_instance.delete_hpc_configs_name(name)
+    api_response = api_instance.delete_hpc_configs_name(name, body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_hpc_configs_name: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = NULL # object |  (optional)
 
 try:
     # Delete all jobs
-    api_response = api_instance.delete_jobs()
+    api_response = api_instance.delete_jobs(body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_jobs: %s\n" % e)
@@ -137,20 +156,22 @@ except ApiException as e:
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
 name = 'name_example' # str | Name of the job.
+body = NULL # object |  (optional)
 
 try:
     # Delete a job
-    api_response = api_instance.delete_jobs_name(name)
+    api_response = api_instance.delete_jobs_name(name, body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_jobs_name: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = NULL # object |  (optional)
 
 try:
     # Delete all needs edges
-    api_response = api_instance.delete_needs()
+    api_response = api_instance.delete_needs(body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_needs: %s\n" % e)
@@ -158,41 +179,45 @@ except ApiException as e:
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
 key = 'key_example' # str | Key of the need.
+body = NULL # object |  (optional)
 
 try:
     # Delete a need
-    api_response = api_instance.delete_needs_key(key)
+    api_response = api_instance.delete_needs_key(key, body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_needs_key: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = NULL # object |  (optional)
 
 try:
     # Delete all produces edges
-    api_response = api_instance.delete_produces()
+    api_response = api_instance.delete_produces(body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_produces: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
-key = 'key_example' # str | Key of the produce.
+key = 'key_example' # str | Key of the produce edge.
+body = NULL # object |  (optional)
 
 try:
     # Delete a produces edge
-    api_response = api_instance.delete_produces_key(key)
+    api_response = api_instance.delete_produces_key(key, body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_produces_key: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = NULL # object |  (optional)
 
 try:
     # Delete all requires edges
-    api_response = api_instance.delete_requires()
+    api_response = api_instance.delete_requires(body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_requires: %s\n" % e)
@@ -200,20 +225,22 @@ except ApiException as e:
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
 key = 'key_example' # str | Key of the require.
+body = NULL # object |  (optional)
 
 try:
     # Delete a require
-    api_response = api_instance.delete_requires_key(key)
+    api_response = api_instance.delete_requires_key(key, body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_requires_key: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = NULL # object |  (optional)
 
 try:
     # Delete all resource_requirements
-    api_response = api_instance.delete_resource_requirements()
+    api_response = api_instance.delete_resource_requirements(body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_resource_requirements: %s\n" % e)
@@ -221,30 +248,68 @@ except ApiException as e:
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
 name = 'name_example' # str | Name of the resource.
+body = NULL # object |  (optional)
 
 try:
     # Delete a resource
-    api_response = api_instance.delete_resource_requirements_name(name)
+    api_response = api_instance.delete_resource_requirements_name(name, body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_resource_requirements_name: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = NULL # object |  (optional)
 
 try:
     # Delete all results
-    api_response = api_instance.delete_results()
+    api_response = api_instance.delete_results(body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_results: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+key = 'key_example' # str | Key of the result object.
+body = NULL # object |  (optional)
+
+try:
+    # Delete a result
+    api_response = api_instance.delete_results_key(key, body=body)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->delete_results_key: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = NULL # object |  (optional)
+
+try:
+    # Delete all returned edges
+    api_response = api_instance.delete_returned(body=body)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->delete_returned: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+key = 'key_example' # str | Key of the edge.
+body = NULL # object |  (optional)
+
+try:
+    # Delete an edge
+    api_response = api_instance.delete_returned_key(key, body=body)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->delete_returned_key: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = NULL # object |  (optional)
 
 try:
     # Delete all scheduled_by edges
-    api_response = api_instance.delete_scheduled_bys()
+    api_response = api_instance.delete_scheduled_bys(body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_scheduled_bys: %s\n" % e)
@@ -252,13 +317,60 @@ except ApiException as e:
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
 key = 'key_example' # str | Key of the scheduled_by.
+body = NULL # object |  (optional)
 
 try:
     # Delete a scheduled_by
-    api_response = api_instance.delete_scheduled_bys_key(key)
+    api_response = api_instance.delete_scheduled_bys_key(key, body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_scheduled_bys_key: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = NULL # object |  (optional)
+
+try:
+    # Delete all stores edges
+    api_response = api_instance.delete_stores(body=body)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->delete_stores: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+key = 'key_example' # str | Key of the stores edge.
+body = NULL # object |  (optional)
+
+try:
+    # Delete a stores edge
+    api_response = api_instance.delete_stores_key(key, body=body)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->delete_stores_key: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = NULL # object |  (optional)
+
+try:
+    # Delete all user data
+    api_response = api_instance.delete_user_data(body=body)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->delete_user_data: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+key = 'key_example' # str | Key of the user data object.
+body = NULL # object |  (optional)
+
+try:
+    # Delete a user data object
+    api_response = api_instance.delete_user_data_key(key, body=body)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->delete_user_data_key: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
@@ -273,10 +385,12 @@ except ApiException as e:
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
 
 try:
     # Retrieve all blocks edges
-    api_response = api_instance.get_blocks()
+    api_response = api_instance.get_blocks(skip=skip, limit=limit)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_blocks: %s\n" % e)
@@ -294,20 +408,35 @@ except ApiException as e:
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
 
 try:
     # Retrieve all events
-    api_response = api_instance.get_events()
+    api_response = api_instance.get_events(skip=skip, limit=limit)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_events: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+key = 'key_example' # str | Key of the events object
+
+try:
+    # Retrieve the event for a key.
+    api_response = api_instance.get_events_key(key)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_events_key: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
 
 try:
     # Retrieve all files
-    api_response = api_instance.get_files()
+    api_response = api_instance.get_files(skip=skip, limit=limit)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_files: %s\n" % e)
@@ -325,28 +454,32 @@ except ApiException as e:
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
-name = 'name_example' # str | 
+name = 'name_example' # str |
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
 
 try:
     # Retrieve files produced by a job
-    api_response = api_instance.get_files_produced_by_job_name(name)
+    api_response = api_instance.get_files_produced_by_job_name(name, skip=skip, limit=limit)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_files_produced_by_job_name: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
 
 try:
     # Retrieve all hpc_configs
-    api_response = api_instance.get_hpc_configs()
+    api_response = api_instance.get_hpc_configs(skip=skip, limit=limit)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_hpc_configs: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
-name = 'name_example' # str | 
+name = 'name_example' # str |
 
 try:
     # Retrieve an hpc_config document by name
@@ -357,10 +490,12 @@ except ApiException as e:
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
 
 try:
     # Retrieve all job definitions
-    api_response = api_instance.get_job_definitions()
+    api_response = api_instance.get_job_definitions(skip=skip, limit=limit)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_job_definitions: %s\n" % e)
@@ -388,24 +523,52 @@ except ApiException as e:
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
 
 try:
     # Retrieve all jobs
-    api_response = api_instance.get_jobs()
+    api_response = api_instance.get_jobs(skip=skip, limit=limit)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_jobs: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+name = 'name_example' # str | File name.
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
+
+try:
+    # Retrieve all jobs that need a file
+    api_response = api_instance.get_jobs_find_by_needs_file_name(name, skip=skip, limit=limit)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_jobs_find_by_needs_file_name: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
 status = 'status_example' # str | Job status.
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
 
 try:
     # Retrieve all jobs with a specific status
-    api_response = api_instance.get_jobs_find_by_status_status(status)
+    api_response = api_instance.get_jobs_find_by_status_status(status, skip=skip, limit=limit)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_jobs_find_by_status_status: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+name = 'name_example' # str | Job name.
+
+try:
+    # Retrieve all user data for a job.
+    api_response = api_instance.get_jobs_get_user_data_name(name)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_jobs_get_user_data_name: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
@@ -431,10 +594,12 @@ except ApiException as e:
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
 
 try:
     # Retrieve all needs
-    api_response = api_instance.get_needs()
+    api_response = api_instance.get_needs(skip=skip, limit=limit)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_needs: %s\n" % e)
@@ -452,10 +617,12 @@ except ApiException as e:
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
 
 try:
     # Retrieve all produces edges
-    api_response = api_instance.get_produces()
+    api_response = api_instance.get_produces(skip=skip, limit=limit)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_produces: %s\n" % e)
@@ -473,10 +640,12 @@ except ApiException as e:
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
 
 try:
     # Retrieve all requires
-    api_response = api_instance.get_requires()
+    api_response = api_instance.get_requires(skip=skip, limit=limit)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_requires: %s\n" % e)
@@ -494,17 +663,19 @@ except ApiException as e:
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
 
 try:
     # Retrieve all resource requirements
-    api_response = api_instance.get_resource_requirements()
+    api_response = api_instance.get_resource_requirements(skip=skip, limit=limit)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_resource_requirements: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
-name = 'name_example' # str | 
+name = 'name_example' # str |
 
 try:
     # Retrieve a resource requirements document by name
@@ -515,20 +686,69 @@ except ApiException as e:
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
 
 try:
     # Retrieve all results
-    api_response = api_instance.get_results()
+    api_response = api_instance.get_results(skip=skip, limit=limit)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_results: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+name = 'name_example' # str | Job name.
+
+try:
+    # Retrieve the latest result for a job
+    api_response = api_instance.get_results_find_by_job_name_name(name)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_results_find_by_job_name_name: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+key = 'key_example' # str | Key of the results object
+
+try:
+    # Retrieve the result for a key.
+    api_response = api_instance.get_results_key(key)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_results_key: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
+
+try:
+    # Retrieve all returned
+    api_response = api_instance.get_returned(skip=skip, limit=limit)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_returned: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+key = 'key_example' # str | Key of the returned edge.
+
+try:
+    # Retrieve a returned edge
+    api_response = api_instance.get_returned_key(key)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_returned_key: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
 
 try:
     # Retrieve all scheduled_by edges
-    api_response = api_instance.get_scheduled_bys()
+    api_response = api_instance.get_scheduled_bys(skip=skip, limit=limit)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_scheduled_bys: %s\n" % e)
@@ -543,6 +763,52 @@ try:
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->get_scheduled_bys_key: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
+
+try:
+    # Retrieve all stores edges
+    api_response = api_instance.get_stores(skip=skip, limit=limit)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_stores: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+key = 'key_example' # str | Key of the stores edge.
+
+try:
+    # Retrieve a stores edge
+    api_response = api_instance.get_stores_key(key)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_stores_key: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
+
+try:
+    # Retrieve all user data objects
+    api_response = api_instance.get_user_data(skip=skip, limit=limit)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_user_data: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+key = 'key_example' # str | Key of the user_data object
+
+try:
+    # Retrieve the user data object for a key.
+    api_response = api_instance.get_user_data_key(key)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_user_data_key: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
@@ -642,6 +908,32 @@ except ApiException as e:
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = swagger_client.StatusRevBody() # StatusRevBody | Result of the job.
+name = 'name_example' # str |
+status = 'status_example' # str |
+rev = 'rev_example' # str |
+
+try:
+    # Complete a job and add a result.
+    api_response = api_instance.post_jobs_complete_job_name_status_rev(body, name, status, rev)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->post_jobs_complete_job_name_status_rev: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = swagger_client.StoreUserDataNameBody() # StoreUserDataNameBody | User data for the job.
+name = 'name_example' # str |
+
+try:
+    # Store user data for a job.
+    api_response = api_instance.post_jobs_store_user_data_name(body, name)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->post_jobs_store_user_data_name: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
 body = swagger_client.NeedsEdgeModel() # NeedsEdgeModel | Needs relationship between a job and a file.
 
 try:
@@ -697,6 +989,17 @@ except ApiException as e:
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = swagger_client.ReturnedEdgeModel() # ReturnedEdgeModel | returned relationship between a job and a result.
+
+try:
+    # Store a returned edge between a job and a result.
+    api_response = api_instance.post_returned(body)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->post_returned: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
 body = swagger_client.ScheduledByEdgeModel() # ScheduledByEdgeModel | scheduled_by relationship between a job and an hpc_config.
 
 try:
@@ -705,6 +1008,28 @@ try:
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->post_scheduled_bys: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = swagger_client.StoresEdgeModel() # StoresEdgeModel | stores relationship between a job and a user data object.
+
+try:
+    # Store a stores edge between a job and a user data object.
+    api_response = api_instance.post_stores(body)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->post_stores: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+body = NULL # object | User data. (optional)
+
+try:
+    # Store user data for a job.
+    api_response = api_instance.post_user_data(body=body)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->post_user_data: %s\n" % e)
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
@@ -761,7 +1086,7 @@ except ApiException as e:
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
 body = NULL # object | file to update in the collection.
-name = 'name_example' # str | 
+name = 'name_example' # str |
 
 try:
     # Update file
@@ -772,8 +1097,21 @@ except ApiException as e:
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
+name = 'name_example' # str |
+status = 'status_example' # str |
+rev = 'rev_example' # str |
+
+try:
+    # Change the status of a job and manage side effects.
+    api_response = api_instance.put_jobs_manage_status_change_name_status_rev(name, status, rev)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->put_jobs_manage_status_change_name_status_rev: %s\n" % e)
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi(swagger_client.ApiClient(configuration))
 body = NULL # object | job to update in the collection.
-name = 'name_example' # str | 
+name = 'name_example' # str |
 
 try:
     # Update job
@@ -792,6 +1130,7 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**delete_blocks**](docs/DefaultApi.md#delete_blocks) | **DELETE** /blocks | Delete all blocks edges
 *DefaultApi* | [**delete_blocks_key**](docs/DefaultApi.md#delete_blocks_key) | **DELETE** /blocks/{key} | Delete a block
 *DefaultApi* | [**delete_events**](docs/DefaultApi.md#delete_events) | **DELETE** /events | Delete all events
+*DefaultApi* | [**delete_events_key**](docs/DefaultApi.md#delete_events_key) | **DELETE** /events/{key} | Delete an event
 *DefaultApi* | [**delete_files**](docs/DefaultApi.md#delete_files) | **DELETE** /files | Delete all files
 *DefaultApi* | [**delete_files_name**](docs/DefaultApi.md#delete_files_name) | **DELETE** /files/{name} | Delete a file
 *DefaultApi* | [**delete_hpc_configs**](docs/DefaultApi.md#delete_hpc_configs) | **DELETE** /hpc_configs | Delete all hpc_configs
@@ -807,12 +1146,20 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**delete_resource_requirements**](docs/DefaultApi.md#delete_resource_requirements) | **DELETE** /resource_requirements | Delete all resource_requirements
 *DefaultApi* | [**delete_resource_requirements_name**](docs/DefaultApi.md#delete_resource_requirements_name) | **DELETE** /resource_requirements/{name} | Delete a resource
 *DefaultApi* | [**delete_results**](docs/DefaultApi.md#delete_results) | **DELETE** /results | Delete all results
+*DefaultApi* | [**delete_results_key**](docs/DefaultApi.md#delete_results_key) | **DELETE** /results/{key} | Delete a result
+*DefaultApi* | [**delete_returned**](docs/DefaultApi.md#delete_returned) | **DELETE** /returned | Delete all returned edges
+*DefaultApi* | [**delete_returned_key**](docs/DefaultApi.md#delete_returned_key) | **DELETE** /returned/{key} | Delete an edge
 *DefaultApi* | [**delete_scheduled_bys**](docs/DefaultApi.md#delete_scheduled_bys) | **DELETE** /scheduled_bys | Delete all scheduled_by edges
 *DefaultApi* | [**delete_scheduled_bys_key**](docs/DefaultApi.md#delete_scheduled_bys_key) | **DELETE** /scheduled_bys/{key} | Delete a scheduled_by
+*DefaultApi* | [**delete_stores**](docs/DefaultApi.md#delete_stores) | **DELETE** /stores | Delete all stores edges
+*DefaultApi* | [**delete_stores_key**](docs/DefaultApi.md#delete_stores_key) | **DELETE** /stores/{key} | Delete a stores edge
+*DefaultApi* | [**delete_user_data**](docs/DefaultApi.md#delete_user_data) | **DELETE** /user_data | Delete all user data
+*DefaultApi* | [**delete_user_data_key**](docs/DefaultApi.md#delete_user_data_key) | **DELETE** /user_data/{key} | Delete a user data object
 *DefaultApi* | [**delete_workflow**](docs/DefaultApi.md#delete_workflow) | **DELETE** /workflow | Delete the workflow.
 *DefaultApi* | [**get_blocks**](docs/DefaultApi.md#get_blocks) | **GET** /blocks | Retrieve all blocks edges
 *DefaultApi* | [**get_blocks_key**](docs/DefaultApi.md#get_blocks_key) | **GET** /blocks/{key} | Retrieve a blocks edge
 *DefaultApi* | [**get_events**](docs/DefaultApi.md#get_events) | **GET** /events | Retrieve all events
+*DefaultApi* | [**get_events_key**](docs/DefaultApi.md#get_events_key) | **GET** /events/{key} | Retrieve the event for a key.
 *DefaultApi* | [**get_files**](docs/DefaultApi.md#get_files) | **GET** /files | Retrieve all files
 *DefaultApi* | [**get_files_name**](docs/DefaultApi.md#get_files_name) | **GET** /files/{name} | Retrieve a file
 *DefaultApi* | [**get_files_produced_by_job_name**](docs/DefaultApi.md#get_files_produced_by_job_name) | **GET** /files/produced_by_job/{name} | Retrieve files produced by a job
@@ -822,7 +1169,9 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**get_job_definitions_name**](docs/DefaultApi.md#get_job_definitions_name) | **GET** /job_definitions/{name} | Retrieve a job
 *DefaultApi* | [**get_job_names**](docs/DefaultApi.md#get_job_names) | **GET** /job_names | Retrieve all job names
 *DefaultApi* | [**get_jobs**](docs/DefaultApi.md#get_jobs) | **GET** /jobs | Retrieve all jobs
+*DefaultApi* | [**get_jobs_find_by_needs_file_name**](docs/DefaultApi.md#get_jobs_find_by_needs_file_name) | **GET** /jobs/find_by_needs_file/{name} | Retrieve all jobs that need a file
 *DefaultApi* | [**get_jobs_find_by_status_status**](docs/DefaultApi.md#get_jobs_find_by_status_status) | **GET** /jobs/find_by_status/{status} | Retrieve all jobs with a specific status
+*DefaultApi* | [**get_jobs_get_user_data_name**](docs/DefaultApi.md#get_jobs_get_user_data_name) | **GET** /jobs/get_user_data/{name} | Retrieve all user data for a job.
 *DefaultApi* | [**get_jobs_name**](docs/DefaultApi.md#get_jobs_name) | **GET** /jobs/{name} | Retrieve a job
 *DefaultApi* | [**get_jobs_resource_requirements_name**](docs/DefaultApi.md#get_jobs_resource_requirements_name) | **GET** /jobs/resource_requirements/{name} | Retrieve the resource requirements for a job.
 *DefaultApi* | [**get_needs**](docs/DefaultApi.md#get_needs) | **GET** /needs | Retrieve all needs
@@ -834,8 +1183,16 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**get_resource_requirements**](docs/DefaultApi.md#get_resource_requirements) | **GET** /resource_requirements | Retrieve all resource requirements
 *DefaultApi* | [**get_resource_requirements_name**](docs/DefaultApi.md#get_resource_requirements_name) | **GET** /resource_requirements/{name} | Retrieve a resource requirements document by name
 *DefaultApi* | [**get_results**](docs/DefaultApi.md#get_results) | **GET** /results | Retrieve all results
+*DefaultApi* | [**get_results_find_by_job_name_name**](docs/DefaultApi.md#get_results_find_by_job_name_name) | **GET** /results/find_by_job_name/{name} | Retrieve the latest result for a job
+*DefaultApi* | [**get_results_key**](docs/DefaultApi.md#get_results_key) | **GET** /results/{key} | Retrieve the result for a key.
+*DefaultApi* | [**get_returned**](docs/DefaultApi.md#get_returned) | **GET** /returned | Retrieve all returned
+*DefaultApi* | [**get_returned_key**](docs/DefaultApi.md#get_returned_key) | **GET** /returned/{key} | Retrieve a returned edge
 *DefaultApi* | [**get_scheduled_bys**](docs/DefaultApi.md#get_scheduled_bys) | **GET** /scheduled_bys | Retrieve all scheduled_by edges
 *DefaultApi* | [**get_scheduled_bys_key**](docs/DefaultApi.md#get_scheduled_bys_key) | **GET** /scheduled_bys/{key} | Retrieve a scheduled_by edge
+*DefaultApi* | [**get_stores**](docs/DefaultApi.md#get_stores) | **GET** /stores | Retrieve all stores edges
+*DefaultApi* | [**get_stores_key**](docs/DefaultApi.md#get_stores_key) | **GET** /stores/{key} | Retrieve a stores edge
+*DefaultApi* | [**get_user_data**](docs/DefaultApi.md#get_user_data) | **GET** /user_data | Retrieve all user data objects
+*DefaultApi* | [**get_user_data_key**](docs/DefaultApi.md#get_user_data_key) | **GET** /user_data/{key} | Retrieve the user data object for a key.
 *DefaultApi* | [**get_workflow**](docs/DefaultApi.md#get_workflow) | **GET** /workflow | Retrieve the current workflow
 *DefaultApi* | [**get_workflow_example**](docs/DefaultApi.md#get_workflow_example) | **GET** /workflow/example | Retrieve an example workflow
 *DefaultApi* | [**get_workflow_is_complete**](docs/DefaultApi.md#get_workflow_is_complete) | **GET** /workflow/is_complete | Report whether the workflow is complete
@@ -845,18 +1202,24 @@ Class | Method | HTTP request | Description
 *DefaultApi* | [**post_hpc_configs**](docs/DefaultApi.md#post_hpc_configs) | **POST** /hpc_configs | Store an hpc_config.
 *DefaultApi* | [**post_job_definitions**](docs/DefaultApi.md#post_job_definitions) | **POST** /job_definitions | Store a job and create edges.
 *DefaultApi* | [**post_jobs**](docs/DefaultApi.md#post_jobs) | **POST** /jobs | Store job
+*DefaultApi* | [**post_jobs_complete_job_name_status_rev**](docs/DefaultApi.md#post_jobs_complete_job_name_status_rev) | **POST** /jobs/complete_job/{name}/{status}/{rev} | Complete a job and add a result.
+*DefaultApi* | [**post_jobs_store_user_data_name**](docs/DefaultApi.md#post_jobs_store_user_data_name) | **POST** /jobs/store_user_data/{name} | Store user data for a job.
 *DefaultApi* | [**post_needs**](docs/DefaultApi.md#post_needs) | **POST** /needs | Store a needs edge between a job and a file.
 *DefaultApi* | [**post_produces**](docs/DefaultApi.md#post_produces) | **POST** /produces | Store a produces edge between a job and a file.
 *DefaultApi* | [**post_requires**](docs/DefaultApi.md#post_requires) | **POST** /requires | Store a requires edge between a job and a resource.
 *DefaultApi* | [**post_resource_requirements**](docs/DefaultApi.md#post_resource_requirements) | **POST** /resource_requirements | Store a resource.
 *DefaultApi* | [**post_results**](docs/DefaultApi.md#post_results) | **POST** /results | Store a job result.
+*DefaultApi* | [**post_returned**](docs/DefaultApi.md#post_returned) | **POST** /returned | Store a returned edge between a job and a result.
 *DefaultApi* | [**post_scheduled_bys**](docs/DefaultApi.md#post_scheduled_bys) | **POST** /scheduled_bys | Store a scheduled_by edge between a job and an hpc_config.
+*DefaultApi* | [**post_stores**](docs/DefaultApi.md#post_stores) | **POST** /stores | Store a stores edge between a job and a user data object.
+*DefaultApi* | [**post_user_data**](docs/DefaultApi.md#post_user_data) | **POST** /user_data | Store user data for a job.
 *DefaultApi* | [**post_workflow**](docs/DefaultApi.md#post_workflow) | **POST** /workflow | Store a workflow.
 *DefaultApi* | [**post_workflow_estimate**](docs/DefaultApi.md#post_workflow_estimate) | **POST** /workflow/estimate | Perform a dry run of all jobs to estimate required resources.
 *DefaultApi* | [**post_workflow_initialize_jobs**](docs/DefaultApi.md#post_workflow_initialize_jobs) | **POST** /workflow/initialize_jobs | Initialize job relationships.
 *DefaultApi* | [**post_workflow_prepare_jobs_for_submission**](docs/DefaultApi.md#post_workflow_prepare_jobs_for_submission) | **POST** /workflow/prepare_jobs_for_submission | Return ready jobs
 *DefaultApi* | [**post_workflow_reset_status**](docs/DefaultApi.md#post_workflow_reset_status) | **POST** /workflow/reset_status | Reset job status.
 *DefaultApi* | [**put_files_name**](docs/DefaultApi.md#put_files_name) | **PUT** /files/{name} | Update file
+*DefaultApi* | [**put_jobs_manage_status_change_name_status_rev**](docs/DefaultApi.md#put_jobs_manage_status_change_name_status_rev) | **PUT** /jobs/manage_status_change/{name}/{status}/{rev} | Change the status of a job and manage side effects.
 *DefaultApi* | [**put_jobs_name**](docs/DefaultApi.md#put_jobs_name) | **PUT** /jobs/{name} | Update job
 
 ## Documentation For Models
@@ -866,9 +1229,16 @@ Class | Method | HTTP request | Description
  - [HpcConfigModel](docs/HpcConfigModel.md)
  - [InlineResponse200](docs/InlineResponse200.md)
  - [InlineResponse2001](docs/InlineResponse2001.md)
+ - [InlineResponse20010](docs/InlineResponse20010.md)
+ - [InlineResponse20011](docs/InlineResponse20011.md)
  - [InlineResponse2002](docs/InlineResponse2002.md)
  - [InlineResponse2003](docs/InlineResponse2003.md)
  - [InlineResponse2004](docs/InlineResponse2004.md)
+ - [InlineResponse2005](docs/InlineResponse2005.md)
+ - [InlineResponse2006](docs/InlineResponse2006.md)
+ - [InlineResponse2007](docs/InlineResponse2007.md)
+ - [InlineResponse2008](docs/InlineResponse2008.md)
+ - [InlineResponse2009](docs/InlineResponse2009.md)
  - [InlineResponse500](docs/InlineResponse500.md)
  - [JobDefinition](docs/JobDefinition.md)
  - [JobDefinition2](docs/JobDefinition2.md)
@@ -878,7 +1248,11 @@ Class | Method | HTTP request | Description
  - [RequiresEdgeModel](docs/RequiresEdgeModel.md)
  - [ResourceRequirementsModel](docs/ResourceRequirementsModel.md)
  - [ResultModel](docs/ResultModel.md)
+ - [ReturnedEdgeModel](docs/ReturnedEdgeModel.md)
  - [ScheduledByEdgeModel](docs/ScheduledByEdgeModel.md)
+ - [StatusRevBody](docs/StatusRevBody.md)
+ - [StoreUserDataNameBody](docs/StoreUserDataNameBody.md)
+ - [StoresEdgeModel](docs/StoresEdgeModel.md)
  - [WorkerResources](docs/WorkerResources.md)
  - [Workflow](docs/Workflow.md)
  - [WorkflowFiles](docs/WorkflowFiles.md)
@@ -891,5 +1265,3 @@ Class | Method | HTTP request | Description
 
 
 ## Author
-
-
