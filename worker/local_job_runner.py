@@ -5,22 +5,21 @@ from pathlib import Path
 
 from swagger_client import ApiClient, DefaultApi
 from swagger_client.configuration import Configuration
-from swagger_client.rest import ApiException
 from swagger_client.models.file_model import FileModel
 from swagger_client.models.hpc_config_model import HpcConfigModel
-from swagger_client.models.job_model import JobModel
 from swagger_client.models.job_definition import JobDefinition
 from swagger_client.models.resource_requirements_model import ResourceRequirementsModel
 from swagger_client.models.workflow import Workflow
 
 from wms.loggers import setup_logging
 from wms.job_runner import JobRunner
+from wms.workflow_manager import WorkflowManager
 
 
 TEST_WORKFLOW = "test_workflow"
-PREPROCESS = Path("tests") / "preprocess.py"
-POSTPROCESS = Path("tests") / "postprocess.py"
-WORK = Path("tests") / "work.py"
+PREPROCESS = Path("tests") / "scripts" / "preprocess.py"
+POSTPROCESS = Path("tests") / "scripts" / "postprocess.py"
+WORK = Path("tests") / "scripts" / "work.py"
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +43,9 @@ def create_workflow(api: DefaultApi, output_dir: Path):
     medium = ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H")
     large = ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H")
 
-    hpc_config = HpcConfigModel(name="debug", hpc_type="slurm", account="dsgrid", partition="debug")
+    hpc_config = HpcConfigModel(
+        name="debug", hpc_type="slurm", account="dsgrid", partition="debug"
+    )
 
     preprocess = JobDefinition(
         name="preprocess",
@@ -57,6 +58,7 @@ def create_workflow(api: DefaultApi, output_dir: Path):
     work1 = JobDefinition(
         name="work1",
         command=f"python {WORK} -i {f1.path} -o {f2.path}",
+        user_data=[{"key1": "val1"}],
         input_files=[f1.name],
         output_files=[f2.name],
         resource_requirements=medium.name,
@@ -90,8 +92,18 @@ def create_workflow(api: DefaultApi, output_dir: Path):
     logger.info("Created workflow")
 
 
-def run_workflow(db, output_dir: Path):
-    runner = JobRunner(db, output_dir, time_limit="P0DT24H")
+def run_workflow(api, output_dir: Path):
+    mgr = WorkflowManager(api)
+    mgr.run()
+    runner = JobRunner(api, output_dir, time_limit="P0DT24H")
+    logger.info("Start workflow")
+    runner.run_worker()
+
+
+def restart_workflow(api, output_dir: Path):
+    mgr = WorkflowManager(api)
+    mgr.reinitialize_jobs()
+    runner = JobRunner(api, output_dir, time_limit="P0DT24H")
     logger.info("Start workflow")
     runner.run_worker()
 
@@ -101,7 +113,7 @@ if __name__ == "__main__":
     from pathlib import Path
     from prettytable import PrettyTable
 
-    usage = f"Usage: python {sys.argv[0]} create|recommend|run"
+    usage = f"Usage: python {sys.argv[0]} create|estimate|run|restart"
     if len(sys.argv) == 1:
         print(usage, file=sys.stderr)
         sys.exit(1)
@@ -130,6 +142,8 @@ if __name__ == "__main__":
         create_database(api)
         create_workflow(api, output_dir)
         run_workflow(api, output_dir)
+    elif mode == "restart":
+        restart_workflow(api, output_dir)
     else:
         print(usage, file=sys.stderr)
         sys.exit(1)

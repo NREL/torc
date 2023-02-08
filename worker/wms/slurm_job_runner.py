@@ -11,6 +11,7 @@ from swagger_client.configuration import Configuration
 
 from wms.job_runner import JobRunner
 from wms.loggers import setup_logging
+from wms.workflow_manager import WorkflowManager
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +19,11 @@ logger = logging.getLogger(__name__)
 @click.command()
 @click.option("-u", "--database-url", help="Database URL")
 @click.option(
-    "-o", "--output", default="output", show_default=True, callback=lambda *x: Path(x[2])
+    "-o",
+    "--output",
+    default="output",
+    show_default=True,
+    callback=lambda *x: Path(x[2]),
 )
 def run(database_url, output):
     """Run workflow jobs on a SLURM compute node."""
@@ -30,6 +35,8 @@ def run(database_url, output):
     else:
         configuration.host = database_url
     api = DefaultApi(ApiClient(configuration))
+    mgr = WorkflowManager(api)  # TODO: needs to be moved outside...not called per node
+    mgr.run()
     runner = JobRunner(api, output, time_limit=end_time)
     logger.info("Start workflow")
     runner.run_worker()
@@ -41,7 +48,7 @@ def get_end_time(buffer_minutes=2):
     cmd = ["squeue", "-j", slurm_job_id, '--format="%20e"']
     ret = subprocess.run(cmd, capture_output=True)
     if ret.returncode != 0:
-        raise Exception(f"Failed to find end time:", ret)
+        raise Exception(f"Failed to find end time: return_code={ret}")
 
     out = ret.stdout.decode("utf-8")
     timestamp = out.split("\n")[1].replace('"', "").strip()

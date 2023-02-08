@@ -57,5 +57,5 @@ setup(
     extras_require={
         "dev": ["black", "flake8", "pytest"],
     },
-    install_requires=["click", "psutil", "prettytable"],
+    install_requires=["click", "psutil", "prettytable", "s3path"],
 )

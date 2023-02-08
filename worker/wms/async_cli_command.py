@@ -109,7 +109,7 @@ class AsyncCliCommand(AsyncJobBase):
             return_code=self._return_code,
             exec_time_minutes=self._exec_time_s / 60,
             completion_time=self._completion_time,
-            status="finished",
+            status="done",
         )
 
     def run(self, output_dir: Path):

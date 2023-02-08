@@ -11,8 +11,15 @@ from swagger_client.models.worker_resources import WorkerResources
 from .common import KiB, MiB, GiB, TiB
 from .async_cli_command import AsyncCliCommand
 from wms.utils.files import compute_file_hash
+from wms.utils.filesystem_factory import make_path
 
 logger = logging.getLogger(__name__)
+
+
+# TODO:
+# standalone resource monitoring process
+# Any open source tool that runs as server and will collect everything we want?
+# send to streaming server? statsd server?
 
 
 class JobRunner:
@@ -36,6 +43,32 @@ class JobRunner:
         if self._outstanding_jobs:
             logger.warning("JobRunner destructed with outstanding jobs", self._outstanding_jobs)
 
+    def check_completions(self):
+        done_jobs = []
+        db_jobs = {}
+        for job in self._outstanding_jobs.values():
+            if job.is_complete():
+                done_jobs.append(job.result)
+                db_jobs[job.name] = job.job
+                self._increment_resources(job.job)
+                self._log_job_complete_event(job.name)
+                self._update_file_info(job)
+                self._num_jobs += 1
+
+        for result in done_jobs:
+            self._outstanding_jobs.pop(result.name)
+            cur_job = self._api.get_jobs_name(result.name)
+            # TODO: track _rev correctly
+            # complete_job(self._api, db_jobs[result.name], result)
+            self._complete_job(cur_job, result)
+
+        logger.info("Found %s completions", len(done_jobs))
+
+        num_started = 0
+        if done_jobs:
+            num_started = self._run_ready_jobs()
+        return num_started
+
     def run_worker(self):
         start = time.time()
         hostname = socket.gethostname()
@@ -47,7 +80,6 @@ class JobRunner:
         }
         event.update(**self._orig_resources.to_dict())
         self._api.post_events(event)
-        self._api.post_workflow_initialize_jobs()
         self._run_ready_jobs()
         self.wait()
         self._api.post_events(
@@ -70,57 +102,19 @@ class JobRunner:
                 else:
                     # TODO: if there is remaining time for this node, consider waiting for new
                     # jobs to become available.
-                    logger.info("No jobs are outstanding on this node and no new jobs are available.")
+                    logger.info(
+                        "No jobs are outstanding on this node and no new jobs are available."
+                    )
                 break
             time.sleep(self._poll_interval)
-
-    def check_completions(self):
-        done_jobs = []
-        db_jobs = {}
-        for job in self._outstanding_jobs.values():
-            if job.is_complete():
-                done_jobs.append(job.result)
-                db_jobs[job.name] = job.job
-                self._increment_resources(job.job)
-                self._log_job_complete_event(job.name)
-                self._update_file_info(job)
-                self._num_jobs += 1
-
-        for result in done_jobs:
-            self._outstanding_jobs.pop(result.name)
-            cur_job = self._api.get_jobs_name(result.name)
-            # TODO: track _rev correctly
-            #complete_job(self._api, db_jobs[result.name], result)
-            self._complete_job(cur_job, result)
-
-        logger.info("Found %s completions", len(done_jobs))
-
-        num_started = 0
-        if done_jobs:
-            num_started = self._run_ready_jobs()
-        return num_started
+            # TODO: check time remaining and then for interruptible jobs
 
     def _complete_job(self, job, result):
         job.return_code = result.return_code
-        job = self._set_job_status(job, "done")
-        self._api.post_results(result)
+        # This order is currently required. TODO: consider making it one command.
+        # Could be called 'complete_job' and require one parameter as result
+        job = self._api.post_jobs_complete_job_name_status_rev(result, job.name, "done", job._rev)
         return job
-
-    def _run_job(self, job: AsyncCliCommand):
-        job.run(self._output_dir)
-        job.job = self._set_job_status(job.job, "submitted")
-        self._outstanding_jobs[job.name] = job
-        logger.debug("Started job %s", job.name)
-        self._log_job_start_event(job.name)
-
-    def _run_ready_jobs(self):
-        ready_jobs = self._api.post_workflow_prepare_jobs_for_submission(self._resources)
-        logger.info("%s jobs are ready for submission", len(ready_jobs))
-        for job in ready_jobs:
-            self._run_job(AsyncCliCommand(job))
-            self._decrement_resources(job)
-
-        return len(ready_jobs)
 
     def _decrement_resources(self, job):
         job_resources = self._api.get_jobs_resource_requirements_name(job.name)
@@ -166,6 +160,22 @@ class JobRunner:
             }
         )
 
+    def _run_job(self, job: AsyncCliCommand):
+        job.run(self._output_dir)
+        job.job = self._set_job_status(job.job, "submitted")
+        self._outstanding_jobs[job.name] = job
+        logger.debug("Started job %s", job.name)
+        self._log_job_start_event(job.name)
+
+    def _run_ready_jobs(self):
+        ready_jobs = self._api.post_workflow_prepare_jobs_for_submission(self._resources)
+        logger.info("%s jobs are ready for submission", len(ready_jobs))
+        for job in ready_jobs:
+            self._run_job(AsyncCliCommand(job))
+            self._decrement_resources(job)
+
+        return len(ready_jobs)
+
     def _set_job_status(self, job, status):
         job.status = status
         job = self._api.put_jobs_name(job, job.name)
@@ -173,11 +183,11 @@ class JobRunner:
         return job
 
     def _update_file_info(self, job):
-        for file in self._api.get_files_produced_by_job_name(job.name):
-            path = Path(file["path"])
-            file["file_hash"] = compute_file_hash(path)
-            file["st_mtime"] = path.stat().st_mtime
-            self._api.put_files_name(file)
+        for file in self._api.get_files_produced_by_job_name(job.name).items:
+            path = make_path(file.path)
+            file.file_hash = compute_file_hash(path)
+            file.st_mtime = path.stat().st_mtime
+            self._api.put_files_name(file, file.name)
 
 
 def _get_system_resources(time_limit):
