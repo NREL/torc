@@ -139,7 +139,6 @@ if __name__ == "__main__":
         create_workflow(api, output_dir)
     elif mode == "estimate":
         data = api.post_workflow_estimate()
-        breakpoint()
         table = PrettyTable(title="Resource Estimates")
         table.field_names = ("round", "num_jobs", "num_cpus", "memory_gb", "num_gpus")
         for i, row in enumerate(data.estimates_by_round, start=1):
