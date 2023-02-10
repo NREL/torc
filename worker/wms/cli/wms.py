@@ -5,12 +5,20 @@ import click
 
 from wms.loggers import setup_logging
 from wms.cli.export import export
+from wms.cli.hpc import hpc
+from wms.cli.workflow import workflow
 
 
 @click.group()
-@click.option("-l", "--log-file", type=Path, default="wms.log", help="Log to this file.")
 @click.option(
-    "--verbose", is_flag=True, default=False, show_default=True, help="Enable verbose log output."
+    "-l", "--log-file", type=Path, default="wms.log", help="Log to this file."
+)
+@click.option(
+    "--verbose",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Enable verbose log output.",
 )
 def cli(log_file, verbose):
     """wms commands"""
@@ -20,3 +28,5 @@ def cli(log_file, verbose):
 
 
 cli.add_command(export)
+cli.add_command(hpc)
+cli.add_command(workflow)
