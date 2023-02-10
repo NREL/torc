@@ -39,9 +39,11 @@ Nodes:
 - results
 - scheduler configurations (SLURM, AWS, etc.)
 - user data (any number of arbitrary objects)
+- compute nodes
 
 Edges:
 - blocks: job blocks another job
+- executed: compute_node executed jobs
 - needs: job needs a file
 - produces: job produces a file
 - requires: job has a set of resource requirements
