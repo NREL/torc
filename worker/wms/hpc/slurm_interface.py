@@ -115,7 +115,9 @@ class SlurmInterface(HpcInterface):
             if value is not None:
                 text += f"#SBATCH --{param}={value}\n"
 
-        text += f"\nsrun {command}"
+        text += f"{command}\n"
+        # TODO: make running through srun configurable?
+        #text += f"\nsrun {command}"
         return text
 
     def get_environment_variables(self) -> dict[str, str]:

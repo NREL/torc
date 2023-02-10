@@ -8,6 +8,7 @@ from swagger_client import ApiClient, DefaultApi
 from swagger_client.configuration import Configuration
 
 from .common import check_output_directory
+from .slurm_runner import slurm_runner
 from wms.hpc.hpc_manager import HpcManager
 from wms.loggers import setup_logging
 from wms.utils.files import dump_data, load_data
@@ -158,3 +159,4 @@ def schedule_nodes(database_url, config_file, num_hpc_jobs, index, output, force
 hpc.add_command(recommend_nodes)
 hpc.add_command(schedule_nodes)
 hpc.add_command(slurm_config)
+hpc.add_command(slurm_runner)

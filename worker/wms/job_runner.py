@@ -8,6 +8,7 @@ from pathlib import Path
 
 import psutil
 from pydantic import BaseModel
+from pydantic.json import timedelta_isoformat
 from swagger_client import DefaultApi
 from swagger_client.models.compute_nodes_model import ComputeNodesModel
 from swagger_client.models.edge_model import EdgeModel
@@ -50,9 +51,7 @@ class JobRunner:
 
     def __del__(self):
         if self._outstanding_jobs:
-            logger.warning(
-                "JobRunner destructed with outstanding jobs", self._outstanding_jobs
-            )
+            logger.warning("JobRunner destructed with outstanding jobs", self._outstanding_jobs)
 
     def check_completions(self):
         done_jobs = []
@@ -113,7 +112,7 @@ class JobRunner:
 
     def wait(self):
         """Return once all jobs have completed."""
-        timeout = _get_timeout(self._orig_resources.time_limit)
+        timeout = _get_timeout(self._resources.time_limit)
         start_time = time.time()
 
         def timed_out():
@@ -141,9 +140,7 @@ class JobRunner:
         job.return_code = result.return_code
         # This order is currently required. TODO: consider making it one command.
         # Could be called 'complete_job' and require one parameter as result
-        job = self._api.post_jobs_complete_job_name_status_rev(
-            result, job.name, "done", job._rev
-        )
+        job = self._api.post_jobs_complete_job_name_status_rev(result, job.name, "done", job._rev)
         return job
 
     def _current_memory_allocation_percentage(self):
@@ -165,12 +162,8 @@ class JobRunner:
         self._resources.num_cpus += job_resources.num_cpus
         self._resources.num_gpus += job_resources.num_gpus
         self._resources.memory_gb += job_memory_gb
-        assert (
-            self._resources.num_cpus <= self._orig_resources.num_cpus
-        ), self._resources.num_cpus
-        assert (
-            self._resources.num_gpus <= self._orig_resources.num_gpus
-        ), self._resources.num_gpus
+        assert self._resources.num_cpus <= self._orig_resources.num_cpus, self._resources.num_cpus
+        assert self._resources.num_gpus <= self._orig_resources.num_gpus, self._resources.num_gpus
         assert (
             self._resources.memory_gb <= self._orig_resources.memory_gb
         ), self._resources.memory_gb
@@ -184,10 +177,7 @@ class JobRunner:
         # asking the database for jobs when it's highly unlikely to get any.
         # It would be better if the database or some middleware could publish events when
         # new jobs are ready to run.
-        return (
-            self._resources.num_cpus > 0
-            and self._current_memory_allocation_percentage() > 10
-        )
+        return self._resources.num_cpus > 0 and self._current_memory_allocation_percentage() > 10
 
     def _log_job_start_event(self, job_name: str):
         self._api.post_events(
@@ -222,9 +212,11 @@ class JobRunner:
         self._log_job_start_event(job.name)
 
     def _run_ready_jobs(self):
-        ready_jobs = self._api.post_workflow_prepare_jobs_for_submission(
-            self._resources
+        # TODO: units are not straightforward
+        self._resources.time_limit = timedelta_isoformat(
+            self._orig_resources.time_limit - datetime.now()
         )
+        ready_jobs = self._api.post_workflow_prepare_jobs_for_submission(self._resources)
         logger.info("%s jobs are ready for submission", len(ready_jobs))
         for job in ready_jobs:
             self._run_job(AsyncCliCommand(job))
