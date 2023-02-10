@@ -751,7 +751,7 @@ function prepareJobsForSubmission(workerResources, limit) {
             conflictOccurred = true;
             continue;
           } else {
-            rethrow();
+            throw (e);
           }
         }
         jobs.push(job);
