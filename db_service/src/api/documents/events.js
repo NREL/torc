@@ -35,7 +35,7 @@ router.get('/events', function(req, res) {
 })
     .queryParam('skip', joi.number().default(0))
     .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
-    .response(schemas.batchEvents)
+    .response(schemas.batchObjects)
     .summary('Retrieve all events')
     .description('Retrieves all events from the "events" collection.');
 

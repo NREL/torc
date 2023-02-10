@@ -12,6 +12,7 @@ for (const name of ['events']) {
 
 if (!graphModule._list().includes(graphName)) {
   const blocks = graphModule._relation('blocks', 'jobs', 'jobs');
+  const executed = graphModule._relation('executed', 'compute_nodes', 'jobs');
   const needs = graphModule._relation('needs', 'jobs', 'files');
   const produces = graphModule._relation('produces', 'jobs', 'files');
   const requires = graphModule._relation('requires', 'jobs', 'resource_requirements');
@@ -22,6 +23,7 @@ if (!graphModule._list().includes(graphName)) {
       graphName,
       [
         blocks,
+        executed,
         needs,
         produces,
         requires,

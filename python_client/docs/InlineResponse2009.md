@@ -3,7 +3,7 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**items** | [**list[ResourceRequirementsModel]**](ResourceRequirementsModel.md) |  | [optional] 
+**items** | [**list[HpcConfigModel]**](HpcConfigModel.md) |  | [optional] 
 **skip** | **float** |  | 
 **max_limit** | **float** |  | 
 **count** | **float** |  | 

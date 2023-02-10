@@ -39,9 +39,15 @@ def create_workflow(api: DefaultApi, output_dir: Path):
     f3 = FileModel(name="file3", path=str(output_dir / "f3.json"))
     f4 = FileModel(name="file4", path=str(output_dir / "f4.json"))
 
-    small = ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT1H")
-    medium = ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H")
-    large = ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H")
+    small = ResourceRequirementsModel(
+        name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
+    )
+    medium = ResourceRequirementsModel(
+        name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
+    )
+    large = ResourceRequirementsModel(
+        name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
+    )
 
     hpc_config = HpcConfigModel(
         name="debug", hpc_type="slurm", account="dsgrid", partition="debug"
@@ -94,7 +100,7 @@ def create_workflow(api: DefaultApi, output_dir: Path):
 
 def run_workflow(api, output_dir: Path):
     mgr = WorkflowManager(api)
-    mgr.run()
+    mgr.start()
     runner = JobRunner(api, output_dir, time_limit="P0DT24H")
     logger.info("Start workflow")
     runner.run_worker()
@@ -118,7 +124,7 @@ if __name__ == "__main__":
         print(usage, file=sys.stderr)
         sys.exit(1)
 
-    setup_logging("wms")
+    setup_logging(__name__)
 
     configuration = Configuration()
     configuration.host = "http://localhost:8529/_db/workflows/wms-service"
@@ -133,10 +139,13 @@ if __name__ == "__main__":
         create_workflow(api, output_dir)
     elif mode == "estimate":
         data = api.post_workflow_estimate()
+        breakpoint()
         table = PrettyTable(title="Resource Estimates")
         table.field_names = ("round", "num_jobs", "num_cpus", "memory_gb", "num_gpus")
         for i, row in enumerate(data.estimates_by_round, start=1):
-            table.add_row((i, row["num_jobs"], row["num_cpus"], row["memory_gb"], row["num_gpus"]))
+            table.add_row(
+                (i, row["num_jobs"], row["num_cpus"], row["memory_gb"], row["num_gpus"])
+            )
         print(table)
     elif mode == "run":
         create_database(api)

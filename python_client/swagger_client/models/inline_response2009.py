@@ -27,7 +27,7 @@ class InlineResponse2009(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'items': 'list[ResourceRequirementsModel]',
+        'items': 'list[HpcConfigModel]',
         'skip': 'float',
         'max_limit': 'float',
         'count': 'float',
@@ -67,7 +67,7 @@ class InlineResponse2009(object):
 
 
         :return: The items of this InlineResponse2009.  # noqa: E501
-        :rtype: list[ResourceRequirementsModel]
+        :rtype: list[HpcConfigModel]
         """
         return self._items
 
@@ -77,7 +77,7 @@ class InlineResponse2009(object):
 
 
         :param items: The items of this InlineResponse2009.  # noqa: E501
-        :type: list[ResourceRequirementsModel]
+        :type: list[HpcConfigModel]
         """
 
         self._items = items

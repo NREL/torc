@@ -1,5 +1,7 @@
 const {query} = require('@arangodb');
 const db = require('@arangodb').db;
+const errors = require('@arangodb').errors;
+const CONFLICTING_REV = errors.ERROR_ARANGO_CONFLICT.code;
 const graphModule = require('@arangodb/general-graph');
 const {GiB, GRAPH_NAME, JobStatus} = require('./defs');
 const graph = graphModule._graph(GRAPH_NAME);
@@ -223,32 +225,22 @@ function estimateWorkflow() {
   initializeJobStatus();
 
   do {
-    let numCpus = 0;
-    let numGpus = 0;
-    let numJobs = 0;
-    let memoryTotal = 0;
-    const readyJobs = [];
-    // TODO: estimate runtime. Need to parse timedelta.
-    for (const job of graph.jobs.byExample({status: JobStatus.Ready})) {
-      const reqs = getJobResourceRequirements(job);
-      numJobs += 1;
-      numCpus += reqs.num_cpus;
-      numGpus += reqs.num_gpus;
-      memoryTotal += utils.getMemoryInBytes(reqs.memory);
-      readyJobs.push(job._id);
-    }
-    if (readyJobs.length == 0) {
+    const reqs = getReadyJobRequirements();
+    byRounds.push(reqs);
+    if (reqs.num_jobs == 0) {
       break;
     }
-    byRounds.push({
-      num_jobs: numJobs,
-      num_cpus: numCpus,
-      num_gpus: numGpus,
-      memory_gb: memoryTotal / GiB,
-    });
-    for (const jobId of readyJobs) {
-      const job = graph.jobs.document(jobId);
+    for (const job of graph.jobs.byExample({status: JobStatus.Ready})) {
       job.status = JobStatus.Done;
+      let result = {
+        name: job.name,
+        return_code: 0,
+        completion_time: new Date().toISOString(),
+        exec_time_minutes: 5,
+        status: job.status,
+      };
+      result = addResult(result);
+      graph.returned.save({_from: job._id, _to: result._id});
       manageJobStatusChange(job);
     }
   } while (!isWorkflowComplete());
@@ -256,6 +248,50 @@ function estimateWorkflow() {
   initializeJobStatus();
 
   return {estimates_by_round: byRounds};
+}
+
+/**
+ * Get information about the resources required for currently-available jobs.
+ * @return {Object}
+ */
+function getReadyJobRequirements() {
+  let numCpus = 0;
+  let numGpus = 0;
+  let numJobs = 0;
+  let maxMemory = 0;
+  let totalMemory = 0;
+  let maxRuntime = 0;
+  let maxRuntimeDuration = '';
+  let maxNumNodes = 0;
+
+  for (const job of graph.jobs.byExample({status: JobStatus.Ready})) {
+    const reqs = getJobResourceRequirements(job);
+    numJobs += 1;
+    numCpus += reqs.num_cpus;
+    numGpus += reqs.num_gpus;
+    memory = utils.getMemoryInBytes(reqs.memory);
+    totalMemory += memory;
+    if (memory > maxMemory) {
+      maxMemory = memory;
+    }
+    const runtime = utils.getTimeDurationInSeconds(reqs.runtime);
+    if (runtime > maxRuntime) {
+      maxRuntime = runtime;
+      maxRuntimeDuration = reqs.runtime;
+    }
+    if (reqs.num_nodes > maxNumNodes) {
+      maxNumNodes = reqs.num_nodes;
+    }
+  }
+  return {
+    num_jobs: numJobs,
+    num_cpus: numCpus,
+    num_gpus: numGpus,
+    memory_gb: totalMemory / GiB,
+    max_memory_gb: maxMemory / GiB,
+    max_num_nodes: maxNumNodes,
+    max_runtime: maxRuntimeDuration,
+  };
 }
 
 /**
@@ -686,29 +722,55 @@ function prepareJobsForSubmission(workerResources, limit) {
     workerResources.time_limit == null ?
       null : utils.getTimeDurationInSeconds(workerResources.time_limit);
   // TODO: numNodes and numGpus
-  for (const job of graph.jobs.byExample({status: JobStatus.Ready})) {
-    const jobResources = getJobResourceRequirements(job);
-    const jobMemory = utils.getMemoryInBytes(jobResources.memory);
-    if (workerTimeLimit != null) {
-      jobRuntime = utils.getTimeDurationInSeconds(jobResources.runtime);
-      if (jobRuntime > workerTimeLimit) {
+  const checkedJobs = new Set();
+  let attemptsRemaining = 10;
+  let conflictOccurred = false;
+  do {
+    conflictOccurred = false;
+    for (const job of graph.jobs.byExample({status: JobStatus.Ready})) {
+      if (job.name in checkedJobs) {
         continue;
       }
-    }
-    if (jobResources.num_cpus <= availableCpus && jobMemory <= availableMemory) {
-      jobs.push(job);
-      job.status = JobStatus.SubmittedPending;
-      const meta = graph.jobs.update(job, job);
-      Object.assign(job, meta);
-      availableCpus -= jobResources.num_cpus;
-      availableMemory -= jobMemory;
-      if (availableCpus == 0 || availableMemory == 0 || (limit != null && jobs.length >= limit)) {
-        break;
+      const jobResources = getJobResourceRequirements(job);
+      const jobMemory = utils.getMemoryInBytes(jobResources.memory);
+      if (workerTimeLimit != null) {
+        jobRuntime = utils.getTimeDurationInSeconds(jobResources.runtime);
+        if (jobRuntime > workerTimeLimit) {
+          checkedJobs.add(job.name);
+          continue;
+        }
+      }
+      if (jobResources.num_cpus <= availableCpus && jobMemory <= availableMemory) {
+        job.status = JobStatus.SubmittedPending;
+        try {
+          const meta = graph.jobs.update(job, job);
+          Object.assign(job, meta);
+        } catch (e) {
+          if (e.isArangoError && e.errorNum === CONFLICTING_REV) {
+            console.log(`Job ${job.name} was changed by another submitter.`);
+            conflictOccurred = true;
+            continue;
+          } else {
+            rethrow();
+          }
+        }
+        jobs.push(job);
+        availableCpus -= jobResources.num_cpus;
+        availableMemory -= jobMemory;
+        if (availableCpus == 0 || availableMemory == 0 || (limit != null && jobs.length >= limit)) {
+          break;
+        }
+      } else {
+        checkedJobs.add(job.name);
       }
     }
-  }
+    attemptsRemaining--;
+  } while (attemptsRemaining > 0 && conflictOccurred);
 
   console.log(`Prepared ${jobs.length} jobs for submission.`);
+  if (attemptsRemaining == 0 && conflictOccurred) {
+    console.log(`Warning: received conflicting revisions on ${attemptsRemaining} passes. May not have prepared all possible jobs.`);
+  }
   return jobs;
 }
 
@@ -783,6 +845,7 @@ module.exports = {
   addResult,
   addUserData,
   estimateWorkflow,
+  getReadyJobRequirements,
   getBlockingJobs,
   getDocumentIfAlreadyStored,
   getFilesNeededByJob,

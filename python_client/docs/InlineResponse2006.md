@@ -3,7 +3,7 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**items** | [**list[HpcConfigModel]**](HpcConfigModel.md) |  | [optional] 
+**items** | [**list[ComputeNodesModel]**](ComputeNodesModel.md) |  | [optional] 
 **skip** | **float** |  | 
 **max_limit** | **float** |  | 
 **count** | **float** |  | 

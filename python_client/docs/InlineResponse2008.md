@@ -3,7 +3,7 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**items** | [**list[JobModel]**](JobModel.md) |  | [optional] 
+**items** | [**list[FileModel]**](FileModel.md) |  | [optional] 
 **skip** | **float** |  | 
 **max_limit** | **float** |  | 
 **count** | **float** |  | 

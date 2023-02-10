@@ -3,26 +3,14 @@ import pytest
 from swagger_client.rest import ApiException
 
 
-def test_api_by_key(completed_workflow):
+def test_api_nodes_by_key(completed_workflow):
     api, _ = completed_workflow
     names = [
-        "blocks",
+        "compute_nodes",
         "events",
-        "needs",
-        "produces",
-        "requires",
         "results",
-        "returned",
-        "scheduled_bys",
-        "stores",
         "user_data",
     ]
-
-    def get_key(data: dict):
-        for key in ("key", "_key"):
-            if key in data:
-                return data[key]
-        raise KeyError(f"key is not stored in {data.keys()}")
 
     for name in names:
         results = getattr(api, f"get_{name}")()
@@ -44,7 +32,7 @@ def test_api_by_key(completed_workflow):
         assert len(result.items) == 0
 
 
-def test_api_by_name(completed_workflow):
+def test_api_nodes_by_name(completed_workflow):
     api, _ = completed_workflow
     names = ["hpc_configs", "files", "jobs", "resource_requirements"]
     for name in names:
@@ -59,3 +47,42 @@ def test_api_by_name(completed_workflow):
         getattr(api, f"delete_{name}")()
         result = getattr(api, f"get_{name}")()
         assert len(result.items) == 0
+
+
+def test_api_edges(completed_workflow):
+    api, _ = completed_workflow
+    names = [
+        "blocks",
+        "executed",
+        "needs",
+        "produces",
+        "requires",
+        "returned",
+        "scheduled_bys",
+        "stores",
+    ]
+    for name in names:
+        result = api.get_edges_name(name)
+        if result.items:
+            item = result.items[0]
+            if not isinstance(item, dict):
+                item = item.to_dict()
+            key = get_key(item)
+            val = api.get_edges_name_key(name, key)
+            if not isinstance(val, dict):
+                val = val.to_dict()
+            assert val == item
+            api.delete_edges_name_key(name, key)
+            with pytest.raises(ApiException):
+                val = api.get_edges_name_key(name, key)
+
+        api.delete_edges_name(name)
+        result = api.get_edges_name(name)
+        assert len(result.items) == 0
+
+
+def get_key(data: dict):
+    for key in ("key", "_key"):
+        if key in data:
+            return data[key]
+    raise KeyError(f"key is not stored in {data.keys()}")

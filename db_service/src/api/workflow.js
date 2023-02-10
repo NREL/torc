@@ -1,7 +1,5 @@
 const joi = require('joi');
 const db = require('@arangodb').db;
-const errors = require('@arangodb').errors;
-const CONFLICTING_REV = errors.ERROR_ARANGO_CONFLICT.code;
 const graphModule = require('@arangodb/general-graph');
 const defs = require('../defs');
 const JobStatus = require('../defs').JobStatus;
@@ -47,6 +45,8 @@ router.get('/workflow', function(req, res) {
 
 router.delete('/workflow', function(req, res) {
   db._truncate('blocks');
+  db._truncate('compute_nodes');
+  db._truncate('executed');
   db._truncate('events');
   db._truncate('files');
   db._truncate('hpc_configs');
@@ -75,6 +75,14 @@ router.get('/workflow/is_complete', function(req, res) {
     .summary('Report whether the workflow is complete')
     .description('Reports true if all jobs in the workflow are complete.');
 
+router.get('/workflow/ready_job_requirements', function(req, res) {
+  const result = query.getReadyJobRequirements();
+  res.send(result);
+})
+    .response(schemas.readyJobsResourceRequirements, 'result')
+    .summary('Return the resource requirements for ready jobs.')
+    .description(`Return the resource requirements for jobs with a status of ready.`);
+
 router.post('/workflow/estimate', function(req, res) {
   const result = query.estimateWorkflow();
   res.send(result);
@@ -96,25 +104,8 @@ router.post('/workflow/initialize_jobs', function(req, res) {
 router.post('/workflow/prepare_jobs_for_submission', function(req, res) {
   const resources = req.body;
   const qp = req.queryParams == null ? {} : req.queryParams;
-  const numTries = 5;
-  for (let i = 0; i < numTries; i++) {
-    try {
-      const jobs = query.prepareJobsForSubmission(resources, qp.limit);
-      res.send(jobs);
-      break;
-    } catch (e) {
-      if (e.isArangoError && e.errorNum !== CONFLICTING_REV) {
-        console.log(`Conflicting revision error in prepare_jobs_for_submission on i=${i}`);
-        if (i < numTries - 1) {
-          continue;
-        } else {
-          res.throw(500, 'Retries exhausted getting revision in prepare_jobs_for_submission');
-        }
-      } else {
-        res.throw(400, 'Failed to prepare_jobs_for_submission', e);
-      }
-    }
-  }
+  const jobs = query.prepareJobsForSubmission(resources, qp.limit);
+  res.send(jobs);
 })
     .body(schemas.workerResources, 'Available worker resources.')
     .response(joi.array().items(schemas.job), 'Jobs that are ready for submission.')

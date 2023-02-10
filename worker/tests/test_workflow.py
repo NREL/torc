@@ -1,8 +1,12 @@
 import json
 import logging
+import subprocess
+import time
 
 import pytest
+from swagger_client.models.worker_resources import WorkerResources
 
+from wms.common import GiB
 from wms.job_runner import JobRunner
 from wms.workflow_manager import WorkflowManager
 
@@ -16,8 +20,10 @@ def test_run_workflow(diamond_workflow):
     assert len(user_data_work1) == 1
     assert user_data_work1[0]["key1"] == "val1"
     mgr = WorkflowManager(api)
-    mgr.run()
-    runner = JobRunner(api, output_dir, time_limit="P0DT24H")
+    mgr.start()
+    runner = JobRunner(
+        api, output_dir, time_limit="P0DT24H", job_completion_poll_interval=0.1
+    )
     runner.run_worker()
 
     assert api.get_workflow_is_complete()
@@ -40,8 +46,10 @@ def test_run_workflow(diamond_workflow):
 def test_cancel_with_failed_job(workflow_with_cancel):
     api, output_dir, cancel_on_blocking_job_failure = workflow_with_cancel
     mgr = WorkflowManager(api)
-    mgr.run()
-    runner = JobRunner(api, output_dir, time_limit="P0DT24H")
+    mgr.start()
+    runner = JobRunner(
+        api, output_dir, time_limit="P0DT24H", job_completion_poll_interval=0.1
+    )
     runner.run_worker()
     assert api.get_workflow_is_complete()
     assert api.get_jobs_name("job1").status == "done"
@@ -96,7 +104,9 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
     assert not stage1_events
     new_file = output_dir / missing_file
     new_file.write_text(json.dumps({"val": missing_file}))
-    runner = JobRunner(api, output_dir, time_limit="P0DT24H")
+    runner = JobRunner(
+        api, output_dir, time_limit="P0DT24H", job_completion_poll_interval=0.1
+    )
     runner.run_worker()
 
     assert api.get_workflow_is_complete()
@@ -118,5 +128,76 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
     assert sorted(expected) == _get_job_names_by_event(stage2_events, "complete")
 
 
+def test_estimate_workflow(diamond_workflow):
+    api, _ = diamond_workflow
+    estimate = api.post_workflow_estimate()
+    assert estimate.estimates_by_round
+
+
+def test_ready_job_requirements(independent_job_workflow):
+    api = independent_job_workflow
+    reqs = api.get_workflow_ready_job_requirements()
+    assert reqs.num_jobs == 5
+
+
+@pytest.mark.parametrize("num_jobs", [5])
+def test_run_independent_job_workflow(independent_job_workflow, tmp_path):
+    api, num_jobs = independent_job_workflow
+    mgr = WorkflowManager(api)
+    mgr.start()
+    resources = WorkerResources(
+        num_cpus=2,
+        num_gpus=0,
+        memory_gb=16 * GiB,
+        num_nodes=1,
+        time_limit="P0DT24H",
+    )
+    runner = JobRunner(
+        api, tmp_path, resources=resources, job_completion_poll_interval=0.1
+    )
+    runner.run_worker()
+
+    assert api.get_workflow_is_complete()
+    for name in (str(i) for i in range(num_jobs)):
+        result = api.get_results_find_by_job_name_name(name)
+        assert result.return_code == 0
+
+
+@pytest.mark.parametrize("num_jobs", [100])
+def test_concurrent_submitters(independent_job_workflow, tmp_path):
+    api, num_jobs = independent_job_workflow
+    mgr = WorkflowManager(api)
+    mgr.start()
+    cmd = [
+        "python",
+        "tests/scripts/run_jobs.py",
+        "http://localhost:8529/_db/workflows/wms-service",
+        "P0DT1H",
+        str(tmp_path),
+    ]
+    num_submitters = 16
+    pipes = [subprocess.Popen(cmd) for _ in range(num_submitters)]
+    ret = 0
+    while True:
+        done = True
+        for pipe in pipes:
+            if pipe.poll() is None:
+                done = False
+                break
+            if pipe.returncode != 0:
+                ret = pipe.returncode
+        if done:
+            break
+        time.sleep(1)
+
+    assert ret == 0
+    assert api.get_workflow_is_complete()
+    for name in (str(i) for i in range(num_jobs)):
+        result = api.get_results_find_by_job_name_name(name)
+        assert result.return_code == 0
+
+
 def _get_job_names_by_event(events, type_):
-    return sorted([x["name"] for x in events if x["category"] == "job" and x["type"] == type_])
+    return sorted(
+        [x["name"] for x in events if x["category"] == "job" and x["type"] == type_]
+    )

@@ -40,9 +40,15 @@ def diamond_workflow(tmp_path):
     f3 = FileModel(name="file3", path=str(output_dir / "f3.json"))
     f4 = FileModel(name="file4", path=str(output_dir / "f4.json"))
 
-    small = ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT1H")
-    medium = ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H")
-    large = ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H")
+    small = ResourceRequirementsModel(
+        name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
+    )
+    medium = ResourceRequirementsModel(
+        name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
+    )
+    large = ResourceRequirementsModel(
+        name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
+    )
 
     hpc_config = HpcConfigModel(
         name="debug", hpc_type="slurm", account="dsgrid", partition="debug"
@@ -99,6 +105,37 @@ def diamond_workflow(tmp_path):
     api.post_workflow_initialize_jobs()
     yield api, output_dir
     api.delete_workflow()
+
+
+@pytest.fixture
+def independent_job_workflow(num_jobs):
+    """Creates a workflow out of independent jobs."""
+    api = _initialize_api()
+    api.delete_workflow()
+
+    small = ResourceRequirementsModel(
+        name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
+    )
+    jobs = []
+    for i in range(num_jobs):
+        job = JobDefinition(
+            name=str(i),
+            command=f"echo hello",
+            resource_requirements=small.name,
+        )
+        jobs.append(job)
+
+    workflow = Workflow(jobs=jobs, resource_requirements=[small])
+    api.post_workflow(workflow)
+    api.post_workflow_initialize_jobs()
+    yield api, num_jobs
+    api.delete_workflow()
+
+
+def _initialize_api():
+    configuration = Configuration()
+    configuration.host = "http://localhost:8529/_db/workflows/wms-service"
+    return DefaultApi(ApiClient(configuration))
 
 
 @pytest.fixture
@@ -204,9 +241,3 @@ def complete_workflow_missing_files(completed_workflow):
     """Fakes an completed diamond workflow and then deletes the specified file."""
     api, output_dir = completed_workflow
     yield api, output_dir
-
-
-def _initialize_api():
-    configuration = Configuration()
-    configuration.host = "http://localhost:8529/_db/workflows/wms-service"
-    return DefaultApi(ApiClient(configuration))

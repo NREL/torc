@@ -52,7 +52,7 @@ class WorkflowManager:
             }
         )
 
-    def run(self):
+    def start(self):
         # Set every job status to unknown/uninitialized.
         self._api.post_workflow_initialize_jobs()
         # post event to start workflow.
@@ -65,6 +65,7 @@ class WorkflowManager:
                 "message": "Started workflow",
             }
         )
+        logger.info("Started workflow")
         # TODO schedule workers.
 
     def _process_changed_files(self):
@@ -118,7 +119,9 @@ class WorkflowManager:
         for job in self._api.get_jobs_find_by_needs_file_name(file.name).items:
             if job.status in ("done", "canceled"):
                 status = "uninitialized"
-                self._api.put_jobs_manage_status_change_name_status_rev(job.name, status, job._rev)
+                self._api.put_jobs_manage_status_change_name_status_rev(
+                    job.name, status, job._rev
+                )
                 logger.info(
                     "Changed job %s from %s to %s after input file change",
                     job.name,

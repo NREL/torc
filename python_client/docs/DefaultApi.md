@@ -4,8 +4,10 @@ All URIs are relative to */_db/workflows/wms-service*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
-[**delete_blocks**](DefaultApi.md#delete_blocks) | **DELETE** /blocks | Delete all blocks edges
-[**delete_blocks_key**](DefaultApi.md#delete_blocks_key) | **DELETE** /blocks/{key} | Delete a block
+[**delete_compute_nodes**](DefaultApi.md#delete_compute_nodes) | **DELETE** /compute_nodes | Delete all compute nodes
+[**delete_compute_nodes_key**](DefaultApi.md#delete_compute_nodes_key) | **DELETE** /compute_nodes/{key} | Delete a compute node
+[**delete_edges_name**](DefaultApi.md#delete_edges_name) | **DELETE** /edges/{name} | Delete all edges from the designated collection
+[**delete_edges_name_key**](DefaultApi.md#delete_edges_name_key) | **DELETE** /edges/{name}/{key} | Delete an edge
 [**delete_events**](DefaultApi.md#delete_events) | **DELETE** /events | Delete all events
 [**delete_events_key**](DefaultApi.md#delete_events_key) | **DELETE** /events/{key} | Delete an event
 [**delete_files**](DefaultApi.md#delete_files) | **DELETE** /files | Delete all files
@@ -14,27 +16,17 @@ Method | HTTP request | Description
 [**delete_hpc_configs_name**](DefaultApi.md#delete_hpc_configs_name) | **DELETE** /hpc_configs/{name} | Delete a hpc_config
 [**delete_jobs**](DefaultApi.md#delete_jobs) | **DELETE** /jobs | Delete all jobs
 [**delete_jobs_name**](DefaultApi.md#delete_jobs_name) | **DELETE** /jobs/{name} | Delete a job
-[**delete_needs**](DefaultApi.md#delete_needs) | **DELETE** /needs | Delete all needs edges
-[**delete_needs_key**](DefaultApi.md#delete_needs_key) | **DELETE** /needs/{key} | Delete a need
-[**delete_produces**](DefaultApi.md#delete_produces) | **DELETE** /produces | Delete all produces edges
-[**delete_produces_key**](DefaultApi.md#delete_produces_key) | **DELETE** /produces/{key} | Delete a produces edge
-[**delete_requires**](DefaultApi.md#delete_requires) | **DELETE** /requires | Delete all requires edges
-[**delete_requires_key**](DefaultApi.md#delete_requires_key) | **DELETE** /requires/{key} | Delete a require
 [**delete_resource_requirements**](DefaultApi.md#delete_resource_requirements) | **DELETE** /resource_requirements | Delete all resource_requirements
 [**delete_resource_requirements_name**](DefaultApi.md#delete_resource_requirements_name) | **DELETE** /resource_requirements/{name} | Delete a resource
 [**delete_results**](DefaultApi.md#delete_results) | **DELETE** /results | Delete all results
 [**delete_results_key**](DefaultApi.md#delete_results_key) | **DELETE** /results/{key} | Delete a result
-[**delete_returned**](DefaultApi.md#delete_returned) | **DELETE** /returned | Delete all returned edges
-[**delete_returned_key**](DefaultApi.md#delete_returned_key) | **DELETE** /returned/{key} | Delete an edge
-[**delete_scheduled_bys**](DefaultApi.md#delete_scheduled_bys) | **DELETE** /scheduled_bys | Delete all scheduled_by edges
-[**delete_scheduled_bys_key**](DefaultApi.md#delete_scheduled_bys_key) | **DELETE** /scheduled_bys/{key} | Delete a scheduled_by
-[**delete_stores**](DefaultApi.md#delete_stores) | **DELETE** /stores | Delete all stores edges
-[**delete_stores_key**](DefaultApi.md#delete_stores_key) | **DELETE** /stores/{key} | Delete a stores edge
 [**delete_user_data**](DefaultApi.md#delete_user_data) | **DELETE** /user_data | Delete all user data
 [**delete_user_data_key**](DefaultApi.md#delete_user_data_key) | **DELETE** /user_data/{key} | Delete a user data object
 [**delete_workflow**](DefaultApi.md#delete_workflow) | **DELETE** /workflow | Delete the workflow.
-[**get_blocks**](DefaultApi.md#get_blocks) | **GET** /blocks | Retrieve all blocks edges
-[**get_blocks_key**](DefaultApi.md#get_blocks_key) | **GET** /blocks/{key} | Retrieve a blocks edge
+[**get_compute_nodes**](DefaultApi.md#get_compute_nodes) | **GET** /compute_nodes | Retrieve all compute nodes
+[**get_compute_nodes_key**](DefaultApi.md#get_compute_nodes_key) | **GET** /compute_nodes/{key} | Retrieve the compute node for a key.
+[**get_edges_name**](DefaultApi.md#get_edges_name) | **GET** /edges/{name} | Retrieve all edges from the designated collection.
+[**get_edges_name_key**](DefaultApi.md#get_edges_name_key) | **GET** /edges/{name}/{key} | Retrieve an edge
 [**get_events**](DefaultApi.md#get_events) | **GET** /events | Retrieve all events
 [**get_events_key**](DefaultApi.md#get_events_key) | **GET** /events/{key} | Retrieve the event for a key.
 [**get_files**](DefaultApi.md#get_files) | **GET** /files | Retrieve all files
@@ -51,29 +43,19 @@ Method | HTTP request | Description
 [**get_jobs_get_user_data_name**](DefaultApi.md#get_jobs_get_user_data_name) | **GET** /jobs/get_user_data/{name} | Retrieve all user data for a job.
 [**get_jobs_name**](DefaultApi.md#get_jobs_name) | **GET** /jobs/{name} | Retrieve a job
 [**get_jobs_resource_requirements_name**](DefaultApi.md#get_jobs_resource_requirements_name) | **GET** /jobs/resource_requirements/{name} | Retrieve the resource requirements for a job.
-[**get_needs**](DefaultApi.md#get_needs) | **GET** /needs | Retrieve all needs
-[**get_needs_key**](DefaultApi.md#get_needs_key) | **GET** /needs/{key} | Retrieve a needs edge
-[**get_produces**](DefaultApi.md#get_produces) | **GET** /produces | Retrieve all produces edges
-[**get_produces_key**](DefaultApi.md#get_produces_key) | **GET** /produces/{key} | Retrieve a produces edge
-[**get_requires**](DefaultApi.md#get_requires) | **GET** /requires | Retrieve all requires
-[**get_requires_key**](DefaultApi.md#get_requires_key) | **GET** /requires/{key} | Retrieve a require
 [**get_resource_requirements**](DefaultApi.md#get_resource_requirements) | **GET** /resource_requirements | Retrieve all resource requirements
 [**get_resource_requirements_name**](DefaultApi.md#get_resource_requirements_name) | **GET** /resource_requirements/{name} | Retrieve a resource requirements document by name
 [**get_results**](DefaultApi.md#get_results) | **GET** /results | Retrieve all results
 [**get_results_find_by_job_name_name**](DefaultApi.md#get_results_find_by_job_name_name) | **GET** /results/find_by_job_name/{name} | Retrieve the latest result for a job
 [**get_results_key**](DefaultApi.md#get_results_key) | **GET** /results/{key} | Retrieve the result for a key.
-[**get_returned**](DefaultApi.md#get_returned) | **GET** /returned | Retrieve all returned
-[**get_returned_key**](DefaultApi.md#get_returned_key) | **GET** /returned/{key} | Retrieve a returned edge
-[**get_scheduled_bys**](DefaultApi.md#get_scheduled_bys) | **GET** /scheduled_bys | Retrieve all scheduled_by edges
-[**get_scheduled_bys_key**](DefaultApi.md#get_scheduled_bys_key) | **GET** /scheduled_bys/{key} | Retrieve a scheduled_by edge
-[**get_stores**](DefaultApi.md#get_stores) | **GET** /stores | Retrieve all stores edges
-[**get_stores_key**](DefaultApi.md#get_stores_key) | **GET** /stores/{key} | Retrieve a stores edge
 [**get_user_data**](DefaultApi.md#get_user_data) | **GET** /user_data | Retrieve all user data objects
 [**get_user_data_key**](DefaultApi.md#get_user_data_key) | **GET** /user_data/{key} | Retrieve the user data object for a key.
 [**get_workflow**](DefaultApi.md#get_workflow) | **GET** /workflow | Retrieve the current workflow
 [**get_workflow_example**](DefaultApi.md#get_workflow_example) | **GET** /workflow/example | Retrieve an example workflow
 [**get_workflow_is_complete**](DefaultApi.md#get_workflow_is_complete) | **GET** /workflow/is_complete | Report whether the workflow is complete
-[**post_blocks**](DefaultApi.md#post_blocks) | **POST** /blocks | Store a blocks edge between a job and a file.
+[**get_workflow_ready_job_requirements**](DefaultApi.md#get_workflow_ready_job_requirements) | **GET** /workflow/ready_job_requirements | Return the resource requirements for ready jobs.
+[**post_compute_nodes**](DefaultApi.md#post_compute_nodes) | **POST** /compute_nodes | Store information about a compute node.
+[**post_edges_name**](DefaultApi.md#post_edges_name) | **POST** /edges/{name} | Store an edge between two vertexes.
 [**post_events**](DefaultApi.md#post_events) | **POST** /events | Store an event.
 [**post_files**](DefaultApi.md#post_files) | **POST** /files | Store file
 [**post_hpc_configs**](DefaultApi.md#post_hpc_configs) | **POST** /hpc_configs | Store an hpc_config.
@@ -81,30 +63,25 @@ Method | HTTP request | Description
 [**post_jobs**](DefaultApi.md#post_jobs) | **POST** /jobs | Store job
 [**post_jobs_complete_job_name_status_rev**](DefaultApi.md#post_jobs_complete_job_name_status_rev) | **POST** /jobs/complete_job/{name}/{status}/{rev} | Complete a job and add a result.
 [**post_jobs_store_user_data_name**](DefaultApi.md#post_jobs_store_user_data_name) | **POST** /jobs/store_user_data/{name} | Store user data for a job.
-[**post_needs**](DefaultApi.md#post_needs) | **POST** /needs | Store a needs edge between a job and a file.
-[**post_produces**](DefaultApi.md#post_produces) | **POST** /produces | Store a produces edge between a job and a file.
-[**post_requires**](DefaultApi.md#post_requires) | **POST** /requires | Store a requires edge between a job and a resource.
 [**post_resource_requirements**](DefaultApi.md#post_resource_requirements) | **POST** /resource_requirements | Store a resource.
 [**post_results**](DefaultApi.md#post_results) | **POST** /results | Store a job result.
-[**post_returned**](DefaultApi.md#post_returned) | **POST** /returned | Store a returned edge between a job and a result.
-[**post_scheduled_bys**](DefaultApi.md#post_scheduled_bys) | **POST** /scheduled_bys | Store a scheduled_by edge between a job and an hpc_config.
-[**post_stores**](DefaultApi.md#post_stores) | **POST** /stores | Store a stores edge between a job and a user data object.
 [**post_user_data**](DefaultApi.md#post_user_data) | **POST** /user_data | Store user data for a job.
 [**post_workflow**](DefaultApi.md#post_workflow) | **POST** /workflow | Store a workflow.
 [**post_workflow_estimate**](DefaultApi.md#post_workflow_estimate) | **POST** /workflow/estimate | Perform a dry run of all jobs to estimate required resources.
 [**post_workflow_initialize_jobs**](DefaultApi.md#post_workflow_initialize_jobs) | **POST** /workflow/initialize_jobs | Initialize job relationships.
 [**post_workflow_prepare_jobs_for_submission**](DefaultApi.md#post_workflow_prepare_jobs_for_submission) | **POST** /workflow/prepare_jobs_for_submission | Return ready jobs
 [**post_workflow_reset_status**](DefaultApi.md#post_workflow_reset_status) | **POST** /workflow/reset_status | Reset job status.
+[**put_compute_nodes_key**](DefaultApi.md#put_compute_nodes_key) | **PUT** /compute_nodes/{key} | Update compute node
 [**put_files_name**](DefaultApi.md#put_files_name) | **PUT** /files/{name} | Update file
 [**put_jobs_manage_status_change_name_status_rev**](DefaultApi.md#put_jobs_manage_status_change_name_status_rev) | **PUT** /jobs/manage_status_change/{name}/{status}/{rev} | Change the status of a job and manage side effects.
 [**put_jobs_name**](DefaultApi.md#put_jobs_name) | **PUT** /jobs/{name} | Update job
 
-# **delete_blocks**
-> object delete_blocks(body=body)
+# **delete_compute_nodes**
+> object delete_compute_nodes(body=body)
 
-Delete all blocks edges
+Delete all compute nodes
 
-Deletes all edges from the \"blocks\" collection.
+Deletes all compute nodes from the \"compute_nodes\" collection.
 
 ### Example
 ```python
@@ -119,18 +96,18 @@ api_instance = swagger_client.DefaultApi()
 body = NULL # object |  (optional)
 
 try:
-    # Delete all blocks edges
-    api_response = api_instance.delete_blocks(body=body)
+    # Delete all compute nodes
+    api_response = api_instance.delete_compute_nodes(body=body)
     pprint(api_response)
 except ApiException as e:
-    print("Exception when calling DefaultApi->delete_blocks: %s\n" % e)
+    print("Exception when calling DefaultApi->delete_compute_nodes: %s\n" % e)
 ```
 
 ### Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)|  | [optional]
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
@@ -147,12 +124,12 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **delete_blocks_key**
-> BlocksEdgeModel delete_blocks_key(key, body=body)
+# **delete_compute_nodes_key**
+> InlineResponse2007 delete_compute_nodes_key(key, body=body)
 
-Delete a block
+Delete a compute node
 
-Deletes a blocks edge from the \"blocks\" collection by key.
+Deletes a compute node from the \"compute_nodes\" collection by key.
 
 ### Example
 ```python
@@ -164,27 +141,129 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
-key = 'key_example' # str | Key of the block.
+key = 'key_example' # str | Key of the compute node.
 body = NULL # object |  (optional)
 
 try:
-    # Delete a block
-    api_response = api_instance.delete_blocks_key(key, body=body)
+    # Delete a compute node
+    api_response = api_instance.delete_compute_nodes_key(key, body=body)
     pprint(api_response)
 except ApiException as e:
-    print("Exception when calling DefaultApi->delete_blocks_key: %s\n" % e)
+    print("Exception when calling DefaultApi->delete_compute_nodes_key: %s\n" % e)
 ```
 
 ### Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the block. |
- **body** | [**object**](object.md)|  | [optional]
+ **key** | **str**| Key of the compute node. | 
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
-[**BlocksEdgeModel**](BlocksEdgeModel.md)
+[**InlineResponse2007**](InlineResponse2007.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **delete_edges_name**
+> object delete_edges_name(name, body=body)
+
+Delete all edges from the designated collection
+
+Deletes all edges from the designated collection.
+
+### Example
+```python
+from __future__ import print_function
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+name = 'name_example' # str | Edge collection name
+body = NULL # object |  (optional)
+
+try:
+    # Delete all edges from the designated collection
+    api_response = api_instance.delete_edges_name(name, body=body)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->delete_edges_name: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **name** | **str**| Edge collection name | 
+ **body** | [**object**](object.md)|  | [optional] 
+
+### Return type
+
+**object**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **delete_edges_name_key**
+> EdgeModel delete_edges_name_key(name, key, body=body)
+
+Delete an edge
+
+Deletes an edge from the designated collection by key.
+
+### Example
+```python
+from __future__ import print_function
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+name = 'name_example' # str | Edge collection name
+key = 'key_example' # str | Edge key.
+body = NULL # object |  (optional)
+
+try:
+    # Delete an edge
+    api_response = api_instance.delete_edges_name_key(name, key, body=body)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->delete_edges_name_key: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **name** | **str**| Edge collection name | 
+ **key** | **str**| Edge key. | 
+ **body** | [**object**](object.md)|  | [optional] 
+
+### Return type
+
+[**EdgeModel**](EdgeModel.md)
 
 ### Authorization
 
@@ -198,7 +277,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **delete_events**
-> object delete_events()
+> object delete_events(body=body)
 
 Delete all events
 
@@ -214,17 +293,21 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
+body = NULL # object |  (optional)
 
 try:
     # Delete all events
-    api_response = api_instance.delete_events()
+    api_response = api_instance.delete_events(body=body)
     pprint(api_response)
 except ApiException as e:
     print("Exception when calling DefaultApi->delete_events: %s\n" % e)
 ```
 
 ### Parameters
-This endpoint does not need any parameter.
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
@@ -236,7 +319,7 @@ No authorization required
 
 ### HTTP request headers
 
- - **Content-Type**: Not defined
+ - **Content-Type**: application/json
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
@@ -273,8 +356,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the event. |
- **body** | [**object**](object.md)|  | [optional]
+ **key** | **str**| Key of the event. | 
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
@@ -322,7 +405,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)|  | [optional]
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
@@ -371,8 +454,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **name** | **str**| Name of the file. |
- **body** | [**object**](object.md)|  | [optional]
+ **name** | **str**| Name of the file. | 
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
@@ -420,7 +503,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)|  | [optional]
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
@@ -469,8 +552,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **name** | **str**| Name of the hpc_config. |
- **body** | [**object**](object.md)|  | [optional]
+ **name** | **str**| Name of the hpc_config. | 
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
@@ -518,7 +601,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)|  | [optional]
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
@@ -567,306 +650,12 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **name** | **str**| Name of the job. |
- **body** | [**object**](object.md)|  | [optional]
+ **name** | **str**| Name of the job. | 
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
 [**JobModel**](JobModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **delete_needs**
-> object delete_needs(body=body)
-
-Delete all needs edges
-
-Deletes all edges from the \"needs\" collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-body = NULL # object |  (optional)
-
-try:
-    # Delete all needs edges
-    api_response = api_instance.delete_needs(body=body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->delete_needs: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)|  | [optional]
-
-### Return type
-
-**object**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **delete_needs_key**
-> NeedsEdgeModel delete_needs_key(key, body=body)
-
-Delete a need
-
-Deletes a need from the \"needs\" collection by key.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-key = 'key_example' # str | Key of the need.
-body = NULL # object |  (optional)
-
-try:
-    # Delete a need
-    api_response = api_instance.delete_needs_key(key, body=body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->delete_needs_key: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the need. |
- **body** | [**object**](object.md)|  | [optional]
-
-### Return type
-
-[**NeedsEdgeModel**](NeedsEdgeModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **delete_produces**
-> object delete_produces(body=body)
-
-Delete all produces edges
-
-Deletes all edges from the \"produces\" collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-body = NULL # object |  (optional)
-
-try:
-    # Delete all produces edges
-    api_response = api_instance.delete_produces(body=body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->delete_produces: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)|  | [optional]
-
-### Return type
-
-**object**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **delete_produces_key**
-> ProducesEdgeModel delete_produces_key(key, body=body)
-
-Delete a produces edge
-
-Deletes a produces edge from the \"produces\" collection by key.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-key = 'key_example' # str | Key of the produce edge.
-body = NULL # object |  (optional)
-
-try:
-    # Delete a produces edge
-    api_response = api_instance.delete_produces_key(key, body=body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->delete_produces_key: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the produce edge. |
- **body** | [**object**](object.md)|  | [optional]
-
-### Return type
-
-[**ProducesEdgeModel**](ProducesEdgeModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **delete_requires**
-> object delete_requires(body=body)
-
-Delete all requires edges
-
-Deletes all edges from the \"requires\" collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-body = NULL # object |  (optional)
-
-try:
-    # Delete all requires edges
-    api_response = api_instance.delete_requires(body=body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->delete_requires: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)|  | [optional]
-
-### Return type
-
-**object**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **delete_requires_key**
-> RequiresEdgeModel delete_requires_key(key, body=body)
-
-Delete a require
-
-Deletes a requires edge from the \"requires\" collection by key.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-key = 'key_example' # str | Key of the require.
-body = NULL # object |  (optional)
-
-try:
-    # Delete a require
-    api_response = api_instance.delete_requires_key(key, body=body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->delete_requires_key: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the require. |
- **body** | [**object**](object.md)|  | [optional]
-
-### Return type
-
-[**RequiresEdgeModel**](RequiresEdgeModel.md)
 
 ### Authorization
 
@@ -910,7 +699,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)|  | [optional]
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
@@ -959,8 +748,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **name** | **str**| Name of the resource. |
- **body** | [**object**](object.md)|  | [optional]
+ **name** | **str**| Name of the resource. | 
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
@@ -1008,7 +797,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)|  | [optional]
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
@@ -1057,306 +846,12 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the result object. |
- **body** | [**object**](object.md)|  | [optional]
+ **key** | **str**| Key of the result object. | 
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
 [**ResultModel**](ResultModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **delete_returned**
-> object delete_returned(body=body)
-
-Delete all returned edges
-
-Deletes all edges from the \"returned\" collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-body = NULL # object |  (optional)
-
-try:
-    # Delete all returned edges
-    api_response = api_instance.delete_returned(body=body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->delete_returned: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)|  | [optional]
-
-### Return type
-
-**object**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **delete_returned_key**
-> ReturnedEdgeModel delete_returned_key(key, body=body)
-
-Delete an edge
-
-Deletes an edge from the \"returned\" collection by key.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-key = 'key_example' # str | Key of the edge.
-body = NULL # object |  (optional)
-
-try:
-    # Delete an edge
-    api_response = api_instance.delete_returned_key(key, body=body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->delete_returned_key: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the edge. |
- **body** | [**object**](object.md)|  | [optional]
-
-### Return type
-
-[**ReturnedEdgeModel**](ReturnedEdgeModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **delete_scheduled_bys**
-> object delete_scheduled_bys(body=body)
-
-Delete all scheduled_by edges
-
-Deletes all edges from the \"scheduled_by\" collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-body = NULL # object |  (optional)
-
-try:
-    # Delete all scheduled_by edges
-    api_response = api_instance.delete_scheduled_bys(body=body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->delete_scheduled_bys: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)|  | [optional]
-
-### Return type
-
-**object**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **delete_scheduled_bys_key**
-> ScheduledByEdgeModel delete_scheduled_bys_key(key, body=body)
-
-Delete a scheduled_by
-
-Deletes a scheduled_by edge from the \"scheduled_by\" collection by key.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-key = 'key_example' # str | Key of the scheduled_by.
-body = NULL # object |  (optional)
-
-try:
-    # Delete a scheduled_by
-    api_response = api_instance.delete_scheduled_bys_key(key, body=body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->delete_scheduled_bys_key: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the scheduled_by. |
- **body** | [**object**](object.md)|  | [optional]
-
-### Return type
-
-[**ScheduledByEdgeModel**](ScheduledByEdgeModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **delete_stores**
-> object delete_stores(body=body)
-
-Delete all stores edges
-
-Deletes all edges from the \"stores\" collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-body = NULL # object |  (optional)
-
-try:
-    # Delete all stores edges
-    api_response = api_instance.delete_stores(body=body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->delete_stores: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)|  | [optional]
-
-### Return type
-
-**object**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **delete_stores_key**
-> StoresEdgeModel delete_stores_key(key, body=body)
-
-Delete a stores edge
-
-Deletes a stores edge from the \"stores\" collection by key.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-key = 'key_example' # str | Key of the stores edge.
-body = NULL # object |  (optional)
-
-try:
-    # Delete a stores edge
-    api_response = api_instance.delete_stores_key(key, body=body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->delete_stores_key: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the stores edge. |
- **body** | [**object**](object.md)|  | [optional]
-
-### Return type
-
-[**StoresEdgeModel**](StoresEdgeModel.md)
 
 ### Authorization
 
@@ -1400,7 +895,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)|  | [optional]
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
@@ -1449,8 +944,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the user data object. |
- **body** | [**object**](object.md)|  | [optional]
+ **key** | **str**| Key of the user data object. | 
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
@@ -1498,7 +993,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)|  | [optional]
+ **body** | [**object**](object.md)|  | [optional] 
 
 ### Return type
 
@@ -1515,12 +1010,12 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **get_blocks**
-> InlineResponse20011 get_blocks(skip=skip, limit=limit)
+# **get_compute_nodes**
+> InlineResponse2006 get_compute_nodes(skip=skip, limit=limit)
 
-Retrieve all blocks edges
+Retrieve all compute nodes
 
-Retrieves all blocks edges from the \"blocks\" collection.
+Retrieves all compute nodes from the \"compute_nodes\" collection.
 
 ### Example
 ```python
@@ -1536,11 +1031,11 @@ skip = 0.0 # float |  (optional) (default to 0.0)
 limit = 100.0 # float |  (optional) (default to 100.0)
 
 try:
-    # Retrieve all blocks edges
-    api_response = api_instance.get_blocks(skip=skip, limit=limit)
+    # Retrieve all compute nodes
+    api_response = api_instance.get_compute_nodes(skip=skip, limit=limit)
     pprint(api_response)
 except ApiException as e:
-    print("Exception when calling DefaultApi->get_blocks: %s\n" % e)
+    print("Exception when calling DefaultApi->get_compute_nodes: %s\n" % e)
 ```
 
 ### Parameters
@@ -1552,7 +1047,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**InlineResponse20011**](InlineResponse20011.md)
+[**InlineResponse2006**](InlineResponse2006.md)
 
 ### Authorization
 
@@ -1565,12 +1060,12 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **get_blocks_key**
-> BlocksEdgeModel get_blocks_key(key)
+# **get_compute_nodes_key**
+> InlineResponse2007 get_compute_nodes_key(key)
 
-Retrieve a blocks edge
+Retrieve the compute node for a key.
 
-Retrieves a blocks edge from the \"blocks\" collection by key.
+Retrieve the compute node for a key.
 
 ### Example
 ```python
@@ -1582,25 +1077,127 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
-key = 'key_example' # str | Key of the block.
+key = 'key_example' # str | Key of the compute node object
 
 try:
-    # Retrieve a blocks edge
-    api_response = api_instance.get_blocks_key(key)
+    # Retrieve the compute node for a key.
+    api_response = api_instance.get_compute_nodes_key(key)
     pprint(api_response)
 except ApiException as e:
-    print("Exception when calling DefaultApi->get_blocks_key: %s\n" % e)
+    print("Exception when calling DefaultApi->get_compute_nodes_key: %s\n" % e)
 ```
 
 ### Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the block. |
+ **key** | **str**| Key of the compute node object | 
 
 ### Return type
 
-[**BlocksEdgeModel**](BlocksEdgeModel.md)
+[**InlineResponse2007**](InlineResponse2007.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_edges_name**
+> InlineResponse20014 get_edges_name(name, skip=skip, limit=limit)
+
+Retrieve all edges from the designated collection.
+
+Retrieve all edges from the designated collection.
+
+### Example
+```python
+from __future__ import print_function
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+name = 'name_example' # str | Edge collection name
+skip = 0.0 # float |  (optional) (default to 0.0)
+limit = 100.0 # float |  (optional) (default to 100.0)
+
+try:
+    # Retrieve all edges from the designated collection.
+    api_response = api_instance.get_edges_name(name, skip=skip, limit=limit)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_edges_name: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **name** | **str**| Edge collection name | 
+ **skip** | **float**|  | [optional] [default to 0.0]
+ **limit** | **float**|  | [optional] [default to 100.0]
+
+### Return type
+
+[**InlineResponse20014**](InlineResponse20014.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **get_edges_name_key**
+> EdgeModel get_edges_name_key(name, key)
+
+Retrieve an edge
+
+Retrieves an edge from the designated collection by key.
+
+### Example
+```python
+from __future__ import print_function
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+name = 'name_example' # str | Edge collection name
+key = 'key_example' # str | Edge key
+
+try:
+    # Retrieve an edge
+    api_response = api_instance.get_edges_name_key(name, key)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->get_edges_name_key: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **name** | **str**| Edge collection name | 
+ **key** | **str**| Edge key | 
+
+### Return type
+
+[**EdgeModel**](EdgeModel.md)
 
 ### Authorization
 
@@ -1694,7 +1291,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the events object |
+ **key** | **str**| Key of the events object | 
 
 ### Return type
 
@@ -1712,7 +1309,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_files**
-> InlineResponse2005 get_files(skip=skip, limit=limit)
+> InlineResponse2008 get_files(skip=skip, limit=limit)
 
 Retrieve all files
 
@@ -1748,7 +1345,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**InlineResponse2005**](InlineResponse2005.md)
+[**InlineResponse2008**](InlineResponse2008.md)
 
 ### Authorization
 
@@ -1792,7 +1389,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **name** | **str**| Name of the file. |
+ **name** | **str**| Name of the file. | 
 
 ### Return type
 
@@ -1810,7 +1407,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_files_produced_by_job_name**
-> InlineResponse2005 get_files_produced_by_job_name(name, skip=skip, limit=limit)
+> InlineResponse2008 get_files_produced_by_job_name(name, skip=skip, limit=limit)
 
 Retrieve files produced by a job
 
@@ -1826,7 +1423,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
-name = 'name_example' # str |
+name = 'name_example' # str | 
 skip = 0.0 # float |  (optional) (default to 0.0)
 limit = 100.0 # float |  (optional) (default to 100.0)
 
@@ -1842,13 +1439,13 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **name** | **str**|  |
+ **name** | **str**|  | 
  **skip** | **float**|  | [optional] [default to 0.0]
  **limit** | **float**|  | [optional] [default to 100.0]
 
 ### Return type
 
-[**InlineResponse2005**](InlineResponse2005.md)
+[**InlineResponse2008**](InlineResponse2008.md)
 
 ### Authorization
 
@@ -1862,7 +1459,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_hpc_configs**
-> InlineResponse2006 get_hpc_configs(skip=skip, limit=limit)
+> InlineResponse2009 get_hpc_configs(skip=skip, limit=limit)
 
 Retrieve all hpc_configs
 
@@ -1898,7 +1495,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**InlineResponse2006**](InlineResponse2006.md)
+[**InlineResponse2009**](InlineResponse2009.md)
 
 ### Authorization
 
@@ -1928,7 +1525,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
-name = 'name_example' # str |
+name = 'name_example' # str | 
 
 try:
     # Retrieve an hpc_config document by name
@@ -1942,7 +1539,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **name** | **str**|  |
+ **name** | **str**|  | 
 
 ### Return type
 
@@ -1960,7 +1557,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_job_definitions**
-> InlineResponse2007 get_job_definitions(skip=skip, limit=limit)
+> InlineResponse20010 get_job_definitions(skip=skip, limit=limit)
 
 Retrieve all job definitions
 
@@ -1996,7 +1593,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**InlineResponse2007**](InlineResponse2007.md)
+[**InlineResponse20010**](InlineResponse20010.md)
 
 ### Authorization
 
@@ -2010,7 +1607,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_job_definitions_name**
-> InlineResponse2004 get_job_definitions_name(name)
+> InlineResponse2005 get_job_definitions_name(name)
 
 Retrieve a job
 
@@ -2040,11 +1637,11 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **name** | **str**| Name of the job. |
+ **name** | **str**| Name of the job. | 
 
 ### Return type
 
-[**InlineResponse2004**](InlineResponse2004.md)
+[**InlineResponse2005**](InlineResponse2005.md)
 
 ### Authorization
 
@@ -2102,7 +1699,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_jobs**
-> InlineResponse2008 get_jobs(skip=skip, limit=limit)
+> InlineResponse20011 get_jobs(skip=skip, limit=limit)
 
 Retrieve all jobs
 
@@ -2138,7 +1735,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**InlineResponse2008**](InlineResponse2008.md)
+[**InlineResponse20011**](InlineResponse20011.md)
 
 ### Authorization
 
@@ -2152,7 +1749,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_jobs_find_by_needs_file_name**
-> InlineResponse2008 get_jobs_find_by_needs_file_name(name, skip=skip, limit=limit)
+> InlineResponse20011 get_jobs_find_by_needs_file_name(name, skip=skip, limit=limit)
 
 Retrieve all jobs that need a file
 
@@ -2184,13 +1781,13 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **name** | **str**| File name. |
+ **name** | **str**| File name. | 
  **skip** | **float**|  | [optional] [default to 0.0]
  **limit** | **float**|  | [optional] [default to 100.0]
 
 ### Return type
 
-[**InlineResponse2008**](InlineResponse2008.md)
+[**InlineResponse20011**](InlineResponse20011.md)
 
 ### Authorization
 
@@ -2204,7 +1801,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_jobs_find_by_status_status**
-> InlineResponse2008 get_jobs_find_by_status_status(status, skip=skip, limit=limit)
+> InlineResponse20011 get_jobs_find_by_status_status(status, skip=skip, limit=limit)
 
 Retrieve all jobs with a specific status
 
@@ -2236,13 +1833,13 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **status** | **str**| Job status. |
+ **status** | **str**| Job status. | 
  **skip** | **float**|  | [optional] [default to 0.0]
  **limit** | **float**|  | [optional] [default to 100.0]
 
 ### Return type
 
-[**InlineResponse2008**](InlineResponse2008.md)
+[**InlineResponse20011**](InlineResponse20011.md)
 
 ### Authorization
 
@@ -2286,7 +1883,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **name** | **str**| Job name. |
+ **name** | **str**| Job name. | 
 
 ### Return type
 
@@ -2334,7 +1931,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **name** | **str**| Name of the job. |
+ **name** | **str**| Name of the job. | 
 
 ### Return type
 
@@ -2382,7 +1979,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **name** | **str**| Name of the job. |
+ **name** | **str**| Name of the job. | 
 
 ### Return type
 
@@ -2399,302 +1996,8 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **get_needs**
-> InlineResponse20011 get_needs(skip=skip, limit=limit)
-
-Retrieve all needs
-
-Retrieves all needs from the \"needs\" collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-skip = 0.0 # float |  (optional) (default to 0.0)
-limit = 100.0 # float |  (optional) (default to 100.0)
-
-try:
-    # Retrieve all needs
-    api_response = api_instance.get_needs(skip=skip, limit=limit)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->get_needs: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **skip** | **float**|  | [optional] [default to 0.0]
- **limit** | **float**|  | [optional] [default to 100.0]
-
-### Return type
-
-[**InlineResponse20011**](InlineResponse20011.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **get_needs_key**
-> NeedsEdgeModel get_needs_key(key)
-
-Retrieve a needs edge
-
-Retrieves a need edge from the \"needs\" collection by key.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-key = 'key_example' # str | Key of the needs edge.
-
-try:
-    # Retrieve a needs edge
-    api_response = api_instance.get_needs_key(key)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->get_needs_key: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the needs edge. |
-
-### Return type
-
-[**NeedsEdgeModel**](NeedsEdgeModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **get_produces**
-> InlineResponse20011 get_produces(skip=skip, limit=limit)
-
-Retrieve all produces edges
-
-Retrieves all produces edges from the \"produces\" collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-skip = 0.0 # float |  (optional) (default to 0.0)
-limit = 100.0 # float |  (optional) (default to 100.0)
-
-try:
-    # Retrieve all produces edges
-    api_response = api_instance.get_produces(skip=skip, limit=limit)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->get_produces: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **skip** | **float**|  | [optional] [default to 0.0]
- **limit** | **float**|  | [optional] [default to 100.0]
-
-### Return type
-
-[**InlineResponse20011**](InlineResponse20011.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **get_produces_key**
-> ProducesEdgeModel get_produces_key(key)
-
-Retrieve a produces edge
-
-Retrieves a produces edge from the \"produces\" collection by key.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-key = 'key_example' # str | Key of the produces edge.
-
-try:
-    # Retrieve a produces edge
-    api_response = api_instance.get_produces_key(key)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->get_produces_key: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the produces edge. |
-
-### Return type
-
-[**ProducesEdgeModel**](ProducesEdgeModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **get_requires**
-> InlineResponse20011 get_requires(skip=skip, limit=limit)
-
-Retrieve all requires
-
-Retrieves all requires edges from the \"requires\" collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-skip = 0.0 # float |  (optional) (default to 0.0)
-limit = 100.0 # float |  (optional) (default to 100.0)
-
-try:
-    # Retrieve all requires
-    api_response = api_instance.get_requires(skip=skip, limit=limit)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->get_requires: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **skip** | **float**|  | [optional] [default to 0.0]
- **limit** | **float**|  | [optional] [default to 100.0]
-
-### Return type
-
-[**InlineResponse20011**](InlineResponse20011.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **get_requires_key**
-> RequiresEdgeModel get_requires_key(key)
-
-Retrieve a require
-
-Retrieves a requires edge from the \"requires\" collection by key.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-key = 'key_example' # str | Key of the require.
-
-try:
-    # Retrieve a require
-    api_response = api_instance.get_requires_key(key)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->get_requires_key: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the require. |
-
-### Return type
-
-[**RequiresEdgeModel**](RequiresEdgeModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
 # **get_resource_requirements**
-> InlineResponse2009 get_resource_requirements(skip=skip, limit=limit)
+> InlineResponse20012 get_resource_requirements(skip=skip, limit=limit)
 
 Retrieve all resource requirements
 
@@ -2730,7 +2033,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**InlineResponse2009**](InlineResponse2009.md)
+[**InlineResponse20012**](InlineResponse20012.md)
 
 ### Authorization
 
@@ -2760,7 +2063,7 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
-name = 'name_example' # str |
+name = 'name_example' # str | 
 
 try:
     # Retrieve a resource requirements document by name
@@ -2774,7 +2077,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **name** | **str**|  |
+ **name** | **str**|  | 
 
 ### Return type
 
@@ -2792,7 +2095,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **get_results**
-> InlineResponse20010 get_results(skip=skip, limit=limit)
+> InlineResponse20013 get_results(skip=skip, limit=limit)
 
 Retrieve all results
 
@@ -2828,7 +2131,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**InlineResponse20010**](InlineResponse20010.md)
+[**InlineResponse20013**](InlineResponse20013.md)
 
 ### Authorization
 
@@ -2872,7 +2175,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **name** | **str**| Job name. |
+ **name** | **str**| Job name. | 
 
 ### Return type
 
@@ -2920,305 +2223,11 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the results object |
+ **key** | **str**| Key of the results object | 
 
 ### Return type
 
 [**ResultModel**](ResultModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **get_returned**
-> InlineResponse20011 get_returned(skip=skip, limit=limit)
-
-Retrieve all returned
-
-Retrieves all edges from the \"returned\" collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-skip = 0.0 # float |  (optional) (default to 0.0)
-limit = 100.0 # float |  (optional) (default to 100.0)
-
-try:
-    # Retrieve all returned
-    api_response = api_instance.get_returned(skip=skip, limit=limit)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->get_returned: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **skip** | **float**|  | [optional] [default to 0.0]
- **limit** | **float**|  | [optional] [default to 100.0]
-
-### Return type
-
-[**InlineResponse20011**](InlineResponse20011.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **get_returned_key**
-> ReturnedEdgeModel get_returned_key(key)
-
-Retrieve a returned edge
-
-Retrieves an edge from the \"returned\" collection by key.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-key = 'key_example' # str | Key of the returned edge.
-
-try:
-    # Retrieve a returned edge
-    api_response = api_instance.get_returned_key(key)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->get_returned_key: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the returned edge. |
-
-### Return type
-
-[**ReturnedEdgeModel**](ReturnedEdgeModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **get_scheduled_bys**
-> InlineResponse20011 get_scheduled_bys(skip=skip, limit=limit)
-
-Retrieve all scheduled_by edges
-
-Retrieves all edges from the \"scheduled_by\" collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-skip = 0.0 # float |  (optional) (default to 0.0)
-limit = 100.0 # float |  (optional) (default to 100.0)
-
-try:
-    # Retrieve all scheduled_by edges
-    api_response = api_instance.get_scheduled_bys(skip=skip, limit=limit)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->get_scheduled_bys: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **skip** | **float**|  | [optional] [default to 0.0]
- **limit** | **float**|  | [optional] [default to 100.0]
-
-### Return type
-
-[**InlineResponse20011**](InlineResponse20011.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **get_scheduled_bys_key**
-> ScheduledByEdgeModel get_scheduled_bys_key(key)
-
-Retrieve a scheduled_by edge
-
-Retrieves an edge from the \"scheduled_by\" collection by key.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-key = 'key_example' # str | Key of the scheduled_by.
-
-try:
-    # Retrieve a scheduled_by edge
-    api_response = api_instance.get_scheduled_bys_key(key)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->get_scheduled_bys_key: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the scheduled_by. |
-
-### Return type
-
-[**ScheduledByEdgeModel**](ScheduledByEdgeModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **get_stores**
-> InlineResponse20011 get_stores(skip=skip, limit=limit)
-
-Retrieve all stores edges
-
-Retrieves all stores edges from the \"stores\" collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-skip = 0.0 # float |  (optional) (default to 0.0)
-limit = 100.0 # float |  (optional) (default to 100.0)
-
-try:
-    # Retrieve all stores edges
-    api_response = api_instance.get_stores(skip=skip, limit=limit)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->get_stores: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **skip** | **float**|  | [optional] [default to 0.0]
- **limit** | **float**|  | [optional] [default to 100.0]
-
-### Return type
-
-[**InlineResponse20011**](InlineResponse20011.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: Not defined
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **get_stores_key**
-> StoresEdgeModel get_stores_key(key)
-
-Retrieve a stores edge
-
-Retrieves a stores edge from the \"stores\" collection by key.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-key = 'key_example' # str | Key of the stores edge.
-
-try:
-    # Retrieve a stores edge
-    api_response = api_instance.get_stores_key(key)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->get_stores_key: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the stores edge. |
-
-### Return type
-
-[**StoresEdgeModel**](StoresEdgeModel.md)
 
 ### Authorization
 
@@ -3312,7 +2321,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **key** | **str**| Key of the user_data object |
+ **key** | **str**| Key of the user_data object | 
 
 ### Return type
 
@@ -3461,12 +2470,12 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
-# **post_blocks**
-> BlocksEdgeModel post_blocks(body)
+# **get_workflow_ready_job_requirements**
+> InlineResponse2003 get_workflow_ready_job_requirements()
 
-Store a blocks edge between a job and a file.
+Return the resource requirements for ready jobs.
 
-Store a job-file relationship in the \"blocks\" edge collection.
+Return the resource requirements for jobs with a status of ready.
 
 ### Example
 ```python
@@ -3478,25 +2487,119 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
-body = swagger_client.BlocksEdgeModel() # BlocksEdgeModel | blocks relationship between a job and a file.
 
 try:
-    # Store a blocks edge between a job and a file.
-    api_response = api_instance.post_blocks(body)
+    # Return the resource requirements for ready jobs.
+    api_response = api_instance.get_workflow_ready_job_requirements()
     pprint(api_response)
 except ApiException as e:
-    print("Exception when calling DefaultApi->post_blocks: %s\n" % e)
+    print("Exception when calling DefaultApi->get_workflow_ready_job_requirements: %s\n" % e)
+```
+
+### Parameters
+This endpoint does not need any parameter.
+
+### Return type
+
+[**InlineResponse2003**](InlineResponse2003.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **post_compute_nodes**
+> InlineResponse2007 post_compute_nodes(body)
+
+Store information about a compute node.
+
+Store information about a compute node in the \"compute_nodes\" collection.
+
+### Example
+```python
+from __future__ import print_function
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+body = swagger_client.ComputeNodesModel() # ComputeNodesModel | compute node.
+
+try:
+    # Store information about a compute node.
+    api_response = api_instance.post_compute_nodes(body)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->post_compute_nodes: %s\n" % e)
 ```
 
 ### Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**BlocksEdgeModel**](BlocksEdgeModel.md)| blocks relationship between a job and a file. |
+ **body** | [**ComputeNodesModel**](ComputeNodesModel.md)| compute node. | 
 
 ### Return type
 
-[**BlocksEdgeModel**](BlocksEdgeModel.md)
+[**InlineResponse2007**](InlineResponse2007.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **post_edges_name**
+> EdgeModel post_edges_name(body, name)
+
+Store an edge between two vertexes.
+
+Store an edge between two vertexes in the designated collection.
+
+### Example
+```python
+from __future__ import print_function
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+body = swagger_client.EdgeModel() # EdgeModel | Relationship between two vertexes
+name = 'name_example' # str | Edge name
+
+try:
+    # Store an edge between two vertexes.
+    api_response = api_instance.post_edges_name(body, name)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->post_edges_name: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **body** | [**EdgeModel**](EdgeModel.md)| Relationship between two vertexes | 
+ **name** | **str**| Edge name | 
+
+### Return type
+
+[**EdgeModel**](EdgeModel.md)
 
 ### Authorization
 
@@ -3540,7 +2643,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)| event. |
+ **body** | [**object**](object.md)| event. | 
 
 ### Return type
 
@@ -3588,7 +2691,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**FileModel**](FileModel.md)| file to store in the collection. |
+ **body** | [**FileModel**](FileModel.md)| file to store in the collection. | 
 
 ### Return type
 
@@ -3636,7 +2739,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**HpcConfigModel**](HpcConfigModel.md)| hpc_config to store in the collection |
+ **body** | [**HpcConfigModel**](HpcConfigModel.md)| hpc_config to store in the collection | 
 
 ### Return type
 
@@ -3654,7 +2757,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **post_job_definitions**
-> InlineResponse2004 post_job_definitions(body)
+> InlineResponse2005 post_job_definitions(body)
 
 Store a job and create edges.
 
@@ -3684,11 +2787,11 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**JobDefinition**](JobDefinition.md)| job definition to store in the collection. |
+ **body** | [**JobDefinition**](JobDefinition.md)| job definition to store in the collection. | 
 
 ### Return type
 
-[**InlineResponse2004**](InlineResponse2004.md)
+[**InlineResponse2005**](InlineResponse2005.md)
 
 ### Authorization
 
@@ -3732,7 +2835,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**JobModel**](JobModel.md)| job to store in the collection. |
+ **body** | [**JobModel**](JobModel.md)| job to store in the collection. | 
 
 ### Return type
 
@@ -3767,9 +2870,9 @@ from pprint import pprint
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
 body = swagger_client.StatusRevBody() # StatusRevBody | Result of the job.
-name = 'name_example' # str |
-status = 'status_example' # str |
-rev = 'rev_example' # str |
+name = 'name_example' # str | 
+status = 'status_example' # str | 
+rev = 'rev_example' # str | 
 
 try:
     # Complete a job and add a result.
@@ -3783,10 +2886,10 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**StatusRevBody**](StatusRevBody.md)| Result of the job. |
- **name** | **str**|  |
- **status** | **str**|  |
- **rev** | **str**|  |
+ **body** | [**StatusRevBody**](StatusRevBody.md)| Result of the job. | 
+ **name** | **str**|  | 
+ **status** | **str**|  | 
+ **rev** | **str**|  | 
 
 ### Return type
 
@@ -3821,7 +2924,7 @@ from pprint import pprint
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
 body = swagger_client.StoreUserDataNameBody() # StoreUserDataNameBody | User data for the job.
-name = 'name_example' # str |
+name = 'name_example' # str | 
 
 try:
     # Store user data for a job.
@@ -3835,156 +2938,12 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**StoreUserDataNameBody**](StoreUserDataNameBody.md)| User data for the job. |
- **name** | **str**|  |
+ **body** | [**StoreUserDataNameBody**](StoreUserDataNameBody.md)| User data for the job. | 
+ **name** | **str**|  | 
 
 ### Return type
 
 **object**
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **post_needs**
-> NeedsEdgeModel post_needs(body)
-
-Store a needs edge between a job and a file.
-
-Store a job-file relationship in the \"needs\" edge collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-body = swagger_client.NeedsEdgeModel() # NeedsEdgeModel | Needs relationship between a job and a file.
-
-try:
-    # Store a needs edge between a job and a file.
-    api_response = api_instance.post_needs(body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->post_needs: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **body** | [**NeedsEdgeModel**](NeedsEdgeModel.md)| Needs relationship between a job and a file. |
-
-### Return type
-
-[**NeedsEdgeModel**](NeedsEdgeModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **post_produces**
-> ProducesEdgeModel post_produces(body)
-
-Store a produces edge between a job and a file.
-
-Store a job-file relationship in the \"produces\" edge collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-body = swagger_client.ProducesEdgeModel() # ProducesEdgeModel | produces relationship between a job and a file.
-
-try:
-    # Store a produces edge between a job and a file.
-    api_response = api_instance.post_produces(body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->post_produces: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **body** | [**ProducesEdgeModel**](ProducesEdgeModel.md)| produces relationship between a job and a file. |
-
-### Return type
-
-[**ProducesEdgeModel**](ProducesEdgeModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **post_requires**
-> RequiresEdgeModel post_requires(body)
-
-Store a requires edge between a job and a resource.
-
-Store a job-resource relationship in the \"requires\" edge collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-body = swagger_client.RequiresEdgeModel() # RequiresEdgeModel | requires relationship between a job and a resource.
-
-try:
-    # Store a requires edge between a job and a resource.
-    api_response = api_instance.post_requires(body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->post_requires: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **body** | [**RequiresEdgeModel**](RequiresEdgeModel.md)| requires relationship between a job and a resource. |
-
-### Return type
-
-[**RequiresEdgeModel**](RequiresEdgeModel.md)
 
 ### Authorization
 
@@ -4028,7 +2987,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**ResourceRequirementsModel**](ResourceRequirementsModel.md)| resource to store in the collection |
+ **body** | [**ResourceRequirementsModel**](ResourceRequirementsModel.md)| resource to store in the collection | 
 
 ### Return type
 
@@ -4076,155 +3035,11 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**ResultModel**](ResultModel.md)| Job result. |
+ **body** | [**ResultModel**](ResultModel.md)| Job result. | 
 
 ### Return type
 
 [**ResultModel**](ResultModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **post_returned**
-> ReturnedEdgeModel post_returned(body)
-
-Store a returned edge between a job and a result.
-
-Store a job-result relationship in the \"returned\" edge collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-body = swagger_client.ReturnedEdgeModel() # ReturnedEdgeModel | returned relationship between a job and a result.
-
-try:
-    # Store a returned edge between a job and a result.
-    api_response = api_instance.post_returned(body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->post_returned: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **body** | [**ReturnedEdgeModel**](ReturnedEdgeModel.md)| returned relationship between a job and a result. |
-
-### Return type
-
-[**ReturnedEdgeModel**](ReturnedEdgeModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **post_scheduled_bys**
-> ScheduledByEdgeModel post_scheduled_bys(body)
-
-Store a scheduled_by edge between a job and an hpc_config.
-
-Store a job-hpc_config relationship in the \"scheduled_by\" edge collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-body = swagger_client.ScheduledByEdgeModel() # ScheduledByEdgeModel | scheduled_by relationship between a job and an hpc_config.
-
-try:
-    # Store a scheduled_by edge between a job and an hpc_config.
-    api_response = api_instance.post_scheduled_bys(body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->post_scheduled_bys: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **body** | [**ScheduledByEdgeModel**](ScheduledByEdgeModel.md)| scheduled_by relationship between a job and an hpc_config. |
-
-### Return type
-
-[**ScheduledByEdgeModel**](ScheduledByEdgeModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
-
-# **post_stores**
-> StoresEdgeModel post_stores(body)
-
-Store a stores edge between a job and a user data object.
-
-Store a job-user-data relationship in the \"stores\" edge collection.
-
-### Example
-```python
-from __future__ import print_function
-import time
-import swagger_client
-from swagger_client.rest import ApiException
-from pprint import pprint
-
-# create an instance of the API class
-api_instance = swagger_client.DefaultApi()
-body = swagger_client.StoresEdgeModel() # StoresEdgeModel | stores relationship between a job and a user data object.
-
-try:
-    # Store a stores edge between a job and a user data object.
-    api_response = api_instance.post_stores(body)
-    pprint(api_response)
-except ApiException as e:
-    print("Exception when calling DefaultApi->post_stores: %s\n" % e)
-```
-
-### Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **body** | [**StoresEdgeModel**](StoresEdgeModel.md)| stores relationship between a job and a user data object. |
-
-### Return type
-
-[**StoresEdgeModel**](StoresEdgeModel.md)
 
 ### Authorization
 
@@ -4268,7 +3083,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)| User data. | [optional]
+ **body** | [**object**](object.md)| User data. | [optional] 
 
 ### Return type
 
@@ -4316,7 +3131,7 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**Workflow**](Workflow.md)| New workflow |
+ **body** | [**Workflow**](Workflow.md)| New workflow | 
 
 ### Return type
 
@@ -4334,7 +3149,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **post_workflow_estimate**
-> InlineResponse2003 post_workflow_estimate()
+> InlineResponse2004 post_workflow_estimate()
 
 Perform a dry run of all jobs to estimate required resources.
 
@@ -4364,7 +3179,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**InlineResponse2003**](InlineResponse2003.md)
+[**InlineResponse2004**](InlineResponse2004.md)
 
 ### Authorization
 
@@ -4422,7 +3237,7 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **post_workflow_prepare_jobs_for_submission**
-> list[InlineResponse2004] post_workflow_prepare_jobs_for_submission(body)
+> list[InlineResponse2005] post_workflow_prepare_jobs_for_submission(body)
 
 Return ready jobs
 
@@ -4452,11 +3267,11 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**WorkerResources**](WorkerResources.md)| Available worker resources. |
+ **body** | [**WorkerResources**](WorkerResources.md)| Available worker resources. | 
 
 ### Return type
 
-[**list[InlineResponse2004]**](InlineResponse2004.md)
+[**list[InlineResponse2005]**](InlineResponse2005.md)
 
 ### Authorization
 
@@ -4513,6 +3328,56 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
+# **put_compute_nodes_key**
+> InlineResponse2007 put_compute_nodes_key(body, key)
+
+Update compute node
+
+Update a compute node in the \"compute_nodes\" collection.
+
+### Example
+```python
+from __future__ import print_function
+import time
+import swagger_client
+from swagger_client.rest import ApiException
+from pprint import pprint
+
+# create an instance of the API class
+api_instance = swagger_client.DefaultApi()
+body = NULL # object | Compute node to update in the collection.
+key = 'key_example' # str | 
+
+try:
+    # Update compute node
+    api_response = api_instance.put_compute_nodes_key(body, key)
+    pprint(api_response)
+except ApiException as e:
+    print("Exception when calling DefaultApi->put_compute_nodes_key: %s\n" % e)
+```
+
+### Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **body** | [**object**](object.md)| Compute node to update in the collection. | 
+ **key** | **str**|  | 
+
+### Return type
+
+[**InlineResponse2007**](InlineResponse2007.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
 # **put_files_name**
 > FileModel put_files_name(body, name)
 
@@ -4531,7 +3396,7 @@ from pprint import pprint
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
 body = NULL # object | file to update in the collection.
-name = 'name_example' # str |
+name = 'name_example' # str | 
 
 try:
     # Update file
@@ -4545,8 +3410,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)| file to update in the collection. |
- **name** | **str**|  |
+ **body** | [**object**](object.md)| file to update in the collection. | 
+ **name** | **str**|  | 
 
 ### Return type
 
@@ -4580,9 +3445,9 @@ from pprint import pprint
 
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
-name = 'name_example' # str |
-status = 'status_example' # str |
-rev = 'rev_example' # str |
+name = 'name_example' # str | 
+status = 'status_example' # str | 
+rev = 'rev_example' # str | 
 
 try:
     # Change the status of a job and manage side effects.
@@ -4596,9 +3461,9 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **name** | **str**|  |
- **status** | **str**|  |
- **rev** | **str**|  |
+ **name** | **str**|  | 
+ **status** | **str**|  | 
+ **rev** | **str**|  | 
 
 ### Return type
 
@@ -4633,7 +3498,7 @@ from pprint import pprint
 # create an instance of the API class
 api_instance = swagger_client.DefaultApi()
 body = NULL # object | job to update in the collection.
-name = 'name_example' # str |
+name = 'name_example' # str | 
 
 try:
     # Update job
@@ -4647,8 +3512,8 @@ except ApiException as e:
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | [**object**](object.md)| job to update in the collection. |
- **name** | **str**|  |
+ **body** | [**object**](object.md)| job to update in the collection. | 
+ **name** | **str**|  | 
 
 ### Return type
 
@@ -4664,3 +3529,4 @@ No authorization required
  - **Accept**: application/json
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+

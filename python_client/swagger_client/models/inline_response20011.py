@@ -27,7 +27,7 @@ class InlineResponse20011(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'items': 'list[StoresEdgeModel]',
+        'items': 'list[JobModel]',
         'skip': 'float',
         'max_limit': 'float',
         'count': 'float',
@@ -67,7 +67,7 @@ class InlineResponse20011(object):
 
 
         :return: The items of this InlineResponse20011.  # noqa: E501
-        :rtype: list[StoresEdgeModel]
+        :rtype: list[JobModel]
         """
         return self._items
 
@@ -77,7 +77,7 @@ class InlineResponse20011(object):
 
 
         :param items: The items of this InlineResponse20011.  # noqa: E501
-        :type: list[StoresEdgeModel]
+        :type: list[JobModel]
         """
 
         self._items = items

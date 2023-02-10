@@ -3,7 +3,7 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**items** | [**list[StoresEdgeModel]**](StoresEdgeModel.md) |  | [optional] 
+**items** | [**list[JobModel]**](JobModel.md) |  | [optional] 
 **skip** | **float** |  | 
 **max_limit** | **float** |  | 
 **count** | **float** |  | 

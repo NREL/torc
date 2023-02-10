@@ -27,175 +27,224 @@ class InlineResponse2005(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'items': 'list[FileModel]',
-        'skip': 'float',
-        'max_limit': 'float',
-        'count': 'float',
-        'total_count': 'float',
-        'has_more': 'bool'
+        'name': 'str',
+        'command': 'str',
+        'status': 'str',
+        'cancel_on_blocking_job_failure': 'bool',
+        'interruptible': 'bool',
+        'key': 'str',
+        'id': 'str',
+        'rev': 'str'
     }
 
     attribute_map = {
-        'items': 'items',
-        'skip': 'skip',
-        'max_limit': 'max_limit',
-        'count': 'count',
-        'total_count': 'total_count',
-        'has_more': 'has_more'
+        'name': 'name',
+        'command': 'command',
+        'status': 'status',
+        'cancel_on_blocking_job_failure': 'cancel_on_blocking_job_failure',
+        'interruptible': 'interruptible',
+        'key': '_key',
+        'id': '_id',
+        'rev': '_rev'
     }
 
-    def __init__(self, items=None, skip=None, max_limit=None, count=None, total_count=None, has_more=None):  # noqa: E501
+    def __init__(self, name=None, command=None, status=None, cancel_on_blocking_job_failure=True, interruptible=False, key=None, id=None, rev=None):  # noqa: E501
         """InlineResponse2005 - a model defined in Swagger"""  # noqa: E501
-        self._items = None
-        self._skip = None
-        self._max_limit = None
-        self._count = None
-        self._total_count = None
-        self._has_more = None
+        self._name = None
+        self._command = None
+        self._status = None
+        self._cancel_on_blocking_job_failure = None
+        self._interruptible = None
+        self._key = None
+        self._id = None
+        self._rev = None
         self.discriminator = None
-        if items is not None:
-            self.items = items
-        self.skip = skip
-        self.max_limit = max_limit
-        self.count = count
-        self.total_count = total_count
-        self.has_more = has_more
+        self.name = name
+        self.command = command
+        if status is not None:
+            self.status = status
+        if cancel_on_blocking_job_failure is not None:
+            self.cancel_on_blocking_job_failure = cancel_on_blocking_job_failure
+        if interruptible is not None:
+            self.interruptible = interruptible
+        if key is not None:
+            self.key = key
+        if id is not None:
+            self.id = id
+        if rev is not None:
+            self.rev = rev
 
     @property
-    def items(self):
-        """Gets the items of this InlineResponse2005.  # noqa: E501
+    def name(self):
+        """Gets the name of this InlineResponse2005.  # noqa: E501
 
 
-        :return: The items of this InlineResponse2005.  # noqa: E501
-        :rtype: list[FileModel]
+        :return: The name of this InlineResponse2005.  # noqa: E501
+        :rtype: str
         """
-        return self._items
+        return self._name
 
-    @items.setter
-    def items(self, items):
-        """Sets the items of this InlineResponse2005.
+    @name.setter
+    def name(self, name):
+        """Sets the name of this InlineResponse2005.
 
 
-        :param items: The items of this InlineResponse2005.  # noqa: E501
-        :type: list[FileModel]
+        :param name: The name of this InlineResponse2005.  # noqa: E501
+        :type: str
         """
+        if name is None:
+            raise ValueError("Invalid value for `name`, must not be `None`")  # noqa: E501
 
-        self._items = items
+        self._name = name
 
     @property
-    def skip(self):
-        """Gets the skip of this InlineResponse2005.  # noqa: E501
+    def command(self):
+        """Gets the command of this InlineResponse2005.  # noqa: E501
 
 
-        :return: The skip of this InlineResponse2005.  # noqa: E501
-        :rtype: float
+        :return: The command of this InlineResponse2005.  # noqa: E501
+        :rtype: str
         """
-        return self._skip
+        return self._command
 
-    @skip.setter
-    def skip(self, skip):
-        """Sets the skip of this InlineResponse2005.
+    @command.setter
+    def command(self, command):
+        """Sets the command of this InlineResponse2005.
 
 
-        :param skip: The skip of this InlineResponse2005.  # noqa: E501
-        :type: float
+        :param command: The command of this InlineResponse2005.  # noqa: E501
+        :type: str
         """
-        if skip is None:
-            raise ValueError("Invalid value for `skip`, must not be `None`")  # noqa: E501
+        if command is None:
+            raise ValueError("Invalid value for `command`, must not be `None`")  # noqa: E501
 
-        self._skip = skip
+        self._command = command
 
     @property
-    def max_limit(self):
-        """Gets the max_limit of this InlineResponse2005.  # noqa: E501
+    def status(self):
+        """Gets the status of this InlineResponse2005.  # noqa: E501
 
 
-        :return: The max_limit of this InlineResponse2005.  # noqa: E501
-        :rtype: float
+        :return: The status of this InlineResponse2005.  # noqa: E501
+        :rtype: str
         """
-        return self._max_limit
+        return self._status
 
-    @max_limit.setter
-    def max_limit(self, max_limit):
-        """Sets the max_limit of this InlineResponse2005.
+    @status.setter
+    def status(self, status):
+        """Sets the status of this InlineResponse2005.
 
 
-        :param max_limit: The max_limit of this InlineResponse2005.  # noqa: E501
-        :type: float
+        :param status: The status of this InlineResponse2005.  # noqa: E501
+        :type: str
         """
-        if max_limit is None:
-            raise ValueError("Invalid value for `max_limit`, must not be `None`")  # noqa: E501
 
-        self._max_limit = max_limit
+        self._status = status
 
     @property
-    def count(self):
-        """Gets the count of this InlineResponse2005.  # noqa: E501
+    def cancel_on_blocking_job_failure(self):
+        """Gets the cancel_on_blocking_job_failure of this InlineResponse2005.  # noqa: E501
 
 
-        :return: The count of this InlineResponse2005.  # noqa: E501
-        :rtype: float
-        """
-        return self._count
-
-    @count.setter
-    def count(self, count):
-        """Sets the count of this InlineResponse2005.
-
-
-        :param count: The count of this InlineResponse2005.  # noqa: E501
-        :type: float
-        """
-        if count is None:
-            raise ValueError("Invalid value for `count`, must not be `None`")  # noqa: E501
-
-        self._count = count
-
-    @property
-    def total_count(self):
-        """Gets the total_count of this InlineResponse2005.  # noqa: E501
-
-
-        :return: The total_count of this InlineResponse2005.  # noqa: E501
-        :rtype: float
-        """
-        return self._total_count
-
-    @total_count.setter
-    def total_count(self, total_count):
-        """Sets the total_count of this InlineResponse2005.
-
-
-        :param total_count: The total_count of this InlineResponse2005.  # noqa: E501
-        :type: float
-        """
-        if total_count is None:
-            raise ValueError("Invalid value for `total_count`, must not be `None`")  # noqa: E501
-
-        self._total_count = total_count
-
-    @property
-    def has_more(self):
-        """Gets the has_more of this InlineResponse2005.  # noqa: E501
-
-
-        :return: The has_more of this InlineResponse2005.  # noqa: E501
+        :return: The cancel_on_blocking_job_failure of this InlineResponse2005.  # noqa: E501
         :rtype: bool
         """
-        return self._has_more
+        return self._cancel_on_blocking_job_failure
 
-    @has_more.setter
-    def has_more(self, has_more):
-        """Sets the has_more of this InlineResponse2005.
+    @cancel_on_blocking_job_failure.setter
+    def cancel_on_blocking_job_failure(self, cancel_on_blocking_job_failure):
+        """Sets the cancel_on_blocking_job_failure of this InlineResponse2005.
 
 
-        :param has_more: The has_more of this InlineResponse2005.  # noqa: E501
+        :param cancel_on_blocking_job_failure: The cancel_on_blocking_job_failure of this InlineResponse2005.  # noqa: E501
         :type: bool
         """
-        if has_more is None:
-            raise ValueError("Invalid value for `has_more`, must not be `None`")  # noqa: E501
 
-        self._has_more = has_more
+        self._cancel_on_blocking_job_failure = cancel_on_blocking_job_failure
+
+    @property
+    def interruptible(self):
+        """Gets the interruptible of this InlineResponse2005.  # noqa: E501
+
+
+        :return: The interruptible of this InlineResponse2005.  # noqa: E501
+        :rtype: bool
+        """
+        return self._interruptible
+
+    @interruptible.setter
+    def interruptible(self, interruptible):
+        """Sets the interruptible of this InlineResponse2005.
+
+
+        :param interruptible: The interruptible of this InlineResponse2005.  # noqa: E501
+        :type: bool
+        """
+
+        self._interruptible = interruptible
+
+    @property
+    def key(self):
+        """Gets the key of this InlineResponse2005.  # noqa: E501
+
+
+        :return: The key of this InlineResponse2005.  # noqa: E501
+        :rtype: str
+        """
+        return self._key
+
+    @key.setter
+    def key(self, key):
+        """Sets the key of this InlineResponse2005.
+
+
+        :param key: The key of this InlineResponse2005.  # noqa: E501
+        :type: str
+        """
+
+        self._key = key
+
+    @property
+    def id(self):
+        """Gets the id of this InlineResponse2005.  # noqa: E501
+
+
+        :return: The id of this InlineResponse2005.  # noqa: E501
+        :rtype: str
+        """
+        return self._id
+
+    @id.setter
+    def id(self, id):
+        """Sets the id of this InlineResponse2005.
+
+
+        :param id: The id of this InlineResponse2005.  # noqa: E501
+        :type: str
+        """
+
+        self._id = id
+
+    @property
+    def rev(self):
+        """Gets the rev of this InlineResponse2005.  # noqa: E501
+
+
+        :return: The rev of this InlineResponse2005.  # noqa: E501
+        :rtype: str
+        """
+        return self._rev
+
+    @rev.setter
+    def rev(self, rev):
+        """Sets the rev of this InlineResponse2005.
+
+
+        :param rev: The rev of this InlineResponse2005.  # noqa: E501
+        :type: str
+        """
+
+        self._rev = rev
 
     def to_dict(self):
         """Returns the model properties as a dict"""

@@ -63,21 +63,21 @@ const jobUserData = joi.object().required().keys({
   count: joi.number(),
 });
 
-const jobEstimate = joi.object().required().keys({
+const readyJobsResourceRequirements = joi.object().required().keys({
   num_jobs: joi.number().required(),
   num_cpus: joi.number().required(),
   num_gpus: joi.number().required(),
   memory_gb: joi.number().required(),
-  status: joi.string(),
-  _key: joi.string(),
-  _id: joi.string(),
-  _rev: joi.string(),
+  max_memory_gb: joi.number().required(),
+  max_num_nodes: joi.number().required(),
+  max_runtime: joi.string().required(),
 });
 
 const resourceRequirements = joi.object().required().keys({
   name: joi.string().required(),
   num_cpus: joi.number().default(1),
   num_gpus: joi.number().default(0),
+  num_nodes: joi.number().default(1),
   memory: joi.string().default('1m'),
   runtime: joi.string().default('P0DT1H'), // ISO 8601 encoding for duration
   _key: joi.string(),
@@ -104,8 +104,19 @@ const workerResources = joi.object().required().keys({
   time_limit: [joi.string().optional(), joi.allow(null)], // ISO 8601 encoding for timedeltas
 });
 
+const computeNode = joi.object().required().keys({
+  hostname: joi.string().required(),
+  start_time: joi.string().required(),
+  is_active: joi.boolean().optional(),
+  resources: workerResources,
+  scheduler: joi.object().default({}),
+  _key: joi.string(),
+  _id: joi.string(),
+  _rev: joi.string(),
+});
+
 const workflowEstimate = joi.object().required().keys({
-  estimates_by_round: [jobEstimate],
+  estimates_by_round: joi.array().items(readyJobsResourceRequirements),
 });
 
 const isComplete = joi.object().required().keys({
@@ -117,6 +128,15 @@ const workflow = joi.object().required().keys({
   files: joi.array().items(file).default([]),
   resource_requirements: joi.array().items(resourceRequirements).default([]),
   schedulers: joi.array().items(hpcConfig).default([]),
+});
+
+const batchComputeNodes = joi.object().required().keys({
+  items: joi.array().items(computeNode),
+  skip: joi.number().required(),
+  max_limit: joi.number().required(),
+  count: joi.number().required(),
+  total_count: joi.number().required(),
+  has_more: joi.boolean().required(),
 });
 
 const batchJobDefinitions = joi.object().required().keys({
@@ -146,7 +166,7 @@ const batchEdges = joi.object().required().keys({
   has_more: joi.boolean().required(),
 });
 
-const batchEvents = joi.object().required().keys({
+const batchObjects = joi.object().required().keys({
   items: joi.array().items(joi.object()),
   skip: joi.number().required(),
   max_limit: joi.number().required(),
@@ -201,8 +221,9 @@ const batchUserData = joi.object().required().keys({
 });
 
 module.exports = {
+  batchComputeNodes,
   batchEdges,
-  batchEvents,
+  batchObjects,
   batchFiles,
   batchHpcConfigs,
   batchJobDefinitions,
@@ -210,14 +231,15 @@ module.exports = {
   batchResourceRequirements,
   batchResults,
   batchUserData,
+  computeNode,
   edge,
   file,
   hpcConfig,
   isComplete,
   job,
   jobDefinition,
-  jobEstimate,
   jobUserData,
+  readyJobsResourceRequirements,
   resourceRequirements,
   result,
   workerResources,

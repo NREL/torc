@@ -27,175 +27,225 @@ class InlineResponse2007(object):
                             and the value is json key in definition.
     """
     swagger_types = {
-        'items': 'list[JobDefinition]',
-        'skip': 'float',
-        'max_limit': 'float',
-        'count': 'float',
-        'total_count': 'float',
-        'has_more': 'bool'
+        'hostname': 'str',
+        'start_time': 'str',
+        'is_active': 'bool',
+        'resources': 'WorkerResources',
+        'scheduler': 'object',
+        'key': 'str',
+        'id': 'str',
+        'rev': 'str'
     }
 
     attribute_map = {
-        'items': 'items',
-        'skip': 'skip',
-        'max_limit': 'max_limit',
-        'count': 'count',
-        'total_count': 'total_count',
-        'has_more': 'has_more'
+        'hostname': 'hostname',
+        'start_time': 'start_time',
+        'is_active': 'is_active',
+        'resources': 'resources',
+        'scheduler': 'scheduler',
+        'key': '_key',
+        'id': '_id',
+        'rev': '_rev'
     }
 
-    def __init__(self, items=None, skip=None, max_limit=None, count=None, total_count=None, has_more=None):  # noqa: E501
+    def __init__(self, hostname=None, start_time=None, is_active=None, resources=None, scheduler=None, key=None, id=None, rev=None):  # noqa: E501
         """InlineResponse2007 - a model defined in Swagger"""  # noqa: E501
-        self._items = None
-        self._skip = None
-        self._max_limit = None
-        self._count = None
-        self._total_count = None
-        self._has_more = None
+        self._hostname = None
+        self._start_time = None
+        self._is_active = None
+        self._resources = None
+        self._scheduler = None
+        self._key = None
+        self._id = None
+        self._rev = None
         self.discriminator = None
-        if items is not None:
-            self.items = items
-        self.skip = skip
-        self.max_limit = max_limit
-        self.count = count
-        self.total_count = total_count
-        self.has_more = has_more
+        self.hostname = hostname
+        self.start_time = start_time
+        if is_active is not None:
+            self.is_active = is_active
+        self.resources = resources
+        if scheduler is not None:
+            self.scheduler = scheduler
+        if key is not None:
+            self.key = key
+        if id is not None:
+            self.id = id
+        if rev is not None:
+            self.rev = rev
 
     @property
-    def items(self):
-        """Gets the items of this InlineResponse2007.  # noqa: E501
+    def hostname(self):
+        """Gets the hostname of this InlineResponse2007.  # noqa: E501
 
 
-        :return: The items of this InlineResponse2007.  # noqa: E501
-        :rtype: list[JobDefinition]
+        :return: The hostname of this InlineResponse2007.  # noqa: E501
+        :rtype: str
         """
-        return self._items
+        return self._hostname
 
-    @items.setter
-    def items(self, items):
-        """Sets the items of this InlineResponse2007.
+    @hostname.setter
+    def hostname(self, hostname):
+        """Sets the hostname of this InlineResponse2007.
 
 
-        :param items: The items of this InlineResponse2007.  # noqa: E501
-        :type: list[JobDefinition]
+        :param hostname: The hostname of this InlineResponse2007.  # noqa: E501
+        :type: str
         """
+        if hostname is None:
+            raise ValueError("Invalid value for `hostname`, must not be `None`")  # noqa: E501
 
-        self._items = items
+        self._hostname = hostname
 
     @property
-    def skip(self):
-        """Gets the skip of this InlineResponse2007.  # noqa: E501
+    def start_time(self):
+        """Gets the start_time of this InlineResponse2007.  # noqa: E501
 
 
-        :return: The skip of this InlineResponse2007.  # noqa: E501
-        :rtype: float
+        :return: The start_time of this InlineResponse2007.  # noqa: E501
+        :rtype: str
         """
-        return self._skip
+        return self._start_time
 
-    @skip.setter
-    def skip(self, skip):
-        """Sets the skip of this InlineResponse2007.
+    @start_time.setter
+    def start_time(self, start_time):
+        """Sets the start_time of this InlineResponse2007.
 
 
-        :param skip: The skip of this InlineResponse2007.  # noqa: E501
-        :type: float
+        :param start_time: The start_time of this InlineResponse2007.  # noqa: E501
+        :type: str
         """
-        if skip is None:
-            raise ValueError("Invalid value for `skip`, must not be `None`")  # noqa: E501
+        if start_time is None:
+            raise ValueError("Invalid value for `start_time`, must not be `None`")  # noqa: E501
 
-        self._skip = skip
+        self._start_time = start_time
 
     @property
-    def max_limit(self):
-        """Gets the max_limit of this InlineResponse2007.  # noqa: E501
+    def is_active(self):
+        """Gets the is_active of this InlineResponse2007.  # noqa: E501
 
 
-        :return: The max_limit of this InlineResponse2007.  # noqa: E501
-        :rtype: float
-        """
-        return self._max_limit
-
-    @max_limit.setter
-    def max_limit(self, max_limit):
-        """Sets the max_limit of this InlineResponse2007.
-
-
-        :param max_limit: The max_limit of this InlineResponse2007.  # noqa: E501
-        :type: float
-        """
-        if max_limit is None:
-            raise ValueError("Invalid value for `max_limit`, must not be `None`")  # noqa: E501
-
-        self._max_limit = max_limit
-
-    @property
-    def count(self):
-        """Gets the count of this InlineResponse2007.  # noqa: E501
-
-
-        :return: The count of this InlineResponse2007.  # noqa: E501
-        :rtype: float
-        """
-        return self._count
-
-    @count.setter
-    def count(self, count):
-        """Sets the count of this InlineResponse2007.
-
-
-        :param count: The count of this InlineResponse2007.  # noqa: E501
-        :type: float
-        """
-        if count is None:
-            raise ValueError("Invalid value for `count`, must not be `None`")  # noqa: E501
-
-        self._count = count
-
-    @property
-    def total_count(self):
-        """Gets the total_count of this InlineResponse2007.  # noqa: E501
-
-
-        :return: The total_count of this InlineResponse2007.  # noqa: E501
-        :rtype: float
-        """
-        return self._total_count
-
-    @total_count.setter
-    def total_count(self, total_count):
-        """Sets the total_count of this InlineResponse2007.
-
-
-        :param total_count: The total_count of this InlineResponse2007.  # noqa: E501
-        :type: float
-        """
-        if total_count is None:
-            raise ValueError("Invalid value for `total_count`, must not be `None`")  # noqa: E501
-
-        self._total_count = total_count
-
-    @property
-    def has_more(self):
-        """Gets the has_more of this InlineResponse2007.  # noqa: E501
-
-
-        :return: The has_more of this InlineResponse2007.  # noqa: E501
+        :return: The is_active of this InlineResponse2007.  # noqa: E501
         :rtype: bool
         """
-        return self._has_more
+        return self._is_active
 
-    @has_more.setter
-    def has_more(self, has_more):
-        """Sets the has_more of this InlineResponse2007.
+    @is_active.setter
+    def is_active(self, is_active):
+        """Sets the is_active of this InlineResponse2007.
 
 
-        :param has_more: The has_more of this InlineResponse2007.  # noqa: E501
+        :param is_active: The is_active of this InlineResponse2007.  # noqa: E501
         :type: bool
         """
-        if has_more is None:
-            raise ValueError("Invalid value for `has_more`, must not be `None`")  # noqa: E501
 
-        self._has_more = has_more
+        self._is_active = is_active
+
+    @property
+    def resources(self):
+        """Gets the resources of this InlineResponse2007.  # noqa: E501
+
+
+        :return: The resources of this InlineResponse2007.  # noqa: E501
+        :rtype: WorkerResources
+        """
+        return self._resources
+
+    @resources.setter
+    def resources(self, resources):
+        """Sets the resources of this InlineResponse2007.
+
+
+        :param resources: The resources of this InlineResponse2007.  # noqa: E501
+        :type: WorkerResources
+        """
+        if resources is None:
+            raise ValueError("Invalid value for `resources`, must not be `None`")  # noqa: E501
+
+        self._resources = resources
+
+    @property
+    def scheduler(self):
+        """Gets the scheduler of this InlineResponse2007.  # noqa: E501
+
+
+        :return: The scheduler of this InlineResponse2007.  # noqa: E501
+        :rtype: object
+        """
+        return self._scheduler
+
+    @scheduler.setter
+    def scheduler(self, scheduler):
+        """Sets the scheduler of this InlineResponse2007.
+
+
+        :param scheduler: The scheduler of this InlineResponse2007.  # noqa: E501
+        :type: object
+        """
+
+        self._scheduler = scheduler
+
+    @property
+    def key(self):
+        """Gets the key of this InlineResponse2007.  # noqa: E501
+
+
+        :return: The key of this InlineResponse2007.  # noqa: E501
+        :rtype: str
+        """
+        return self._key
+
+    @key.setter
+    def key(self, key):
+        """Sets the key of this InlineResponse2007.
+
+
+        :param key: The key of this InlineResponse2007.  # noqa: E501
+        :type: str
+        """
+
+        self._key = key
+
+    @property
+    def id(self):
+        """Gets the id of this InlineResponse2007.  # noqa: E501
+
+
+        :return: The id of this InlineResponse2007.  # noqa: E501
+        :rtype: str
+        """
+        return self._id
+
+    @id.setter
+    def id(self, id):
+        """Sets the id of this InlineResponse2007.
+
+
+        :param id: The id of this InlineResponse2007.  # noqa: E501
+        :type: str
+        """
+
+        self._id = id
+
+    @property
+    def rev(self):
+        """Gets the rev of this InlineResponse2007.  # noqa: E501
+
+
+        :return: The rev of this InlineResponse2007.  # noqa: E501
+        :rtype: str
+        """
+        return self._rev
+
+    @rev.setter
+    def rev(self, rev):
+        """Sets the rev of this InlineResponse2007.
+
+
+        :param rev: The rev of this InlineResponse2007.  # noqa: E501
+        :type: str
+        """
+
+        self._rev = rev
 
     def to_dict(self):
         """Returns the model properties as a dict"""

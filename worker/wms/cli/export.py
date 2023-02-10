@@ -68,7 +68,7 @@ def export_json(database_url, directory, force):
         else:
             filename = directory / f"{name}.json"
         with open(filename, "w") as f_out:
-            for item in _iter_values(func):
+            for item in _iter_values(name, func):
                 if name in ("events", "user_data"):
                     f_out.write(json.dumps(item))
                 else:
@@ -77,11 +77,14 @@ def export_json(database_url, directory, force):
         print(f"Exported {name} values to {filename}")
 
 
-def _iter_values(func):
+def _iter_values(name, func):
     skip = 0
     has_more = True
     while has_more:
-        result = func(skip=skip, limit=2)
+        if name in _EDGES:
+            result = func(name, skip=skip, limit=2)
+        else:
+            result = func(skip=skip, limit=2)
         assert result.count == len(result.items)
         for item in result.items:
             yield item
@@ -132,7 +135,7 @@ def sqlite(database_url, filename, force):
     for name, func in _get_db_documents(api).items():
         found_first = False
         rows = []
-        for item in _iter_values(func):
+        for item in _iter_values(name, func):
             row = item if isinstance(item, dict) else item.to_dict()
             if "to" in row:
                 row["_to"] = row.pop("to")
@@ -161,20 +164,29 @@ def _get_db_documents(api: DefaultApi):
         "hpc_configs": api.get_hpc_configs,
         "resource_requirements": api.get_resource_requirements,
         "results": api.get_results,
-        "blocks": api.get_blocks,
-        "needs": api.get_needs,
-        "produces": api.get_produces,
-        "requires": api.get_requires,
-        "results": api.get_results,
-        "returned": api.get_returned,
-        "scheduled_bys": api.get_scheduled_bys,
-        "stores": api.get_stores,
         "user_data": api.get_user_data,
+        "blocks": api.get_edges_name,
+        "needs": api.get_edges_name,
+        "produces": api.get_edges_name,
+        "requires": api.get_edges_name,
+        "returned": api.get_edges_name,
+        "scheduled_bys": api.get_edges_name,
+        "stores": api.get_edges_name,
     }
 
 
-_EDGES = {"blocks", "needs", "produces", "requires", "returned", "scheduled_bys", "stores"}
+_EDGES = {
+    "blocks",
+    "executed",
+    "needs",
+    "produces",
+    "requires",
+    "returned",
+    "scheduled_bys",
+    "stores",
+}
 _PRIMARY_KEYS = {
+    "executed": "key",
     "events": "key",
     "jobs": "name",
     "files": "name",
