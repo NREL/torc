@@ -11,7 +11,7 @@ from swagger_client.configuration import Configuration
 
 from wms.hpc.common import HpcType
 from wms.hpc.slurm_interface import SlurmInterface
-from wms.job_runner import JobRunner
+from wms.job_runner import JobRunner, convert_end_time_to_duration_str
 from wms.loggers import setup_logging
 
 logger = logging.getLogger(__name__)
@@ -41,7 +41,8 @@ def slurm_runner(database_url, output):
         "hpc_type": HpcType.SLURM.value,
     }
     end_time = _get_end_time(slurm_job_id)
-    runner = JobRunner(api, output, time_limit=end_time)
+    time_limit = convert_end_time_to_duration_str(end_time)
+    runner = JobRunner(api, output, time_limit=time_limit)
     logger.info("Start workflow")
     runner.run_worker(scheduler=scheduler)
     # TODO: schedule more nodes if needed
@@ -55,9 +56,7 @@ def _get_end_time(slurm_job_id, buffer_minutes=2):
 
     out = ret.stdout.decode("utf-8")
     timestamp = out.split("\n")[1].replace('"', "").strip()
-    return datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S") - timedelta(
-        minutes=buffer_minutes
-    )
+    return datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S") - timedelta(minutes=buffer_minutes)
 
 
 if __name__ == "__main__":

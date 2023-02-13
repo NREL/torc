@@ -1,10 +1,14 @@
 import logging
 import sys
+from datetime import datetime, timedelta
+from pathlib import Path
 
 import click
 from swagger_client import ApiClient, DefaultApi
 from swagger_client.configuration import Configuration
 
+from .common import check_output_directory
+from wms.job_runner import JobRunner
 from wms.loggers import setup_logging
 from wms.workflow_manager import WorkflowManager
 
@@ -39,4 +43,37 @@ def cancel(database_url):
     sys.exit(1)
 
 
+@click.command()
+@click.option(
+    "-o",
+    "--output",
+    default="output",
+    show_default=True,
+    callback=lambda *x: Path(x[2]),
+)
+@click.option(
+    "-f",
+    "--force",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Overwrite directory if it exists.",
+)
+@click.argument("database_url")
+def run_local(database_url, output, force):
+    """Run workflow jobs on a local system."""
+    logger = setup_logging(__name__)
+    check_output_directory(output, force)
+    configuration = Configuration()
+    configuration.host = database_url
+    api = DefaultApi(ApiClient(configuration))
+
+    mgr = WorkflowManager(api)
+    mgr.start()
+    runner = JobRunner(api, output)
+    logger.info("Start workflow")
+    runner.run_worker()
+
+
+workflow.add_command(run_local)
 workflow.add_command(start_workflow)

@@ -40,15 +40,9 @@ def diamond_workflow(tmp_path):
     f3 = FileModel(name="file3", path=str(output_dir / "f3.json"))
     f4 = FileModel(name="file4", path=str(output_dir / "f4.json"))
 
-    small = ResourceRequirementsModel(
-        name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
-    )
-    medium = ResourceRequirementsModel(
-        name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
-    )
-    large = ResourceRequirementsModel(
-        name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
-    )
+    small = ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT1H")
+    medium = ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H")
+    large = ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H")
 
     hpc_config = HpcConfigModel(
         name="debug", hpc_type="slurm", account="dsgrid", partition="debug"
@@ -98,7 +92,7 @@ def diamond_workflow(tmp_path):
     for file in workflow.files:
         path = Path(file.path)
         if path.exists():
-            file.file_hash = compute_file_hash(path)
+            # file.file_hash = compute_file_hash(path)
             file.st_mtime = path.stat().st_mtime
 
     api.post_workflow(workflow)
@@ -113,9 +107,7 @@ def independent_job_workflow(num_jobs):
     api = _initialize_api()
     api.delete_workflow()
 
-    small = ResourceRequirementsModel(
-        name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
-    )
+    small = ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT1H")
     jobs = []
     for i in range(num_jobs):
         job = JobDefinition(
@@ -185,7 +177,6 @@ def completed_workflow(diamond_workflow):
         path = Path(file.path)
         if not path.exists():
             path.touch()
-            file.file_hash = compute_file_hash(path)
             file.st_mtime = path.stat().st_mtime
             api.put_files_name(file, file.name)
 
@@ -214,7 +205,7 @@ def incomplete_workflow(diamond_workflow):
             path = Path(file.path)
             if not path.exists():
                 path.touch()
-                file.file_hash = compute_file_hash(path)
+                # file.file_hash = compute_file_hash(path)
                 file.st_mtime = path.stat().st_mtime
                 api.put_files_name(file, file.name)
 

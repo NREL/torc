@@ -3,8 +3,6 @@ import logging
 import socket
 from pathlib import Path
 
-from wms.utils.files import compute_file_hash
-
 
 logger = logging.getLogger(__name__)
 
@@ -72,22 +70,18 @@ class WorkflowManager:
         for file in self._api.get_files().items:
             path = Path(file.path)
             old = {
-                "exists": bool(file.file_hash or file.st_mtime),
-                "hash": file.file_hash,
+                "exists": file.st_mtime is not None,
                 "st_mtime": file.st_mtime,
             }
             new = {
                 "exists": path.exists(),
-                "hash": None,
                 "st_mtime": None,
             }
             if new["exists"]:
-                new["hash"] = compute_file_hash(path)
                 new["st_mtime"] = path.stat().st_mtime
             changed = not old == new
             if changed:
-                if file.file_hash or file.st_mtime and not new["exists"]:
-                    file.file_hash = None
+                if file.st_mtime and not new["exists"]:
                     file.st_mtime = None
                     self._api.put_files_name(file, file.name)
                     logger.info("File %s was removed. Cleared file stats", file.name)
@@ -119,9 +113,7 @@ class WorkflowManager:
         for job in self._api.get_jobs_find_by_needs_file_name(file.name).items:
             if job.status in ("done", "canceled"):
                 status = "uninitialized"
-                self._api.put_jobs_manage_status_change_name_status_rev(
-                    job.name, status, job._rev
-                )
+                self._api.put_jobs_manage_status_change_name_status_rev(job.name, status, job._rev)
                 logger.info(
                     "Changed job %s from %s to %s after input file change",
                     job.name,

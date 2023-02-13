@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 import socket
@@ -212,10 +213,6 @@ class JobRunner:
         self._log_job_start_event(job.name)
 
     def _run_ready_jobs(self):
-        # TODO: units are not straightforward
-        self._resources.time_limit = timedelta_isoformat(
-            self._orig_resources.time_limit - datetime.now()
-        )
         ready_jobs = self._api.post_workflow_prepare_jobs_for_submission(self._resources)
         logger.info("%s jobs are ready for submission", len(ready_jobs))
         for job in ready_jobs:
@@ -238,7 +235,7 @@ class JobRunner:
     def _update_file_info(self, job):
         for file in self._api.get_files_produced_by_job_name(job.name).items:
             path = make_path(file.path)
-            file.file_hash = compute_file_hash(path)
+            # file.file_hash = compute_file_hash(path)
             file.st_mtime = path.stat().st_mtime
             self._api.put_files_name(file, file.name)
 
@@ -285,6 +282,11 @@ def get_memory_in_bytes(memory: str):
 # This pydantic code will convert ISO 8601 duration strings to timedelta.
 class _TimeLimitModel(BaseModel):
     time_limit: timedelta
+
+
+def convert_end_time_to_duration_str(end_time: datetime):
+    duration = end_time - datetime.now()
+    return json.loads(_TimeLimitModel(time_limit=duration).json())["time_limit"]
 
 
 def _get_timeout(time_limit):
