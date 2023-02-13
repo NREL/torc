@@ -56,6 +56,14 @@ setup(
     test_suite="tests",
     install_requires=["click", "json5", "psutil", "prettytable", "pydantic", "s3path"],
     extras_require={
-        "dev": ["black", "flake8", "pytest", "pytest-cov", "sphinx-rtd-theme", "sphinx"],
+        "dev": [
+            "black",
+            "flake8",
+            "ghp-import",
+            "pytest",
+            "pytest-cov",
+            "sphinx-rtd-theme",
+            "sphinx",
+        ],
     },
 )
