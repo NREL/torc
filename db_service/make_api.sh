@@ -2,12 +2,17 @@ if [ -z ${SWAGGER_CODEGEN_CLI} ]; then
     echo "Please define the path to the generator in the environment variable SWAGGER_CODEGEN_CLI."
     exit 1
 fi
+
+if [ -z ${WMS_URL} ]; then
+    export WMS_URL=http://localhost:8529
+fi
+
 rm -f swagger.json openapi.yaml
 user="root"
 if [ ! -z ${WMS_PASSWORD} ]; then
     user="${user}:${WMS_PASSWORD}"
 fi
-swagger=$(curl -u ${user} --silent -X GET http://localhost:8529/_db/workflows/_admin/aardvark/foxxes/docs/swagger.json\?mount\=%2Fwms-service)
+swagger=$(curl -u ${user} --silent -X GET ${WMS_URL}/_db/workflows/_admin/aardvark/foxxes/docs/swagger.json\?mount\=%2Fwms-service)
 ret=$?
 if [ $ret -ne 0 ]; then
     echo "Failed to download swagger.json"
@@ -57,7 +62,7 @@ swap_text "s/workflow_jobs/job_definition2/g"  # Is there a way to eliminate the
 swap_text "s/workflow_prepare_jobs_for_submission_body/worker_resources/g"
 rm swagger.json
 
-python_dir=../python_client
+python_dir=python_client
 rm -rf $python_dir
 mkdir $python_dir
 java -jar ${SWAGGER_CODEGEN_CLI} generate --lang=python --input-spec=openapi.yaml -o $python_dir
