@@ -54,8 +54,8 @@ setup(
         "Programming Language :: Python :: 3.10",
     ],
     test_suite="tests",
-    extras_require={
-        "dev": ["black", "flake8", "pytest"],
-    },
     install_requires=["click", "json5", "psutil", "prettytable", "pydantic", "s3path"],
+    extras_require={
+        "dev": ["black", "flake8", "pytest", "pytest-cov", "sphinx-rtd-theme", "sphinx"],
+    },
 )
