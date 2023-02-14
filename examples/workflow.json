@@ -1,0 +1,64 @@
+{
+  "files": [
+    {
+      "name": "work_script",
+      "path": "my_script.sh"
+    },
+    {
+      "name": "postprocess_script",
+      "path": "postprocess.sh"
+    },
+    {
+      "name": "f1",
+      "path": "dir/f1.json"
+    },
+    {
+      "name": "f2",
+      "path": "dir/f2.json"
+    },
+    {
+      "name": "f3",
+      "path": "dir/f3.json"
+    }
+  ],
+  "jobs": [
+    {
+      "name": "work",
+      "command": "bash my_script.sh -i f1.json -o f2.json",
+      "input_files": [
+        "work_script",
+        "f1"
+      ],
+      "output_files": [
+        "f2"
+      ],
+      "resource_requirements": "medium"
+    },
+    {
+      "name": "postprocess",
+      "command": "bash postprocess.sh -i f2.json -o f3.json",
+      "input_files": [
+        "postprocess_script",
+        "f2"
+      ],
+      "output_files": [
+        "f3"
+      ],
+      "resource_requirements": "small"
+    }
+  ],
+  "resource_requirements": [
+    {
+      "name": "small",
+      "num_cpus": 1,
+      "memory": "10g",
+      "runtime": "P0DT1H"
+    },
+    {
+      "name": "medium",
+      "num_cpus": 8,
+      "memory": "30g",
+      "runtime": "P0DT4H"
+    }
+  ]
+}
