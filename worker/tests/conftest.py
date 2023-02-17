@@ -13,7 +13,7 @@ from swagger_client.models.resource_requirements_model import ResourceRequiremen
 from swagger_client.models.workflow import Workflow
 from swagger_client.models.result_model import ResultModel
 
-from wms.utils.files import compute_file_hash
+from wms.utils.timing import timer_stats_collector
 
 
 TEST_WORKFLOW = "test_workflow"
@@ -27,6 +27,7 @@ NOOP = Path("tests") / "scripts" / "noop.py"
 @pytest.fixture
 def diamond_workflow(tmp_path):
     """Creates a diamond workflow out of 4 jobs."""
+    timer_stats_collector.enable()
     api = _initialize_api()
     api.delete_workflow()
     output_dir = tmp_path / "output"
