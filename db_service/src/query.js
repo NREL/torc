@@ -722,55 +722,38 @@ function prepareJobsForSubmission(workerResources, limit) {
     workerResources.time_limit == null ?
       null : utils.getTimeDurationInSeconds(workerResources.time_limit);
   // TODO: numNodes and numGpus
-  const checkedJobs = new Set();
-  let attemptsRemaining = 10;
-  let conflictOccurred = false;
-  do {
-    conflictOccurred = false;
-    for (const job of graph.jobs.byExample({status: JobStatus.Ready})) {
-      if (job.name in checkedJobs) {
-        continue;
-      }
-      const jobResources = getJobResourceRequirements(job);
-      const jobMemory = utils.getMemoryInBytes(jobResources.memory);
-      if (workerTimeLimit != null) {
-        jobRuntime = utils.getTimeDurationInSeconds(jobResources.runtime);
-        if (jobRuntime > workerTimeLimit) {
-          checkedJobs.add(job.name);
-          continue;
-        }
-      }
-      if (jobResources.num_cpus <= availableCpus && jobMemory <= availableMemory) {
-        job.status = JobStatus.SubmittedPending;
-        try {
-          const meta = graph.jobs.update(job, job);
-          Object.assign(job, meta);
-        } catch (e) {
-          if (e.isArangoError && e.errorNum === CONFLICTING_REV) {
-            console.log(`Job ${job.name} was changed by another submitter.`);
-            conflictOccurred = true;
+  db._executeTransaction({
+    collections: {
+      exclusive: 'jobs',
+      read: ['requires', 'resource_requirements'],
+    },
+    action: function() {
+      const db = require('@arangodb').db;
+      for (const job of db.jobs.byExample({status: JobStatus.Ready})) {
+        const jobResources = getJobResourceRequirements(job);
+        const jobMemory = utils.getMemoryInBytes(jobResources.memory);
+        if (workerTimeLimit != null) {
+          jobRuntime = utils.getTimeDurationInSeconds(jobResources.runtime);
+          if (jobRuntime > workerTimeLimit) {
             continue;
-          } else {
-            throw (e);
           }
         }
-        jobs.push(job);
-        availableCpus -= jobResources.num_cpus;
-        availableMemory -= jobMemory;
-        if (availableCpus == 0 || availableMemory == 0 || (limit != null && jobs.length >= limit)) {
-          break;
+        if (jobResources.num_cpus <= availableCpus && jobMemory <= availableMemory) {
+          job.status = JobStatus.SubmittedPending;
+          const meta = db.jobs.update(job, job);
+          Object.assign(job, meta);
+          jobs.push(job);
+          availableCpus -= jobResources.num_cpus;
+          availableMemory -= jobMemory;
+          if (availableCpus == 0 || availableMemory == 0 || (limit != null && jobs.length >= limit)) {
+            break;
+          }
         }
-      } else {
-        checkedJobs.add(job.name);
       }
-    }
-    attemptsRemaining--;
-  } while (attemptsRemaining > 0 && conflictOccurred);
+    },
+  });
 
   console.log(`Prepared ${jobs.length} jobs for submission.`);
-  if (attemptsRemaining == 0 && conflictOccurred) {
-    console.log(`Warning: received conflicting revisions on ${attemptsRemaining} passes. May not have prepared all possible jobs.`);
-  }
   return jobs;
 }
 
