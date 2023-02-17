@@ -55,6 +55,7 @@ The web UI is particularly useful for running queries and visualizing workflow g
    installation
    usage
    architecture
+   job_input_parameters
 
 
 Indices and tables
