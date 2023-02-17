@@ -167,6 +167,5 @@ This example will show only job names and status.
 
 Cloud Compute Nodes
 -------------------
-We currently do not any automated support for worker scheduling or job execution, but plan to add
-it soon. The existing SLURM script can easily be adapted to pull and run jobs from nodes that you
-allocate.
+We currently do not perform compute node scheduling, but plan to add it soon. The existing ``wms
+workflow run-local`` command will work on an allocated node.

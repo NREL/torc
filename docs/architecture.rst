@@ -51,6 +51,33 @@ Documents
 
 Users can post their own events. Common structure is TBD.
 
+Job Statuses
+============
+- **uninitialized**: Initial state. Not yet known if it is blocked or ready.
+- **ready**: The job can be submitted.
+- **blocked**: The job cannot start because of dependencies.
+- **submitted_pending**: The job was given to a compute node but is not yet running.
+- **submitted**: The job is running on a compute node.
+- **interrupted**: Compute node timeout occurred and the job was notified to checkpoint and shut down.
+- **done**: The job finished. It may or may not have completed successfully.
+- **canceled**: A blocking job failed and so the job never ran.
+
+.. graphviz::
+
+   digraph job_statuses {
+      "uninitialized" -> "ready";
+      "uninitialized" -> "blocked";
+      "ready" -> "submitted_pending";
+      "submitted_pending" -> "submitted";
+      "submitted" -> "done";
+      "submitted" -> "interrupted";
+      "blocked" -> "canceled";
+      "blocked" -> "ready";
+   }
+
+.. raw:: html
+
+   <hr>
 
 Worker nodes
 ============
