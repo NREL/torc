@@ -17,7 +17,7 @@ from swagger_client.models.worker_resources import WorkerResources
 from .common import KiB, MiB, GiB, TiB
 from .async_cli_command import AsyncCliCommand
 from wms.utils.filesystem_factory import make_path
-from wms.utils.timing import timer_stats_collector, track_timing, Timer
+from wms.utils.timing import timer_stats_collector, Timer
 
 logger = logging.getLogger(__name__)
 
@@ -110,7 +110,6 @@ class JobRunner:
                 "message": f"Worker completed on {hostname}",
             }
         )
-        timer_stats_collector.log_stats()
 
     def wait(self):
         """Return once all jobs have completed."""
@@ -250,8 +249,7 @@ class JobRunner:
 
 def _get_system_resources(time_limit):
     return WorkerResources(
-        #num_cpus=psutil.cpu_count(),
-        num_cpus=36,
+        num_cpus=psutil.cpu_count(),
         memory_gb=psutil.virtual_memory().total / GiB,
         num_nodes=1,
         time_limit=time_limit,
@@ -306,7 +304,6 @@ def _get_timeout(time_limit):
     )
 
 
-@track_timing(timer_stats_collector)
 def send_api_command(func, *args, **kwargs):
     with Timer(timer_stats_collector, func.__name__):
         return func(*args, **kwargs)
