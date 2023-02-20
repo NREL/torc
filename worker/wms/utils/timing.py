@@ -3,7 +3,9 @@
 import functools
 import logging
 import time
+from pathlib import Path
 
+from wms.utils.files import dump_line_delimited_json
 
 logger = logging.getLogger(__name__)
 
@@ -183,6 +185,25 @@ class TimerStatsCollector:
         """Return True if timing is enabled."""
         return self._is_enabled
     
+    def log_json_stats(self, filename: Path, clear=False):
+        """Log line-delimited JSON stats to filename.
+
+        Parameters
+        ----------
+        filename: Path
+        clear : bool
+            If True, clear all stats.
+        """
+        if self._is_enabled:
+            rows = []
+            for name, stat in self._stats.items():
+                row = {"name": name}
+                row.update(stat.get_stats())
+                rows.append(row)
+            dump_line_delimited_json(rows, filename, mode="a")
+            if clear:
+                self._stats.clear()
+
     def log_stats(self, clear=False):
         """Log statistics for all tracked stats.
 
@@ -190,7 +211,6 @@ class TimerStatsCollector:
         ----------
         clear : bool
             If True, clear all stats.
-
         """
         if self._is_enabled:
             for stat in self._stats.values():

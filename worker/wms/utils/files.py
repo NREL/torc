@@ -114,15 +114,17 @@ def _get_module_from_extension(filename, **kwargs):
     return mod
 
 
-def dump_line_delimited_json(data, filename):
+def dump_line_delimited_json(data, filename, mode="w"):
     """Dump a list of objects to the file as line-delimited JSON.
 
     Parameters
     ----------
     data : list
     filename : str
+    mode : str
+        Mode with which to open file, defaults to write.
     """
-    with open(filename, "w") as f_out:
+    with open(filename, mode) as f_out:
         for obj in data:
             f_out.write(json.dumps(obj))
             f_out.write("\n")

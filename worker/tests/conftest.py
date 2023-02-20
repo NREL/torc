@@ -13,8 +13,6 @@ from swagger_client.models.resource_requirements_model import ResourceRequiremen
 from swagger_client.models.workflow import Workflow
 from swagger_client.models.result_model import ResultModel
 
-from wms.utils.timing import timer_stats_collector
-
 
 TEST_WORKFLOW = "test_workflow"
 PREPROCESS = Path("tests") / "scripts" / "preprocess.py"
@@ -27,7 +25,6 @@ NOOP = Path("tests") / "scripts" / "noop.py"
 @pytest.fixture
 def diamond_workflow(tmp_path):
     """Creates a diamond workflow out of 4 jobs."""
-    timer_stats_collector.enable()
     api = _initialize_api()
     api.delete_workflow()
     output_dir = tmp_path / "output"
@@ -108,7 +105,7 @@ def independent_job_workflow(num_jobs):
     api = _initialize_api()
     api.delete_workflow()
 
-    small = ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT1H")
+    small = ResourceRequirementsModel(name="small", num_cpus=1, memory="1m", runtime="P0DT0H1M")
     jobs = []
     for i in range(num_jobs):
         job = JobDefinition(

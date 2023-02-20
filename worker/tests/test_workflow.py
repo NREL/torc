@@ -9,6 +9,7 @@ from swagger_client.models.worker_resources import WorkerResources
 
 from wms.common import GiB
 from wms.job_runner import JobRunner
+from wms.utils.timing import timer_stats_collector
 from wms.workflow_manager import WorkflowManager
 
 
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 
 def test_run_workflow(diamond_workflow):
     api, output_dir = diamond_workflow
+    timer_stats_collector.enable()
     user_data_work1 = api.get_jobs_get_user_data_name("work1")
     assert len(user_data_work1) == 1
     assert user_data_work1[0]["key1"] == "val1"
@@ -39,6 +41,13 @@ def test_run_workflow(diamond_workflow):
     events = api.get_events().items
     # start for workflow, start and stop for worker, start and stop for each job
     assert len(events) == 1 + 2 * 4 + 2
+
+    timer_stats_collector.log_stats()
+    stats_file = output_dir / "stats.json"
+    assert not stats_file.exists()
+    timer_stats_collector.log_json_stats(stats_file, clear=True)
+    assert stats_file.exists()
+    timer_stats_collector.log_stats(clear=True)
 
 
 @pytest.mark.parametrize("cancel_on_blocking_job_failure", [True, False])
