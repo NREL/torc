@@ -37,7 +37,6 @@ router.get('/hpc_configs/:name', function(req, res) {
     }
   } else {
     const data = graph.hpc_configs.document(req.pathParams.name);
-    console.log(`TODO data is ${JSON.stringify(data)}`);
     res.send(data);
   }
 })

@@ -1,9 +1,8 @@
 const joi = require('joi');
 const db = require('@arangodb').db;
 const graphModule = require('@arangodb/general-graph');
-const defs = require('../defs');
-const JobStatus = require('../defs').JobStatus;
-const graph = graphModule._graph(defs.GRAPH_NAME);
+const {GRAPH_NAME, JobStatus, MAX_TRANSFER_RECORDS} = require('../defs');
+const graph = graphModule._graph(GRAPH_NAME);
 const query = require('../query');
 const schemas = require('./schemas');
 const createRouter = require('@arangodb/foxx/router');
@@ -107,6 +106,7 @@ router.post('/workflow/prepare_jobs_for_submission', function(req, res) {
   const jobs = query.prepareJobsForSubmission(resources, qp.limit);
   res.send(jobs);
 })
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
     .body(schemas.workerResources, 'Available worker resources.')
     .response(joi.array().items(schemas.job), 'Jobs that are ready for submission.')
     .summary('Return ready jobs')

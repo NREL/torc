@@ -27,7 +27,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 100.0
+          default: 1000.0
       responses:
         "200":
           description: HTTP 200 OK.
@@ -330,6 +330,15 @@ paths:
       summary: Return ready jobs
       description: Return jobs that are ready for submission. Sets status to submitted_pending
       operationId: post_workflow_prepare_jobs_for_submission
+      parameters:
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 1000.0
       requestBody:
         description: Available worker resources.
         content:
@@ -421,7 +430,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 100.0
+          default: 1000.0
       responses:
         "200":
           description: HTTP 200 OK.
@@ -610,7 +619,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 100.0
+          default: 1000.0
       responses:
         "200":
           description: HTTP 200 OK.
@@ -806,7 +815,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 100.0
+          default: 1000.0
       responses:
         "200":
           description: HTTP 200 OK.
@@ -843,7 +852,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 100.0
+          default: 1000.0
       responses:
         "200":
           description: HTTP 200 OK.
@@ -996,7 +1005,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 100.0
+          default: 1000.0
       responses:
         "200":
           description: HTTP 200 OK.
@@ -1029,7 +1038,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_5'
+                $ref: '#/components/schemas/inline_response_200_11'
         "500":
           description: Default error response.
           content:
@@ -1059,7 +1068,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_5'
+                $ref: '#/components/schemas/inline_response_200_11'
         "500":
           description: Default error response.
           content:
@@ -1089,14 +1098,14 @@ paths:
         explode: true
         schema:
           type: number
-          default: 100.0
+          default: 1000.0
       responses:
         "200":
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_11'
+                $ref: '#/components/schemas/inline_response_200_12'
         "500":
           description: Default error response.
           content:
@@ -1122,7 +1131,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/job_model'
+                $ref: '#/components/schemas/inline_response_200_11'
         "500":
           description: Default error response.
           content:
@@ -1178,7 +1187,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/job_model'
+                $ref: '#/components/schemas/inline_response_200_11'
         "500":
           description: Default error response.
           content:
@@ -1212,7 +1221,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/job_model'
+                $ref: '#/components/schemas/inline_response_200_11'
         "500":
           description: Default error response.
           content:
@@ -1247,7 +1256,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/job_model'
+                $ref: '#/components/schemas/inline_response_200_11'
         "500":
           description: Default error response.
           content:
@@ -1286,14 +1295,14 @@ paths:
         explode: true
         schema:
           type: number
-          default: 100.0
+          default: 1000.0
       responses:
         "200":
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_11'
+                $ref: '#/components/schemas/inline_response_200_12'
         "500":
           description: Default error response.
           content:
@@ -1331,14 +1340,14 @@ paths:
         explode: true
         schema:
           type: number
-          default: 100.0
+          default: 1000.0
       responses:
         "200":
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_11'
+                $ref: '#/components/schemas/inline_response_200_12'
         "500":
           description: Default error response.
           content:
@@ -1416,7 +1425,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/job_model'
+                $ref: '#/components/schemas/inline_response_200_11'
         "500":
           description: Default error response.
           content:
@@ -1463,7 +1472,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/job_model'
+                $ref: '#/components/schemas/inline_response_200_11'
         "500":
           description: Default error response.
           content:
@@ -1579,14 +1588,14 @@ paths:
         explode: true
         schema:
           type: number
-          default: 100.0
+          default: 1000.0
       responses:
         "200":
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_12'
+                $ref: '#/components/schemas/inline_response_200_13'
         "500":
           description: Default error response.
           content:
@@ -1733,14 +1742,14 @@ paths:
         explode: true
         schema:
           type: number
-          default: 100.0
+          default: 1000.0
       responses:
         "200":
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_13'
+                $ref: '#/components/schemas/inline_response_200_14'
         "500":
           description: Default error response.
           content:
@@ -1917,7 +1926,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 100.0
+          default: 1000.0
       responses:
         "200":
           description: HTTP 200 OK.
@@ -2079,14 +2088,14 @@ paths:
         explode: true
         schema:
           type: number
-          default: 100.0
+          default: 1000.0
       responses:
         "200":
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_14'
+                $ref: '#/components/schemas/inline_response_200_15'
         "500":
           description: Default error response.
           content:
@@ -2247,29 +2256,45 @@ paths:
       x-codegen-request-body-name: body
 components:
   schemas:
-    inline_response_200_11:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
+    workflowprepare_jobs_for_submission_internal:
       type: object
       properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/job_model'
-        skip:
+        memory_bytes:
           type: number
-        max_limit:
+        num_cpus:
           type: number
-        count:
+        num_gpus:
           type: number
-        total_count:
+        runtime_seconds:
           type: number
-        has_more:
+    inline_response_200_11:
+      required:
+      - command
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        command:
+          type: string
+        status:
+          type: string
+        cancel_on_blocking_job_failure:
           type: boolean
+          default: true
+        interruptible:
+          type: boolean
+          default: false
+        runtime_seconds:
+          type: number
+        internal:
+          $ref: '#/components/schemas/workflowprepare_jobs_for_submission_internal'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
     inline_response_200_10:
       required:
       - count
@@ -2305,7 +2330,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/result_model'
+            $ref: '#/components/schemas/resource_requirements_model'
         skip:
           type: number
         max_limit:
@@ -2328,7 +2353,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/resource_requirements_model'
+            $ref: '#/components/schemas/job_model'
         skip:
           type: number
         max_limit:
@@ -2390,7 +2415,7 @@ components:
           type: string
         _rev:
           type: string
-    inline_response_200_14:
+    inline_response_200_15:
       required:
       - count
       - has_more
@@ -2403,6 +2428,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/edge_model'
+        skip:
+          type: number
+        max_limit:
+          type: number
+        count:
+          type: number
+        total_count:
+          type: number
+        has_more:
+          type: boolean
+    inline_response_200_14:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/result_model'
         skip:
           type: number
         max_limit:
@@ -2666,6 +2714,10 @@ components:
         interruptible:
           type: boolean
           default: false
+        runtime_seconds:
+          type: number
+        internal:
+          $ref: '#/components/schemas/workflowprepare_jobs_for_submission_internal'
         _key:
           type: string
         _id:
@@ -2796,6 +2848,10 @@ components:
         interruptible:
           type: boolean
           default: false
+        runtime_seconds:
+          type: number
+        internal:
+          $ref: '#/components/schemas/workflowprepare_jobs_for_submission_internal'
         _key:
           type: string
         _id:

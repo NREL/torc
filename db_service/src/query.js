@@ -1,7 +1,5 @@
 const {query} = require('@arangodb');
 const db = require('@arangodb').db;
-const errors = require('@arangodb').errors;
-const CONFLICTING_REV = errors.ERROR_ARANGO_CONFLICT.code;
 const graphModule = require('@arangodb/general-graph');
 const {GiB, GRAPH_NAME, JobStatus} = require('./defs');
 const graph = graphModule._graph(GRAPH_NAME);
@@ -141,6 +139,7 @@ function addJobDefinition(jobDef) {
     user_data: jobDef.user_data,
     cancel_on_blocking_job_failure: jobDef.cancel_on_blocking_job_failure,
     interruptible: jobDef.interruptible,
+    internal: schemas.jobInternal.validate({}).value,
   });
   for (const filename of jobDef.input_files) {
     const file = graph.files.document(filename);
@@ -603,6 +602,13 @@ function getUserDataStoredByJob(jobName) {
 function initializeJobStatus() {
   // TODO: Can this be more efficient with one traversal?
   for (const job of graph.jobs.all()) {
+    const jobResources = getJobResourceRequirements(job);
+    if (job.internal == null) {
+      job.internal = schemas.jobInternal.validate({}).value;
+    }
+    job.internal.memory_bytes = utils.getMemoryInBytes(jobResources.memory);
+    job.internal.runtime_seconds = utils.getTimeDurationInSeconds(jobResources.runtime);
+    job.internal.num_cpus = jobResources.num_cpus;
     if (isJobInitiallyBlocked(job._id)) {
       job.status = JobStatus.Blocked;
     } else if (job.status != JobStatus.Done) {
@@ -718,34 +724,42 @@ function prepareJobsForSubmission(workerResources, limit) {
   const jobs = [];
   let availableCpus = workerResources.num_cpus;
   let availableMemory = workerResources.memory_gb * GiB;
+  const queryLimit = limit == null ? availableCpus : limit;
   const workerTimeLimit =
     workerResources.time_limit == null ?
-      null : utils.getTimeDurationInSeconds(workerResources.time_limit);
+      Number.MAX_SAFE_INTEGER : utils.getTimeDurationInSeconds(workerResources.time_limit);
   // TODO: numNodes and numGpus
   db._executeTransaction({
     collections: {
       exclusive: 'jobs',
-      read: ['requires', 'resource_requirements'],
+      allowImplicit: false,
     },
     action: function() {
       const db = require('@arangodb').db;
-      for (const job of db.jobs.byExample({status: JobStatus.Ready})) {
-        const jobResources = getJobResourceRequirements(job);
-        const jobMemory = utils.getMemoryInBytes(jobResources.memory);
-        if (workerTimeLimit != null) {
-          jobRuntime = utils.getTimeDurationInSeconds(jobResources.runtime);
-          if (jobRuntime > workerTimeLimit) {
-            continue;
-          }
-        }
-        if (jobResources.num_cpus <= availableCpus && jobMemory <= availableMemory) {
+      const cursor = query`
+        FOR job IN jobs
+          FILTER job.status == ${JobStatus.Ready}
+            && job.internal.memory_bytes < ${availableMemory}
+            && job.internal.num_cpus < ${availableCpus}
+            && job.internal.runtime_seconds < ${workerTimeLimit}
+          LIMIT ${queryLimit}
+          RETURN job
+      `;
+
+      // This implementation stores the job resource information in the internal object
+      // so that it doesn't have to run a graph query while holding an exclusive lock.
+      for (const job of cursor) {
+        if (
+          job.internal.num_cpus <= availableCpus &&
+          job.internal.memory_bytes <= availableMemory
+        ) {
           job.status = JobStatus.SubmittedPending;
           const meta = db.jobs.update(job, job);
           Object.assign(job, meta);
           jobs.push(job);
-          availableCpus -= jobResources.num_cpus;
-          availableMemory -= jobMemory;
-          if (availableCpus == 0 || availableMemory == 0 || (limit != null && jobs.length >= limit)) {
+          availableCpus -= job.internal.num_cpus;
+          availableMemory -= job.internal.memory_bytes;
+          if (availableCpus == 0 || availableMemory == 0) {
             break;
           }
         }
@@ -753,7 +767,7 @@ function prepareJobsForSubmission(workerResources, limit) {
     },
   });
 
-  console.log(`Prepared ${jobs.length} jobs for submission.`);
+  // console.log(`Prepared ${jobs.length} jobs for submission.`);
   return jobs;
 }
 

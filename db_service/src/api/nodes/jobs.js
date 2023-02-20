@@ -15,7 +15,8 @@ module.exports = router;
 
 router.post('/jobs', function(req, res) {
   const doc = query.addJob(req.body);
-  console.log(`Added job ${doc.name}`);
+  // console.log(`Added job ${doc.name}`);
+  res.send(convertJobforApi(doc));
 })
     .body(schemas.job, 'job to store in the collection.')
     .response(schemas.job, 'job stored in the collection.')
@@ -34,7 +35,7 @@ router.put('/jobs/:name', function(req, res) {
     }
     const meta = db.jobs.update(doc, doc);
     Object.assign(doc, meta);
-    res.send(doc);
+    res.send(convertJobforApi(doc));
   } catch (e) {
     if (!e.isArangoError || e.errorNum !== DOC_NOT_FOUND) {
       throw e;
@@ -49,8 +50,8 @@ router.put('/jobs/:name', function(req, res) {
 
 router.get('/jobs/:name', function(req, res) {
   try {
-    const cursor = graph.jobs.document(req.pathParams.name);
-    res.send(cursor);
+    const doc = graph.jobs.document(req.pathParams.name);
+    res.send(convertJobforApi(doc));
   } catch (e) {
     if (!e.isArangoError || e.errorNum !== DOC_NOT_FOUND) {
       throw e;
@@ -66,7 +67,10 @@ router.get('/jobs/:name', function(req, res) {
 router.get('/jobs', function(req, res) {
   const qp = req.queryParams;
   const limit = getItemsLimit(qp.limit);
-  const items = graph.jobs.all().skip(qp.skip).limit(limit).toArray();
+  const items = [];
+  for (const job of graph.jobs.all().skip(qp.skip).limit(limit)) {
+    items.push(convertJobforApi(job));
+  }
   res.send(makeCursorResult(items, qp.skip, limit, graph.jobs.count()));
 })
     .queryParam('skip', joi.number().default(0))
@@ -91,7 +95,10 @@ router.get('/jobs/find_by_status/:status', function(req, res) {
   const qp = req.queryParams;
   const limit = getItemsLimit(qp.limit);
   const cursor = graph.jobs.byExample({status: req.pathParams.status});
-  const items = cursor.skip(qp.skip).limit(limit).toArray();
+  const items = [];
+  for (const job of cursor.skip(qp.skip).limit(limit)) {
+    items.push(convertJobforApi(job));
+  }
   res.send(makeCursorResult(items, qp.skip, limit, cursor.count()));
 })
     .pathParam('status', joi.string().required(), 'Job status.')
@@ -116,7 +123,7 @@ router.get('/jobs/find_by_needs_file/:name', function(req, res) {
       i++;
       continue;
     }
-    items.push(item);
+    items.push(convertJobforApi(item));
     if (items.length == limit) {
       break;
     }
@@ -132,9 +139,9 @@ router.get('/jobs/find_by_needs_file/:name', function(req, res) {
 
 router.delete('/jobs/:name', function(req, res) {
   try {
-    const cursor = graph.jobs.document(req.pathParams.name);
+    const doc = graph.jobs.document(req.pathParams.name);
     db._remove(`jobs/${req.pathParams.name}`);
-    res.send(cursor);
+    res.send(convertJobforApi(doc));
   } catch (e) {
     if (!e.isArangoError || e.errorNum !== DOC_NOT_FOUND) {
       throw e;
@@ -205,7 +212,7 @@ router.post('jobs/complete_job/:name/:status/:rev', function(req, res) {
   const result = query.addResult(req.body);
   graph.returned.save({_from: job._id, _to: result._id});
   const updatedJob = query.manageJobStatusChange(job);
-  res.send(updatedJob);
+  res.send(convertJobforApi(updatedJob));
 })
     .body(schemas.result, 'Result of the job.')
     .response(schemas.job, 'job completed in the collection.')
@@ -225,7 +232,7 @@ router.put('jobs/manage_status_change/:name/:status/:rev', function(req, res) {
   }
   job.status = status;
   const updatedJob = query.manageJobStatusChange(job);
-  res.send(updatedJob);
+  res.send(convertJobforApi(updatedJob));
 })
     .response(schemas.job, 'Updated job.')
     .summary('Change the status of a job and manage side effects.')
@@ -255,3 +262,15 @@ router.get('jobs/get_user_data/:name', function(req, res) {
     .response(joi.object().required(), 'All user data stored for the job.')
     .summary('Retrieve all user data for a job.')
     .description('Retrieve all user data for a job.');
+
+/**
+ * Convert the job for delivery to an API client.
+ * @param {Object} job
+ * @return {Object}
+ */
+function convertJobforApi(job) {
+  console.log(`before ${JSON.stringify(job)}`);
+  delete job.internal;
+  console.log(`after ${JSON.stringify(job)}`);
+  return job;
+}

@@ -31,12 +31,23 @@ const hpcConfig = joi.object().required().keys({
   _rev: joi.string(),
 });
 
+const jobInternal = joi.object().required().keys({
+  memory_bytes: joi.number().default(0.0),
+  num_cpus: joi.number().default(0.0),
+  num_gpus: joi.number().default(0.0),
+  runtime_seconds: joi.number().default(0.0),
+});
+
 const job = joi.object().required().keys({
   name: joi.string().required(),
   command: joi.string().required(),
   status: joi.string(),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   interruptible: joi.boolean().default(false),
+  runtime_seconds: joi.number().default(0.0),
+  // This only exists to all prepareJobsForSubmission to take less time to find
+  // jobs with exclusive access.
+  internal: jobInternal.validate({}).value,
   // TODO container information
   _key: joi.string(),
   _id: joi.string(),
@@ -238,6 +249,7 @@ module.exports = {
   isComplete,
   job,
   jobDefinition,
+  jobInternal,
   jobUserData,
   readyJobsResourceRequirements,
   resourceRequirements,
