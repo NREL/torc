@@ -89,7 +89,7 @@ after cloning this repository.
 .. code-block:: console
 
     $ npm install
-    $ zip -r wms-service.zip manifest.json node_modules index.js src scripts
+    $ zip -r wms-service.zip manifest.json index.js src scripts
 
 Install that service via the web app by following instructions at
 https://www.arangodb.com/docs/stable/foxx-getting-started.html#try-it-out or by using the ``foxx``

@@ -6,6 +6,7 @@ Architecture
 - A server implements an HTTP API endpoint that manages the database.
 
   - With ArangoDB as the database, this API endpoint is a service inside the database.
+  - ArangoDB balances client requests across multiple V8 JavaScript contexts running in the server.
 
 - The API conforms to the OpenAPI specification.
 
@@ -19,6 +20,11 @@ Architecture
 
 Database layout/schema
 ======================
+
+Each database in an ArangoDB instance can store one workflow. The nodes, edges, and documents
+discussed below are part of one database. Each database also has one API service. User
+authentication is specific to each database. This supports a multi-tenant configuration where
+different users can store and manage their own workflows.
 
 Nodes
 -----
@@ -58,15 +64,19 @@ Job Statuses
 - **blocked**: The job cannot start because of dependencies.
 - **submitted_pending**: The job was given to a compute node but is not yet running.
 - **submitted**: The job is running on a compute node.
-- **interrupted**: Compute node timeout occurred and the job was notified to checkpoint and shut down.
+- **interrupted**: Compute node timeout occurred and the job was notified to checkpoint and shut
+  down.
 - **done**: The job finished. It may or may not have completed successfully.
 - **canceled**: A blocking job failed and so the job never ran.
+- **disabled**: The job cannot run or change state.
 
 .. graphviz::
 
    digraph job_statuses {
       "uninitialized" -> "ready";
       "uninitialized" -> "blocked";
+      "uninitialized" -> "disabled";
+      "disabled" -> "uninitialized";
       "ready" -> "submitted_pending";
       "submitted_pending" -> "submitted";
       "submitted" -> "done";
@@ -119,3 +129,4 @@ The current choice is ArangoDB because of these reasons:
 - Graph nodes and edges can store full JSON documents and filters can use those documents. Neo4j
   can store key-value pairs but not nested structures. That may be limiting, especially for
   user-defined events. Using Neo4j for storing job dependencies may require a second database.
+- ArangoDB provides built-in API services.

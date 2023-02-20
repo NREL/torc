@@ -88,7 +88,7 @@ as many databases as you want.
 
     $ cd db_service
     $ npm install
-    $ zip -r wms-service.zip manifest.json node_modules index.js src scripts
+    $ zip -r wms-service.zip manifest.json index.js src scripts
 
 5. Use the foxx-cli Singularity container to install the API service. This can be done on a login
    node. Change the IP address to the database compute node if you are not already on that node.
