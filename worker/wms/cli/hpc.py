@@ -54,7 +54,11 @@ def hpc():
 )
 @click.option("-p", "--partition", help="HPC partition. Default is determinted by the scheduler")
 @click.option(
-    "-q", "--qos", default="normal", show_default=True, help="Controls priority of the jobs."
+    "-q",
+    "--qos",
+    default="normal",
+    show_default=True,
+    help="Controls priority of the jobs.",
 )
 @click.option(
     "-t",
@@ -85,7 +89,12 @@ def slurm_config(account, filename, gres, mem, nodes, partition, qos, tmp, wallt
 
 @click.command()
 @click.option(
-    "-c", "--num-cpus", type=int, default=36, help="Number of CPUs per node", show_default=True
+    "-c",
+    "--num-cpus",
+    type=int,
+    default=36,
+    help="Number of CPUs per node",
+    show_default=True,
 )
 @click.argument("database_url")
 def recommend_nodes(database_url: str, num_cpus):

@@ -6,7 +6,7 @@ Database Installation on Eagle
 
 1. Start the ArangoDB Singularity container in a directory where you want
    to keep your database. Note that you can reload your data after stopping and restarting the
-   container. 
+   container.
 
 .. warning:: Do not run ArangoDB on a login node.
 

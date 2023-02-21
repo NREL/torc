@@ -65,7 +65,7 @@ Python API
 ----------
 Refer to this Python script: https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py
 
-Running it in a terminal will delete the existing workflow and then create the workflow 
+Running it in a terminal will delete the existing workflow and then create the workflow
 described in :ref:`overview`.
 
 .. code-block:: console

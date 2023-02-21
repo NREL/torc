@@ -23,4 +23,3 @@ Refer to :ref:`generate_client_apis` to generate a new API after changing the AP
    db_installation_local
    db_installation_eagle
    generate_client_apis
-

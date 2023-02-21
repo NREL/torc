@@ -14,7 +14,7 @@ Features
 - Manage job resource requirements.
 - Support cloud and HPC environments simultaneously.
 - Support workflow restarts.
- 
+
    - Account for job failures
    - Account for node timeouts and hardware failures
    - Account for changes (or not) of program and data files

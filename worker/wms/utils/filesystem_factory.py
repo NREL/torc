@@ -41,13 +41,9 @@ def create_s3_session(path, profile_name):
     """
     bucket = _get_bucket(path)
     if bucket in _s3_sessions:
-        logger.info(
-            "Replacing an S3 session bucket=%s profile_name=%s", bucket, profile_name
-        )
+        logger.info("Replacing an S3 session bucket=%s profile_name=%s", bucket, profile_name)
     else:
-        logger.info(
-            "Creating an S3 session bucket=%s profile_name=%s", bucket, profile_name
-        )
+        logger.info("Creating an S3 session bucket=%s profile_name=%s", bucket, profile_name)
     _s3_sessions[bucket] = _S3Session(profile_name, bucket)
     if len(_s3_sessions) > 10:
         raise Exception(
@@ -68,9 +64,7 @@ class _S3Session:
         self._base_path = f"s3://{self._bucket}"
         self._session = boto3.session.Session(profile_name=profile_name)
         self._client = self._session.client("s3")
-        register_configuration_parameter(
-            S3Path("/"), resource=self._session.resource("s3")
-        )
+        register_configuration_parameter(S3Path("/"), resource=self._session.resource("s3"))
 
     def path(self, path: str):
         if not path.startswith(self._base_path):

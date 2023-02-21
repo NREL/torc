@@ -30,15 +30,9 @@ def create_workflow(api: DefaultApi, output_dir: Path):
     f3 = FileModel(name="file3", path=str(output_dir / "f3.json"))
     f4 = FileModel(name="file4", path=str(output_dir / "f4.json"))
 
-    small = ResourceRequirementsModel(
-        name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
-    )
-    medium = ResourceRequirementsModel(
-        name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
-    )
-    large = ResourceRequirementsModel(
-        name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
-    )
+    small = ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT1H")
+    medium = ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H")
+    large = ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H")
 
     preprocess = JobDefinition(
         name="preprocess",

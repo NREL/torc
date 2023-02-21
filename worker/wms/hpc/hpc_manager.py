@@ -160,7 +160,7 @@ class HpcManager:
         match hpc_type:
             case HpcType.SLURM:
                 intf = SlurmInterface()
-            #case HpcType.FAKE:
+            # case HpcType.FAKE:
             #    intf = FakeManager(config)
             case _:
                 raise ValueError("Unsupported HPC type: {}".format(hpc_type))

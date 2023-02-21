@@ -43,7 +43,10 @@ class SlurmInterface(HpcInterface):
                 return HpcJobInfo("", "", HpcJobStatus.NONE)
 
             logger.error(
-                "Failed to run squeue command=[%s] ret=%s err=%s", cmd, ret, output["stderr"]
+                "Failed to run squeue command=[%s] ret=%s err=%s",
+                cmd,
+                ret,
+                output["stderr"],
             )
             raise ExecutionError(f"squeue command failed: {ret}")
 
@@ -69,7 +72,10 @@ class SlurmInterface(HpcInterface):
         ret = run_command(cmd, output, num_retries=6, retry_delay_s=10)
         if ret != 0:
             logger.error(
-                "Failed to run squeue command=[%s] ret=%s err=%s", cmd, ret, output["stderr"]
+                "Failed to run squeue command=[%s] ret=%s err=%s",
+                cmd,
+                ret,
+                output["stderr"],
             )
             raise ExecutionError(f"squeue command failed: {ret}")
 
@@ -117,7 +123,7 @@ class SlurmInterface(HpcInterface):
 
         text += f"{command}\n"
         # TODO: make running through srun configurable?
-        #text += f"\nsrun {command}"
+        # text += f"\nsrun {command}"
         return text
 
     def get_environment_variables(self) -> dict[str, str]:

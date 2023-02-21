@@ -10,9 +10,7 @@ from wms.cli.workflow import workflow
 
 
 @click.group()
-@click.option(
-    "-l", "--log-file", type=Path, default="wms.log", help="Log to this file."
-)
+@click.option("-l", "--log-file", type=Path, default="wms.log", help="Log to this file.")
 @click.option(
     "--verbose",
     is_flag=True,

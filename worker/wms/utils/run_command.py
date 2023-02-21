@@ -11,7 +11,13 @@ logger = logging.getLogger(__name__)
 
 
 def run_command(
-    cmd, output=None, cwd=None, num_retries=0, retry_delay_s=2.0, error_strings=None, **kwargs
+    cmd,
+    output=None,
+    cwd=None,
+    num_retries=0,
+    retry_delay_s=2.0,
+    error_strings=None,
+    **kwargs,
 ):
     """Runs a command as a subprocess.
 

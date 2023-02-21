@@ -157,11 +157,11 @@ class TimerStatsCollector:
     def disable(self):
         """Disable timing."""
         self._is_enabled = False
-    
+
     def enable(self):
         """Enable timing."""
         self._is_enabled = True
-    
+
     def get_stat(self, name):
         """Return a TimerStats. Return None if timing is disabled.
 
@@ -184,7 +184,7 @@ class TimerStatsCollector:
     def is_enabled(self) -> bool:
         """Return True if timing is enabled."""
         return self._is_enabled
-    
+
     def log_json_stats(self, filename: Path, clear=False):
         """Log line-delimited JSON stats to filename.
 
