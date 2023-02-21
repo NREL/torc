@@ -13,6 +13,7 @@ from swagger_client.models.workflow import Workflow
 
 from wms.loggers import setup_logging
 from wms.job_runner import JobRunner
+from wms.resource_monitor import ComputeNodeResourceStatConfig
 from wms.workflow_manager import WorkflowManager
 
 
@@ -95,7 +96,8 @@ def create_workflow(api: DefaultApi, output_dir: Path):
 def run_workflow(api, output_dir: Path):
     mgr = WorkflowManager(api)
     mgr.start()
-    runner = JobRunner(api, output_dir, time_limit="P0DT24H")
+    stats = ComputeNodeResourceStatConfig(cpu=True, process=True, interval=1, name="local")
+    runner = JobRunner(api, output_dir, time_limit="P0DT24H", stats=stats)
     logger.info("Start workflow")
     runner.run_worker()
 

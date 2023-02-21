@@ -7,7 +7,9 @@ def test_api_nodes_by_key(completed_workflow):
     api, _ = completed_workflow
     names = [
         "compute_nodes",
+        "compute_node_stats",
         "events",
+        "job_process_stats",
         "results",
         "user_data",
     ]
@@ -55,6 +57,8 @@ def test_api_edges(completed_workflow):
         "blocks",
         "executed",
         "needs",
+        "node_used",
+        "process_used",
         "produces",
         "requires",
         "returned",

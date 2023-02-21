@@ -36,6 +36,8 @@ Nodes
 - scheduler configurations (SLURM, AWS, etc.)
 - user data (any number of arbitrary objects)
 - compute nodes
+- compute node stats
+- job process stats
 
 Edges
 -----
@@ -43,6 +45,8 @@ Edges
 - blocks: job blocks another job
 - executed: compute_node executed jobs
 - needs: job needs a file
+- nodes_used: compute nodes used resources - connects compute nodes to usage stats
+- process_used: job processes used resources - connects jobs to process usage stats
 - produces: job produces a file
 - requires: job has a set of resource requirements
 - returned: job returned a result

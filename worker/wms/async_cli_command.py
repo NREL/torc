@@ -71,6 +71,10 @@ class AsyncCliCommand(AsyncJobBase):
     def name(self):
         return self._job.name
 
+    @property
+    def pid(self):
+        return self._pipe.pid
+
     def is_complete(self):
         if self._is_complete:
             return True
@@ -121,7 +125,5 @@ class AsyncCliCommand(AsyncJobBase):
         stderr_filename = output_dir / f"{self.name}.e"
         self._stdout_fp = open(stdout_filename, "w")
         self._stderr_fp = open(stderr_filename, "w")
-        self._pipe = subprocess.Popen(
-            cmd, stdout=self._stdout_fp, stderr=self._stderr_fp
-        )
+        self._pipe = subprocess.Popen(cmd, stdout=self._stdout_fp, stderr=self._stderr_fp)
         self._is_pending = True

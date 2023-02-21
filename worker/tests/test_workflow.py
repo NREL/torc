@@ -9,6 +9,7 @@ from swagger_client.models.worker_resources import WorkerResources
 
 from wms.common import GiB
 from wms.job_runner import JobRunner
+from wms.resource_monitor import ComputeNodeResourceStatConfig
 from wms.utils.timing import timer_stats_collector
 from wms.workflow_manager import WorkflowManager
 
@@ -24,7 +25,14 @@ def test_run_workflow(diamond_workflow):
     assert user_data_work1[0]["key1"] == "val1"
     mgr = WorkflowManager(api)
     mgr.start()
-    runner = JobRunner(api, output_dir, time_limit="P0DT24H", job_completion_poll_interval=0.1)
+    stats = ComputeNodeResourceStatConfig(interval=1, name="test")
+    runner = JobRunner(
+        api,
+        output_dir,
+        time_limit="P0DT24H",
+        job_completion_poll_interval=0.1,
+        stats=stats,
+    )
     runner.run_worker()
 
     assert api.get_workflow_is_complete()

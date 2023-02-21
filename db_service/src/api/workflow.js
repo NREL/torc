@@ -44,13 +44,17 @@ router.get('/workflow', function(req, res) {
 
 router.delete('/workflow', function(req, res) {
   db._truncate('blocks');
+  db._truncate('compute_node_stats');
   db._truncate('compute_nodes');
-  db._truncate('executed');
   db._truncate('events');
+  db._truncate('executed');
   db._truncate('files');
   db._truncate('hpc_configs');
+  db._truncate('job_process_stats');
   db._truncate('jobs');
   db._truncate('needs');
+  db._truncate('node_used');
+  db._truncate('process_used');
   db._truncate('produces');
   db._truncate('requires');
   db._truncate('resource_requirements');

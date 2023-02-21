@@ -44,7 +44,10 @@ const job = joi.object().required().keys({
   status: joi.string(),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   interruptible: joi.boolean().default(false),
-  runtime_seconds: joi.number().default(0.0),
+  // TODO: need to manage the lifecycle of job runs.
+  // If a job completes and is rerun, track those iterations through this run field.
+  // Determine how to tie the run number to things like results and process stats.
+  // run: joi.number().default(1),
   // This only exists to all prepareJobsForSubmission to take less time to find
   // jobs with exclusive access.
   internal: jobInternal.validate({}).value,
@@ -141,6 +144,39 @@ const workflow = joi.object().required().keys({
   schedulers: joi.array().items(hpcConfig).default([]),
 });
 
+const resourceStats = joi.object().required().keys({
+  resourceType: joi.string().required(),
+  average: joi.object().required({}),
+  minimum: joi.object().required({}),
+  maximum: joi.object().required({}),
+  num_samples: joi.number().required(),
+  // Only applies to process stats. Consider something better.
+  job_name: joi.string().optional(),
+});
+
+const computeNodeStats = joi.object().required().keys({
+  name: joi.string().required(),
+  hostname: joi.string().required(),
+  stats: joi.array().items(resourceStats),
+  timestamp: joi.string().required(),
+  _key: joi.string(),
+  _id: joi.string(),
+  _rev: joi.string(),
+});
+
+const jobProcessStats = joi.object().required().keys({
+  job_name: joi.string().required(),
+  avg_cpu_percent: joi.number().required(),
+  max_cpu_percent: joi.number().required(),
+  avg_rss: joi.number().required(),
+  max_rss: joi.number().required(),
+  num_samples: joi.number().required(),
+  timestamp: joi.string().required(),
+  _key: joi.string(),
+  _id: joi.string(),
+  _rev: joi.string(),
+});
+
 const batchComputeNodes = joi.object().required().keys({
   items: joi.array().items(computeNode),
   skip: joi.number().required(),
@@ -231,18 +267,39 @@ const batchUserData = joi.object().required().keys({
   has_more: joi.boolean().required(),
 });
 
+const batchComputeNodeStats = joi.object().required().keys({
+  items: joi.array().items(computeNodeStats),
+  skip: joi.number().required(),
+  max_limit: joi.number().required(),
+  count: joi.number().required(),
+  total_count: joi.number().required(),
+  has_more: joi.boolean().required(),
+});
+
+const batchJobProcessStats = joi.object().required().keys({
+  items: joi.array().items(jobProcessStats),
+  skip: joi.number().required(),
+  max_limit: joi.number().required(),
+  count: joi.number().required(),
+  total_count: joi.number().required(),
+  has_more: joi.boolean().required(),
+});
+
 module.exports = {
+  batchComputeNodeStats,
   batchComputeNodes,
   batchEdges,
-  batchObjects,
   batchFiles,
   batchHpcConfigs,
   batchJobDefinitions,
+  batchJobProcessStats,
   batchJobs,
+  batchObjects,
   batchResourceRequirements,
   batchResults,
   batchUserData,
   computeNode,
+  computeNodeStats,
   edge,
   file,
   hpcConfig,
@@ -250,6 +307,7 @@ module.exports = {
   job,
   jobDefinition,
   jobInternal,
+  jobProcessStats,
   jobUserData,
   readyJobsResourceRequirements,
   resourceRequirements,

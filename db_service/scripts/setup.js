@@ -19,6 +19,8 @@ if (!graphModule._list().includes(graphName)) {
   const returned = graphModule._relation('returned', 'jobs', 'results');
   const scheduledBys = graphModule._relation('scheduled_bys', 'jobs', 'hpc_configs');
   const stores = graphModule._relation('stores', 'jobs', 'user_data');
+  const nodeUsed = graphModule._relation('node_used', 'compute_nodes', 'compute_node_stats');
+  const processUsed = graphModule._relation('process_used', 'job', 'job_process_stats');
   graphModule._create(
       graphName,
       [
@@ -30,6 +32,8 @@ if (!graphModule._list().includes(graphName)) {
         returned,
         scheduledBys,
         stores,
+        nodeUsed,
+        processUsed,
       ],
   );
   console.log(`Created graph ${graphName}`);

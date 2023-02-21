@@ -274,3 +274,5 @@ function convertJobforApi(job) {
   console.log(`after ${JSON.stringify(job)}`);
   return job;
 }
+
+// TODO: Add command to get job process results

@@ -1,5 +1,6 @@
 import json
 import logging
+import multiprocessing
 import re
 import socket
 import sys
@@ -11,11 +12,22 @@ import psutil
 from pydantic import BaseModel
 from swagger_client import DefaultApi
 from swagger_client.models.compute_nodes_model import ComputeNodesModel
+from swagger_client.models.compute_node_stats_model import ComputeNodeStatsModel
+from swagger_client.models.compute_node_stats_stats import ComputeNodeStatsStats
 from swagger_client.models.edge_model import EdgeModel
+from swagger_client.models.job_process_stats_model import JobProcessStatsModel
 from swagger_client.models.worker_resources import WorkerResources
 
 from .common import KiB, MiB, GiB, TiB
 from .async_cli_command import AsyncCliCommand
+from wms.resource_monitor import (
+    ComputeNodeResourceStatConfig,
+    ComputeNodeResourceStatResults,
+    IpcMonitorCommands,
+    ProcessStatResults,
+    ResourceType,
+    run_stat_aggregator,
+)
 from wms.utils.filesystem_factory import make_path
 from wms.utils.timing import timer_stats_collector, Timer
 
@@ -37,6 +49,7 @@ class JobRunner:
         database_poll_interval=600,
         time_limit=None,
         resources=None,
+        stats=None,
     ):
         self._api = api
         self._outstanding_jobs = {}
@@ -48,10 +61,16 @@ class JobRunner:
         self._num_jobs = 0
         self._last_db_poll_time = 0
         self._compute_node_db_id = None
+        self._stats = stats or ComputeNodeResourceStatConfig.disabled()
+        self._parent_monitor_conn = None
+        self._monitor_proc = None
+        self._pids = {}
 
     def __del__(self):
         if self._outstanding_jobs:
             logger.warning("JobRunner destructed with outstanding jobs", self._outstanding_jobs)
+        if self._parent_monitor_conn is not None or self._monitor_proc is not None:
+            logger.warning("JobRunner destructed without stopping the resource monitor process.")
 
     def check_completions(self):
         done_jobs = []
@@ -67,6 +86,8 @@ class JobRunner:
 
         for result in done_jobs:
             self._outstanding_jobs.pop(result.name)
+            if self._stats.process:
+                self._pids.pop(result.name)
             cur_job = send_api_command(self._api.get_jobs_name, result.name)
             # TODO: track _rev correctly
             # complete_job(self._api, db_jobs[result.name], result)
@@ -77,6 +98,16 @@ class JobRunner:
         return len(done_jobs)
 
     def run_worker(self, scheduler=None):
+        if self._stats.process:
+            self._start_resource_monitor()
+
+        try:
+            self._run_worker(scheduler)
+        finally:
+            if self._stats.process:
+                self._stop_resource_monitor()
+
+    def _run_worker(self, scheduler):
         start = time.time()
         hostname = socket.gethostname()
         event = {
@@ -108,7 +139,7 @@ class JobRunner:
                 "num_jobs": self._num_jobs,
                 "duration_seconds": time.time() - start,
                 "message": f"Worker completed on {hostname}",
-            }
+            },
         )
 
     def wait(self):
@@ -119,11 +150,14 @@ class JobRunner:
         def timed_out():
             return time.time() - start_time > timeout
 
-        while not send_api_command(self._api.get_workflow_is_complete).is_complete or not timed_out():
+        while (
+            not send_api_command(self._api.get_workflow_is_complete).is_complete or not timed_out()
+        ):
             num_completed = self.check_completions()
             num_started = 0
             if num_completed > 0 or self._is_time_to_poll_database():
                 num_started = self._run_ready_jobs()
+
             if num_started == 0 and not self._outstanding_jobs:
                 if send_api_command(self._api.get_workflow_is_complete).is_complete:
                     logger.info("Workflow is complete.")
@@ -134,14 +168,27 @@ class JobRunner:
                         "No jobs are outstanding on this node and no new jobs are available."
                     )
                 break
+
+            if num_completed > 0 or num_started > 0:
+                self._update_pids_to_monitor()
+
             time.sleep(self._poll_interval)
             # TODO: check time remaining and then for interruptible jobs
+
+        self._pids.clear()
+        self._update_pids_to_monitor()
 
     def _complete_job(self, job, result):
         job.return_code = result.return_code
         # This order is currently required. TODO: consider making it one command.
         # Could be called 'complete_job' and require one parameter as result
-        job = send_api_command(self._api.post_jobs_complete_job_name_status_rev, result, job.name, "done", job._rev)
+        job = send_api_command(
+            self._api.post_jobs_complete_job_name_status_rev,
+            result,
+            job.name,
+            "done",
+            job._rev,
+        )
         return job
 
     def _current_memory_allocation_percentage(self):
@@ -189,7 +236,7 @@ class JobRunner:
                 "name": job_name,
                 "node_name": socket.gethostname(),
                 "message": f"Started job {job_name}",
-            }
+            },
         )
 
     def _log_job_complete_event(self, job_name: str):
@@ -201,17 +248,19 @@ class JobRunner:
                 "name": job_name,
                 "node_name": socket.gethostname(),
                 "message": f"Completed job {job_name}",
-            }
+            },
         )
 
     def _run_job(self, job: AsyncCliCommand):
         job.run(self._output_dir)
         job.job = self._set_job_status(job.job, "submitted")
         self._outstanding_jobs[job.name] = job
+        if self._stats.process:
+            self._pids[job.name] = job.pid
         send_api_command(
             self._api.post_edges_name,
             EdgeModel(_from=self._compute_node_db_id, to=job.job._id),
-            "executed"
+            "executed",
         )
         logger.debug("Started job %s", job.name)
         self._log_job_start_event(job.name)
@@ -238,6 +287,79 @@ class JobRunner:
             raise
         logger.info("Set job %s status=%s", job._id, status)
         return job
+
+    def _start_resource_monitor(self):
+        self._parent_monitor_conn, child_conn = multiprocessing.Pipe()
+        pids = self._pids if self._stats.process else None
+        self._monitor_proc = multiprocessing.Process(
+            target=run_stat_aggregator, args=(child_conn, self._stats, pids)
+        )
+        self._monitor_proc.start()
+
+    def _stop_resource_monitor(self):
+        self._parent_monitor_conn.send({"command": IpcMonitorCommands.SHUTDOWN})
+        has_results = False
+        for _ in range(30):
+            if self._parent_monitor_conn.poll():
+                has_results = True
+                break
+            time.sleep(1)
+        if has_results:
+            results = self._parent_monitor_conn.recv()
+            if results.results:
+                self._post_compute_node_stats(results)
+            self._monitor_proc.join()
+        else:
+            logger.error("Failed to receive results from resource monitor.")
+        self._parent_monitor_conn = None
+        self._monitor_proc = None
+
+    def _update_pids_to_monitor(self):
+        if self._stats.process:
+            self._parent_monitor_conn.send(
+                {"command": IpcMonitorCommands.SET_PIDS, "pids": self._pids}
+            )
+
+    def _post_compute_node_stats(self, results: ComputeNodeResourceStatResults):
+        res = send_api_command(
+            self._api.post_compute_node_stats,
+            ComputeNodeStatsModel(
+                name=results.name,
+                hostname=results.name,
+                # These json methods let Pydantic run its data type conversions.
+                stats=[ComputeNodeStatsStats(**json.loads(x.json())) for x in results.results],
+                timestamp=str(datetime.now()),
+            ),
+        )
+        send_api_command(
+            self._api.post_edges_name,
+            EdgeModel(_from=self._compute_node_db_id, to=res._id),
+            "node_used",
+        )
+
+        for result in results.results:
+            if result.resource_type == ResourceType.PROCESS:
+                self._post_job_process_stats(result)
+
+    def _post_job_process_stats(self, result: ProcessStatResults):
+        # TODO: need to connect this to specific job runs
+        res = send_api_command(
+            self._api.post_job_process_stats,
+            JobProcessStatsModel(
+                avg_cpu_percent=result.average["cpu_percent"],
+                max_cpu_percent=result.maximum["cpu_percent"],
+                avg_rss=result.average["rss"],
+                max_rss=result.maximum["rss"],
+                num_samples=result.num_samples,
+                job_name=result.job_name,
+                timestamp=str(datetime.now()),
+            ),
+        )
+        send_api_command(
+            self._api.post_edges_name,
+            EdgeModel(_from=f"jobs/{result.job_name}", to=res._id),
+            "process_used",
+        )
 
     def _update_file_info(self, job):
         for file in send_api_command(self._api.get_files_produced_by_job_name, job.name).items:

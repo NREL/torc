@@ -156,22 +156,30 @@ def sqlite(database_url, filename, force):
     print(f"Exported workflow database to {filename}")
 
 
+# TODO: make test that verifies that this list is synced with the database.
+
+
 def _get_db_documents(api: DefaultApi):
     return {
+        "blocks": api.get_edges_name,
+        "compute_node_stats": api.get_compute_node_stats,
+        "compute_nodes": api.get_compute_nodes,
         "events": api.get_events,
-        "jobs": api.get_jobs,
         "files": api.get_files,
         "hpc_configs": api.get_hpc_configs,
-        "resource_requirements": api.get_resource_requirements,
-        "results": api.get_results,
-        "user_data": api.get_user_data,
-        "blocks": api.get_edges_name,
+        "job_process_stats": api.get_job_process_stats,
+        "jobs": api.get_jobs,
         "needs": api.get_edges_name,
+        "node_used": api.get_edges_name,
+        "process_used": api.get_edges_name,
         "produces": api.get_edges_name,
         "requires": api.get_edges_name,
+        "resource_requirements": api.get_resource_requirements,
+        "results": api.get_results,
         "returned": api.get_edges_name,
         "scheduled_bys": api.get_edges_name,
         "stores": api.get_edges_name,
+        "user_data": api.get_user_data,
     }
 
 
@@ -179,6 +187,8 @@ _EDGES = {
     "blocks",
     "executed",
     "needs",
+    "node_used",
+    "process_used",
     "produces",
     "requires",
     "returned",
