@@ -38,6 +38,7 @@ def slurm_runner(database_url, output):
         "node_names": intf.list_active_nodes(slurm_job_id),
         "environment_variables": intf.get_environment_variables(),
         "scheduler_type": "hpc",
+        "slurm_job_id": slurm_job_id,
         "hpc_type": HpcType.SLURM.value,
     }
     end_time = _get_end_time(slurm_job_id)
