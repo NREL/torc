@@ -678,6 +678,10 @@ function isJobStatusComplete(status) {
  * @return {bool}
  */
 function isWorkflowComplete() {
+  // TODO: Store a status object in the database that stores these things:
+  // - is_canceled: allows the user to cancel a workflow and workers to cancel jobs
+  // - compute node scheduler IDs: this will allow us to cancel them
+  // - run ID: every time a workflow is restarted, bump the ID
   const cursor = query({count: true})`
     FOR job in jobs
         FILTER !(job.status == ${JobStatus.Done} OR job.status == ${JobStatus.Canceled})

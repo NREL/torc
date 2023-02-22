@@ -22,14 +22,6 @@ router.post('/job_definitions', function(req, res) {
     .summary('Store a job and create edges.')
     .description('Store a job in the "jobs" collection and create edges.');
 
-// TODO
-// router.put('/jobs/:name', function(req, res) {
-// })
-//     .body(joi.object().required(), 'job definition to update in the collection.')
-//     .response(schemas.job, 'job updated in the collection.')
-//     .summary('Update job')
-//     .description('Update a job in the "jobs" collection.');
-
 router.get('/job_definitions/:name', function(req, res) {
   try {
     const doc = graph.jobs.document(req.pathParams.name);

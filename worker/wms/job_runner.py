@@ -34,12 +34,6 @@ from wms.utils.timing import timer_stats_collector, Timer
 logger = logging.getLogger(__name__)
 
 
-# TODO:
-# standalone resource monitoring process
-# Any open source tool that runs as server and will collect everything we want?
-# send to streaming server? statsd server?
-
-
 class JobRunner:
     def __init__(
         self,
@@ -180,8 +174,6 @@ class JobRunner:
 
     def _complete_job(self, job, result):
         job.return_code = result.return_code
-        # This order is currently required. TODO: consider making it one command.
-        # Could be called 'complete_job' and require one parameter as result
         job = send_api_command(
             self._api.post_jobs_complete_job_name_status_rev,
             result,
@@ -343,6 +335,7 @@ class JobRunner:
 
     def _post_job_process_stats(self, result: ProcessStatResults):
         # TODO: need to connect this to specific job runs
+        # TODO: Run this whenever a job completes
         res = send_api_command(
             self._api.post_job_process_stats,
             JobProcessStatsModel(

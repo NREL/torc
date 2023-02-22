@@ -89,7 +89,8 @@ class WorkflowManager:
 
     def _reset_job_status(self):
         for status in ("canceled", "submitted", "submitted_pending"):
-            # TODO: throttle with skip and limit
+            # TODO: This query will be throttled. Handle batching. Do it generically so that all
+            # similar iterations can use it.
             for job in self._api.get_jobs_find_by_status_status(status).items:
                 job.status = "uninitialized"
                 self._api.put_jobs_name(job, job.name)

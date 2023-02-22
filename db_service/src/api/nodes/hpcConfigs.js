@@ -23,7 +23,6 @@ router.post('/hpc_configs', function(req, res) {
 
 router.get('/hpc_configs/:name', function(req, res) {
   const exists = graph.hpc_configs.exists(req.pathParams.name);
-  console.log(`TODO: exists=${exists}`);
   if (!exists) {
     if (req.pathParams.name == 'default') {
       const config = {
