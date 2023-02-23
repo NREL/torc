@@ -89,17 +89,22 @@ class ResourceMonitorAggregator:
         -------
         ComputeNodeResourceStatResults
         """
+        hostname = socket.gethostname()
+        results = []
+        resource_types = []
+
         if self._count == 0:
-            raise Exception("Resource monitoring was disabled")
+            return ComputeNodeResourceStatResults(
+                name=self.name,
+                hostname=hostname,
+                results=results,
+            )
 
         for resource_type, stat_dict in self._summaries["sum"].items():
             for stat_name, val in stat_dict.items():
                 self._summaries["average"][resource_type][stat_name] = val / self._count
 
         self._summaries.pop("sum")
-        results = []
-        hostname = socket.gethostname()
-        resource_types = []
         if self._stats.cpu:
             resource_types.append(ResourceType.CPU)
         if self._stats.disk:

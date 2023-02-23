@@ -154,6 +154,7 @@ def schedule_nodes(database_url, config_file, num_hpc_jobs, index, output, force
         job_id = mgr.submit(output, name, runner_script, keep_submission_script=True)
         job_ids.append(job_id)
 
+    # TODO: post the scheduled IDs to the database in workflow_status
     api.post_events(
         {
             "category": "scheduler",

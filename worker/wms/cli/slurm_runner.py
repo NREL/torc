@@ -46,6 +46,7 @@ def slurm_runner(database_url, output):
     logger.info("Start workflow")
     runner.run_worker(scheduler=scheduler)
     # TODO: schedule more nodes if needed
+    # TODO: clear the scheduled IDs from the database in workflow_status
 
 
 def _get_end_time(slurm_job_id, buffer_minutes=2):

@@ -39,6 +39,13 @@ Nodes
 - compute node stats
 - job process stats
 
+Job Restarts
+~~~~~~~~~~~~
+The orchestrator stores one result and process stats object for each run of a job in case a
+workflow is restarted.
+
+Those objects contain a ``run_id`` field that gets incremented each time a job runs.
+
 Edges
 -----
 

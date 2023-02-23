@@ -156,14 +156,21 @@ def workflow_with_cancel(tmp_path, cancel_on_blocking_job_failure):
 def completed_workflow(diamond_workflow):
     """Fakes a completed diamond workflow."""
     api, output_dir = diamond_workflow
+    status = api.get_workflow_status()
+    status.run_id = 1
+    api.put_workflow_status(status)
     job_names = [job.name for job in api.get_jobs().items]
     for name in job_names:
         # Completing a job this way will cause blocked jobs to change status and revision,
         # so we need to update each time.
         job = api.get_jobs_name(name)
+        # Fake out what normally happens at submission time.
+        job.run_id += 1
+        job = api.put_jobs_name(job, name)
         status = "done"
         result = ResultModel(
             name=name,
+            run_id=job.run_id,
             return_code=0,
             exec_time_minutes=5,
             completion_time=str(datetime.now()),
@@ -192,6 +199,7 @@ def incomplete_workflow(diamond_workflow):
         status = "done"
         result = ResultModel(
             name=name,
+            run_id=job.run_id,
             return_code=0,
             exec_time_minutes=5,
             completion_time=str(datetime.now()),

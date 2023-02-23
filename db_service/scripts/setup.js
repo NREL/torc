@@ -10,6 +10,12 @@ for (const name of ['events']) {
   }
 }
 
+if (!db._collection('workflow_status')) {
+  db._createDocumentCollection('workflow_status');
+  db.workflow_status.save({is_canceled: false, run_id: 0, scheduled_compute_node_ids: []});
+  console.log(`Created document collection workflow_status`);
+}
+
 if (!graphModule._list().includes(graphName)) {
   const blocks = graphModule._relation('blocks', 'jobs', 'jobs');
   const executed = graphModule._relation('executed', 'compute_nodes', 'jobs');

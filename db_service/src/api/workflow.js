@@ -14,6 +14,7 @@ module.exports = router;
 router.post('/workflow', function(req, res) {
   try {
     addWorkflow(req.body);
+    query.resetWorkflowStatus();
     res.send({message: 'Added workflow.'});
   } catch (e) {
     res.throw(400, 'Error occured', e);
@@ -105,10 +106,15 @@ router.post('/workflow/initialize_jobs', function(req, res) {
     .description('Initialize job relationships based on file relationships.');
 
 router.post('/workflow/prepare_jobs_for_submission', function(req, res) {
-  const resources = req.body;
-  const qp = req.queryParams == null ? {} : req.queryParams;
-  const jobs = query.prepareJobsForSubmission(resources, qp.limit);
-  res.send(jobs);
+  const status = query.getWorkflowStatus();
+  if (status.is_canceled) {
+    res.send([]);
+  } else {
+    const resources = req.body;
+    const qp = req.queryParams == null ? {} : req.queryParams;
+    const jobs = query.prepareJobsForSubmission(resources, qp.limit);
+    res.send(jobs);
+  }
 })
     .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
     .body(schemas.workerResources, 'Available worker resources.')
@@ -118,6 +124,7 @@ router.post('/workflow/prepare_jobs_for_submission', function(req, res) {
 
 router.post('/workflow/reset_status', function(req, res) {
   query.resetJobStatus();
+  query.resetWorkflowStatus();
   res.send({message: `Reset job status to ${JobStatus.Uninitialized}`});
 })
     .response(joi.object(), 'message')

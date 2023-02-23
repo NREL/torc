@@ -62,6 +62,9 @@ def export_json(database_url, directory, force):
     configuration.host = database_url
     api = DefaultApi(ApiClient(configuration))
 
+    # TODO: This doesn't handle batching and will not get all data.
+    # TODO: Get workflow_status
+    # TODO: Consider using arangoexport instead
     for name, func in _get_db_documents(api).items():
         if name in _EDGES:
             filename = directory / "edges" / f"{name}.json"
@@ -132,6 +135,8 @@ def sqlite(database_url, filename, force):
     configuration.host = database_url
     api = DefaultApi(ApiClient(configuration))
 
+    # TODO: This doesn't handle batching and will not get all data.
+    # TODO: Get workflow_status
     for name, func in _get_db_documents(api).items():
         found_first = False
         rows = []

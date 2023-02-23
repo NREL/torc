@@ -2368,6 +2368,78 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
+  /workflow_status:
+    get:
+      tags: []
+      summary: Retrieve the current workflow status.
+      description: Retrieve the current workflow status.
+      operationId: get_workflow_status
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_18'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+    put:
+      tags: []
+      summary: Update workflow status
+      description: Update workflow status in the "workflow_status" collection.
+      operationId: put_workflow_status
+      requestBody:
+        description: Updated workflow status
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          description: Updated workflow status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_18'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /workflow_status/reset:
+    put:
+      tags: []
+      summary: Reset workflow status
+      description: Rest workflow status in the "workflow_status" collection.
+      operationId: put_workflow_status_reset
+      requestBody:
+        content:
+          '*/*': {}
+        required: false
+      responses:
+        "200":
+          description: Updated workflow status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_18'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
   /edges/{name}:
     get:
       tags: []
@@ -2405,7 +2477,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_18'
+                $ref: '#/components/schemas/inline_response_200_19'
         "500":
           description: Default error response.
           content:
@@ -2664,6 +2736,8 @@ components:
         interruptible:
           type: boolean
           default: false
+        run_id:
+          type: number
         internal:
           $ref: '#/components/schemas/workflowprepare_jobs_for_submission_internal'
         _key:
@@ -2721,7 +2795,7 @@ components:
           type: string
         _rev:
           type: string
-    inline_response_200_18:
+    inline_response_200_19:
       required:
       - count
       - has_more
@@ -2744,17 +2818,40 @@ components:
           type: number
         has_more:
           type: boolean
+    inline_response_200_18:
+      required:
+      - is_canceled
+      - run_id
+      type: object
+      properties:
+        is_canceled:
+          type: boolean
+        run_id:
+          type: number
+        scheduled_compute_node_ids:
+          type: array
+          items:
+            type: number
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
     store_user_data_name_body:
       required:
       - completion_time
       - exec_time_minutes
       - name
       - return_code
+      - run_id
       - status
       type: object
       properties:
         name:
           type: string
+        run_id:
+          type: number
         return_code:
           type: number
         exec_time_minutes:
@@ -2869,11 +2966,14 @@ components:
       - max_cpu_percent
       - max_rss
       - num_samples
+      - run_id
       - timestamp
       type: object
       properties:
         job_name:
           type: string
+        run_id:
+          type: number
         avg_cpu_percent:
           type: number
         max_cpu_percent:
@@ -2922,11 +3022,14 @@ components:
       - exec_time_minutes
       - name
       - return_code
+      - run_id
       - status
       type: object
       properties:
         name:
           type: string
+        run_id:
+          type: number
         return_code:
           type: number
         exec_time_minutes:
@@ -2996,11 +3099,14 @@ components:
       - exec_time_minutes
       - name
       - return_code
+      - run_id
       - status
       type: object
       properties:
         name:
           type: string
+        run_id:
+          type: number
         return_code:
           type: number
         exec_time_minutes:
@@ -3169,6 +3275,8 @@ components:
         interruptible:
           type: boolean
           default: false
+        run_id:
+          type: number
         internal:
           $ref: '#/components/schemas/workflowprepare_jobs_for_submission_internal'
         _key:
@@ -3301,6 +3409,8 @@ components:
         interruptible:
           type: boolean
           default: false
+        run_id:
+          type: number
         internal:
           $ref: '#/components/schemas/workflowprepare_jobs_for_submission_internal'
         _key:

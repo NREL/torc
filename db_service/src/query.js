@@ -139,6 +139,7 @@ function addJobDefinition(jobDef) {
     user_data: jobDef.user_data,
     cancel_on_blocking_job_failure: jobDef.cancel_on_blocking_job_failure,
     interruptible: jobDef.interruptible,
+    run_id: 0,
     internal: schemas.jobInternal.validate({}).value,
   });
   for (const filename of jobDef.input_files) {
@@ -598,6 +599,18 @@ function getUserDataStoredByJob(jobName) {
   `;
 }
 
+/**
+ * Return the current workflow status.
+ * @return {Object}
+*/
+function getWorkflowStatus() {
+  const status = db.workflow_status.all().toArray();
+  if (status.length != 1) {
+    throw new Error(`There can only be one workflow status: ${JSON.stringify(status)}`);
+  }
+  return status[0];
+}
+
 /** Set initial job status. */
 function initializeJobStatus() {
   // TODO: Can this be more efficient with one traversal?
@@ -678,10 +691,6 @@ function isJobStatusComplete(status) {
  * @return {bool}
  */
 function isWorkflowComplete() {
-  // TODO: Store a status object in the database that stores these things:
-  // - is_canceled: allows the user to cancel a workflow and workers to cancel jobs
-  // - compute node scheduler IDs: this will allow us to cancel them
-  // - run ID: every time a workflow is restarted, bump the ID
   const cursor = query({count: true})`
     FOR job in jobs
         FILTER !(job.status == ${JobStatus.Done} OR job.status == ${JobStatus.Canceled})
@@ -778,10 +787,25 @@ function prepareJobsForSubmission(workerResources, limit) {
 /** Reset job status to uninitialized. */
 function resetJobStatus() {
   for (const job of graph.jobs.all()) {
-    job.status = JobStatus.Unknown;
+    job.status = JobStatus.Uninitialized;
     graph.jobs.update(job, job);
   }
   console.log(`Reset all job status to ${JobStatus.Uninitialized}`);
+}
+
+/** Reset workflow status. */
+function resetWorkflowStatus() {
+  const status = {run_id: 0, is_canceled: false, scheduled_compute_node_ids: []};
+  const doc = getWorkflowStatus();
+  Object.assign(doc, status);
+  db.workflow_status.update(doc, doc);
+
+  for (const job of db.jobs.all()) {
+    job.run_id = 0;
+    job.status = JobStatus.Uninitialized;
+    db.jobs.update(job, job);
+  }
+  console.log(`Reset workflow status`);
 }
 
 /**
@@ -858,6 +882,7 @@ module.exports = {
   getJobResults,
   getLatestJobResult,
   getUserDataStoredByJob,
+  getWorkflowStatus,
   initializeJobStatus,
   isJobBlocked,
   isJobInitiallyBlocked,
@@ -866,5 +891,6 @@ module.exports = {
   manageJobStatusChange,
   prepareJobsForSubmission,
   resetJobStatus,
+  resetWorkflowStatus,
   updateBlockedJobsFromCompletion,
 };

@@ -127,10 +127,14 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
     api, output_dir = complete_workflow_missing_files
     (output_dir / missing_file).unlink()
     mgr = WorkflowManager(api)
-    mgr.reinitialize_jobs()
+    mgr.restart()
+    status = api.get_workflow_status()
+    assert status.run_id == 2
 
     stage1_events = api.get_events().items
-    assert not stage1_events
+    assert len(stage1_events) == 1
+    assert stage1_events[0].get("type", "") == "restart"
+
     new_file = output_dir / missing_file
     new_file.write_text(json.dumps({"val": missing_file}))
     runner = JobRunner(api, output_dir, time_limit="P0DT24H", job_completion_poll_interval=0.1)
@@ -153,6 +157,18 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
             assert False
     assert sorted(expected) == _get_job_names_by_event(stage2_events, "start")
     assert sorted(expected) == _get_job_names_by_event(stage2_events, "complete")
+
+    for name in {"preprocess", "work1", "work2", "postprocess"}.difference(expected):
+        assert api.get_jobs_name(name).run_id == 1
+    for name in expected:
+        assert api.get_jobs_name(name).run_id == 2
+
+    api.put_workflow_status_reset()
+    assert api.get_workflow_status().run_id == 0
+    for name in ("preprocess", "work1", "work2", "postprocess"):
+        job = api.get_jobs_name(name)
+        assert job.run_id == 0
+        assert job.status == "uninitialized"
 
 
 def test_estimate_workflow(diamond_workflow):

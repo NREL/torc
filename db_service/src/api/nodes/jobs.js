@@ -15,7 +15,6 @@ module.exports = router;
 
 router.post('/jobs', function(req, res) {
   const doc = query.addJob(req.body);
-  // console.log(`Added job ${doc.name}`);
   res.send(convertJobforApi(doc));
 })
     .body(schemas.job, 'job to store in the collection.')
@@ -269,9 +268,7 @@ router.get('jobs/get_user_data/:name', function(req, res) {
  * @return {Object}
  */
 function convertJobforApi(job) {
-  console.log(`before ${JSON.stringify(job)}`);
   delete job.internal;
-  console.log(`after ${JSON.stringify(job)}`);
   return job;
 }
 

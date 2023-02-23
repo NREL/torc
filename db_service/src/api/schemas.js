@@ -1,5 +1,44 @@
 const joi = require('joi');
 
+const workerResources = joi.object().required().keys({
+  num_cpus: joi.number().required(),
+  memory_gb: joi.number().required(),
+  num_gpus: joi.number().default(0),
+  num_nodes: joi.number().default(1),
+  time_limit: [joi.string().optional(), joi.allow(null)], // ISO 8601 encoding for timedeltas
+});
+
+const computeNode = joi.object().required().keys({
+  hostname: joi.string().required(),
+  start_time: joi.string().required(),
+  is_active: joi.boolean().optional(),
+  resources: workerResources,
+  scheduler: joi.object().default({}),
+  _key: joi.string(),
+  _id: joi.string(),
+  _rev: joi.string(),
+});
+
+const resourceStats = joi.object().required().keys({
+  resourceType: joi.string().required(),
+  average: joi.object().required({}),
+  minimum: joi.object().required({}),
+  maximum: joi.object().required({}),
+  num_samples: joi.number().required(),
+  // Only applies to process stats. Consider something better.
+  job_name: joi.string().optional(),
+});
+
+const computeNodeStats = joi.object().required().keys({
+  name: joi.string().required(),
+  hostname: joi.string().required(),
+  stats: joi.array().items(resourceStats),
+  timestamp: joi.string().required(),
+  _key: joi.string(),
+  _id: joi.string(),
+  _rev: joi.string(),
+});
+
 const edge = joi.object().required().keys({
   _from: joi.string().required(),
   _to: joi.string().required(),
@@ -31,6 +70,10 @@ const hpcConfig = joi.object().required().keys({
   _rev: joi.string(),
 });
 
+const isComplete = joi.object().required().keys({
+  is_complete: joi.boolean().required(),
+});
+
 const jobInternal = joi.object().required().keys({
   memory_bytes: joi.number().default(0.0),
   num_cpus: joi.number().default(0.0),
@@ -44,10 +87,7 @@ const job = joi.object().required().keys({
   status: joi.string(),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   interruptible: joi.boolean().default(false),
-  // TODO: need to manage the lifecycle of job runs.
-  // If a job completes and is rerun, track those iterations through this run field.
-  // Determine how to tie the run number to things like results and process stats.
-  // run: joi.number().default(1),
+  run_id: joi.number().default(0),
   // This only exists to all prepareJobsForSubmission to take less time to find
   // jobs with exclusive access.
   internal: jobInternal.validate({}).value,
@@ -69,6 +109,20 @@ const jobDefinition = joi.object().required().keys({
   input_files: joi.array().items(joi.string()).default([]),
   output_files: joi.array().items(joi.string()).default([]),
   blocked_by: joi.array().items(joi.string()).default([]),
+});
+
+const jobProcessStats = joi.object().required().keys({
+  job_name: joi.string().required(),
+  run_id: joi.number().required(),
+  avg_cpu_percent: joi.number().required(),
+  max_cpu_percent: joi.number().required(),
+  avg_rss: joi.number().required(),
+  max_rss: joi.number().required(),
+  num_samples: joi.number().required(),
+  timestamp: joi.string().required(),
+  _key: joi.string(),
+  _id: joi.string(),
+  _rev: joi.string(),
 });
 
 const jobUserData = joi.object().required().keys({
@@ -101,6 +155,7 @@ const resourceRequirements = joi.object().required().keys({
 
 const result = joi.object().required().keys({
   name: joi.string().required(),
+  run_id: joi.number().required(),
   return_code: joi.number().required(),
   exec_time_minutes: joi.number().required(),
   completion_time: joi.string().required(),
@@ -110,31 +165,8 @@ const result = joi.object().required().keys({
   _rev: joi.string(),
 });
 
-const workerResources = joi.object().required().keys({
-  num_cpus: joi.number().required(),
-  memory_gb: joi.number().required(),
-  num_gpus: joi.number().default(0),
-  num_nodes: joi.number().default(1),
-  time_limit: [joi.string().optional(), joi.allow(null)], // ISO 8601 encoding for timedeltas
-});
-
-const computeNode = joi.object().required().keys({
-  hostname: joi.string().required(),
-  start_time: joi.string().required(),
-  is_active: joi.boolean().optional(),
-  resources: workerResources,
-  scheduler: joi.object().default({}),
-  _key: joi.string(),
-  _id: joi.string(),
-  _rev: joi.string(),
-});
-
 const workflowEstimate = joi.object().required().keys({
   estimates_by_round: joi.array().items(readyJobsResourceRequirements),
-});
-
-const isComplete = joi.object().required().keys({
-  is_complete: joi.boolean().required(),
 });
 
 const workflow = joi.object().required().keys({
@@ -144,34 +176,10 @@ const workflow = joi.object().required().keys({
   schedulers: joi.array().items(hpcConfig).default([]),
 });
 
-const resourceStats = joi.object().required().keys({
-  resourceType: joi.string().required(),
-  average: joi.object().required({}),
-  minimum: joi.object().required({}),
-  maximum: joi.object().required({}),
-  num_samples: joi.number().required(),
-  // Only applies to process stats. Consider something better.
-  job_name: joi.string().optional(),
-});
-
-const computeNodeStats = joi.object().required().keys({
-  name: joi.string().required(),
-  hostname: joi.string().required(),
-  stats: joi.array().items(resourceStats),
-  timestamp: joi.string().required(),
-  _key: joi.string(),
-  _id: joi.string(),
-  _rev: joi.string(),
-});
-
-const jobProcessStats = joi.object().required().keys({
-  job_name: joi.string().required(),
-  avg_cpu_percent: joi.number().required(),
-  max_cpu_percent: joi.number().required(),
-  avg_rss: joi.number().required(),
-  max_rss: joi.number().required(),
-  num_samples: joi.number().required(),
-  timestamp: joi.string().required(),
+const workflowStatus = joi.object().required().keys({
+  is_canceled: joi.boolean().required(),
+  run_id: joi.number().required(),
+  scheduled_compute_node_ids: joi.array().items(joi.number()),
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),
@@ -315,4 +323,5 @@ module.exports = {
   workerResources,
   workflow,
   workflowEstimate,
+  workflowStatus,
 };

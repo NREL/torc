@@ -85,6 +85,19 @@ def test_api_edges(completed_workflow):
         assert len(result.items) == 0
 
 
+def test_api_workflow_status(completed_workflow):
+    api, _ = completed_workflow
+    status = api.get_workflow_status()
+    orig = status.run_id
+    status.run_id += 1
+    api.put_workflow_status(status)
+    new_status = api.get_workflow_status()
+    assert new_status.run_id == orig + 1
+    api.put_workflow_status_reset()
+    new_status = api.get_workflow_status()
+    assert new_status.run_id == 0
+
+
 def get_key(data: dict):
     for key in ("key", "_key"):
         if key in data:
