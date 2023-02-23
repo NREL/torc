@@ -110,7 +110,7 @@ def independent_job_workflow(num_jobs):
     for i in range(num_jobs):
         job = JobDefinition(
             name=str(i),
-            command=f"echo hello",
+            command="echo hello",
             resource_requirements=small.name,
         )
         jobs.append(job)

@@ -81,8 +81,7 @@ class SlurmInterface(HpcInterface):
 
         return self._get_statuses_from_output(output["stdout"])
 
-    @staticmethod
-    def _get_statuses_from_output(output):
+    def _get_statuses_from_output(self, output):
         logger.debug("squeue output:  [%s]", output)
         lines = output.split("\n")
         if not lines:
@@ -97,7 +96,7 @@ class SlurmInterface(HpcInterface):
             assert len(fields) == 2
             job_id = fields[0]
             status = fields[1]
-            statuses[job_id] = SlurmManager._STATUSES.get(status, HpcJobStatus.UNKNOWN)
+            statuses[job_id] = self._STATUSES.get(status, HpcJobStatus.UNKNOWN)
 
         return statuses
 

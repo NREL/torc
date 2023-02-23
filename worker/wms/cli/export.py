@@ -202,7 +202,6 @@ _PRIMARY_KEYS = {
     "files": "name",
     "hpc_configs": "name",
     "resource_requirements": "name",
-    "results": "name",
     "user_data": "key",
     "blocks": "key",
     "needs": "key",

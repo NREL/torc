@@ -3,8 +3,6 @@
 import abc
 import getpass
 
-from wms.hpc.common import HpcJobStats
-
 
 class HpcInterface(abc.ABC):
     """Defines the implementation interface for managing an HPC."""

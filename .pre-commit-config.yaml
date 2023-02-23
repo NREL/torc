@@ -11,4 +11,10 @@ repos:
     rev: 23.1.0 # Replace by any tag/version: https://github.com/psf/black/tags
     hooks:
       - id: black
-        language_version: python # Should be a command that runs python3.6+
+        args: ["-l99"]
+        language: python
+  - repo: https://github.com/pycqa/flake8
+    rev: 6.0.0 # Use the sha / tag you want to point at
+    hooks:
+      - id: flake8 # works with .flake8 config
+        language: python

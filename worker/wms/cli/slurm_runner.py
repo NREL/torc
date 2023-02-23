@@ -1,6 +1,5 @@
 import logging
 import subprocess
-import os
 
 from datetime import datetime, timedelta
 from pathlib import Path

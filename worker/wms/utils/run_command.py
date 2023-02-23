@@ -51,7 +51,7 @@ def run_command(
 
     """
     if error_strings and output is None:
-        raise ValueError(f"output must be set if error_strings are passed")
+        raise ValueError("output must be set if error_strings are passed")
     if error_strings is None:
         error_strings = []
 

@@ -171,7 +171,7 @@ class ResourceMonitorAggregator:
 
         if self._stats.process:
             if pids is None:
-                raise Exception(f"pids cannot be None if process stats are enabled")
+                raise Exception("pids cannot be None if process stats are enabled")
             cur_process_stats = self._get_process_stats(pids)
             for job_name, stat_dict in cur_process_stats.items():
                 if job_name in self._process_summaries["maximum"]:
