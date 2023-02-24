@@ -82,6 +82,50 @@ class ResourceMonitorAggregator:
         self._monitor.clear_stale_processes(cur_pids)
         return stats
 
+    def complete_process_stats(self, completed_job_names):
+        """Finalize stat summaries for completed processes.
+
+        Parameters
+        ----------
+        completed_job_names : list[str]
+
+        Returns
+        -------
+        ComputeNodeResourceStatResults
+        """
+        # Note that short-lived jobs may not be present.
+        jobs = set(completed_job_names).intersection(self._process_sample_count)
+        results = []
+        for job_name in jobs:
+            stat_dict = self._process_summaries["sum"][job_name]
+            for stat_name, val in stat_dict.items():
+                self._process_summaries["average"][job_name][stat_name] = (
+                    val / self._process_sample_count[job_name]
+                )
+
+        for job_name in jobs:
+            samples = self._process_sample_count[job_name]
+            result = ProcessStatResults(
+                job_name=job_name,
+                num_samples=samples,
+                resource_type=ResourceType.PROCESS,
+                average=self._process_summaries["average"][job_name],
+                minimum=self._process_summaries["minimum"][job_name],
+                maximum=self._process_summaries["maximum"][job_name],
+            )
+            results.append(result)
+
+        for job_name in jobs:
+            for stat_dict in self._process_summaries.values():
+                stat_dict.pop(job_name)
+            self._process_sample_count.pop(job_name)
+
+        return ComputeNodeResourceStatResults(
+            name=self.name,
+            hostname=socket.gethostname(),
+            results=results,
+        )
+
     def finalize(self):
         """Finalize the stat summaries and return the results.
 
@@ -123,24 +167,6 @@ class ResourceMonitorAggregator:
                     num_samples=self._count,
                 ),
             )
-
-        for job_name, stat_dict in self._process_summaries["sum"].items():
-            for stat_name, val in stat_dict.items():
-                self._process_summaries["average"][job_name][stat_name] = (
-                    val / self._process_sample_count[job_name]
-                )
-
-        self._process_summaries.pop("sum")
-        for job_name, samples in self._process_sample_count.items():
-            result = ProcessStatResults(
-                job_name=job_name,
-                num_samples=samples,
-                resource_type=ResourceType.PROCESS,
-                average=self._process_summaries["average"][job_name],
-                minimum=self._process_summaries["minimum"][job_name],
-                maximum=self._process_summaries["maximum"][job_name],
-            )
-            results.append(result)
 
         return ComputeNodeResourceStatResults(
             name=self.name,
@@ -220,11 +246,16 @@ def run_stat_aggregator(conn, stats, pids):
             cmd = conn.recv()
             logger.info("Received command %s", cmd["command"].value)
             match cmd["command"]:
+                case IpcMonitorCommands.COMPLETE_JOBS:
+                    results = agg.complete_process_stats(cmd["completed_job_names"])
+                    conn.send(results)
+                    pids = cmd["pids"]
                 case IpcMonitorCommands.SELECT_STATS:
                     agg.stats = cmd["stats"]
                     pids = cmd["pids"]
-                case IpcMonitorCommands.SET_PIDS:
+                case IpcMonitorCommands.UPDATE_STATS:
                     pids = cmd["pids"]
+                    agg.update_resource_stats(pids=pids)
                 case IpcMonitorCommands.SHUTDOWN:
                     logger.info("Received shutdown command")
                     results = agg.finalize()
@@ -232,7 +263,6 @@ def run_stat_aggregator(conn, stats, pids):
                 case _:
                     raise Exception(f"Received unknown command: {cmd}")
 
-        agg.update_resource_stats(pids=pids)
         time.sleep(stats.interval)
 
     conn.send(results)

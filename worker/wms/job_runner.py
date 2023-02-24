@@ -30,6 +30,7 @@ from wms.resource_monitor import (
     run_stat_aggregator,
 )
 from wms.utils.filesystem_factory import make_path
+from wms.utils.timing import timer_stats_collector, Timer
 
 logger = logging.getLogger(__name__)
 
@@ -59,35 +60,13 @@ class JobRunner:
         self._parent_monitor_conn = None
         self._monitor_proc = None
         self._pids = {}
+        self._jobs_pending_process_stat_completion = []
 
     def __del__(self):
         if self._outstanding_jobs:
             logger.warning("JobRunner destructed with outstanding jobs", self._outstanding_jobs)
         if self._parent_monitor_conn is not None or self._monitor_proc is not None:
             logger.warning("JobRunner destructed without stopping the resource monitor process.")
-
-    def check_completions(self):
-        done_jobs = []
-        db_jobs = {}
-        for job in self._outstanding_jobs.values():
-            if job.is_complete():
-                result = job.get_result()
-                done_jobs.append(result)
-                db_jobs[job.name] = job.db_job
-                self._increment_resources(job.db_job)
-                self._log_job_complete_event(job.name, result.status)
-                self._update_file_info(job)
-                self._num_jobs += 1
-
-        for result in done_jobs:
-            self._outstanding_jobs.pop(result.name)
-            if self._stats.process:
-                self._pids.pop(result.name)
-            self._complete_job(db_jobs[result.name], result)
-
-        logger.info("Found %s completions", len(done_jobs))
-
-        return len(done_jobs)
 
     def run_worker(self, scheduler=None):
         if self._stats.process:
@@ -151,7 +130,7 @@ class JobRunner:
                 num_completed = self._cancel_outstanding_jobs()
                 break
 
-            num_completed = self.check_completions()
+            num_completed = self._process_completions(cancel=False)
             num_started = 0
             if num_completed > 0 or self._is_time_to_poll_database():
                 num_started = self._run_ready_jobs()
@@ -167,7 +146,10 @@ class JobRunner:
                     )
                 break
 
-            if num_completed > 0 or num_started > 0:
+            if num_started > 0:
+                self._update_pids_to_monitor()
+            if num_completed > 0:
+                self._handle_completed_process_stats()
                 self._update_pids_to_monitor()
 
             time.sleep(self._poll_interval)
@@ -177,24 +159,7 @@ class JobRunner:
         self._update_pids_to_monitor()
 
     def _cancel_outstanding_jobs(self):
-        canceled_jobs = []
-        db_jobs = {}
-        for job in self._outstanding_jobs.values():
-            job.cancel()
-            result = job.get_result()
-            canceled_jobs.append(result)
-            db_jobs[job.name] = job.db_job
-            self._increment_resources(job.db_job)
-            self._log_job_complete_event(job.name, result.status)
-
-        for result in canceled_jobs:
-            self._outstanding_jobs.pop(result.name)
-            if self._stats.process:
-                self._pids.pop(result.name)
-            self._complete_job(db_jobs[result.name], result)
-
-        logger.info("Canceled %s jobs", len(canceled_jobs))
-        return len(canceled_jobs)
+        return self._process_completions(cancel=True)
 
     def _complete_job(self, job, result):
         job = send_api_command(
@@ -267,11 +232,42 @@ class JobRunner:
             },
         )
 
+    def _process_completions(self, cancel=False):
+        done_jobs = []
+        db_jobs = {}
+        for job in self._outstanding_jobs.values():
+            if cancel:
+                job.cancel()
+            if job.is_complete():
+                result = job.get_result()
+                done_jobs.append(result)
+                db_jobs[job.name] = job.db_job
+                self._increment_resources(job.db_job)
+                self._log_job_complete_event(job.name, result.status)
+                if not cancel:
+                    self._update_file_info(job)
+                    self._num_jobs += 1
+
+        for result in done_jobs:
+            self._outstanding_jobs.pop(result.name)
+            if self._stats.process:
+                self._jobs_pending_process_stat_completion.append(result.name)
+                self._pids.pop(result.name)
+            self._complete_job(db_jobs[result.name], result)
+
+        logger.info("Found %s completions", len(done_jobs))
+        return len(done_jobs)
+
     def _run_job(self, job: AsyncCliCommand):
         job.run(self._output_dir)
         job.db_job.run_id += 1
-        job.db_job.status = "submitted"
         job.db_job = send_api_command(self._api.put_jobs_name, job.db_job, job.name)
+        job.db_job = send_api_command(
+            self._api.put_jobs_manage_status_change_name_status_rev,
+            job.name,
+            "submitted",
+            job.db_job._rev,
+        )
         self._outstanding_jobs[job.name] = job
         if self._stats.process:
             self._pids[job.name] = job.pid
@@ -322,10 +318,38 @@ class JobRunner:
         self._parent_monitor_conn = None
         self._monitor_proc = None
 
+    def _handle_completed_process_stats(self):
+        if self._stats.process:
+            self._parent_monitor_conn.send(
+                {
+                    "command": IpcMonitorCommands.COMPLETE_JOBS,
+                    "pids": self._pids,
+                    "completed_job_names": self._jobs_pending_process_stat_completion,
+                }
+            )
+            with Timer(timer_stats_collector, "receive_process_stats"):
+                results = self._parent_monitor_conn.recv()
+            for result in results.results:
+                self._post_job_process_stats(result)
+            if results.results:
+                send_api_command(
+                    self._api.post_compute_node_stats,
+                    ComputeNodeStatsModel(
+                        name=results.name,
+                        hostname=results.name,
+                        # These json methods let Pydantic run its data type conversions.
+                        stats=[
+                            ComputeNodeStatsStats(**json.loads(x.json())) for x in results.results
+                        ],
+                        timestamp=str(datetime.now()),
+                    ),
+                )
+            self._jobs_pending_process_stat_completion.clear()
+
     def _update_pids_to_monitor(self):
         if self._stats.process:
             self._parent_monitor_conn.send(
-                {"command": IpcMonitorCommands.SET_PIDS, "pids": self._pids}
+                {"command": IpcMonitorCommands.UPDATE_STATS, "pids": self._pids}
             )
 
     def _post_compute_node_stats(self, results: ComputeNodeResourceStatResults):
@@ -346,11 +370,10 @@ class JobRunner:
         )
 
         for result in results.results:
-            if result.resource_type == ResourceType.PROCESS:
-                self._post_job_process_stats(result)
+            assert result.resource_type != ResourceType.PROCESS, result
 
     def _post_job_process_stats(self, result: ProcessStatResults):
-        # TODO: Run this whenever a job completes
+        run_id = send_api_command(self._api.get_jobs_name, result.job_name).run_id
         res = send_api_command(
             self._api.post_job_process_stats,
             JobProcessStatsModel(
@@ -360,7 +383,7 @@ class JobRunner:
                 max_rss=result.maximum["rss"],
                 num_samples=result.num_samples,
                 job_name=result.job_name,
-                run_id=result.run_id,
+                run_id=run_id,
                 timestamp=str(datetime.now()),
             ),
         )

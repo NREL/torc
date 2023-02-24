@@ -23,9 +23,10 @@ class ResourceType(enum.Enum):
 class IpcMonitorCommands(enum.Enum):
     """Monitor commands that can be sent to child processes"""
 
+    COMPLETE_JOBS = "complete_pids"
     SELECT_STATS = "select_stats"
-    SET_PIDS = "set_pids"
     SHUTDOWN = "shutdown"
+    UPDATE_STATS = "update_stats"
 
 
 class ComputeNodeResourceStatConfig(WmsBaseModel):
