@@ -1,3 +1,4 @@
+'use strict';
 const {query} = require('@arangodb');
 const db = require('@arangodb').db;
 const graphModule = require('@arangodb/general-graph');
@@ -269,7 +270,7 @@ function getReadyJobRequirements() {
     numJobs += 1;
     numCpus += reqs.num_cpus;
     numGpus += reqs.num_gpus;
-    memory = utils.getMemoryInBytes(reqs.memory);
+    const memory = utils.getMemoryInBytes(reqs.memory);
     totalMemory += memory;
     if (memory > maxMemory) {
       maxMemory = memory;
@@ -547,7 +548,7 @@ function listJobResults(job) {
     return null;
   }
 
-  results = cursor.toArray();
+  const results = cursor.toArray();
   if (results.length > 1) {
     results.sort(compareTimestamp);
   }
@@ -561,8 +562,8 @@ function listJobResults(job) {
  * @return {number}
  */
 function compareTimestamp(result1, result2) {
-  t1 = new Date(result1.completion_time).getTime();
-  t2 = new Date(result2.completion_time).getTime();
+  const t1 = new Date(result1.completion_time).getTime();
+  const t2 = new Date(result2.completion_time).getTime();
   return t1 - t2;
 }
 
@@ -886,7 +887,7 @@ function resetWorkflowStatus() {
  * Enable one job from each resource requirement group and disable the rest.
  */
 function setupAutoTuneResourceRequirements() {
-  groups = new Set();
+  const groups = new Set();
   const status = getWorkflowStatus();
   status.auto_tune_status.enabled = true;
 

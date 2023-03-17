@@ -1,3 +1,4 @@
+'use strict';
 const joi = require('joi');
 const db = require('@arangodb').db;
 const errors = require('@arangodb').errors;

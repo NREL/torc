@@ -1,5 +1,5 @@
+'use strict';
 const parse = require('tinyduration').parse;
-
 const {KiB, MiB, GiB, TiB, MAX_TRANSFER_RECORDS} = require('./defs');
 const product = (...a) => a.reduce((a, b) => a.flatMap((d) => b.map((e) => [d, e].flat())));
 
@@ -42,7 +42,7 @@ function getMemoryInBytes(memoryString) {
  * @return {number} - Duration in seconds
  */
 function getTimeDurationInSeconds(duration) {
-  obj = parse(duration);
+  const obj = parse(duration);
   if (obj.years != undefined || obj.months != undefined) {
     throw new Error('duration=${duration} contains inexact time periods');
   }

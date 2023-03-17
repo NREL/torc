@@ -1,3 +1,4 @@
+'use strict';
 const joi = require('joi');
 const db = require('@arangodb').db;
 const graphModule = require('@arangodb/general-graph');

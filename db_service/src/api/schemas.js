@@ -1,3 +1,4 @@
+'use strict';
 const joi = require('joi');
 
 const workerResources = joi.object().required().keys({

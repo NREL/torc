@@ -1,3 +1,4 @@
+'use strict';
 const GRAPH_NAME = 'workflow_graph';
 const KiB = 1024;
 const MiB = KiB * KiB;
