@@ -1,4 +1,5 @@
 import logging
+import socket
 import time
 
 import psutil
@@ -31,8 +32,8 @@ class ResourceMonitor:
         "packets_sent",
     )
 
-    def __init__(self, name):
-        self._name = name
+    def __init__(self, name=None):
+        self._name = name or socket.gethostname()
         self._last_disk_check_time = None
         self._last_net_check_time = None
         self._update_disk_stats(psutil.disk_io_counters())

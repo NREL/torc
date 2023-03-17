@@ -3,17 +3,11 @@ const db = require('@arangodb').db;
 const graphModule = require('@arangodb/general-graph');
 const graphName = 'workflow_graph';
 
-for (const name of ['events']) {
+for (const name of ['events', 'workflow_config', 'workflow_status']) {
   if (!db._collection(name)) {
     db._createDocumentCollection(name);
     console.log(`Created document collection ${name}`);
   }
-}
-
-if (!db._collection('workflow_status')) {
-  db._createDocumentCollection('workflow_status');
-  db.workflow_status.save({is_canceled: false, run_id: 0, scheduled_compute_node_ids: []});
-  console.log(`Created document collection workflow_status`);
 }
 
 if (!graphModule._list().includes(graphName)) {

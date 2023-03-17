@@ -1,3 +1,4 @@
+'use strict';
 const joi = require('joi');
 const db = require('@arangodb').db;
 const errors = require('@arangodb').errors;
@@ -42,6 +43,7 @@ router.put('/jobs/:name', function(req, res) {
     res.throw(404, 'The job does not exist', e);
   }
 })
+    .pathParam('name', joi.string().required(), 'Name of the job.')
     .body(joi.object().required(), 'job to update in the collection.')
     .response(schemas.job, 'job updated in the collection.')
     .summary('Update job')
@@ -183,9 +185,26 @@ router.get('/jobs/resource_requirements/:name', function(req, res) {
   }
 })
     .pathParam('name', joi.string().required(), 'Name of the job.')
-    .response(schemas.resourceRequirements, 'Resource requirements for job.')
+    .response(schemas.resourceRequirements, 'Resource requirements for the job.')
     .summary('Retrieve the resource requirements for a job.')
     .description('Retrieve the resource requirements for a job by its name.');
+
+router.get('/jobs/process_stats/:name', function(req, res) {
+  try {
+    const doc = graph.jobs.document(req.pathParams.name);
+    const rr = query.listJobProcessStats(doc);
+    res.send(rr);
+  } catch (e) {
+    if (!e.isArangoError || e.errorNum !== DOC_NOT_FOUND) {
+      throw e;
+    }
+    res.throw(404, 'The job does not exist', e);
+  }
+})
+    .pathParam('name', joi.string().required(), 'Name of the job.')
+    .response(joi.array().items(schemas.jobProcessStats), 'Process stats for the job.')
+    .summary('Retrieve the job process stats for a job.')
+    .description('Retrieve the job process stats for a job by its name.');
 
 router.post('jobs/complete_job/:name/:status/:rev', function(req, res) {
   const status = req.pathParams.status;

@@ -12,8 +12,10 @@ logger = logging.getLogger(__name__)
 class WorkflowManager:
     """Manages the workflow across nodes."""
 
-    def __init__(self, api):
+    def __init__(self, api, reset_config=True):
         self._api = api
+        if reset_config:
+            api.put_workflow_config_reset()
 
     def reinitialize_jobs(self):
         """Reinitialize job status to prepare for restarting the workflow.
@@ -55,11 +57,14 @@ class WorkflowManager:
             },
         )
 
-    def start(self):
+    def start(self, auto_tune_resource_requirements=False):
         send_api_command(self._api.put_workflow_status_reset)
         # Set every job status to unknown/uninitialized.
         send_api_command(self._api.post_workflow_initialize_jobs)
-        # post event to start workflow.
+
+        if auto_tune_resource_requirements:
+            send_api_command(self._api.post_workflow_auto_tune_resource_requirements)
+
         send_api_command(
             self._api.post_events,
             {

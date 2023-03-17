@@ -456,7 +456,6 @@ function getJobDefinition(job) {
     scheduler: scheduler == null ? null : scheduler.name,
   };
 }
-
 /**
  * Return the job's resource requirements, using default values if none are assigned.
  * @param {Object} job
@@ -530,11 +529,11 @@ function getJobsThatNeedFile(name) {
 /**
  * Return all result documents connected to the job, sorted by completion time.
  * Return null if the job does not have a result.
- * @param {string} jobName
+ * @param {Object} job
  * @return {Object}
  */
-function getJobResults(jobName) {
-  const jobId = `jobs/${jobName}`;
+function listJobResults(job) {
+  const jobId = `jobs/${job.name}`;
   const cursor = query({count: true})`
     FOR v, e, p
       IN 1
@@ -570,11 +569,11 @@ function compareTimestamp(result1, result2) {
 /**
  * Return the latest job result.
  * Return null if the job does not have a result.
- * @param {string} jobName
+ * @param {Object} job
  * @return {Object}
  */
-function getLatestJobResult(jobName) {
-  const results = getJobResults(jobName);
+function getLatestJobResult(job) {
+  const results = listJobResults(job);
   if (results == null) {
     return results;
   }
@@ -600,12 +599,28 @@ function getUserDataStoredByJob(jobName) {
 }
 
 /**
+ * Return the current workflow config.
+ * @return {Object}
+*/
+function getWorkflowConfig() {
+  const config = db.workflow_config.all().toArray();
+  if (config.length == 0) {
+    return null;
+  } else if (config.length != 1) {
+    throw new Error(`There can only be one workflow config: ${JSON.stringify(config)}`);
+  }
+  return config[0];
+}
+
+/**
  * Return the current workflow status.
  * @return {Object}
 */
 function getWorkflowStatus() {
   const status = db.workflow_status.all().toArray();
-  if (status.length != 1) {
+  if (status.length == 0) {
+    return null;
+  } else if (status.length != 1) {
     throw new Error(`There can only be one workflow status: ${JSON.stringify(status)}`);
   }
   return status[0];
@@ -615,6 +630,9 @@ function getWorkflowStatus() {
 function initializeJobStatus() {
   // TODO: Can this be more efficient with one traversal?
   for (const job of graph.jobs.all()) {
+    if (job.status == JobStatus.Disabled) {
+      continue;
+    }
     const jobResources = getJobResourceRequirements(job);
     if (job.internal == null) {
       job.internal = schemas.jobInternal.validate({}).value;
@@ -693,11 +711,37 @@ function isJobStatusComplete(status) {
 function isWorkflowComplete() {
   const cursor = query({count: true})`
     FOR job in jobs
-        FILTER !(job.status == ${JobStatus.Done} OR job.status == ${JobStatus.Canceled})
+        FILTER !(
+          job.status == ${JobStatus.Done}
+          OR job.status == ${JobStatus.Canceled}
+          OR job.status == ${JobStatus.Disabled}
+        )
         LIMIT 1
         RETURN job.name
   `;
   return cursor.count() == 0;
+}
+
+/**
+ * Return the job's process stats.
+ * @param {Object} job
+ * @return {Array} Array of jobProcessStats
+ */
+function listJobProcessStats(job) {
+  const jobId = job._id;
+  const cursor = query({count: true})`
+    FOR v, e, p
+      IN 1
+      OUTBOUND ${jobId}
+      GRAPH ${GRAPH_NAME}
+      OPTIONS { edgeCollections: 'process_used' }
+      RETURN p.vertices[1]
+  `;
+  const results = cursor.toArray();
+  if (results.length > 1) {
+    results.sort((x, y) => x.run_id - y.run_id);
+  }
+  return results;
 }
 
 /**
@@ -714,7 +758,7 @@ function manageJobStatusChange(job) {
   Object.assign(job, meta);
 
   if (!isJobStatusComplete(oldStatus) && isJobStatusComplete(job.status)) {
-    const result = getLatestJobResult(job.name);
+    const result = getLatestJobResult(job);
     if (result == null) {
       throw new Error(
           `A job must have a result before it is completed: ${job.name}.`,
@@ -742,6 +786,10 @@ function prepareJobsForSubmission(workerResources, limit) {
     workerResources.time_limit == null ?
       Number.MAX_SAFE_INTEGER : utils.getTimeDurationInSeconds(workerResources.time_limit);
   // TODO: numNodes and numGpus
+
+  // TODO: Improvement: if there are multiple resoure requirement groups (and nodes),
+  // the larger nodes should avoid taking the smaller jobs.
+  // Perhaps this request can specify minimum job thresholds.
   db._executeTransaction({
     collections: {
       exclusive: 'jobs',
@@ -793,12 +841,37 @@ function resetJobStatus() {
   console.log(`Reset all job status to ${JobStatus.Uninitialized}`);
 }
 
+/** Reset workflow config. */
+function resetWorkflowConfig() {
+  const config = {
+    compute_node_resource_stat_config: schemas.computeNodeResourceStatConfig.validate({}).value,
+  };
+
+  const doc = getWorkflowConfig();
+  if (doc == null) {
+    db.workflow_config.save(config);
+  } else {
+    Object.assign(doc, config);
+    db.workflow_config.update(doc, doc);
+  }
+}
+
 /** Reset workflow status. */
 function resetWorkflowStatus() {
-  const status = {run_id: 0, is_canceled: false, scheduled_compute_node_ids: []};
+  const status = {
+    run_id: 0,
+    is_canceled: false,
+    scheduled_compute_node_ids: [],
+    auto_tune_status: schemas.autoTuneStatus.validate({}).value,
+  };
+
   const doc = getWorkflowStatus();
-  Object.assign(doc, status);
-  db.workflow_status.update(doc, doc);
+  if (doc == null) {
+    db.workflow_status.save(status);
+  } else {
+    Object.assign(doc, status);
+    db.workflow_status.update(doc, doc);
+  }
 
   for (const job of db.jobs.all()) {
     job.run_id = 0;
@@ -806,6 +879,98 @@ function resetWorkflowStatus() {
     db.jobs.update(job, job);
   }
   console.log(`Reset workflow status`);
+}
+
+/**
+ * Setup the jobs to auto-tune resource requirements.
+ * Enable one job from each resource requirement group and disable the rest.
+ */
+function setupAutoTuneResourceRequirements() {
+  groups = new Set();
+  const status = getWorkflowStatus();
+  status.auto_tune_status.enabled = true;
+
+  // TODO DT: verify that process stats are enabled for jobs
+
+  for (const job of db.jobs.all()) {
+    if (job.status == JobStatus.Blocked) {
+      continue;
+    }
+    const rr = getJobResourceRequirements(job);
+    if (groups.has(rr.name)) {
+      if (job.status == JobStatus.Disabled) {
+        // TODO DT: should I track these instead?
+        res.throw(400, `Job ${job.name} is already disabled`);
+      }
+      // This isn't atomic, but the user shouldn't call this in parallel.
+      // Let Arango fail the operation if they do that.
+      job.status = JobStatus.Disabled;
+      db.jobs.update(job, job);
+    } else {
+      status.auto_tune_status.job_names.push(job.name);
+      groups.add(rr.name);
+    }
+  }
+  db.workflow_status.update(status, status);
+}
+
+/**
+ * Process the results of setupAutoTuneResourceRequirements.
+ * 1. Update the resource requirements groups based on the utilization stats from
+ * the selected jobs that ran.
+ * 2. Update all non-auto-tune job status from disabled to uninitialized.
+ */
+function processAutoTuneResourceRequirementsResults() {
+  const status = getWorkflowStatus();
+  status.auto_tune_status.disabled = true;
+  const groupsUpdated = new Set();
+  const autoTuneJobs = new Set();
+
+  // FUTURE: consider whether all changes can be made atomically.
+  for (const name of status.auto_tune_status.job_names) {
+    const job = db.jobs.document(name);
+    const jobStats = listJobProcessStats(job);
+    if (jobStats.length == 0) {
+      throw new Error(`job ${job.name} does not have any process stats`);
+    }
+    const stats = jobStats.slice(-1)[0];
+    const maxMemoryGb = Math.ceil(stats.max_rss / GiB);
+    const maxMemory = `${maxMemoryGb}g`;
+    const maxCpusUsed = stats.max_cpu_percent == 0 ? 1 : Math.ceil(stats.max_cpu_percent / 100);
+    const rr = getJobResourceRequirements(job);
+    const result = getLatestJobResult(job);
+    const oldRr = JSON.parse(JSON.stringify(rr));
+    rr.num_cpus = maxCpusUsed;
+    rr.memory = maxMemory;
+    const minutes = Math.ceil(result.exec_time_minutes);
+    rr.runtime = `P0DT0H${minutes}M`;
+    if (groupsUpdated.has(rr.name)) {
+      throw new Error(`resource requirements ${rr.name} was already updated`);
+    }
+    groupsUpdated.add(rr.name);
+    db.resource_requirements.update(rr, rr);
+    const event = {
+      category: 'resource_requirements',
+      type: 'update',
+      name: rr.name,
+      old: oldRr,
+      new: rr,
+      message: `Updated resource requirements for name = ${rr.name}`,
+    };
+    db.events.save(event);
+    autoTuneJobs.add(job.name);
+  }
+
+  for (const job of db.jobs.all()) {
+    if (!autoTuneJobs.has(job.name)) {
+      if (job.status != JobStatus.Disabled) {
+        throw new Error(`Expected status disabled instead of ${job.status} for job ${job.name}`);
+      }
+      job.status = JobStatus.Uninitialized;
+      db.jobs.update(job, job);
+    }
+  }
+  db.workflow_status.update(status, status);
 }
 
 /**
@@ -822,7 +987,7 @@ function updateBlockedJobsFromCompletion(job) {
       OPTIONS { edgeCollections: 'blocks', uniqueVertices: 'global', order: 'bfs' }
       RETURN p.vertices[1]
   `;
-  const result = getLatestJobResult(job.name);
+  const result = getLatestJobResult(job);
   // TODO: should other queries use bfs?
   for (const blockedJob of cursor) {
     if (!isJobBlocked(blockedJob._id)) {
@@ -879,18 +1044,23 @@ module.exports = {
   getJobResourceRequirements,
   getJobScheduler,
   getJobsThatNeedFile,
-  getJobResults,
+  listJobResults,
   getLatestJobResult,
   getUserDataStoredByJob,
+  getWorkflowConfig,
   getWorkflowStatus,
   initializeJobStatus,
   isJobBlocked,
   isJobInitiallyBlocked,
   isJobStatusComplete,
   isWorkflowComplete,
+  listJobProcessStats,
   manageJobStatusChange,
   prepareJobsForSubmission,
+  processAutoTuneResourceRequirementsResults,
   resetJobStatus,
+  resetWorkflowConfig,
   resetWorkflowStatus,
+  setupAutoTuneResourceRequirements,
   updateBlockedJobsFromCompletion,
 };

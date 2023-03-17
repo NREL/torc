@@ -60,6 +60,7 @@ swap_text "s/job_definitions_body/job_definition/g"
 swap_text "s/resource_requirements_body/resource_requirements_model/g"
 swap_text "s/edges_name_body/edge_model/g"
 swap_text "s/workflow_body/workflow/g"
+swap_text "s/workflow_config_body/workflow_config_model/g"
 swap_text "s/workflow_jobs/job_definition2/g"  # Is there a way to eliminate the duplicate?
 swap_text "s/workflow_prepare_jobs_for_submission_body/worker_resources/g"
 rm swagger.json

@@ -27,7 +27,7 @@ def setup_logging(
     file_level : int, optional
         file log level. defaults to logging.INFO
     packages : list, optional
-        enable logging for these package names. Always adds dsgrid.
+        enable logging for these package names. Always adds wms.
     """
     handler_names = ["console"]
     handler_configs = {

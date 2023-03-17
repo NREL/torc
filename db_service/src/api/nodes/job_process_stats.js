@@ -63,7 +63,7 @@ router.delete('/job_process_stats/:key', function(req, res) {
     if (!e.isArangoError || e.errorNum !== DOC_NOT_FOUND) {
       throw e;
     }
-    res.throw(404, 'The user data does not exist', e);
+    res.throw(404, 'The job process stats key does not exist', e);
   }
 })
     .pathParam('key', joi.string().required(), 'Key of the job process.')

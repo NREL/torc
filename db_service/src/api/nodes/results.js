@@ -75,11 +75,12 @@ router.delete('/results/:key', function(req, res) {
     .description('Deletes a result from the "results" collection by key.');
 
 router.get('/results/find_by_job_name/:name', function(req, res) {
-  const job = query.getLatestJobResult(req.pathParams.name);
-  if (job == null) {
+  const job = db.jobs.document(req.pathParams.name);
+  const result = query.getLatestJobResult(job);
+  if (result == null) {
     res.throw(404, `No result is stored for job ${req.pathParams.name}`);
   }
-  res.send(job);
+  res.send(result);
 })
     .pathParam('name', joi.string().required(), 'Job name.')
     .response(schemas.result)

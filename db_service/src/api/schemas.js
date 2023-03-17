@@ -90,7 +90,7 @@ const job = joi.object().required().keys({
   run_id: joi.number().default(0),
   // This only exists to all prepareJobsForSubmission to take less time to find
   // jobs with exclusive access.
-  internal: jobInternal.validate({}).value,
+  internal: jobInternal.validate({}).value, // TODO DT: seems wrong
   // TODO container information
   _key: joi.string(),
   _id: joi.string(),
@@ -170,16 +170,41 @@ const workflowEstimate = joi.object().required().keys({
 });
 
 const workflow = joi.object().required().keys({
+  // TODO: allow specifying compute node resource stat config here
   jobs: joi.array().items(jobDefinition).default([]),
   files: joi.array().items(file).default([]),
   resource_requirements: joi.array().items(resourceRequirements).default([]),
   schedulers: joi.array().items(hpcConfig).default([]),
 });
 
+const autoTuneStatus = joi.object().required().keys({
+  enabled: joi.boolean().default(true),
+  job_names: joi.array().items(joi.string()).default([]),
+});
+
+const computeNodeResourceStatConfig = joi.object().required().keys({
+  cpu: joi.boolean().default(false),
+  disk: joi.boolean().default(false),
+  memory: joi.boolean().default(false),
+  network: joi.boolean().default(false),
+  process: joi.boolean().default(false),
+  include_child_processes: joi.boolean().default(true),
+  recurse_child_processes: joi.boolean().default(false),
+  interval: joi.number().default(10),
+});
+
+const workflowConfig = joi.object().required().keys({
+  compute_node_resource_stat_config: computeNodeResourceStatConfig,
+  _key: joi.string(),
+  _id: joi.string(),
+  _rev: joi.string(),
+});
+
 const workflowStatus = joi.object().required().keys({
   is_canceled: joi.boolean().required(),
   run_id: joi.number().required(),
   scheduled_compute_node_ids: joi.array().items(joi.number()),
+  auto_tune_status: autoTuneStatus,
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),
@@ -294,6 +319,7 @@ const batchJobProcessStats = joi.object().required().keys({
 });
 
 module.exports = {
+  autoTuneStatus,
   batchComputeNodeStats,
   batchComputeNodes,
   batchEdges,
@@ -307,6 +333,7 @@ module.exports = {
   batchResults,
   batchUserData,
   computeNode,
+  computeNodeResourceStatConfig,
   computeNodeStats,
   edge,
   file,
@@ -322,6 +349,7 @@ module.exports = {
   result,
   workerResources,
   workflow,
+  workflowConfig,
   workflowEstimate,
   workflowStatus,
 };

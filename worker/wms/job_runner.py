@@ -22,7 +22,6 @@ from .common import KiB, MiB, GiB, TiB
 from .async_cli_command import AsyncCliCommand
 from wms.api import send_api_command
 from wms.resource_monitor import (
-    ComputeNodeResourceStatConfig,
     ComputeNodeResourceStatResults,
     IpcMonitorCommands,
     ProcessStatResults,
@@ -44,7 +43,6 @@ class JobRunner:
         database_poll_interval=600,
         time_limit=None,
         resources=None,
-        stats=None,
     ):
         self._api = api
         self._outstanding_jobs = {}
@@ -56,7 +54,7 @@ class JobRunner:
         self._num_jobs = 0
         self._last_db_poll_time = 0
         self._compute_node_db_id = None
-        self._stats = stats or ComputeNodeResourceStatConfig.disabled()
+        self._stats = api.get_workflow_config().compute_node_resource_stat_config
         self._parent_monitor_conn = None
         self._monitor_proc = None
         self._pids = {}
@@ -98,7 +96,7 @@ class JobRunner:
         )
         compute_node = send_api_command(self._api.post_compute_nodes, compute_node)
         self._compute_node_db_id = compute_node._id
-        self._run_ready_jobs()
+        # self._run_ready_jobs()
         self.wait()
         compute_node.is_active = False
         send_api_command(self._api.put_compute_nodes_key, compute_node, compute_node._key)
@@ -156,6 +154,7 @@ class JobRunner:
             # TODO: check time remaining and then for interruptible jobs
 
         self._pids.clear()
+        self._handle_completed_process_stats()
         self._update_pids_to_monitor()
 
     def _cancel_outstanding_jobs(self):
@@ -255,7 +254,10 @@ class JobRunner:
                 self._pids.pop(result.name)
             self._complete_job(db_jobs[result.name], result)
 
-        logger.info("Found %s completions", len(done_jobs))
+        if done_jobs:
+            logger.info("Found %s completions", len(done_jobs))
+        else:
+            logger.debug("Found 0 completions")
         return len(done_jobs)
 
     def _run_job(self, job: AsyncCliCommand):

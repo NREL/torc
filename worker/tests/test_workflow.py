@@ -6,10 +6,12 @@ from pathlib import Path
 
 import pytest
 from swagger_client.models.worker_resources import WorkerResources
+from swagger_client.models.workflow_config_compute_node_resource_stat_config import (
+    WorkflowConfigComputeNodeResourceStatConfig,
+)
 
 from wms.common import GiB
 from wms.job_runner import JobRunner
-from wms.resource_monitor import ComputeNodeResourceStatConfig
 from wms.utils.timing import timer_stats_collector
 from wms.workflow_manager import WorkflowManager
 
@@ -24,14 +26,17 @@ def test_run_workflow(diamond_workflow):
     assert len(user_data_work1) == 1
     assert user_data_work1[0]["key1"] == "val1"
     mgr = WorkflowManager(api)
+    config = api.get_workflow_config()
+    config.compute_node_resource_stat_config = WorkflowConfigComputeNodeResourceStatConfig(
+        cpu=True, memory=True, process=True, interval=0.1
+    )
+    api.put_workflow_config(config)
     mgr.start()
-    stats = ComputeNodeResourceStatConfig(interval=1, name="test")
     runner = JobRunner(
         api,
         output_dir,
         time_limit="P0DT24H",
         job_completion_poll_interval=0.1,
-        stats=stats,
     )
     runner.run_worker()
 
@@ -241,3 +246,11 @@ def test_concurrent_submitters(independent_job_workflow, tmp_path):
 
 def _get_job_names_by_event(events, type_):
     return sorted([x["name"] for x in events if x["category"] == "job" and x["type"] == type_])
+
+
+# def _disable_resource_stats(api):
+#    config = api.get_workflow_config()
+#    config.compute_node_resource_stat_config = WorkflowConfigComputeNodeResourceStatConfig(
+#        cpu=False, memory=False, disk=False, network=False, process=False
+#    )
+#    api.put_workflow_config(config)

@@ -14,10 +14,12 @@ module.exports = router;
 router.post('/workflow', function(req, res) {
   try {
     addWorkflow(req.body);
+    // TODO: remove this call when the config can be set in the workflow body.
+    query.resetWorkflowConfig();
     query.resetWorkflowStatus();
     res.send({message: 'Added workflow.'});
   } catch (e) {
-    res.throw(400, 'Error occured', e);
+    res.throw(400, `Error occured: ${e}`);
   }
 })
     .body(schemas.workflow, 'New workflow')
@@ -44,26 +46,12 @@ router.get('/workflow', function(req, res) {
     .description('Retrieves the current workflow in JSON format.');
 
 router.delete('/workflow', function(req, res) {
-  db._truncate('blocks');
-  db._truncate('compute_node_stats');
-  db._truncate('compute_nodes');
-  db._truncate('events');
-  db._truncate('executed');
-  db._truncate('files');
-  db._truncate('hpc_configs');
-  db._truncate('job_process_stats');
-  db._truncate('jobs');
-  db._truncate('needs');
-  db._truncate('node_used');
-  db._truncate('process_used');
-  db._truncate('produces');
-  db._truncate('requires');
-  db._truncate('resource_requirements');
-  db._truncate('results');
-  db._truncate('returned');
-  db._truncate('scheduled_bys');
-  db._truncate('stores');
-  db._truncate('user_data');
+  for (const collection of db._collections()) {
+    const name = collection.name();
+    if (!name.startsWith('_')) {
+      db._truncate(name);
+    }
+  }
   console.log(`Deleted all database objects.`);
   res.send({message: 'Deleted the workflow'});
 })
@@ -121,6 +109,22 @@ router.post('/workflow/prepare_jobs_for_submission', function(req, res) {
     .response(joi.array().items(schemas.job), 'Jobs that are ready for submission.')
     .summary('Return ready jobs')
     .description('Return jobs that are ready for submission. Sets status to submitted_pending');
+
+router.post('/workflow/auto_tune_resource_requirements', function(req, res) {
+  query.setupAutoTuneResourceRequirements();
+  res.send({message: 'Enabled jobs for auto-tune mode.'});
+})
+    .response(joi.object(), 'Message')
+    .summary('Enable workflow for auto-tuning resource requirements.')
+    .description('Enable workflow for auto-tuning resource requirements.');
+
+router.post('/workflow/process_auto_tune_resource_requirements_results', function(req, res) {
+  query.processAutoTuneResourceRequirementsResults();
+  res.send({message: 'Processed the results of auto-tuning resource requirements.'});
+})
+    .response(joi.object(), 'Message')
+    .summary('Process the results of auto-tuning resource requirements.')
+    .description('Process the results of auto-tuning resource requirements.');
 
 router.post('/workflow/reset_status', function(req, res) {
   query.resetJobStatus();

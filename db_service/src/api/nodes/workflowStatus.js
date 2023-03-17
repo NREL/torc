@@ -1,3 +1,4 @@
+'use strict';
 const joi = require('joi');
 const db = require('@arangodb').db;
 const createRouter = require('@arangodb/foxx/router');
@@ -30,7 +31,15 @@ router.put('/workflow_status', function(req, res) {
     .description('Update workflow status in the "workflow_status" collection.');
 
 router.get('/workflow_status', function(req, res) {
-  const doc = query.getWorkflowStatus();
+  let doc = query.getWorkflowStatus();
+  if (doc == null) {
+    doc = {
+      run_id: 0,
+      is_canceled: false,
+      scheduled_compute_node_ids: [],
+      auto_tune_status: schemas.autoTuneStatus.validate({}).value,
+    };
+  }
   res.send(doc);
 })
     .response(schemas.workflowStatus)

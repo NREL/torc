@@ -363,6 +363,56 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
+  /workflow/auto_tune_resource_requirements:
+    post:
+      tags: []
+      summary: Enable workflow for auto-tuning resource requirements.
+      description: Enable workflow for auto-tuning resource requirements.
+      operationId: post_workflow_auto_tune_resource_requirements
+      requestBody:
+        content:
+          '*/*': {}
+        required: false
+      responses:
+        "200":
+          description: Message
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /workflow/process_auto_tune_resource_requirements_results:
+    post:
+      tags: []
+      summary: Process the results of auto-tuning resource requirements.
+      description: Process the results of auto-tuning resource requirements.
+      operationId: post_workflow_process_auto_tune_resource_requirements_results
+      requestBody:
+        content:
+          '*/*': {}
+        required: false
+      responses:
+        "200":
+          description: Message
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
   /workflow/reset_status:
     post:
       tags: []
@@ -1513,6 +1563,7 @@ paths:
       parameters:
       - name: name
         in: path
+        description: Name of the job.
         required: true
         style: simple
         explode: false
@@ -1682,11 +1733,42 @@ paths:
           type: string
       responses:
         "200":
-          description: Resource requirements for job.
+          description: Resource requirements for the job.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_resource_requirements'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /jobs/process_stats/{name}:
+    get:
+      tags: []
+      summary: Retrieve the job process stats for a job.
+      description: Retrieve the job process stats for a job by its name.
+      operationId: get_jobs_process_stats_name
+      parameters:
+      - name: name
+        in: path
+        description: Name of the job.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Process stats for the job.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/job_process_stats_model'
         "500":
           description: Default error response.
           content:
@@ -2368,6 +2450,105 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
+  /workflow_config:
+    get:
+      tags: []
+      summary: Retrieve the current workflow config.
+      description: Retrieve the current workflow config.
+      operationId: get_workflow_config
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_18'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+    put:
+      tags: []
+      summary: Update workflow config
+      description: Update workflow config in the "workflow_config" collection.
+      operationId: put_workflow_config
+      requestBody:
+        description: Updated workflow config
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/workflow_config_model'
+        required: true
+      responses:
+        "200":
+          description: Updated workflow config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_18'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+    post:
+      tags: []
+      summary: Set workflow config
+      description: Set workflow config in the "workflow_config" collection.
+      operationId: post_workflow_config
+      requestBody:
+        description: Workflow config
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/workflow_config_model_1'
+        required: true
+      responses:
+        "200":
+          description: Workflow config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_18'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /workflow_config/reset:
+    put:
+      tags: []
+      summary: Reset workflow config
+      description: Rest workflow config in the "workflow_config" collection.
+      operationId: put_workflow_config_reset
+      requestBody:
+        content:
+          '*/*': {}
+        required: false
+      responses:
+        "200":
+          description: Updated workflow config
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_18'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
   /workflow_status:
     get:
       tags: []
@@ -2380,7 +2561,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_18'
+                $ref: '#/components/schemas/inline_response_200_19'
         "500":
           description: Default error response.
           content:
@@ -2406,7 +2587,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_18'
+                $ref: '#/components/schemas/inline_response_200_19'
         "500":
           description: Default error response.
           content:
@@ -2431,7 +2612,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_18'
+                $ref: '#/components/schemas/inline_response_200_19'
         "500":
           description: Default error response.
           content:
@@ -2477,7 +2658,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_19'
+                $ref: '#/components/schemas/inline_response_200_20'
         "500":
           description: Default error response.
           content:
@@ -2746,6 +2927,32 @@ components:
           type: string
         _rev:
           type: string
+    workflow_config_compute_node_resource_stat_config:
+      type: object
+      properties:
+        cpu:
+          type: boolean
+          default: true
+        disk:
+          type: boolean
+          default: false
+        memory:
+          type: boolean
+          default: true
+        network:
+          type: boolean
+          default: false
+        process:
+          type: boolean
+          default: true
+        include_child_processes:
+          type: boolean
+          default: true
+        recurse_child_processes:
+          type: boolean
+          default: false
+        interval:
+          type: number
     inline_response_200_12:
       required:
       - count
@@ -2795,31 +3002,22 @@ components:
           type: string
         _rev:
           type: string
-    inline_response_200_19:
+    workflow_config_model_1:
       required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
+      - compute_node_resource_stat_config
       type: object
       properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/edge_model'
-        skip:
-          type: number
-        max_limit:
-          type: number
-        count:
-          type: number
-        total_count:
-          type: number
-        has_more:
-          type: boolean
-    inline_response_200_18:
+        compute_node_resource_stat_config:
+          $ref: '#/components/schemas/workflow_config_compute_node_resource_stat_config'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_19:
       required:
+      - auto_tune_status
       - is_canceled
       - run_id
       type: object
@@ -2832,6 +3030,21 @@ components:
           type: array
           items:
             type: number
+        auto_tune_status:
+          $ref: '#/components/schemas/inline_response_200_19_auto_tune_status'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_18:
+      required:
+      - compute_node_resource_stat_config
+      type: object
+      properties:
+        compute_node_resource_stat_config:
+          $ref: '#/components/schemas/workflow_config_compute_node_resource_stat_config'
         _key:
           type: string
         _id:
@@ -3044,6 +3257,16 @@ components:
           type: string
         _rev:
           type: string
+    inline_response_200_19_auto_tune_status:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        job_names:
+          type: array
+          items:
+            type: string
     inline_response_200:
       required:
       - count
@@ -3352,6 +3575,29 @@ components:
           type: string
         _rev:
           type: string
+    inline_response_200_20:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/edge_model'
+        skip:
+          type: number
+        max_limit:
+          type: number
+        count:
+          type: number
+        total_count:
+          type: number
+        has_more:
+          type: boolean
     inline_response_200_8:
       required:
       - count
@@ -3581,4 +3827,17 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/inline_response_200_3'
+    workflow_config_model:
+      required:
+      - compute_node_resource_stat_config
+      type: object
+      properties:
+        compute_node_resource_stat_config:
+          $ref: '#/components/schemas/workflow_config_compute_node_resource_stat_config'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
 x-original-swagger-version: "2.0"

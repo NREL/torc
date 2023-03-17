@@ -29,6 +29,8 @@ class IpcMonitorCommands(enum.Enum):
     UPDATE_STATS = "update_stats"
 
 
+# TODO DT: make test to assert that this is the same as WorkflowConfigComputeNodeResourceStatConfig
+# Want two versions so that this can be used without the Swagger API
 class ComputeNodeResourceStatConfig(WmsBaseModel):
     """Defines the stats to monitor."""
 

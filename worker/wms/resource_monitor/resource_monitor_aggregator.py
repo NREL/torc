@@ -29,7 +29,7 @@ class ResourceMonitorAggregator:
     ):
         self._stats = stats
         self._count = 0
-        self._monitor = ResourceMonitor(stats.name)
+        self._monitor = ResourceMonitor()
         self._last_stats = self._get_stats()
         self._summaries = {
             "average": defaultdict(dict),

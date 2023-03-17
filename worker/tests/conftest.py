@@ -20,6 +20,7 @@ POSTPROCESS = Path("tests") / "scripts" / "postprocess.py"
 WORK = Path("tests") / "scripts" / "work.py"
 INVALID = Path("tests") / "scripts" / "invalid.py"
 NOOP = Path("tests") / "scripts" / "noop.py"
+RC_JOB = Path("tests") / "scripts" / "resource_consumption.py"
 
 
 @pytest.fixture
@@ -238,3 +239,58 @@ def complete_workflow_missing_files(completed_workflow):
     """Fakes an completed diamond workflow and then deletes the specified file."""
     api, output_dir = completed_workflow
     yield api, output_dir
+
+
+@pytest.fixture
+def multi_resource_requirement_workflow(tmp_path):
+    """Creates a workflow with jobs that need different categories of resource requirements."""
+    api = _initialize_api()
+    api.delete_workflow()
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    small = ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT1H")
+    medium = ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H")
+    large = ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H")
+
+    hpc_config = HpcConfigModel(name="debug", hpc_type="slurm", account="dsgrid")
+
+    num_jobs_per_category = 3
+    small_jobs = [
+        JobDefinition(
+            name=f"job_small{i}",
+            command=f"python {RC_JOB} -i {i} -c small",
+            resource_requirements=small.name,
+            scheduler=hpc_config.name,
+        )
+        for i in range(1, num_jobs_per_category + 1)
+    ]
+    medium_jobs = [
+        JobDefinition(
+            name=f"job_medium{i}",
+            command=f"python {RC_JOB} -i {i} -c medium",
+            resource_requirements=medium.name,
+            scheduler=hpc_config.name,
+        )
+        for i in range(1, num_jobs_per_category + 1)
+    ]
+    large_jobs = [
+        JobDefinition(
+            name=f"job_large{i}",
+            command=f"python {RC_JOB} -i {i} -c large",
+            resource_requirements=large.name,
+            scheduler=hpc_config.name,
+        )
+        for i in range(1, num_jobs_per_category + 1)
+    ]
+
+    workflow = Workflow(
+        jobs=small_jobs + medium_jobs + large_jobs,
+        resource_requirements=[small, medium, large],
+        schedulers=[hpc_config],
+    )
+
+    api.post_workflow(workflow)
+    api.post_workflow_initialize_jobs()
+    yield api, output_dir
+    api.delete_workflow()
