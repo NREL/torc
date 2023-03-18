@@ -3191,10 +3191,10 @@ components:
       - maximum
       - minimum
       - num_samples
-      - resourceType
+      - resource_type
       type: object
       properties:
-        resourceType:
+        resource_type:
           type: string
         average:
           type: object

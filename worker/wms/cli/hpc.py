@@ -6,9 +6,8 @@ import sys
 from pathlib import Path
 
 import click
-from swagger_client import ApiClient, DefaultApi
-from swagger_client.configuration import Configuration
 
+from wms.api import make_api
 from wms.hpc.hpc_manager import HpcManager
 from wms.loggers import setup_logging
 from wms.utils.files import dump_data, load_data
@@ -102,9 +101,7 @@ def slurm_config(account, filename, gres, mem, nodes, partition, qos, tmp, wallt
 def recommend_nodes(database_url: str, num_cpus):
     """Schedule nodes to run jobs.."""
     setup_logging(__name__)
-    configuration = Configuration()
-    configuration.host = database_url
-    api = DefaultApi(ApiClient(configuration))
+    api = make_api(database_url)
     reqs = api.get_workflow_ready_job_requirements()
     if reqs.num_jobs == 0:
         print("Error: no jobs are available", file=sys.stderr)
@@ -143,9 +140,7 @@ def recommend_nodes(database_url: str, num_cpus):
 def schedule_nodes(database_url, config_file, num_hpc_jobs, index, output, force):
     """Schedule nodes to run jobs."""
     check_output_directory(output, force)
-    configuration = Configuration()
-    configuration.host = database_url
-    api = DefaultApi(ApiClient(configuration))
+    api = make_api(database_url)
     setup_logging(__name__)
     config = load_data(config_file)
     mgr = HpcManager(config, output)

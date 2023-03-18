@@ -21,7 +21,7 @@ const computeNode = joi.object().required().keys({
 });
 
 const resourceStats = joi.object().required().keys({
-  resourceType: joi.string().required(),
+  resource_type: joi.string().required(),
   average: joi.object().required({}),
   minimum: joi.object().required({}),
   maximum: joi.object().required({}),

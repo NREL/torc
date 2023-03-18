@@ -7,10 +7,13 @@ from pathlib import Path
 import click
 from prettytable import PrettyTable
 
-from wms.api import make_api, remove_db_keys
-from wms.common import GiB
+from wms.api import make_api
 from wms.job_runner import JobRunner
 from wms.loggers import setup_logging
+from wms.resource_monitor.reports import (
+    iter_job_process_stats,
+    make_compute_node_stats_text_tables,
+)
 from wms.workflow_manager import WorkflowManager
 from .common import check_output_directory
 
@@ -25,7 +28,7 @@ def workflow():
 
 @click.command()
 @click.argument("database_url")
-def start_workflow(database_url):
+def start(database_url):
     """Start the workflow defined in the database specified by the URL."""
     setup_logging(__name__)
     api = make_api(database_url)
@@ -74,33 +77,39 @@ def run_local(database_url, output, force):
 
 @click.command()
 @click.argument("database_url")
-def show_resource_stats(database_url):
-    """Show resource statistics from a workflow run."""
+def show_process_stats(database_url):
+    """Show per-job process resource statistics from a workflow run."""
     api = make_api(database_url)
     table = PrettyTable(title="Job Process Resource Utilization Statistics")
     found_first = False
-    for job in api.get_jobs().items:
-        for stat in api.get_jobs_process_stats_name(job.name):
-            stats = remove_db_keys(stat.to_dict())
-            data = {
-                "job_name": stats["job_name"],
-                "run_id": int(stats["run_id"]),
-                "timestamp": stats["timestamp"],
-                "avg_cpu_percent": stats["avg_cpu_percent"],
-                "max_cpu_percent": stats["max_cpu_percent"],
-                "avg_memory_gb": stats["avg_rss"] / GiB,
-                "max_memory_gb": stats["max_rss"] / GiB,
-                "num_samples": int(stats["num_samples"]),
-            }
-            if not found_first:
-                table.field_names = tuple(data.keys())
-                found_first = True
-            table.add_row(data.values())
+    for stats in iter_job_process_stats(api):
+        if not found_first:
+            table.field_names = tuple(stats.keys())
+            found_first = True
+        table.add_row(stats.values())
     print(table)
 
-    # TODO: show compute node stats here
+
+@click.command()
+@click.option(
+    "-x",
+    "--exclude-process",
+    default=False,
+    is_flag=True,
+    show_default=True,
+    help="Exclude job process stats (show compute node stats only).",
+)
+@click.argument("database_url")
+def show_resource_stats(database_url, exclude_process):
+    """Show resource statistics from a workflow run."""
+    api = make_api(database_url)
+    for table in make_compute_node_stats_text_tables(
+        api, exclude_process=exclude_process
+    ).values():
+        print(table)
 
 
 workflow.add_command(run_local)
+workflow.add_command(show_process_stats)
 workflow.add_command(show_resource_stats)
-workflow.add_command(start_workflow)
+workflow.add_command(start)

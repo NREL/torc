@@ -7,9 +7,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import click
-from swagger_client import ApiClient, DefaultApi
-from swagger_client.configuration import Configuration
 
+from wms.api import make_api
 from wms.hpc.common import HpcType
 from wms.hpc.slurm_interface import SlurmInterface
 from wms.job_runner import JobRunner, convert_end_time_to_duration_str
@@ -30,9 +29,7 @@ logger = logging.getLogger(__name__)
 def slurm_runner(database_url, output):
     """Run workflow jobs on a SLURM compute node."""
     my_logger = setup_logging(__name__)
-    configuration = Configuration()
-    configuration.host = database_url
-    api = DefaultApi(ApiClient(configuration))
+    api = make_api(database_url)
     intf = SlurmInterface()
     slurm_job_id = intf.get_current_job_id()
     scheduler = {

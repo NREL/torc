@@ -6,6 +6,30 @@ from swagger_client.configuration import Configuration
 from wms.utils.timing import timer_stats_collector, Timer
 
 
+def iter_documents(func, *args, batch_size=1000, **kwargs):
+    """Return a generator of documents where the API service employs batching.
+
+    Parameters
+    ----------
+    func : function
+        API function
+    batch_size : int
+        Max number of documents to fetch in each batch.
+
+    Yields
+    ------
+    Swagger model or dict, depending on what the API function returns
+    """
+    skip = 0
+    has_more = True
+    while has_more:
+        result = func(*args, skip=skip, limit=batch_size, **kwargs)
+        for item in result.items:
+            yield item
+        skip += result.count
+        has_more = result.has_more
+
+
 def make_api(database_url) -> DefaultApi:
     """Instantiate a Swagger API object from a database URL."""
     configuration = Configuration()

@@ -27,13 +27,13 @@ if (!graphModule._list().includes(graphName)) {
         blocks,
         executed,
         needs,
+        nodeUsed,
+        processUsed,
         produces,
         requires,
         returned,
         scheduledBys,
         stores,
-        nodeUsed,
-        processUsed,
       ],
   );
   console.log(`Created graph ${graphName}`);

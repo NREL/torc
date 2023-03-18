@@ -23,7 +23,7 @@ router.get('/compute_node_stats', function(req, res) {
   try {
     const qp = req.queryParams;
     const limit = getItemsLimit(qp.limit);
-    const items = db.compute_node_stats.all().skip(qp.skip).limit(limit).toArray();
+    const items = db.compute_node_stats.all().skip(qp.skip).limit(limit);
     res.send(makeCursorResult(items, qp.skip, limit, db.compute_node_stats.count()));
   } catch (e) {
     if (!e.isArangoError) {

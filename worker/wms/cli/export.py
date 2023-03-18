@@ -7,9 +7,9 @@ import sys
 from pathlib import Path
 
 import click
-from swagger_client import ApiClient, DefaultApi
-from swagger_client.configuration import Configuration
+from swagger_client import DefaultApi
 
+from wms.api import make_api, iter_documents
 from wms.utils.sql import make_table, insert_rows
 
 
@@ -60,9 +60,7 @@ def export_json(database_url, directory, force):
     directory.mkdir()
     edges_directory = directory / "edges"
     edges_directory.mkdir()
-    configuration = Configuration()
-    configuration.host = database_url
-    api = DefaultApi(ApiClient(configuration))
+    api = make_api(database_url)
 
     # TODO: This doesn't handle batching and will not get all data.
     # TODO: Get workflow_status
@@ -73,28 +71,14 @@ def export_json(database_url, directory, force):
         else:
             filename = directory / f"{name}.json"
         with open(filename, "w", encoding="utf-8") as f_out:
-            for item in _iter_values(name, func):
+            args = (name,) if name in _EDGES else tuple()
+            for item in iter_documents(func, *args):
                 if name in ("events", "user_data"):
                     f_out.write(json.dumps(item))
                 else:
                     f_out.write(json.dumps(item.to_dict()))
                 f_out.write("\n")
         print(f"Exported {name} values to {filename}")
-
-
-def _iter_values(name, func):
-    skip = 0
-    has_more = True
-    while has_more:
-        if name in _EDGES:
-            result = func(name, skip=skip, limit=2)
-        else:
-            result = func(skip=skip, limit=2)
-        assert result.count == len(result.items)
-        for item in result.items:
-            yield item
-        skip += result.count
-        has_more = result.has_more
 
 
 @click.command()
@@ -133,16 +117,14 @@ def sqlite(database_url, filename, force):
             )
             sys.exit(1)
 
-    configuration = Configuration()
-    configuration.host = database_url
-    api = DefaultApi(ApiClient(configuration))
+    api = make_api(database_url)
 
-    # TODO: This doesn't handle batching and will not get all data.
     # TODO: Get workflow_status
     for name, func in _get_db_documents(api).items():
         found_first = False
         rows = []
-        for item in _iter_values(name, func):
+        args = (name,) if name in _EDGES else tuple()
+        for item in iter_documents(func, *args):
             row = item if isinstance(item, dict) else item.to_dict()
             if "to" in row:
                 row["_to"] = row.pop("to")
