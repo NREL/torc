@@ -1,9 +1,12 @@
+"""Tests database API commands"""
+
 import pytest
 
 from swagger_client.rest import ApiException
 
 
 def test_api_nodes_by_key(completed_workflow):
+    """Tests API commands to get documents stored by the 'key' parameter."""
     api, _ = completed_workflow
     names = [
         "compute_nodes",
@@ -20,7 +23,7 @@ def test_api_nodes_by_key(completed_workflow):
             item = results.items[0]
             if not isinstance(item, dict):
                 item = item.to_dict()
-            key = get_key(item)
+            key = _get_key(item)
             val = getattr(api, f"get_{name}_key")(key)
             if not isinstance(val, dict):
                 val = val.to_dict()
@@ -35,6 +38,7 @@ def test_api_nodes_by_key(completed_workflow):
 
 
 def test_api_nodes_by_name(completed_workflow):
+    """Tests API commands to get documents stored by the 'name' parameter."""
     api, _ = completed_workflow
     names = ["hpc_configs", "files", "jobs", "resource_requirements"]
     for name in names:
@@ -52,6 +56,7 @@ def test_api_nodes_by_name(completed_workflow):
 
 
 def test_api_edges(completed_workflow):
+    """Tests API commands for edges."""
     api, _ = completed_workflow
     names = [
         "blocks",
@@ -71,7 +76,7 @@ def test_api_edges(completed_workflow):
             item = result.items[0]
             if not isinstance(item, dict):
                 item = item.to_dict()
-            key = get_key(item)
+            key = _get_key(item)
             val = api.get_edges_name_key(name, key)
             if not isinstance(val, dict):
                 val = val.to_dict()
@@ -86,6 +91,7 @@ def test_api_edges(completed_workflow):
 
 
 def test_api_workflow_status(completed_workflow):
+    """Tests API commands to manage workflow status."""
     api, _ = completed_workflow
     status = api.get_workflow_status()
     orig = status.run_id
@@ -98,7 +104,7 @@ def test_api_workflow_status(completed_workflow):
     assert new_status.run_id == 0
 
 
-def get_key(data: dict):
+def _get_key(data: dict):
     for key in ("key", "_key"):
         if key in data:
             return data[key]

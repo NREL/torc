@@ -1,3 +1,5 @@
+"""User interface to manage a workflow"""
+
 import getpass
 import logging
 import socket
@@ -58,6 +60,13 @@ class WorkflowManager:
         )
 
     def start(self, auto_tune_resource_requirements=False):
+        """Start a workflow.
+
+        Parameters
+        ----------
+        auto_tune_resource_requirements : bool
+            If True, configure the workflow to auto-tune resource requirements.
+        """
         send_api_command(self._api.put_workflow_status_reset)
         # Set every job status to unknown/uninitialized.
         send_api_command(self._api.post_workflow_initialize_jobs)
@@ -91,7 +100,7 @@ class WorkflowManager:
             }
             if new["exists"]:
                 new["st_mtime"] = path.stat().st_mtime
-            changed = not old == new
+            changed = old != new
             if changed:
                 if file.st_mtime and not new["exists"]:
                     file.st_mtime = None
@@ -130,7 +139,7 @@ class WorkflowManager:
                     self._api.put_jobs_manage_status_change_name_status_rev,
                     job.name,
                     status,
-                    job._rev,
+                    job._rev,  # pylint: disable=protected-access
                 )
                 logger.info(
                     "Changed job %s from %s to %s after input file change",

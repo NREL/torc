@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+"""Test script to simulate doing work."""
+
 import json
 import sys
 from pathlib import Path
@@ -15,4 +17,4 @@ output_file = Path(sys.argv[4])
 if not input_file.exists():
     raise Exception(f"{input_file} does not exist")
 
-output_file.write_text(json.dumps({"hello": "world"}, indent=2) + "\n")
+output_file.write_text(json.dumps({"hello": "world"}, indent=2) + "\n", encoding="utf-8")

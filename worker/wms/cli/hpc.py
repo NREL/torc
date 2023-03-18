@@ -1,3 +1,5 @@
+"""HPC CLI commands"""
+
 import logging
 import math
 import sys
@@ -7,11 +9,11 @@ import click
 from swagger_client import ApiClient, DefaultApi
 from swagger_client.configuration import Configuration
 
-from .common import check_output_directory
-from .slurm_runner import slurm_runner
 from wms.hpc.hpc_manager import HpcManager
 from wms.loggers import setup_logging
 from wms.utils.files import dump_data, load_data
+from .common import check_output_directory
+from .slurm_runner import slurm_runner
 
 
 logger = logging.getLogger(__name__)

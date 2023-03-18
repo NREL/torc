@@ -1,3 +1,7 @@
+"""pytest fixtures"""
+
+# pylint: disable=redefined-outer-name,duplicate-code
+
 import json
 from datetime import datetime
 from pathlib import Path
@@ -177,7 +181,9 @@ def completed_workflow(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.post_jobs_complete_job_name_status_rev(result, name, status, job._rev)
+        job = api.post_jobs_complete_job_name_status_rev(
+            result, name, status, job._rev  # pylint: disable=protected-access
+        )
 
     for file in api.get_files().items:
         path = Path(file.path)
@@ -206,7 +212,9 @@ def incomplete_workflow(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.post_jobs_complete_job_name_status_rev(result, name, status, job._rev)
+        job = api.post_jobs_complete_job_name_status_rev(
+            result, name, status, job._rev  # pylint: disable=protected-access
+        )
 
         for file in api.get_files_produced_by_job_name(name).items:
             path = Path(file.path)

@@ -18,3 +18,15 @@ repos:
     hooks:
       - id: flake8 # works with .flake8 config
         language: python
+  - repo: local
+    hooks:
+      - id: pylint
+        name: pylint
+        entry: pylint
+        language: system
+        types: [python]
+        args:
+          [
+            "-rn", # Only display messages
+            "-sn", # Don't display the score
+          ]

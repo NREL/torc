@@ -1,3 +1,5 @@
+"""Test script to run jobs."""
+
 import sys
 from pathlib import Path
 

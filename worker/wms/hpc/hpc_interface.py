@@ -63,21 +63,27 @@ class HpcInterface(abc.ABC):
         """
 
     @abc.abstractmethod
-    def create_submission_script(self, name, script, filename, path):
+    def create_submission_script(self, name, command, filename, path, config):
         """Create the script to queue the jobs to the HPC.
 
         Parameters
         ----------
         name : str
             job name
-        script : str
-            script to execute on HPC
+        command : str
+            CLI command to execute on HPC
         filename : str
             submission script filename
         path : str
             path for stdout and stderr files
+        config : dict[str, str]
+            Configuration parameters and values for the HPC scheduler
 
         """
+
+    @abc.abstractmethod
+    def get_current_job_id(self):
+        """Return the HPC job ID from the current job."""
 
     @abc.abstractmethod
     def get_environment_variables(self) -> dict[str, dict]:
@@ -112,6 +118,11 @@ class HpcInterface(abc.ABC):
         str
 
         """
+
+    @staticmethod
+    @abc.abstractmethod
+    def get_num_cpus():
+        """Return the number of CPUs on the current node."""
 
     @abc.abstractmethod
     def list_active_nodes(self, job_id):

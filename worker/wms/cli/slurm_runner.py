@@ -1,3 +1,5 @@
+"""CLI command to start a JobRunner on a SLURM compute node"""
+
 import logging
 import subprocess
 
@@ -27,7 +29,7 @@ logger = logging.getLogger(__name__)
 @click.argument("database_url")
 def slurm_runner(database_url, output):
     """Run workflow jobs on a SLURM compute node."""
-    logger = setup_logging(__name__)
+    my_logger = setup_logging(__name__)
     configuration = Configuration()
     configuration.host = database_url
     api = DefaultApi(ApiClient(configuration))
@@ -43,7 +45,7 @@ def slurm_runner(database_url, output):
     end_time = _get_end_time(slurm_job_id)
     time_limit = convert_end_time_to_duration_str(end_time)
     runner = JobRunner(api, output, time_limit=time_limit)
-    logger.info("Start workflow")
+    my_logger.info("Start workflow")
     runner.run_worker(scheduler=scheduler)
     # TODO: schedule more nodes if needed
     # TODO: clear the scheduled IDs from the database in workflow_status
@@ -51,7 +53,7 @@ def slurm_runner(database_url, output):
 
 def _get_end_time(slurm_job_id, buffer_minutes=2):
     cmd = ["squeue", "-j", slurm_job_id, '--format="%20e"']
-    ret = subprocess.run(cmd, capture_output=True)
+    ret = subprocess.run(cmd, capture_output=True, check=False)
     if ret.returncode != 0:
         raise Exception(f"Failed to find end time: return_code={ret}")
 
@@ -61,4 +63,4 @@ def _get_end_time(slurm_job_id, buffer_minutes=2):
 
 
 if __name__ == "__main__":
-    slurm_runner()
+    slurm_runner()  # pylint: disable=no-value-for-parameter

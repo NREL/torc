@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+"""Test script to cause CPU and memory resource consumption."""
+
 import gc
 import random
 import sys

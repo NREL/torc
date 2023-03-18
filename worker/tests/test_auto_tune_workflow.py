@@ -1,3 +1,5 @@
+"""Test Auto-tune feature"""
+
 import logging
 
 from swagger_client.models.worker_resources import WorkerResources
@@ -14,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 
 def test_auto_tune_workflow(multi_resource_requirement_workflow):
+    """Test execution of a workflow using the auto-tune feature."""
     setup_logging("wms")
     api, output_dir = multi_resource_requirement_workflow
 

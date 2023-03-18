@@ -1,8 +1,12 @@
+"""Script to run jobs on a local computer"""
+
 import json
 import logging
 import shutil
+import sys
 from pathlib import Path
 
+from prettytable import PrettyTable
 from swagger_client import ApiClient, DefaultApi
 from swagger_client.configuration import Configuration
 from swagger_client.models.file_model import FileModel
@@ -27,11 +31,8 @@ WORK = Path("tests") / "scripts" / "work.py"
 logger = logging.getLogger(__name__)
 
 
-def create_database(api: DefaultApi):
-    api.delete_workflow()
-
-
 def create_workflow(api: DefaultApi, output_dir: Path):
+    """Create a dimond workflow with file dependencies."""
     output_dir.mkdir(exist_ok=True)
     inputs_file = output_dir / "inputs.json"
     inputs_file.write_text(json.dumps({"val": 5}))
@@ -96,6 +97,7 @@ def create_workflow(api: DefaultApi, output_dir: Path):
 
 
 def run_workflow(api, output_dir: Path):
+    """Run the workflow stored in the database."""
     mgr = WorkflowManager(api)
     mgr.start()
     config = api.get_workflow_config()
@@ -109,6 +111,7 @@ def run_workflow(api, output_dir: Path):
 
 
 def restart_workflow(api, output_dir: Path):
+    """Restart the workflow stored in the database."""
     mgr = WorkflowManager(api)
     mgr.reinitialize_jobs()
     runner = JobRunner(api, output_dir, time_limit="P0DT24H")
@@ -116,11 +119,8 @@ def restart_workflow(api, output_dir: Path):
     runner.run_worker()
 
 
-if __name__ == "__main__":
-    import sys
-    from pathlib import Path
-    from prettytable import PrettyTable
-
+def main():
+    """Entry point"""
     usage = f"Usage: python {sys.argv[0]} create|estimate|run|restart"
     if len(sys.argv) == 1:
         print(usage, file=sys.stderr)
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     if mode == "create":
         if output_dir.exists():
             shutil.rmtree(output_dir)
-        create_database(api)
+        api.delete_workflow()
         create_workflow(api, output_dir)
     elif mode == "estimate":
         data = api.post_workflow_estimate()
@@ -147,7 +147,7 @@ if __name__ == "__main__":
             table.add_row((i, row["num_jobs"], row["num_cpus"], row["memory_gb"], row["num_gpus"]))
         print(table)
     elif mode == "run":
-        create_database(api)
+        api.delete_workflow()
         create_workflow(api, output_dir)
         run_workflow(api, output_dir)
     elif mode == "restart":
@@ -155,3 +155,7 @@ if __name__ == "__main__":
     else:
         print(usage, file=sys.stderr)
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()

@@ -1,10 +1,16 @@
+"""Defines data models used in resource monitoring code."""
+
 import enum
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field  # pylint: disable=no-name-in-module
 
 
 class WmsBaseModel(BaseModel):
+    """Base model for all custom types"""
+
     class Config:
+        """Custom config"""
+
         json_encoders = {
             enum.Enum: lambda x: x.value,
         }
@@ -79,6 +85,8 @@ class ComputeNodeResourceStatConfig(WmsBaseModel):
 
 
 class ResourceStatResults(WmsBaseModel):
+    """Results for one resource type"""
+
     resource_type: ResourceType
     average: dict
     minimum: dict
@@ -87,10 +95,14 @@ class ResourceStatResults(WmsBaseModel):
 
 
 class ProcessStatResults(ResourceStatResults):
+    """Results for one process stat"""
+
     job_name: str
 
 
 class ComputeNodeResourceStatResults(WmsBaseModel):
+    """Contains all results from one compute node"""
+
     name: str
     hostname: str = Field(description="Hostname of compute node")
     results: list[ResourceStatResults]

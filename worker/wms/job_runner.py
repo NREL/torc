@@ -1,3 +1,5 @@
+"""Runs jobs on a compute node"""
+
 import json
 import logging
 import multiprocessing
@@ -9,7 +11,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import psutil
-from pydantic import BaseModel
+from pydantic import BaseModel  # pylint: disable=no-name-in-module
 from swagger_client import DefaultApi
 from swagger_client.models.compute_nodes_model import ComputeNodesModel
 from swagger_client.models.compute_node_stats_model import ComputeNodeStatsModel
@@ -18,8 +20,6 @@ from swagger_client.models.edge_model import EdgeModel
 from swagger_client.models.job_process_stats_model import JobProcessStatsModel
 from swagger_client.models.worker_resources import WorkerResources
 
-from .common import KiB, MiB, GiB, TiB
-from .async_cli_command import AsyncCliCommand
 from wms.api import send_api_command
 from wms.resource_monitor import (
     ComputeNodeResourceStatResults,
@@ -30,11 +30,15 @@ from wms.resource_monitor import (
 )
 from wms.utils.filesystem_factory import make_path
 from wms.utils.timing import timer_stats_collector, Timer
+from .async_cli_command import AsyncCliCommand
+from .common import KiB, MiB, GiB, TiB
 
 logger = logging.getLogger(__name__)
 
 
 class JobRunner:
+    """Runs jobs on a compute node"""
+
     def __init__(
         self,
         api: DefaultApi,
@@ -62,11 +66,21 @@ class JobRunner:
 
     def __del__(self):
         if self._outstanding_jobs:
-            logger.warning("JobRunner destructed with outstanding jobs", self._outstanding_jobs)
+            logger.warning(
+                "JobRunner destructed with outstanding jobs: %s", self._outstanding_jobs.keys()
+            )
         if self._parent_monitor_conn is not None or self._monitor_proc is not None:
             logger.warning("JobRunner destructed without stopping the resource monitor process.")
 
     def run_worker(self, scheduler=None):
+        """Run jobs from a worker process.
+
+        Parameters
+        ----------
+        scheduler : None | dict
+            Scheduler configuration parameters. Used only for logs and events.
+
+        """
         if self._stats.process:
             self._start_resource_monitor()
 
@@ -95,11 +109,14 @@ class JobRunner:
             scheduler=scheduler or {},
         )
         compute_node = send_api_command(self._api.post_compute_nodes, compute_node)
-        self._compute_node_db_id = compute_node._id
-        # self._run_ready_jobs()
+        self._compute_node_db_id = compute_node._id  # pylint: disable=protected-access
         self.wait()
         compute_node.is_active = False
-        send_api_command(self._api.put_compute_nodes_key, compute_node, compute_node._key)
+        send_api_command(
+            self._api.put_compute_nodes_key,
+            compute_node,
+            compute_node._key,  # pylint: disable=protected-access
+        )
         send_api_command(
             self._api.post_events,
             {
@@ -166,7 +183,7 @@ class JobRunner:
             result,
             job.name,
             "done",
-            job._rev,
+            job._rev,  # pylint: disable=protected-access
         )
         return job
 
@@ -263,19 +280,24 @@ class JobRunner:
     def _run_job(self, job: AsyncCliCommand):
         job.run(self._output_dir)
         job.db_job.run_id += 1
+        # The database changes db_job._rev on every update.
+        # This reassigns job.db_job in order to stay current.
         job.db_job = send_api_command(self._api.put_jobs_name, job.db_job, job.name)
         job.db_job = send_api_command(
             self._api.put_jobs_manage_status_change_name_status_rev,
             job.name,
             "submitted",
-            job.db_job._rev,
+            job.db_job._rev,  # pylint: disable=protected-access
         )
         self._outstanding_jobs[job.name] = job
         if self._stats.process:
             self._pids[job.name] = job.pid
         send_api_command(
             self._api.post_edges_name,
-            EdgeModel(_from=self._compute_node_db_id, to=job.db_job._id),
+            EdgeModel(
+                _from=self._compute_node_db_id,
+                to=job.db_job._id,  # pylint: disable=protected-access
+            ),
             "executed",
         )
         logger.debug("Started job %s", job.name)
@@ -367,7 +389,9 @@ class JobRunner:
         )
         send_api_command(
             self._api.post_edges_name,
-            EdgeModel(_from=self._compute_node_db_id, to=res._id),
+            EdgeModel(
+                _from=self._compute_node_db_id, to=res._id  # pylint: disable=protected-access
+            ),
             "node_used",
         )
 
@@ -391,7 +415,9 @@ class JobRunner:
         )
         send_api_command(
             self._api.post_edges_name,
-            EdgeModel(_from=f"jobs/{result.job_name}", to=res._id),
+            EdgeModel(
+                _from=f"jobs/{result.job_name}", to=res._id  # pylint: disable=protected-access
+            ),
             "process_used",
         )
 
@@ -414,10 +440,32 @@ def _get_system_resources(time_limit):
 
 
 def get_memory_gb(memory):
+    """Converts a memory defined as a string to GiB.
+
+    Parameters
+    ----------
+    memory : str
+        Memory as string with units, such as '10g'
+
+    Returns
+    -------
+    int
+    """
     return get_memory_in_bytes(memory) / GiB
 
 
 def get_memory_in_bytes(memory: str):
+    """Converts a memory defined as a string to bytes.
+
+    Parameters
+    ----------
+    memory : str
+        Memory as string with units, such as '10g'
+
+    Returns
+    -------
+    int
+    """
     match = re.search(r"^([0-9]+)$", memory)
     if match is not None:
         return int(match.group(1))
@@ -448,6 +496,7 @@ class _TimeLimitModel(BaseModel):
 
 
 def convert_end_time_to_duration_str(end_time: datetime):
+    """Convert an end time timestamp to an ISO 8601 duration string, relative to current time."""
     duration = end_time - datetime.now()
     return json.loads(_TimeLimitModel(time_limit=duration).json())["time_limit"]
 

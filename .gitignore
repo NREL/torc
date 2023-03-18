@@ -127,3 +127,7 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+db_service/README.md
+db_service/.swagger-codegen/
+db_service/.swagger-codegen-ignore

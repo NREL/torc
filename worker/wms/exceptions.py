@@ -1,3 +1,6 @@
+"""Custom exceptions defined in this package"""
+
+
 class WmsBaseException(Exception):
     """Base exception for all exceptions in this package"""
 

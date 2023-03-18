@@ -40,6 +40,7 @@ def _timed(func, log_func, *args, **kwargs):
 
 def get_time_duration_string(seconds):
     """Returns a string with the time converted to reasonable units."""
+    # pylint: disable=consider-using-f-string
     if seconds >= 1:
         val = "{:.3f} s".format(seconds)
     elif seconds >= 0.001:
@@ -50,6 +51,7 @@ def get_time_duration_string(seconds):
         val = "0 s"
     else:
         val = "{:.3f} ns".format(seconds * 1000000000)
+    # pylint: enable=consider-using-f-string
 
     return val
 
@@ -88,10 +90,12 @@ class TimerStats:
             logger.info("No stats have been recorded for %s.", self._name)
             return
 
+        # pylint: disable=consider-using-f-string
         x = self.get_stats()
         text = "total={:.3f}s avg={:.3f}ms max={:.3f}ms min={:.3f}ms count={}".format(
             x["total"], x["avg"] * 1000, x["max"] * 1000, x["min"] * 1000, x["count"]
         )
+        # pylint: enable=consider-using-f-string
         logger.info("TimerStats summary: %s: %s", self._name, text)
 
     def update(self, duration):
@@ -234,7 +238,6 @@ class TimerStatsCollector:
             assert name not in self._stats
             stat = TimerStats(name)
             self._stats[name] = stat
-            return stat
 
 
 timer_stats_collector = TimerStatsCollector()

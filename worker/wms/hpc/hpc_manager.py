@@ -72,6 +72,17 @@ class HpcManager:
         return self._intf.check_statuses()
 
     def get_job_stats(self, job_id):
+        """Get stats for job ID.
+
+        Parameters
+        ----------
+        job_id : str
+
+        Returns
+        -------
+        HpcJobStats
+
+        """
         return self._intf.get_job_stats(job_id)
 
     def get_local_scratch(self):
@@ -163,7 +174,7 @@ class HpcManager:
             # case HpcType.FAKE:
             #    intf = FakeManager(config)
             case _:
-                raise ValueError("Unsupported HPC type: {}".format(hpc_type))
+                raise ValueError(f"Unsupported HPC type: {hpc_type}")
 
         logger.debug("HPC manager type=%s", hpc_type)
         return intf

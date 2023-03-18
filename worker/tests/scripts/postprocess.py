@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+"""Test script to run post-processing."""
+
 import json
 import sys
 from pathlib import Path
@@ -17,4 +19,4 @@ if not input_file1.exists():
 if not input_file2.exists():
     raise Exception(f"{input_file2} does not exist")
 
-output_file.write_text(json.dumps({"hello": "world"}, indent=2) + "\n")
+output_file.write_text(json.dumps({"hello": "world"}, indent=2) + "\n", encoding="utf-8")

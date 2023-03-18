@@ -1,3 +1,4 @@
+"""Example diamond workflow"""
 import json
 import logging
 import shutil
@@ -20,6 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def create_workflow(api: DefaultApi, output_dir: Path):
+    """Creates a workflow with implicit job dependencies declared through files."""
     output_dir.mkdir(exist_ok=True)
     inputs_file = output_dir / "inputs.json"
     inputs_file.write_text(json.dumps({"val": 5}))
@@ -75,6 +77,7 @@ def create_workflow(api: DefaultApi, output_dir: Path):
 
 
 def main():
+    """Entry point"""
     output_dir = Path("demo_diamond_workflow_output")
     if output_dir.exists():
         shutil.rmtree(output_dir)

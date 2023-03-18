@@ -1,3 +1,5 @@
+"""Test workflow execution"""
+
 import json
 import logging
 import subprocess
@@ -20,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 def test_run_workflow(diamond_workflow):
+    """Test full execution of diamond workflow with file dependencies."""
     api, output_dir = diamond_workflow
     timer_stats_collector.enable()
     user_data_work1 = api.get_jobs_get_user_data_name("work1")
@@ -65,6 +68,7 @@ def test_run_workflow(diamond_workflow):
 
 @pytest.mark.parametrize("cancel_on_blocking_job_failure", [True, False])
 def test_cancel_with_failed_job(workflow_with_cancel):
+    """Test the cancel_on_blocking_job_failure feature for jobs."""
     api, output_dir, cancel_on_blocking_job_failure = workflow_with_cancel
     mgr = WorkflowManager(api)
     mgr.start()
@@ -79,6 +83,7 @@ def test_cancel_with_failed_job(workflow_with_cancel):
 
 
 def test_reinitialize_workflow_noop(completed_workflow):
+    """Verify that a workflow can be reinitialized."""
     api, _ = completed_workflow
 
     mgr = WorkflowManager(api)
@@ -89,6 +94,7 @@ def test_reinitialize_workflow_noop(completed_workflow):
 
 
 def test_reinitialize_workflow_input_file_updated(completed_workflow):
+    """Test workflow reinitialization after input files are changed."""
     api, _ = completed_workflow
     file = api.get_files_name("inputs")
     path = Path(file.path)
@@ -103,6 +109,7 @@ def test_reinitialize_workflow_input_file_updated(completed_workflow):
 
 
 def test_reinitialize_workflow_incomplete(incomplete_workflow):
+    """Test workflow reinitialization on an incomplete workflow."""
     api, _ = incomplete_workflow
     mgr = WorkflowManager(api)
     mgr.reinitialize_jobs()
@@ -116,6 +123,7 @@ def test_reinitialize_workflow_incomplete(incomplete_workflow):
 def test_reinitialize_workflow_incomplete_missing_files(
     incomplete_workflow_missing_files,
 ):
+    """Test workflow reinitialization on an incomplete workflow with missing files."""
     api, _ = incomplete_workflow_missing_files
     mgr = WorkflowManager(api)
     mgr.reinitialize_jobs()
@@ -129,6 +137,7 @@ def test_reinitialize_workflow_incomplete_missing_files(
     "missing_file", ["inputs.json", "f1.json", "f2.json", "f3.json", "f4.json"]
 )
 def test_restart_workflow_missing_files(complete_workflow_missing_files, missing_file):
+    """Test workflow restart on a complete workflow with missing files."""
     api, output_dir = complete_workflow_missing_files
     (output_dir / missing_file).unlink()
     mgr = WorkflowManager(api)
@@ -177,6 +186,7 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
 
 
 def test_estimate_workflow(diamond_workflow):
+    """Test the estimate workflow feature."""
     api, _ = diamond_workflow
     estimate = api.post_workflow_estimate()
     assert estimate.estimates_by_round
@@ -184,6 +194,7 @@ def test_estimate_workflow(diamond_workflow):
 
 @pytest.mark.parametrize("num_jobs", [5])
 def test_ready_job_requirements(independent_job_workflow):
+    """Test the API command for getting resource requirements for ready jobs."""
     api, num_jobs = independent_job_workflow
     reqs = api.get_workflow_ready_job_requirements()
     assert reqs.num_jobs == num_jobs
@@ -191,6 +202,7 @@ def test_ready_job_requirements(independent_job_workflow):
 
 @pytest.mark.parametrize("num_jobs", [5])
 def test_run_independent_job_workflow(independent_job_workflow, tmp_path):
+    """Test execution of a workflow with jobs that can be run in parallel."""
     api, num_jobs = independent_job_workflow
     mgr = WorkflowManager(api)
     mgr.start()
@@ -212,6 +224,9 @@ def test_run_independent_job_workflow(independent_job_workflow, tmp_path):
 
 @pytest.mark.parametrize("num_jobs", [100])
 def test_concurrent_submitters(independent_job_workflow, tmp_path):
+    """Test execution of a workflow with concurrent submitters.
+    Tests database locking procedures.
+    """
     api, num_jobs = independent_job_workflow
     mgr = WorkflowManager(api)
     mgr.start()
@@ -223,7 +238,9 @@ def test_concurrent_submitters(independent_job_workflow, tmp_path):
         str(tmp_path),
     ]
     num_submitters = 16
-    pipes = [subprocess.Popen(cmd) for _ in range(num_submitters)]
+    pipes = [
+        subprocess.Popen(cmd) for _ in range(num_submitters)  # pylint: disable=consider-using-with
+    ]
     ret = 0
     while True:
         done = True

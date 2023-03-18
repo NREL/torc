@@ -1,3 +1,5 @@
+"""Utility functions for inserting data into a SQLite database"""
+
 import logging
 import sqlite3
 

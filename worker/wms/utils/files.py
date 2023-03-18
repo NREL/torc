@@ -31,7 +31,7 @@ def create_script(filename, text, executable=True):
     if path.exists():
         path.unlink()
 
-    path.write_text(text)
+    path.write_text(text, encoding="utf-8")
     if executable:
         curstat = path.stat()
         path.chmod(curstat.st_mode | stat.S_IEXEC)
@@ -53,6 +53,7 @@ def compute_file_hash(filename):
 
 
 def compute_hash(text: str):
+    """Compute a hash of the input string."""
     hash_obj = hashlib.sha256()
     hash_obj.update(text)
     return hash_obj.hexdigest()
@@ -70,7 +71,7 @@ def dump_data(data, filename, **kwargs):
         file to create or overwrite
     """
     mod = _get_module_from_extension(filename, **kwargs)
-    with open(filename, "w") as f_out:
+    with open(filename, "w", encoding="utf-8") as f_out:
         mod.dump(data, f_out, **kwargs)
 
     logger.debug("Dumped data to %s", filename)
@@ -89,7 +90,7 @@ def load_data(filename, **kwargs):
     dict
     """
     mod = _get_module_from_extension(filename, **kwargs)
-    with open(filename) as f_in:
+    with open(filename, encoding="utf-8") as f_in:
         try:
             data = mod.load(f_in)
         except Exception:
@@ -124,7 +125,7 @@ def dump_line_delimited_json(data, filename, mode="w"):
     mode : str
         Mode with which to open file, defaults to write.
     """
-    with open(filename, mode) as f_out:
+    with open(filename, mode, encoding="utf-8") as f_out:
         for obj in data:
             f_out.write(json.dumps(obj))
             f_out.write("\n")
@@ -144,7 +145,7 @@ def load_line_delimited_json(filename):
     dict
     """
     objects = []
-    with open(filename) as f_in:
+    with open(filename, encoding="utf-8") as f_in:
         for i, line in enumerate(f_in):
             text = line.strip()
             if not text:

@@ -1,3 +1,5 @@
+"""Factory functions for filesystem paths, abstracts local vs cloud"""
+
 import logging
 import re
 from pathlib import Path
@@ -66,7 +68,8 @@ class _S3Session:
         self._client = self._session.client("s3")
         register_configuration_parameter(S3Path("/"), resource=self._session.resource("s3"))
 
-    def path(self, path: str):
+    def path(self, path: str) -> S3Path:
+        """Return a path object from a string."""
         if not path.startswith(self._base_path):
             raise Exception(
                 f"path={path} does not start with the session's base path: {self._base_path}"

@@ -1,3 +1,5 @@
+"""Utility functions to run commands through the system"""
+
 import logging
 import shlex
 import subprocess
@@ -104,13 +106,18 @@ def _should_exit_early(std_err, error_strings):
 
 def _run_command(command, output, cwd, **kwargs):
     if output is not None:
-        pipe = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, **kwargs
+        result = subprocess.run(
+            command,
+            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            cwd=cwd,
+            check=False,
+            **kwargs,
         )
-        out, err = pipe.communicate()
-        output["stdout"] = out.decode("utf-8")
-        output["stderr"] = err.decode("utf-8")
-        ret = pipe.returncode
+        output["stdout"] = result.stdout.decode("utf-8")
+        output["stderr"] = result.stderr.decode("utf-8")
+        ret = result.returncode
     else:
         ret = subprocess.call(command, cwd=cwd, **kwargs)
 

@@ -5,11 +5,11 @@ import os
 import re
 from datetime import datetime
 
-from .common import HpcJobStats, HpcJobStatus, HpcJobInfo
-from .hpc_interface import HpcInterface
 from wms.exceptions import ExecutionError
 from wms.utils.files import create_script
 from wms.utils.run_command import check_run_command, run_command
+from .common import HpcJobStats, HpcJobStatus, HpcJobInfo
+from .hpc_interface import HpcInterface
 
 
 logger = logging.getLogger(__name__)

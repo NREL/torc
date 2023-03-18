@@ -1,3 +1,5 @@
+"""CLI commands for exporting workflows from the database"""
+
 import json
 import logging
 import shutil
@@ -70,7 +72,7 @@ def export_json(database_url, directory, force):
             filename = directory / "edges" / f"{name}.json"
         else:
             filename = directory / f"{name}.json"
-        with open(filename, "w") as f_out:
+        with open(filename, "w", encoding="utf-8") as f_out:
             for item in _iter_values(name, func):
                 if name in ("events", "user_data"):
                     f_out.write(json.dumps(item))

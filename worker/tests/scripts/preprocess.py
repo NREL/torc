@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+"""Test script to run a preprocess command."""
+
 import json
 import sys
 from pathlib import Path

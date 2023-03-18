@@ -1,3 +1,5 @@
+"""Monitors resource utilization statistics"""
+
 import logging
 import socket
 import time

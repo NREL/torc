@@ -65,8 +65,8 @@ disable=blacklisted-name,
         line-too-long,
         too-many-lines,
         superfluous-parens,
-        bad-whitespace,
-        bad-continuation,
+#bad-whitespace,
+#bad-continuation,
         too-many-function-args,
         too-many-instance-attributes,
         too-few-public-methods,
@@ -79,6 +79,7 @@ disable=blacklisted-name,
         too-many-boolean-expressions,
         too-many-nested-blocks,
         fixme,
+        broad-exception-raised,
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -98,13 +99,12 @@ enable=missing-docstring,
        invalid-all-object,
        unpacking-non-sequence,
        no-member,
-       no-self-use,
        duplicate-code,
        unreachable,
        attribute-defined-outside-init,
        wildcard-import,
        deprecated-module,
-       relative-import,
+#relative-import,
        reimported,
        import-self,
        global-variable-undefined,
@@ -115,7 +115,7 @@ enable=missing-docstring,
        unused-variable,
        unused-argument,
        unused-wildcard-import,
-       redefine-in-handler,
+#redefine-in-handler,
        undefined-loop-variable,
        cell-var-from-loop,
        missing-format-argument-key,
@@ -294,8 +294,8 @@ max-module-lines=1000
 # separator` is used to allow tabulation in dicts, etc.: {1  : 1,\n222: 2}.
 # `trailing-comma` allows a space between comma and closing bracket: (a, ).
 # `empty-line` allows space-only lines.
-no-space-check=trailing-comma,
-               dict-separator
+#no-space-check=trailing-comma,
+#               dict-separator
 
 # Allow the body of a class to be on the same line as the declaration if body
 # contains single statement.
@@ -542,4 +542,4 @@ known-third-party=enchant
 
 # Exceptions that will emit a warning when being caught. Defaults to
 # "BaseException, Exception".
-overgeneral-exceptions=Exception
+overgeneral-exceptions=builtins.Exception

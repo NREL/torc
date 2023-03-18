@@ -1,15 +1,17 @@
-# Configuration file for the Sphinx documentation builder.
-#
-# For the full list of built-in configuration values, see the documentation:
-# https://www.sphinx-doc.org/en/master/usage/configuration.html
+"""
+Configuration file for the Sphinx documentation builder.
 
-# -- Project information -----------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+For the full list of built-in configuration values, see the documentation:
+https://www.sphinx-doc.org/en/master/usage/configuration.html
+
+-- Project information -----------------------------------------------------
+https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
+"""
 
 import sphinx_rtd_theme
 
 project = "wms"
-copyright = "2023, Daniel Thom"
+copyright = "2023, Daniel Thom"  # pylint: disable=redefined-builtin
 author = "Daniel Thom"
 release = "0.1.0"
 

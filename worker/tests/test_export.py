@@ -1,10 +1,13 @@
+"""Tests database export functionality."""
+
 import shlex
 import subprocess
 
 from wms.utils.files import load_line_delimited_json
 
 
-def test_export(tmp_path, completed_workflow):
+def test_export(tmp_path, completed_workflow):  # pylint: disable=unused-argument
+    """Tests the CLI commands that export data from the database."""
     output_dir = tmp_path / "exports"
     cmd = f"wms export json -d {output_dir} --force"
     subprocess.run(shlex.split(cmd), check=True)

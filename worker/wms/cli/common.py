@@ -1,3 +1,5 @@
+"""Common functions for CLI commands"""
+
 import shutil
 import sys
 from pathlib import Path

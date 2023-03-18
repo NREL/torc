@@ -1,3 +1,5 @@
+"""CLI commands to manage a workflow"""
+
 import logging
 import sys
 from pathlib import Path
@@ -6,10 +8,10 @@ import click
 from swagger_client import ApiClient, DefaultApi
 from swagger_client.configuration import Configuration
 
-from .common import check_output_directory
 from wms.job_runner import JobRunner
 from wms.loggers import setup_logging
 from wms.workflow_manager import WorkflowManager
+from .common import check_output_directory
 
 
 logger = logging.getLogger(__name__)
@@ -38,7 +40,7 @@ def start_workflow(database_url):
 def cancel(database_url):
     """Cancel all jobs that are currently active in the workflow."""
     # TODO: find active nodes by scheduler type and send cancel commands
-    print("not implemented yet")
+    print(f"Cannot cancel {database_url}: not implemented yet:")
     sys.exit(1)
 
 
@@ -61,7 +63,7 @@ def cancel(database_url):
 @click.argument("database_url")
 def run_local(database_url, output, force):
     """Run workflow jobs on a local system."""
-    logger = setup_logging(__name__)
+    my_logger = setup_logging(__name__)
     check_output_directory(output, force)
     configuration = Configuration()
     configuration.host = database_url
@@ -70,7 +72,7 @@ def run_local(database_url, output, force):
     mgr = WorkflowManager(api)
     mgr.start()
     runner = JobRunner(api, output)
-    logger.info("Start workflow")
+    my_logger.info("Start workflow")
     runner.run_worker()
 
 

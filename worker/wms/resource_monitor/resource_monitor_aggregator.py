@@ -1,6 +1,6 @@
+"""Aggregates resource stats"""
+
 import logging
-import multiprocessing
-import os
 import socket
 import sys
 import time
@@ -268,23 +268,23 @@ def run_stat_aggregator(conn, stats, pids):
     conn.send(results)
 
 
-if __name__ == "__main__":
-    name = "test_node"
-    stats = ComputeNodeResourceStatConfig(process=False, name=name, interval=1)
-    parent, child = multiprocessing.Pipe()
-    proc = multiprocessing.Process(target=run_stat_aggregator, args=(child, stats, None))
-    proc.start()
-    time.sleep(2)
-    stats.process = True
-    parent.send(
-        {
-            "command": IpcMonitorCommands.SELECT_STATS,
-            "stats": stats,
-            "pids": {"my_process": os.getpid()},
-        }
-    )
-    time.sleep(10)
-    parent.send({"command": IpcMonitorCommands.SHUTDOWN})
-    results = parent.recv()
-    proc.join()
-    print(results)
+# if __name__ == "__main__":
+#    name = "test_node"
+#    stats = ComputeNodeResourceStatConfig(process=False, name=name, interval=1)
+#    parent, child = multiprocessing.Pipe()
+#    proc = multiprocessing.Process(target=run_stat_aggregator, args=(child, stats, None))
+#    proc.start()
+#    time.sleep(2)
+#    stats.process = True
+#    parent.send(
+#        {
+#            "command": IpcMonitorCommands.SELECT_STATS,
+#            "stats": stats,
+#            "pids": {"my_process": os.getpid()},
+#        }
+#    )
+#    time.sleep(10)
+#    parent.send({"command": IpcMonitorCommands.SHUTDOWN})
+#    results = parent.recv()
+#    proc.join()
+#    print(results)

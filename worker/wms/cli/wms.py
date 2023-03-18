@@ -1,3 +1,5 @@
+"""Entry point for CLI commands"""
+
 import logging
 from pathlib import Path
 

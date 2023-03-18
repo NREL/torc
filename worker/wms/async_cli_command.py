@@ -1,3 +1,5 @@
+"""Runs a CLI command asynchronously"""
+
 import abc
 import logging
 import shlex
@@ -13,6 +15,8 @@ logger = logging.getLogger(__name__)
 
 
 class AsyncJobBase(abc.ABC):
+    """Base class for async jobs"""
+
     @abc.abstractmethod
     def run(self, output_dir: Path):
         """Run a job."""
@@ -20,6 +24,16 @@ class AsyncJobBase(abc.ABC):
     @abc.abstractmethod
     def cancel(self):
         """Cancel the job."""
+
+    @property
+    @abc.abstractmethod
+    def db_job(self):
+        """Return the underlying job object that is stored in the database."""
+
+    @db_job.setter
+    @abc.abstractmethod
+    def db_job(self, job):
+        """Set the underlying job object that is stored in the database."""
 
     @abc.abstractmethod
     def get_result(self):
@@ -49,6 +63,7 @@ class AsyncCliCommand(AsyncJobBase):
         self._is_running = False
         self._start_time = 0.0
         self._completion_time = 0.0
+        self._exec_time_s = 0.0
         self._return_code = None
         self._is_complete = False
         self._status = None
@@ -57,7 +72,7 @@ class AsyncCliCommand(AsyncJobBase):
 
     def __del__(self):
         if self._is_running:
-            logger.warning("job %s destructed while running", self.command)
+            logger.warning("job %s destructed while running", self._db_job.command)
 
     def cancel(self):
         self._pipe.kill()
@@ -73,10 +88,6 @@ class AsyncCliCommand(AsyncJobBase):
             )
 
         self._complete("canceled")
-
-    @property
-    def command(self):
-        return self._db_job.command
 
     @property
     def db_job(self):
@@ -111,19 +122,22 @@ class AsyncCliCommand(AsyncJobBase):
         return self._db_job.name
 
     @property
-    def pid(self):
+    def pid(self) -> int:
+        """Return the process ID for the job."""
         return self._pipe.pid
 
     def run(self, output_dir: Path):
         assert self._pipe is None
         self._start_time = time.time()
 
-        cmd = shlex.split(self.command, posix="win" not in sys.platform)
+        cmd = shlex.split(self._db_job.command, posix="win" not in sys.platform)
         stdout_filename = output_dir / f"{self.name}.o"
         stderr_filename = output_dir / f"{self.name}.e"
-        self._stdout_fp = open(stdout_filename, "w")
-        self._stderr_fp = open(stderr_filename, "w")
+        # pylint: disable=consider-using-with
+        self._stdout_fp = open(stdout_filename, "w", encoding="utf-8")
+        self._stderr_fp = open(stderr_filename, "w", encoding="utf-8")
         self._pipe = subprocess.Popen(cmd, stdout=self._stdout_fp, stderr=self._stderr_fp)
+        # pylint: enable=consider-using-with
         self._is_running = True
 
     def _complete(self, status):

@@ -3,16 +3,10 @@ setup.py
 """
 import os
 import logging
-from codecs import open
-from pathlib import Path
 from setuptools import setup, find_packages
 
 
 logger = logging.getLogger(__name__)
-
-
-def read_lines(filename):
-    return Path(filename).read_text().splitlines()
 
 
 here = os.path.abspath(os.path.dirname(__file__))
@@ -60,6 +54,7 @@ setup(
             "black",
             "flake8",
             "ghp-import",
+            "pylint",
             "pytest",
             "pytest-cov",
             "sphinx-rtd-theme",
