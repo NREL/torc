@@ -5,9 +5,10 @@ import sys
 from pathlib import Path
 
 import click
-from swagger_client import ApiClient, DefaultApi
-from swagger_client.configuration import Configuration
+from prettytable import PrettyTable
 
+from wms.api import make_api, remove_db_keys
+from wms.common import GiB
 from wms.job_runner import JobRunner
 from wms.loggers import setup_logging
 from wms.workflow_manager import WorkflowManager
@@ -27,9 +28,7 @@ def workflow():
 def start_workflow(database_url):
     """Start the workflow defined in the database specified by the URL."""
     setup_logging(__name__)
-    configuration = Configuration()
-    configuration.host = database_url
-    api = DefaultApi(ApiClient(configuration))
+    api = make_api(database_url)
     mgr = WorkflowManager(api)
     mgr.start()
     # TODO: This could schedule nodes.
@@ -63,18 +62,45 @@ def cancel(database_url):
 @click.argument("database_url")
 def run_local(database_url, output, force):
     """Run workflow jobs on a local system."""
-    my_logger = setup_logging(__name__)
+    setup_logging(__name__)
     check_output_directory(output, force)
-    configuration = Configuration()
-    configuration.host = database_url
-    api = DefaultApi(ApiClient(configuration))
+    api = make_api(database_url)
 
     mgr = WorkflowManager(api)
     mgr.start()
     runner = JobRunner(api, output)
-    my_logger.info("Start workflow")
     runner.run_worker()
 
 
+@click.command()
+@click.argument("database_url")
+def show_resource_stats(database_url):
+    """Show resource statistics from a workflow run."""
+    api = make_api(database_url)
+    table = PrettyTable(title="Job Process Resource Utilization Statistics")
+    found_first = False
+    for job in api.get_jobs().items:
+        for stat in api.get_jobs_process_stats_name(job.name):
+            stats = remove_db_keys(stat.to_dict())
+            data = {
+                "job_name": stats["job_name"],
+                "run_id": int(stats["run_id"]),
+                "timestamp": stats["timestamp"],
+                "avg_cpu_percent": stats["avg_cpu_percent"],
+                "max_cpu_percent": stats["max_cpu_percent"],
+                "avg_memory_gb": stats["avg_rss"] / GiB,
+                "max_memory_gb": stats["max_rss"] / GiB,
+                "num_samples": int(stats["num_samples"]),
+            }
+            if not found_first:
+                table.field_names = tuple(data.keys())
+                found_first = True
+            table.add_row(data.values())
+    print(table)
+
+    # TODO: show compute node stats here
+
+
 workflow.add_command(run_local)
+workflow.add_command(show_resource_stats)
 workflow.add_command(start_workflow)

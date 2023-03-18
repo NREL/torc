@@ -109,8 +109,6 @@ def _run_command(command, output, cwd, **kwargs):
         result = subprocess.run(
             command,
             capture_output=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
             cwd=cwd,
             check=False,
             **kwargs,

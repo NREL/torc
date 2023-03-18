@@ -1,6 +1,8 @@
 'use strict';
 const joi = require('joi');
 const db = require('@arangodb').db;
+const errors = require('@arangodb').errors;
+const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
 const createRouter = require('@arangodb/foxx/router');
 const schemas = require('../schemas');
 const query = require('../../query');
@@ -28,7 +30,7 @@ router.post('/workflow_config', function(req, res) {
     .summary('Set workflow config')
     .description('Set workflow config in the "workflow_config" collection.');
 
-router.put('/workflow_config', function(req, res) {
+router.put('/workflow_config/:key', function(req, res) {
   const doc = req.body;
   try {
     if (query.getWorkflowConfig() == null) {
@@ -46,19 +48,14 @@ router.put('/workflow_config', function(req, res) {
     res.throw(404, 'The workflow config does not exist', e);
   }
 })
+    .pathParam('key', joi.string().required(), 'Key of the config.')
     .body(schemas.workflowConfig, 'Updated workflow config')
     .response(schemas.workflowConfig, 'Updated workflow config')
     .summary('Update workflow config')
     .description('Update workflow config in the "workflow_config" collection.');
 
 router.get('/workflow_config', function(req, res) {
-  let doc = query.getWorkflowConfig();
-  if (doc == null) {
-    doc = {
-      computeNodeResourceStatConfig: schemas.computeNodeResourceStatConfig.validate({}).value,
-    };
-  }
-  res.send(doc);
+  res.send(query.getWorkflowConfig());
 })
     .response(schemas.workflowConfig)
     .summary('Retrieve the current workflow config.')

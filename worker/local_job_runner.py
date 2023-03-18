@@ -14,8 +14,8 @@ from swagger_client.models.hpc_config_model import HpcConfigModel
 from swagger_client.models.job_definition import JobDefinition
 from swagger_client.models.resource_requirements_model import ResourceRequirementsModel
 from swagger_client.models.workflow import Workflow
-from swagger_client.models.workflow_config_compute_node_resource_stat_config import (
-    WorkflowConfigComputeNodeResourceStatConfig,
+from swagger_client.models.workflow_config_compute_node_resource_stats import (
+    WorkflowConfigComputeNodeResourceStats,
 )
 
 from wms.loggers import setup_logging
@@ -101,7 +101,7 @@ def run_workflow(api, output_dir: Path):
     mgr = WorkflowManager(api)
     mgr.start()
     config = api.get_workflow_config()
-    config.compute_node_resource_stat_config = WorkflowConfigComputeNodeResourceStatConfig(
+    config.compute_node_resource_stats = WorkflowConfigComputeNodeResourceStats(
         cpu=True, process=True, interval=1
     )
     api.put_workflow_config(config)

@@ -91,7 +91,7 @@ const job = joi.object().required().keys({
   run_id: joi.number().default(0),
   // This only exists to all prepareJobsForSubmission to take less time to find
   // jobs with exclusive access.
-  internal: jobInternal.validate({}).value, // TODO DT: seems wrong
+  internal: jobInternal.optional().default(jobInternal.validate({}).value),
   // TODO container information
   _key: joi.string(),
   _id: joi.string(),
@@ -166,24 +166,7 @@ const result = joi.object().required().keys({
   _rev: joi.string(),
 });
 
-const workflowEstimate = joi.object().required().keys({
-  estimates_by_round: joi.array().items(readyJobsResourceRequirements),
-});
-
-const workflow = joi.object().required().keys({
-  // TODO: allow specifying compute node resource stat config here
-  jobs: joi.array().items(jobDefinition).default([]),
-  files: joi.array().items(file).default([]),
-  resource_requirements: joi.array().items(resourceRequirements).default([]),
-  schedulers: joi.array().items(hpcConfig).default([]),
-});
-
-const autoTuneStatus = joi.object().required().keys({
-  enabled: joi.boolean().default(true),
-  job_names: joi.array().items(joi.string()).default([]),
-});
-
-const computeNodeResourceStatConfig = joi.object().required().keys({
+const computeNodeResourceStatConfig = joi.object().keys({
   cpu: joi.boolean().default(false),
   disk: joi.boolean().default(false),
   memory: joi.boolean().default(false),
@@ -195,10 +178,28 @@ const computeNodeResourceStatConfig = joi.object().required().keys({
 });
 
 const workflowConfig = joi.object().required().keys({
-  compute_node_resource_stat_config: computeNodeResourceStatConfig,
-  _key: joi.string(),
-  _id: joi.string(),
-  _rev: joi.string(),
+  compute_node_resource_stats: computeNodeResourceStatConfig.default(
+      computeNodeResourceStatConfig.validate({}).value),
+  _key: joi.string().optional(),
+  _id: joi.string().optional(),
+  _rev: joi.string().optional(),
+});
+
+const workflowEstimate = joi.object().required().keys({
+  estimates_by_round: joi.array().items(readyJobsResourceRequirements),
+});
+
+const workflow = joi.object().required().keys({
+  jobs: joi.array().items(jobDefinition).default([]),
+  files: joi.array().items(file).default([]),
+  resource_requirements: joi.array().items(resourceRequirements).default([]),
+  schedulers: joi.array().items(hpcConfig).default([]),
+  config: joi.object().default(workflowConfig.validate({}).value),
+});
+
+const autoTuneStatus = joi.object().required().keys({
+  enabled: joi.boolean().default(true),
+  job_names: joi.array().items(joi.string()).default([]),
 });
 
 const workflowStatus = joi.object().required().keys({

@@ -16,6 +16,10 @@ from swagger_client.models.job_definition import JobDefinition
 from swagger_client.models.resource_requirements_model import ResourceRequirementsModel
 from swagger_client.models.workflow import Workflow
 from swagger_client.models.result_model import ResultModel
+from swagger_client.models.workflow_config_compute_node_resource_stats import (
+    WorkflowConfigComputeNodeResourceStats,
+)
+from swagger_client.models.workflow_config_model import WorkflowConfigModel
 
 
 TEST_WORKFLOW = "test_workflow"
@@ -296,6 +300,14 @@ def multi_resource_requirement_workflow(tmp_path):
         jobs=small_jobs + medium_jobs + large_jobs,
         resource_requirements=[small, medium, large],
         schedulers=[hpc_config],
+        config=WorkflowConfigModel(
+            compute_node_resource_stats=WorkflowConfigComputeNodeResourceStats(
+                cpu=True,
+                memory=True,
+                process=True,
+                interval=0.1,
+            )
+        ),
     )
 
     api.post_workflow(workflow)

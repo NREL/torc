@@ -58,7 +58,7 @@ class JobRunner:
         self._num_jobs = 0
         self._last_db_poll_time = 0
         self._compute_node_db_id = None
-        self._stats = api.get_workflow_config().compute_node_resource_stat_config
+        self._stats = api.get_workflow_config().compute_node_resource_stats
         self._parent_monitor_conn = None
         self._monitor_proc = None
         self._pids = {}

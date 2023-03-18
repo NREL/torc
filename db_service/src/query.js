@@ -845,9 +845,23 @@ function resetJobStatus() {
 /** Reset workflow config. */
 function resetWorkflowConfig() {
   const config = {
-    compute_node_resource_stat_config: schemas.computeNodeResourceStatConfig.validate({}).value,
+    compute_node_resource_stats: schemas.computeNodeResourceStatConfig.validate({}).value,
   };
 
+  const doc = getWorkflowConfig();
+  if (doc == null) {
+    db.workflow_config.save(config);
+  } else {
+    Object.assign(doc, config);
+    db.workflow_config.update(doc, doc);
+  }
+}
+
+/**
+ * Update workflow config.
+ * @param {Object} config
+ **/
+function updateWorkflowConfig(config) {
   const doc = getWorkflowConfig();
   if (doc == null) {
     db.workflow_config.save(config);
@@ -1064,4 +1078,5 @@ module.exports = {
   resetWorkflowStatus,
   setupAutoTuneResourceRequirements,
   updateBlockedJobsFromCompletion,
+  updateWorkflowConfig,
 };

@@ -3,12 +3,10 @@
 import logging
 
 from swagger_client.models.worker_resources import WorkerResources
-from swagger_client.models.workflow_config_compute_node_resource_stat_config import (
-    WorkflowConfigComputeNodeResourceStatConfig,
-)
 
 from wms.job_runner import JobRunner
 from wms.loggers import setup_logging
+from wms.utils.run_command import check_run_command
 from wms.workflow_manager import WorkflowManager
 
 
@@ -21,11 +19,6 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     api, output_dir = multi_resource_requirement_workflow
 
     mgr = WorkflowManager(api)
-    config = api.get_workflow_config()
-    config.compute_node_resource_stat_config = WorkflowConfigComputeNodeResourceStatConfig(
-        cpu=True, memory=True, process=True, interval=0.1
-    )
-    api.put_workflow_config(config)
     mgr.start(auto_tune_resource_requirements=True)
 
     # TODO: this will change when the manager can schedule nodes
@@ -88,3 +81,9 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     )
     runner.run_worker()
     assert api.get_workflow_is_complete()
+    cmd = "wms workflow show-resource-stats http://localhost:8529/_db/workflows/wms-service"
+    output = {}
+    check_run_command(cmd, output)
+    assert "Job Process Resource Utilization Statistics" in output["stdout"]
+    for name in stats_by_name:
+        assert name in output["stdout"]

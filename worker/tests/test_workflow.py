@@ -8,9 +8,6 @@ from pathlib import Path
 
 import pytest
 from swagger_client.models.worker_resources import WorkerResources
-from swagger_client.models.workflow_config_compute_node_resource_stat_config import (
-    WorkflowConfigComputeNodeResourceStatConfig,
-)
 
 from wms.common import GiB
 from wms.job_runner import JobRunner
@@ -30,10 +27,11 @@ def test_run_workflow(diamond_workflow):
     assert user_data_work1[0]["key1"] == "val1"
     mgr = WorkflowManager(api)
     config = api.get_workflow_config()
-    config.compute_node_resource_stat_config = WorkflowConfigComputeNodeResourceStatConfig(
-        cpu=True, memory=True, process=True, interval=0.1
-    )
-    api.put_workflow_config(config)
+    config.compute_node_resource_stats.cpu = True
+    config.compute_node_resource_stats.memory = True
+    config.compute_node_resource_stats.process = True
+    config.compute_node_resource_stats.interval = 1
+    api.put_workflow_config_key(config, config.key)
     mgr.start()
     runner = JobRunner(
         api,
@@ -267,7 +265,7 @@ def _get_job_names_by_event(events, type_):
 
 # def _disable_resource_stats(api):
 #    config = api.get_workflow_config()
-#    config.compute_node_resource_stat_config = WorkflowConfigComputeNodeResourceStatConfig(
+#    config.compute_node_resource_stats = WorkflowConfigComputeNodeResourceStats(
 #        cpu=False, memory=False, disk=False, network=False, process=False
 #    )
 #    api.put_workflow_config(config)

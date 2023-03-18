@@ -15,8 +15,6 @@ module.exports = router;
 router.post('/workflow', function(req, res) {
   try {
     addWorkflow(req.body);
-    // TODO: remove this call when the config can be set in the workflow body.
-    query.resetWorkflowConfig();
     query.resetWorkflowStatus();
     res.send({message: 'Added workflow.'});
   } catch (e) {
@@ -218,6 +216,7 @@ function addWorkflow(workflow) {
   for (const item of workflow.jobs) {
     query.addJobDefinition(item);
   }
+  query.updateWorkflowConfig(workflow.config);
 }
 
 /**

@@ -290,5 +290,3 @@ function convertJobforApi(job) {
   delete job.internal;
   return job;
 }
-
-// TODO: Add command to get job process results

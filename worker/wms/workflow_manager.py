@@ -14,10 +14,8 @@ logger = logging.getLogger(__name__)
 class WorkflowManager:
     """Manages the workflow across nodes."""
 
-    def __init__(self, api, reset_config=True):
+    def __init__(self, api):
         self._api = api
-        if reset_config:
-            api.put_workflow_config_reset()
 
     def reinitialize_jobs(self):
         """Reinitialize job status to prepare for restarting the workflow.

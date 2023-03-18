@@ -2470,13 +2470,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-    put:
+    post:
       tags: []
-      summary: Update workflow config
-      description: Update workflow config in the "workflow_config" collection.
-      operationId: put_workflow_config
+      summary: Set workflow config
+      description: Set workflow config in the "workflow_config" collection.
+      operationId: post_workflow_config
       requestBody:
-        description: Updated workflow config
+        description: Workflow config
         content:
           application/json:
             schema:
@@ -2484,7 +2484,7 @@ paths:
         required: true
       responses:
         "200":
-          description: Updated workflow config
+          description: Workflow config
           content:
             application/json:
               schema:
@@ -2497,21 +2497,31 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-    post:
+  /workflow_config/{key}:
+    put:
       tags: []
-      summary: Set workflow config
-      description: Set workflow config in the "workflow_config" collection.
-      operationId: post_workflow_config
+      summary: Update workflow config
+      description: Update workflow config in the "workflow_config" collection.
+      operationId: put_workflow_config_key
+      parameters:
+      - name: key
+        in: path
+        description: Key of the config.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
       requestBody:
-        description: Workflow config
+        description: Updated workflow config
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow_config_model_1'
+              $ref: '#/components/schemas/workflow_config_key_body'
         required: true
       responses:
         "200":
-          description: Workflow config
+          description: Updated workflow config
           content:
             application/json:
               schema:
@@ -2927,32 +2937,6 @@ components:
           type: string
         _rev:
           type: string
-    workflow_config_compute_node_resource_stat_config:
-      type: object
-      properties:
-        cpu:
-          type: boolean
-          default: true
-        disk:
-          type: boolean
-          default: false
-        memory:
-          type: boolean
-          default: true
-        network:
-          type: boolean
-          default: false
-        process:
-          type: boolean
-          default: true
-        include_child_processes:
-          type: boolean
-          default: true
-        recurse_child_processes:
-          type: boolean
-          default: false
-        interval:
-          type: number
     inline_response_200_12:
       required:
       - count
@@ -3002,13 +2986,11 @@ components:
           type: string
         _rev:
           type: string
-    workflow_config_model_1:
-      required:
-      - compute_node_resource_stat_config
+    workflow_config_key_body:
       type: object
       properties:
-        compute_node_resource_stat_config:
-          $ref: '#/components/schemas/workflow_config_compute_node_resource_stat_config'
+        compute_node_resource_stats:
+          $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
         _key:
           type: string
         _id:
@@ -3039,12 +3021,10 @@ components:
         _rev:
           type: string
     inline_response_200_18:
-      required:
-      - compute_node_resource_stat_config
       type: object
       properties:
-        compute_node_resource_stat_config:
-          $ref: '#/components/schemas/workflow_config_compute_node_resource_stat_config'
+        compute_node_resource_stats:
+          $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
         _key:
           type: string
         _id:
@@ -3344,6 +3324,32 @@ components:
           type: string
         _rev:
           type: string
+    workflow_config_compute_node_resource_stats:
+      type: object
+      properties:
+        cpu:
+          type: boolean
+          default: false
+        disk:
+          type: boolean
+          default: false
+        memory:
+          type: boolean
+          default: false
+        network:
+          type: boolean
+          default: false
+        process:
+          type: boolean
+          default: false
+        include_child_processes:
+          type: boolean
+          default: true
+        recurse_child_processes:
+          type: boolean
+          default: false
+        interval:
+          type: number
     job_definition2:
       required:
       - command
@@ -3684,6 +3690,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/workflow_schedulers'
+        config:
+          type: object
+          properties: {}
     edge_model:
       required:
       - _from
@@ -3768,6 +3777,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/hpc_config_model'
+        config:
+          type: object
+          properties: {}
     workflow_files:
       required:
       - name
@@ -3828,12 +3840,10 @@ components:
           items:
             $ref: '#/components/schemas/inline_response_200_3'
     workflow_config_model:
-      required:
-      - compute_node_resource_stat_config
       type: object
       properties:
-        compute_node_resource_stat_config:
-          $ref: '#/components/schemas/workflow_config_compute_node_resource_stat_config'
+        compute_node_resource_stats:
+          $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
         _key:
           type: string
         _id:
