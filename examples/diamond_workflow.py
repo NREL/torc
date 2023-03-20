@@ -4,12 +4,12 @@ import logging
 import shutil
 from pathlib import Path
 
-from swagger_client import ApiClient, DefaultApi
-from swagger_client.configuration import Configuration
 from swagger_client.models.file_model import FileModel
 from swagger_client.models.job_definition import JobDefinition
 from swagger_client.models.resource_requirements_model import ResourceRequirementsModel
-from swagger_client.models.workflow import Workflow
+from swagger_client.models.workflow_model import WorkflowModel
+
+from wms.api import make_api
 
 
 TEST_WORKFLOW = "test_workflow"
@@ -20,7 +20,7 @@ WORK = Path("tests") / "worker" / "scripts" / "work.py"
 logger = logging.getLogger(__name__)
 
 
-def create_workflow(api: DefaultApi, output_dir: Path):
+def create_workflow(api, output_dir: Path):
     """Creates a workflow with implicit job dependencies declared through files."""
     output_dir.mkdir(exist_ok=True)
     inputs_file = output_dir / "inputs.json"
@@ -66,7 +66,7 @@ def create_workflow(api: DefaultApi, output_dir: Path):
         resource_requirements=small.name,
     )
 
-    workflow = Workflow(
+    workflow = WorkflowModel(
         files=[inputs, f1, f2, f3, f4],
         jobs=[preprocess, work1, work2, postprocess],
         resource_requirements=[small, medium, large],
@@ -82,10 +82,7 @@ def main():
     if output_dir.exists():
         shutil.rmtree(output_dir)
     output_dir.mkdir()
-    configuration = Configuration()
-    configuration.host = "http://localhost:8529/_db/workflows/wms-service"
-    api = DefaultApi(ApiClient(configuration))
-    api.delete_workflow()
+    api = make_api("http://localhost:8529/_db/workflows/wms-service")
     create_workflow(api, output_dir)
 
 

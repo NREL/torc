@@ -10,11 +10,13 @@ import pytest
 
 from swagger_client import ApiClient, DefaultApi
 from swagger_client.configuration import Configuration
+from swagger_client.models.workflow_scheduler import WorkflowScheduler
+from swagger_client.models.workflow_schedulers import WorkflowSchedulers
 from swagger_client.models.file_model import FileModel
-from swagger_client.models.hpc_config_model import HpcConfigModel
+from swagger_client.models.local_schedulers_model import LocalSchedulersModel
 from swagger_client.models.job_definition import JobDefinition
 from swagger_client.models.resource_requirements_model import ResourceRequirementsModel
-from swagger_client.models.workflow import Workflow
+from swagger_client.models.workflow_model import WorkflowModel
 from swagger_client.models.result_model import ResultModel
 from swagger_client.models.workflow_config_compute_node_resource_stats import (
     WorkflowConfigComputeNodeResourceStats,
@@ -51,17 +53,14 @@ def diamond_workflow(tmp_path):
     medium = ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H")
     large = ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H")
 
-    hpc_config = HpcConfigModel(
-        name="debug", hpc_type="slurm", account="dsgrid", partition="debug"
-    )
-
+    scheduler = LocalSchedulersModel(name="local")
     preprocess = JobDefinition(
         name="preprocess",
         command=f"python {PREPROCESS} -i {inputs.path} -o {f1.path}",
         input_files=[inputs.name],
         output_files=[f1.name],
         resource_requirements=small.name,
-        scheduler=hpc_config.name,
+        scheduler=WorkflowScheduler(name="local", type="local"),
     )
     work1 = JobDefinition(
         name="work1",
@@ -70,7 +69,7 @@ def diamond_workflow(tmp_path):
         input_files=[f1.name],
         output_files=[f2.name],
         resource_requirements=medium.name,
-        scheduler=hpc_config.name,
+        scheduler=WorkflowScheduler(name="local", type="local"),
     )
     work2 = JobDefinition(
         name="work2",
@@ -79,7 +78,7 @@ def diamond_workflow(tmp_path):
         input_files=[f1.name],
         output_files=[f3.name],
         resource_requirements=large.name,
-        scheduler=hpc_config.name,
+        scheduler=WorkflowScheduler(name="local", type="local"),
     )
     postprocess = JobDefinition(
         name="postprocess",
@@ -87,14 +86,14 @@ def diamond_workflow(tmp_path):
         input_files=[f2.name, f3.name],
         output_files=[f4.name],
         resource_requirements=small.name,
-        scheduler=hpc_config.name,
+        scheduler=WorkflowScheduler(name="local", type="local"),
     )
 
-    workflow = Workflow(
+    workflow = WorkflowModel(
         files=[inputs, f1, f2, f3, f4],
         jobs=[preprocess, work1, work2, postprocess],
         resource_requirements=[small, medium, large],
-        schedulers=[hpc_config],
+        schedulers=WorkflowSchedulers(local_schedulers=[scheduler]),
     )
     for file in workflow.files:
         path = Path(file.path)
@@ -104,7 +103,8 @@ def diamond_workflow(tmp_path):
 
     api.post_workflow(workflow)
     api.post_workflow_initialize_jobs()
-    yield api, output_dir
+    scheduler = api.get_local_schedulers_key("local")
+    yield api, scheduler.id, output_dir
     api.delete_workflow()
 
 
@@ -124,7 +124,7 @@ def independent_job_workflow(num_jobs):
         )
         jobs.append(job)
 
-    workflow = Workflow(jobs=jobs, resource_requirements=[small])
+    workflow = WorkflowModel(jobs=jobs, resource_requirements=[small])
     api.post_workflow(workflow)
     api.post_workflow_initialize_jobs()
     yield api, num_jobs
@@ -154,7 +154,7 @@ def workflow_with_cancel(tmp_path, cancel_on_blocking_job_failure):
         cancel_on_blocking_job_failure=cancel_on_blocking_job_failure,
     )
 
-    workflow = Workflow(jobs=[job1, job2])
+    workflow = WorkflowModel(jobs=[job1, job2])
     api.post_workflow(workflow)
     api.post_workflow_initialize_jobs()
     yield api, tmp_path, cancel_on_blocking_job_failure
@@ -164,7 +164,7 @@ def workflow_with_cancel(tmp_path, cancel_on_blocking_job_failure):
 @pytest.fixture
 def completed_workflow(diamond_workflow):
     """Fakes a completed diamond workflow."""
-    api, output_dir = diamond_workflow
+    api, scheduler_config_id, output_dir = diamond_workflow
     status = api.get_workflow_status()
     status.run_id = 1
     api.put_workflow_status(status)
@@ -172,10 +172,10 @@ def completed_workflow(diamond_workflow):
     for name in job_names:
         # Completing a job this way will cause blocked jobs to change status and revision,
         # so we need to update each time.
-        job = api.get_jobs_name(name)
+        job = api.get_jobs_key(name)
         # Fake out what normally happens at submission time.
         job.run_id += 1
-        job = api.put_jobs_name(job, name)
+        job = api.put_jobs_key(job, name)
         status = "done"
         result = ResultModel(
             name=name,
@@ -185,7 +185,7 @@ def completed_workflow(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.post_jobs_complete_job_name_status_rev(
+        job = api.post_jobs_complete_job_key_status_rev(
             result, name, status, job._rev  # pylint: disable=protected-access
         )
 
@@ -194,9 +194,9 @@ def completed_workflow(diamond_workflow):
         if not path.exists():
             path.touch()
             file.st_mtime = path.stat().st_mtime
-            api.put_files_name(file, file.name)
+            api.put_files_key(file, file.name)
 
-    yield api, output_dir
+    yield api, scheduler_config_id, output_dir
 
 
 @pytest.fixture
@@ -204,9 +204,9 @@ def incomplete_workflow(diamond_workflow):
     """Fakes an incomplete diamond workflow.
     One work job and the postprocess job are not complete.
     """
-    api, output_dir = diamond_workflow
+    api, scheduler_config_id, output_dir = diamond_workflow
     for name in ("preprocess", "work1"):
-        job = api.get_jobs_name(name)
+        job = api.get_jobs_key(name)
         status = "done"
         result = ResultModel(
             name=name,
@@ -216,23 +216,23 @@ def incomplete_workflow(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.post_jobs_complete_job_name_status_rev(
+        job = api.post_jobs_complete_job_key_status_rev(
             result, name, status, job._rev  # pylint: disable=protected-access
         )
 
-        for file in api.get_files_produced_by_job_name(name).items:
+        for file in api.get_files_produced_by_job_key(name).items:
             path = Path(file.path)
             if not path.exists():
                 path.touch()
                 # file.file_hash = compute_file_hash(path)
                 file.st_mtime = path.stat().st_mtime
-                api.put_files_name(file, file.name)
+                api.put_files_key(file, file.name)
 
-    assert api.get_jobs_name("preprocess").status == "done"
-    assert api.get_jobs_name("work1").status == "done"
-    assert api.get_jobs_name("work2").status == "ready"
-    assert api.get_jobs_name("postprocess").status == "blocked"
-    yield api, output_dir
+    assert api.get_jobs_key("preprocess").status == "done"
+    assert api.get_jobs_key("work1").status == "done"
+    assert api.get_jobs_key("work2").status == "ready"
+    assert api.get_jobs_key("postprocess").status == "blocked"
+    yield api, scheduler_config_id, output_dir
 
 
 @pytest.fixture
@@ -241,16 +241,16 @@ def incomplete_workflow_missing_files(incomplete_workflow):
     One work job and the postprocess job are not complete.
     The file produced by the work job that completed is deleted.
     """
-    api, output_dir = incomplete_workflow
+    api, scheduler_config_id, output_dir = incomplete_workflow
     (output_dir / "f2.json").unlink()
-    yield api, output_dir
+    yield api, scheduler_config_id, output_dir
 
 
 @pytest.fixture
 def complete_workflow_missing_files(completed_workflow):
     """Fakes an completed diamond workflow and then deletes the specified file."""
-    api, output_dir = completed_workflow
-    yield api, output_dir
+    api, scheduler_config_id, output_dir = completed_workflow
+    yield api, scheduler_config_id, output_dir
 
 
 @pytest.fixture
@@ -265,15 +265,14 @@ def multi_resource_requirement_workflow(tmp_path):
     medium = ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H")
     large = ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H")
 
-    hpc_config = HpcConfigModel(name="debug", hpc_type="slurm", account="dsgrid")
-
+    scheduler = LocalSchedulersModel(name="local")
     num_jobs_per_category = 3
     small_jobs = [
         JobDefinition(
             name=f"job_small{i}",
             command=f"python {RC_JOB} -i {i} -c small",
             resource_requirements=small.name,
-            scheduler=hpc_config.name,
+            scheduler=WorkflowScheduler(name="local", type="local"),
         )
         for i in range(1, num_jobs_per_category + 1)
     ]
@@ -282,7 +281,7 @@ def multi_resource_requirement_workflow(tmp_path):
             name=f"job_medium{i}",
             command=f"python {RC_JOB} -i {i} -c medium",
             resource_requirements=medium.name,
-            scheduler=hpc_config.name,
+            scheduler=WorkflowScheduler(name="local", type="local"),
         )
         for i in range(1, num_jobs_per_category + 1)
     ]
@@ -291,15 +290,15 @@ def multi_resource_requirement_workflow(tmp_path):
             name=f"job_large{i}",
             command=f"python {RC_JOB} -i {i} -c large",
             resource_requirements=large.name,
-            scheduler=hpc_config.name,
+            scheduler=WorkflowScheduler(name="local", type="local"),
         )
         for i in range(1, num_jobs_per_category + 1)
     ]
 
-    workflow = Workflow(
+    workflow = WorkflowModel(
         jobs=small_jobs + medium_jobs + large_jobs,
         resource_requirements=[small, medium, large],
-        schedulers=[hpc_config],
+        schedulers=WorkflowSchedulers(local_schedulers=[scheduler]),
         config=WorkflowConfigModel(
             compute_node_resource_stats=WorkflowConfigComputeNodeResourceStats(
                 cpu=True,
@@ -311,6 +310,7 @@ def multi_resource_requirement_workflow(tmp_path):
     )
 
     api.post_workflow(workflow)
+    scheduler = api.get_local_schedulers_key("local")
     api.post_workflow_initialize_jobs()
-    yield api, output_dir
+    yield api, scheduler.id, output_dir
     api.delete_workflow()

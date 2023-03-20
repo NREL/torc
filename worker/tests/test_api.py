@@ -7,7 +7,7 @@ from swagger_client.rest import ApiException
 
 def test_api_nodes_by_key(completed_workflow):
     """Tests API commands to get documents stored by the 'key' parameter."""
-    api, _ = completed_workflow
+    api, _, _ = completed_workflow
     names = [
         "compute_nodes",
         "compute_node_stats",
@@ -39,16 +39,16 @@ def test_api_nodes_by_key(completed_workflow):
 
 def test_api_nodes_by_name(completed_workflow):
     """Tests API commands to get documents stored by the 'name' parameter."""
-    api, _ = completed_workflow
-    names = ["hpc_configs", "files", "jobs", "resource_requirements"]
+    api, _, _ = completed_workflow
+    names = ["local_schedulers", "files", "jobs", "resource_requirements"]
     for name in names:
         results = getattr(api, f"get_{name}")()
         if results.items:
-            val = getattr(api, f"get_{name}_name")(results.items[0].name)
+            val = getattr(api, f"get_{name}_key")(results.items[0].name)
             assert val.to_dict() == results.items[0].to_dict()
-            getattr(api, f"delete_{name}_name")(results.items[0].name)
+            getattr(api, f"delete_{name}_key")(results.items[0].name)
             with pytest.raises(ApiException):
-                val = getattr(api, f"get_{name}_name")(results.items[0].name)
+                val = getattr(api, f"get_{name}_key")(results.items[0].name)
 
         getattr(api, f"delete_{name}")()
         result = getattr(api, f"get_{name}")()
@@ -57,7 +57,7 @@ def test_api_nodes_by_name(completed_workflow):
 
 def test_api_edges(completed_workflow):
     """Tests API commands for edges."""
-    api, _ = completed_workflow
+    api, _, _ = completed_workflow
     names = [
         "blocks",
         "executed",
@@ -92,7 +92,7 @@ def test_api_edges(completed_workflow):
 
 def test_api_workflow_status(completed_workflow):
     """Tests API commands to manage workflow status."""
-    api, _ = completed_workflow
+    api, _, _ = completed_workflow
     status = api.get_workflow_status()
     orig = status.run_id
     status.run_id += 1

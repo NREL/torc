@@ -69,18 +69,22 @@ function addFile(doc) {
 /**
  * Add an hpc config document to the database.
  * @param {Object} doc
+ * @param {String} collectionName
  * @return {Object}
  */
-function addHpcConfig(doc) {
-  const existing = getDocumentIfAlreadyStored(doc, 'hpc_configs');
+function addScheduler(doc, collectionName) {
+  const existing = getDocumentIfAlreadyStored(doc, collectionName);
   if (existing != null) {
     return existing;
   }
 
+  if (doc._key != null) {
+    throw new Error(`_key = ${doc._key} cannot be set on scheduler insertion)`);
+  }
   doc._key = doc.name;
-  const meta = db.hpc_configs.save(doc);
+  const meta = db._collection(collectionName).save(doc);
   Object.assign(doc, meta);
-  console.log(`Added hpc_config ${doc.name}`);
+  console.log(`Added ${collectionName} ${JSON.stringify(doc)}`);
   return doc;
 }
 
@@ -111,6 +115,7 @@ function addJob(doc) {
  * @return {Object}
  */
 function addJobDefinition(jobDef) {
+  let schedulerConfigId = null;
   for (const filename of jobDef.input_files) {
     if (!graph.files.exists(filename)) {
       throw new Error(`job ${jobDef.name} input file ${filename} is not stored`);
@@ -126,8 +131,8 @@ function addJobDefinition(jobDef) {
       throw new Error(`job ${jobDef.name} with blocked_by ${jobName} is not stored`);
     }
   }
-  if (jobDef.scheduler != null && !graph.hpc_configs.exists(jobDef.scheduler)) {
-    throw new Error(`job ${jobDef.name} scheduler ${jobDef.scheduler} is not stored`);
+  if (jobDef.scheduler != null) {
+    schedulerConfigId = getSchedulerConfig(jobDef.scheduler)._id;
   }
   const rr = jobDef.resource_requirements;
   if (rr != null && !graph.resource_requirements.exists(rr)) {
@@ -137,7 +142,6 @@ function addJobDefinition(jobDef) {
   const job = addJob({
     name: jobDef.name,
     command: jobDef.command,
-    user_data: jobDef.user_data,
     cancel_on_blocking_job_failure: jobDef.cancel_on_blocking_job_failure,
     interruptible: jobDef.interruptible,
     run_id: 0,
@@ -163,9 +167,8 @@ function addJobDefinition(jobDef) {
     const edge = {_from: job._id, _to: rr._id};
     graph.requires.save(edge);
   }
-  if (jobDef.scheduler != null) {
-    const scheduler = graph.hpc_configs.document(jobDef.scheduler);
-    const edge = {_from: job._id, _to: scheduler._id};
+  if (schedulerConfigId != null) {
+    const edge = {_from: job._id, _to: schedulerConfigId};
     graph.scheduled_bys.save(edge);
   }
   for (const userData of jobDef.user_data) {
@@ -173,6 +176,34 @@ function addJobDefinition(jobDef) {
     graph.stores.save({_from: job._id, _to: doc._id});
   }
   return job;
+}
+
+/**
+ * Return the scheduler config for the scheduler config reference.
+ * @param {schedulerConfigReference} ref
+ * @return {Object}
+ */
+function getSchedulerConfig(ref) {
+  let collectionName = null;
+  switch (ref.type) {
+    case 'aws':
+      collectionName = 'aws_schedulers';
+      break;
+    case 'local':
+      collectionName = 'local_schedulers';
+      break;
+    case 'slurm':
+      collectionName = 'slurm_schedulers';
+      break;
+    default:
+      throw new Error(`Invalid scheduler type: ${ref.type}`);
+  }
+
+  const collection = db._collection(collectionName);
+  if (!collection.exists(ref.name)) {
+    throw new Error(`scheduler ${JSON.stringify(ref)} is not stored`);
+  }
+  return collection.document(ref.name);
 }
 
 /**
@@ -318,28 +349,30 @@ function getBlockingJobs(job) {
   return blockingJobs;
 }
 
-const filesFields = ['name', 'path', 'file_hash', 'st_mtime'];
-const jobsFields = [
-  'name',
-  'command',
-  'status',
-  'cancel_on_blocking_job_failure',
-];
-const hpcConfigsFields = [
-  'name',
-  'hpc_type',
-  'account',
-  'partition',
-  'qos',
-  'walltime',
-];
-const resourceRequirementsFields = [
-  'name',
-  'num_cpus',
-  'num_gpus',
-  'memory',
-  'runtime',
-];
+// const filesFields = ['name', 'path', 'file_hash', 'st_mtime'];
+// const jobsFields = [
+//   'name',
+//   'command',
+//   'status',
+//   'cancel_on_blocking_job_failure',
+// ];
+// const hpcConfigsFields = [
+//   'name',
+//   'hpc_type',
+//   'account',
+//   'partition',
+//   'qos',
+//   'reservation',
+//   'walltime',
+// ];
+// const resourceRequirementsFields = [
+//   'name',
+//   'num_cpus',
+//   'num_gpus',
+//   'num_nodes',
+//   'memory',
+//   'runtime',
+// ];
 
 /**
  * Return the current version of the resource_requirements document if it is already stored.
@@ -349,39 +382,48 @@ const resourceRequirementsFields = [
  * @return {Object}
  */
 function getDocumentIfAlreadyStored(doc, collectionName) {
-  let collection = '';
-  let fields = [];
-  switch (collectionName) {
-    case 'files':
-      collection = graph.files;
-      fields = filesFields;
-      break;
-    case 'hpc_configs':
-      collection = graph.hpc_configs;
-      fields = hpcConfigsFields;
-      break;
-    case 'jobs':
-      collection = graph.jobs;
-      fields = jobsFields;
-      break;
-    case 'resource_requirements':
-      collection = graph.resource_requirements;
-      fields = resourceRequirementsFields;
-      break;
-    default:
-      throw new Error(`collection name ${collectionName} is not handled`);
+  const collection = db._collection(collectionName);
+  // TODO DT: call collection.document(doc)
+  const filter = JSON.parse(JSON.stringify(doc));
+  for (const property of ['_key', '_id', '_rev']) {
+    delete filter[property];
   }
-  if (!collection.exists(doc.name)) {
+  const result = collection.byExample(filter);
+  if (result.count() == 0) {
     return null;
   }
-  const existing = collection.document(doc.name);
-  for (const field of fields) {
-    if (doc[field] !== existing[field]) {
-      return null;
-    }
+  if (result.count() > 1) {
+    throw new Error(`filter ${JSON.stringify(filter)} returned ${result.count()} matches`);
   }
+  return result.next();
+  // let fields = [];
+  // switch (collectionName) {
+  //   case 'files':
+  //     fields = filesFields;
+  //     break;
+  //   case 'slurm_schedulers':
+  //     fields = hpcConfigsFields;
+  //     break;
+  //   case 'jobs':
+  //     fields = jobsFields;
+  //     break;
+  //   case 'resource_requirements':
+  //     fields = resourceRequirementsFields;
+  //     break;
+  //   default:
+  //     throw new Error(`collection name ${collectionName} is not handled`);
+  // }
+  // if (!collection.exists(doc.name)) {
+  //   return null;
+  // }
+  // const existing = collection.document(doc.name);
+  // for (const field of fields) {
+  //   if (doc[field] !== existing[field]) {
+  //     return null;
+  //   }
+  // }
 
-  return existing;
+  // return existing;
 }
 
 /**
@@ -457,6 +499,7 @@ function getJobDefinition(job) {
     scheduler: scheduler == null ? null : scheduler.name,
   };
 }
+
 /**
  * Return the job's resource requirements, using default values if none are assigned.
  * @param {Object} job
@@ -638,9 +681,14 @@ function initializeJobStatus() {
     if (job.internal == null) {
       job.internal = schemas.jobInternal.validate({}).value;
     }
+    const scheduler = getJobScheduler(job);
+    if (scheduler != null) {
+      job.internal.scheduler_config_id = scheduler._id;
+    }
     job.internal.memory_bytes = utils.getMemoryInBytes(jobResources.memory);
     job.internal.runtime_seconds = utils.getTimeDurationInSeconds(jobResources.runtime);
     job.internal.num_cpus = jobResources.num_cpus;
+    job.internal.num_nodes = jobResources.num_nodes;
     if (isJobInitiallyBlocked(job._id)) {
       job.status = JobStatus.Blocked;
     } else if (job.status != JobStatus.Done) {
@@ -786,11 +834,9 @@ function prepareJobsForSubmission(workerResources, limit) {
   const workerTimeLimit =
     workerResources.time_limit == null ?
       Number.MAX_SAFE_INTEGER : utils.getTimeDurationInSeconds(workerResources.time_limit);
-  // TODO: numNodes and numGpus
+  const schedulerConfigId = workerResources.scheduler_config_id == null ? '' : workerResources.scheduler_config_id;
+  // TODO: numGpus
 
-  // TODO: Improvement: if there are multiple resoure requirement groups (and nodes),
-  // the larger nodes should avoid taking the smaller jobs.
-  // Perhaps this request can specify minimum job thresholds.
   db._executeTransaction({
     collections: {
       exclusive: 'jobs',
@@ -804,6 +850,9 @@ function prepareJobsForSubmission(workerResources, limit) {
             && job.internal.memory_bytes < ${availableMemory}
             && job.internal.num_cpus < ${availableCpus}
             && job.internal.runtime_seconds < ${workerTimeLimit}
+            && job.internal.num_nodes == ${workerResources.num_nodes}
+            && (${schedulerConfigId} == ''
+            || job.internal.scheduler_config_id == ${schedulerConfigId})
           LIMIT ${queryLimit}
           RETURN job
       `;
@@ -1043,7 +1092,7 @@ function updateJobsFromCompletionReversal(job) {
 module.exports = {
   addBlocksEdgesFromFiles,
   addFile,
-  addHpcConfig,
+  addScheduler,
   addJob,
   addJobDefinition,
   addResourceRequirements,

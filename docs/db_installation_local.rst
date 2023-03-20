@@ -86,6 +86,18 @@ API Service
 Create the service that will implement the API endpoint. Change to the ``db_service`` directory
 after cloning this repository.
 
+1. Change to the ``generateRouters`` directory in order to auto-generate several API router files.
+
+.. code-block:: console
+
+    $ npm install
+    $ rm -r ../src/api/generated/*
+    $ generateRouters
+
+It should have generated several files in ``db_service/src/api/generated``.
+
+2. Change back to the ``db_service`` directory and create the API service package.
+
 .. code-block:: console
 
     $ npm install

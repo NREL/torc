@@ -7,10 +7,14 @@ from pathlib import Path
 
 import click
 
-from wms.api import make_api
+from swagger_client.models.scheduled_compute_nodes_model import (
+    ScheduledComputeNodesModel,
+)
+
+from wms.api import make_api, remove_db_keys
 from wms.hpc.hpc_manager import HpcManager
 from wms.loggers import setup_logging
-from wms.utils.files import dump_data, load_data
+from wms.utils.files import dump_data
 from .common import check_output_directory
 from .slurm_runner import slurm_runner
 
@@ -112,15 +116,19 @@ def recommend_nodes(database_url: str, num_cpus):
 
 
 @click.command()
-@click.argument("database_url")
-@click.argument("config_file", callback=lambda *x: Path(x[2]))
-@click.argument("num_hpc_jobs", type=int)
 @click.option(
     "-i",
     "--index",
     default=1,
     show_default=True,
     help="Starting index for HPC job names",
+)
+@click.option(
+    "-n",
+    "--num-hpc-jobs",
+    type=int,
+    required=True,
+    help="Number of HPC jobs to schedule",
 )
 @click.option(
     "-o",
@@ -131,18 +139,46 @@ def recommend_nodes(database_url: str, num_cpus):
     callback=lambda *x: Path(x[2]),
 )
 @click.option(
+    "-s",
+    "--scheduler-config-id",
+    type=str,
+    required=True,
+    help="Scheduler config ID",
+)
+@click.option(
+    "-u",
+    "--database-url",
+    type=str,
+    required=True,
+    envvar="WMS_DATABASE_URL",
+    help="Database URL",
+)
+@click.option(
     "--force",
     is_flag=True,
     default=False,
     show_default=True,
     help="Overwrite files if they exist.",
 )
-def schedule_nodes(database_url, config_file, num_hpc_jobs, index, output, force):
+def schedule_slurm_nodes(index, num_hpc_jobs, output, scheduler_config_id, database_url, force):
     """Schedule nodes to run jobs."""
+    filename = output / f"slurm_scheduler_{scheduler_config_id}.log"
+    my_logger = setup_logging(__name__, filename=filename, mode="a")
+
     check_output_directory(output, force)
     api = make_api(database_url)
     setup_logging(__name__)
-    config = load_data(config_file)
+
+    fields = scheduler_config_id.split("/")
+    if len(fields) != 2:
+        my_logger.error("Invalid scheduler ID format: %s", scheduler_config_id)
+        sys.exit(1)
+    if fields[0] != "slurm_schedulers":
+        my_logger.error("Invalid database collection name: %s", fields[0])
+        sys.exit(1)
+
+    config = remove_db_keys(api.get_slurm_schedulers_key(fields[1]).to_dict())
+    config["hpc_type"] = "slurm"
     mgr = HpcManager(config, output)
     runner_script = f"wms hpc slurm-runner {database_url}"
     job_ids = []
@@ -150,20 +186,25 @@ def schedule_nodes(database_url, config_file, num_hpc_jobs, index, output, force
         name = config["job_prefix"] + "_" + str(i)
         job_id = mgr.submit(output, name, runner_script, keep_submission_script=True)
         job_ids.append(job_id)
+        api.post_scheduled_compute_nodes(
+            ScheduledComputeNodesModel(
+                scheduler_id=job_id, scheduler_config_id=scheduler_config_id, status="pending"
+            )
+        )
 
-    # TODO: post the scheduled IDs to the database in workflow_status
     api.post_events(
         {
             "category": "scheduler",
             "type": "submit",
             "num_jobs": len(job_ids),
             "job_ids": job_ids,
+            "scheduler_config_id": scheduler_config_id,
             "message": f"Submitted {len(job_ids)} job requests to {config['hpc_type']}",
         }
     )
 
 
 hpc.add_command(recommend_nodes)
-hpc.add_command(schedule_nodes)
+hpc.add_command(schedule_slurm_nodes)
 hpc.add_command(slurm_config)
 hpc.add_command(slurm_runner)

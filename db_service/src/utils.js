@@ -93,7 +93,18 @@ function makeCursorResult(items, skip, limit, totalCount) {
   };
 }
 
+/**
+ * Convert the job for delivery to an API client.
+ * @param {Object} job
+ * @return {Object}
+ */
+function convertJobForApi(job) {
+  delete job.internal;
+  return job;
+}
+
 module.exports = {
+  convertJobForApi,
   getItemsLimit,
   getTimeDurationInSeconds,
   getMemoryInBytes,

@@ -3,7 +3,9 @@
 import logging
 
 import polars as pl
-from swagger_client.models.worker_resources import WorkerResources
+from swagger_client.models.workflow_prepare_jobs_for_submission_model import (
+    WorkflowPrepareJobsForSubmissionModel,
+)
 
 from wms.job_runner import JobRunner
 from wms.loggers import setup_logging
@@ -21,7 +23,7 @@ logger = logging.getLogger(__name__)
 def test_auto_tune_workflow(multi_resource_requirement_workflow):
     """Test execution of a workflow using the auto-tune feature."""
     setup_logging("wms")
-    api, output_dir = multi_resource_requirement_workflow
+    api, scheduler_config_id, output_dir = multi_resource_requirement_workflow
 
     mgr = WorkflowManager(api)
     mgr.start(auto_tune_resource_requirements=True)
@@ -36,14 +38,14 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
         if job.name in auto_tune_job_names:
             assert job.status == "ready"
             num_enabled += 1
-            rr = api.get_jobs_resource_requirements_name(job.name)
+            rr = api.get_jobs_resource_requirements_key(job.name)
             assert rr.name not in groups
             groups.add(rr.name)
         else:
             assert job.status == "disabled"
     assert num_enabled == 3
 
-    resources = WorkerResources(
+    resources = WorkflowPrepareJobsForSubmissionModel(
         num_cpus=32,
         num_gpus=0,
         memory_gb=32,
@@ -54,18 +56,19 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
         output_dir,
         resources=resources,
         job_completion_poll_interval=0.1,
+        scheduler_config_id=scheduler_config_id,
     )
     runner.run_worker()
     assert api.get_workflow_is_complete()
 
-    stats_by_name = {x: api.get_jobs_process_stats_name(x)[0] for x in auto_tune_job_names}
+    stats_by_name = {x: api.get_jobs_process_stats_key(x)[0] for x in auto_tune_job_names}
     assert stats_by_name["job_small1"].max_rss < stats_by_name["job_medium1"].max_rss
     assert stats_by_name["job_medium1"].max_rss < stats_by_name["job_large1"].max_rss
 
     api.post_workflow_process_auto_tune_resource_requirements_results()
-    small = api.get_resource_requirements_name("small")
-    medium = api.get_resource_requirements_name("medium")
-    large = api.get_resource_requirements_name("large")
+    small = api.get_resource_requirements_key("small")
+    medium = api.get_resource_requirements_key("medium")
+    large = api.get_resource_requirements_key("large")
     for rr in (small, medium, large):
         assert rr.runtime == "P0DT0H1M"
         assert rr.num_cpus == 1

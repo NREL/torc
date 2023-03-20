@@ -6,6 +6,7 @@ const {GRAPH_NAME, JobStatus, MAX_TRANSFER_RECORDS} = require('../defs');
 const graph = graphModule._graph(GRAPH_NAME);
 const query = require('../query');
 const schemas = require('./schemas');
+const {convertJobForApi} = require('../utils');
 const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
 module.exports = router;
@@ -100,6 +101,10 @@ router.post('/workflow/prepare_jobs_for_submission', function(req, res) {
     const resources = req.body;
     const qp = req.queryParams == null ? {} : req.queryParams;
     const jobs = query.prepareJobsForSubmission(resources, qp.limit);
+    const items = [];
+    for (const job of jobs) {
+      items.push(convertJobForApi(job));
+    }
     res.send(jobs);
   }
 })
@@ -207,8 +212,14 @@ function addWorkflow(workflow) {
   for (const item of workflow.files) {
     query.addFile(item);
   }
-  for (const item of workflow.schedulers) {
-    query.addHpcConfig(item);
+  for (const item of workflow.schedulers.aws_schedulers) {
+    query.addScheduler(item, 'aws_schedulers');
+  }
+  for (const item of workflow.schedulers.local_schedulers) {
+    query.addScheduler(item, 'local_schedulers');
+  }
+  for (const item of workflow.schedulers.slurm_schedulers) {
+    query.addScheduler(item, 'slurm_schedulers');
   }
   for (const item of workflow.resource_requirements) {
     query.addResourceRequirements(item);
@@ -225,15 +236,23 @@ function addWorkflow(workflow) {
  */
 function checkDependencies(workflow) {
   const files = new Set();
-  const hpcConfigs = new Set();
+  const awsConfigs = new Set();
+  const localConfigs = new Set();
+  const slurmConfigs = new Set();
   const jobs = new Set();
   const resourceRequirements = new Set();
 
   for (const item of workflow.files) {
     files.add(item.name);
   }
-  for (const item of workflow.schedulers) {
-    hpcConfigs.add(item.name);
+  for (const item of workflow.schedulers.aws_schedulers) {
+    awsConfigs.add(item.name);
+  }
+  for (const item of workflow.schedulers.local_schedulers) {
+    localConfigs.add(item.name);
+  }
+  for (const item of workflow.schedulers.slurm_schedulers) {
+    slurmConfigs.add(item.name);
   }
   for (const item of workflow.jobs) {
     jobs.add(item.name);
@@ -258,9 +277,24 @@ function checkDependencies(workflow) {
         throw new Error(`job ${job.name} with blocked_by ${jobName} is not stored`);
       }
     }
-    if (job.scheduler != null && !hpcConfigs.has(job.scheduler) &&
-      !graph.hpc_configs.exists(job.scheduler)) {
-      throw new Error(`job ${job.name} scheduler ${job.scheduler} is not stored`);
+    if (job.scheduler != null) {
+      let container = null;
+      switch (job.scheduler.type) {
+        case 'aws':
+          container = awsConfigs;
+          break;
+        case 'local':
+          container = localConfigs;
+          break;
+        case 'slurm':
+          container = slurmConfigs;
+          break;
+        default:
+          throw new Error(`Invalid scheduler type: ${job.scheduler.type}`);
+      }
+      if (!container.has(job.scheduler.name)) {
+        throw new Error(`Invalid scheduler: job=${job.name}: ${JSON.stringify(job.scheduler)}`);
+      }
     }
     const rr = job.resource_requirements;
     if (rr != null && !resourceRequirements.has(rr) && !graph.resource_requirements.exists(rr)) {

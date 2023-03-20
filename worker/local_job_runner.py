@@ -7,17 +7,16 @@ import sys
 from pathlib import Path
 
 from prettytable import PrettyTable
-from swagger_client import ApiClient, DefaultApi
-from swagger_client.configuration import Configuration
 from swagger_client.models.file_model import FileModel
-from swagger_client.models.hpc_config_model import HpcConfigModel
 from swagger_client.models.job_definition import JobDefinition
 from swagger_client.models.resource_requirements_model import ResourceRequirementsModel
-from swagger_client.models.workflow import Workflow
+from swagger_client.models.workflow_model import WorkflowModel
 from swagger_client.models.workflow_config_compute_node_resource_stats import (
     WorkflowConfigComputeNodeResourceStats,
 )
+from swagger_client.models.workflow_config_model import WorkflowConfigModel
 
+from wms.api import make_api
 from wms.loggers import setup_logging
 from wms.job_runner import JobRunner
 from wms.workflow_manager import WorkflowManager
@@ -31,8 +30,8 @@ WORK = Path("tests") / "scripts" / "work.py"
 logger = logging.getLogger(__name__)
 
 
-def create_workflow(api: DefaultApi, output_dir: Path):
-    """Create a dimond workflow with file dependencies."""
+def create_workflow(api, output_dir: Path):
+    """Create a diamond workflow with file dependencies."""
     output_dir.mkdir(exist_ok=True)
     inputs_file = output_dir / "inputs.json"
     inputs_file.write_text(json.dumps({"val": 5}))
@@ -47,17 +46,12 @@ def create_workflow(api: DefaultApi, output_dir: Path):
     medium = ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H")
     large = ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H")
 
-    hpc_config = HpcConfigModel(
-        name="debug", hpc_type="slurm", account="dsgrid", partition="debug"
-    )
-
     preprocess = JobDefinition(
         name="preprocess",
         command=f"python {PREPROCESS} -i {inputs.path} -o {f1.path}",
         input_files=[inputs.name],
         output_files=[f1.name],
         resource_requirements=small.name,
-        scheduler=hpc_config.name,
     )
     work1 = JobDefinition(
         name="work1",
@@ -66,7 +60,6 @@ def create_workflow(api: DefaultApi, output_dir: Path):
         input_files=[f1.name],
         output_files=[f2.name],
         resource_requirements=medium.name,
-        scheduler=hpc_config.name,
     )
     work2 = JobDefinition(
         name="work2",
@@ -74,7 +67,6 @@ def create_workflow(api: DefaultApi, output_dir: Path):
         input_files=[f1.name],
         output_files=[f3.name],
         resource_requirements=large.name,
-        scheduler=hpc_config.name,
     )
     postprocess = JobDefinition(
         name="postprocess",
@@ -82,14 +74,20 @@ def create_workflow(api: DefaultApi, output_dir: Path):
         input_files=[f2.name, f3.name],
         output_files=[f4.name],
         resource_requirements=small.name,
-        scheduler=hpc_config.name,
     )
 
-    workflow = Workflow(
+    workflow = WorkflowModel(
         files=[inputs, f1, f2, f3, f4],
         jobs=[preprocess, work1, work2, postprocess],
         resource_requirements=[small, medium, large],
-        schedulers=[hpc_config],
+        config=WorkflowConfigModel(
+            compute_node_resource_stats=WorkflowConfigComputeNodeResourceStats(
+                cpu=True,
+                memory=True,
+                process=True,
+                interval=1,
+            )
+        ),
     )
     api.post_workflow(workflow)
     api.post_workflow_initialize_jobs()
@@ -100,11 +98,6 @@ def run_workflow(api, output_dir: Path):
     """Run the workflow stored in the database."""
     mgr = WorkflowManager(api)
     mgr.start()
-    config = api.get_workflow_config()
-    config.compute_node_resource_stats = WorkflowConfigComputeNodeResourceStats(
-        cpu=True, process=True, interval=1
-    )
-    api.put_workflow_config(config)
     runner = JobRunner(api, output_dir, time_limit="P0DT24H")
     logger.info("Start workflow")
     runner.run_worker()
@@ -128,10 +121,7 @@ def main():
 
     setup_logging(__name__)
 
-    configuration = Configuration()
-    configuration.host = "http://localhost:8529/_db/workflows/wms-service"
-    api = DefaultApi(ApiClient(configuration))
-
+    api = make_api("http://localhost:8529/_db/workflows/wms-service")
     output_dir = Path("output_dir")
     mode = sys.argv[1]
     if mode == "create":

@@ -9,7 +9,7 @@ paths:
     get:
       tags: []
       summary: Retrieve all events
-      description: Retrieves all events from the "events" collection.
+      description: Retrieves all documents from the "events" collection.
       operationId: get_events
       parameters:
       - name: skip
@@ -48,7 +48,7 @@ paths:
       description: Store an event in the "events" collection.
       operationId: post_events
       requestBody:
-        description: event.
+        description: User-defined event.
         content:
           application/json:
             schema:
@@ -56,7 +56,7 @@ paths:
         required: true
       responses:
         "200":
-          description: event
+          description: User-defined event
           content:
             application/json:
               schema:
@@ -72,7 +72,7 @@ paths:
     delete:
       tags: []
       summary: Delete all events
-      description: Deletes all events from the "events" collection.
+      description: Deletes all documents from the "events" collection.
       operationId: delete_events
       requestBody:
         content:
@@ -99,12 +99,12 @@ paths:
     get:
       tags: []
       summary: Retrieve the event for a key.
-      description: Retrieve the event for a key.
+      description: Retrieve the document for a key from the "events" collection.
       operationId: get_events_key
       parameters:
       - name: key
         in: path
-        description: Key of the events object
+        description: key of the events document
         required: true
         style: simple
         explode: false
@@ -124,15 +124,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
+    put:
+      tags: []
+      summary: Update event
+      description: Update a document in the "events" collection.
+      operationId: put_events_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the event.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: event to update in the collection.
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          description: event updated in the collection.
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete an event
-      description: Deletes an event from the "events" collection by key.
+      description: Deletes document from the "events" collection by key.
       operationId: delete_events_key
       parameters:
       - name: key
         in: path
-        description: Key of the event.
+        description: key of the  object.
         required: true
         style: simple
         explode: false
@@ -146,7 +182,7 @@ paths:
         required: false
       responses:
         "200":
-          description: Event stored in the collection.
+          description: event stored in the collection.
           content:
             application/json:
               schema:
@@ -189,7 +225,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow'
+              $ref: '#/components/schemas/workflow_model'
         required: true
       responses:
         "200":
@@ -344,7 +380,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/worker_resources'
+              $ref: '#/components/schemas/workflow_prepare_jobs_for_submission_model'
         required: true
       responses:
         "200":
@@ -462,7 +498,7 @@ paths:
     get:
       tags: []
       summary: Retrieve all compute nodes
-      description: Retrieves all compute nodes from the "compute_nodes" collection.
+      description: Retrieves all documents from the "compute_nodes" collection.
       operationId: get_compute_nodes
       parameters:
       - name: skip
@@ -497,11 +533,11 @@ paths:
       security: []
     post:
       tags: []
-      summary: Store information about a compute node.
-      description: Store information about a compute node in the "compute_nodes" collection.
+      summary: Store a compute node.
+      description: Store a compute node in the "compute_nodes" collection.
       operationId: post_compute_nodes
       requestBody:
-        description: compute node.
+        description: Compute node used for running jobs.
         content:
           application/json:
             schema:
@@ -509,7 +545,7 @@ paths:
         required: true
       responses:
         "200":
-          description: compute node
+          description: Compute node used for running jobs
           content:
             application/json:
               schema:
@@ -525,7 +561,7 @@ paths:
     delete:
       tags: []
       summary: Delete all compute nodes
-      description: Deletes all compute nodes from the "compute_nodes" collection.
+      description: Deletes all documents from the "compute_nodes" collection.
       operationId: delete_compute_nodes
       requestBody:
         content:
@@ -552,12 +588,12 @@ paths:
     get:
       tags: []
       summary: Retrieve the compute node for a key.
-      description: Retrieve the compute node for a key.
+      description: Retrieve the document for a key from the "compute_nodes" collection.
       operationId: get_compute_nodes_key
       parameters:
       - name: key
         in: path
-        description: Key of the compute node object
+        description: key of the compute_nodes document
         required: true
         style: simple
         explode: false
@@ -580,26 +616,27 @@ paths:
     put:
       tags: []
       summary: Update compute node
-      description: Update a compute node in the "compute_nodes" collection.
+      description: Update a document in the "compute_nodes" collection.
       operationId: put_compute_nodes_key
       parameters:
       - name: key
         in: path
+        description: key of the compute node.
         required: true
         style: simple
         explode: false
         schema:
           type: string
       requestBody:
-        description: Compute node to update in the collection.
+        description: compute node to update in the collection.
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/compute_nodes_key_model'
         required: true
       responses:
         "200":
-          description: Compute node updated in the collection.
+          description: compute node updated in the collection.
           content:
             application/json:
               schema:
@@ -615,12 +652,12 @@ paths:
     delete:
       tags: []
       summary: Delete a compute node
-      description: Deletes a compute node from the "compute_nodes" collection by key.
+      description: Deletes document from the "compute_nodes" collection by key.
       operationId: delete_compute_nodes_key
       parameters:
       - name: key
         in: path
-        description: Key of the compute node.
+        description: key of the  object.
         required: true
         style: simple
         explode: false
@@ -634,7 +671,7 @@ paths:
         required: false
       responses:
         "200":
-          description: Compute node stored in the collection.
+          description: compute node stored in the collection.
           content:
             application/json:
               schema:
@@ -650,8 +687,8 @@ paths:
   /compute_node_stats:
     get:
       tags: []
-      summary: Retrieve all compute nodes
-      description: Retrieves all compute nodes from the "compute_node_stats" collection.
+      summary: Retrieve all compute node statisticss
+      description: Retrieves all documents from the "compute_node_stats" collection.
       operationId: get_compute_node_stats
       parameters:
       - name: skip
@@ -686,11 +723,11 @@ paths:
       security: []
     post:
       tags: []
-      summary: Store utilization stats for a compute node.
-      description: Store utilization stats for a compute node.
+      summary: Store a compute node statistics.
+      description: Store a compute node statistics in the "compute_node_stats" collection.
       operationId: post_compute_node_stats
       requestBody:
-        description: compute node stats
+        description: Compute node resource utilization statistics.
         content:
           application/json:
             schema:
@@ -698,7 +735,7 @@ paths:
         required: true
       responses:
         "200":
-          description: compute node stats
+          description: Compute node resource utilization statistics
           content:
             application/json:
               schema:
@@ -713,8 +750,8 @@ paths:
       x-codegen-request-body-name: body
     delete:
       tags: []
-      summary: Delete all compute node stats
-      description: Deletes all compute node stats from the "compute_node_stats" collection.
+      summary: Delete all compute node statisticss
+      description: Deletes all documents from the "compute_node_stats" collection.
       operationId: delete_compute_node_stats
       requestBody:
         content:
@@ -740,13 +777,13 @@ paths:
   /compute_node_stats/{key}:
     get:
       tags: []
-      summary: Retrieve the compute node for a key.
-      description: Retrieve the compute node for a key.
+      summary: Retrieve the compute node statistics for a key.
+      description: Retrieve the document for a key from the "compute_node_stats" collection.
       operationId: get_compute_node_stats_key
       parameters:
       - name: key
         in: path
-        description: Key of the compute node object
+        description: key of the compute_node_stats document
         required: true
         style: simple
         explode: false
@@ -766,16 +803,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
+    put:
+      tags: []
+      summary: Update compute node statistics
+      description: Update a document in the "compute_node_stats" collection.
+      operationId: put_compute_node_stats_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the compute node statistics.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: compute node statistics to update in the collection.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/compute_node_stats_key_model'
+        required: true
+      responses:
+        "200":
+          description: compute node statistics updated in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_9'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
     delete:
       tags: []
-      summary: Delete a compute node
-      description: Deletes a compute node from the "compute_node_stats" collection
-        by key.
+      summary: Delete a compute node statistics
+      description: Deletes document from the "compute_node_stats" collection by key.
       operationId: delete_compute_node_stats_key
       parameters:
       - name: key
         in: path
-        description: Key of the compute node.
+        description: key of the  object.
         required: true
         style: simple
         explode: false
@@ -789,7 +861,7 @@ paths:
         required: false
       responses:
         "200":
-          description: Compute node stored in the collection.
+          description: compute node statistics stored in the collection.
           content:
             application/json:
               schema:
@@ -806,7 +878,7 @@ paths:
     get:
       tags: []
       summary: Retrieve all files
-      description: Retrieves all files from the "files" collection.
+      description: Retrieves all documents from the "files" collection.
       operationId: get_files
       parameters:
       - name: skip
@@ -841,11 +913,11 @@ paths:
       security: []
     post:
       tags: []
-      summary: Store file
+      summary: Store a file.
       description: Store a file in the "files" collection.
       operationId: post_files
       requestBody:
-        description: file to store in the collection.
+        description: Job input or output files.
         content:
           application/json:
             schema:
@@ -853,7 +925,7 @@ paths:
         required: true
       responses:
         "200":
-          description: file stored in the collection.
+          description: Job input or output files
           content:
             application/json:
               schema:
@@ -869,7 +941,7 @@ paths:
     delete:
       tags: []
       summary: Delete all files
-      description: Deletes all files from the "files" collection.
+      description: Deletes all documents from the "files" collection.
       operationId: delete_files
       requestBody:
         content:
@@ -892,16 +964,16 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /files/{name}:
+  /files/{key}:
     get:
       tags: []
-      summary: Retrieve a file
-      description: Retrieves a file from the "files" collection by name.
-      operationId: get_files_name
+      summary: Retrieve the file for a key.
+      description: Retrieve the document for a key from the "files" collection.
+      operationId: get_files_key
       parameters:
-      - name: name
+      - name: key
         in: path
-        description: Name of the file.
+        description: key of the files document
         required: true
         style: simple
         explode: false
@@ -909,7 +981,7 @@ paths:
           type: string
       responses:
         "200":
-          description: file stored in the collection.
+          description: HTTP 200 OK.
           content:
             application/json:
               schema:
@@ -924,11 +996,12 @@ paths:
     put:
       tags: []
       summary: Update file
-      description: Update a file in the "files" collection.
-      operationId: put_files_name
+      description: Update a document in the "files" collection.
+      operationId: put_files_key
       parameters:
-      - name: name
+      - name: key
         in: path
+        description: key of the file.
         required: true
         style: simple
         explode: false
@@ -939,7 +1012,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/files_key_model'
         required: true
       responses:
         "200":
@@ -947,7 +1020,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/file_model'
+                $ref: '#/components/schemas/files_key_model'
         "500":
           description: Default error response.
           content:
@@ -959,12 +1032,12 @@ paths:
     delete:
       tags: []
       summary: Delete a file
-      description: Deletes a file from the "files" collection by name.
-      operationId: delete_files_name
+      description: Deletes document from the "files" collection by key.
+      operationId: delete_files_key
       parameters:
-      - name: name
+      - name: key
         in: path
-        description: Name of the file.
+        description: key of the  object.
         required: true
         style: simple
         explode: false
@@ -982,7 +1055,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/file_model'
+                $ref: '#/components/schemas/files_key_model'
         "500":
           description: Default error response.
           content:
@@ -991,15 +1064,16 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /files/produced_by_job/{name}:
+  /files/produced_by_job/{key}:
     get:
       tags: []
       summary: Retrieve files produced by a job
       description: Retrieves files from the "files" collection produced by a job.
-      operationId: get_files_produced_by_job_name
+      operationId: get_files_produced_by_job_key
       parameters:
-      - name: name
+      - name: key
         in: path
+        description: Job key
         required: true
         style: simple
         explode: false
@@ -1035,12 +1109,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-  /hpc_configs:
+  /aws_schedulers:
     get:
       tags: []
-      summary: Retrieve all hpc_configs
-      description: Retrieves all hpc_configs from the "hpc_configs" collection.
-      operationId: get_hpc_configs
+      summary: Retrieve all AWS compute node configurations
+      description: Retrieves all documents from the "aws_schedulers" collection.
+      operationId: get_aws_schedulers
       parameters:
       - name: skip
         in: query
@@ -1074,23 +1148,24 @@ paths:
       security: []
     post:
       tags: []
-      summary: Store an hpc_config.
-      description: Store an hpc_config in the "hpc_configs" collection.
-      operationId: post_hpc_configs
+      summary: Store a AWS compute node configuration.
+      description: Store a AWS compute node configuration in the "aws_schedulers"
+        collection.
+      operationId: post_aws_schedulers
       requestBody:
-        description: hpc_config to store in the collection
+        description: AWS compute node configuration.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/hpc_config_model'
+              $ref: '#/components/schemas/aws_schedulers_model'
         required: true
       responses:
         "200":
-          description: hpc_config stored in the collection
+          description: AWS compute node configuration
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/hpc_config_model'
+                $ref: '#/components/schemas/aws_schedulers_model'
         "500":
           description: Default error response.
           content:
@@ -1101,9 +1176,9 @@ paths:
       x-codegen-request-body-name: body
     delete:
       tags: []
-      summary: Delete all hpc_configs
-      description: Deletes all hpc_configs from the "hpc_configs" collection.
-      operationId: delete_hpc_configs
+      summary: Delete all AWS compute node configurations
+      description: Deletes all documents from the "aws_schedulers" collection.
+      operationId: delete_aws_schedulers
       requestBody:
         content:
           application/json:
@@ -1125,15 +1200,16 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /hpc_configs/{name}:
+  /aws_schedulers/{key}:
     get:
       tags: []
-      summary: Retrieve an hpc_config document by name
-      description: Retrieves an hpc_config document from the "hpc_configs" collection.
-      operationId: get_hpc_configs_name
+      summary: Retrieve the AWS compute node configuration for a key.
+      description: Retrieve the document for a key from the "aws_schedulers" collection.
+      operationId: get_aws_schedulers_key
       parameters:
-      - name: name
+      - name: key
         in: path
+        description: key of the aws_schedulers document
         required: true
         style: simple
         explode: false
@@ -1145,7 +1221,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/hpc_config_model'
+                $ref: '#/components/schemas/aws_schedulers_model'
         "500":
           description: Default error response.
           content:
@@ -1153,15 +1229,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
+    put:
+      tags: []
+      summary: Update AWS compute node configuration
+      description: Update a document in the "aws_schedulers" collection.
+      operationId: put_aws_schedulers_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the AWS compute node configuration.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: AWS compute node configuration to update in the collection.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/aws_schedulers_key_model'
+        required: true
+      responses:
+        "200":
+          description: AWS compute node configuration updated in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/aws_schedulers_key_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
     delete:
       tags: []
-      summary: Delete a hpc_config
-      description: Deletes a hpc_config from the "hpc_configs" collection by name.
-      operationId: delete_hpc_configs_name
+      summary: Delete a AWS compute node configuration
+      description: Deletes document from the "aws_schedulers" collection by key.
+      operationId: delete_aws_schedulers_key
       parameters:
-      - name: name
+      - name: key
         in: path
-        description: Name of the hpc_config.
+        description: key of the  object.
         required: true
         style: simple
         explode: false
@@ -1175,11 +1287,393 @@ paths:
         required: false
       responses:
         "200":
-          description: hpc_config stored in the collection.
+          description: AWS compute node configuration stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/hpc_config_model'
+                $ref: '#/components/schemas/aws_schedulers_key_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /local_schedulers:
+    get:
+      tags: []
+      summary: Retrieve all local compute node configurations
+      description: Retrieves all documents from the "local_schedulers" collection.
+      operationId: get_local_schedulers
+      parameters:
+      - name: skip
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 0.0
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 1000.0
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_12'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+    post:
+      tags: []
+      summary: Store a local compute node configuration.
+      description: Store a local compute node configuration in the "local_schedulers"
+        collection.
+      operationId: post_local_schedulers
+      requestBody:
+        description: Local compute node configuration.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/local_schedulers_model'
+        required: true
+      responses:
+        "200":
+          description: Local compute node configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/local_schedulers_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+    delete:
+      tags: []
+      summary: Delete all local compute node configurations
+      description: Deletes all documents from the "local_schedulers" collection.
+      operationId: delete_local_schedulers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          description: message
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /local_schedulers/{key}:
+    get:
+      tags: []
+      summary: Retrieve the local compute node configuration for a key.
+      description: Retrieve the document for a key from the "local_schedulers" collection.
+      operationId: get_local_schedulers_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the local_schedulers document
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/local_schedulers_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+    put:
+      tags: []
+      summary: Update local compute node configuration
+      description: Update a document in the "local_schedulers" collection.
+      operationId: put_local_schedulers_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the local compute node configuration.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: local compute node configuration to update in the collection.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/local_schedulers_key_model'
+        required: true
+      responses:
+        "200":
+          description: local compute node configuration updated in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/local_schedulers_key_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+    delete:
+      tags: []
+      summary: Delete a local compute node configuration
+      description: Deletes document from the "local_schedulers" collection by key.
+      operationId: delete_local_schedulers_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the  object.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          description: local compute node configuration stored in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/local_schedulers_key_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /slurm_schedulers:
+    get:
+      tags: []
+      summary: Retrieve all SLURM compute node configurations
+      description: Retrieves all documents from the "slurm_schedulers" collection.
+      operationId: get_slurm_schedulers
+      parameters:
+      - name: skip
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 0.0
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 1000.0
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_13'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+    post:
+      tags: []
+      summary: Store a SLURM compute node configuration.
+      description: Store a SLURM compute node configuration in the "slurm_schedulers"
+        collection.
+      operationId: post_slurm_schedulers
+      requestBody:
+        description: SLURM compute node configuration.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/slurm_schedulers_model'
+        required: true
+      responses:
+        "200":
+          description: SLURM compute node configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/slurm_schedulers_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+    delete:
+      tags: []
+      summary: Delete all SLURM compute node configurations
+      description: Deletes all documents from the "slurm_schedulers" collection.
+      operationId: delete_slurm_schedulers
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          description: message
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /slurm_schedulers/{key}:
+    get:
+      tags: []
+      summary: Retrieve the SLURM compute node configuration for a key.
+      description: Retrieve the document for a key from the "slurm_schedulers" collection.
+      operationId: get_slurm_schedulers_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the slurm_schedulers document
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/slurm_schedulers_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+    put:
+      tags: []
+      summary: Update SLURM compute node configuration
+      description: Update a document in the "slurm_schedulers" collection.
+      operationId: put_slurm_schedulers_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the SLURM compute node configuration.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: SLURM compute node configuration to update in the collection.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/slurm_schedulers_key_model'
+        required: true
+      responses:
+        "200":
+          description: SLURM compute node configuration updated in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/slurm_schedulers_key_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+    delete:
+      tags: []
+      summary: Delete a SLURM compute node configuration
+      description: Deletes document from the "slurm_schedulers" collection by key.
+      operationId: delete_slurm_schedulers_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the  object.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          description: SLURM compute node configuration stored in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/slurm_schedulers_key_model'
         "500":
           description: Default error response.
           content:
@@ -1217,7 +1711,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_12'
+                $ref: '#/components/schemas/inline_response_200_14'
         "500":
           description: Default error response.
           content:
@@ -1243,7 +1737,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_13'
+                $ref: '#/components/schemas/inline_response_200_15'
         "500":
           description: Default error response.
           content:
@@ -1252,16 +1746,16 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /job_definitions/{name}:
+  /job_definitions/{key}:
     get:
       tags: []
       summary: Retrieve a job
-      description: Retrieves a job from the "jobs" collection by name.
-      operationId: get_job_definitions_name
+      description: Retrieves a job from the "jobs" collection by key.
+      operationId: get_job_definitions_key
       parameters:
-      - name: name
+      - name: key
         in: path
-        description: Name of the job.
+        description: Job key
         required: true
         style: simple
         explode: false
@@ -1273,7 +1767,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_13'
+                $ref: '#/components/schemas/inline_response_200_15'
         "500":
           description: Default error response.
           content:
@@ -1284,686 +1778,9 @@ paths:
   /job_process_stats:
     get:
       tags: []
-      summary: Retrieve all job processs
-      description: Retrieves all job processs from the "job_process_stats" collection.
+      summary: Retrieve all job process statisticss
+      description: Retrieves all documents from the "job_process_stats" collection.
       operationId: get_job_process_stats
-      parameters:
-      - name: skip
-        in: query
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-          default: 0.0
-      - name: limit
-        in: query
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-          default: 1000.0
-      responses:
-        "200":
-          description: HTTP 200 OK.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_14'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-    post:
-      tags: []
-      summary: Store utilization stats for a job process.
-      description: Store utilization stats for a job process.
-      operationId: post_job_process_stats
-      requestBody:
-        description: job process stats
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/job_process_stats_model'
-        required: true
-      responses:
-        "200":
-          description: job process stats
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/job_process_stats_model'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-    delete:
-      tags: []
-      summary: Delete all job process stats
-      description: Deletes all job process stats from the "job_process_stats" collection.
-      operationId: delete_job_process_stats
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-        required: false
-      responses:
-        "200":
-          description: message
-          content:
-            application/json:
-              schema:
-                type: object
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /job_process_stats/{key}:
-    get:
-      tags: []
-      summary: Retrieve the job process for a key.
-      description: Retrieve the job process for a key.
-      operationId: get_job_process_stats_key
-      parameters:
-      - name: key
-        in: path
-        description: Key of the job process object
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: HTTP 200 OK.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/job_process_stats_model'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-    delete:
-      tags: []
-      summary: Delete a job process
-      description: Deletes a job process from the "job_process_stats" collection by
-        key.
-      operationId: delete_job_process_stats_key
-      parameters:
-      - name: key
-        in: path
-        description: Key of the job process.
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-        required: false
-      responses:
-        "200":
-          description: job process stored in the collection.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/job_process_stats_model'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /jobs:
-    get:
-      tags: []
-      summary: Retrieve all jobs
-      description: Retrieve all jobs. Limit output with skip and limit.
-      operationId: get_jobs
-      parameters:
-      - name: skip
-        in: query
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-          default: 0.0
-      - name: limit
-        in: query
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-          default: 1000.0
-      responses:
-        "200":
-          description: HTTP 200 OK.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_15'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-    post:
-      tags: []
-      summary: Store job
-      description: Store a job in the "jobs" collection.
-      operationId: post_jobs
-      requestBody:
-        description: job to store in the collection.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/job_model'
-        required: true
-      responses:
-        "200":
-          description: job stored in the collection.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_13'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-    delete:
-      tags: []
-      summary: Delete all jobs
-      description: Deletes all jobs from the "jobs" collection.
-      operationId: delete_jobs
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-        required: false
-      responses:
-        "200":
-          description: message
-          content:
-            application/json:
-              schema:
-                type: object
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /jobs/{name}:
-    get:
-      tags: []
-      summary: Retrieve a job
-      description: Retrieves a job from the "jobs" collection by name.
-      operationId: get_jobs_name
-      parameters:
-      - name: name
-        in: path
-        description: Name of the job.
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Job stored in the collection.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_13'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-    put:
-      tags: []
-      summary: Update job
-      description: Update a job in the "jobs" collection.
-      operationId: put_jobs_name
-      parameters:
-      - name: name
-        in: path
-        description: Name of the job.
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        description: job to update in the collection.
-        content:
-          application/json:
-            schema:
-              type: object
-        required: true
-      responses:
-        "200":
-          description: job updated in the collection.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_13'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-    delete:
-      tags: []
-      summary: Delete a job
-      description: Deletes a job from the "jobs" collection by name.
-      operationId: delete_jobs_name
-      parameters:
-      - name: name
-        in: path
-        description: Name of the job.
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-        required: false
-      responses:
-        "200":
-          description: Job stored in the collection.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_13'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /jobs/find_by_status/{status}:
-    get:
-      tags: []
-      summary: Retrieve all jobs with a specific status
-      description: Retrieves all jobs from the "jobs" collection with a specific status.
-      operationId: get_jobs_find_by_status_status
-      parameters:
-      - name: status
-        in: path
-        description: Job status.
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      - name: skip
-        in: query
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-          default: 0.0
-      - name: limit
-        in: query
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-          default: 1000.0
-      responses:
-        "200":
-          description: HTTP 200 OK.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_15'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-  /jobs/find_by_needs_file/{name}:
-    get:
-      tags: []
-      summary: Retrieve all jobs that need a file
-      description: Retrieves all jobs connected to a file by the needs edge.
-      operationId: get_jobs_find_by_needs_file_name
-      parameters:
-      - name: name
-        in: path
-        description: File name.
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      - name: skip
-        in: query
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-          default: 0.0
-      - name: limit
-        in: query
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-          default: 1000.0
-      responses:
-        "200":
-          description: HTTP 200 OK.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_15'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-  /jobs/resource_requirements/{name}:
-    get:
-      tags: []
-      summary: Retrieve the resource requirements for a job.
-      description: Retrieve the resource requirements for a job by its name.
-      operationId: get_jobs_resource_requirements_name
-      parameters:
-      - name: name
-        in: path
-        description: Name of the job.
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Resource requirements for the job.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/workflow_resource_requirements'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-  /jobs/process_stats/{name}:
-    get:
-      tags: []
-      summary: Retrieve the job process stats for a job.
-      description: Retrieve the job process stats for a job by its name.
-      operationId: get_jobs_process_stats_name
-      parameters:
-      - name: name
-        in: path
-        description: Name of the job.
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: Process stats for the job.
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/job_process_stats_model'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-  /jobs/complete_job/{name}/{status}/{rev}:
-    post:
-      tags: []
-      summary: Complete a job and add a result.
-      description: "Complete a job, connect it to a result, and manage side effects."
-      operationId: post_jobs_complete_job_name_status_rev
-      parameters:
-      - name: name
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      - name: status
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      - name: rev
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        description: Result of the job.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/status_rev_body'
-        required: true
-      responses:
-        "200":
-          description: job completed in the collection.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_13'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /jobs/manage_status_change/{name}/{status}/{rev}:
-    put:
-      tags: []
-      summary: Change the status of a job and manage side effects.
-      description: Change the status of a job and manage side effects.
-      operationId: put_jobs_manage_status_change_name_status_rev
-      parameters:
-      - name: name
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      - name: status
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      - name: rev
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        content:
-          '*/*': {}
-        required: false
-      responses:
-        "200":
-          description: Updated job.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_13'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /jobs/store_user_data/{name}:
-    post:
-      tags: []
-      summary: Store user data for a job.
-      description: Store user data for a job and connect the two vertexes.
-      operationId: post_jobs_store_user_data_name
-      parameters:
-      - name: name
-        in: path
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        description: User data for the job.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/store_user_data_name_body'
-        required: true
-      responses:
-        "200":
-          description: Database information for the user data.
-          content:
-            application/json:
-              schema:
-                type: object
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /jobs/get_user_data/{name}:
-    get:
-      tags: []
-      summary: Retrieve all user data for a job.
-      description: Retrieve all user data for a job.
-      operationId: get_jobs_get_user_data_name
-      parameters:
-      - name: name
-        in: path
-        description: Job name.
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: All user data stored for the job.
-          content:
-            application/json:
-              schema:
-                type: object
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-  /job_names:
-    get:
-      tags: []
-      summary: Retrieve all job names
-      description: Retrieves all job names from the "jobs" collection.
-      operationId: get_job_names
-      responses:
-        "200":
-          description: HTTP 200 OK.
-          content:
-            application/json:
-              schema:
-                type: object
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-  /resource_requirements:
-    get:
-      tags: []
-      summary: Retrieve all resource requirements
-      description: Retrieves all requirement from the "resource_requirements" collection.
-      operationId: get_resource_requirements
       parameters:
       - name: skip
         in: query
@@ -1997,23 +1814,23 @@ paths:
       security: []
     post:
       tags: []
-      summary: Store a resource.
-      description: Store a resource in the "resource_requirements" collection.
-      operationId: post_resource_requirements
+      summary: Store a job process statistics.
+      description: Store a job process statistics in the "job_process_stats" collection.
+      operationId: post_job_process_stats
       requestBody:
-        description: resource to store in the collection
+        description: Job process resource utilization statistics.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/resource_requirements_model'
+              $ref: '#/components/schemas/job_process_stats_model'
         required: true
       responses:
         "200":
-          description: resource stored in the collection
+          description: Job process resource utilization statistics
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/resource_requirements_model'
+                $ref: '#/components/schemas/job_process_stats_model'
         "500":
           description: Default error response.
           content:
@@ -2024,9 +1841,9 @@ paths:
       x-codegen-request-body-name: body
     delete:
       tags: []
-      summary: Delete all resource_requirements
-      description: Deletes all documents from the "resource_requirements" collection.
-      operationId: delete_resource_requirements
+      summary: Delete all job process statisticss
+      description: Deletes all documents from the "job_process_stats" collection.
+      operationId: delete_job_process_stats
       requestBody:
         content:
           application/json:
@@ -2048,15 +1865,16 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /resource_requirements/{name}:
+  /job_process_stats/{key}:
     get:
       tags: []
-      summary: Retrieve a resource requirements document by name
-      description: Retrieve a resource requirements document by name.
-      operationId: get_resource_requirements_name
+      summary: Retrieve the job process statistics for a key.
+      description: Retrieve the document for a key from the "job_process_stats" collection.
+      operationId: get_job_process_stats_key
       parameters:
-      - name: name
+      - name: key
         in: path
+        description: key of the job_process_stats document
         required: true
         style: simple
         explode: false
@@ -2068,7 +1886,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/resource_requirements_model'
+                $ref: '#/components/schemas/job_process_stats_model'
         "500":
           description: Default error response.
           content:
@@ -2076,16 +1894,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
+    put:
+      tags: []
+      summary: Update job process statistics
+      description: Update a document in the "job_process_stats" collection.
+      operationId: put_job_process_stats_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the job process statistics.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: job process statistics to update in the collection.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/job_process_stats_key_model'
+        required: true
+      responses:
+        "200":
+          description: job process statistics updated in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/job_process_stats_key_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
     delete:
       tags: []
-      summary: Delete a resource
-      description: Deletes a resource from the "resource_requirements" collection
-        by name.
-      operationId: delete_resource_requirements_name
+      summary: Delete a job process statistics
+      description: Deletes document from the "job_process_stats" collection by key.
+      operationId: delete_job_process_stats_key
       parameters:
-      - name: name
+      - name: key
         in: path
-        description: Name of the resource.
+        description: key of the  object.
         required: true
         style: simple
         explode: false
@@ -2099,11 +1952,11 @@ paths:
         required: false
       responses:
         "200":
-          description: resource stored in the collection.
+          description: job process statistics stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/resource_requirements_model'
+                $ref: '#/components/schemas/job_process_stats_key_model'
         "500":
           description: Default error response.
           content:
@@ -2112,12 +1965,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /results:
+  /resource_requirements:
     get:
       tags: []
-      summary: Retrieve all results
-      description: Retrieves all results from the "results" collection.
-      operationId: get_results
+      summary: Retrieve all resource requirementss
+      description: Retrieves all documents from the "resource_requirements" collection.
+      operationId: get_resource_requirements
       parameters:
       - name: skip
         in: query
@@ -2151,11 +2004,233 @@ paths:
       security: []
     post:
       tags: []
-      summary: Store a job result.
-      description: Store a job result in the "results" collection.
+      summary: Store a resource requirements.
+      description: Store a resource requirements in the "resource_requirements" collection.
+      operationId: post_resource_requirements
+      requestBody:
+        description: Job resource requirements.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/resource_requirements_model'
+        required: true
+      responses:
+        "200":
+          description: Job resource requirements
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/resource_requirements_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+    delete:
+      tags: []
+      summary: Delete all resource requirementss
+      description: Deletes all documents from the "resource_requirements" collection.
+      operationId: delete_resource_requirements
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          description: message
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /resource_requirements/{key}:
+    get:
+      tags: []
+      summary: Retrieve the resource requirements for a key.
+      description: Retrieve the document for a key from the "resource_requirements"
+        collection.
+      operationId: get_resource_requirements_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the resource_requirements document
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/resource_requirements_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+    put:
+      tags: []
+      summary: Update resource requirements
+      description: Update a document in the "resource_requirements" collection.
+      operationId: put_resource_requirements_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the resource requirements.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: resource requirements to update in the collection.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/resource_requirements_key_model'
+        required: true
+      responses:
+        "200":
+          description: resource requirements updated in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/resource_requirements_key_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+    delete:
+      tags: []
+      summary: Delete a resource requirements
+      description: Deletes document from the "resource_requirements" collection by
+        key.
+      operationId: delete_resource_requirements_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the  object.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          description: resource requirements stored in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/resource_requirements_key_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /results/find_by_job/{key}:
+    get:
+      tags: []
+      summary: Retrieve the latest result for a job
+      description: Retrieve the latest result for a job. Throws an error if no result
+        is stored.
+      operationId: get_results_find_by_job_key
+      parameters:
+      - name: key
+        in: path
+        description: Job key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_18'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /results:
+    get:
+      tags: []
+      summary: Retrieve all results
+      description: Retrieves all documents from the "results" collection.
+      operationId: get_results
+      parameters:
+      - name: skip
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 0.0
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 1000.0
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_19'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+    post:
+      tags: []
+      summary: Store a result.
+      description: Store a result in the "results" collection.
       operationId: post_results
       requestBody:
-        description: Job result.
+        description: Result of a job.
         content:
           application/json:
             schema:
@@ -2163,7 +2238,7 @@ paths:
         required: true
       responses:
         "200":
-          description: result
+          description: Result of a job
           content:
             application/json:
               schema:
@@ -2179,7 +2254,7 @@ paths:
     delete:
       tags: []
       summary: Delete all results
-      description: Deletes all results from the "results" collection.
+      description: Deletes all documents from the "results" collection.
       operationId: delete_results
       requestBody:
         content:
@@ -2206,12 +2281,12 @@ paths:
     get:
       tags: []
       summary: Retrieve the result for a key.
-      description: Retrieve the result for a key.
+      description: Retrieve the document for a key from the "results" collection.
       operationId: get_results_key
       parameters:
       - name: key
         in: path
-        description: Key of the results object
+        description: key of the results document
         required: true
         style: simple
         explode: false
@@ -2231,15 +2306,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
+    put:
+      tags: []
+      summary: Update result
+      description: Update a document in the "results" collection.
+      operationId: put_results_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the result.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: result to update in the collection.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/results_key_model'
+        required: true
+      responses:
+        "200":
+          description: result updated in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/results_key_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete a result
-      description: Deletes a result from the "results" collection by key.
+      description: Deletes document from the "results" collection by key.
       operationId: delete_results_key
       parameters:
       - name: key
         in: path
-        description: Key of the result object.
+        description: key of the  object.
         required: true
         style: simple
         explode: false
@@ -2253,11 +2364,11 @@ paths:
         required: false
       responses:
         "200":
-          description: Result stored in the collection.
+          description: result stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/result_model'
+                $ref: '#/components/schemas/results_key_model'
         "500":
           description: Default error response.
           content:
@@ -2266,17 +2377,108 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /results/find_by_job_name/{name}:
+  /scheduled_compute_nodes:
     get:
       tags: []
-      summary: Retrieve the latest result for a job
-      description: Retrieve the latest result for a job. Throws an error if no result
-        is stored.
-      operationId: get_results_find_by_job_name_name
+      summary: Retrieve all scheduled compute nodes
+      description: Retrieves all documents from the "scheduled_compute_nodes" collection.
+      operationId: get_scheduled_compute_nodes
       parameters:
-      - name: name
+      - name: skip
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 0.0
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 1000.0
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_20'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+    post:
+      tags: []
+      summary: Store a scheduled compute node.
+      description: Store a scheduled compute node in the "scheduled_compute_nodes"
+        collection.
+      operationId: post_scheduled_compute_nodes
+      requestBody:
+        description: Compute nodes scheduled to complete jobs.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/scheduled_compute_nodes_model'
+        required: true
+      responses:
+        "200":
+          description: Compute nodes scheduled to complete jobs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/scheduled_compute_nodes_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+    delete:
+      tags: []
+      summary: Delete all scheduled compute nodes
+      description: Deletes all documents from the "scheduled_compute_nodes" collection.
+      operationId: delete_scheduled_compute_nodes
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          description: message
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /scheduled_compute_nodes/{key}:
+    get:
+      tags: []
+      summary: Retrieve the scheduled compute node for a key.
+      description: Retrieve the document for a key from the "scheduled_compute_nodes"
+        collection.
+      operationId: get_scheduled_compute_nodes_key
+      parameters:
+      - name: key
         in: path
-        description: Job name.
+        description: key of the scheduled_compute_nodes document
         required: true
         style: simple
         explode: false
@@ -2288,7 +2490,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/result_model'
+                $ref: '#/components/schemas/scheduled_compute_nodes_model'
         "500":
           description: Default error response.
           content:
@@ -2296,11 +2498,83 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
+    put:
+      tags: []
+      summary: Update scheduled compute node
+      description: Update a document in the "scheduled_compute_nodes" collection.
+      operationId: put_scheduled_compute_nodes_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the scheduled compute node.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: scheduled compute node to update in the collection.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/scheduled_compute_nodes_key_model'
+        required: true
+      responses:
+        "200":
+          description: scheduled compute node updated in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/scheduled_compute_nodes_key_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+    delete:
+      tags: []
+      summary: Delete a scheduled compute node
+      description: Deletes document from the "scheduled_compute_nodes" collection
+        by key.
+      operationId: delete_scheduled_compute_nodes_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the  object.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          description: scheduled compute node stored in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/scheduled_compute_nodes_key_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
   /user_data:
     get:
       tags: []
-      summary: Retrieve all user data objects
-      description: Retrieves all user data from the "user_data" collection.
+      summary: Retrieve all user datas
+      description: Retrieves all documents from the "user_data" collection.
       operationId: get_user_data
       parameters:
       - name: skip
@@ -2335,19 +2609,19 @@ paths:
       security: []
     post:
       tags: []
-      summary: Store user data for a job.
-      description: Store user data in the "user_data" collection.
+      summary: Store an user data.
+      description: Store an user data in the "user_data" collection.
       operationId: post_user_data
       requestBody:
-        description: User data.
+        description: Input or output user data for a job.
         content:
           application/json:
             schema:
               type: object
-        required: false
+        required: true
       responses:
         "200":
-          description: User data
+          description: Input or output user data for a job
           content:
             application/json:
               schema:
@@ -2362,8 +2636,8 @@ paths:
       x-codegen-request-body-name: body
     delete:
       tags: []
-      summary: Delete all user data
-      description: Deletes all user data from the "user_data" collection.
+      summary: Delete all user datas
+      description: Deletes all documents from the "user_data" collection.
       operationId: delete_user_data
       requestBody:
         content:
@@ -2389,13 +2663,13 @@ paths:
   /user_data/{key}:
     get:
       tags: []
-      summary: Retrieve the user data object for a key.
-      description: Retrieve the user data object for a key.
+      summary: Retrieve the user data for a key.
+      description: Retrieve the document for a key from the "user_data" collection.
       operationId: get_user_data_key
       parameters:
       - name: key
         in: path
-        description: Key of the user_data object
+        description: key of the user_data document
         required: true
         style: simple
         explode: false
@@ -2415,15 +2689,51 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
+    put:
+      tags: []
+      summary: Update user data
+      description: Update a document in the "user_data" collection.
+      operationId: put_user_data_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the user data.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: user data to update in the collection.
+        content:
+          application/json:
+            schema:
+              type: object
+        required: true
+      responses:
+        "200":
+          description: user data updated in the collection.
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
     delete:
       tags: []
-      summary: Delete a user data object
-      description: Deletes a user data object from the "user_data" collection by key.
+      summary: Delete an user data
+      description: Deletes document from the "user_data" collection by key.
       operationId: delete_user_data_key
       parameters:
       - name: key
         in: path
-        description: Key of the user data object.
+        description: key of the  object.
         required: true
         style: simple
         explode: false
@@ -2437,7 +2747,7 @@ paths:
         required: false
       responses:
         "200":
-          description: User data stored in the collection.
+          description: user data stored in the collection.
           content:
             application/json:
               schema:
@@ -2462,7 +2772,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_18'
+                $ref: '#/components/schemas/inline_response_200_21'
         "500":
           description: Default error response.
           content:
@@ -2488,7 +2798,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_18'
+                $ref: '#/components/schemas/inline_response_200_21'
         "500":
           description: Default error response.
           content:
@@ -2517,7 +2827,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow_config_key_body'
+              $ref: '#/components/schemas/workflow_config_key_model'
         required: true
       responses:
         "200":
@@ -2525,7 +2835,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_18'
+                $ref: '#/components/schemas/inline_response_200_21'
         "500":
           description: Default error response.
           content:
@@ -2550,7 +2860,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_18'
+                $ref: '#/components/schemas/inline_response_200_21'
         "500":
           description: Default error response.
           content:
@@ -2571,7 +2881,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_19'
+                $ref: '#/components/schemas/inline_response_200_22'
         "500":
           description: Default error response.
           content:
@@ -2597,7 +2907,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_19'
+                $ref: '#/components/schemas/inline_response_200_22'
         "500":
           description: Default error response.
           content:
@@ -2622,7 +2932,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_19'
+                $ref: '#/components/schemas/inline_response_200_22'
         "500":
           description: Default error response.
           content:
@@ -2668,7 +2978,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_20'
+                $ref: '#/components/schemas/inline_response_200_23'
         "500":
           description: Default error response.
           content:
@@ -2827,19 +3137,533 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
+  /job_names:
+    get:
+      tags: []
+      summary: Retrieve all job names
+      description: Retrieves all job names from the "jobs" collection.
+      operationId: get_job_names
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /jobs/find_by_status/{status}:
+    get:
+      tags: []
+      summary: Retrieve all jobs with a specific status
+      description: Retrieves all jobs from the "jobs" collection with a specific status.
+      operationId: get_jobs_find_by_status_status
+      parameters:
+      - name: status
+        in: path
+        description: Job status.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: skip
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 0.0
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 1000.0
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_24'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /jobs/find_by_needs_file/{key}:
+    get:
+      tags: []
+      summary: Retrieve all jobs that need a file
+      description: Retrieves all jobs connected to a file by the needs edge.
+      operationId: get_jobs_find_by_needs_file_key
+      parameters:
+      - name: key
+        in: path
+        description: File key.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: skip
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 0.0
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 1000.0
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_24'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /jobs/resource_requirements/{key}:
+    get:
+      tags: []
+      summary: Retrieve the resource requirements for a job.
+      description: Retrieve the resource requirements for a job by its key.
+      operationId: get_jobs_resource_requirements_key
+      parameters:
+      - name: key
+        in: path
+        description: Job key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Resource requirements for the job.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/resource_requirements_key_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /jobs/process_stats/{key}:
+    get:
+      tags: []
+      summary: Retrieve the job process stats for a job.
+      description: Retrieve the job process stats for a job by its key.
+      operationId: get_jobs_process_stats_key
+      parameters:
+      - name: key
+        in: path
+        description: Job key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: Process stats for the job.
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/job_process_stats_key_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /jobs/complete_job/{key}/{status}/{rev}:
+    post:
+      tags: []
+      summary: Complete a job and add a result.
+      description: "Complete a job, connect it to a result, and manage side effects."
+      operationId: post_jobs_complete_job_key_status_rev
+      parameters:
+      - name: key
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: status
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: rev
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: Result of the job.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/status_rev_model'
+        required: true
+      responses:
+        "200":
+          description: job completed in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_15'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /jobs/manage_status_change/{key}/{status}/{rev}:
+    put:
+      tags: []
+      summary: Change the status of a job and manage side effects.
+      description: Change the status of a job and manage side effects.
+      operationId: put_jobs_manage_status_change_key_status_rev
+      parameters:
+      - name: key
+        in: path
+        description: Job key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: status
+        in: path
+        description: New job status
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: rev
+        in: path
+        description: Current job revision
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*': {}
+        required: false
+      responses:
+        "200":
+          description: Updated job.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_15'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /jobs/store_user_data/{key}:
+    post:
+      tags: []
+      summary: Store user data for a job.
+      description: Store user data for a job and connect the two vertexes.
+      operationId: post_jobs_store_user_data_key
+      parameters:
+      - name: key
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: User data for the job.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/store_user_data_key_model'
+        required: true
+      responses:
+        "200":
+          description: Database information for the user data.
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /jobs/get_user_data/{key}:
+    get:
+      tags: []
+      summary: Retrieve all user data for a job.
+      description: Retrieve all user data for a job.
+      operationId: get_jobs_get_user_data_key
+      parameters:
+      - name: key
+        in: path
+        description: Job key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: All user data stored for the job.
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /jobs:
+    get:
+      tags: []
+      summary: Retrieve all jobs
+      description: Retrieves all documents from the "jobs" collection.
+      operationId: get_jobs
+      parameters:
+      - name: skip
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 0.0
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 1000.0
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_24'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+    post:
+      tags: []
+      summary: Store a job.
+      description: Store a job in the "jobs" collection.
+      operationId: post_jobs
+      requestBody:
+        description: Job.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/job_model'
+        required: true
+      responses:
+        "200":
+          description: Job
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_15'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+    delete:
+      tags: []
+      summary: Delete all jobs
+      description: Deletes all documents from the "jobs" collection.
+      operationId: delete_jobs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          description: message
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /jobs/{key}:
+    get:
+      tags: []
+      summary: Retrieve the job for a key.
+      description: Retrieve the document for a key from the "jobs" collection.
+      operationId: get_jobs_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the jobs document
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_15'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+    put:
+      tags: []
+      summary: Update job
+      description: Update a document in the "jobs" collection.
+      operationId: put_jobs_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the job.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: job to update in the collection.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/jobs_key_model'
+        required: true
+      responses:
+        "200":
+          description: job updated in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_15'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+    delete:
+      tags: []
+      summary: Delete a job
+      description: Deletes document from the "jobs" collection by key.
+      operationId: delete_jobs_key
+      parameters:
+      - name: key
+        in: path
+        description: key of the  object.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          description: job stored in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_15'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
 components:
   schemas:
-    workflowprepare_jobs_for_submission_internal:
-      type: object
-      properties:
-        memory_bytes:
-          type: number
-        num_cpus:
-          type: number
-        num_gpus:
-          type: number
-        runtime_seconds:
-          type: number
     compute_node_stats_model:
       required:
       - hostname
@@ -2863,294 +3687,58 @@ components:
           type: string
         _rev:
           type: string
-    inline_response_200_11:
+    compute_node_stats_key_model:
       required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
+      - hostname
+      - name
+      - timestamp
       type: object
       properties:
-        items:
+        name:
+          type: string
+        hostname:
+          type: string
+        stats:
           type: array
           items:
-            $ref: '#/components/schemas/hpc_config_model'
-        skip:
-          type: number
-        max_limit:
-          type: number
-        count:
-          type: number
-        total_count:
-          type: number
-        has_more:
-          type: boolean
-    inline_response_200_10:
+            $ref: '#/components/schemas/compute_node_stats_stats'
+        timestamp:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    workflow_schedulers_aws_schedulers:
       required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/file_model'
-        skip:
-          type: number
-        max_limit:
-          type: number
-        count:
-          type: number
-        total_count:
-          type: number
-        has_more:
-          type: boolean
-    inline_response_200_13:
-      required:
-      - command
       - name
       type: object
       properties:
         name:
           type: string
-        command:
-          type: string
-        status:
-          type: string
-        cancel_on_blocking_job_failure:
-          type: boolean
-          default: true
-        interruptible:
-          type: boolean
-          default: false
-        run_id:
-          type: number
-        internal:
-          $ref: '#/components/schemas/workflowprepare_jobs_for_submission_internal'
         _key:
           type: string
         _id:
           type: string
         _rev:
           type: string
-    inline_response_200_12:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/job_definition'
-        skip:
-          type: number
-        max_limit:
-          type: number
-        count:
-          type: number
-        total_count:
-          type: number
-        has_more:
-          type: boolean
-    workflow_schedulers:
-      required:
-      - account
-      - hpc_type
-      - name
+    local_schedulers_model:
       type: object
       properties:
         name:
           type: string
-        hpc_type:
+          default: default
+        memory:
           type: string
-        account:
-          type: string
-        partition:
-          type: string
-        qos:
-          type: string
-          default: normal
-        walltime:
-          type: string
+        num_cpus:
+          type: number
         _key:
           type: string
         _id:
           type: string
         _rev:
           type: string
-    workflow_config_key_body:
-      type: object
-      properties:
-        compute_node_resource_stats:
-          $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_19:
-      required:
-      - auto_tune_status
-      - is_canceled
-      - run_id
-      type: object
-      properties:
-        is_canceled:
-          type: boolean
-        run_id:
-          type: number
-        scheduled_compute_node_ids:
-          type: array
-          items:
-            type: number
-        auto_tune_status:
-          $ref: '#/components/schemas/inline_response_200_19_auto_tune_status'
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_18:
-      type: object
-      properties:
-        compute_node_resource_stats:
-          $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    store_user_data_name_body:
-      required:
-      - completion_time
-      - exec_time_minutes
-      - name
-      - return_code
-      - run_id
-      - status
-      type: object
-      properties:
-        name:
-          type: string
-        run_id:
-          type: number
-        return_code:
-          type: number
-        exec_time_minutes:
-          type: number
-        completion_time:
-          type: string
-        status:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_15:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/job_model'
-        skip:
-          type: number
-        max_limit:
-          type: number
-        count:
-          type: number
-        total_count:
-          type: number
-        has_more:
-          type: boolean
-    inline_response_200_14:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/job_process_stats_model'
-        skip:
-          type: number
-        max_limit:
-          type: number
-        count:
-          type: number
-        total_count:
-          type: number
-        has_more:
-          type: boolean
-    inline_response_200_17:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/result_model'
-        skip:
-          type: number
-        max_limit:
-          type: number
-        count:
-          type: number
-        total_count:
-          type: number
-        has_more:
-          type: boolean
-    inline_response_200_16:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/resource_requirements_model'
-        skip:
-          type: number
-        max_limit:
-          type: number
-        count:
-          type: number
-        total_count:
-          type: number
-        has_more:
-          type: boolean
     job_process_stats_model:
       required:
       - avg_cpu_percent
@@ -3185,6 +3773,31 @@ components:
           type: string
         _rev:
           type: string
+    resource_requirements_key_model:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        num_cpus:
+          type: number
+        num_gpus:
+          type: number
+        num_nodes:
+          type: number
+        memory:
+          type: string
+          default: 1m
+        runtime:
+          type: string
+          default: P0DT1H
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
     compute_node_stats_stats:
       required:
       - average
@@ -3209,7 +3822,23 @@ components:
           type: number
         job_name:
           type: string
-    status_rev_body:
+    workflow_schedulers_local_schedulers:
+      type: object
+      properties:
+        name:
+          type: string
+          default: default
+        memory:
+          type: string
+        num_cpus:
+          type: number
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    status_rev_model:
       required:
       - completion_time
       - exec_time_minutes
@@ -3237,7 +3866,520 @@ components:
           type: string
         _rev:
           type: string
-    inline_response_200_19_auto_tune_status:
+    slurm_schedulers_model:
+      required:
+      - account
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        account:
+          type: string
+        partition:
+          type: string
+        qos:
+          type: string
+          default: normal
+        reservation:
+          type: string
+          default: normal
+        walltime:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    aws_schedulers_model:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    workflow_config_compute_node_resource_stats:
+      type: object
+      properties:
+        cpu:
+          type: boolean
+          default: false
+        disk:
+          type: boolean
+          default: false
+        memory:
+          type: boolean
+          default: false
+        network:
+          type: boolean
+          default: false
+        process:
+          type: boolean
+          default: false
+        include_child_processes:
+          type: boolean
+          default: true
+        recurse_child_processes:
+          type: boolean
+          default: false
+        interval:
+          type: number
+    inline_response_500:
+      required:
+      - error
+      type: object
+      properties:
+        error:
+          type: object
+        errorNum:
+          type: integer
+        errorMessage:
+          type: string
+        code:
+          type: integer
+    inline_response_200_9:
+      required:
+      - hostname
+      - name
+      - timestamp
+      type: object
+      properties:
+        name:
+          type: string
+        hostname:
+          type: string
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/compute_node_stats_stats'
+        timestamp:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_22:
+      required:
+      - auto_tune_status
+      - is_canceled
+      - run_id
+      type: object
+      properties:
+        is_canceled:
+          type: boolean
+        run_id:
+          type: number
+        auto_tune_status:
+          $ref: '#/components/schemas/inline_response_200_22_auto_tune_status'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_21:
+      type: object
+      properties:
+        compute_node_resource_stats:
+          $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_24:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/jobs_key_model'
+        skip:
+          type: number
+        max_limit:
+          type: number
+        count:
+          type: number
+        total_count:
+          type: number
+        has_more:
+          type: boolean
+    job_process_stats_key_model:
+      required:
+      - avg_cpu_percent
+      - avg_rss
+      - job_name
+      - max_cpu_percent
+      - max_rss
+      - num_samples
+      - run_id
+      - timestamp
+      type: object
+      properties:
+        job_name:
+          type: string
+        run_id:
+          type: number
+        avg_cpu_percent:
+          type: number
+        max_cpu_percent:
+          type: number
+        avg_rss:
+          type: number
+        max_rss:
+          type: number
+        num_samples:
+          type: number
+        timestamp:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_23:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/edge_model'
+        skip:
+          type: number
+        max_limit:
+          type: number
+        count:
+          type: number
+        total_count:
+          type: number
+        has_more:
+          type: boolean
+    inline_response_200_5:
+      required:
+      - command
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        command:
+          type: string
+        status:
+          type: string
+        cancel_on_blocking_job_failure:
+          type: boolean
+          default: true
+        interruptible:
+          type: boolean
+          default: false
+        run_id:
+          type: number
+        internal:
+          $ref: '#/components/schemas/workflowprepare_jobs_for_submission_internal'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_6:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/compute_nodes_key_model'
+        skip:
+          type: number
+        max_limit:
+          type: number
+        count:
+          type: number
+        total_count:
+          type: number
+        has_more:
+          type: boolean
+    file_model:
+      required:
+      - name
+      - path
+      type: object
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        file_hash:
+          type: string
+        st_mtime:
+          type: number
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_7:
+      required:
+      - hostname
+      - resources
+      - start_time
+      type: object
+      properties:
+        hostname:
+          type: string
+        start_time:
+          type: string
+        is_active:
+          type: boolean
+        resources:
+          $ref: '#/components/schemas/workflow_prepare_jobs_for_submission_model'
+        scheduler:
+          type: object
+          properties: {}
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_20:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/scheduled_compute_nodes_key_model'
+        skip:
+          type: number
+        max_limit:
+          type: number
+        count:
+          type: number
+        total_count:
+          type: number
+        has_more:
+          type: boolean
+    inline_response_200_8:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/compute_node_stats_key_model'
+        skip:
+          type: number
+        max_limit:
+          type: number
+        count:
+          type: number
+        total_count:
+          type: number
+        has_more:
+          type: boolean
+    workflow_schedulers_slurm_schedulers:
+      required:
+      - account
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        account:
+          type: string
+        partition:
+          type: string
+        qos:
+          type: string
+          default: normal
+        reservation:
+          type: string
+          default: normal
+        walltime:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    workflow_prepare_jobs_for_submission_model:
+      required:
+      - memory_gb
+      - num_cpus
+      type: object
+      properties:
+        num_cpus:
+          type: number
+        memory_gb:
+          type: number
+        num_gpus:
+          type: number
+        num_nodes:
+          type: number
+        time_limit:
+          type: object
+        scheduler_config_id:
+          type: string
+    job_model:
+      required:
+      - command
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        command:
+          type: string
+        status:
+          type: string
+        cancel_on_blocking_job_failure:
+          type: boolean
+          default: true
+        interruptible:
+          type: boolean
+          default: false
+        run_id:
+          type: number
+        internal:
+          $ref: '#/components/schemas/workflowprepare_jobs_for_submission_internal'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    workflow_model:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_jobs'
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_files'
+        resource_requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_resource_requirements'
+        schedulers:
+          $ref: '#/components/schemas/workflow_schedulers'
+        config:
+          type: object
+          properties: {}
+    edge_model:
+      required:
+      - _from
+      - _to
+      type: object
+      properties:
+        _from:
+          type: string
+        _to:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    resource_requirements_model:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        num_cpus:
+          type: number
+        num_gpus:
+          type: number
+        num_nodes:
+          type: number
+        memory:
+          type: string
+          default: 1m
+        runtime:
+          type: string
+          default: P0DT1H
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    store_user_data_key_model:
+      required:
+      - completion_time
+      - exec_time_minutes
+      - name
+      - return_code
+      - run_id
+      - status
+      type: object
+      properties:
+        name:
+          type: string
+        run_id:
+          type: number
+        return_code:
+          type: number
+        exec_time_minutes:
+          type: number
+        completion_time:
+          type: string
+        status:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_22_auto_tune_status:
       type: object
       properties:
         enabled:
@@ -3247,6 +4389,525 @@ components:
           type: array
           items:
             type: string
+    inline_response_200_1:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/job_definition'
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/files_key_model'
+        resource_requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/resource_requirements_key_model'
+        schedulers:
+          $ref: '#/components/schemas/inline_response_200_1_schedulers'
+        config:
+          type: object
+          properties: {}
+    workflow_files:
+      required:
+      - name
+      - path
+      type: object
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        file_hash:
+          type: string
+        st_mtime:
+          type: number
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_2:
+      required:
+      - is_complete
+      type: object
+      properties:
+        is_complete:
+          type: boolean
+    inline_response_200_3:
+      required:
+      - max_memory_gb
+      - max_num_nodes
+      - max_runtime
+      - memory_gb
+      - num_cpus
+      - num_gpus
+      - num_jobs
+      type: object
+      properties:
+        num_jobs:
+          type: number
+        num_cpus:
+          type: number
+        num_gpus:
+          type: number
+        memory_gb:
+          type: number
+        max_memory_gb:
+          type: number
+        max_num_nodes:
+          type: number
+        max_runtime:
+          type: string
+    aws_schedulers_key_model:
+      required:
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_4:
+      type: object
+      properties:
+        estimates_by_round:
+          type: array
+          items:
+            $ref: '#/components/schemas/inline_response_200_3'
+    workflow_config_model:
+      type: object
+      properties:
+        compute_node_resource_stats:
+          $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    workflowprepare_jobs_for_submission_internal:
+      type: object
+      properties:
+        memory_bytes:
+          type: number
+        num_cpus:
+          type: number
+        num_gpus:
+          type: number
+        runtime_seconds:
+          type: number
+        scheduler_config_id:
+          type: string
+          default: ""
+    inline_response_200_11:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/aws_schedulers_key_model'
+        skip:
+          type: number
+        max_limit:
+          type: number
+        count:
+          type: number
+        total_count:
+          type: number
+        has_more:
+          type: boolean
+    inline_response_200_10:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/files_key_model'
+        skip:
+          type: number
+        max_limit:
+          type: number
+        count:
+          type: number
+        total_count:
+          type: number
+        has_more:
+          type: boolean
+    inline_response_200_13:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/slurm_schedulers_key_model'
+        skip:
+          type: number
+        max_limit:
+          type: number
+        count:
+          type: number
+        total_count:
+          type: number
+        has_more:
+          type: boolean
+    inline_response_200_12:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/local_schedulers_key_model'
+        skip:
+          type: number
+        max_limit:
+          type: number
+        count:
+          type: number
+        total_count:
+          type: number
+        has_more:
+          type: boolean
+    workflow_schedulers:
+      type: object
+      properties:
+        aws_schedulers:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_schedulers_aws_schedulers'
+        local_schedulers:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_schedulers_local_schedulers'
+        slurm_schedulers:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_schedulers_slurm_schedulers'
+    slurm_schedulers_key_model:
+      required:
+      - account
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        account:
+          type: string
+        partition:
+          type: string
+        qos:
+          type: string
+          default: normal
+        reservation:
+          type: string
+          default: normal
+        walltime:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    workflow_config_key_model:
+      type: object
+      properties:
+        compute_node_resource_stats:
+          $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    jobs_key_model:
+      required:
+      - command
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        command:
+          type: string
+        status:
+          type: string
+        cancel_on_blocking_job_failure:
+          type: boolean
+          default: true
+        interruptible:
+          type: boolean
+          default: false
+        run_id:
+          type: number
+        internal:
+          $ref: '#/components/schemas/workflowprepare_jobs_for_submission_internal'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_19:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/store_user_data_key_model'
+        skip:
+          type: number
+        max_limit:
+          type: number
+        count:
+          type: number
+        total_count:
+          type: number
+        has_more:
+          type: boolean
+    inline_response_200_18:
+      required:
+      - completion_time
+      - exec_time_minutes
+      - name
+      - return_code
+      - run_id
+      - status
+      type: object
+      properties:
+        name:
+          type: string
+        run_id:
+          type: number
+        return_code:
+          type: number
+        exec_time_minutes:
+          type: number
+        completion_time:
+          type: string
+        status:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    files_key_model:
+      required:
+      - name
+      - path
+      type: object
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        file_hash:
+          type: string
+        st_mtime:
+          type: number
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    scheduled_compute_nodes_key_model:
+      required:
+      - scheduler_config_id
+      - scheduler_id
+      - status
+      type: object
+      properties:
+        scheduler_id:
+          type: string
+        scheduler_config_id:
+          type: string
+        status:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_15:
+      required:
+      - command
+      - name
+      type: object
+      properties:
+        name:
+          type: string
+        command:
+          type: string
+        status:
+          type: string
+        cancel_on_blocking_job_failure:
+          type: boolean
+          default: true
+        interruptible:
+          type: boolean
+          default: false
+        run_id:
+          type: number
+        internal:
+          $ref: '#/components/schemas/workflowprepare_jobs_for_submission_internal'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_14:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/job_definition'
+        skip:
+          type: number
+        max_limit:
+          type: number
+        count:
+          type: number
+        total_count:
+          type: number
+        has_more:
+          type: boolean
+    inline_response_200_17:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/resource_requirements_key_model'
+        skip:
+          type: number
+        max_limit:
+          type: number
+        count:
+          type: number
+        total_count:
+          type: number
+        has_more:
+          type: boolean
+    inline_response_200_16:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/job_process_stats_key_model'
+        skip:
+          type: number
+        max_limit:
+          type: number
+        count:
+          type: number
+        total_count:
+          type: number
+        has_more:
+          type: boolean
+    scheduled_compute_nodes_model:
+      required:
+      - scheduler_config_id
+      - scheduler_id
+      - status
+      type: object
+      properties:
+        scheduler_id:
+          type: string
+        scheduler_config_id:
+          type: string
+        status:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    compute_nodes_key_model:
+      required:
+      - hostname
+      - resources
+      - start_time
+      type: object
+      properties:
+        hostname:
+          type: string
+        start_time:
+          type: string
+        is_active:
+          type: boolean
+        resources:
+          $ref: '#/components/schemas/workflow_prepare_jobs_for_submission_model'
+        scheduler:
+          type: object
+          properties: {}
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
     inline_response_200:
       required:
       - count
@@ -3324,33 +4985,7 @@ components:
           type: string
         _rev:
           type: string
-    workflow_config_compute_node_resource_stats:
-      type: object
-      properties:
-        cpu:
-          type: boolean
-          default: false
-        disk:
-          type: boolean
-          default: false
-        memory:
-          type: boolean
-          default: false
-        network:
-          type: boolean
-          default: false
-        process:
-          type: boolean
-          default: false
-        include_child_processes:
-          type: boolean
-          default: true
-        recurse_child_processes:
-          type: boolean
-          default: false
-        interval:
-          type: number
-    job_definition2:
+    workflow_jobs:
       required:
       - command
       - name
@@ -3372,7 +5007,7 @@ components:
           type: boolean
           default: false
         scheduler:
-          type: string
+          $ref: '#/components/schemas/workflow_scheduler'
         resource_requirements:
           type: string
         input_files:
@@ -3409,7 +5044,7 @@ components:
           type: boolean
           default: false
         scheduler:
-          type: string
+          $ref: '#/components/schemas/workflow_scheduler'
         resource_requirements:
           type: string
         input_files:
@@ -3424,291 +5059,21 @@ components:
           type: array
           items:
             type: string
-    inline_response_500:
-      required:
-      - error
+    inline_response_200_1_schedulers:
       type: object
       properties:
-        error:
-          type: object
-        errorNum:
-          type: integer
-        errorMessage:
-          type: string
-        code:
-          type: integer
-    inline_response_200_9:
-      required:
-      - hostname
-      - name
-      - timestamp
-      type: object
-      properties:
-        name:
-          type: string
-        hostname:
-          type: string
-        stats:
+        aws_schedulers:
           type: array
           items:
-            $ref: '#/components/schemas/compute_node_stats_stats'
-        timestamp:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    hpc_config_model:
-      required:
-      - account
-      - hpc_type
-      - name
-      type: object
-      properties:
-        name:
-          type: string
-        hpc_type:
-          type: string
-        account:
-          type: string
-        partition:
-          type: string
-        qos:
-          type: string
-          default: normal
-        walltime:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_5:
-      required:
-      - command
-      - name
-      type: object
-      properties:
-        name:
-          type: string
-        command:
-          type: string
-        status:
-          type: string
-        cancel_on_blocking_job_failure:
-          type: boolean
-          default: true
-        interruptible:
-          type: boolean
-          default: false
-        run_id:
-          type: number
-        internal:
-          $ref: '#/components/schemas/workflowprepare_jobs_for_submission_internal'
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_6:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
+            $ref: '#/components/schemas/aws_schedulers_key_model'
+        local_schedulers:
           type: array
           items:
-            $ref: '#/components/schemas/compute_nodes_model'
-        skip:
-          type: number
-        max_limit:
-          type: number
-        count:
-          type: number
-        total_count:
-          type: number
-        has_more:
-          type: boolean
-    file_model:
-      required:
-      - name
-      - path
-      type: object
-      properties:
-        name:
-          type: string
-        path:
-          type: string
-        file_hash:
-          type: string
-        st_mtime:
-          type: number
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_7:
-      required:
-      - hostname
-      - resources
-      - start_time
-      type: object
-      properties:
-        hostname:
-          type: string
-        start_time:
-          type: string
-        is_active:
-          type: boolean
-        resources:
-          $ref: '#/components/schemas/worker_resources'
-        scheduler:
-          type: object
-          properties: {}
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_20:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
+            $ref: '#/components/schemas/local_schedulers_key_model'
+        slurm_schedulers:
           type: array
           items:
-            $ref: '#/components/schemas/edge_model'
-        skip:
-          type: number
-        max_limit:
-          type: number
-        count:
-          type: number
-        total_count:
-          type: number
-        has_more:
-          type: boolean
-    inline_response_200_8:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/compute_node_stats_model'
-        skip:
-          type: number
-        max_limit:
-          type: number
-        count:
-          type: number
-        total_count:
-          type: number
-        has_more:
-          type: boolean
-    worker_resources:
-      required:
-      - memory_gb
-      - num_cpus
-      type: object
-      properties:
-        num_cpus:
-          type: number
-        memory_gb:
-          type: number
-        num_gpus:
-          type: number
-        num_nodes:
-          type: number
-        time_limit:
-          type: object
-    job_model:
-      required:
-      - command
-      - name
-      type: object
-      properties:
-        name:
-          type: string
-        command:
-          type: string
-        status:
-          type: string
-        cancel_on_blocking_job_failure:
-          type: boolean
-          default: true
-        interruptible:
-          type: boolean
-          default: false
-        run_id:
-          type: number
-        internal:
-          $ref: '#/components/schemas/workflowprepare_jobs_for_submission_internal'
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    workflow:
-      type: object
-      properties:
-        jobs:
-          type: array
-          items:
-            $ref: '#/components/schemas/job_definition2'
-        files:
-          type: array
-          items:
-            $ref: '#/components/schemas/workflow_files'
-        resource_requirements:
-          type: array
-          items:
-            $ref: '#/components/schemas/workflow_resource_requirements'
-        schedulers:
-          type: array
-          items:
-            $ref: '#/components/schemas/workflow_schedulers'
-        config:
-          type: object
-          properties: {}
-    edge_model:
-      required:
-      - _from
-      - _to
-      type: object
-      properties:
-        _from:
-          type: string
-        _to:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
+            $ref: '#/components/schemas/slurm_schedulers_key_model'
     compute_nodes_model:
       required:
       - hostname
@@ -3723,7 +5088,7 @@ components:
         is_active:
           type: boolean
         resources:
-          $ref: '#/components/schemas/worker_resources'
+          $ref: '#/components/schemas/workflow_prepare_jobs_for_submission_model'
         scheduler:
           type: object
           properties: {}
@@ -3733,117 +5098,54 @@ components:
           type: string
         _rev:
           type: string
-    resource_requirements_model:
+    workflow_scheduler:
       required:
       - name
+      - type
       type: object
       properties:
         name:
           type: string
-        num_cpus:
-          type: number
-        num_gpus:
-          type: number
-        num_nodes:
-          type: number
+        type:
+          type: string
+    local_schedulers_key_model:
+      type: object
+      properties:
+        name:
+          type: string
+          default: default
         memory:
           type: string
-          default: 1m
-        runtime:
-          type: string
-          default: P0DT1H
+        num_cpus:
+          type: number
         _key:
           type: string
         _id:
           type: string
         _rev:
           type: string
-    inline_response_200_1:
-      type: object
-      properties:
-        jobs:
-          type: array
-          items:
-            $ref: '#/components/schemas/job_definition'
-        files:
-          type: array
-          items:
-            $ref: '#/components/schemas/file_model'
-        resource_requirements:
-          type: array
-          items:
-            $ref: '#/components/schemas/resource_requirements_model'
-        schedulers:
-          type: array
-          items:
-            $ref: '#/components/schemas/hpc_config_model'
-        config:
-          type: object
-          properties: {}
-    workflow_files:
+    results_key_model:
       required:
+      - completion_time
+      - exec_time_minutes
       - name
-      - path
+      - return_code
+      - run_id
+      - status
       type: object
       properties:
         name:
           type: string
-        path:
+        run_id:
+          type: number
+        return_code:
+          type: number
+        exec_time_minutes:
+          type: number
+        completion_time:
           type: string
-        file_hash:
+        status:
           type: string
-        st_mtime:
-          type: number
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_2:
-      required:
-      - is_complete
-      type: object
-      properties:
-        is_complete:
-          type: boolean
-    inline_response_200_3:
-      required:
-      - max_memory_gb
-      - max_num_nodes
-      - max_runtime
-      - memory_gb
-      - num_cpus
-      - num_gpus
-      - num_jobs
-      type: object
-      properties:
-        num_jobs:
-          type: number
-        num_cpus:
-          type: number
-        num_gpus:
-          type: number
-        memory_gb:
-          type: number
-        max_memory_gb:
-          type: number
-        max_num_nodes:
-          type: number
-        max_runtime:
-          type: string
-    inline_response_200_4:
-      type: object
-      properties:
-        estimates_by_round:
-          type: array
-          items:
-            $ref: '#/components/schemas/inline_response_200_3'
-    workflow_config_model:
-      type: object
-      properties:
-        compute_node_resource_stats:
-          $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
         _key:
           type: string
         _id:

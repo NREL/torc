@@ -7,7 +7,9 @@ import time
 from pathlib import Path
 
 import pytest
-from swagger_client.models.worker_resources import WorkerResources
+from swagger_client.models.workflow_prepare_jobs_for_submission_model import (
+    WorkflowPrepareJobsForSubmissionModel,
+)
 
 from wms.common import GiB
 from wms.job_runner import JobRunner
@@ -20,9 +22,9 @@ logger = logging.getLogger(__name__)
 
 def test_run_workflow(diamond_workflow):
     """Test full execution of diamond workflow with file dependencies."""
-    api, output_dir = diamond_workflow
+    api, scheduler_config_id, output_dir = diamond_workflow
     timer_stats_collector.enable()
-    user_data_work1 = api.get_jobs_get_user_data_name("work1")
+    user_data_work1 = api.get_jobs_get_user_data_key("work1")
     assert len(user_data_work1) == 1
     assert user_data_work1[0]["key1"] == "val1"
     mgr = WorkflowManager(api)
@@ -38,16 +40,17 @@ def test_run_workflow(diamond_workflow):
         output_dir,
         time_limit="P0DT24H",
         job_completion_poll_interval=0.1,
+        scheduler_config_id=scheduler_config_id,
     )
     runner.run_worker()
 
     assert api.get_workflow_is_complete()
     for name in ["preprocess", "work1", "work2", "postprocess"]:
-        result = api.get_results_find_by_job_name_name(name)
+        result = api.get_results_find_by_job_key(name)
         assert result.return_code == 0
 
     for name in ["inputs", "file1", "file2", "file3", "file4"]:
-        file = api.get_files_name(name)
+        file = api.get_files_key(name)
         assert file.path
         # assert file.file_hash
         assert file.st_mtime
@@ -73,62 +76,62 @@ def test_cancel_with_failed_job(workflow_with_cancel):
     runner = JobRunner(api, output_dir, time_limit="P0DT24H", job_completion_poll_interval=0.1)
     runner.run_worker()
     assert api.get_workflow_is_complete()
-    assert api.get_jobs_name("job1").status == "done"
-    result = api.get_results_find_by_job_name_name("job1")
+    assert api.get_jobs_key("job1").status == "done"
+    result = api.get_results_find_by_job_key("job1")
     assert result.return_code == 1
     expected_status = "canceled" if cancel_on_blocking_job_failure else "done"
-    assert api.get_jobs_name("job2").status == expected_status
+    assert api.get_jobs_key("job2").status == expected_status
 
 
 def test_reinitialize_workflow_noop(completed_workflow):
     """Verify that a workflow can be reinitialized."""
-    api, _ = completed_workflow
+    api, _, _ = completed_workflow
 
     mgr = WorkflowManager(api)
     mgr.reinitialize_jobs()
     for name in ("preprocess", "work1", "work2", "postprocess"):
-        job = api.get_jobs_name(name)
+        job = api.get_jobs_key(name)
         assert job.status == "done"
 
 
 def test_reinitialize_workflow_input_file_updated(completed_workflow):
     """Test workflow reinitialization after input files are changed."""
-    api, _ = completed_workflow
-    file = api.get_files_name("inputs")
+    api, _, _ = completed_workflow
+    file = api.get_files_key("inputs")
     path = Path(file.path)
     path.touch()
 
     mgr = WorkflowManager(api)
     mgr.reinitialize_jobs()
-    assert api.get_jobs_name("preprocess").status == "ready"
+    assert api.get_jobs_key("preprocess").status == "ready"
     for name in ("work1", "work2", "postprocess"):
-        job = api.get_jobs_name(name)
+        job = api.get_jobs_key(name)
         assert job.status == "blocked"
 
 
 def test_reinitialize_workflow_incomplete(incomplete_workflow):
     """Test workflow reinitialization on an incomplete workflow."""
-    api, _ = incomplete_workflow
+    api, _, _ = incomplete_workflow
     mgr = WorkflowManager(api)
     mgr.reinitialize_jobs()
     for name in ("preprocess", "work1"):
-        job = api.get_jobs_name(name)
+        job = api.get_jobs_key(name)
         assert job.status == "done"
-    assert api.get_jobs_name("work2").status == "ready"
-    assert api.get_jobs_name("postprocess").status == "blocked"
+    assert api.get_jobs_key("work2").status == "ready"
+    assert api.get_jobs_key("postprocess").status == "blocked"
 
 
 def test_reinitialize_workflow_incomplete_missing_files(
     incomplete_workflow_missing_files,
 ):
     """Test workflow reinitialization on an incomplete workflow with missing files."""
-    api, _ = incomplete_workflow_missing_files
+    api, _, _ = incomplete_workflow_missing_files
     mgr = WorkflowManager(api)
     mgr.reinitialize_jobs()
-    assert api.get_jobs_name("preprocess").status == "done"
-    assert api.get_jobs_name("work1").status == "ready"
-    assert api.get_jobs_name("work2").status == "ready"
-    assert api.get_jobs_name("postprocess").status == "blocked"
+    assert api.get_jobs_key("preprocess").status == "done"
+    assert api.get_jobs_key("work1").status == "ready"
+    assert api.get_jobs_key("work2").status == "ready"
+    assert api.get_jobs_key("postprocess").status == "blocked"
 
 
 @pytest.mark.parametrize(
@@ -136,7 +139,7 @@ def test_reinitialize_workflow_incomplete_missing_files(
 )
 def test_restart_workflow_missing_files(complete_workflow_missing_files, missing_file):
     """Test workflow restart on a complete workflow with missing files."""
-    api, output_dir = complete_workflow_missing_files
+    api, _, output_dir = complete_workflow_missing_files
     (output_dir / missing_file).unlink()
     mgr = WorkflowManager(api)
     mgr.restart()
@@ -149,7 +152,13 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
 
     new_file = output_dir / missing_file
     new_file.write_text(json.dumps({"val": missing_file}))
-    runner = JobRunner(api, output_dir, time_limit="P0DT24H", job_completion_poll_interval=0.1)
+    runner = JobRunner(
+        api,
+        output_dir,
+        time_limit="P0DT24H",
+        job_completion_poll_interval=0.1,
+        scheduler_config_id=None,  # This tests the case where the node doesn't want this restriction.
+    )
     runner.run_worker()
 
     assert api.get_workflow_is_complete()
@@ -171,21 +180,21 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
     assert sorted(expected) == _get_job_names_by_event(stage2_events, "complete")
 
     for name in {"preprocess", "work1", "work2", "postprocess"}.difference(expected):
-        assert api.get_jobs_name(name).run_id == 1
+        assert api.get_jobs_key(name).run_id == 1
     for name in expected:
-        assert api.get_jobs_name(name).run_id == 2
+        assert api.get_jobs_key(name).run_id == 2
 
     api.put_workflow_status_reset()
     assert api.get_workflow_status().run_id == 0
     for name in ("preprocess", "work1", "work2", "postprocess"):
-        job = api.get_jobs_name(name)
+        job = api.get_jobs_key(name)
         assert job.run_id == 0
         assert job.status == "uninitialized"
 
 
 def test_estimate_workflow(diamond_workflow):
     """Test the estimate workflow feature."""
-    api, _ = diamond_workflow
+    api = diamond_workflow[0]
     estimate = api.post_workflow_estimate()
     assert estimate.estimates_by_round
 
@@ -204,7 +213,7 @@ def test_run_independent_job_workflow(independent_job_workflow, tmp_path):
     api, num_jobs = independent_job_workflow
     mgr = WorkflowManager(api)
     mgr.start()
-    resources = WorkerResources(
+    resources = WorkflowPrepareJobsForSubmissionModel(
         num_cpus=2,
         num_gpus=0,
         memory_gb=16 * GiB,
@@ -216,7 +225,7 @@ def test_run_independent_job_workflow(independent_job_workflow, tmp_path):
 
     assert api.get_workflow_is_complete()
     for name in (str(i) for i in range(num_jobs)):
-        result = api.get_results_find_by_job_name_name(name)
+        result = api.get_results_find_by_job_key(name)
         assert result.return_code == 0
 
 
@@ -255,7 +264,7 @@ def test_concurrent_submitters(independent_job_workflow, tmp_path):
     assert ret == 0
     assert api.get_workflow_is_complete()
     for name in (str(i) for i in range(num_jobs)):
-        result = api.get_results_find_by_job_name_name(name)
+        result = api.get_results_find_by_job_key(name)
         assert result.return_code == 0
 
 

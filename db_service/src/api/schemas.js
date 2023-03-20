@@ -7,6 +7,7 @@ const workerResources = joi.object().required().keys({
   num_gpus: joi.number().default(0),
   num_nodes: joi.number().default(1),
   time_limit: [joi.string().optional(), joi.allow(null)], // ISO 8601 encoding for timedeltas
+  scheduler_config_id: joi.string().optional(),
 });
 
 const computeNode = joi.object().required().keys({
@@ -19,6 +20,8 @@ const computeNode = joi.object().required().keys({
   _id: joi.string(),
   _rev: joi.string(),
 });
+
+const object = joi.object().required();
 
 const resourceStats = joi.object().required().keys({
   resource_type: joi.string().required(),
@@ -59,18 +62,6 @@ const file = joi.object().required().keys({
   // Keep changes in sync with getDocumentIfAlreadyStored
 });
 
-const hpcConfig = joi.object().required().keys({
-  name: joi.string().required(),
-  hpc_type: joi.string().required(),
-  account: joi.string().required(),
-  partition: joi.string(),
-  qos: joi.string().default('normal'),
-  walltime: joi.string(),
-  _key: joi.string(),
-  _id: joi.string(),
-  _rev: joi.string(),
-});
-
 const isComplete = joi.object().required().keys({
   is_complete: joi.boolean().required(),
 });
@@ -80,6 +71,7 @@ const jobInternal = joi.object().required().keys({
   num_cpus: joi.number().default(0.0),
   num_gpus: joi.number().default(0.0),
   runtime_seconds: joi.number().default(0.0),
+  scheduler_config_id: joi.string().optional().default(''),
 });
 
 const job = joi.object().required().keys({
@@ -98,6 +90,11 @@ const job = joi.object().required().keys({
   _rev: joi.string(),
 });
 
+const schedulerConfigReference = joi.object().required().keys({
+  name: joi.string().required(),
+  type: joi.string().required(),
+});
+
 // This schema is used in the user workflow construction but is never stored.
 const jobDefinition = joi.object().required().keys({
   name: joi.string().required(),
@@ -105,7 +102,7 @@ const jobDefinition = joi.object().required().keys({
   user_data: joi.array().items(joi.object()).default([]),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   interruptible: joi.boolean().default(false),
-  scheduler: joi.string().optional(),
+  scheduler: schedulerConfigReference.optional(),
   resource_requirements: joi.string().optional(),
   input_files: joi.array().items(joi.string()).default([]),
   output_files: joi.array().items(joi.string()).default([]),
@@ -189,11 +186,46 @@ const workflowEstimate = joi.object().required().keys({
   estimates_by_round: joi.array().items(readyJobsResourceRequirements),
 });
 
+const awsScheduler = joi.object().required().keys({
+  // TODO
+  name: joi.string().required(),
+  _key: joi.string(),
+  _id: joi.string(),
+  _rev: joi.string(),
+});
+
+const localScheduler = joi.object().required().keys({
+  name: joi.string().optional().default('default'),
+  memory: joi.string().optional(),
+  num_cpus: joi.number().optional(),
+  _key: joi.string(),
+  _id: joi.string(),
+  _rev: joi.string(),
+});
+
+const slurmScheduler = joi.object().required().keys({
+  name: joi.string().required(),
+  account: joi.string().required(),
+  partition: joi.string(),
+  qos: joi.string().default('normal'),
+  reservation: joi.string().default('normal'),
+  walltime: joi.string(),
+  _key: joi.string(),
+  _id: joi.string(),
+  _rev: joi.string(),
+});
+
+const schedulers = joi.object().required().keys({
+  aws_schedulers: joi.array().items(awsScheduler).optional().default([]),
+  local_schedulers: joi.array().items(localScheduler).optional().default([]),
+  slurm_schedulers: joi.array().items(slurmScheduler).optional().default([]),
+});
+
 const workflow = joi.object().required().keys({
   jobs: joi.array().items(jobDefinition).default([]),
   files: joi.array().items(file).default([]),
   resource_requirements: joi.array().items(resourceRequirements).default([]),
-  schedulers: joi.array().items(hpcConfig).default([]),
+  schedulers: schedulers.optional().default(schedulers.validate({}).value),
   config: joi.object().default(workflowConfig.validate({}).value),
 });
 
@@ -202,14 +234,49 @@ const autoTuneStatus = joi.object().required().keys({
   job_names: joi.array().items(joi.string()).default([]),
 });
 
+const scheduledComputeNode = joi.object().required().keys({
+  scheduler_id: joi.string().required(),
+  scheduler_config_id: joi.string().required(),
+  status: joi.string().required(),
+  _key: joi.string(),
+  _id: joi.string(),
+  _rev: joi.string(),
+});
+
 const workflowStatus = joi.object().required().keys({
   is_canceled: joi.boolean().required(),
   run_id: joi.number().required(),
-  scheduled_compute_node_ids: joi.array().items(joi.number()),
   auto_tune_status: autoTuneStatus,
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),
+});
+
+const batchAwsSchedulers = joi.object().required().keys({
+  items: joi.array().items(awsScheduler),
+  skip: joi.number().required(),
+  max_limit: joi.number().required(),
+  count: joi.number().required(),
+  total_count: joi.number().required(),
+  has_more: joi.boolean().required(),
+});
+
+const batchLocalSchedulers = joi.object().required().keys({
+  items: joi.array().items(localScheduler),
+  skip: joi.number().required(),
+  max_limit: joi.number().required(),
+  count: joi.number().required(),
+  total_count: joi.number().required(),
+  has_more: joi.boolean().required(),
+});
+
+const batchSlurmSchedulers = joi.object().required().keys({
+  items: joi.array().items(slurmScheduler),
+  skip: joi.number().required(),
+  max_limit: joi.number().required(),
+  count: joi.number().required(),
+  total_count: joi.number().required(),
+  has_more: joi.boolean().required(),
 });
 
 const batchComputeNodes = joi.object().required().keys({
@@ -266,15 +333,6 @@ const batchFiles = joi.object().required().keys({
   has_more: joi.boolean().required(),
 });
 
-const batchHpcConfigs = joi.object().required().keys({
-  items: joi.array().items(hpcConfig),
-  skip: joi.number().required(),
-  max_limit: joi.number().required(),
-  count: joi.number().required(),
-  total_count: joi.number().required(),
-  has_more: joi.boolean().required(),
-});
-
 const batchResourceRequirements = joi.object().required().keys({
   items: joi.array().items(resourceRequirements),
   skip: joi.number().required(),
@@ -293,8 +351,8 @@ const batchResults = joi.object().required().keys({
   has_more: joi.boolean().required(),
 });
 
-const batchUserData = joi.object().required().keys({
-  items: joi.array().items(joi.object()),
+const batchScheduledComputeNodes = joi.object().required().keys({
+  items: joi.array().items(scheduledComputeNode),
   skip: joi.number().required(),
   max_limit: joi.number().required(),
   count: joi.number().required(),
@@ -322,33 +380,40 @@ const batchJobProcessStats = joi.object().required().keys({
 
 module.exports = {
   autoTuneStatus,
+  awsScheduler,
+  batchAwsSchedulers,
   batchComputeNodeStats,
   batchComputeNodes,
   batchEdges,
   batchFiles,
-  batchHpcConfigs,
   batchJobDefinitions,
   batchJobProcessStats,
   batchJobs,
+  batchLocalSchedulers,
   batchObjects,
   batchResourceRequirements,
   batchResults,
-  batchUserData,
+  batchScheduledComputeNodes,
+  batchSlurmSchedulers,
   computeNode,
   computeNodeResourceStatConfig,
   computeNodeStats,
   edge,
   file,
-  hpcConfig,
   isComplete,
   job,
   jobDefinition,
   jobInternal,
   jobProcessStats,
   jobUserData,
+  localScheduler,
+  object,
   readyJobsResourceRequirements,
   resourceRequirements,
   result,
+  scheduledComputeNode,
+  schedulers,
+  slurmScheduler,
   workerResources,
   workflow,
   workflowConfig,

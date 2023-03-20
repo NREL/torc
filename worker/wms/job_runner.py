@@ -18,7 +18,9 @@ from swagger_client.models.compute_node_stats_model import ComputeNodeStatsModel
 from swagger_client.models.compute_node_stats_stats import ComputeNodeStatsStats
 from swagger_client.models.edge_model import EdgeModel
 from swagger_client.models.job_process_stats_model import JobProcessStatsModel
-from swagger_client.models.worker_resources import WorkerResources
+from swagger_client.models.workflow_prepare_jobs_for_submission_model import (
+    WorkflowPrepareJobsForSubmissionModel,
+)
 
 from wms.api import send_api_command
 from wms.resource_monitor import (
@@ -43,18 +45,41 @@ class JobRunner:
         self,
         api: DefaultApi,
         output_dir: Path,
-        job_completion_poll_interval=1,
+        job_completion_poll_interval=10,
         database_poll_interval=600,
         time_limit=None,
         resources=None,
+        scheduler_config_id=None,
     ):
+        """Constructs a JobRunner.
+
+        Parameters
+        ----------
+        api : DefaultApi
+        output_dir : Path
+            Directory for output files
+        job_completion_poll_interval : int
+            Interval in seconds in which to poll for job completions.
+        database_poll_interval : int
+            Max time in seconds in which the code should poll for job updates in the database.
+        time_limit : None | str
+            ISO 8601 time duration string. If None then there is no time limit.
+        resources : None | WorkflowPrepareJobsForSubmissionModel
+            Resources of the compute node. If None, make system calls to check resources.
+        scheduler_config_id : str
+            ID of the scheduler config used to acquire this compute node.
+            If set, use this ID to pull matching jobs. If not set, pull any job that meets the
+            resource availability.
+        """
         self._api = api
         self._outstanding_jobs = {}
         self._poll_interval = job_completion_poll_interval
         self._db_poll_interval = database_poll_interval
         self._output_dir = output_dir
+        self._scheduler_config_id = scheduler_config_id
         self._orig_resources = resources or _get_system_resources(time_limit)
-        self._resources = WorkerResources(**self._orig_resources.to_dict())
+        self._orig_resources.scheduler_config_id = self._scheduler_config_id
+        self._resources = WorkflowPrepareJobsForSubmissionModel(**self._orig_resources.to_dict())
         self._num_jobs = 0
         self._last_db_poll_time = 0
         self._compute_node_db_id = None
@@ -67,7 +92,8 @@ class JobRunner:
     def __del__(self):
         if self._outstanding_jobs:
             logger.warning(
-                "JobRunner destructed with outstanding jobs: %s", self._outstanding_jobs.keys()
+                "JobRunner destructed with outstanding jobs: %s",
+                self._outstanding_jobs.keys(),
             )
         if self._parent_monitor_conn is not None or self._monitor_proc is not None:
             logger.warning("JobRunner destructed without stopping the resource monitor process.")
@@ -113,10 +139,8 @@ class JobRunner:
         self.wait()
         compute_node.is_active = False
         send_api_command(
-            self._api.put_compute_nodes_key,
-            compute_node,
-            compute_node._key,  # pylint: disable=protected-access
-        )
+            self._api.put_compute_nodes_key, compute_node, compute_node.key
+        )  # ,  # pylint: disable=protected-access)
         send_api_command(
             self._api.post_events,
             {
@@ -179,7 +203,7 @@ class JobRunner:
 
     def _complete_job(self, job, result):
         job = send_api_command(
-            self._api.post_jobs_complete_job_name_status_rev,
+            self._api.post_jobs_complete_job_key_status_rev,
             result,
             job.name,
             "done",
@@ -191,7 +215,7 @@ class JobRunner:
         return self._resources.memory_gb / self._orig_resources.memory_gb * 100
 
     def _decrement_resources(self, job):
-        job_resources = send_api_command(self._api.get_jobs_resource_requirements_name, job.name)
+        job_resources = send_api_command(self._api.get_jobs_resource_requirements_key, job.name)
         job_memory_gb = get_memory_gb(job_resources.memory)
         self._resources.num_cpus -= job_resources.num_cpus
         self._resources.num_gpus -= job_resources.num_gpus
@@ -201,7 +225,7 @@ class JobRunner:
         assert self._resources.memory_gb >= 0.0, self._resources.memory_gb
 
     def _increment_resources(self, job):
-        job_resources = send_api_command(self._api.get_jobs_resource_requirements_name, job.name)
+        job_resources = send_api_command(self._api.get_jobs_resource_requirements_key, job.name)
         job_memory_gb = get_memory_gb(job_resources.memory)
         self._resources.num_cpus += job_resources.num_cpus
         self._resources.num_gpus += job_resources.num_gpus
@@ -282,9 +306,9 @@ class JobRunner:
         job.db_job.run_id += 1
         # The database changes db_job._rev on every update.
         # This reassigns job.db_job in order to stay current.
-        job.db_job = send_api_command(self._api.put_jobs_name, job.db_job, job.name)
+        job.db_job = send_api_command(self._api.put_jobs_key, job.db_job, job.name)
         job.db_job = send_api_command(
-            self._api.put_jobs_manage_status_change_name_status_rev,
+            self._api.put_jobs_manage_status_change_key_status_rev,
             job.name,
             "submitted",
             job.db_job._rev,  # pylint: disable=protected-access
@@ -390,7 +414,8 @@ class JobRunner:
         send_api_command(
             self._api.post_edges_name,
             EdgeModel(
-                _from=self._compute_node_db_id, to=res._id  # pylint: disable=protected-access
+                _from=self._compute_node_db_id,
+                to=res._id,  # pylint: disable=protected-access
             ),
             "node_used",
         )
@@ -399,7 +424,7 @@ class JobRunner:
             assert result.resource_type != ResourceType.PROCESS, result
 
     def _post_job_process_stats(self, result: ProcessStatResults):
-        run_id = send_api_command(self._api.get_jobs_name, result.job_name).run_id
+        run_id = send_api_command(self._api.get_jobs_key, result.job_name).run_id
         res = send_api_command(
             self._api.post_job_process_stats,
             JobProcessStatsModel(
@@ -416,21 +441,22 @@ class JobRunner:
         send_api_command(
             self._api.post_edges_name,
             EdgeModel(
-                _from=f"jobs/{result.job_name}", to=res._id  # pylint: disable=protected-access
+                _from=f"jobs/{result.job_name}",
+                to=res._id,  # pylint: disable=protected-access
             ),
             "process_used",
         )
 
     def _update_file_info(self, job):
-        for file in send_api_command(self._api.get_files_produced_by_job_name, job.name).items:
+        for file in send_api_command(self._api.get_files_produced_by_job_key, job.name).items:
             path = make_path(file.path)
             # file.file_hash = compute_file_hash(path)
             file.st_mtime = path.stat().st_mtime
-            send_api_command(self._api.put_files_name, file, file.name)
+            send_api_command(self._api.put_files_key, file, file.name)
 
 
 def _get_system_resources(time_limit):
-    return WorkerResources(
+    return WorkflowPrepareJobsForSubmissionModel(
         num_cpus=psutil.cpu_count(),
         memory_gb=psutil.virtual_memory().total / GiB,
         num_nodes=1,

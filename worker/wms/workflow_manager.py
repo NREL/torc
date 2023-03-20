@@ -102,7 +102,7 @@ class WorkflowManager:
             if changed:
                 if file.st_mtime and not new["exists"]:
                     file.st_mtime = None
-                    send_api_command(self._api.put_files_name, file, file.name)
+                    send_api_command(self._api.put_files_key, file, file.name)
                     logger.info("File %s was removed. Cleared file stats", file.name)
                 self._update_jobs_on_file_change(file)
 
@@ -112,16 +112,16 @@ class WorkflowManager:
             # similar iterations can use it.
             for job in send_api_command(self._api.get_jobs_find_by_status_status, status).items:
                 job.status = "uninitialized"
-                send_api_command(self._api.put_jobs_name, job, job.name)
+                send_api_command(self._api.put_jobs_key, job, job.name)
                 logger.info("Changed job %s from %s to uninitialized", job.name, status)
 
     def _update_jobs_if_output_files_are_missing(self):
         for job in send_api_command(self._api.get_jobs_find_by_status_status, "done").items:
-            for file in send_api_command(self._api.get_files_produced_by_job_name, job.name).items:
+            for file in send_api_command(self._api.get_files_produced_by_job_key, job.name).items:
                 path = Path(file.path)
                 if not path.exists():
                     job.status = "uninitialized"
-                    send_api_command(self._api.put_jobs_name, job, job.name)
+                    send_api_command(self._api.put_jobs_key, job, job.name)
                     logger.info(
                         "Changed job %s from done to %s because output file is missing",
                         job.name,
@@ -130,11 +130,11 @@ class WorkflowManager:
                     break
 
     def _update_jobs_on_file_change(self, file):
-        for job in send_api_command(self._api.get_jobs_find_by_needs_file_name, file.name).items:
+        for job in send_api_command(self._api.get_jobs_find_by_needs_file_key, file.name).items:
             if job.status in ("done", "canceled"):
                 status = "uninitialized"
                 send_api_command(
-                    self._api.put_jobs_manage_status_change_name_status_rev,
+                    self._api.put_jobs_manage_status_change_key_status_rev,
                     job.name,
                     status,
                     job._rev,  # pylint: disable=protected-access

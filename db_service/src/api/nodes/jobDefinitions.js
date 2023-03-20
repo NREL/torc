@@ -2,11 +2,8 @@
 const joi = require('joi');
 const errors = require('@arangodb').errors;
 const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
-const graphModule = require('@arangodb/general-graph');
-const defs = require('../../defs');
 const {MAX_TRANSFER_RECORDS} = require('../../defs');
 const {getItemsLimit, makeCursorResult} = require('../../utils');
-const graph = graphModule._graph(defs.GRAPH_NAME);
 const query = require('../../query');
 const schemas = require('../schemas');
 const createRouter = require('@arangodb/foxx/router');
@@ -23,31 +20,31 @@ router.post('/job_definitions', function(req, res) {
     .summary('Store a job and create edges.')
     .description('Store a job in the "jobs" collection and create edges.');
 
-router.get('/job_definitions/:name', function(req, res) {
+router.get('/job_definitions/:key', function(req, res) {
   try {
-    const doc = graph.jobs.document(req.pathParams.name);
+    const doc = db.jobs.document(req.pathParams.key);
     res.send(query.getJobDefinition(doc));
   } catch (e) {
     if (!e.isArangoError || e.errorNum !== DOC_NOT_FOUND) {
       throw e;
     }
-    res.throw(404, 'The job does not exist', e);
+    res.throw(404, `The job with key = ${key} does not exist`, e);
   }
 })
-    .pathParam('name', joi.string().required(), 'Name of the job.')
+    .pathParam('key', joi.string().required(), 'Job key')
     .response(schemas.job, 'Job stored in the collection.')
     .summary('Retrieve a job')
-    .description('Retrieves a job from the "jobs" collection by name.');
+    .description('Retrieves a job from the "jobs" collection by key.');
 
 router.get('/job_definitions', function(req, res) {
   const qp = req.queryParams;
   const limit = getItemsLimit(qp.limit);
-  const cursor = graph.jobs.all().skip(qp.skip).limit(limit);
+  const cursor = db.jobs.all().skip(qp.skip).limit(limit);
   const jobDefinitions = [];
   for (const job of cursor) {
     jobDefinitions.push(query.getJobDefinition(job));
   }
-  res.send(makeCursorResult(jobDefinitions, qp.skip, limit, graph.jobs.count()));
+  res.send(makeCursorResult(jobDefinitions, qp.skip, limit, db.jobs.count()));
 })
     .queryParam('skip', joi.number().default(0))
     .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))

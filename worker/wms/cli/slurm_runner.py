@@ -1,6 +1,7 @@
 """CLI command to start a JobRunner on a SLURM compute node"""
 
 import logging
+import socket
 import subprocess
 
 from datetime import datetime, timedelta
@@ -41,11 +42,21 @@ def slurm_runner(database_url, output):
     }
     end_time = _get_end_time(slurm_job_id)
     time_limit = convert_end_time_to_duration_str(end_time)
-    runner = JobRunner(api, output, time_limit=time_limit)
-    my_logger.info("Start workflow")
+    scheduled_compute_node = api.get_scheduled_compute_nodes_key(slurm_job_id)
+    runner = JobRunner(
+        api,
+        output,
+        time_limit=time_limit,
+        scheduler_config_id=scheduled_compute_node.scheduler_config_id,
+    )
+    node = api.get_scheduled_compute_nodes_key(slurm_job_id)
+    node.status = "active"
+    node = api.put_scheduled_compute_nodes_key(node, slurm_job_id)
+    my_logger.info("Start workflow on compute node %s", socket.gethostname())
     runner.run_worker(scheduler=scheduler)
+    node.status = "complete"
+    node = api.put_scheduled_compute_nodes_key(node, slurm_job_id)
     # TODO: schedule more nodes if needed
-    # TODO: clear the scheduled IDs from the database in workflow_status
 
 
 def _get_end_time(slurm_job_id, buffer_minutes=2):

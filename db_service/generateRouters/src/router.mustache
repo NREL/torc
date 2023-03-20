@@ -1,0 +1,157 @@
+// This file is auto-generated. Do not edit.
+
+'use strict';
+const joi = require('joi');
+const db = require('@arangodb').db;
+const errors = require('@arangodb').errors;
+const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
+const {{collection_var_name}} = db._collection('{{collection}}');
+const {MAX_TRANSFER_RECORDS} = require('../../defs');
+const {getItemsLimit, makeCursorResult} = require('../../utils');
+const createRouter = require('@arangodb/foxx/router');
+{{#custom_imports}}
+{{{custom_imports}}}
+{{/custom_imports}}
+const schemas = require('../schemas');
+const router = createRouter();
+module.exports = router;
+
+router.post('/{{collection}}', function(req, res) {
+  let doc = req.body;
+  {{#custom_post}}
+  doc = {{{custom_post}}}(doc);
+  {{/custom_post}}
+  {{^custom_post}}
+  {{#key}}
+  if (doc._key != null) {
+    throw new Error(`_key = ${doc._key} cannot be set on post)`);
+  }
+  doc._key = doc.{{key}};
+  {{/key}}
+  const meta = {{collection_var_name}}.save(doc);
+  Object.assign(doc, meta);
+  {{/custom_post}}
+  {{#custom_convert}}
+  doc = {{{custom_convert}}}(doc);
+  {{/custom_convert}}
+  res.send(doc);
+})
+    .body(schemas.{{schema}}, '{{description}}.')
+    .response(schemas.{{schema}}, '{{description}}')
+    .summary('Store {{a_or_an}} {{name}}.')
+    .description('Store {{a_or_an}} {{name}} in the "{{collection}}" collection.');
+
+router.put('/{{collection}}/:key', function(req, res) {
+  const key = req.pathParams.key;
+  let doc = req.body;
+  if (doc._rev == null) {
+    throw new Error('Updating {{a_or_an}} {{name}} requires the existing revision');
+  }
+
+  try {
+    if (key != doc._key) {
+      throw new Error(`key=${key} does not match ${doc._key}`);
+    }
+    const meta = {{collection_var_name}}.update(doc, doc);
+    Object.assign(doc, meta);
+    {{#custom_convert}}
+    doc = {{{custom_convert}}}(doc);
+    {{/custom_convert}}
+    res.send(doc);
+  } catch (e) {
+    if (!e.isArangoError || e.errorNum !== DOC_NOT_FOUND) {
+      throw e;
+    }
+    res.throw(404, `The {{name}} with key = ${key} does not exist`, e);
+  }
+})
+    .pathParam('key', joi.string().required(), 'key of the {{name}}.')
+    .body(schemas.{{schema}}, '{{name}} to update in the collection.')
+    .response(schemas.{{schema}}, '{{name}} updated in the collection.')
+    .summary('Update {{name}}')
+    .description('Update a document in the "{{collection}}" collection.');
+
+router.get('/{{collection}}', function(req, res) {
+  try {
+    const qp = req.queryParams;
+    const limit = getItemsLimit(qp.limit);
+    {{#custom_convert}}
+    const items = [];
+    for (const doc of {{collection_var_name}}.all().skip(qp.skip).limit(limit)) {
+      items.push({{custom_convert}}(doc));
+    }
+    {{/custom_convert}}
+    {{^custom_convert}}
+    const items = {{collection_var_name}}.all().skip(qp.skip).limit(limit).toArray();
+    {{/custom_convert}}
+    res.send(makeCursorResult(items, qp.skip, limit, {{collection_var_name}}.count()));
+  } catch (e) {
+    if (!e.isArangoError) {
+      throw e;
+    }
+    res.throw(400, 'Error occurred: ${e}', e);
+  }
+})
+    .queryParam('skip', joi.number().default(0))
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .response(schemas.{{batch_schema}})
+    .summary('Retrieve all {{name}}s')
+    .description('Retrieves all documents from the "{{collection}}" collection.');
+
+router.get('/{{collection}}/:key', function(req, res) {
+  const key = req.pathParams.key;
+  try {
+    let doc = {{collection_var_name}}.document(key);
+    {{#custom_convert}}
+    doc = {{{custom_convert}}}(doc);
+    {{/custom_convert}}
+    res.send(doc);
+  } catch (e) {
+    if (!e.isArangoError || e.errorNum !== DOC_NOT_FOUND) {
+      throw e;
+    }
+    res.throw(404, `The {{name}} with key = ${key} does not exist`, e);
+  }
+})
+    .pathParam('key', joi.string().required(), 'key of the {{collection}} document')
+    .response(schemas.{{schema}})
+    .summary('Retrieve the {{name}} for a key.')
+    .description('Retrieve the document for a key from the "{{collection}}" collection.');
+
+router.delete('/{{collection}}/:key', function(req, res) {
+  const key = req.pathParams.key;
+  try {
+    let doc = {{collection_var_name}}.document(key);
+    db._remove(`{{collection}}/${req.pathParams.key}`);
+    {{#custom_convert}}
+    doc = {{{custom_convert}}}(doc);
+    {{/custom_convert}}
+    res.send(doc);
+  } catch (e) {
+    if (!e.isArangoError || e.errorNum !== DOC_NOT_FOUND) {
+      throw e;
+    }
+    res.throw(404, `The {{name}} with key = ${key} does not exist`, e);
+  }
+})
+    .pathParam('key', joi.string().required(), 'key of the {{event}} object.')
+    .body(joi.object().optional())
+    .response(schemas.{{schema}}, '{{name}} stored in the collection.')
+    .summary('Delete {{a_or_an}} {{name}}')
+    .description('Deletes document from the "{{collection}}" collection by key.');
+
+router.delete('/{{collection}}', function(req, res) {
+  try {
+    db._truncate(`{{collection}}`);
+    res.send({message: 'Deleted all documents in the "{{collection}}" collection'});
+  } catch (e) {
+    if (!e.isArangoError) {
+      throw e;
+    }
+    res.throw(400, 'Error occurred', e);
+  }
+})
+    .body(joi.object().optional())
+    .response(joi.object(), 'message')
+    .summary('Delete all {{name}}s')
+    .description('Deletes all documents from the "{{collection}}" collection.');
