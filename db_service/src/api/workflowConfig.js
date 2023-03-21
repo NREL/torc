@@ -4,8 +4,8 @@ const db = require('@arangodb').db;
 const errors = require('@arangodb').errors;
 const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
 const createRouter = require('@arangodb/foxx/router');
-const schemas = require('../schemas');
-const query = require('../../query');
+const schemas = require('./schemas');
+const query = require('../query');
 const router = createRouter();
 module.exports = router;
 

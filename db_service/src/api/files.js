@@ -1,9 +1,9 @@
 'use strict';
 const joi = require('joi');
-const {MAX_TRANSFER_RECORDS} = require('../../defs');
-const {getItemsLimit, makeCursorResult} = require('../../utils');
-const schemas = require('../schemas');
-const query = require('../../query');
+const {MAX_TRANSFER_RECORDS} = require('../defs');
+const {getItemsLimit, makeCursorResult} = require('../utils');
+const schemas = require('./schemas');
+const query = require('../query');
 const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
 module.exports = router;

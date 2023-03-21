@@ -2,8 +2,8 @@
 const joi = require('joi');
 const db = require('@arangodb').db;
 const createRouter = require('@arangodb/foxx/router');
-const query = require('../../query');
-const schemas = require('../schemas');
+const query = require('../query');
+const schemas = require('./schemas');
 const router = createRouter();
 module.exports = router;
 
