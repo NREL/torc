@@ -34,10 +34,15 @@ router.get('/workflow', function(req, res) {
   }
 
   const data = {
-    files: graph.files.toArray(),
+    config: query.getWorkflowConfig(),
+    files: db.files.all().toArray(),
     jobs: jobs,
-    resource_requirements: graph.resource_requirements.toArray(),
-    schedulers: graph.scheduled_bys.toArray(),
+    resource_requirements: db.resource_requirements.all().toArray(),
+    schedulers: {
+      aws_schedulers: db.aws_schedulers.all().toArray(),
+      local_schedulers: db.local_schedulers.all().toArray(),
+      slurm_schedulers: db.slurm_schedulers.all().toArray(),
+    },
   };
   res.send(data);
 })
@@ -236,9 +241,7 @@ function addWorkflow(workflow) {
  */
 function checkDependencies(workflow) {
   const files = new Set();
-  const awsConfigs = new Set();
-  const localConfigs = new Set();
-  const slurmConfigs = new Set();
+  const schedulerConfigs = new Set();
   const jobs = new Set();
   const resourceRequirements = new Set();
 
@@ -246,13 +249,13 @@ function checkDependencies(workflow) {
     files.add(item.name);
   }
   for (const item of workflow.schedulers.aws_schedulers) {
-    awsConfigs.add(item.name);
+    schedulerConfigs.add(`aws_schedulers/${item.name}`);
   }
   for (const item of workflow.schedulers.local_schedulers) {
-    localConfigs.add(item.name);
+    schedulerConfigs.add(`local_schedulers/${item.name}`);
   }
   for (const item of workflow.schedulers.slurm_schedulers) {
-    slurmConfigs.add(item.name);
+    schedulerConfigs.add(`slurm_schedulers/${item.name}`);
   }
   for (const item of workflow.jobs) {
     jobs.add(item.name);
@@ -277,22 +280,8 @@ function checkDependencies(workflow) {
         throw new Error(`job ${job.name} with blocked_by ${jobName} is not stored`);
       }
     }
-    if (job.scheduler != null) {
-      let container = null;
-      switch (job.scheduler.type) {
-        case 'aws':
-          container = awsConfigs;
-          break;
-        case 'local':
-          container = localConfigs;
-          break;
-        case 'slurm':
-          container = slurmConfigs;
-          break;
-        default:
-          throw new Error(`Invalid scheduler type: ${job.scheduler.type}`);
-      }
-      if (!container.has(job.scheduler.name)) {
+    if (job.scheduler != '') {
+      if (!schedulerConfigs.has(job.scheduler)) {
         throw new Error(`Invalid scheduler: job=${job.name}: ${JSON.stringify(job.scheduler)}`);
       }
     }

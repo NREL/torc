@@ -3870,20 +3870,26 @@ components:
       required:
       - account
       - name
+      - nodes
       type: object
       properties:
         name:
           type: string
         account:
           type: string
+        gres:
+          type: string
+        mem:
+          type: string
+        nodes:
+          type: number
         partition:
           type: string
         qos:
           type: string
           default: normal
-        reservation:
+        tmp:
           type: string
-          default: normal
         walltime:
           type: string
         _key:
@@ -4222,20 +4228,26 @@ components:
       required:
       - account
       - name
+      - nodes
       type: object
       properties:
         name:
           type: string
         account:
           type: string
+        gres:
+          type: string
+        mem:
+          type: string
+        nodes:
+          type: number
         partition:
           type: string
         qos:
           type: string
           default: normal
-        reservation:
+        tmp:
           type: string
-          default: normal
         walltime:
           type: string
         _key:
@@ -4617,20 +4629,26 @@ components:
       required:
       - account
       - name
+      - nodes
       type: object
       properties:
         name:
           type: string
         account:
           type: string
+        gres:
+          type: string
+        mem:
+          type: string
+        nodes:
+          type: number
         partition:
           type: string
         qos:
           type: string
           default: normal
-        reservation:
+        tmp:
           type: string
-          default: normal
         walltime:
           type: string
         _key:
@@ -5007,7 +5025,7 @@ components:
           type: boolean
           default: false
         scheduler:
-          $ref: '#/components/schemas/workflow_scheduler'
+          type: object
         resource_requirements:
           type: string
         input_files:
@@ -5044,7 +5062,7 @@ components:
           type: boolean
           default: false
         scheduler:
-          $ref: '#/components/schemas/workflow_scheduler'
+          type: object
         resource_requirements:
           type: string
         input_files:
@@ -5097,16 +5115,6 @@ components:
         _id:
           type: string
         _rev:
-          type: string
-    workflow_scheduler:
-      required:
-      - name
-      - type
-      type: object
-      properties:
-        name:
-          type: string
-        type:
           type: string
     local_schedulers_key_model:
       type: object

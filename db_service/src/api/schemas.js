@@ -90,11 +90,6 @@ const job = joi.object().required().keys({
   _rev: joi.string(),
 });
 
-const schedulerConfigReference = joi.object().required().keys({
-  name: joi.string().required(),
-  type: joi.string().required(),
-});
-
 // This schema is used in the user workflow construction but is never stored.
 const jobDefinition = joi.object().required().keys({
   name: joi.string().required(),
@@ -102,7 +97,7 @@ const jobDefinition = joi.object().required().keys({
   user_data: joi.array().items(joi.object()).default([]),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   interruptible: joi.boolean().default(false),
-  scheduler: schedulerConfigReference.optional(),
+  scheduler: joi.string().default('').allow(''),
   resource_requirements: joi.string().optional(),
   input_files: joi.array().items(joi.string()).default([]),
   output_files: joi.array().items(joi.string()).default([]),
@@ -206,9 +201,12 @@ const localScheduler = joi.object().required().keys({
 const slurmScheduler = joi.object().required().keys({
   name: joi.string().required(),
   account: joi.string().required(),
+  gres: joi.string().optional(),
+  mem: joi.string().optional(),
+  nodes: joi.number().required(),
   partition: joi.string(),
   qos: joi.string().default('normal'),
-  reservation: joi.string().default('normal'),
+  tmp: joi.string(),
   walltime: joi.string(),
   _key: joi.string(),
   _id: joi.string(),
@@ -216,9 +214,9 @@ const slurmScheduler = joi.object().required().keys({
 });
 
 const schedulers = joi.object().required().keys({
-  aws_schedulers: joi.array().items(awsScheduler).optional().default([]),
-  local_schedulers: joi.array().items(localScheduler).optional().default([]),
-  slurm_schedulers: joi.array().items(slurmScheduler).optional().default([]),
+  aws_schedulers: joi.array().items(awsScheduler).default([]),
+  local_schedulers: joi.array().items(localScheduler).default([]),
+  slurm_schedulers: joi.array().items(slurmScheduler).default([]),
 });
 
 const workflow = joi.object().required().keys({

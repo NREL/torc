@@ -131,7 +131,7 @@ function addJobDefinition(jobDef) {
       throw new Error(`job ${jobDef.name} with blocked_by ${jobName} is not stored`);
     }
   }
-  if (jobDef.scheduler != null) {
+  if (jobDef.scheduler != '') {
     schedulerConfigId = getSchedulerConfig(jobDef.scheduler)._id;
   }
   const rr = jobDef.resource_requirements;
@@ -180,30 +180,19 @@ function addJobDefinition(jobDef) {
 
 /**
  * Return the scheduler config for the scheduler config reference.
- * @param {schedulerConfigReference} ref
+ * @param {String} schedulerConfigId
  * @return {Object}
  */
-function getSchedulerConfig(ref) {
-  let collectionName = null;
-  switch (ref.type) {
-    case 'aws':
-      collectionName = 'aws_schedulers';
-      break;
-    case 'local':
-      collectionName = 'local_schedulers';
-      break;
-    case 'slurm':
-      collectionName = 'slurm_schedulers';
-      break;
-    default:
-      throw new Error(`Invalid scheduler type: ${ref.type}`);
+function getSchedulerConfig(schedulerConfigId) {
+  const fields = schedulerConfigId.split('/');
+  if (fields.length != 2) {
+    throw new Error(`${schedulerConfigId} must be split by /`);
   }
-
-  const collection = db._collection(collectionName);
-  if (!collection.exists(ref.name)) {
-    throw new Error(`scheduler ${JSON.stringify(ref)} is not stored`);
+  const collection = db._collection(fields[0]);
+  if (!collection.exists(fields[1])) {
+    throw new Error(`scheduler ${schedulerConfigId} is not stored`);
   }
-  return collection.document(ref.name);
+  return collection.document(fields[1]);
 }
 
 /**
@@ -349,31 +338,6 @@ function getBlockingJobs(job) {
   return blockingJobs;
 }
 
-// const filesFields = ['name', 'path', 'file_hash', 'st_mtime'];
-// const jobsFields = [
-//   'name',
-//   'command',
-//   'status',
-//   'cancel_on_blocking_job_failure',
-// ];
-// const hpcConfigsFields = [
-//   'name',
-//   'hpc_type',
-//   'account',
-//   'partition',
-//   'qos',
-//   'reservation',
-//   'walltime',
-// ];
-// const resourceRequirementsFields = [
-//   'name',
-//   'num_cpus',
-//   'num_gpus',
-//   'num_nodes',
-//   'memory',
-//   'runtime',
-// ];
-
 /**
  * Return the current version of the resource_requirements document if it is already stored.
  * Return null if the _id doesn't exist or the existing document has different content.
@@ -383,7 +347,6 @@ function getBlockingJobs(job) {
  */
 function getDocumentIfAlreadyStored(doc, collectionName) {
   const collection = db._collection(collectionName);
-  // TODO DT: call collection.document(doc)
   const filter = JSON.parse(JSON.stringify(doc));
   for (const property of ['_key', '_id', '_rev']) {
     delete filter[property];
@@ -396,34 +359,6 @@ function getDocumentIfAlreadyStored(doc, collectionName) {
     throw new Error(`filter ${JSON.stringify(filter)} returned ${result.count()} matches`);
   }
   return result.next();
-  // let fields = [];
-  // switch (collectionName) {
-  //   case 'files':
-  //     fields = filesFields;
-  //     break;
-  //   case 'slurm_schedulers':
-  //     fields = hpcConfigsFields;
-  //     break;
-  //   case 'jobs':
-  //     fields = jobsFields;
-  //     break;
-  //   case 'resource_requirements':
-  //     fields = resourceRequirementsFields;
-  //     break;
-  //   default:
-  //     throw new Error(`collection name ${collectionName} is not handled`);
-  // }
-  // if (!collection.exists(doc.name)) {
-  //   return null;
-  // }
-  // const existing = collection.document(doc.name);
-  // for (const field of fields) {
-  //   if (doc[field] !== existing[field]) {
-  //     return null;
-  //   }
-  // }
-
-  // return existing;
 }
 
 /**
@@ -496,7 +431,8 @@ function getJobDefinition(job) {
     input_files: inputFiles,
     output_files: outputFiles,
     resource_requirements: getJobResourceRequirements(job).name,
-    scheduler: scheduler == null ? null : scheduler.name,
+    scheduler: scheduler == null ? '' : scheduler._id,
+    user_data: userData,
   };
 }
 
@@ -632,7 +568,7 @@ function getLatestJobResult(job) {
  */
 function getUserDataStoredByJob(jobName) {
   const jobId = `jobs/${jobName}`;
-  return query({count: true})`
+  const cursor = query({count: true})`
     FOR v, e, p
       IN 1
       OUTBOUND ${jobId}
@@ -640,6 +576,10 @@ function getUserDataStoredByJob(jobName) {
       OPTIONS { edgeCollections: 'stores' }
       RETURN p.vertices[1]
   `;
+  if (cursor.count() == 0) {
+    return [];
+  }
+  return cursor.toArray();
 }
 
 /**
@@ -834,7 +774,8 @@ function prepareJobsForSubmission(workerResources, limit) {
   const workerTimeLimit =
     workerResources.time_limit == null ?
       Number.MAX_SAFE_INTEGER : utils.getTimeDurationInSeconds(workerResources.time_limit);
-  const schedulerConfigId = workerResources.scheduler_config_id == null ? '' : workerResources.scheduler_config_id;
+  const schedulerConfigId = workerResources.scheduler_config_id == null ? '' :
+    workerResources.scheduler_config_id;
   // TODO: numGpus
 
   db._executeTransaction({
@@ -954,7 +895,10 @@ function setupAutoTuneResourceRequirements() {
   const status = getWorkflowStatus();
   status.auto_tune_status.enabled = true;
 
-  // TODO DT: verify that process stats are enabled for jobs
+  const config = getWorkflowConfig();
+  if (!config.compute_node_resource_stats.process) {
+    throw new Error('The auto-tune feature requires collection of job process stats.');
+  }
 
   for (const job of db.jobs.all()) {
     if (job.status == JobStatus.Blocked) {
@@ -963,7 +907,7 @@ function setupAutoTuneResourceRequirements() {
     const rr = getJobResourceRequirements(job);
     if (groups.has(rr.name)) {
       if (job.status == JobStatus.Disabled) {
-        // TODO DT: should I track these instead?
+        // TODO: should we track these instead?
         res.throw(400, `Job ${job.name} is already disabled`);
       }
       // This isn't atomic, but the user shouldn't call this in parallel.

@@ -175,7 +175,7 @@ router.get('jobs/get_user_data/:key', function(req, res) {
   if (!graph.jobs.document(req.pathParams.key)) {
     res.throw(404, `Job ${req.pathParams.key} is not stored`);
   } else {
-    res.send(query.getUserDataStoredByJob(req.pathParams.key).toArray());
+    res.send(query.getUserDataStoredByJob(req.pathParams.key));
   }
 })
     .pathParam('key', joi.string().required(), 'Job key')
