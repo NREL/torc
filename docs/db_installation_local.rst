@@ -101,7 +101,7 @@ It should have generated several files in ``db_service/src/api/generated``.
 .. code-block:: console
 
     $ npm install
-    $ zip -r wms-service.zip manifest.json index.js src scripts
+    $ zip -r torc-service.zip manifest.json index.js src scripts node_modules
 
 Install that service via the web app by following instructions at
 https://www.arangodb.com/docs/stable/foxx-getting-started.html#try-it-out or by using the ``foxx``
@@ -140,26 +140,26 @@ Default ``foxx`` instructions didn't fully work. Here are some that did:
 .. code-block:: console
 
     $ foxx list --server dev
-      /wms-service           [DEV]
+      /torc-service           [DEV]
 
 4. Install the service.
 
 .. code-block:: console
 
-    $ foxx install -H dev /wms-service wms-service.zip
+    $ foxx install -H dev /torc-service torc-service.zip
 
 You can replace an existing service with
 
 .. code-block:: console
 
-    $ foxx replace -H dev /wms-service wms-service.zip
+    $ foxx replace -H dev /torc-service torc-service.zip
 
 5. Enable development mode with this command (this can also be done in the settings tab of the web
 UI)
 
 .. code-block:: console
 
-    $ foxx set-dev --server dev /wms-service
+    $ foxx set-dev --server dev /torc-service
 
 Be sure to read https://www.arangodb.com/docs/stable/foxx-guides-development-mode.html when
 developing the API endpoint.
@@ -176,4 +176,4 @@ generally useful for displaying and filtering JSON output).
 
 .. code-block:: console
 
-    $ curl --silent -X GET http://localhost:8529/_db/workflows/wms-service/workflow/example | jq .
+    $ curl --silent -X GET http://localhost:8529/_db/workflows/torc-service/workflow/example | jq .

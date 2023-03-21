@@ -99,7 +99,7 @@ Change back to the ``db_service`` directory and create the API service package.
 .. code-block:: console
 
     $ npm install
-    $ zip -r wms-service.zip manifest.json index.js src scripts
+    $ zip -r torc-service.zip manifest.json index.js src scripts
 
 5. Use the foxx-cli Singularity container to install the API service. This can be done on a login
    node. Change the IP address to the database compute node if you are not already on that node.
@@ -115,8 +115,8 @@ Change back to the ``db_service`` directory and create the API service package.
         --database workflows \
         -username root \
         -password \
-        /wms-service \
-        /scratch/dthom/wms/wms-service.zip
+        /torc-service \
+        /scratch/dthom/torc/torc-service.zip
     $ singularity run -B /scratch:/scratch \
         /scratch/dthom/containers/foxx.sif set-dev \
         --server http://127.0.0.1:8529 \
@@ -124,7 +124,7 @@ Change back to the ``db_service`` directory and create the API service package.
         -username root \
         -password \
         --server http://127.0.0.1:8529 \
-        /wms-service
+        /torc-service
 
 You can install foxx-cli in your environment if you prefer, but you need ``npm`` installed.
 
@@ -144,4 +144,4 @@ You can install foxx-cli in your environment if you prefer, but you need ``npm``
 
 .. code-block:: console
 
-    $ curl --silent -X GET http://localhost:8529/_db/workflows/wms-service/workflow/example | jq .
+    $ curl --silent -X GET http://localhost:8529/_db/workflows/torc-service/workflow/example | jq .

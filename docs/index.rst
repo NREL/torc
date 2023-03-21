@@ -1,17 +1,18 @@
-.. wms documentation master file, created by
+.. torc documentation master file, created by
    sphinx-quickstart on Sat Feb 11 11:41:31 2023.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Prototype Workflow Management System
-====================================
-This software package orchestrates execution of a workflow of jobs on distributed
-computing resources.
+Torc Workflow Management System
+===============================
+The torc software package orchestrates execution of workflows on distributed computing resources.
+It also provides mechanisms for users to manage result data.
 
 Features
 --------
 - Manage job dependencies.
 - Manage job resource requirements.
+- Auto-tune resource requirements.
 - Support cloud and HPC environments simultaneously.
 - Support workflow restarts.
 
@@ -27,7 +28,7 @@ Refer to :ref:`overview` for an illustration of its capabilities.
 
 ArangoDB
 --------
-The software relies heavily on the multi-model database `ArangoDB <https://www.arangodb.com/>`_.
+Torc relies heavily on the multi-model database `ArangoDB <https://www.arangodb.com/>`_.
 It uses graphs to store relationships/dependencies between workflow objects and documents
 for user-defined data.
 

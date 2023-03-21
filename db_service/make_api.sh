@@ -3,16 +3,16 @@ if [ -z ${SWAGGER_CODEGEN_CLI} ]; then
     exit 1
 fi
 
-if [ -z ${WMS_URL} ]; then
-    export WMS_URL=http://localhost:8529
+if [ -z ${TORC_URL} ]; then
+    export TORC_URL=http://localhost:8529
 fi
 
 rm -f swagger.json openapi.yaml
 user="root"
-if [ ! -z ${WMS_PASSWORD} ]; then
-    user="${user}:${WMS_PASSWORD}"
+if [ ! -z ${TORC_PASSWORD} ]; then
+    user="${user}:${TORC_PASSWORD}"
 fi
-swagger=$(curl -u ${user} --silent -X GET ${WMS_URL}/_db/workflows/_admin/aardvark/foxxes/docs/swagger.json\?mount\=%2Fwms-service)
+swagger=$(curl -u ${user} --silent -X GET ${TORC_URL}/_db/workflows/_admin/aardvark/foxxes/docs/swagger.json\?mount\=%2Ftorc-service)
 ret=$?
 if [ $ret -ne 0 ]; then
     echo "Failed to download swagger.json"

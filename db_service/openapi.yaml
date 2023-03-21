@@ -3,7 +3,7 @@ info:
   description: ""
   license: {}
 servers:
-- url: /_db/workflows/wms-service
+- url: /_db/workflows/torc-service
 paths:
   /events:
     get:

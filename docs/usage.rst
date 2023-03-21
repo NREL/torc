@@ -4,7 +4,7 @@ Usage
 
 Configuration
 =============
-The ``wms`` tool offers several ways to configure a workflow. In all cases there is one database
+The ``torc`` tool offers several ways to configure a workflow. In all cases there is one database
 per workflow on a single instance of ArangoDB.
 
 There methods to configure a workflow are the following:
@@ -29,41 +29,41 @@ Install ``jq`` from https://stedolan.github.io/jq/download/ in order to pretty-p
 
 .. code-block:: console
 
-    $ curl --silent -X GET http://localhost:8529/_db/workflows/wms-service/workflow/example | jq . > workflow.json
+    $ curl --silent -X GET http://localhost:8529/_db/workflows/torc-service/workflow/example | jq . > workflow.json
 
 or if you have authentication enabled:
 
 .. code-block:: console
 
-    $ curl --user username:password --silent -X GET http://localhost:8529/_db/workflows/wms-service/workflow/example | jq . > workflow.json
+    $ curl --user username:password --silent -X GET http://localhost:8529/_db/workflows/torc-service/workflow/example | jq . > workflow.json
 
 Edit file as desired and the post it back to the server.
 
 .. code-block:: console
 
-    $ curl --silent -X POST http://localhost:8529/_db/workflows/wms-service/workflow -d "$(cat workflow.json)"
+    $ curl --silent -X POST http://localhost:8529/_db/workflows/torc-service/workflow -d "$(cat workflow.json)"
 
 To view the current workflow:
 
 .. code-block:: console
 
-    $ curl --silent -X GET http://localhost:8528/_db/workflows/wms-service/workflow | jq .
+    $ curl --silent -X GET http://localhost:8528/_db/workflows/torc-service/workflow | jq .
 
 To delete the current workflow:
 
 .. code-block:: console
 
-    $ curl --silent -X DELETE http://localhost:8529/_db/workflows/wms-service/workflow
+    $ curl --silent -X DELETE http://localhost:8529/_db/workflows/torc-service/workflow
 
 .. raw:: html
 
    <hr>
 
-This example workflow is stored in https://github.nrel.gov/viz/wms/blob/main/examples/workflow.json
+This example workflow is stored in https://github.nrel.gov/viz/torc/blob/main/examples/workflow.json
 
 Python API
 ----------
-Refer to this Python script: https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py
+Refer to this Python script: https://github.nrel.gov/viz/torc/blob/main/examples/diamond_workflow.py
 
 Running it in a terminal will delete the existing workflow and then create the workflow
 described in :ref:`overview`.
@@ -97,7 +97,7 @@ One-time installation:
 
     $ pip install -e python_client
 
-3. Install the ``wms`` package.
+3. Install the ``torc`` package.
 
 .. code-block:: console
 
@@ -107,7 +107,7 @@ One-time installation:
 
 .. code-block:: console
 
-   $ wms workflow run-local http://localhost:8528/_db/workflows/wms-service
+   $ torc workflow run-local http://localhost:8528/_db/workflows/torc-service
 
 .. raw:: html
 
@@ -116,13 +116,13 @@ One-time installation:
 SLURM worker on HPC via Python
 ------------------------------
 1. Install the database and API service as described in :ref:`eagle_db_installation`.
-2. Install the ``wms`` package.
+2. Install the ``torc`` package.
 3. Add your workflow to the database.
 4. Run this command to get a recommendation for how many compute nodes you need.
 
 .. code-block:: console
 
-   $ wms hpc recommend-nodes --num-cpus=36 DATABASE_URL
+   $ torc hpc recommend-nodes --num-cpus=36 DATABASE_URL
 
 5. Create an HPC configuration file that defines the parameters to pass along to SLURM. Note that
    you'll need to run this step multiple times if you require different types of nodes for
@@ -132,16 +132,16 @@ SLURM worker on HPC via Python
 
 .. code-block:: console
 
-   $ wms hpc slurm-config --help
+   $ torc hpc slurm-config --help
 
 6. Acquire the nodes by passing the HPC config file and the number of HPC job requests to make
    (note that each job could acquire multiple nodes) to this command. The script passed to SLURM
-   will start a ``wms`` job-runner script on each node. When SLURM starts allocates a node and
+   will start a ``torc`` job-runner script on each node. When SLURM starts allocates a node and
    starts that script, it will begin pulling and executing jobs from the database.
 
 .. code-block:: console
 
-   $ wms hpc schedule-nodes [OPTIONS] DATABASE_URL CONFIG_FILE NUM_HPC_JOBS
+   $ torc hpc schedule-nodes [OPTIONS] DATABASE_URL CONFIG_FILE NUM_HPC_JOBS
 
 As of now the orchestrator will not automatically schedule new nodes after blocked jobs become
 ready. We plan to add this functionality.
@@ -153,13 +153,13 @@ a query with filters directly against the database, such in the query page of th
 
 .. code-block:: console
 
-   $ curl --silent -X GET http://localhost:8529/_db/workflows/wms-service/jobs | jq .
+   $ curl --silent -X GET http://localhost:8529/_db/workflows/torc-service/jobs | jq .
 
 This example will show only job names and status.
 
 .. code-block:: console
 
-   $ curl --silent -X GET http://localhost:8529/_db/workflows/wms-service/jobs | jq '.items | .[] | [.name, .status]'
+   $ curl --silent -X GET http://localhost:8529/_db/workflows/torc-service/jobs | jq '.items | .[] | [.name, .status]'
 
 .. raw:: html
 
@@ -167,5 +167,5 @@ This example will show only job names and status.
 
 Cloud Compute Nodes
 -------------------
-We currently do not perform compute node scheduling, but plan to add it soon. The existing ``wms
+We currently do not perform compute node scheduling, but plan to add it soon. The existing ``torc
 workflow run-local`` command will work on an allocated node.

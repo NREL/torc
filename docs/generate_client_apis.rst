@@ -16,7 +16,7 @@ and port:
 
 .. code-block:: console
 
-   $ export WMS_URL=http://hostname:port
+   $ export TORC_URL=http://hostname:port
 
 2. Change to the ``db_service`` directory in the repository.
 
@@ -29,7 +29,7 @@ and port:
 .. code-block:: console
 
    $ export SWAGGER_CODEGEN_CLI=~/tools/swagger-codegen-cli.jar
-   $ export WMS_PASSWORD=my_password
+   $ export TORC_PASSWORD=my_password
 
 4. Generate the python client.
 
