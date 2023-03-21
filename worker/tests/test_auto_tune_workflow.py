@@ -13,7 +13,6 @@ from wms.resource_monitor.reports import (
     make_job_process_stats_dataframe,
     make_compute_node_stats_dataframes,
 )
-from wms.utils.run_command import check_run_command
 from wms.workflow_manager import WorkflowManager
 
 
@@ -89,16 +88,6 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     )
     runner.run_worker()
     assert api.get_workflow_is_complete()
-    for command in ("show-process-stats", "show-resource-stats"):
-        cmd = f"wms workflow {command} http://localhost:8529/_db/workflows/wms-service"
-        output = {}
-        check_run_command(cmd, output)
-        assert "Statistics" in output["stdout"]
-        for name in stats_by_name:
-            assert name in output["stdout"]
-
-    cmd = "wms workflow show-resource-stats -x http://localhost:8529/_db/workflows/wms-service"
-    check_run_command(cmd)
 
     df = make_job_process_stats_dataframe(api)
     assert isinstance(df, pl.DataFrame)

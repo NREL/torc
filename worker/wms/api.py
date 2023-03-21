@@ -1,5 +1,7 @@
 """Helper functions to access the API"""
 
+import itertools
+
 from swagger_client import ApiClient, DefaultApi
 from swagger_client.configuration import Configuration
 
@@ -57,3 +59,20 @@ def send_api_command(func, *args, **kwargs):
     """
     with Timer(timer_stats_collector, func.__name__):
         return func(*args, **kwargs)
+
+
+def sanitize_workflow(data: dict):
+    """Sanitize a WorkflowModel dictionary in place so that it can be loaded into the database."""
+    for item in itertools.chain([data["config"]], data["files"], data["resource_requirements"]):
+        for key in _DATABASE_KEYS:
+            item.pop(key, None)
+    if "files" in data and not data["files"]:
+        data.pop("files")
+    for file in data.get("files", []):
+        for field in ("file_hash", "st_mtime"):
+            if file[field] is None:
+                file.pop(field)
+    for field in ("aws_schedulers", "local_schedulers", "slurm_schedulers"):
+        if field in data["schedulers"] and not data["schedulers"][field]:
+            data["schedulers"].pop(field)
+    return data

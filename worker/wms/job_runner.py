@@ -12,6 +12,7 @@ from pathlib import Path
 
 import psutil
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
+from pydantic.json import timedelta_isoformat  # pylint: disable=no-name-in-module
 from swagger_client import DefaultApi
 from swagger_client.models.compute_nodes_model import ComputeNodesModel
 from swagger_client.models.compute_node_stats_model import ComputeNodeStatsModel
@@ -518,6 +519,11 @@ def get_memory_in_bytes(memory: str):
 
 # This pydantic code will convert ISO 8601 duration strings to timedelta.
 class _TimeLimitModel(BaseModel):
+    class Config:
+        """Custom config"""
+
+        json_encoders = {timedelta: timedelta_isoformat}
+
     time_limit: timedelta
 
 

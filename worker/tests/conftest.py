@@ -10,7 +10,6 @@ import pytest
 
 from swagger_client import ApiClient, DefaultApi
 from swagger_client.configuration import Configuration
-from swagger_client.models.workflow_scheduler import WorkflowScheduler
 from swagger_client.models.workflow_schedulers import WorkflowSchedulers
 from swagger_client.models.file_model import FileModel
 from swagger_client.models.local_schedulers_model import LocalSchedulersModel
@@ -53,14 +52,14 @@ def diamond_workflow(tmp_path):
     medium = ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H")
     large = ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H")
 
-    scheduler = LocalSchedulersModel(name="local")
+    scheduler = LocalSchedulersModel(name="test")
     preprocess = JobDefinition(
         name="preprocess",
         command=f"python {PREPROCESS} -i {inputs.path} -o {f1.path}",
         input_files=[inputs.name],
         output_files=[f1.name],
         resource_requirements=small.name,
-        scheduler=WorkflowScheduler(name="local", type="local"),
+        scheduler="local_schedulers/test",
     )
     work1 = JobDefinition(
         name="work1",
@@ -69,7 +68,7 @@ def diamond_workflow(tmp_path):
         input_files=[f1.name],
         output_files=[f2.name],
         resource_requirements=medium.name,
-        scheduler=WorkflowScheduler(name="local", type="local"),
+        scheduler="local_schedulers/test",
     )
     work2 = JobDefinition(
         name="work2",
@@ -78,7 +77,7 @@ def diamond_workflow(tmp_path):
         input_files=[f1.name],
         output_files=[f3.name],
         resource_requirements=large.name,
-        scheduler=WorkflowScheduler(name="local", type="local"),
+        scheduler="local_schedulers/test",
     )
     postprocess = JobDefinition(
         name="postprocess",
@@ -86,7 +85,7 @@ def diamond_workflow(tmp_path):
         input_files=[f2.name, f3.name],
         output_files=[f4.name],
         resource_requirements=small.name,
-        scheduler=WorkflowScheduler(name="local", type="local"),
+        scheduler="local_schedulers/test",
     )
 
     workflow = WorkflowModel(
@@ -103,7 +102,7 @@ def diamond_workflow(tmp_path):
 
     api.post_workflow(workflow)
     api.post_workflow_initialize_jobs()
-    scheduler = api.get_local_schedulers_key("local")
+    scheduler = api.get_local_schedulers_key("test")
     yield api, scheduler.id, output_dir
     api.delete_workflow()
 
@@ -265,14 +264,14 @@ def multi_resource_requirement_workflow(tmp_path):
     medium = ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H")
     large = ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H")
 
-    scheduler = LocalSchedulersModel(name="local")
+    scheduler = LocalSchedulersModel(name="test")
     num_jobs_per_category = 3
     small_jobs = [
         JobDefinition(
             name=f"job_small{i}",
             command=f"python {RC_JOB} -i {i} -c small",
             resource_requirements=small.name,
-            scheduler=WorkflowScheduler(name="local", type="local"),
+            scheduler="local_schedulers/test",
         )
         for i in range(1, num_jobs_per_category + 1)
     ]
@@ -281,7 +280,7 @@ def multi_resource_requirement_workflow(tmp_path):
             name=f"job_medium{i}",
             command=f"python {RC_JOB} -i {i} -c medium",
             resource_requirements=medium.name,
-            scheduler=WorkflowScheduler(name="local", type="local"),
+            scheduler="local_schedulers/test",
         )
         for i in range(1, num_jobs_per_category + 1)
     ]
@@ -290,7 +289,7 @@ def multi_resource_requirement_workflow(tmp_path):
             name=f"job_large{i}",
             command=f"python {RC_JOB} -i {i} -c large",
             resource_requirements=large.name,
-            scheduler=WorkflowScheduler(name="local", type="local"),
+            scheduler="local_schedulers/test",
         )
         for i in range(1, num_jobs_per_category + 1)
     ]
@@ -310,7 +309,7 @@ def multi_resource_requirement_workflow(tmp_path):
     )
 
     api.post_workflow(workflow)
-    scheduler = api.get_local_schedulers_key("local")
+    scheduler = api.get_local_schedulers_key("test")
     api.post_workflow_initialize_jobs()
     yield api, scheduler.id, output_dir
     api.delete_workflow()

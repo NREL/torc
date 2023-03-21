@@ -14,11 +14,11 @@ logger = logging.getLogger(__name__)
 class HpcManager:
     """Manages HPC job submission and monitoring."""
 
-    def __init__(self, config, output):
+    def __init__(self, config, hpc_type: HpcType, output):
         self._output = output
         self._config = config
-        self._hpc_type = config["hpc_type"]
-        self._intf = self.create_hpc_interface(HpcType(config["hpc_type"]))
+        self._hpc_type = hpc_type
+        self._intf = self.create_hpc_interface(hpc_type)
 
         logger.debug("Constructed HpcManager with output=%s", output)
 

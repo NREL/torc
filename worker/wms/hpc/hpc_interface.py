@@ -2,6 +2,7 @@
 
 import abc
 import getpass
+from datetime import datetime
 
 
 class HpcInterface(abc.ABC):
@@ -88,6 +89,10 @@ class HpcInterface(abc.ABC):
     @abc.abstractmethod
     def get_environment_variables(self) -> dict[str, dict]:
         """Return a dict of all relevant HPC environment variables."""
+
+    @abc.abstractmethod
+    def get_job_end_time(self) -> datetime:
+        """Return the end time for the current job."""
 
     @abc.abstractmethod
     def get_job_stats(self, job_id):

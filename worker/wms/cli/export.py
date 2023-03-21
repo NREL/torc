@@ -9,26 +9,22 @@ from pathlib import Path
 import click
 from swagger_client import DefaultApi
 
-from wms.api import make_api, iter_documents
+from wms.api import iter_documents
 from wms.utils.sql import make_table, insert_rows
+from .common import setup_cli_logging
 
 
 logger = logging.getLogger(__name__)
 
 
 @click.group()
-def export():
+@click.pass_context
+def export(ctx):
     """Export commands"""
+    setup_cli_logging(ctx, 1, __name__)
 
 
 @click.command(name="json")
-@click.option(
-    "-u",
-    "--database-url",
-    help="Database URL",
-    default="http://localhost:8529/_db/workflows/wms-service",
-    show_default=True,
-)
 @click.option(
     "-d",
     "--directory",
@@ -45,7 +41,8 @@ def export():
     show_default=True,
     help="Overwrite directory if it exists.",
 )
-def export_json(database_url, directory, force):
+@click.pass_obj
+def export_json(api, directory, force):
     """Export workflow database to this directory in JSON format."""
     if directory.exists():
         if force:
@@ -60,11 +57,10 @@ def export_json(database_url, directory, force):
     directory.mkdir()
     edges_directory = directory / "edges"
     edges_directory.mkdir()
-    api = make_api(database_url)
 
+    # TODO: Delete this and use arangodump instead.
     # TODO: This doesn't handle batching and will not get all data.
     # TODO: Get workflow_status
-    # TODO: Consider using arangoexport instead
     for name, func in _get_db_documents(api).items():
         if name in _EDGES:
             filename = directory / "edges" / f"{name}.json"
@@ -83,13 +79,6 @@ def export_json(database_url, directory, force):
 
 @click.command()
 @click.option(
-    "-u",
-    "--database-url",
-    help="Database URL",
-    default="http://localhost:8529/_db/workflows/wms-service",
-    show_default=True,
-)
-@click.option(
     "-F",
     "--filename",
     default="workflow.sqlite",
@@ -105,7 +94,8 @@ def export_json(database_url, directory, force):
     show_default=True,
     help="Overwrite file if it exists.",
 )
-def sqlite(database_url, filename, force):
+@click.pass_obj
+def sqlite(api, filename, force):
     """Export workflow database to this SQLite file."""
     if filename.exists():
         if force:
@@ -117,10 +107,11 @@ def sqlite(database_url, filename, force):
             )
             sys.exit(1)
 
-    api = make_api(database_url)
-
     # TODO: Get workflow_status
     for name, func in _get_db_documents(api).items():
+        if name in ("compute_node_stats", "compute_nodes"):
+            # TODO: determine how to record the nested data. JSON string?
+            continue
         found_first = False
         rows = []
         args = (name,) if name in _EDGES else tuple()
@@ -187,6 +178,8 @@ _EDGES = {
     "stores",
 }
 _PRIMARY_KEYS = {
+    "compute_node_stats": "key",
+    "compute_nodes": "key",
     "executed": "key",
     "events": "key",
     "jobs": "name",
@@ -198,6 +191,7 @@ _PRIMARY_KEYS = {
     "user_data": "key",
     "blocks": "key",
     "needs": "key",
+    "node_used": "key",
     "produces": "key",
     "requires": "key",
     "results": "key",

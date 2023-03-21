@@ -109,14 +109,14 @@ class SlurmInterface(HpcInterface):
 
     def _create_submission_script_text(self, name, command, path, config):
         text = f"""#!/bin/bash
-#SBATCH --account={config['hpc']['account']}
+#SBATCH --account={config['account']}
 #SBATCH --job-name={name}
-#SBATCH --time={config['hpc']['walltime']}
+#SBATCH --time={config['walltime']}
 #SBATCH --output={path}/job_output_%j.o
 #SBATCH --error={path}/job_output_%j.e
 """
-        for param in set(config["hpc"]).difference({"account", "walltime"}):
-            value = config["hpc"][param]
+        for param in set(config).difference({"account", "walltime"}):
+            value = config[param]
             if value is not None:
                 text += f"#SBATCH --{param}={value}\n"
 
@@ -127,6 +127,13 @@ class SlurmInterface(HpcInterface):
 
     def get_environment_variables(self) -> dict[str, str]:
         return {k: v for k, v in os.environ.items() if "SLURM" in k}
+
+    def get_job_end_time(self):
+        cmd = f"squeue -j {self.get_current_job_id()} --format='%20e'"
+        output = {}
+        check_run_command(cmd, output=output)
+        timestamp = output["stdout"].split("\n")[1].replace('"', "").strip()
+        return datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
 
     def get_job_stats(self, job_id):
         cmd = (

@@ -1,6 +1,7 @@
 """Utility functions to run commands through the system"""
 
 import logging
+import os
 import shlex
 import subprocess
 import sys
@@ -134,3 +135,14 @@ def check_run_command(*args, **kwargs):
     ret = run_command(*args, **kwargs)
     if ret != 0:
         raise ExecutionError(f"command returned error code: {ret}")
+
+
+def get_cli_string():
+    """Return the command-line arguments issued.
+
+    Returns
+    -------
+    str
+
+    """
+    return os.path.basename(sys.argv[0]) + " " + " ".join(sys.argv[1:])
