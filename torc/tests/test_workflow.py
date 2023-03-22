@@ -55,6 +55,13 @@ def test_run_workflow(diamond_workflow):
         # assert file.file_hash
         assert file.st_mtime
 
+    result_data_work1 = {"result": 1}
+    result_data_overall = {"overall_result": 2}
+    api.post_jobs_store_user_data_key(result_data_work1, "work1")
+    user_data_work1 = api.get_jobs_get_user_data_key("work1")
+    assert len(user_data_work1) == 2
+    api.post_user_data(result_data_overall)
+
     events = api.get_events().items
     # start for workflow, start and stop for worker, start and stop for each job
     assert len(events) == 1 + 2 * 4 + 2

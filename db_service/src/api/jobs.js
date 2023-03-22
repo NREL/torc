@@ -159,12 +159,12 @@ router.put('jobs/manage_status_change/:key/:status/:rev', function(req, res) {
 
 router.post('jobs/store_user_data/:key', function(req, res) {
   const job = graph.jobs.document(req.pathParams.key);
-  const userData = req.pathParams.user_data;
+  const userData = req.body;
   const doc = query.addUserData(userData);
   graph.stores.save({_from: job._id, _to: doc._id});
   res.send(doc);
 })
-    .body(schemas.result, 'User data for the job.')
+    .body(joi.object().required(), 'User data for the job.')
     .response(joi.object().required(), 'Database information for the user data.')
     .summary('Store user data for a job.')
     .description('Store user data for a job and connect the two vertexes.');
