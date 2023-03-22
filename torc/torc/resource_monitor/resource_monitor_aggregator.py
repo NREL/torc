@@ -263,6 +263,7 @@ def run_stat_aggregator(conn, stats, pids):
                 case _:
                     raise Exception(f"Received unknown command: {cmd}")
 
+        agg.update_resource_stats(pids=pids)
         time.sleep(stats.interval)
 
     conn.send(results)
