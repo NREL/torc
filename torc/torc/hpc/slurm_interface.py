@@ -117,6 +117,8 @@ class SlurmInterface(HpcInterface):
 """
         for param in set(config).difference({"account", "walltime"}):
             value = config[param]
+            if isinstance(value, float):
+                value = int(value)
             if value is not None:
                 text += f"#SBATCH --{param}={value}\n"
 

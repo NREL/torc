@@ -11,6 +11,8 @@ from pathlib import Path
 
 from swagger_client.models.result_model import ResultModel
 
+from torc.common import JOB_STDIO
+
 logger = logging.getLogger(__name__)
 
 
@@ -131,8 +133,8 @@ class AsyncCliCommand(AsyncJobBase):
         self._start_time = time.time()
 
         cmd = shlex.split(self._db_job.command, posix="win" not in sys.platform)
-        stdout_filename = output_dir / f"{self.name}.o"
-        stderr_filename = output_dir / f"{self.name}.e"
+        stdout_filename = output_dir / JOB_STDIO / f"{self.name}.o"
+        stderr_filename = output_dir / JOB_STDIO / f"{self.name}.e"
         # pylint: disable=consider-using-with
         self._stdout_fp = open(stdout_filename, "w", encoding="utf-8")
         self._stderr_fp = open(stderr_filename, "w", encoding="utf-8")

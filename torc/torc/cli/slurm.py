@@ -19,15 +19,17 @@ from torc.hpc.slurm_interface import SlurmInterface
 from torc.job_runner import JobRunner, convert_end_time_to_duration_str
 from torc.loggers import setup_logging
 from torc.utils.run_command import get_cli_string
-from .common import make_text_table
+from .common import make_text_table, setup_cli_logging
 
 
 logger = logging.getLogger(__name__)
 
 
 @click.group()
-def slurm():
+@click.pass_context
+def slurm(ctx):
     """SLURM commands"""
+    setup_cli_logging(ctx, 2, __name__)
 
 
 @click.command()
@@ -145,7 +147,9 @@ def show_configs(api):
 @click.pass_context
 def schedule_nodes(ctx, api, scheduler_config_id, index, job_prefix, num_hpc_jobs, output):
     """Schedule nodes with SLURM to run jobs."""
+    # TODO: if workflow isn't started, start it?
     logger.info(get_cli_string())
+    output.mkdir(exist_ok=True)
     fields = scheduler_config_id.split("/")
     if len(fields) != 2:
         logger.info("Invalid scheduler ID format: %s", scheduler_config_id)
@@ -159,8 +163,8 @@ def schedule_nodes(ctx, api, scheduler_config_id, index, job_prefix, num_hpc_job
     config.pop("name")
     hpc_type = HpcType("slurm")
     mgr = HpcManager(config, hpc_type, output)
-    database_url = ctx.parent.parent.params["database_url"]
-    runner_script = f"torc hpc slurm-runner {database_url}"
+    database_url = ctx.parent.parent.parent.params["database_url"]
+    runner_script = f"torc -u {database_url} hpc slurm run-jobs"
     job_ids = []
     for i in range(index, num_hpc_jobs + 1):
         name = f"{job_prefix}_{i}"
@@ -193,13 +197,17 @@ def schedule_nodes(ctx, api, scheduler_config_id, index, job_prefix, num_hpc_job
     callback=lambda *x: Path(x[2]),
 )
 @click.pass_obj
-def run_jobs(api, output):
+@click.pass_context
+def run_jobs(ctx, api, output):
     """Run workflow jobs on a SLURM compute node."""
     # TODO: make unique
-    filename = output / "slurm_runner.log"
+    hostname = socket.gethostname()
+    filename = output / f"slurm_runner_{hostname}.log"
     my_logger = setup_logging(__name__, filename=filename, mode="a")
     my_logger.info(get_cli_string())
-    my_logger.info("Run jobs against the database at %s", "TODO")
+    my_logger.info(
+        "Run jobs on %s for workflow %s", hostname, ctx.obj.api_client.configuration.host
+    )
     intf = SlurmInterface()
     slurm_job_id = intf.get_current_job_id()
     scheduler = {

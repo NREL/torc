@@ -35,7 +35,7 @@ class IpcMonitorCommands(enum.Enum):
     UPDATE_STATS = "update_stats"
 
 
-# TODO DT: make test to assert that this is the same as WorkflowConfigComputeNodeResourceStats
+# TODO: make test to assert that this is the same as WorkflowConfigComputeNodeResourceStats
 # Want two versions so that this can be used without the Swagger API
 class ComputeNodeResourceStatConfig(TorcBaseModel):
     """Defines the stats to monitor."""

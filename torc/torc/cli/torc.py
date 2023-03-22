@@ -47,7 +47,7 @@ def _get_log_level_from_str(*args):
 )
 @click.option(
     "--timings/--no-timings",
-    default=True,
+    default=False,
     is_flag=True,
     show_default=True,
     help="Enable tracking of function timings.",
@@ -65,7 +65,15 @@ def cli(ctx, console_level, file_level, timings, database_url):  # pylint: disab
     """torc commands"""
     if timings:
         timer_stats_collector.enable()
+    else:
+        timer_stats_collector.disable()
     ctx.obj = make_api(database_url)
+
+
+@cli.result_callback()
+def callback(*args, **kwargs):  # pylint: disable=unused-argument
+    """Log timer stats at exit."""
+    timer_stats_collector.log_stats()
 
 
 cli.add_command(export)

@@ -2,10 +2,11 @@
 
 import json
 import logging
+from pprint import pprint
 
 import click
 
-from torc.api import iter_documents, sanitize_workflow
+from torc.api import iter_documents, remove_db_keys, sanitize_workflow
 from torc.resource_monitor.reports import (
     iter_job_process_stats,
     make_compute_node_stats_text_tables,
@@ -21,6 +22,14 @@ logger = logging.getLogger(__name__)
 def show(ctx):
     """Show commands"""
     setup_cli_logging(ctx, 1, __name__)
+
+
+@click.command()
+@click.pass_obj
+def events(api):
+    """Show jobs stored in the workflow."""
+    for event in api.get_events().items:
+        pprint(remove_db_keys(event))
 
 
 @click.command()
@@ -111,6 +120,7 @@ def example_workflow(api):
     print(json.dumps(text, indent=2))
 
 
+show.add_command(events)
 show.add_command(jobs)
 show.add_command(process_stats)
 show.add_command(resource_stats)
