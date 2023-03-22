@@ -24,6 +24,7 @@ from swagger_client.models.workflow_prepare_jobs_for_submission_model import (
 )
 
 from torc.api import send_api_command
+from torc.common import JOB_STDIO
 from torc.resource_monitor import (
     ComputeNodeResourceStatResults,
     IpcMonitorCommands,
@@ -89,6 +90,8 @@ class JobRunner:
         self._monitor_proc = None
         self._pids = {}
         self._jobs_pending_process_stat_completion = []
+        job_stdio = output_dir / JOB_STDIO
+        job_stdio.mkdir(exist_ok=True)
 
     def __del__(self):
         if self._outstanding_jobs:
@@ -344,6 +347,7 @@ class JobRunner:
     def _start_resource_monitor(self):
         self._parent_monitor_conn, child_conn = multiprocessing.Pipe()
         pids = self._pids if self._stats.process else None
+        logger.info("Start resource monitor with %s", self._stats)
         self._monitor_proc = multiprocessing.Process(
             target=run_stat_aggregator, args=(child_conn, self._stats, pids)
         )
