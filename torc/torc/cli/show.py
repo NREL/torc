@@ -34,6 +34,22 @@ def events(api):
 
 @click.command()
 @click.pass_obj
+def files(api):
+    """Show files stored in the workflow."""
+    exclude = ("key", "id", "rev")
+    table = make_text_table(
+        (x.to_dict() for x in iter_documents(api.get_files)),
+        "Files",
+        exclude_columns=exclude,
+    )
+    if table.rows:
+        print(table)
+    else:
+        print("No files are available")
+
+
+@click.command()
+@click.pass_obj
 def jobs(api):
     """Show jobs stored in the workflow."""
     exclude = ("key", "id", "rev", "internal")
@@ -121,6 +137,7 @@ def example_workflow(api):
 
 
 show.add_command(events)
+show.add_command(files)
 show.add_command(jobs)
 show.add_command(process_stats)
 show.add_command(resource_stats)

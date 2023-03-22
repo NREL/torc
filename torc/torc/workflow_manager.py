@@ -5,7 +5,7 @@ import logging
 import socket
 from pathlib import Path
 
-from torc.api import send_api_command
+from torc.api import send_api_command, iter_documents
 
 
 logger = logging.getLogger(__name__)
@@ -65,6 +65,12 @@ class WorkflowManager:
         auto_tune_resource_requirements : bool
             If True, configure the workflow to auto-tune resource requirements.
         """
+        for file in iter_documents(self._api.get_files):
+            path = Path(file.path)
+            if path.exists():
+                file.st_mtime = path.stat().st_mtime
+                send_api_command(self._api.put_files_key, file, file.key)
+
         send_api_command(self._api.put_workflow_status_reset)
         # Set every job status to unknown/uninitialized.
         send_api_command(self._api.post_workflow_initialize_jobs)

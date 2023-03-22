@@ -70,7 +70,7 @@ def sanitize_workflow(data: dict):
         data.pop("files")
     for file in data.get("files", []):
         for field in ("file_hash", "st_mtime"):
-            if file[field] is None:
+            if field in file and file[field] is None:
                 file.pop(field)
     for field in ("aws_schedulers", "local_schedulers", "slurm_schedulers"):
         if field in data["schedulers"] and not data["schedulers"][field]:

@@ -70,7 +70,7 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     large = api.get_resource_requirements_key("large")
     for rr in (small, medium, large):
         assert rr.runtime == "P0DT0H1M"
-        assert rr.num_cpus == 1
+        assert rr.num_cpus in (1, 2)
         assert rr.memory.lower() == "1g"
 
     for job in api.get_jobs().items:

@@ -347,7 +347,7 @@ class JobRunner:
     def _start_resource_monitor(self):
         self._parent_monitor_conn, child_conn = multiprocessing.Pipe()
         pids = self._pids if self._stats.process else None
-        logger.info("Start resource monitor with %s", self._stats)
+        logger.info("Start resource monitor with %s", json.dumps(self._stats.to_dict()))
         self._monitor_proc = multiprocessing.Process(
             target=run_stat_aggregator, args=(child_conn, self._stats, pids)
         )

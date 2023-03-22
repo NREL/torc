@@ -4,7 +4,6 @@ import logging
 import socket
 import sys
 from datetime import timedelta
-from pathlib import Path
 
 import click
 from swagger_client.models.slurm_schedulers_model import SlurmSchedulersModel
@@ -19,7 +18,7 @@ from torc.hpc.slurm_interface import SlurmInterface
 from torc.job_runner import JobRunner, convert_end_time_to_duration_str
 from torc.loggers import setup_logging
 from torc.utils.run_command import get_cli_string
-from .common import make_text_table, setup_cli_logging
+from .common import make_text_table, setup_cli_logging, path_callback
 
 
 logger = logging.getLogger(__name__)
@@ -141,7 +140,7 @@ def show_configs(api):
     default="output",
     show_default=True,
     help="Output directory for compute nodes",
-    callback=lambda *x: Path(x[2]),
+    callback=path_callback,
 )
 @click.pass_obj
 @click.pass_context
@@ -194,7 +193,7 @@ def schedule_nodes(ctx, api, scheduler_config_id, index, job_prefix, num_hpc_job
     "--output",
     default="output",
     show_default=True,
-    callback=lambda *x: Path(x[2]),
+    callback=path_callback,
 )
 @click.pass_obj
 @click.pass_context
