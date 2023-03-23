@@ -1,15 +1,13 @@
 'use strict';
 const {query} = require('@arangodb');
 const db = require('@arangodb').db;
-const graphModule = require('@arangodb/general-graph');
 const {GiB, GRAPH_NAME, JobStatus} = require('./defs');
-const graph = graphModule._graph(GRAPH_NAME);
 const schemas = require('./api/schemas');
 const utils = require('./utils');
 
 /** Add 'blocks' edges between jobs by looking at their file edges. */
 function addBlocksEdgesFromFiles() {
-  for (const file of graph.files.all()) {
+  for (const file of db.files.all()) {
     const fid = file._id;
     const fromVertices = query`
       FOR v
@@ -40,7 +38,7 @@ function addBlocksEdgesFromFiles() {
               RETURN edge
             `;
         if (cursor.count() == 0) {
-          graph.blocks.save({_from: fromVertex, _to: toVertex});
+          db.blocks.save({_from: fromVertex, _to: toVertex});
           console.log(`${fromVertex} blocks ${toVertex}`);
         }
       }
@@ -94,18 +92,20 @@ function addScheduler(doc, collectionName) {
  * @return {Object}
  */
 function addJob(doc) {
-  const existing = getDocumentIfAlreadyStored(doc, 'jobs');
-  if (existing != null) {
-    return existing;
-  }
+  // const existing = getDocumentIfAlreadyStored(doc, 'jobs');
+  // if (existing != null) {
+  //   return existing;
+  // }
 
-  doc._key = doc.name;
+  if (doc._key != null) {
+    throw new Error(`key=${doc._key} cannot be set on job insertion`);
+  }
   if (doc.status == null) {
     doc.status = JobStatus.Uninitialized;
   }
   const meta = db.jobs.save(doc);
   Object.assign(doc, meta);
-  console.log(`Added job ${doc.name}`);
+  console.log(`Added job ${doc._key}`);
   return doc;
 }
 
@@ -117,26 +117,25 @@ function addJob(doc) {
 function addJobDefinition(jobDef) {
   let schedulerConfigId = null;
   for (const filename of jobDef.input_files) {
-    if (!graph.files.exists(filename)) {
-      throw new Error(`job ${jobDef.name} input file ${filename} is not stored`);
+    if (!db.files.exists(filename)) {
+      throw new Error(`job ${JSON.stringify(jobDef)} input file ${filename} is not stored`);
     }
   }
   for (const filename of jobDef.output_files) {
-    if (!graph.files.exists(filename)) {
-      throw new Error(`job ${jobDef.name} output file ${filename} is not stored`);
+    if (!db.files.exists(filename)) {
+      throw new Error(`job ${JSON.stringify(jobDef)} output file ${filename} is not stored`);
     }
   }
   for (const jobName of jobDef.blocked_by) {
-    if (!graph.jobs.exists(jobName)) {
-      throw new Error(`job ${jobDef.name} with blocked_by ${jobName} is not stored`);
-    }
+    // Will throw if not correct.
+    getJobByName(jobName);
   }
   if (jobDef.scheduler != '') {
     schedulerConfigId = getSchedulerConfig(jobDef.scheduler)._id;
   }
   const rr = jobDef.resource_requirements;
-  if (rr != null && !graph.resource_requirements.exists(rr)) {
-    throw new Error(`job ${jobDef.name} resource_requirements ${rr} is not stored`);
+  if (rr != null && !db.resource_requirements.exists(rr)) {
+    throw new Error(`job ${JSON.stringify(jobDef)} resource_requirements ${rr} is not stored`);
   }
 
   const job = addJob({
@@ -148,34 +147,49 @@ function addJobDefinition(jobDef) {
     internal: schemas.jobInternal.validate({}).value,
   });
   for (const filename of jobDef.input_files) {
-    const file = graph.files.document(filename);
+    const file = db.files.document(filename);
     const edge = {_from: job._id, _to: file._id};
-    graph.needs.save(edge);
+    db.needs.save(edge);
   }
   for (const filename of jobDef.output_files) {
-    const file = graph.files.document(filename);
+    const file = db.files.document(filename);
     const edge = {_from: job._id, _to: file._id};
-    graph.produces.save(edge);
+    db.produces.save(edge);
   }
   for (const jobName of jobDef.blocked_by) {
-    const blockingJob = graph.jobs.document(jobName);
+    const blockingJob = getJobByName(jobName);
     const edge = {_from: blockingJob._id, _to: job._id};
-    graph.blocks.save(edge);
+    db.blocks.save(edge);
   }
   if (jobDef.resource_requirements != null) {
-    const rr = graph.resource_requirements.document(jobDef.resource_requirements);
+    const rr = db.resource_requirements.document(jobDef.resource_requirements);
     const edge = {_from: job._id, _to: rr._id};
-    graph.requires.save(edge);
+    db.requires.save(edge);
   }
   if (schedulerConfigId != null) {
     const edge = {_from: job._id, _to: schedulerConfigId};
-    graph.scheduled_bys.save(edge);
+    db.scheduled_bys.save(edge);
   }
   for (const userData of jobDef.user_data) {
     const doc = addUserData(userData);
-    graph.stores.save({_from: job._id, _to: doc._id});
+    db.stores.save({_from: job._id, _to: doc._id});
   }
   return job;
+}
+
+/**
+ * Return the job with name. Throws if there is not exactly one match.
+ * @param {String} name
+ * @return {Object}
+ */
+function getJobByName(name) {
+  const jobs = db.jobs.byExample({name: name}).toArray();
+  if (jobs.length == 0) {
+    throw new Error(`No job with name = ${name} is stored`);
+  } else if (jobs.length > 1) {
+    throw new Error(`There is more than one job with name = ${name}. length = ${jobs.length}`);
+  }
+  return jobs[0];
 }
 
 /**
@@ -251,17 +265,17 @@ function estimateWorkflow() {
     if (reqs.num_jobs == 0) {
       break;
     }
-    for (const job of graph.jobs.byExample({status: JobStatus.Ready})) {
+    for (const job of db.jobs.byExample({status: JobStatus.Ready})) {
       job.status = JobStatus.Done;
       let result = {
-        name: job.name,
+        job_key: job._key,
         return_code: 0,
         completion_time: new Date().toISOString(),
         exec_time_minutes: 5,
         status: job.status,
       };
       result = addResult(result);
-      graph.returned.save({_from: job._id, _to: result._id});
+      db.returned.save({_from: job._id, _to: result._id});
       manageJobStatusChange(job);
     }
   } while (!isWorkflowComplete());
@@ -285,7 +299,7 @@ function getReadyJobRequirements() {
   let maxRuntimeDuration = '';
   let maxNumNodes = 0;
 
-  for (const job of graph.jobs.byExample({status: JobStatus.Ready})) {
+  for (const job of db.jobs.byExample({status: JobStatus.Ready})) {
     const reqs = getJobResourceRequirements(job);
     numJobs += 1;
     numCpus += reqs.num_cpus;
@@ -362,16 +376,15 @@ function getDocumentIfAlreadyStored(doc, collectionName) {
 }
 
 /**
- * Return files needed by the passed job name.
- * @param {string} name - job name
+ * Return files needed by the passed job.
+ * @param {Object} job
  * @return {ArangoQueryCursor}
  */
-function getFilesNeededByJob(name) {
-  const jobId = `jobs/${name}`;
+function getFilesNeededByJob(job) {
   return query({count: true})`
       FOR v
           IN 1
-          OUTBOUND ${jobId}
+          OUTBOUND ${job._id}
           GRAPH ${GRAPH_NAME}
           OPTIONS { edgeCollections: 'needs' }
           RETURN v
@@ -379,16 +392,15 @@ function getFilesNeededByJob(name) {
 }
 
 /**
- * Return files needed by the passed job name.
- * @param {string} name - job name
+ * Return files needed by the passed job.
+ * @param {Object} job
  * @return {ArangoQueryCursor}
  */
-function getFilesProducedByJob(name) {
-  const jobId = `jobs/${name}`;
+function getFilesProducedByJob(job) {
   return query({count: true})`
       FOR v
           IN 1
-          OUTBOUND ${jobId}
+          OUTBOUND ${job._id}
           GRAPH ${GRAPH_NAME}
           OPTIONS { edgeCollections: 'produces' }
           RETURN v
@@ -409,13 +421,13 @@ function getJobDefinition(job) {
   for (const blockingJob of getBlockingJobs(job)) {
     blockingJobs.push(blockingJob.name);
   }
-  for (const file of getFilesNeededByJob(job.name)) {
+  for (const file of getFilesNeededByJob(job)) {
     inputFiles.push(file.name);
   }
-  for (const file of getFilesProducedByJob(job.name)) {
+  for (const file of getFilesProducedByJob(job)) {
     outputFiles.push(file.name);
   }
-  for (const data of getUserDataStoredByJob(job.name)) {
+  for (const data of getUserDataStoredByJob(job)) {
     delete(data._id);
     delete(data._key);
     delete(data._rev);
@@ -513,11 +525,10 @@ function getJobsThatNeedFile(name) {
  * @return {Object}
  */
 function listJobResults(job) {
-  const jobId = `jobs/${job.name}`;
   const cursor = query({count: true})`
     FOR v, e, p
       IN 1
-      OUTBOUND ${jobId}
+      OUTBOUND ${job._id}
       GRAPH ${GRAPH_NAME}
       OPTIONS { edgeCollections: 'returned' }
       RETURN p.vertices[1]
@@ -563,15 +574,14 @@ function getLatestJobResult(job) {
 
 /**
  * Return the user data that is connected to the job.
- * @param {string} jobName
+ * @param {Object} job
  * @return {ArangoQueryCursor}
  */
-function getUserDataStoredByJob(jobName) {
-  const jobId = `jobs/${jobName}`;
+function getUserDataStoredByJob(job) {
   const cursor = query({count: true})`
     FOR v, e, p
       IN 1
-      OUTBOUND ${jobId}
+      OUTBOUND ${job._id}
       GRAPH ${GRAPH_NAME}
       OPTIONS { edgeCollections: 'stores' }
       RETURN p.vertices[1]
@@ -613,7 +623,7 @@ function getWorkflowStatus() {
 /** Set initial job status. */
 function initializeJobStatus() {
   // TODO: Can this be more efficient with one traversal?
-  for (const job of graph.jobs.all()) {
+  for (const job of db.jobs.all()) {
     if (job.status == JobStatus.Disabled) {
       continue;
     }
@@ -634,7 +644,7 @@ function initializeJobStatus() {
     } else if (job.status != JobStatus.Done) {
       job.status = JobStatus.Ready;
     }
-    graph.jobs.update(job, job);
+    db.jobs.update(job, job);
   }
   console.log(
       `Initialized all incomplete job status to ${JobStatus.Ready} or ${JobStatus.Blocked}`,
@@ -706,7 +716,7 @@ function isWorkflowComplete() {
           OR job.status == ${JobStatus.Disabled}
         )
         LIMIT 1
-        RETURN job.name
+        RETURN job.key
   `;
   return cursor.count() == 0;
 }
@@ -739,7 +749,7 @@ function listJobProcessStats(job) {
  * @return {Object}
  */
 function manageJobStatusChange(job) {
-  const oldStatus = graph.jobs.document(job.name).status;
+  const oldStatus = db.jobs.document(job._key).status;
   if (job.status == oldStatus) {
     return job;
   }
@@ -750,7 +760,7 @@ function manageJobStatusChange(job) {
     const result = getLatestJobResult(job);
     if (result == null) {
       throw new Error(
-          `A job must have a result before it is completed: ${job.name}.`,
+          `A job must have a result before it is completed: ${job._key}.`,
       );
     }
     updateBlockedJobsFromCompletion(job);
@@ -825,9 +835,9 @@ function prepareJobsForSubmission(workerResources, limit) {
 
 /** Reset job status to uninitialized. */
 function resetJobStatus() {
-  for (const job of graph.jobs.all()) {
+  for (const job of db.jobs.all()) {
     job.status = JobStatus.Uninitialized;
-    graph.jobs.update(job, job);
+    db.jobs.update(job, job);
   }
   console.log(`Reset all job status to ${JobStatus.Uninitialized}`);
 }
@@ -908,14 +918,14 @@ function setupAutoTuneResourceRequirements() {
     if (groups.has(rr.name)) {
       if (job.status == JobStatus.Disabled) {
         // TODO: should we track these instead?
-        res.throw(400, `Job ${job.name} is already disabled`);
+        res.throw(400, `Job ${job._key} is already disabled`);
       }
       // This isn't atomic, but the user shouldn't call this in parallel.
       // Let Arango fail the operation if they do that.
       job.status = JobStatus.Disabled;
       db.jobs.update(job, job);
     } else {
-      status.auto_tune_status.job_names.push(job.name);
+      status.auto_tune_status.job_keys.push(job._key);
       groups.add(rr.name);
     }
   }
@@ -935,11 +945,11 @@ function processAutoTuneResourceRequirementsResults() {
   const autoTuneJobs = new Set();
 
   // FUTURE: consider whether all changes can be made atomically.
-  for (const name of status.auto_tune_status.job_names) {
-    const job = db.jobs.document(name);
+  for (const key of status.auto_tune_status.job_keys) {
+    const job = db.jobs.document(key);
     const jobStats = listJobProcessStats(job);
     if (jobStats.length == 0) {
-      throw new Error(`job ${job.name} does not have any process stats`);
+      throw new Error(`job ${job._key} does not have any process stats`);
     }
     const stats = jobStats.slice(-1)[0];
     const maxMemoryGb = Math.ceil(stats.max_rss / GiB);
@@ -966,13 +976,13 @@ function processAutoTuneResourceRequirementsResults() {
       message: `Updated resource requirements for name = ${rr.name}`,
     };
     db.events.save(event);
-    autoTuneJobs.add(job.name);
+    autoTuneJobs.add(job._key);
   }
 
   for (const job of db.jobs.all()) {
-    if (!autoTuneJobs.has(job.name)) {
+    if (!autoTuneJobs.has(job._key)) {
       if (job.status != JobStatus.Disabled) {
-        throw new Error(`Expected status disabled instead of ${job.status} for job ${job.name}`);
+        throw new Error(`Expected status disabled instead of ${job.status} for job ${job._key}`);
       }
       job.status = JobStatus.Uninitialized;
       db.jobs.update(job, job);
@@ -1004,7 +1014,7 @@ function updateBlockedJobsFromCompletion(job) {
       } else {
         blockedJob.status = JobStatus.Ready;
       }
-      graph.jobs.update(blockedJob, blockedJob);
+      db.jobs.update(blockedJob, blockedJob);
     }
   }
 }
@@ -1015,7 +1025,7 @@ function updateBlockedJobsFromCompletion(job) {
  */
 function updateJobsFromCompletionReversal(job) {
   const jobId = job._id;
-  const numJobs = graph.jobs.count();
+  const numJobs = db.jobs.count();
   const cursor = query`
     FOR v, e, p
       IN 1..${numJobs}
@@ -1027,8 +1037,8 @@ function updateJobsFromCompletionReversal(job) {
   for (const downstreamJob of cursor) {
     if (downstreamJob.status != JobStatus.Uninitialized) {
       downstreamJob.status = JobStatus.Uninitialized;
-      graph.jobs.update(downstreamJob, downstreamJob);
-      console.log(`Reset job=${downstreamJob.name} status to ${JobStatus.Uninitialized}`);
+      db.jobs.update(downstreamJob, downstreamJob);
+      console.log(`Reset job=${downstreamJob._key} status to ${JobStatus.Uninitialized}`);
     }
   }
 }
@@ -1053,6 +1063,7 @@ module.exports = {
   getJobScheduler,
   getJobsThatNeedFile,
   listJobResults,
+  getJobByName,
   getLatestJobResult,
   getUserDataStoredByJob,
   getWorkflowConfig,

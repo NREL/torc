@@ -12,7 +12,6 @@ module.exports = router;
 
 router.post('/job_definitions', function(req, res) {
   const doc = query.addJobDefinition(req.body);
-  console.log(`Added job ${doc.name}`);
   res.send(doc);
 })
     .body(schemas.jobDefinition, 'job definition to store in the collection.')

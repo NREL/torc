@@ -1,33 +1,32 @@
 'use strict';
 const joi = require('joi');
+const db = require('@arangodb').db;
 const errors = require('@arangodb').errors;
 const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
-const graphModule = require('@arangodb/general-graph');
-const {GRAPH_NAME, MAX_TRANSFER_RECORDS} = require('../defs');
+const {MAX_TRANSFER_RECORDS} = require('../defs');
 const {convertJobForApi, getItemsLimit, makeCursorResult} = require('../utils');
-const graph = graphModule._graph(GRAPH_NAME);
 const query = require('../query');
 const schemas = require('./schemas');
 const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
 module.exports = router;
 
-router.get('/job_names', function(req, res) {
-  const jobs = graph.jobs.all();
+router.get('/job_keys', function(req, res) {
+  const jobs = db.jobs.all();
   const names = [];
   for (const job of jobs) {
-    names.push(job.name);
+    names.push(job._key);
   }
   res.send({items: names});
 })
     .response(joi.object())
-    .summary('Retrieve all job names')
-    .description('Retrieves all job names from the "jobs" collection.');
+    .summary('Retrieve all job keys')
+    .description('Retrieves all job keys from the "jobs" collection.');
 
 router.get('/jobs/find_by_status/:status', function(req, res) {
   const qp = req.queryParams;
   const limit = getItemsLimit(qp.limit);
-  const cursor = graph.jobs.byExample({status: req.pathParams.status});
+  const cursor = db.jobs.byExample({status: req.pathParams.status});
   const items = [];
   for (const job of cursor.skip(qp.skip).limit(limit)) {
     items.push(convertJobForApi(job));
@@ -42,7 +41,7 @@ router.get('/jobs/find_by_status/:status', function(req, res) {
     .description('Retrieves all jobs from the "jobs" collection with a specific status.');
 
 router.get('/jobs/find_by_needs_file/:key', function(req, res) {
-  if (!graph.files.exists(req.pathParams.key)) {
+  if (!db.files.exists(req.pathParams.key)) {
     res.throw(404, `File ${req.pathParams.key} is not stored`);
   }
   const qp = req.queryParams;
@@ -72,7 +71,7 @@ router.get('/jobs/find_by_needs_file/:key', function(req, res) {
 
 router.get('/jobs/resource_requirements/:key', function(req, res) {
   try {
-    const doc = graph.jobs.document(req.pathParams.key);
+    const doc = db.jobs.document(req.pathParams.key);
     const rr = query.getJobResourceRequirements(doc);
     res.send(rr);
   } catch (e) {
@@ -89,7 +88,7 @@ router.get('/jobs/resource_requirements/:key', function(req, res) {
 
 router.get('/jobs/process_stats/:key', function(req, res) {
   try {
-    const doc = graph.jobs.document(req.pathParams.key);
+    const doc = db.jobs.document(req.pathParams.key);
     const rr = query.listJobProcessStats(doc);
     res.send(rr);
   } catch (e) {
@@ -110,7 +109,7 @@ router.post('jobs/complete_job/:key/:status/:rev', function(req, res) {
     res.throw(400, `status=${status} does not indicate completion`);
     return;
   }
-  const job = graph.jobs.document(req.pathParams.key);
+  const job = db.jobs.document(req.pathParams.key);
   if (job._rev != req.pathParams.rev) {
     res.throw(400, `Revision conflict for ${job.key}: _rev=${job._rev}`);
     return;
@@ -121,12 +120,12 @@ router.post('jobs/complete_job/:key/:status/:rev', function(req, res) {
     return;
   }
 
-  const meta = {name: req.pathParams.key, status: status};
+  const meta = {_key: req.pathParams.key, status: status};
   Object.assign(job, meta);
 
   // This order is required.
   const result = query.addResult(req.body);
-  graph.returned.save({_from: job._id, _to: result._id});
+  db.returned.save({_from: job._id, _to: result._id});
   const updatedJob = query.manageJobStatusChange(job);
   res.send(convertJobForApi(updatedJob));
 })
@@ -141,7 +140,7 @@ router.put('jobs/manage_status_change/:key/:status/:rev', function(req, res) {
     res.throw(400, `status=${status} indicates completion. Post complete_job status instead.`);
     return;
   }
-  const job = graph.jobs.document(req.pathParams.key);
+  const job = db.jobs.document(req.pathParams.key);
   if (job._rev != req.pathParams.rev) {
     res.throw(400, `Revision conflict for ${job.key}: _rev=${job._rev}`);
     return;
@@ -158,10 +157,10 @@ router.put('jobs/manage_status_change/:key/:status/:rev', function(req, res) {
     .description('Change the status of a job and manage side effects.');
 
 router.post('jobs/store_user_data/:key', function(req, res) {
-  const job = graph.jobs.document(req.pathParams.key);
+  const job = db.jobs.document(req.pathParams.key);
   const userData = req.body;
   const doc = query.addUserData(userData);
-  graph.stores.save({_from: job._id, _to: doc._id});
+  db.stores.save({_from: job._id, _to: doc._id});
   res.send(doc);
 })
     .body(joi.object().required(), 'User data for the job.')
@@ -171,10 +170,12 @@ router.post('jobs/store_user_data/:key', function(req, res) {
 
 router.get('jobs/get_user_data/:key', function(req, res) {
   // Shouldn't need skip and limit, but that could be added.
-  if (!graph.jobs.document(req.pathParams.key)) {
-    res.throw(404, `Job ${req.pathParams.key} is not stored`);
+  const key = req.pathParams.key;
+  if (!db.jobs.exists(key)) {
+    res.throw(404, `Job ${key} is not stored`);
   } else {
-    res.send(query.getUserDataStoredByJob(req.pathParams.key));
+    const job = db.jobs.document(key);
+    res.send(query.getUserDataStoredByJob(job));
   }
 })
     .pathParam('key', joi.string().required(), 'Job key')

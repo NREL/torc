@@ -22,6 +22,8 @@ from swagger_client.models.workflow_config_compute_node_resource_stats import (
 )
 from swagger_client.models.workflow_config_model import WorkflowConfigModel
 
+from torc.tests.common import TestApiManager
+
 
 TEST_WORKFLOW = "test_workflow"
 PREPROCESS = Path("tests") / "scripts" / "preprocess.py"
@@ -167,17 +169,17 @@ def completed_workflow(diamond_workflow):
     status = api.get_workflow_status()
     status.run_id = 1
     api.put_workflow_status(status)
-    job_names = [job.name for job in api.get_jobs().items]
-    for name in job_names:
+    job_keys = [job.key for job in api.get_jobs().items]
+    for key in job_keys:
         # Completing a job this way will cause blocked jobs to change status and revision,
         # so we need to update each time.
-        job = api.get_jobs_key(name)
+        job = api.get_jobs_key(key)
         # Fake out what normally happens at submission time.
         job.run_id += 1
-        job = api.put_jobs_key(job, name)
+        job = api.put_jobs_key(job, key)
         status = "done"
         result = ResultModel(
-            name=name,
+            job_key=key,
             run_id=job.run_id,
             return_code=0,
             exec_time_minutes=5,
@@ -185,7 +187,7 @@ def completed_workflow(diamond_workflow):
             status=status,
         )
         job = api.post_jobs_complete_job_key_status_rev(
-            result, name, status, job._rev  # pylint: disable=protected-access
+            result, key, status, job._rev  # pylint: disable=protected-access
         )
 
     for file in api.get_files().items:
@@ -204,11 +206,12 @@ def incomplete_workflow(diamond_workflow):
     One work job and the postprocess job are not complete.
     """
     api, scheduler_config_id, output_dir = diamond_workflow
+    test_mgr = TestApiManager(api)
     for name in ("preprocess", "work1"):
-        job = api.get_jobs_key(name)
+        job = test_mgr.get_job(name)
         status = "done"
         result = ResultModel(
-            name=name,
+            job_key=job.key,
             run_id=job.run_id,
             return_code=0,
             exec_time_minutes=5,
@@ -216,10 +219,10 @@ def incomplete_workflow(diamond_workflow):
             status=status,
         )
         job = api.post_jobs_complete_job_key_status_rev(
-            result, name, status, job._rev  # pylint: disable=protected-access
+            result, job.key, status, job._rev  # pylint: disable=protected-access
         )
 
-        for file in api.get_files_produced_by_job_key(name).items:
+        for file in api.get_files_produced_by_job_key(job.key).items:
             path = Path(file.path)
             if not path.exists():
                 path.touch()
@@ -227,10 +230,10 @@ def incomplete_workflow(diamond_workflow):
                 file.st_mtime = path.stat().st_mtime
                 api.put_files_key(file, file.name)
 
-    assert api.get_jobs_key("preprocess").status == "done"
-    assert api.get_jobs_key("work1").status == "done"
-    assert api.get_jobs_key("work2").status == "ready"
-    assert api.get_jobs_key("postprocess").status == "blocked"
+    assert test_mgr.get_job("preprocess").status == "done"
+    assert test_mgr.get_job("work1").status == "done"
+    assert test_mgr.get_job("work2").status == "ready"
+    assert test_mgr.get_job("postprocess").status == "blocked"
     yield api, scheduler_config_id, output_dir
 
 

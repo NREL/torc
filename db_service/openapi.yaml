@@ -3137,12 +3137,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /job_names:
+  /job_keys:
     get:
       tags: []
-      summary: Retrieve all job names
-      description: Retrieves all job names from the "jobs" collection.
-      operationId: get_job_names
+      summary: Retrieve all job keys
+      description: Retrieves all job keys from the "jobs" collection.
+      operationId: get_job_keys
       responses:
         "200":
           description: HTTP 200 OK.
@@ -3737,7 +3737,7 @@ components:
       required:
       - avg_cpu_percent
       - avg_rss
-      - job_name
+      - job_key
       - max_cpu_percent
       - max_rss
       - num_samples
@@ -3745,7 +3745,7 @@ components:
       - timestamp
       type: object
       properties:
-        job_name:
+        job_key:
           type: string
         run_id:
           type: number
@@ -3814,7 +3814,7 @@ components:
           properties: {}
         num_samples:
           type: number
-        job_name:
+        job_key:
           type: string
     workflow_schedulers_local_schedulers:
       type: object
@@ -3836,13 +3836,13 @@ components:
       required:
       - completion_time
       - exec_time_minutes
-      - name
+      - job_key
       - return_code
       - run_id
       - status
       type: object
       properties:
-        name:
+        job_key:
           type: string
         run_id:
           type: number
@@ -4024,7 +4024,7 @@ components:
       required:
       - avg_cpu_percent
       - avg_rss
-      - job_name
+      - job_key
       - max_cpu_percent
       - max_rss
       - num_samples
@@ -4032,7 +4032,7 @@ components:
       - timestamp
       type: object
       properties:
-        job_name:
+        job_key:
           type: string
         run_id:
           type: number
@@ -4080,7 +4080,6 @@ components:
     inline_response_200_5:
       required:
       - command
-      - name
       type: object
       properties:
         name:
@@ -4271,7 +4270,6 @@ components:
     job_model:
       required:
       - command
-      - name
       type: object
       properties:
         name:
@@ -4363,7 +4361,7 @@ components:
         enabled:
           type: boolean
           default: true
-        job_names:
+        job_keys:
           type: array
           items:
             type: string
@@ -4637,7 +4635,6 @@ components:
     jobs_key_model:
       required:
       - command
-      - name
       type: object
       properties:
         name:
@@ -4689,13 +4686,13 @@ components:
       required:
       - completion_time
       - exec_time_minutes
-      - name
+      - job_key
       - return_code
       - run_id
       - status
       type: object
       properties:
-        name:
+        job_key:
           type: string
         run_id:
           type: number
@@ -4755,7 +4752,6 @@ components:
     inline_response_200_15:
       required:
       - command
-      - name
       type: object
       properties:
         name:
@@ -4945,13 +4941,13 @@ components:
       required:
       - completion_time
       - exec_time_minutes
-      - name
+      - job_key
       - return_code
       - run_id
       - status
       type: object
       properties:
-        name:
+        job_key:
           type: string
         run_id:
           type: number
@@ -4972,7 +4968,6 @@ components:
     workflow_jobs:
       required:
       - command
-      - name
       type: object
       properties:
         name:
@@ -5009,7 +5004,6 @@ components:
     job_definition:
       required:
       - command
-      - name
       type: object
       properties:
         name:
@@ -5102,13 +5096,13 @@ components:
       required:
       - completion_time
       - exec_time_minutes
-      - name
+      - job_key
       - return_code
       - run_id
       - status
       type: object
       properties:
-        name:
+        job_key:
           type: string
         run_id:
           type: number

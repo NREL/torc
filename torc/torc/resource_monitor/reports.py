@@ -33,7 +33,7 @@ def iter_compute_node_stats(api, exclude_process=False):
                 "num_samples": stat.num_samples,
             }
             if stat.resource_type == "Process":
-                row["job_name"] = stat.job_name
+                row["job_key"] = stat.job_key
             for stat_type in ("average", "minimum", "maximum"):
                 row.update(getattr(stat, stat_type))
                 row["type"] = stat_type
@@ -52,10 +52,10 @@ def iter_job_process_stats(api):
     dict
     """
     for job in iter_documents(api.get_jobs):
-        for stat in send_api_command(api.get_jobs_process_stats_key, job.name):
+        for stat in send_api_command(api.get_jobs_process_stats_key, job.key):
             stats = remove_db_keys(stat.to_dict())
             yield {
-                "job_name": stats["job_name"],
+                "job_key": stats["job_key"],
                 "run_id": int(stats["run_id"]),
                 "timestamp": stats["timestamp"],
                 "avg_cpu_percent": stats["avg_cpu_percent"],

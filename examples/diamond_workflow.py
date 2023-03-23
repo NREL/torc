@@ -9,7 +9,7 @@ from swagger_client.models.job_definition import JobDefinition
 from swagger_client.models.resource_requirements_model import ResourceRequirementsModel
 from swagger_client.models.workflow_model import WorkflowModel
 
-from wms.api import make_api
+from torc.api import make_api
 
 
 TEST_WORKFLOW = "test_workflow"

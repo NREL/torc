@@ -52,8 +52,8 @@ class AsyncJobBase(abc.ABC):
 
     @property
     @abc.abstractmethod
-    def name(self):
-        """Return the name of the job."""
+    def key(self):
+        """Return the key of the job."""
 
 
 class AsyncCliCommand(AsyncJobBase):
@@ -82,12 +82,10 @@ class AsyncCliCommand(AsyncJobBase):
         for _ in range(10):
             if self._pipe.poll() is not None:
                 killed = True
-                logger.info("Killed job %s", self.name)
+                logger.info("Killed job %s", self.key)
                 break
         if not killed:
-            logger.warning(
-                "Timed out waiting for job %s to complete after being killed", self.name
-            )
+            logger.warning("Timed out waiting for job %s to complete after being killed", self.key)
 
         self._complete("canceled")
 
@@ -102,7 +100,7 @@ class AsyncCliCommand(AsyncJobBase):
     def get_result(self):
         assert self._is_complete
         return ResultModel(
-            name=self.name,
+            job_key=self.key,
             run_id=self._db_job.run_id,
             return_code=self._return_code,
             exec_time_minutes=self._exec_time_s / 60,
@@ -120,8 +118,8 @@ class AsyncCliCommand(AsyncJobBase):
         return not self._is_running
 
     @property
-    def name(self):
-        return self._db_job.name
+    def key(self):
+        return self._db_job.key
 
     @property
     def pid(self) -> int:
@@ -133,8 +131,8 @@ class AsyncCliCommand(AsyncJobBase):
         self._start_time = time.time()
 
         cmd = shlex.split(self._db_job.command, posix="win" not in sys.platform)
-        stdout_filename = output_dir / JOB_STDIO_DIR / f"{self.name}.o"
-        stderr_filename = output_dir / JOB_STDIO_DIR / f"{self.name}.e"
+        stdout_filename = output_dir / JOB_STDIO_DIR / f"{self.key}.o"
+        stderr_filename = output_dir / JOB_STDIO_DIR / f"{self.key}.e"
         # pylint: disable=consider-using-with
         self._stdout_fp = open(stdout_filename, "w", encoding="utf-8")
         self._stderr_fp = open(stderr_filename, "w", encoding="utf-8")
@@ -154,7 +152,7 @@ class AsyncCliCommand(AsyncJobBase):
 
         logger.info(
             "Job %s completed return_code=%s exec_time_s=%s status=%s",
-            self.name,
+            self.key,
             self._return_code,
             self._exec_time_s,
             self._status,

@@ -213,7 +213,7 @@ class JobRunner:
         job = send_api_command(
             self._api.post_jobs_complete_job_key_status_rev,
             result,
-            job.name,
+            job.key,
             "done",
             job._rev,  # pylint: disable=protected-access
         )
@@ -223,7 +223,7 @@ class JobRunner:
         return self._resources.memory_gb / self._orig_resources.memory_gb * 100
 
     def _decrement_resources(self, job):
-        job_resources = send_api_command(self._api.get_jobs_resource_requirements_key, job.name)
+        job_resources = send_api_command(self._api.get_jobs_resource_requirements_key, job.key)
         job_memory_gb = get_memory_gb(job_resources.memory)
         self._resources.num_cpus -= job_resources.num_cpus
         self._resources.num_gpus -= job_resources.num_gpus
@@ -233,7 +233,7 @@ class JobRunner:
         assert self._resources.memory_gb >= 0.0, self._resources.memory_gb
 
     def _increment_resources(self, job):
-        job_resources = send_api_command(self._api.get_jobs_resource_requirements_key, job.name)
+        job_resources = send_api_command(self._api.get_jobs_resource_requirements_key, job.key)
         job_memory_gb = get_memory_gb(job_resources.memory)
         self._resources.num_cpus += job_resources.num_cpus
         self._resources.num_gpus += job_resources.num_gpus
@@ -255,28 +255,28 @@ class JobRunner:
         # new jobs are ready to run.
         return self._resources.num_cpus > 0 and self._current_memory_allocation_percentage() > 10
 
-    def _log_job_start_event(self, job_name: str):
+    def _log_job_start_event(self, job_key: str):
         send_api_command(
             self._api.post_events,
             {
                 "category": "job",
                 "type": "start",
-                "name": job_name,
+                "key": job_key,
                 "node_name": self._hostname,
-                "message": f"Started job {job_name}",
+                "message": f"Started job {job_key}",
             },
         )
 
-    def _log_job_complete_event(self, job_name: str, status: str):
+    def _log_job_complete_event(self, job_key: str, status: str):
         send_api_command(
             self._api.post_events,
             {
                 "category": "job",
                 "type": "complete",
-                "name": job_name,
+                "key": job_key,
                 "status": status,
                 "node_name": self._hostname,
-                "message": f"Completed job {job_name}",
+                "message": f"Completed job {job_key}",
             },
         )
 
@@ -289,19 +289,19 @@ class JobRunner:
             if job.is_complete():
                 result = job.get_result()
                 done_jobs.append(result)
-                db_jobs[job.name] = job.db_job
+                db_jobs[job.key] = job.db_job
                 self._increment_resources(job.db_job)
-                self._log_job_complete_event(job.name, result.status)
+                self._log_job_complete_event(job.key, result.status)
                 if not cancel:
                     self._update_file_info(job)
                     self._num_jobs += 1
 
         for result in done_jobs:
-            self._outstanding_jobs.pop(result.name)
+            self._outstanding_jobs.pop(result.job_key)
             if self._stats.process:
-                self._jobs_pending_process_stat_completion.append(result.name)
-                self._pids.pop(result.name)
-            self._complete_job(db_jobs[result.name], result)
+                self._jobs_pending_process_stat_completion.append(result.job_key)
+                self._pids.pop(result.job_key)
+            self._complete_job(db_jobs[result.job_key], result)
 
         if done_jobs:
             logger.info("Found %s completions", len(done_jobs))
@@ -314,16 +314,16 @@ class JobRunner:
         job.db_job.run_id += 1
         # The database changes db_job._rev on every update.
         # This reassigns job.db_job in order to stay current.
-        job.db_job = send_api_command(self._api.put_jobs_key, job.db_job, job.name)
+        job.db_job = send_api_command(self._api.put_jobs_key, job.db_job, job.key)
         job.db_job = send_api_command(
             self._api.put_jobs_manage_status_change_key_status_rev,
-            job.name,
+            job.key,
             "submitted",
             job.db_job._rev,  # pylint: disable=protected-access
         )
-        self._outstanding_jobs[job.name] = job
+        self._outstanding_jobs[job.key] = job
         if self._stats.process:
-            self._pids[job.name] = job.pid
+            self._pids[job.key] = job.pid
         send_api_command(
             self._api.post_edges_name,
             EdgeModel(
@@ -332,8 +332,8 @@ class JobRunner:
             ),
             "executed",
         )
-        logger.debug("Started job %s", job.name)
-        self._log_job_start_event(job.name)
+        logger.debug("Started job %s", job.key)
+        self._log_job_start_event(job.key)
 
     def _run_ready_jobs(self):
         ready_jobs = send_api_command(
@@ -386,7 +386,7 @@ class JobRunner:
                 {
                     "command": IpcMonitorCommands.COMPLETE_JOBS,
                     "pids": self._pids,
-                    "completed_job_names": self._jobs_pending_process_stat_completion,
+                    "completed_job_keys": self._jobs_pending_process_stat_completion,
                 }
             )
             with Timer(timer_stats_collector, "receive_process_stats"):
@@ -436,7 +436,7 @@ class JobRunner:
             assert result.resource_type != ResourceType.PROCESS, result
 
     def _post_job_process_stats(self, result: ProcessStatResults):
-        run_id = send_api_command(self._api.get_jobs_key, result.job_name).run_id
+        run_id = send_api_command(self._api.get_jobs_key, result.job_key).run_id
         res = send_api_command(
             self._api.post_job_process_stats,
             JobProcessStatsModel(
@@ -445,7 +445,7 @@ class JobRunner:
                 avg_rss=result.average["rss"],
                 max_rss=result.maximum["rss"],
                 num_samples=result.num_samples,
-                job_name=result.job_name,
+                job_key=result.job_key,
                 run_id=run_id,
                 timestamp=str(datetime.now()),
             ),
@@ -453,14 +453,14 @@ class JobRunner:
         send_api_command(
             self._api.post_edges_name,
             EdgeModel(
-                _from=f"jobs/{result.job_name}",
+                _from=f"jobs/{result.job_key}",
                 to=res._id,  # pylint: disable=protected-access
             ),
             "process_used",
         )
 
     def _update_file_info(self, job):
-        for file in send_api_command(self._api.get_files_produced_by_job_key, job.name).items:
+        for file in send_api_command(self._api.get_files_produced_by_job_key, job.key).items:
             path = make_path(file.path)
             # file.file_hash = compute_file_hash(path)
             file.st_mtime = path.stat().st_mtime

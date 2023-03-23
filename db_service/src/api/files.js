@@ -1,5 +1,6 @@
 'use strict';
 const joi = require('joi');
+const db = require('@arangodb').db;
 const {MAX_TRANSFER_RECORDS} = require('../defs');
 const {getItemsLimit, makeCursorResult} = require('../utils');
 const schemas = require('./schemas');
@@ -13,7 +14,8 @@ router.get('/files/produced_by_job/:key', function(req, res) {
   try {
     const qp = req.queryParams;
     const limit = getItemsLimit(qp.limit);
-    const cursor = query.getFilesProducedByJob(req.pathParams.key);
+    const job = db.jobs.document(req.pathParams.key);
+    const cursor = query.getFilesProducedByJob(job);
     // TODO: how to do this with Arango cursor?
     const items = [];
     let i = 0;

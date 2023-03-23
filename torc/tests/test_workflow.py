@@ -15,6 +15,7 @@ from torc.common import GiB
 from torc.job_runner import JobRunner
 from torc.utils.timing import timer_stats_collector
 from torc.workflow_manager import WorkflowManager
+from torc.tests.common import TestApiManager
 
 
 logger = logging.getLogger(__name__)
@@ -23,8 +24,9 @@ logger = logging.getLogger(__name__)
 def test_run_workflow(diamond_workflow):
     """Test full execution of diamond workflow with file dependencies."""
     api, scheduler_config_id, output_dir = diamond_workflow
+    test_mgr = TestApiManager(api)
     timer_stats_collector.enable()
-    user_data_work1 = api.get_jobs_get_user_data_key("work1")
+    user_data_work1 = api.get_jobs_get_user_data_key(test_mgr.get_job_key("work1"))
     assert len(user_data_work1) == 1
     assert user_data_work1[0]["key1"] == "val1"
     mgr = WorkflowManager(api)
@@ -46,7 +48,7 @@ def test_run_workflow(diamond_workflow):
 
     assert api.get_workflow_is_complete()
     for name in ["preprocess", "work1", "work2", "postprocess"]:
-        result = api.get_results_find_by_job_key(name)
+        result = api.get_results_find_by_job_key(test_mgr.get_job_key(name))
         assert result.return_code == 0
 
     for name in ["inputs", "file1", "file2", "file3", "file4"]:
@@ -57,8 +59,8 @@ def test_run_workflow(diamond_workflow):
 
     result_data_work1 = {"result": 1}
     result_data_overall = {"overall_result": 2}
-    api.post_jobs_store_user_data_key(result_data_work1, "work1")
-    user_data_work1 = api.get_jobs_get_user_data_key("work1")
+    api.post_jobs_store_user_data_key(result_data_work1, test_mgr.get_job_key("work1"))
+    user_data_work1 = api.get_jobs_get_user_data_key(test_mgr.get_job_key("work1"))
     assert len(user_data_work1) == 2
     api.post_user_data(result_data_overall)
 
@@ -78,54 +80,57 @@ def test_run_workflow(diamond_workflow):
 def test_cancel_with_failed_job(workflow_with_cancel):
     """Test the cancel_on_blocking_job_failure feature for jobs."""
     api, output_dir, cancel_on_blocking_job_failure = workflow_with_cancel
+    test_mgr = TestApiManager(api)
     mgr = WorkflowManager(api)
     mgr.start()
     runner = JobRunner(api, output_dir, time_limit="P0DT24H", job_completion_poll_interval=0.1)
     runner.run_worker()
     assert api.get_workflow_is_complete()
-    assert api.get_jobs_key("job1").status == "done"
-    result = api.get_results_find_by_job_key("job1")
+    assert test_mgr.get_job("job1").status == "done"
+    result = api.get_results_find_by_job_key(test_mgr.get_job_key("job1"))
     assert result.return_code == 1
     expected_status = "canceled" if cancel_on_blocking_job_failure else "done"
-    assert api.get_jobs_key("job2").status == expected_status
+    assert test_mgr.get_job("job2").status == expected_status
 
 
 def test_reinitialize_workflow_noop(completed_workflow):
     """Verify that a workflow can be reinitialized."""
     api, _, _ = completed_workflow
-
+    test_mgr = TestApiManager(api)
     mgr = WorkflowManager(api)
     mgr.reinitialize_jobs()
     for name in ("preprocess", "work1", "work2", "postprocess"):
-        job = api.get_jobs_key(name)
+        job = test_mgr.get_job(name)
         assert job.status == "done"
 
 
 def test_reinitialize_workflow_input_file_updated(completed_workflow):
     """Test workflow reinitialization after input files are changed."""
     api, _, _ = completed_workflow
+    test_mgr = TestApiManager(api)
     file = api.get_files_key("inputs")
     path = Path(file.path)
     path.touch()
 
     mgr = WorkflowManager(api)
     mgr.reinitialize_jobs()
-    assert api.get_jobs_key("preprocess").status == "ready"
+    assert test_mgr.get_job("preprocess").status == "ready"
     for name in ("work1", "work2", "postprocess"):
-        job = api.get_jobs_key(name)
+        job = test_mgr.get_job(name)
         assert job.status == "blocked"
 
 
 def test_reinitialize_workflow_incomplete(incomplete_workflow):
     """Test workflow reinitialization on an incomplete workflow."""
     api, _, _ = incomplete_workflow
+    test_mgr = TestApiManager(api)
     mgr = WorkflowManager(api)
     mgr.reinitialize_jobs()
     for name in ("preprocess", "work1"):
-        job = api.get_jobs_key(name)
+        job = test_mgr.get_job(name)
         assert job.status == "done"
-    assert api.get_jobs_key("work2").status == "ready"
-    assert api.get_jobs_key("postprocess").status == "blocked"
+    assert test_mgr.get_job("work2").status == "ready"
+    assert test_mgr.get_job("postprocess").status == "blocked"
 
 
 def test_reinitialize_workflow_incomplete_missing_files(
@@ -133,12 +138,13 @@ def test_reinitialize_workflow_incomplete_missing_files(
 ):
     """Test workflow reinitialization on an incomplete workflow with missing files."""
     api, _, _ = incomplete_workflow_missing_files
+    test_mgr = TestApiManager(api)
     mgr = WorkflowManager(api)
     mgr.reinitialize_jobs()
-    assert api.get_jobs_key("preprocess").status == "done"
-    assert api.get_jobs_key("work1").status == "ready"
-    assert api.get_jobs_key("work2").status == "ready"
-    assert api.get_jobs_key("postprocess").status == "blocked"
+    assert test_mgr.get_job("preprocess").status == "done"
+    assert test_mgr.get_job("work1").status == "ready"
+    assert test_mgr.get_job("work2").status == "ready"
+    assert test_mgr.get_job("postprocess").status == "blocked"
 
 
 @pytest.mark.parametrize(
@@ -147,6 +153,7 @@ def test_reinitialize_workflow_incomplete_missing_files(
 def test_restart_workflow_missing_files(complete_workflow_missing_files, missing_file):
     """Test workflow restart on a complete workflow with missing files."""
     api, _, output_dir = complete_workflow_missing_files
+    test_mgr = TestApiManager(api)
     (output_dir / missing_file).unlink()
     mgr = WorkflowManager(api)
     mgr.restart()
@@ -170,31 +177,35 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
 
     assert api.get_workflow_is_complete()
     stage2_events = api.get_events().items
+    preprocess = test_mgr.get_job_key("preprocess")
+    work1 = test_mgr.get_job_key("work1")
+    work2 = test_mgr.get_job_key("work2")
+    postprocess = test_mgr.get_job_key("postprocess")
     match missing_file:
         case "inputs.json":
-            expected = ["preprocess", "work1", "work2", "postprocess"]
+            expected = [preprocess, work1, work2, postprocess]
         case "f1.json":
-            expected = ["preprocess", "work1", "work2", "postprocess"]
+            expected = [preprocess, work1, work2, postprocess]
         case "f2.json":
-            expected = ["work1", "postprocess"]
+            expected = [work1, postprocess]
         case "f3.json":
-            expected = ["work2", "postprocess"]
+            expected = [work2, postprocess]
         case "f4.json":
-            expected = ["postprocess"]
+            expected = [postprocess]
         case _:
             assert False
-    assert sorted(expected) == _get_job_names_by_event(stage2_events, "start")
-    assert sorted(expected) == _get_job_names_by_event(stage2_events, "complete")
+    assert sorted(expected) == _get_job_keys_by_event(stage2_events, "start")
+    assert sorted(expected) == _get_job_keys_by_event(stage2_events, "complete")
 
-    for name in {"preprocess", "work1", "work2", "postprocess"}.difference(expected):
-        assert api.get_jobs_key(name).run_id == 1
-    for name in expected:
-        assert api.get_jobs_key(name).run_id == 2
+    for key in {preprocess, work1, work2, postprocess}.difference(expected):
+        assert api.get_jobs_key(key).run_id == 1
+    for key in expected:
+        assert api.get_jobs_key(key).run_id == 2
 
     api.put_workflow_status_reset()
     assert api.get_workflow_status().run_id == 0
     for name in ("preprocess", "work1", "work2", "postprocess"):
-        job = api.get_jobs_key(name)
+        job = test_mgr.get_job(name)
         assert job.run_id == 0
         assert job.status == "uninitialized"
 
@@ -218,6 +229,7 @@ def test_ready_job_requirements(independent_job_workflow):
 def test_run_independent_job_workflow(independent_job_workflow, tmp_path):
     """Test execution of a workflow with jobs that can be run in parallel."""
     api, num_jobs = independent_job_workflow
+    test_mgr = TestApiManager(api)
     mgr = WorkflowManager(api)
     mgr.start()
     resources = WorkflowPrepareJobsForSubmissionModel(
@@ -232,7 +244,7 @@ def test_run_independent_job_workflow(independent_job_workflow, tmp_path):
 
     assert api.get_workflow_is_complete()
     for name in (str(i) for i in range(num_jobs)):
-        result = api.get_results_find_by_job_key(name)
+        result = api.get_results_find_by_job_key(test_mgr.get_job_key(name))
         assert result.return_code == 0
 
 
@@ -242,6 +254,7 @@ def test_concurrent_submitters(independent_job_workflow, tmp_path):
     Tests database locking procedures.
     """
     api, num_jobs = independent_job_workflow
+    test_mgr = TestApiManager(api)
     mgr = WorkflowManager(api)
     mgr.start()
     cmd = [
@@ -271,12 +284,12 @@ def test_concurrent_submitters(independent_job_workflow, tmp_path):
     assert ret == 0
     assert api.get_workflow_is_complete()
     for name in (str(i) for i in range(num_jobs)):
-        result = api.get_results_find_by_job_key(name)
+        result = api.get_results_find_by_job_key(test_mgr.get_job_key(name))
         assert result.return_code == 0
 
 
-def _get_job_names_by_event(events, type_):
-    return sorted([x["name"] for x in events if x["category"] == "job" and x["type"] == type_])
+def _get_job_keys_by_event(events, type_):
+    return sorted([x["key"] for x in events if x["category"] == "job" and x["type"] == type_])
 
 
 # def _disable_resource_stats(api):

@@ -14,12 +14,12 @@ def test_workflow_cli_commands(tmp_path):
     check_run_command(f"torc -u {url} workflow delete")
     try:
         check_run_command(f"torc -u {url} workflow import {file}")
-        _run_and_check_output(f"torc -u {url} show jobs", ("small", "medium", "large", "status"))
+        _run_and_check_output(f"torc -u {url} show jobs", ("status",))
         check_run_command(f"torc -u {url} workflow start")
         check_run_command(f"torc -u {url} local run-jobs -o {tmp_path}")
         _run_and_check_output(
             f"torc -u {url} show process-stats",
-            ("small", "medium", "large", "max_cpu_percent", "max_memory_gb"),
+            ("max_cpu_percent", "max_memory_gb"),
         )
         _run_and_check_output(
             f"torc -u {url} show resource-stats",
@@ -30,18 +30,13 @@ def test_workflow_cli_commands(tmp_path):
                 "Memory",
                 "CPU",
                 "Process",
-                "small",
-                "medium",
-                "large",
             ),
         )
         _run_and_check_output(
             f"torc -u {url} show resource-stats -x",
             (hostname, "resource_type", "percent", "Memory", "CPU"),
         )
-        _run_and_check_output(
-            f"torc -u {url} show results", ("small", "medium", "large", "return_code")
-        )
+        _run_and_check_output(f"torc -u {url} show results", ("job_key", "return_code"))
     finally:
         check_run_command(f"torc -u {url} workflow delete")
 

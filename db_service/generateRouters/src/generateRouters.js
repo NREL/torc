@@ -55,7 +55,6 @@ const documents = [
     custom_post: `query.addJob`,
     schema: 'job',
     batch_schema: 'batchJobs',
-    key: 'name',
   },
   {
     name: 'job process statistics',

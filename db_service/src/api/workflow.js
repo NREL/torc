@@ -1,9 +1,7 @@
 'use strict';
 const joi = require('joi');
 const db = require('@arangodb').db;
-const graphModule = require('@arangodb/general-graph');
-const {GRAPH_NAME, JobStatus, MAX_TRANSFER_RECORDS} = require('../defs');
-const graph = graphModule._graph(GRAPH_NAME);
+const {JobStatus, MAX_TRANSFER_RECORDS} = require('../defs');
 const query = require('../query');
 const schemas = require('./schemas');
 const {convertJobForApi} = require('../utils');
@@ -29,7 +27,7 @@ router.post('/workflow', function(req, res) {
 
 router.get('/workflow', function(req, res) {
   const jobs = [];
-  for (const job of graph.jobs.all()) {
+  for (const job of db.jobs.all()) {
     jobs.push(query.getJobDefinition(job));
   }
 
@@ -266,28 +264,28 @@ function checkDependencies(workflow) {
 
   for (const job of workflow.jobs) {
     for (const filename of job.input_files) {
-      if (!files.has(filename) && !graph.files.exists(filename)) {
-        throw new Error(`job ${job.name} input file ${filename} is not stored`);
+      if (!files.has(filename) && !db.files.exists(filename)) {
+        throw new Error(`Invalid input file=${filename} in ${JSON.stringify(job)}`);
       }
     }
     for (const filename of job.output_files) {
-      if (!files.has(filename) && !graph.files.exists(filename)) {
-        throw new Error(`job ${job.name} output file ${filename} is not stored`);
+      if (!files.has(filename) && !db.files.exists(filename)) {
+        throw new Error(`Invalid output file=${filename} in ${JSON.stringify(job)}`);
       }
     }
     for (const jobName of job.blocked_by) {
-      if (!jobs.has(jobName) && !graph.jobs.exists(jobName)) {
-        throw new Error(`job ${job.name} with blocked_by ${jobName} is not stored`);
+      if (!jobs.has(jobName)) {
+        throw new Error(`Invalid blocked_by=${jobName} in job ${JSON.stringify(job)}`);
       }
     }
     if (job.scheduler != '') {
       if (!schedulerConfigs.has(job.scheduler)) {
-        throw new Error(`Invalid scheduler: job=${job.name}: ${JSON.stringify(job.scheduler)}`);
+        throw new Error(`Invalid scheduler=${job.scheduler} in job=${JSON.stringify(job)}`);
       }
     }
     const rr = job.resource_requirements;
-    if (rr != null && !resourceRequirements.has(rr) && !graph.resource_requirements.exists(rr)) {
-      throw new Error(`job ${job.name} resource_requirements ${rr} is not stored`);
+    if (rr != null && !resourceRequirements.has(rr) && !db.resource_requirements.exists(rr)) {
+      throw new Error(`Invalid resource_requirements=${rr} in job ${JSON.stringify(job)}`);
     }
   }
 }

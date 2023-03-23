@@ -61,7 +61,7 @@ class ResourceStatStore:
         make_table(
             self._db_file,
             ResourceType.PROCESS.value.lower(),
-            {"rss": 0.0, "cpu_percent": 0.0, "job_name": ""},
+            {"rss": 0.0, "cpu_percent": 0.0, "job_key": ""},
         )
         self._bufs[ResourceType.PROCESS] = []
 
@@ -104,7 +104,7 @@ class ResourceStatStore:
             self._add_stats(ResourceType.NETWORK, tuple(stats[ResourceType.NETWORK].values()))
         if self._config.process:
             for name, _stats in stats[ResourceType.PROCESS].items():
-                _stats["job_name"] = name
+                _stats["job_key"] = name
                 self._add_stats(ResourceType.PROCESS, tuple(_stats.values()))
 
     @property

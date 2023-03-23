@@ -30,7 +30,7 @@ const resourceStats = joi.object().required().keys({
   maximum: joi.object().required({}),
   num_samples: joi.number().required(),
   // Only applies to process stats. Consider something better.
-  job_name: joi.string().optional(),
+  job_key: joi.string().optional(),
 });
 
 const computeNodeStats = joi.object().required().keys({
@@ -74,7 +74,7 @@ const jobInternal = joi.object().required().keys({
 });
 
 const job = joi.object().required().keys({
-  name: joi.string().required(),
+  name: joi.string().optional(),
   command: joi.string().required(),
   status: joi.string(),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
@@ -91,7 +91,7 @@ const job = joi.object().required().keys({
 
 // This schema is used in the user workflow construction but is never stored.
 const jobDefinition = joi.object().required().keys({
-  name: joi.string().required(),
+  name: joi.string().optional(),
   command: joi.string().required(),
   user_data: joi.array().items(joi.object()).default([]),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
@@ -104,7 +104,7 @@ const jobDefinition = joi.object().required().keys({
 });
 
 const jobProcessStats = joi.object().required().keys({
-  job_name: joi.string().required(),
+  job_key: joi.string().required(),
   run_id: joi.number().required(),
   avg_cpu_percent: joi.number().required(),
   max_cpu_percent: joi.number().required(),
@@ -115,12 +115,6 @@ const jobProcessStats = joi.object().required().keys({
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),
-});
-
-const jobUserData = joi.object().required().keys({
-  items: joi.array().items(joi.object()),
-  name: joi.string(),
-  count: joi.number(),
 });
 
 const readyJobsResourceRequirements = joi.object().required().keys({
@@ -146,7 +140,7 @@ const resourceRequirements = joi.object().required().keys({
 });
 
 const result = joi.object().required().keys({
-  name: joi.string().required(),
+  job_key: joi.string().required(),
   run_id: joi.number().required(),
   return_code: joi.number().required(),
   exec_time_minutes: joi.number().required(),
@@ -229,7 +223,7 @@ const workflow = joi.object().required().keys({
 
 const autoTuneStatus = joi.object().required().keys({
   enabled: joi.boolean().default(true),
-  job_names: joi.array().items(joi.string()).default([]),
+  job_keys: joi.array().items(joi.string()).default([]),
 });
 
 const scheduledComputeNode = joi.object().required().keys({
@@ -403,7 +397,6 @@ module.exports = {
   jobDefinition,
   jobInternal,
   jobProcessStats,
-  jobUserData,
   localScheduler,
   object,
   readyJobsResourceRequirements,

@@ -46,43 +46,43 @@ class ResourceStatAggregator:
         }
         self._process_sample_count = {}
 
-    def complete_process_stats(self, completed_job_names):
+    def complete_process_stats(self, completed_job_keys):
         """Finalize stat summaries for completed processes.
 
         Parameters
         ----------
-        completed_job_names : list[str]
+        completed_job_keys : list[str]
 
         Returns
         -------
         ComputeNodeResourceStatResults
         """
         # Note that short-lived jobs may not be present.
-        jobs = set(completed_job_names).intersection(self._process_sample_count)
+        jobs = set(completed_job_keys).intersection(self._process_sample_count)
         results = []
-        for job_name in jobs:
-            stat_dict = self._process_summaries["sum"][job_name]
+        for job_key in jobs:
+            stat_dict = self._process_summaries["sum"][job_key]
             for stat_name, val in stat_dict.items():
-                self._process_summaries["average"][job_name][stat_name] = (
-                    val / self._process_sample_count[job_name]
+                self._process_summaries["average"][job_key][stat_name] = (
+                    val / self._process_sample_count[job_key]
                 )
 
-        for job_name in jobs:
-            samples = self._process_sample_count[job_name]
+        for job_key in jobs:
+            samples = self._process_sample_count[job_key]
             result = ProcessStatResults(
-                job_name=job_name,
+                job_key=job_key,
                 num_samples=samples,
                 resource_type=ResourceType.PROCESS,
-                average=self._process_summaries["average"][job_name],
-                minimum=self._process_summaries["minimum"][job_name],
-                maximum=self._process_summaries["maximum"][job_name],
+                average=self._process_summaries["average"][job_key],
+                minimum=self._process_summaries["minimum"][job_key],
+                maximum=self._process_summaries["maximum"][job_key],
             )
             results.append(result)
 
-        for job_name in jobs:
+        for job_key in jobs:
             for stat_dict in self._process_summaries.values():
-                stat_dict.pop(job_name)
-            self._process_sample_count.pop(job_name)
+                stat_dict.pop(job_key)
+            self._process_sample_count.pop(job_key)
 
         return ComputeNodeResourceStatResults(
             hostname=socket.gethostname(),
@@ -158,21 +158,21 @@ class ResourceStatAggregator:
                 self._summaries["sum"][resource_type][stat_name] += val
 
         if self._config.process:
-            for job_name, stat_dict in cur_stats[ResourceType.PROCESS].items():
-                if job_name in self._process_summaries["maximum"]:
+            for job_key, stat_dict in cur_stats[ResourceType.PROCESS].items():
+                if job_key in self._process_summaries["maximum"]:
                     for stat_name, val in stat_dict.items():
-                        if val > self._process_summaries["maximum"][job_name][stat_name]:
-                            self._process_summaries["maximum"][job_name][stat_name] = val
-                        elif val < self._process_summaries["minimum"][job_name][stat_name]:
-                            self._process_summaries["minimum"][job_name][stat_name] = val
-                        self._process_summaries["sum"][job_name][stat_name] += val
-                    self._process_sample_count[job_name] += 1
+                        if val > self._process_summaries["maximum"][job_key][stat_name]:
+                            self._process_summaries["maximum"][job_key][stat_name] = val
+                        elif val < self._process_summaries["minimum"][job_key][stat_name]:
+                            self._process_summaries["minimum"][job_key][stat_name] = val
+                        self._process_summaries["sum"][job_key][stat_name] += val
+                    self._process_sample_count[job_key] += 1
                 else:
                     for stat_name, val in stat_dict.items():
-                        self._process_summaries["maximum"][job_name][stat_name] = val
-                        self._process_summaries["minimum"][job_name][stat_name] = val
-                        self._process_summaries["sum"][job_name][stat_name] = val
-                    self._process_sample_count[job_name] = 1
+                        self._process_summaries["maximum"][job_key][stat_name] = val
+                        self._process_summaries["minimum"][job_key][stat_name] = val
+                        self._process_summaries["sum"][job_key][stat_name] = val
+                    self._process_sample_count[job_key] = 1
 
         self._count += 1
         self._last_stats = cur_stats

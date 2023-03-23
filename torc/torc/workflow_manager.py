@@ -118,19 +118,19 @@ class WorkflowManager:
             # similar iterations can use it.
             for job in send_api_command(self._api.get_jobs_find_by_status_status, status).items:
                 job.status = "uninitialized"
-                send_api_command(self._api.put_jobs_key, job, job.name)
-                logger.info("Changed job %s from %s to uninitialized", job.name, status)
+                send_api_command(self._api.put_jobs_key, job, job.key)
+                logger.info("Changed job %s from %s to uninitialized", job.key, status)
 
     def _update_jobs_if_output_files_are_missing(self):
         for job in send_api_command(self._api.get_jobs_find_by_status_status, "done").items:
-            for file in send_api_command(self._api.get_files_produced_by_job_key, job.name).items:
+            for file in send_api_command(self._api.get_files_produced_by_job_key, job.key).items:
                 path = Path(file.path)
                 if not path.exists():
                     job.status = "uninitialized"
-                    send_api_command(self._api.put_jobs_key, job, job.name)
+                    send_api_command(self._api.put_jobs_key, job, job.key)
                     logger.info(
                         "Changed job %s from done to %s because output file is missing",
-                        job.name,
+                        job.key,
                         job.status,
                     )
                     break
@@ -141,13 +141,13 @@ class WorkflowManager:
                 status = "uninitialized"
                 send_api_command(
                     self._api.put_jobs_manage_status_change_key_status_rev,
-                    job.name,
+                    job.key,
                     status,
                     job._rev,  # pylint: disable=protected-access
                 )
                 logger.info(
                     "Changed job %s from %s to %s after input file change",
-                    job.name,
+                    job.key,
                     job.status,
                     status,
                 )

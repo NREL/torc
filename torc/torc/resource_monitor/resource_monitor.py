@@ -26,7 +26,7 @@ def run_monitor_async(conn, config: ComputeNodeResourceStatConfig, pids, path=No
         Child side of the pipe
     config : ComputeNodeResourceStatConfig
     pids : dict | None
-        Process IDs to monitor ({job_name: pid})
+        Process IDs to monitor ({job_key: pid})
     path : Path | None
         Path to store database if monitor_type = "periodic"
 
@@ -48,7 +48,7 @@ def run_monitor_async(conn, config: ComputeNodeResourceStatConfig, pids, path=No
             logger.info("Received command %s", cmd["command"].value)
             match cmd["command"]:
                 case IpcMonitorCommands.COMPLETE_JOBS:
-                    results = agg.complete_process_stats(cmd["completed_job_names"])
+                    results = agg.complete_process_stats(cmd["completed_job_keys"])
                     conn.send(results)
                     pids = cmd["pids"]
                 case IpcMonitorCommands.SELECT_STATS:
@@ -88,7 +88,7 @@ def run_monitor_sync(config: ComputeNodeResourceStatConfig, pids, duration_secon
     ----------
     config : ComputeNodeResourceStatConfig
     pids : dict | None
-        Process IDs to monitor ({job_name: pid})
+        Process IDs to monitor ({job_key: pid})
     path : Path | None
         Path to store database if monitor_type = "periodic"
 

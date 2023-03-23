@@ -12,6 +12,7 @@ def test_api_nodes_by_key(completed_workflow):
         "compute_nodes",
         "compute_node_stats",
         "events",
+        "jobs",
         "job_process_stats",
         "results",
         "user_data",
@@ -40,7 +41,7 @@ def test_api_nodes_by_key(completed_workflow):
 def test_api_nodes_by_name(completed_workflow):
     """Tests API commands to get documents stored by the 'name' parameter."""
     api, _, _ = completed_workflow
-    names = ["local_schedulers", "files", "jobs", "resource_requirements"]
+    names = ["local_schedulers", "files", "resource_requirements"]
     for name in names:
         results = getattr(api, f"get_{name}")()
         if results.items:

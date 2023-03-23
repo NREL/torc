@@ -16,6 +16,7 @@ from torc.resource_monitor.reports import (
     make_compute_node_stats_dataframes,
 )
 from torc.workflow_manager import WorkflowManager
+from torc.tests.common import TestApiManager
 
 
 logger = logging.getLogger(__name__)
@@ -25,22 +26,32 @@ logger = logging.getLogger(__name__)
 def test_auto_tune_workflow(multi_resource_requirement_workflow):
     """Test execution of a workflow using the auto-tune feature."""
     setup_logging("torc")
-    api, scheduler_config_id, output_dir, monitor_type = multi_resource_requirement_workflow
+    (
+        api,
+        scheduler_config_id,
+        output_dir,
+        monitor_type,
+    ) = multi_resource_requirement_workflow
+    test_mgr = TestApiManager(api)
 
     mgr = WorkflowManager(api)
     mgr.start(auto_tune_resource_requirements=True)
 
     # TODO: this will change when the manager can schedule nodes
     auto_tune_status = api.get_workflow_status().auto_tune_status
-    auto_tune_job_names = set(auto_tune_status.job_names)
-    assert auto_tune_job_names == {"job_small1", "job_medium1", "job_large1"}
+    auto_tune_job_keys = set(auto_tune_status.job_keys)
+    assert auto_tune_job_keys == {
+        test_mgr.get_job_key("job_small1"),
+        test_mgr.get_job_key("job_medium1"),
+        test_mgr.get_job_key("job_large1"),
+    }
     num_enabled = 0
     groups = set()
     for job in api.get_jobs().items:
-        if job.name in auto_tune_job_names:
+        if job.key in auto_tune_job_keys:
             assert job.status == "ready"
             num_enabled += 1
-            rr = api.get_jobs_resource_requirements_key(job.name)
+            rr = api.get_jobs_resource_requirements_key(job.key)
             assert rr.name not in groups
             groups.add(rr.name)
         else:
@@ -63,9 +74,15 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     runner.run_worker()
     assert api.get_workflow_is_complete()
 
-    stats_by_name = {x: api.get_jobs_process_stats_key(x)[0] for x in auto_tune_job_names}
-    assert stats_by_name["job_small1"].max_rss < stats_by_name["job_medium1"].max_rss
-    assert stats_by_name["job_medium1"].max_rss < stats_by_name["job_large1"].max_rss
+    stats_by_key = {x: api.get_jobs_process_stats_key(x)[0] for x in auto_tune_job_keys}
+    assert (
+        stats_by_key[test_mgr.get_job_key("job_small1")].max_rss
+        < stats_by_key[test_mgr.get_job_key("job_medium1")].max_rss
+    )
+    assert (
+        stats_by_key[test_mgr.get_job_key("job_medium1")].max_rss
+        < stats_by_key[test_mgr.get_job_key("job_large1")].max_rss
+    )
 
     api.post_workflow_process_auto_tune_resource_requirements_results()
     small = api.get_resource_requirements_key("small")
@@ -78,7 +95,7 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
         assert rr.memory.lower() == "1g"
 
     for job in api.get_jobs().items:
-        if job.name in auto_tune_job_names:
+        if job.key in auto_tune_job_keys:
             assert job.status == "done"
         else:
             assert job.status == "uninitialized"

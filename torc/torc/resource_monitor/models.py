@@ -121,7 +121,7 @@ class ResourceStatResults(TorcBaseModel):
 class ProcessStatResults(ResourceStatResults):
     """Results for one process stat"""
 
-    job_name: str
+    job_key: str
 
 
 class ComputeNodeResourceStatResults(TorcBaseModel):
