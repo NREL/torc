@@ -253,7 +253,7 @@ def complete_workflow_missing_files(completed_workflow):
 
 
 @pytest.fixture
-def multi_resource_requirement_workflow(tmp_path):
+def multi_resource_requirement_workflow(tmp_path, monitor_type):
     """Creates a workflow with jobs that need different categories of resource requirements."""
     api = _initialize_api()
     api.delete_workflow()
@@ -304,6 +304,7 @@ def multi_resource_requirement_workflow(tmp_path):
                 memory=True,
                 process=True,
                 interval=0.1,
+                monitor_type=monitor_type,
             )
         ),
     )
@@ -311,5 +312,5 @@ def multi_resource_requirement_workflow(tmp_path):
     api.post_workflow(workflow)
     scheduler = api.get_local_schedulers_key("test")
     api.post_workflow_initialize_jobs()
-    yield api, scheduler.id, output_dir
+    yield api, scheduler.id, output_dir, monitor_type
     api.delete_workflow()

@@ -11,6 +11,11 @@ class TorcBaseModel(BaseModel):
     class Config:
         """Custom config"""
 
+        anystr_strip_whitespace = True
+        validate_assignment = True
+        validate_all = True
+        extra = "forbid"
+        use_enum_values = False
         json_encoders = {
             enum.Enum: lambda x: x.value,
         }
@@ -32,11 +37,13 @@ class IpcMonitorCommands(enum.Enum):
     COMPLETE_JOBS = "complete_pids"
     SELECT_STATS = "select_stats"
     SHUTDOWN = "shutdown"
-    UPDATE_STATS = "update_stats"
+    UPDATE_PIDS = "update_pids"
 
 
-# TODO: make test to assert that this is the same as WorkflowConfigComputeNodeResourceStats
-# Want two versions so that this can be used without the Swagger API
+# This is duplicate of WorkflowConfigComputeNodeResourceStats. We want the duplicate
+# so that this can be used without the Swagger API.
+
+
 class ComputeNodeResourceStatConfig(TorcBaseModel):
     """Defines the stats to monitor."""
 
@@ -68,8 +75,22 @@ class ComputeNodeResourceStatConfig(TorcBaseModel):
         description="Recurse child processes to find all descendants.",
         default=False,
     )
+    monitor_type: str = Field(
+        description="'aggregation' or 'periodic'. Keep aggregated stats in memory or record time-series data on an interval.",
+        default=False,
+    )
     interval: int = Field(description="Interval in seconds on which to collect stats", default=10)
-    name: str
+
+    @classmethod
+    def all_enabled(cls):
+        """Return an instance with all stats enabled."""
+        return cls(
+            cpu=True,
+            disk=True,
+            memory=True,
+            network=True,
+            process=True,
+        )
 
     @classmethod
     def disabled(cls):
@@ -80,8 +101,11 @@ class ComputeNodeResourceStatConfig(TorcBaseModel):
             memory=False,
             network=False,
             process=False,
-            name="disabled",
         )
+
+    def is_enabled(self):
+        """Return True if any stat is enabled."""
+        return self.cpu or self.disk or self.memory or self.network or self.process
 
 
 class ResourceStatResults(TorcBaseModel):
@@ -103,6 +127,5 @@ class ProcessStatResults(ResourceStatResults):
 class ComputeNodeResourceStatResults(TorcBaseModel):
     """Contains all results from one compute node"""
 
-    name: str
     hostname: str = Field(description="Hostname of compute node")
     results: list[ResourceStatResults]

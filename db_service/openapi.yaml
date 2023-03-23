@@ -3426,7 +3426,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/store_user_data_key_model'
+              type: object
         required: true
       responses:
         "200":
@@ -3667,12 +3667,9 @@ components:
     compute_node_stats_model:
       required:
       - hostname
-      - name
       - timestamp
       type: object
       properties:
-        name:
-          type: string
         hostname:
           type: string
         stats:
@@ -3690,12 +3687,9 @@ components:
     compute_node_stats_key_model:
       required:
       - hostname
-      - name
       - timestamp
       type: object
       properties:
-        name:
-          type: string
         hostname:
           type: string
         stats:
@@ -3935,6 +3929,9 @@ components:
         recurse_child_processes:
           type: boolean
           default: false
+        monitor_type:
+          type: string
+          default: aggregation
         interval:
           type: number
     inline_response_500:
@@ -3953,12 +3950,9 @@ components:
     inline_response_200_9:
       required:
       - hostname
-      - name
       - timestamp
       type: object
       properties:
-        name:
-          type: string
         hostname:
           type: string
         stats:
@@ -4363,34 +4357,6 @@ components:
           type: string
         _rev:
           type: string
-    store_user_data_key_model:
-      required:
-      - completion_time
-      - exec_time_minutes
-      - name
-      - return_code
-      - run_id
-      - status
-      type: object
-      properties:
-        name:
-          type: string
-        run_id:
-          type: number
-        return_code:
-          type: number
-        exec_time_minutes:
-          type: number
-        completion_time:
-          type: string
-        status:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
     inline_response_200_22_auto_tune_status:
       type: object
       properties:
@@ -4708,7 +4674,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/store_user_data_key_model'
+            $ref: '#/components/schemas/status_rev_model'
         skip:
           type: number
         max_limit:

@@ -34,7 +34,6 @@ const resourceStats = joi.object().required().keys({
 });
 
 const computeNodeStats = joi.object().required().keys({
-  name: joi.string().required(),
   hostname: joi.string().required(),
   stats: joi.array().items(resourceStats),
   timestamp: joi.string().required(),
@@ -166,6 +165,7 @@ const computeNodeResourceStatConfig = joi.object().keys({
   process: joi.boolean().default(false),
   include_child_processes: joi.boolean().default(true),
   recurse_child_processes: joi.boolean().default(false),
+  monitor_type: joi.string().default('aggregation'),
   interval: joi.number().default(10),
 });
 

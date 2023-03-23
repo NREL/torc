@@ -24,14 +24,15 @@ from swagger_client.models.workflow_prepare_jobs_for_submission_model import (
 )
 
 from torc.api import send_api_command
-from torc.common import JOB_STDIO
-from torc.resource_monitor import (
+from torc.common import JOB_STDIO_DIR, STATS_DIR
+from torc.resource_monitor.models import (
+    ComputeNodeResourceStatConfig,
     ComputeNodeResourceStatResults,
     IpcMonitorCommands,
     ProcessStatResults,
     ResourceType,
-    run_stat_aggregator,
 )
+from torc.resource_monitor.resource_monitor import run_monitor_async
 from torc.utils.filesystem_factory import make_path
 from torc.utils.timing import timer_stats_collector, Timer
 from .async_cli_command import AsyncCliCommand
@@ -85,13 +86,18 @@ class JobRunner:
         self._num_jobs = 0
         self._last_db_poll_time = 0
         self._compute_node_db_id = None
-        self._stats = api.get_workflow_config().compute_node_resource_stats
+        self._stats = ComputeNodeResourceStatConfig(
+            **(api.get_workflow_config().compute_node_resource_stats.to_dict())
+        )
         self._parent_monitor_conn = None
         self._monitor_proc = None
         self._pids = {}
         self._jobs_pending_process_stat_completion = []
-        job_stdio = output_dir / JOB_STDIO
-        job_stdio.mkdir(exist_ok=True)
+        self._job_stdio_dir = output_dir / JOB_STDIO_DIR
+        self._stats_dir = output_dir / STATS_DIR
+        self._job_stdio_dir.mkdir(exist_ok=True)
+        self._stats_dir.mkdir(exist_ok=True)
+        self._hostname = socket.gethostname()
 
     def __del__(self):
         if self._outstanding_jobs:
@@ -111,7 +117,7 @@ class JobRunner:
             Scheduler configuration parameters. Used only for logs and events.
 
         """
-        if self._stats.process:
+        if self._stats.is_enabled():
             self._start_resource_monitor()
 
         try:
@@ -122,17 +128,16 @@ class JobRunner:
 
     def _run_worker(self, scheduler):
         start = time.time()
-        hostname = socket.gethostname()
         event = {
             "category": "worker",
             "type": "start",
-            "node_name": hostname,
-            "message": f"Worker started on {hostname}",
+            "node_name": self._hostname,
+            "message": f"Worker started on {self._hostname}",
         }
         event.update(**self._orig_resources.to_dict())
         send_api_command(self._api.post_events, event)
         compute_node = ComputeNodesModel(
-            hostname=hostname,
+            hostname=self._hostname,
             start_time=str(datetime.now()),
             resources=self._orig_resources,
             is_active=True,
@@ -152,7 +157,7 @@ class JobRunner:
                 "type": "complete",
                 "num_jobs": self._num_jobs,
                 "duration_seconds": time.time() - start,
-                "message": f"Worker completed on {hostname}",
+                "message": f"Worker completed on {self._hostname}",
             },
         )
 
@@ -200,7 +205,6 @@ class JobRunner:
 
         self._pids.clear()
         self._handle_completed_process_stats()
-        self._update_pids_to_monitor()
 
     def _cancel_outstanding_jobs(self):
         return self._process_completions(cancel=True)
@@ -258,7 +262,7 @@ class JobRunner:
                 "category": "job",
                 "type": "start",
                 "name": job_name,
-                "node_name": socket.gethostname(),
+                "node_name": self._hostname,
                 "message": f"Started job {job_name}",
             },
         )
@@ -271,7 +275,7 @@ class JobRunner:
                 "type": "complete",
                 "name": job_name,
                 "status": status,
-                "node_name": socket.gethostname(),
+                "node_name": self._hostname,
                 "message": f"Completed job {job_name}",
             },
         )
@@ -347,10 +351,15 @@ class JobRunner:
     def _start_resource_monitor(self):
         self._parent_monitor_conn, child_conn = multiprocessing.Pipe()
         pids = self._pids if self._stats.process else None
-        logger.info("Start resource monitor with %s", json.dumps(self._stats.to_dict()))
-        self._monitor_proc = multiprocessing.Process(
-            target=run_stat_aggregator, args=(child_conn, self._stats, pids)
-        )
+        logger.info("Start resource monitor with %s", json.dumps(self._stats.dict()))
+        if self._stats.monitor_type == "aggregation":
+            args = (child_conn, self._stats, pids, None)
+        elif self._stats.monitor_type == "periodic":
+            db_file = self._stats_dir / f"{self._hostname}__{int(time.time())}.sqlite"
+            args = (child_conn, self._stats, pids, db_file)
+        else:
+            raise Exception(f"Unsupported monitor_type={self._stats.monitor_type}")
+        self._monitor_proc = multiprocessing.Process(target=run_monitor_async, args=args)
         self._monitor_proc.start()
 
     def _stop_resource_monitor(self):
@@ -388,8 +397,7 @@ class JobRunner:
                 send_api_command(
                     self._api.post_compute_node_stats,
                     ComputeNodeStatsModel(
-                        name=results.name,
-                        hostname=results.name,
+                        hostname=self._hostname,
                         # These json methods let Pydantic run its data type conversions.
                         stats=[
                             ComputeNodeStatsStats(**json.loads(x.json())) for x in results.results
@@ -402,15 +410,14 @@ class JobRunner:
     def _update_pids_to_monitor(self):
         if self._stats.process:
             self._parent_monitor_conn.send(
-                {"command": IpcMonitorCommands.UPDATE_STATS, "pids": self._pids}
+                {"command": IpcMonitorCommands.UPDATE_PIDS, "pids": self._pids}
             )
 
     def _post_compute_node_stats(self, results: ComputeNodeResourceStatResults):
         res = send_api_command(
             self._api.post_compute_node_stats,
             ComputeNodeStatsModel(
-                name=results.name,
-                hostname=results.name,
+                hostname=self._hostname,
                 # These json methods let Pydantic run its data type conversions.
                 stats=[ComputeNodeStatsStats(**json.loads(x.json())) for x in results.results],
                 timestamp=str(datetime.now()),
