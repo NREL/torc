@@ -40,7 +40,7 @@ class IpcMonitorCommands(enum.Enum):
     UPDATE_PIDS = "update_pids"
 
 
-# This is duplicate of WorkflowConfigComputeNodeResourceStats. We want the duplicate
+# This is duplicate of WorkflowsconfigkeyComputeNodeResourceStats. We want the duplicate
 # so that this can be used without the Swagger API.
 
 

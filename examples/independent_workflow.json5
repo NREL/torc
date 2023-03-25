@@ -1,4 +1,6 @@
 {
+  name: "independent_workflow",
+  description: "Workflow with independent jobs",
   "jobs": [
     {
       "name": "small",

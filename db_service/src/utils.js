@@ -1,5 +1,8 @@
 'use strict';
 const parse = require('tinyduration').parse;
+const errors = require('@arangodb').errors;
+const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
+const CONFLICTING_REV = errors.ERROR_ARANGO_CONFLICT.code;
 const {KiB, MiB, GiB, TiB, MAX_TRANSFER_RECORDS} = require('./defs');
 const product = (...a) => a.reduce((a, b) => a.flatMap((d) => b.map((e) => [d, e].flat())));
 
@@ -89,7 +92,7 @@ function makeCursorResult(items, skip, limit, totalCount) {
     max_limit: MAX_TRANSFER_RECORDS,
     count: items.length,
     total_count: totalCount,
-    has_more: skip + items.length < totalCount,
+    has_more: skip >= items.length ? false : skip + items.length < totalCount,
   };
 }
 
@@ -103,11 +106,31 @@ function convertJobForApi(job) {
   return job;
 }
 
+/**
+ * Return Arango error messages in http responses.
+ * @param {Object} e
+ * @param {Object} res
+ * @param {string} tag
+ */
+function handleArangoApiErrors(e, res, tag) {
+  if (e.isArangoError) {
+    if (e.errorNum === DOC_NOT_FOUND) {
+      res.throw(404, `Error: Document not found. Operation: ${tag}`);
+    } else if (e.errorNum === CONFLICTING_REV) {
+      res.throw(409, `Error: Conflicting revision. Operation: ${tag}`);
+    } else {
+      res.throw(400, `Database error occurred: ${e}`, e);
+    }
+  }
+  throw e;
+}
+
 module.exports = {
   convertJobForApi,
   getItemsLimit,
   getTimeDurationInSeconds,
   getMemoryInBytes,
+  handleArangoApiErrors,
   makeCursorResult,
   product,
 };

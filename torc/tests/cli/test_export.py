@@ -6,10 +6,11 @@ import subprocess
 from torc.utils.files import load_line_delimited_json
 
 
-def test_export(tmp_path, completed_workflow):  # pylint: disable=unused-argument
+def test_export(tmp_path, completed_workflow):
     """Tests the CLI commands that export data from the database."""
+    db, _, output_dir = completed_workflow
     output_dir = tmp_path / "exports"
-    cmd = f"torc -u http://localhost:8529/_db/workflows/torc-service export json -d {output_dir} --force"
+    cmd = f"torc -u {db.url} export json {db.workflow.key} -d {output_dir} --force"
     subprocess.run(shlex.split(cmd), check=True)
     jobs_file = output_dir / "jobs.json"
     assert jobs_file.exists()
@@ -18,6 +19,6 @@ def test_export(tmp_path, completed_workflow):  # pylint: disable=unused-argumen
     assert (output_dir / "edges" / "blocks.json").exists()
 
     filename = tmp_path / "db.sqlite"
-    cmd = f"torc -u http://localhost:8529/_db/workflows/torc-service export sqlite -F {filename} --force"
+    cmd = f"torc -u {db.url} export sqlite {db.workflow.key} -F {filename} --force"
     subprocess.run(shlex.split(cmd), check=True)
     assert filename.exists()

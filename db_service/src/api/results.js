@@ -2,19 +2,25 @@
 const joi = require('joi');
 const db = require('@arangodb').db;
 const createRouter = require('@arangodb/foxx/router');
+const config = require('../config');
+const documents = require('../documents');
 const query = require('../query');
 const schemas = require('./schemas');
 const router = createRouter();
 module.exports = router;
 
-router.get('/results/find_by_job/:key', function(req, res) {
-  const job = db.jobs.document(req.pathParams.key);
-  const result = query.getLatestJobResult(job);
+router.get('/results/find_by_job/:workflow/:key', function(req, res) {
+  const workflowKey = req.pathParams.workflow;
+  const key = req.pathParams.key;
+  const workflow = documents.getWorkflow(workflowKey, res);
+  const job = documents.getWorkflowDocument(workflow, 'jobs', key, res);
+  const result = query.getLatestJobResult(job, workflow);
   if (result == null) {
-    res.throw(404, `No result is stored for job ${req.pathParams.key}`);
+    res.throw(404, `No result is stored for job ${key}`);
   }
   res.send(result);
 })
+    .pathParam('workflow', joi.string().required(), 'Workflow key')
     .pathParam('key', joi.string().required(), 'Job key')
     .response(schemas.result)
     .summary('Retrieve the latest result for a job')

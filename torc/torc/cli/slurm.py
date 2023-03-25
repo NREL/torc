@@ -6,9 +6,9 @@ import sys
 from datetime import timedelta
 
 import click
-from swagger_client.models.slurm_schedulers_model import SlurmSchedulersModel
-from swagger_client.models.scheduled_compute_nodes_model import (
-    ScheduledComputeNodesModel,
+from swagger_client.models.slurm_schedulers_workflow_model import SlurmSchedulersWorkflowModel
+from swagger_client.models.scheduled_compute_nodes_workflow_model import (
+    ScheduledComputeNodesWorkflowModel,
 )
 
 from torc.api import iter_documents, remove_db_keys
@@ -94,7 +94,7 @@ def add_config(api, name, account, gres, mem, nodes, partition, qos, tmp, wallti
         "tmp": tmp,
         "walltime": walltime,
     }
-    api.post_slurm_schedulers(SlurmSchedulersModel(name=name, **config))
+    api.post_slurm_schedulers(SlurmSchedulersWorkflowModel(name=name, **config))
     print(f"Added SLURM configuration {name} to database", file=sys.stderr)
 
 
@@ -170,7 +170,7 @@ def schedule_nodes(ctx, api, scheduler_config_id, index, job_prefix, num_hpc_job
         job_id = mgr.submit(output, name, runner_script, keep_submission_script=True)
         job_ids.append(job_id)
         api.post_scheduled_compute_nodes(
-            ScheduledComputeNodesModel(
+            ScheduledComputeNodesWorkflowModel(
                 scheduler_id=job_id, scheduler_config_id=scheduler_config_id, status="pending"
             )
         )
@@ -188,6 +188,7 @@ def schedule_nodes(ctx, api, scheduler_config_id, index, job_prefix, num_hpc_job
 
 
 @click.command()
+@click.argument("workflow_key")
 @click.option(
     "-o",
     "--output",
@@ -197,7 +198,7 @@ def schedule_nodes(ctx, api, scheduler_config_id, index, job_prefix, num_hpc_job
 )
 @click.pass_obj
 @click.pass_context
-def run_jobs(ctx, api, output):
+def run_jobs(ctx, api, workflow_key, output):
     """Run workflow jobs on a SLURM compute node."""
     # TODO: make unique
     hostname = socket.gethostname()
@@ -220,8 +221,10 @@ def run_jobs(ctx, api, output):
     end_time = intf.get_job_end_time() - buffer
     time_limit = convert_end_time_to_duration_str(end_time)
     # scheduled_compute_node = api.get_scheduled_compute_nodes_key(slurm_job_id)
+    workflow = api.get_workflows_key(workflow_key)
     runner = JobRunner(
         api,
+        workflow,
         output,
         time_limit=time_limit,
         # scheduler_config_id=scheduled_compute_node.scheduler_config_id,

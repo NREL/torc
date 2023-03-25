@@ -9,7 +9,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from swagger_client.models.result_model import ResultModel
+from swagger_client.models.results_workflow_model import ResultsWorkflowModel
 
 from torc.common import JOB_STDIO_DIR
 
@@ -43,7 +43,7 @@ class AsyncJobBase(abc.ABC):
 
         Returns
         -------
-        ResultModel
+        ResultsWorkflowModel
         """
 
     @abc.abstractmethod
@@ -99,7 +99,7 @@ class AsyncCliCommand(AsyncJobBase):
 
     def get_result(self):
         assert self._is_complete
-        return ResultModel(
+        return ResultsWorkflowModel(
             job_key=self.key,
             run_id=self._db_job.run_id,
             return_code=self._return_code,

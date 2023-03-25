@@ -7,9 +7,10 @@ import click
 from torc.api import make_api
 from torc.cli.export import export
 from torc.cli.hpc import hpc
+from torc.cli.jobs import jobs
 from torc.cli.local import local
 from torc.cli.show import show
-from torc.cli.workflow import workflow
+from torc.cli.workflows import workflows
 from torc.utils.timing import timer_stats_collector
 
 
@@ -78,6 +79,7 @@ def callback(*args, **kwargs):  # pylint: disable=unused-argument
 
 cli.add_command(export)
 cli.add_command(hpc)
+cli.add_command(jobs)
 cli.add_command(local)
 cli.add_command(show)
-cli.add_command(workflow)
+cli.add_command(workflows)

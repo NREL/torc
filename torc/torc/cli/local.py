@@ -19,6 +19,7 @@ def local():
 
 
 @click.command()
+@click.argument("workflow_key")
 @click.option(
     "-o",
     "--output",
@@ -28,13 +29,14 @@ def local():
 )
 @click.pass_obj
 @click.pass_context
-def run_jobs(ctx, api, output: Path):
+def run_jobs(ctx, api, workflow_key, output: Path):
     """Run workflow jobs on a local system."""
     output.mkdir(exist_ok=True)
     hostname = socket.gethostname()
     log_file = output / f"worker_{hostname}.log"
     setup_cli_logging(ctx, 2, __name__, filename=log_file, mode="a")
-    runner = JobRunner(api, output)
+    workflow = api.get_workflows_key(workflow_key)
+    runner = JobRunner(api, workflow, output)
     runner.run_worker()
 
 

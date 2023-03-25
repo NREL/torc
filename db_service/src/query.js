@@ -1,20 +1,31 @@
 'use strict';
 const {query} = require('@arangodb');
 const db = require('@arangodb').db;
-const {GiB, GRAPH_NAME, JobStatus} = require('./defs');
+const {GiB, JobStatus, GRAPH_NAME} = require('./defs');
+const config = require('./config');
+const documents = require('./documents');
 const schemas = require('./api/schemas');
 const utils = require('./utils');
 
-/** Add 'blocks' edges between jobs by looking at their file edges. */
-function addBlocksEdgesFromFiles() {
-  for (const file of db.files.all()) {
+/**
+ * Add 'blocks' edges between jobs by looking at their file edges.
+ * @param {Object} workflow
+ */
+function addBlocksEdgesFromFiles(workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const blocksCollection = config.getWorkflowCollection(workflow, 'blocks');
+  const needs = config.getWorkflowCollectionName(workflow, 'needs');
+  const needsCollection = config.getWorkflowCollection(workflow, 'needs');
+  const produces = config.getWorkflowCollectionName(workflow, 'produces');
+  const files = config.getWorkflowCollection(workflow, 'files');
+  for (const file of files.all()) {
     const fid = file._id;
     const fromVertices = query`
       FOR v
           IN 1
           INBOUND ${fid}
-          GRAPH ${GRAPH_NAME}
-          OPTIONS { edgeCollections: 'produces' }
+          GRAPH ${graphName}
+          OPTIONS { edgeCollections: ${produces} }
           RETURN v._id
     `;
     if (fromVertices.count() > 0) {
@@ -22,8 +33,8 @@ function addBlocksEdgesFromFiles() {
         FOR v
             IN 1
             INBOUND ${file._id}
-            GRAPH ${GRAPH_NAME}
-            OPTIONS { edgeCollections: 'needs' }
+            GRAPH ${graphName}
+            OPTIONS { edgeCollections: ${needs} }
             RETURN v._id
       `;
       for (const item of utils.product(
@@ -33,239 +44,39 @@ function addBlocksEdgesFromFiles() {
         const fromVertex = item[0];
         const toVertex = item[1];
         const cursor = query({count: true})`
-            FOR edge IN needs
+            FOR edge IN ${needsCollection}
               FILTER edge._from == ${fromVertex} AND edge._to == ${toVertex}
               RETURN edge
             `;
         if (cursor.count() == 0) {
-          db.blocks.save({_from: fromVertex, _to: toVertex});
-          console.log(`${fromVertex} blocks ${toVertex}`);
+          blocksCollection.save({_from: fromVertex, _to: toVertex});
         }
       }
     }
   }
 }
 
-/**
- * Add a file document to the database.
- * @param {Object} doc
- * @return {Object}
- */
-function addFile(doc) {
-  const existing = getDocumentIfAlreadyStored(doc, 'files');
-  if (existing != null) {
-    return existing;
-  }
-
-  doc._key = doc.name;
-  const meta = db.files.save(doc);
-  Object.assign(doc, meta);
-  console.log(`Added file ${doc.name}`);
-  return doc;
-}
-
-/**
- * Add an hpc config document to the database.
- * @param {Object} doc
- * @param {String} collectionName
- * @return {Object}
- */
-function addScheduler(doc, collectionName) {
-  const existing = getDocumentIfAlreadyStored(doc, collectionName);
-  if (existing != null) {
-    return existing;
-  }
-
-  if (doc._key != null) {
-    throw new Error(`_key = ${doc._key} cannot be set on scheduler insertion)`);
-  }
-  doc._key = doc.name;
-  const meta = db._collection(collectionName).save(doc);
-  Object.assign(doc, meta);
-  console.log(`Added ${collectionName} ${JSON.stringify(doc)}`);
-  return doc;
-}
-
-/**
- * Add a job document to the database.
- * @param {Object} doc
- * @return {Object}
- */
-function addJob(doc) {
-  // const existing = getDocumentIfAlreadyStored(doc, 'jobs');
-  // if (existing != null) {
-  //   return existing;
-  // }
-
-  if (doc._key != null) {
-    throw new Error(`key=${doc._key} cannot be set on job insertion`);
-  }
-  if (doc.status == null) {
-    doc.status = JobStatus.Uninitialized;
-  }
-  const meta = db.jobs.save(doc);
-  Object.assign(doc, meta);
-  console.log(`Added job ${doc._key}`);
-  return doc;
-}
-
-/**
- * Add a job from its definition to the database and create edges.
- * @param {Object} jobDef
- * @return {Object}
- */
-function addJobDefinition(jobDef) {
-  let schedulerConfigId = null;
-  for (const filename of jobDef.input_files) {
-    if (!db.files.exists(filename)) {
-      throw new Error(`job ${JSON.stringify(jobDef)} input file ${filename} is not stored`);
-    }
-  }
-  for (const filename of jobDef.output_files) {
-    if (!db.files.exists(filename)) {
-      throw new Error(`job ${JSON.stringify(jobDef)} output file ${filename} is not stored`);
-    }
-  }
-  for (const jobName of jobDef.blocked_by) {
-    // Will throw if not correct.
-    getJobByName(jobName);
-  }
-  if (jobDef.scheduler != '') {
-    schedulerConfigId = getSchedulerConfig(jobDef.scheduler)._id;
-  }
-  const rr = jobDef.resource_requirements;
-  if (rr != null && !db.resource_requirements.exists(rr)) {
-    throw new Error(`job ${JSON.stringify(jobDef)} resource_requirements ${rr} is not stored`);
-  }
-
-  const job = addJob({
-    name: jobDef.name,
-    command: jobDef.command,
-    cancel_on_blocking_job_failure: jobDef.cancel_on_blocking_job_failure,
-    interruptible: jobDef.interruptible,
-    run_id: 0,
-    internal: schemas.jobInternal.validate({}).value,
-  });
-  for (const filename of jobDef.input_files) {
-    const file = db.files.document(filename);
-    const edge = {_from: job._id, _to: file._id};
-    db.needs.save(edge);
-  }
-  for (const filename of jobDef.output_files) {
-    const file = db.files.document(filename);
-    const edge = {_from: job._id, _to: file._id};
-    db.produces.save(edge);
-  }
-  for (const jobName of jobDef.blocked_by) {
-    const blockingJob = getJobByName(jobName);
-    const edge = {_from: blockingJob._id, _to: job._id};
-    db.blocks.save(edge);
-  }
-  if (jobDef.resource_requirements != null) {
-    const rr = db.resource_requirements.document(jobDef.resource_requirements);
-    const edge = {_from: job._id, _to: rr._id};
-    db.requires.save(edge);
-  }
-  if (schedulerConfigId != null) {
-    const edge = {_from: job._id, _to: schedulerConfigId};
-    db.scheduled_bys.save(edge);
-  }
-  for (const userData of jobDef.user_data) {
-    const doc = addUserData(userData);
-    db.stores.save({_from: job._id, _to: doc._id});
-  }
-  return job;
-}
-
-/**
- * Return the job with name. Throws if there is not exactly one match.
- * @param {String} name
- * @return {Object}
- */
-function getJobByName(name) {
-  const jobs = db.jobs.byExample({name: name}).toArray();
-  if (jobs.length == 0) {
-    throw new Error(`No job with name = ${name} is stored`);
-  } else if (jobs.length > 1) {
-    throw new Error(`There is more than one job with name = ${name}. length = ${jobs.length}`);
-  }
-  return jobs[0];
-}
-
-/**
- * Return the scheduler config for the scheduler config reference.
- * @param {String} schedulerConfigId
- * @return {Object}
- */
-function getSchedulerConfig(schedulerConfigId) {
-  const fields = schedulerConfigId.split('/');
-  if (fields.length != 2) {
-    throw new Error(`${schedulerConfigId} must be split by /`);
-  }
-  const collection = db._collection(fields[0]);
-  if (!collection.exists(fields[1])) {
-    throw new Error(`scheduler ${schedulerConfigId} is not stored`);
-  }
-  return collection.document(fields[1]);
-}
-
-/**
- * Add a resource requirements document to the database.
- * @param {Object} doc
- * @return {Object}
- */
-function addResourceRequirements(doc) {
-  const existing = getDocumentIfAlreadyStored(doc, 'resource_requirements');
-  if (existing != null) {
-    return existing;
-  }
-  doc._key = doc.name;
-  utils.getMemoryInBytes(doc.memory);
-  const meta = db.resource_requirements.save(doc);
-  Object.assign(doc, meta);
-  console.log(`Added resource_requirements ${doc.name}`);
-  return doc;
-}
-
-/**
- * Add a result to the database.
- * @param {Object} doc
- * @return {Object}
- */
-function addResult(doc) {
-  const meta = db.results.save(doc);
-  Object.assign(doc, meta);
-  return doc;
-}
-
-/**
- * Add a user data object to the database.
- * @param {Object} doc
- * @return {Object}
- */
-function addUserData(doc) {
-  const meta = db.user_data.save(doc);
-  Object.assign(doc, meta);
-  return doc;
-}
 
 /**
  * Perform a dry run of all jobs to get a rough estimate of how many rounds
  * and resources are required.
+ * @param {Object} workflow
  * @return {Object}
  */
-function estimateWorkflow() {
+function estimateWorkflow(workflow) {
   const byRounds = [];
-  resetJobStatus();
-  initializeJobStatus();
+  resetJobStatus(workflow);
+  initializeJobStatus(workflow);
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
+  const returned = config.getWorkflowCollection(workflow, 'returned');
 
   do {
-    const reqs = getReadyJobRequirements();
+    const reqs = getReadyJobRequirements(workflow);
     byRounds.push(reqs);
     if (reqs.num_jobs == 0) {
       break;
     }
-    for (const job of db.jobs.byExample({status: JobStatus.Ready})) {
+    for (const job of jobs.byExample({status: JobStatus.Ready})) {
       job.status = JobStatus.Done;
       let result = {
         job_key: job._key,
@@ -274,22 +85,24 @@ function estimateWorkflow() {
         exec_time_minutes: 5,
         status: job.status,
       };
-      result = addResult(result);
-      db.returned.save({_from: job._id, _to: result._id});
-      manageJobStatusChange(job);
+      // TODO: this is not being cleaned up.
+      result = documents.addResult(result, workflow);
+      returned.save({_from: job._id, _to: result._id});
+      manageJobStatusChange(job, workflow);
     }
-  } while (!isWorkflowComplete());
-  resetJobStatus();
-  initializeJobStatus();
+  } while (!isWorkflowComplete(workflow));
+  resetJobStatus(workflow);
+  initializeJobStatus(workflow);
 
   return {estimates_by_round: byRounds};
 }
 
 /**
  * Get information about the resources required for currently-available jobs.
+ * @param {Object} workflow
  * @return {Object}
  */
-function getReadyJobRequirements() {
+function getReadyJobRequirements(workflow) {
   let numCpus = 0;
   let numGpus = 0;
   let numJobs = 0;
@@ -299,8 +112,9 @@ function getReadyJobRequirements() {
   let maxRuntimeDuration = '';
   let maxNumNodes = 0;
 
-  for (const job of db.jobs.byExample({status: JobStatus.Ready})) {
-    const reqs = getJobResourceRequirements(job);
+  const collection = config.getWorkflowCollection(workflow, 'jobs');
+  for (const job of collection.byExample({status: JobStatus.Ready})) {
+    const reqs = getJobResourceRequirements(job, workflow);
     numJobs += 1;
     numCpus += reqs.num_cpus;
     numGpus += reqs.num_gpus;
@@ -332,17 +146,19 @@ function getReadyJobRequirements() {
 /**
  * Return all jobs blocking this job.
  * @param {Object} job
+ * @param {Object} workflow
  * @return {Array}
  */
-function getBlockingJobs(job) {
+function getBlockingJobs(job, workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'blocks');
   const blockingJobs = [];
-  const jobId = job._id;
   const cursor = query`
     FOR v, e, p
       IN 1
-      INBOUND ${jobId}
-      GRAPH ${GRAPH_NAME}
-      OPTIONS { edgeCollections: 'blocks' }
+      INBOUND ${job._id}
+      GRAPH ${graphName}
+      OPTIONS { edgeCollections: ${edgeName} }
       RETURN p.vertices[1]
   `;
   for (const job of cursor) {
@@ -353,40 +169,20 @@ function getBlockingJobs(job) {
 }
 
 /**
- * Return the current version of the resource_requirements document if it is already stored.
- * Return null if the _id doesn't exist or the existing document has different content.
- * @param {Object} doc
- * @param {string} collectionName
- * @return {Object}
- */
-function getDocumentIfAlreadyStored(doc, collectionName) {
-  const collection = db._collection(collectionName);
-  const filter = JSON.parse(JSON.stringify(doc));
-  for (const property of ['_key', '_id', '_rev']) {
-    delete filter[property];
-  }
-  const result = collection.byExample(filter);
-  if (result.count() == 0) {
-    return null;
-  }
-  if (result.count() > 1) {
-    throw new Error(`filter ${JSON.stringify(filter)} returned ${result.count()} matches`);
-  }
-  return result.next();
-}
-
-/**
  * Return files needed by the passed job.
  * @param {Object} job
+ * @param {Object} workflow
  * @return {ArangoQueryCursor}
  */
-function getFilesNeededByJob(job) {
+function getFilesNeededByJob(job, workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'needs');
   return query({count: true})`
       FOR v
           IN 1
           OUTBOUND ${job._id}
-          GRAPH ${GRAPH_NAME}
-          OPTIONS { edgeCollections: 'needs' }
+          GRAPH ${graphName}
+          OPTIONS { edgeCollections: ${edgeName} }
           RETURN v
     `;
 }
@@ -394,15 +190,18 @@ function getFilesNeededByJob(job) {
 /**
  * Return files needed by the passed job.
  * @param {Object} job
+ * @param {Object} workflow
  * @return {ArangoQueryCursor}
  */
-function getFilesProducedByJob(job) {
+function getFilesProducedByJob(job, workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'produces');
   return query({count: true})`
       FOR v
           IN 1
           OUTBOUND ${job._id}
-          GRAPH ${GRAPH_NAME}
-          OPTIONS { edgeCollections: 'produces' }
+          GRAPH ${graphName}
+          OPTIONS { edgeCollections: ${edgeName} }
           RETURN v
     `;
 }
@@ -410,31 +209,32 @@ function getFilesProducedByJob(job) {
 /**
  * Return a job definition.
  * @param {Object} job - Instance of schemas.job
- * @return {Object} - Instance of schemas.jobDefinition
+ * @param {Object} workflow
+ * @return {Object} - Instance of schemas.jobSpecification
  */
-function getJobDefinition(job) {
+function getjobSpecification(job, workflow) {
   const blockingJobs = [];
   const inputFiles = [];
   const outputFiles = [];
   const userData = [];
 
-  for (const blockingJob of getBlockingJobs(job)) {
+  for (const blockingJob of getBlockingJobs(job, workflow)) {
     blockingJobs.push(blockingJob.name);
   }
-  for (const file of getFilesNeededByJob(job)) {
+  for (const file of getFilesNeededByJob(job, workflow)) {
     inputFiles.push(file.name);
   }
-  for (const file of getFilesProducedByJob(job)) {
+  for (const file of getFilesProducedByJob(job, workflow)) {
     outputFiles.push(file.name);
   }
-  for (const data of getUserDataStoredByJob(job)) {
+  for (const data of getUserDataStoredByJob(job, workflow)) {
     delete(data._id);
     delete(data._key);
     delete(data._rev);
     userData.push(data);
   }
 
-  const scheduler = getJobScheduler(job);
+  const scheduler = getJobScheduler(job, workflow);
   return {
     name: job.name,
     command: job.command,
@@ -442,7 +242,7 @@ function getJobDefinition(job) {
     blocked_by: blockingJobs,
     input_files: inputFiles,
     output_files: outputFiles,
-    resource_requirements: getJobResourceRequirements(job).name,
+    resource_requirements: getJobResourceRequirements(job, workflow).name,
     scheduler: scheduler == null ? '' : scheduler._id,
     user_data: userData,
   };
@@ -451,16 +251,18 @@ function getJobDefinition(job) {
 /**
  * Return the job's resource requirements, using default values if none are assigned.
  * @param {Object} job
+ * @param {Object} workflow
  * @return {Object}
  */
-function getJobResourceRequirements(job) {
-  const jobId = job._id;
+function getJobResourceRequirements(job, workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'requires');
   const cursor = query({count: true})`
     FOR v, e, p
       IN 1
-      OUTBOUND ${jobId}
-      GRAPH ${GRAPH_NAME}
-      OPTIONS { edgeCollections: 'requires' }
+      OUTBOUND ${job._id}
+      GRAPH ${graphName}
+      OPTIONS { edgeCollections: ${edgeName} }
       RETURN p.vertices[1]
   `;
   if (cursor.count() == 0) {
@@ -481,16 +283,18 @@ function getJobResourceRequirements(job) {
 /**
  * Return the job's scheduler, returning null if one isn't defined.
  * @param {Object} job
+ * @param {Object} workflow
  * @return {string}
  */
-function getJobScheduler(job) {
-  const jobId = job._id;
+function getJobScheduler(job, workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'scheduled_bys');
   const cursor = query({count: true})`
     FOR v, e, p
       IN 1
-      OUTBOUND ${jobId}
-      GRAPH ${GRAPH_NAME}
-      OPTIONS { edgeCollections: 'scheduled_bys' }
+      OUTBOUND ${job._id}
+      GRAPH ${graphName}
+      OPTIONS { edgeCollections: ${edgeName} }
       RETURN p.vertices[1]
   `;
   if (cursor.count() == 0) {
@@ -503,17 +307,19 @@ function getJobScheduler(job) {
 
 /**
  * Return jobs that need the file.
- * @param {string} name - file name
+ * @param {Object} file
+ * @param {Object} workflow
  * @return {ArangoQueryCursor}
  */
-function getJobsThatNeedFile(name) {
-  const fileId = `files/${name}`;
+function getJobsThatNeedFile(file, workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'needs');
   return query({count: true})`
       FOR v
           IN 1
-          INBOUND ${fileId}
-          GRAPH ${GRAPH_NAME}
-          OPTIONS { edgeCollections: 'needs' }
+          INBOUND ${file._id}
+          GRAPH ${graphName}
+          OPTIONS { edgeCollections: ${edgeName} }
           RETURN v
     `;
 }
@@ -522,15 +328,18 @@ function getJobsThatNeedFile(name) {
  * Return all result documents connected to the job, sorted by completion time.
  * Return null if the job does not have a result.
  * @param {Object} job
+ * @param {Object} workflow
  * @return {Object}
  */
-function listJobResults(job) {
+function listJobResults(job, workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'returned');
   const cursor = query({count: true})`
     FOR v, e, p
       IN 1
       OUTBOUND ${job._id}
-      GRAPH ${GRAPH_NAME}
-      OPTIONS { edgeCollections: 'returned' }
+      GRAPH ${graphName}
+      OPTIONS { edgeCollections: ${edgeName} }
       RETURN p.vertices[1]
   `;
   const count = cursor.count();
@@ -561,10 +370,11 @@ function compareTimestamp(result1, result2) {
  * Return the latest job result.
  * Return null if the job does not have a result.
  * @param {Object} job
+ * @param {Object} workflow
  * @return {Object}
  */
-function getLatestJobResult(job) {
-  const results = listJobResults(job);
+function getLatestJobResult(job, workflow) {
+  const results = listJobResults(job, workflow);
   if (results == null) {
     return results;
   }
@@ -575,15 +385,18 @@ function getLatestJobResult(job) {
 /**
  * Return the user data that is connected to the job.
  * @param {Object} job
+ * @param {Object} workflow
  * @return {ArangoQueryCursor}
  */
-function getUserDataStoredByJob(job) {
+function getUserDataStoredByJob(job, workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'stores');
   const cursor = query({count: true})`
     FOR v, e, p
       IN 1
       OUTBOUND ${job._id}
-      GRAPH ${GRAPH_NAME}
-      OPTIONS { edgeCollections: 'stores' }
+      GRAPH ${graphName}
+      OPTIONS { edgeCollections: ${edgeName} }
       RETURN p.vertices[1]
   `;
   if (cursor.count() == 0) {
@@ -593,45 +406,61 @@ function getUserDataStoredByJob(job) {
 }
 
 /**
- * Return the current workflow config.
+ * Return the workflow config.
+ * @param {Object} workflow
  * @return {Object}
 */
-function getWorkflowConfig() {
-  const config = db.workflow_config.all().toArray();
-  if (config.length == 0) {
-    return null;
-  } else if (config.length != 1) {
-    throw new Error(`There can only be one workflow config: ${JSON.stringify(config)}`);
+function getWorkflowConfig(workflow) {
+  const cursor = query({count: true})`
+    FOR v, e, p
+      IN 1
+      OUTBOUND ${workflow._id}
+      GRAPH ${GRAPH_NAME}
+      OPTIONS { edgeCollections: 'has_workflow_config' }
+      RETURN p.vertices[1]
+  `;
+  if (cursor.count() != 1) {
+    throw new Error(`workflow ${workflow._id} must only have one config: ${cursor.count()}`);
   }
-  return config[0];
+  return cursor.next();
 }
 
 /**
- * Return the current workflow status.
+ * Return the workflow status.
+ * @param {Object} workflow
  * @return {Object}
 */
-function getWorkflowStatus() {
-  const status = db.workflow_status.all().toArray();
-  if (status.length == 0) {
-    return null;
-  } else if (status.length != 1) {
-    throw new Error(`There can only be one workflow status: ${JSON.stringify(status)}`);
+function getWorkflowStatus(workflow) {
+  const cursor = query({count: true})`
+    FOR v, e, p
+      IN 1
+      OUTBOUND ${workflow._id}
+      GRAPH ${GRAPH_NAME}
+      OPTIONS { edgeCollections: 'has_workflow_status' }
+      RETURN p.vertices[1]
+  `;
+  if (cursor.count() != 1) {
+    throw new Error(`workflow ${workflow._id} must only have one status: ${cursor.count()}`);
   }
-  return status[0];
+  return cursor.next();
 }
 
-/** Set initial job status. */
-function initializeJobStatus() {
+/** Set initial job status.
+ * @param {Object} workflow
+ */
+function initializeJobStatus(workflow) {
   // TODO: Can this be more efficient with one traversal?
-  for (const job of db.jobs.all()) {
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
+  for (const job of jobs.all()) {
+    // TODO: filter?
     if (job.status == JobStatus.Disabled) {
       continue;
     }
-    const jobResources = getJobResourceRequirements(job);
+    const jobResources = getJobResourceRequirements(job, workflow);
     if (job.internal == null) {
       job.internal = schemas.jobInternal.validate({}).value;
     }
-    const scheduler = getJobScheduler(job);
+    const scheduler = getJobScheduler(job, workflow);
     if (scheduler != null) {
       job.internal.scheduler_config_id = scheduler._id;
     }
@@ -639,12 +468,12 @@ function initializeJobStatus() {
     job.internal.runtime_seconds = utils.getTimeDurationInSeconds(jobResources.runtime);
     job.internal.num_cpus = jobResources.num_cpus;
     job.internal.num_nodes = jobResources.num_nodes;
-    if (isJobInitiallyBlocked(job._id)) {
+    if (isJobInitiallyBlocked(job, workflow)) {
       job.status = JobStatus.Blocked;
     } else if (job.status != JobStatus.Done) {
       job.status = JobStatus.Ready;
     }
-    db.jobs.update(job, job);
+    jobs.update(job, job);
   }
   console.log(
       `Initialized all incomplete job status to ${JobStatus.Ready} or ${JobStatus.Blocked}`,
@@ -652,18 +481,32 @@ function initializeJobStatus() {
 }
 
 /**
+ * Return an iterator over all documents of the given type connected to the workflow.
+ * @param {Object} workflow
+ * @param {string} collectionName
+ * @return {Object}
+ */
+function iterWorkflowDocuments(workflow, collectionName) {
+  const collection = config.getWorkflowCollection(workflow, collectionName);
+  return collection.all();
+}
+
+/**
  * Return true if the job is blocked by another job.
- * @param {string} jobId - job ID
+ * @param {Object} job
+ * @param {Object} workflow
  * @return {bool}
  *
  **/
-function isJobBlocked(jobId) {
+function isJobBlocked(job, workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'blocks');
   const cursor = query`
     FOR v
         IN 1
-        INBOUND ${jobId}
-        GRAPH ${GRAPH_NAME}
-        OPTIONS { edgeCollections: 'blocks' }
+        INBOUND ${job._id}
+        GRAPH ${graphName}
+        OPTIONS { edgeCollections: ${edgeName} }
         RETURN v.status
   `;
   for (const status of cursor) {
@@ -677,17 +520,20 @@ function isJobBlocked(jobId) {
 
 /**
  * Return true if the job is initially blocked by another job.
- * @param {string} jobId - job ID
+ * @param {Object} job
+ * @param {Object} workflow
  * @return {bool}
  *
  **/
-function isJobInitiallyBlocked(jobId) {
+function isJobInitiallyBlocked(job, workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'blocks');
   const cursor = query({count: true})`
     FOR v
         IN 1
-        INBOUND ${jobId}
-        GRAPH ${GRAPH_NAME}
-        OPTIONS { edgeCollections: 'blocks' }
+        INBOUND ${job._id}
+        GRAPH ${graphName}
+        OPTIONS { edgeCollections: ${edgeName} }
         FILTER v.status != ${JobStatus.Done}
         RETURN v._id
   `;
@@ -705,18 +551,20 @@ function isJobStatusComplete(status) {
 
 /**
  * Return true if the workflow is complete.
+ * @param {Object} workflow
  * @return {bool}
  */
-function isWorkflowComplete() {
+function isWorkflowComplete(workflow) {
+  const collection = config.getWorkflowCollection(workflow, 'jobs');
   const cursor = query({count: true})`
-    FOR job in jobs
-        FILTER !(
-          job.status == ${JobStatus.Done}
-          OR job.status == ${JobStatus.Canceled}
-          OR job.status == ${JobStatus.Disabled}
-        )
-        LIMIT 1
-        RETURN job.key
+    FOR job in ${collection}
+      FILTER !(
+        job.status == ${JobStatus.Done}
+        OR job.status == ${JobStatus.Canceled}
+        OR job.status == ${JobStatus.Disabled}
+      )
+      LIMIT 1
+      RETURN job._key
   `;
   return cursor.count() == 0;
 }
@@ -724,16 +572,18 @@ function isWorkflowComplete() {
 /**
  * Return the job's process stats.
  * @param {Object} job
+ * @param {Object} workflow
  * @return {Array} Array of jobProcessStats
  */
-function listJobProcessStats(job) {
-  const jobId = job._id;
+function listJobProcessStats(job, workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'process_used');
   const cursor = query({count: true})`
     FOR v, e, p
       IN 1
-      OUTBOUND ${jobId}
-      GRAPH ${GRAPH_NAME}
-      OPTIONS { edgeCollections: 'process_used' }
+      OUTBOUND ${job._id}
+      GRAPH ${graphName}
+      OPTIONS { edgeCollections: ${edgeName} }
       RETURN p.vertices[1]
   `;
   const results = cursor.toArray();
@@ -746,38 +596,43 @@ function listJobProcessStats(job) {
 /**
  * Update a job status and manage all downstream consequences.
  * @param {Object} job
+ * @param {Object} workflow
  * @return {Object}
  */
-function manageJobStatusChange(job) {
-  const oldStatus = db.jobs.document(job._key).status;
+function manageJobStatusChange(job, workflow) {
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
+  const oldStatus = jobs.document(job._key).status;
   if (job.status == oldStatus) {
     return job;
   }
-  const meta = db.jobs.update(job, job);
+  const meta = jobs.update(job, job);
   Object.assign(job, meta);
 
   if (!isJobStatusComplete(oldStatus) && isJobStatusComplete(job.status)) {
-    const result = getLatestJobResult(job);
+    const result = getLatestJobResult(job, workflow);
     if (result == null) {
       throw new Error(
           `A job must have a result before it is completed: ${job._key}.`,
       );
     }
-    updateBlockedJobsFromCompletion(job);
+    updateBlockedJobsFromCompletion(job, workflow);
   } else if (isJobStatusComplete(oldStatus) && job.status == JobStatus.Uninitialized) {
-    updateJobsFromCompletionReversal(job);
+    updateJobsFromCompletionReversal(job, workflow);
   }
   return job;
 }
 
 /**
  * Prepare a list of jobs for submission that meet the worker resource availability.
+ * @param {Object} workflow
  * @param {Object} workerResources
  * @param {Number} limit
  * @return {Array}
  */
-function prepareJobsForSubmission(workerResources, limit) {
+function prepareJobsForSubmission(workflow, workerResources, limit) {
   const jobs = [];
+  const collection = config.getWorkflowCollection(workflow, 'jobs');
+  const collectionName = config.getWorkflowCollectionName(workflow, 'jobs');
   let availableCpus = workerResources.num_cpus;
   let availableMemory = workerResources.memory_gb * GiB;
   const queryLimit = limit == null ? availableCpus : limit;
@@ -787,16 +642,17 @@ function prepareJobsForSubmission(workerResources, limit) {
   const schedulerConfigId = workerResources.scheduler_config_id == null ? '' :
     workerResources.scheduler_config_id;
   // TODO: numGpus
+  const jobsCollection = config.getWorkflowCollection(workflow, 'jobs');
 
   db._executeTransaction({
     collections: {
-      exclusive: 'jobs',
+      exclusive: collectionName,
       allowImplicit: false,
     },
     action: function() {
       const db = require('@arangodb').db;
       const cursor = query`
-        FOR job IN jobs
+        FOR job IN ${collection}
           FILTER job.status == ${JobStatus.Ready}
             && job.internal.memory_bytes < ${availableMemory}
             && job.internal.num_cpus < ${availableCpus}
@@ -816,7 +672,7 @@ function prepareJobsForSubmission(workerResources, limit) {
           job.internal.memory_bytes <= availableMemory
         ) {
           job.status = JobStatus.SubmittedPending;
-          const meta = db.jobs.update(job, job);
+          const meta = jobsCollection.update(job, job);
           Object.assign(job, meta);
           jobs.push(job);
           availableCpus -= job.internal.num_cpus;
@@ -833,22 +689,27 @@ function prepareJobsForSubmission(workerResources, limit) {
   return jobs;
 }
 
-/** Reset job status to uninitialized. */
-function resetJobStatus() {
-  for (const job of db.jobs.all()) {
+/** Reset job status to uninitialized.
+ * @param {Object} workflow
+ */
+function resetJobStatus(workflow) {
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
+  for (const job of iterWorkflowDocuments(workflow, 'jobs')) {
     job.status = JobStatus.Uninitialized;
-    db.jobs.update(job, job);
+    jobs.update(job, job);
   }
   console.log(`Reset all job status to ${JobStatus.Uninitialized}`);
 }
 
-/** Reset workflow config. */
-function resetWorkflowConfig() {
+/** Reset workflow config.
+ * @param {Object} workflow
+ */
+function resetWorkflowConfig(workflow) {
   const config = {
     compute_node_resource_stats: schemas.computeNodeResourceStatConfig.validate({}).value,
   };
 
-  const doc = getWorkflowConfig();
+  const doc = getWorkflowConfig(workflow);
   if (doc == null) {
     db.workflow_config.save(config);
   } else {
@@ -857,41 +718,26 @@ function resetWorkflowConfig() {
   }
 }
 
-/**
- * Update workflow config.
- * @param {Object} config
- **/
-function updateWorkflowConfig(config) {
-  const doc = getWorkflowConfig();
-  if (doc == null) {
-    db.workflow_config.save(config);
-  } else {
-    Object.assign(doc, config);
-    db.workflow_config.update(doc, doc);
-  }
-}
-
-/** Reset workflow status. */
-function resetWorkflowStatus() {
+/** Reset workflow status.
+ * @param {Object} workflow
+ */
+function resetWorkflowStatus(workflow) {
   const status = {
     run_id: 0,
     is_canceled: false,
     scheduled_compute_node_ids: [],
     auto_tune_status: schemas.autoTuneStatus.validate({}).value,
   };
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
 
-  const doc = getWorkflowStatus();
-  if (doc == null) {
-    db.workflow_status.save(status);
-  } else {
-    Object.assign(doc, status);
-    db.workflow_status.update(doc, doc);
-  }
+  const doc = getWorkflowStatus(workflow);
+  Object.assign(doc, status);
+  db.workflow_statuses.update(doc, doc);
 
-  for (const job of db.jobs.all()) {
+  for (const job of iterWorkflowDocuments(workflow, 'jobs')) {
     job.run_id = 0;
     job.status = JobStatus.Uninitialized;
-    db.jobs.update(job, job);
+    jobs.update(job, job);
   }
   console.log(`Reset workflow status`);
 }
@@ -899,22 +745,24 @@ function resetWorkflowStatus() {
 /**
  * Setup the jobs to auto-tune resource requirements.
  * Enable one job from each resource requirement group and disable the rest.
+ * @param {Object} workflow
  */
-function setupAutoTuneResourceRequirements() {
+function setupAutoTuneResourceRequirements(workflow) {
   const groups = new Set();
-  const status = getWorkflowStatus();
+  const status = getWorkflowStatus(workflow);
   status.auto_tune_status.enabled = true;
 
-  const config = getWorkflowConfig();
-  if (!config.compute_node_resource_stats.process) {
+  const workflowConfig = getWorkflowConfig(workflow);
+  if (!workflowConfig.compute_node_resource_stats.process) {
     throw new Error('The auto-tune feature requires collection of job process stats.');
   }
 
-  for (const job of db.jobs.all()) {
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
+  for (const job of jobs.all()) {
     if (job.status == JobStatus.Blocked) {
       continue;
     }
-    const rr = getJobResourceRequirements(job);
+    const rr = getJobResourceRequirements(job, workflow);
     if (groups.has(rr.name)) {
       if (job.status == JobStatus.Disabled) {
         // TODO: should we track these instead?
@@ -923,13 +771,13 @@ function setupAutoTuneResourceRequirements() {
       // This isn't atomic, but the user shouldn't call this in parallel.
       // Let Arango fail the operation if they do that.
       job.status = JobStatus.Disabled;
-      db.jobs.update(job, job);
+      jobs.update(job, job);
     } else {
       status.auto_tune_status.job_keys.push(job._key);
       groups.add(rr.name);
     }
   }
-  db.workflow_status.update(status, status);
+  db.workflow_statuses.update(status, status);
 }
 
 /**
@@ -937,17 +785,19 @@ function setupAutoTuneResourceRequirements() {
  * 1. Update the resource requirements groups based on the utilization stats from
  * the selected jobs that ran.
  * 2. Update all non-auto-tune job status from disabled to uninitialized.
+ * @param {Object} workflow
  */
-function processAutoTuneResourceRequirementsResults() {
-  const status = getWorkflowStatus();
-  status.auto_tune_status.disabled = true;
+function processAutoTuneResourceRequirementsResults(workflow) {
+  const workflowStatus = getWorkflowStatus(workflow);
+  workflowStatus.auto_tune_status.disabled = true;
   const groupsUpdated = new Set();
   const autoTuneJobs = new Set();
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
 
   // FUTURE: consider whether all changes can be made atomically.
-  for (const key of status.auto_tune_status.job_keys) {
-    const job = db.jobs.document(key);
-    const jobStats = listJobProcessStats(job);
+  for (const key of workflowStatus.auto_tune_status.job_keys) {
+    const job = jobs.document(key);
+    const jobStats = listJobProcessStats(job, workflow);
     if (jobStats.length == 0) {
       throw new Error(`job ${job._key} does not have any process stats`);
     }
@@ -955,8 +805,8 @@ function processAutoTuneResourceRequirementsResults() {
     const maxMemoryGb = Math.ceil(stats.max_rss / GiB);
     const maxMemory = `${maxMemoryGb}g`;
     const maxCpusUsed = stats.max_cpu_percent == 0 ? 1 : Math.ceil(stats.max_cpu_percent / 100);
-    const rr = getJobResourceRequirements(job);
-    const result = getLatestJobResult(job);
+    const rr = getJobResourceRequirements(job, workflow);
+    const result = getLatestJobResult(job, workflow);
     const oldRr = JSON.parse(JSON.stringify(rr));
     rr.num_cpus = maxCpusUsed;
     rr.memory = maxMemory;
@@ -966,7 +816,8 @@ function processAutoTuneResourceRequirementsResults() {
       throw new Error(`resource requirements ${rr.name} was already updated`);
     }
     groupsUpdated.add(rr.name);
-    db.resource_requirements.update(rr, rr);
+    const rrCollection = config.getWorkflowCollection(workflow, 'resource_requirements');
+    rrCollection.update(rr, rr);
     const event = {
       category: 'resource_requirements',
       type: 'update',
@@ -975,46 +826,51 @@ function processAutoTuneResourceRequirementsResults() {
       new: rr,
       message: `Updated resource requirements for name = ${rr.name}`,
     };
-    db.events.save(event);
+    const eventsCollection = config.getWorkflowCollection(workflow, 'events');
+    eventsCollection.save(event);
     autoTuneJobs.add(job._key);
   }
 
-  for (const job of db.jobs.all()) {
+  const jobsCollection = config.getWorkflowCollection(workflow, 'jobs');
+  for (const job of jobsCollection.all()) {
     if (!autoTuneJobs.has(job._key)) {
       if (job.status != JobStatus.Disabled) {
         throw new Error(`Expected status disabled instead of ${job.status} for job ${job._key}`);
       }
       job.status = JobStatus.Uninitialized;
-      db.jobs.update(job, job);
+      jobsCollection.update(job, job);
     }
   }
-  db.workflow_status.update(status, status);
+  db.workflow_statuses.update(workflowStatus, workflowStatus);
 }
 
 /**
  * Update blocked jobs after a job completion.
  * @param {Object} job
+ * @param {Object} workflow
  */
-function updateBlockedJobsFromCompletion(job) {
-  const jobId = job._id;
+function updateBlockedJobsFromCompletion(job, workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'blocks');
   const cursor = query`
     FOR v, e, p
       IN 1
-      OUTBOUND ${jobId}
-      GRAPH ${GRAPH_NAME}
-      OPTIONS { edgeCollections: 'blocks', uniqueVertices: 'global', order: 'bfs' }
+      OUTBOUND ${job._id}
+      GRAPH ${graphName}
+      OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
       RETURN p.vertices[1]
   `;
-  const result = getLatestJobResult(job);
+  const result = getLatestJobResult(job, workflow);
   // TODO: should other queries use bfs?
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
   for (const blockedJob of cursor) {
-    if (!isJobBlocked(blockedJob._id)) {
+    if (!isJobBlocked(blockedJob, workflow)) {
       if (result.return_code != 0 && blockedJob.cancel_on_blocking_job_failure) {
         blockedJob.status = JobStatus.Canceled;
       } else {
         blockedJob.status = JobStatus.Ready;
       }
-      db.jobs.update(blockedJob, blockedJob);
+      jobs.update(blockedJob, blockedJob);
     }
   }
 }
@@ -1022,48 +878,57 @@ function updateBlockedJobsFromCompletion(job) {
 /**
  * Update jobs after a job completion reversal.
  * @param {Object} job
+ * @param {Object} workflow
  */
-function updateJobsFromCompletionReversal(job) {
-  const jobId = job._id;
-  const numJobs = db.jobs.count();
+function updateJobsFromCompletionReversal(job, workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'blocks');
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
+  const numJobs = jobs.count();
   const cursor = query`
     FOR v, e, p
       IN 1..${numJobs}
-      OUTBOUND ${jobId}
-      GRAPH ${GRAPH_NAME}
-      OPTIONS { edgeCollections: 'blocks', uniqueVertices: 'global', order: 'bfs' }
+      OUTBOUND ${job._id}
+      GRAPH ${graphName}
+      OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
       RETURN v
   `;
   for (const downstreamJob of cursor) {
     if (downstreamJob.status != JobStatus.Uninitialized) {
       downstreamJob.status = JobStatus.Uninitialized;
-      db.jobs.update(downstreamJob, downstreamJob);
+      jobs.update(downstreamJob, downstreamJob);
       console.log(`Reset job=${downstreamJob._key} status to ${JobStatus.Uninitialized}`);
     }
   }
 }
 
+/**
+ * Update workflow config.
+ * @param {Object} workflow
+ * @param {Object} config
+ * @return {Object}
+ **/
+function updateWorkflowConfig(workflow, config) {
+  const doc = getWorkflowConfig(workflow);
+  Object.assign(doc, config);
+  Object.assign(doc.compute_node_resource_stats, config.compute_node_resource_stats);
+  const meta = db.workflow_configs.update(doc, doc);
+  Object.assign(doc, meta);
+  return doc;
+}
+
 module.exports = {
   addBlocksEdgesFromFiles,
-  addFile,
-  addScheduler,
-  addJob,
-  addJobDefinition,
-  addResourceRequirements,
-  addResult,
-  addUserData,
   estimateWorkflow,
   getReadyJobRequirements,
   getBlockingJobs,
-  getDocumentIfAlreadyStored,
   getFilesNeededByJob,
   getFilesProducedByJob,
-  getJobDefinition,
+  getjobSpecification,
   getJobResourceRequirements,
   getJobScheduler,
   getJobsThatNeedFile,
   listJobResults,
-  getJobByName,
   getLatestJobResult,
   getUserDataStoredByJob,
   getWorkflowConfig,
@@ -1073,6 +938,7 @@ module.exports = {
   isJobInitiallyBlocked,
   isJobStatusComplete,
   isWorkflowComplete,
+  iterWorkflowDocuments,
   listJobProcessStats,
   manageJobStatusChange,
   prepareJobsForSubmission,

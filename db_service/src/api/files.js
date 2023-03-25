@@ -1,21 +1,27 @@
 'use strict';
 const joi = require('joi');
-const db = require('@arangodb').db;
 const {MAX_TRANSFER_RECORDS} = require('../defs');
-const {getItemsLimit, makeCursorResult} = require('../utils');
 const schemas = require('./schemas');
+const config = require('../config');
+const documents = require('../documents');
+const utils = require('../utils');
 const query = require('../query');
 const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
 module.exports = router;
 
 
-router.get('/files/produced_by_job/:key', function(req, res) {
+router.get('/files/produced_by_job/:workflow/:key', function(req, res) {
+  const workflowKey = req.pathParams.workflow;
+  const key = req.pathParams.key;
+  const workflow = documents.getWorkflow(workflowKey, res);
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
+  const qp = req.queryParams;
+
   try {
-    const qp = req.queryParams;
-    const limit = getItemsLimit(qp.limit);
-    const job = db.jobs.document(req.pathParams.key);
-    const cursor = query.getFilesProducedByJob(job);
+    const limit = utils.getItemsLimit(qp.limit);
+    const job = jobs.document(key);
+    const cursor = query.getFilesProducedByJob(job, workflow);
     // TODO: how to do this with Arango cursor?
     const items = [];
     let i = 0;
@@ -29,14 +35,12 @@ router.get('/files/produced_by_job/:key', function(req, res) {
         break;
       }
     }
-    res.send(makeCursorResult(items, qp.skip, limit, cursor.count()));
+    res.send(utils.makeCursorResult(items, qp.skip, limit, cursor.count()));
   } catch (e) {
-    if (!e.isArangoError) {
-      throw e;
-    }
-    res.throw(404, 'Unknown error', e);
+    utils.handleArangoApiErrors(e, res, `Get files produced_by_job key=${key}`);
   }
 })
+    .pathParam('workflow', joi.string().required(), 'Workflow key')
     .pathParam('key', joi.string().required(), 'Job key')
     .queryParam('skip', joi.number().default(0))
     .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))

@@ -3,11 +3,10 @@
 'use strict';
 const joi = require('joi');
 const db = require('@arangodb').db;
-const errors = require('@arangodb').errors;
-const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
-const {{collection_var_name}} = db._collection('{{collection}}');
 const {MAX_TRANSFER_RECORDS} = require('../../defs');
-const {getItemsLimit, makeCursorResult} = require('../../utils');
+const config = require('../../config');
+const documents = require('../../documents');
+const utils = require('../../utils');
 const createRouter = require('@arangodb/foxx/router');
 {{#custom_imports}}
 {{{custom_imports}}}
@@ -16,142 +15,162 @@ const schemas = require('../schemas');
 const router = createRouter();
 module.exports = router;
 
-router.post('/{{collection}}', function(req, res) {
+router.post('/{{collection}}/:workflow', function(req, res) {
+  const workflowKey = req.pathParams.workflow;
+  const workflow = documents.getWorkflow(workflowKey, res);
   let doc = req.body;
-  {{#custom_post}}
-  doc = {{{custom_post}}}(doc);
-  {{/custom_post}}
-  {{^custom_post}}
-  {{#key}}
-  if (doc._key != null) {
-    throw new Error(`_key = ${doc._key} cannot be set on post)`);
+  try {
+    {{#custom_post}}
+    doc = {{{custom_post}}}(doc, workflow);
+    {{/custom_post}}
+    {{^custom_post}}
+    const collection = config.getWorkflowCollection(workflow, '{{collection}}');
+    const meta = collection.save(doc);
+    Object.assign(doc, meta);
+    {{/custom_post}}
+    {{#custom_convert}}
+    doc = {{{custom_convert}}}(doc);
+    {{/custom_convert}}
+    res.send(doc);
+  } catch (e) {
+    utils.handleArangoApiErrors(e, res, `Post {{collection}} document`);
   }
-  doc._key = doc.{{key}};
-  {{/key}}
-  const meta = {{collection_var_name}}.save(doc);
-  Object.assign(doc, meta);
-  {{/custom_post}}
-  {{#custom_convert}}
-  doc = {{{custom_convert}}}(doc);
-  {{/custom_convert}}
-  res.send(doc);
 })
+    .pathParam('workflow', joi.string().required(), 'Workflow key')
     .body(schemas.{{schema}}, '{{description}}.')
     .response(schemas.{{schema}}, '{{description}}')
     .summary('Store {{a_or_an}} {{name}}.')
     .description('Store {{a_or_an}} {{name}} in the "{{collection}}" collection.');
 
-router.put('/{{collection}}/:key', function(req, res) {
+router.put('/{{collection}}/:workflow/:key', function(req, res) {
   const key = req.pathParams.key;
+  const workflowKey = req.pathParams.workflow;
+  const workflow = documents.getWorkflow(workflowKey, res);
+  const collection = config.getWorkflowCollection(workflow, '{{collection}}');
   let doc = req.body;
   if (doc._rev == null) {
-    throw new Error('Updating {{a_or_an}} {{name}} requires the existing revision');
+    res.throw(400, `Updating {{a_or_an}} {{name}} requires the existing revision`);
+  }
+  if (key != doc._key) {
+    res.throw(400, `key=${key} does not match ${doc._key}`);
   }
 
   try {
-    if (key != doc._key) {
-      throw new Error(`key=${key} does not match ${doc._key}`);
-    }
-    const meta = {{collection_var_name}}.update(doc, doc);
+    const meta = collection.update(doc, doc);
     Object.assign(doc, meta);
     {{#custom_convert}}
     doc = {{{custom_convert}}}(doc);
     {{/custom_convert}}
     res.send(doc);
   } catch (e) {
-    if (!e.isArangoError || e.errorNum !== DOC_NOT_FOUND) {
-      throw e;
-    }
-    res.throw(404, `The {{name}} with key = ${key} does not exist`, e);
+    utils.handleArangoApiErrors(e, res, `Update {{collection}} key=${key}`);
   }
 })
+    .pathParam('workflow', joi.string().required(), 'Workflow key.')
     .pathParam('key', joi.string().required(), 'key of the {{name}}.')
     .body(schemas.{{schema}}, '{{name}} to update in the collection.')
     .response(schemas.{{schema}}, '{{name}} updated in the collection.')
     .summary('Update {{name}}')
     .description('Update a document in the "{{collection}}" collection.');
 
-router.get('/{{collection}}', function(req, res) {
+router.get('/{{collection}}/:workflow', function(req, res) {
+  const qp = req.queryParams;
+  const limit = utils.getItemsLimit(qp.limit);
+  const workflowKey = req.pathParams.workflow;
+  const workflow = documents.getWorkflow(workflowKey, res);
+  const collection = config.getWorkflowCollection(workflow, '{{collection}}');
   try {
-    const qp = req.queryParams;
-    const limit = getItemsLimit(qp.limit);
+    const example = {};
+    {{#filter_fields}}
+    if (qp.{{name}} != null) {
+      example.{{name}} = qp.{{name}};
+    }
+    {{/filter_fields}}
+    const cursor = Object.keys(example).length == 0 ?
+      collection.all().skip(qp.skip).limit(limit) :
+      collection.byExample(example).skip(qp.skip).limit(limit);
+
     {{#custom_convert}}
     const items = [];
-    for (const doc of {{collection_var_name}}.all().skip(qp.skip).limit(limit)) {
+    for (const doc of cursor) {
       items.push({{custom_convert}}(doc));
     }
     {{/custom_convert}}
     {{^custom_convert}}
-    const items = {{collection_var_name}}.all().skip(qp.skip).limit(limit).toArray();
+    const items = cursor.toArray();
     {{/custom_convert}}
-    res.send(makeCursorResult(items, qp.skip, limit, {{collection_var_name}}.count()));
+    res.send(utils.makeCursorResult(items, qp.skip, limit, collection.count()));
   } catch (e) {
-    if (!e.isArangoError) {
-      throw e;
-    }
-    res.throw(400, 'Error occurred: ${e}', e);
+    utils.handleArangoApiErrors(e, res, `Get {{collection}} documents`);
   }
 })
+    .pathParam('workflow', joi.string().required(), 'Workflow key')
     .queryParam('skip', joi.number().default(0))
     .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    {{#filter_fields}}
+    .queryParam('{{name}}', {{type}})
+    {{/filter_fields}}
     .response(schemas.{{batch_schema}})
     .summary('Retrieve all {{name}}s')
-    .description('Retrieves all documents from the "{{collection}}" collection.');
+    .description('Retrieves all documents from the "{{collection}}" collection for one workflow.');
 
-router.get('/{{collection}}/:key', function(req, res) {
+router.get('/{{collection}}/:workflow/:key', function(req, res) {
+  const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
+  const workflow = documents.getWorkflow(workflowKey, res);
+  let doc = documents.getWorkflowDocument(workflow, '{{collection}}', key, res);
   try {
-    let doc = {{collection_var_name}}.document(key);
     {{#custom_convert}}
     doc = {{{custom_convert}}}(doc);
     {{/custom_convert}}
     res.send(doc);
   } catch (e) {
-    if (!e.isArangoError || e.errorNum !== DOC_NOT_FOUND) {
-      throw e;
-    }
-    res.throw(404, `The {{name}} with key = ${key} does not exist`, e);
+    utils.handleArangoApiErrors(e, res, `Get {{collection}} document with key=${key}`);
   }
 })
+    .pathParam('workflow', joi.string().required(), 'Workflow key')
     .pathParam('key', joi.string().required(), 'key of the {{collection}} document')
     .response(schemas.{{schema}})
-    .summary('Retrieve the {{name}} for a key.')
+    .summary('Retrieve the {{name}} for an key.')
     .description('Retrieve the document for a key from the "{{collection}}" collection.');
 
-router.delete('/{{collection}}/:key', function(req, res) {
+router.delete('/{{collection}}/:workflow/:key', function(req, res) {
+  const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
+  const workflow = documents.getWorkflow(workflowKey, res);
+  const doc = documents.getWorkflowDocument(workflow, '{{collection}}', key, res);
   try {
-    let doc = {{collection_var_name}}.document(key);
-    db._remove(`{{collection}}/${req.pathParams.key}`);
-    {{#custom_convert}}
-    doc = {{{custom_convert}}}(doc);
-    {{/custom_convert}}
+    {{#custom_delete}}
+    {{{custom_delete}}}(doc);
+    {{/custom_delete}}
+    {{^custom_delete}}
+    db._remove(`${doc._id}`);
+    {{/custom_delete}}
     res.send(doc);
   } catch (e) {
-    if (!e.isArangoError || e.errorNum !== DOC_NOT_FOUND) {
-      throw e;
-    }
-    res.throw(404, `The {{name}} with key = ${key} does not exist`, e);
+    utils.handleArangoApiErrors(e, res, `Delete {{collection}} document with key=${key}`);
   }
 })
-    .pathParam('key', joi.string().required(), 'key of the {{event}} object.')
+    .pathParam('workflow', joi.string().required(), 'Workflow key')
+    .pathParam('key', joi.string().required(), 'key of the {{name}} document.')
     .body(joi.object().optional())
     .response(schemas.{{schema}}, '{{name}} stored in the collection.')
     .summary('Delete {{a_or_an}} {{name}}')
-    .description('Deletes document from the "{{collection}}" collection by key.');
+    .description('Deletes a document from the "{{collection}}" collection by key.');
 
-router.delete('/{{collection}}', function(req, res) {
+router.delete('/{{collection}}/:workflow', function(req, res) {
+  const workflowKey = req.pathParams.workflow;
+  const workflow = documents.getWorkflow(workflowKey, res);
+  const collectionName = config.getWorkflowCollectionName(workflow, '{{collection}}');
   try {
-    db._truncate(`{{collection}}`);
-    res.send({message: 'Deleted all documents in the "{{collection}}" collection'});
+    db._truncate(collectionName);
+    res.send({message: 'Deleted all documents in the "{{collection}}" collection for workflow ${workflowKey}'});
   } catch (e) {
-    if (!e.isArangoError) {
-      throw e;
-    }
-    res.throw(400, 'Error occurred', e);
+    utils.handleArangoApiErrors(e, res, `Delete all ${collectionName} documents`);
   }
 })
+    .pathParam('workflow', joi.string().required(), 'Workflow key')
     .body(joi.object().optional())
     .response(joi.object(), 'message')
-    .summary('Delete all {{name}}s')
-    .description('Deletes all documents from the "{{collection}}" collection.');
+    .summary('Delete all {{name}}s for a workflow')
+    .description('Deletes all documents from the "{{collection}}" collection for a workflow.');

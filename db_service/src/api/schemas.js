@@ -2,10 +2,10 @@
 const joi = require('joi');
 
 const workerResources = joi.object().required().keys({
-  num_cpus: joi.number().required(),
+  num_cpus: joi.number().integer().required(),
   memory_gb: joi.number().required(),
-  num_gpus: joi.number().default(0),
-  num_nodes: joi.number().default(1),
+  num_gpus: joi.number().integer().default(0),
+  num_nodes: joi.number().integer().default(1),
   time_limit: [joi.string().optional(), joi.allow(null)], // ISO 8601 encoding for timedeltas
   scheduler_config_id: joi.string().optional(),
 });
@@ -28,7 +28,7 @@ const resourceStats = joi.object().required().keys({
   average: joi.object().required({}),
   minimum: joi.object().required({}),
   maximum: joi.object().required({}),
-  num_samples: joi.number().required(),
+  num_samples: joi.number().integer().required(),
   // Only applies to process stats. Consider something better.
   job_key: joi.string().optional(),
 });
@@ -53,12 +53,11 @@ const edge = joi.object().required().keys({
 const file = joi.object().required().keys({
   name: joi.string().required(),
   path: joi.string().required(),
-  file_hash: joi.string().optional(),
+  // file_hash: joi.string().optional(),
   st_mtime: joi.number().optional(),
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),
-  // Keep changes in sync with getDocumentIfAlreadyStored
 });
 
 const isComplete = joi.object().required().keys({
@@ -66,9 +65,9 @@ const isComplete = joi.object().required().keys({
 });
 
 const jobInternal = joi.object().required().keys({
-  memory_bytes: joi.number().default(0.0),
-  num_cpus: joi.number().default(0.0),
-  num_gpus: joi.number().default(0.0),
+  memory_bytes: joi.number().integer().default(0.0),
+  num_cpus: joi.number().integer().default(0.0),
+  num_gpus: joi.number().integer().default(0.0),
   runtime_seconds: joi.number().default(0.0),
   scheduler_config_id: joi.string().optional().default(''),
 });
@@ -79,7 +78,7 @@ const job = joi.object().required().keys({
   status: joi.string(),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   interruptible: joi.boolean().default(false),
-  run_id: joi.number().default(0),
+  run_id: joi.number().integer().default(0),
   // This only exists to all prepareJobsForSubmission to take less time to find
   // jobs with exclusive access.
   internal: jobInternal.optional().default(jobInternal.validate({}).value),
@@ -90,7 +89,7 @@ const job = joi.object().required().keys({
 });
 
 // This schema is used in the user workflow construction but is never stored.
-const jobDefinition = joi.object().required().keys({
+const jobSpecification = joi.object().required().keys({
   name: joi.string().optional(),
   command: joi.string().required(),
   user_data: joi.array().items(joi.object()).default([]),
@@ -105,12 +104,12 @@ const jobDefinition = joi.object().required().keys({
 
 const jobProcessStats = joi.object().required().keys({
   job_key: joi.string().required(),
-  run_id: joi.number().required(),
+  run_id: joi.number().integer().required(),
   avg_cpu_percent: joi.number().required(),
   max_cpu_percent: joi.number().required(),
   avg_rss: joi.number().required(),
   max_rss: joi.number().required(),
-  num_samples: joi.number().required(),
+  num_samples: joi.number().integer().required(),
   timestamp: joi.string().required(),
   _key: joi.string(),
   _id: joi.string(),
@@ -118,20 +117,20 @@ const jobProcessStats = joi.object().required().keys({
 });
 
 const readyJobsResourceRequirements = joi.object().required().keys({
-  num_jobs: joi.number().required(),
-  num_cpus: joi.number().required(),
-  num_gpus: joi.number().required(),
+  num_jobs: joi.number().integer().required(),
+  num_cpus: joi.number().integer().required(),
+  num_gpus: joi.number().integer().required(),
   memory_gb: joi.number().required(),
   max_memory_gb: joi.number().required(),
-  max_num_nodes: joi.number().required(),
+  max_num_nodes: joi.number().integer().required(),
   max_runtime: joi.string().required(),
 });
 
 const resourceRequirements = joi.object().required().keys({
   name: joi.string().required(),
-  num_cpus: joi.number().default(1),
-  num_gpus: joi.number().default(0),
-  num_nodes: joi.number().default(1),
+  num_cpus: joi.number().integer().default(1),
+  num_gpus: joi.number().integer().default(0),
+  num_nodes: joi.number().integer().default(1),
   memory: joi.string().default('1m'),
   runtime: joi.string().default('P0DT1H'), // ISO 8601 encoding for duration
   _key: joi.string(),
@@ -141,8 +140,8 @@ const resourceRequirements = joi.object().required().keys({
 
 const result = joi.object().required().keys({
   job_key: joi.string().required(),
-  run_id: joi.number().required(),
-  return_code: joi.number().required(),
+  run_id: joi.number().integer().required(),
+  return_code: joi.number().integer().required(),
   exec_time_minutes: joi.number().required(),
   completion_time: joi.string().required(),
   status: joi.string().required(),
@@ -186,7 +185,7 @@ const awsScheduler = joi.object().required().keys({
 const localScheduler = joi.object().required().keys({
   name: joi.string().optional().default('default'),
   memory: joi.string().optional(),
-  num_cpus: joi.number().optional(),
+  num_cpus: joi.number().integer().optional(),
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),
@@ -197,7 +196,7 @@ const slurmScheduler = joi.object().required().keys({
   account: joi.string().required(),
   gres: joi.string().optional(),
   mem: joi.string().optional(),
-  nodes: joi.number().required(),
+  nodes: joi.number().integer().required(),
   partition: joi.string(),
   qos: joi.string().default('normal'),
   tmp: joi.string(),
@@ -213,12 +212,24 @@ const schedulers = joi.object().required().keys({
   slurm_schedulers: joi.array().items(slurmScheduler).default([]),
 });
 
-const workflow = joi.object().required().keys({
-  jobs: joi.array().items(jobDefinition).default([]),
+const workflowSpecification = joi.object().required().keys({
+  name: joi.string().optional(),
+  user: joi.string().optional(),
+  description: joi.string().optional(),
+  jobs: joi.array().items(jobSpecification).default([]),
   files: joi.array().items(file).default([]),
   resource_requirements: joi.array().items(resourceRequirements).default([]),
   schedulers: schedulers.optional().default(schedulers.validate({}).value),
   config: joi.object().default(workflowConfig.validate({}).value),
+});
+
+const workflow = joi.object().required().keys({
+  name: joi.string().optional(),
+  user: joi.string().optional(),
+  description: joi.string().optional(),
+  _key: joi.string(),
+  _id: joi.string(),
+  _rev: joi.string(),
 });
 
 const autoTuneStatus = joi.object().required().keys({
@@ -237,7 +248,7 @@ const scheduledComputeNode = joi.object().required().keys({
 
 const workflowStatus = joi.object().required().keys({
   is_canceled: joi.boolean().required(),
-  run_id: joi.number().required(),
+  run_id: joi.number().integer().required(),
   auto_tune_status: autoTuneStatus,
   _key: joi.string(),
   _id: joi.string(),
@@ -246,127 +257,136 @@ const workflowStatus = joi.object().required().keys({
 
 const batchAwsSchedulers = joi.object().required().keys({
   items: joi.array().items(awsScheduler),
-  skip: joi.number().required(),
-  max_limit: joi.number().required(),
-  count: joi.number().required(),
-  total_count: joi.number().required(),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
   has_more: joi.boolean().required(),
 });
 
 const batchLocalSchedulers = joi.object().required().keys({
   items: joi.array().items(localScheduler),
-  skip: joi.number().required(),
-  max_limit: joi.number().required(),
-  count: joi.number().required(),
-  total_count: joi.number().required(),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
   has_more: joi.boolean().required(),
 });
 
 const batchSlurmSchedulers = joi.object().required().keys({
   items: joi.array().items(slurmScheduler),
-  skip: joi.number().required(),
-  max_limit: joi.number().required(),
-  count: joi.number().required(),
-  total_count: joi.number().required(),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
   has_more: joi.boolean().required(),
 });
 
 const batchComputeNodes = joi.object().required().keys({
   items: joi.array().items(computeNode),
-  skip: joi.number().required(),
-  max_limit: joi.number().required(),
-  count: joi.number().required(),
-  total_count: joi.number().required(),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
   has_more: joi.boolean().required(),
 });
 
-const batchJobDefinitions = joi.object().required().keys({
-  items: joi.array().items(jobDefinition),
-  skip: joi.number().required(),
-  max_limit: joi.number().required(),
-  count: joi.number().required(),
-  total_count: joi.number().required(),
+const batchjobSpecifications = joi.object().required().keys({
+  items: joi.array().items(jobSpecification),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
   has_more: joi.boolean().required(),
 });
 
 const batchJobs = joi.object().required().keys({
   items: joi.array().items(job),
-  skip: joi.number().required(),
-  max_limit: joi.number().required(),
-  count: joi.number().required(),
-  total_count: joi.number().required(),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
   has_more: joi.boolean().required(),
 });
 
 const batchEdges = joi.object().required().keys({
   items: joi.array().items(edge),
-  skip: joi.number().required(),
-  max_limit: joi.number().required(),
-  count: joi.number().required(),
-  total_count: joi.number().required(),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
   has_more: joi.boolean().required(),
 });
 
 const batchObjects = joi.object().required().keys({
   items: joi.array().items(joi.object()),
-  skip: joi.number().required(),
-  max_limit: joi.number().required(),
-  count: joi.number().required(),
-  total_count: joi.number().required(),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
   has_more: joi.boolean().required(),
 });
 
 const batchFiles = joi.object().required().keys({
   items: joi.array().items(file),
-  skip: joi.number().required(),
-  max_limit: joi.number().required(),
-  count: joi.number().required(),
-  total_count: joi.number().required(),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
   has_more: joi.boolean().required(),
 });
 
 const batchResourceRequirements = joi.object().required().keys({
   items: joi.array().items(resourceRequirements),
-  skip: joi.number().required(),
-  max_limit: joi.number().required(),
-  count: joi.number().required(),
-  total_count: joi.number().required(),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
   has_more: joi.boolean().required(),
 });
 
 const batchResults = joi.object().required().keys({
   items: joi.array().items(result),
-  skip: joi.number().required(),
-  max_limit: joi.number().required(),
-  count: joi.number().required(),
-  total_count: joi.number().required(),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
   has_more: joi.boolean().required(),
 });
 
 const batchScheduledComputeNodes = joi.object().required().keys({
   items: joi.array().items(scheduledComputeNode),
-  skip: joi.number().required(),
-  max_limit: joi.number().required(),
-  count: joi.number().required(),
-  total_count: joi.number().required(),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
   has_more: joi.boolean().required(),
 });
 
 const batchComputeNodeStats = joi.object().required().keys({
   items: joi.array().items(computeNodeStats),
-  skip: joi.number().required(),
-  max_limit: joi.number().required(),
-  count: joi.number().required(),
-  total_count: joi.number().required(),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
   has_more: joi.boolean().required(),
 });
 
 const batchJobProcessStats = joi.object().required().keys({
   items: joi.array().items(jobProcessStats),
-  skip: joi.number().required(),
-  max_limit: joi.number().required(),
-  count: joi.number().required(),
-  total_count: joi.number().required(),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
+  has_more: joi.boolean().required(),
+});
+
+const batchWorkflows = joi.object().required().keys({
+  items: joi.array().items(workflow),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
   has_more: joi.boolean().required(),
 });
 
@@ -378,7 +398,7 @@ module.exports = {
   batchComputeNodes,
   batchEdges,
   batchFiles,
-  batchJobDefinitions,
+  batchjobSpecifications,
   batchJobProcessStats,
   batchJobs,
   batchLocalSchedulers,
@@ -387,6 +407,7 @@ module.exports = {
   batchResults,
   batchScheduledComputeNodes,
   batchSlurmSchedulers,
+  batchWorkflows,
   computeNode,
   computeNodeResourceStatConfig,
   computeNodeStats,
@@ -394,7 +415,7 @@ module.exports = {
   file,
   isComplete,
   job,
-  jobDefinition,
+  jobSpecification,
   jobInternal,
   jobProcessStats,
   localScheduler,
@@ -407,6 +428,7 @@ module.exports = {
   slurmScheduler,
   workerResources,
   workflow,
+  workflowSpecification,
   workflowConfig,
   workflowEstimate,
   workflowStatus,

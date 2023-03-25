@@ -62,7 +62,9 @@ def send_api_command(func, *args, **kwargs):
 
 
 def sanitize_workflow(data: dict):
-    """Sanitize a WorkflowModel dictionary in place so that it can be loaded into the database."""
+    """Sanitize a WorkflowSpecificationsModel dictionary in place so that it can be loaded into
+    the database.
+    """
     for item in itertools.chain([data["config"]], data["files"], data["resource_requirements"]):
         for key in _DATABASE_KEYS:
             item.pop(key, None)

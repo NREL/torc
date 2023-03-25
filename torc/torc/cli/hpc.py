@@ -33,7 +33,7 @@ def recommend_nodes(api, num_cpus):
     setup_logging(__name__)
     reqs = api.get_workflow_ready_job_requirements()
     if reqs.num_jobs == 0:
-        print("Error: no jobs are available", file=sys.stderr)
+        print("Error: no jobs are stored", file=sys.stderr)
         sys.exit(1)
     num_nodes_by_cpus = math.ceil(reqs.num_cpus / num_cpus)
     print(f"Requirements for jobs in the ready state: \n{reqs}")

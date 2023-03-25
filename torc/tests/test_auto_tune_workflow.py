@@ -4,10 +4,11 @@ import logging
 
 import polars as pl
 import pytest
-from swagger_client.models.workflow_prepare_jobs_for_submission_model import (
-    WorkflowPrepareJobsForSubmissionModel,
+from swagger_client.models.prepare_jobs_for_submission_key_model import (
+    PrepareJobsForSubmissionKeyModel,
 )
 
+from torc.api import iter_documents
 from torc.common import STATS_DIR
 from torc.job_runner import JobRunner
 from torc.loggers import setup_logging
@@ -16,7 +17,6 @@ from torc.resource_monitor.reports import (
     make_compute_node_stats_dataframes,
 )
 from torc.workflow_manager import WorkflowManager
-from torc.tests.common import TestApiManager
 
 
 logger = logging.getLogger(__name__)
@@ -27,38 +27,37 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     """Test execution of a workflow using the auto-tune feature."""
     setup_logging("torc")
     (
-        api,
+        db,
         scheduler_config_id,
         output_dir,
         monitor_type,
     ) = multi_resource_requirement_workflow
-    test_mgr = TestApiManager(api)
-
-    mgr = WorkflowManager(api)
+    api = db.api
+    mgr = WorkflowManager(api, db.workflow.key)
     mgr.start(auto_tune_resource_requirements=True)
 
     # TODO: this will change when the manager can schedule nodes
-    auto_tune_status = api.get_workflow_status().auto_tune_status
+    auto_tune_status = api.get_workflows_status_key(db.workflow.key).auto_tune_status
     auto_tune_job_keys = set(auto_tune_status.job_keys)
     assert auto_tune_job_keys == {
-        test_mgr.get_job_key("job_small1"),
-        test_mgr.get_job_key("job_medium1"),
-        test_mgr.get_job_key("job_large1"),
+        db.get_document_key("jobs", "job_small1"),
+        db.get_document_key("jobs", "job_medium1"),
+        db.get_document_key("jobs", "job_large1"),
     }
     num_enabled = 0
     groups = set()
-    for job in api.get_jobs().items:
+    for job in iter_documents(api.get_jobs_workflow, db.workflow.key):
         if job.key in auto_tune_job_keys:
             assert job.status == "ready"
             num_enabled += 1
-            rr = api.get_jobs_resource_requirements_key(job.key)
+            rr = api.get_jobs_resource_requirements_workflow_key(db.workflow.key, job.key)
             assert rr.name not in groups
             groups.add(rr.name)
         else:
             assert job.status == "disabled"
     assert num_enabled == 3
 
-    resources = WorkflowPrepareJobsForSubmissionModel(
+    resources = PrepareJobsForSubmissionKeyModel(
         num_cpus=32,
         num_gpus=0,
         memory_gb=32,
@@ -66,35 +65,45 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     )
     runner = JobRunner(
         api,
+        db.workflow,
         output_dir,
         resources=resources,
         job_completion_poll_interval=0.1,
         scheduler_config_id=scheduler_config_id,
     )
     runner.run_worker()
-    assert api.get_workflow_is_complete()
+    assert api.get_workflows_is_complete_key(db.workflow.key)
 
-    stats_by_key = {x: api.get_jobs_process_stats_key(x)[0] for x in auto_tune_job_keys}
+    stats_by_key = {
+        x: api.get_jobs_process_stats_workflow_key(db.workflow.key, x)[0]
+        for x in auto_tune_job_keys
+    }
     assert (
-        stats_by_key[test_mgr.get_job_key("job_small1")].max_rss
-        < stats_by_key[test_mgr.get_job_key("job_medium1")].max_rss
+        stats_by_key[db.get_document_key("jobs", "job_small1")].max_rss
+        < stats_by_key[db.get_document_key("jobs", "job_medium1")].max_rss
     )
     assert (
-        stats_by_key[test_mgr.get_job_key("job_medium1")].max_rss
-        < stats_by_key[test_mgr.get_job_key("job_large1")].max_rss
+        stats_by_key[db.get_document_key("jobs", "job_medium1")].max_rss
+        < stats_by_key[db.get_document_key("jobs", "job_large1")].max_rss
     )
 
-    api.post_workflow_process_auto_tune_resource_requirements_results()
-    small = api.get_resource_requirements_key("small")
-    medium = api.get_resource_requirements_key("medium")
-    large = api.get_resource_requirements_key("large")
+    api.post_workflows_process_auto_tune_resource_requirements_results_key(db.workflow.key)
+    small = api.get_resource_requirements_workflow_key(
+        db.workflow.key, db.get_document_key("resource_requirements", "small")
+    )
+    medium = api.get_resource_requirements_workflow_key(
+        db.workflow.key, db.get_document_key("resource_requirements", "medium")
+    )
+    large = api.get_resource_requirements_workflow_key(
+        db.workflow.key, db.get_document_key("resource_requirements", "large")
+    )
     for rr in (small, medium, large):
         assert rr.runtime == "P0DT0H1M"
         # This is unreliable.
         # assert rr.num_cpus in (1, 2)
         assert rr.memory.lower() == "1g"
 
-    for job in api.get_jobs().items:
+    for job in api.get_jobs_workflow(db.workflow.key).items:
         if job.key in auto_tune_job_keys:
             assert job.status == "done"
         else:
@@ -103,18 +112,19 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     mgr.restart()
     runner = JobRunner(
         api,
+        db.workflow,
         output_dir,
         resources=resources,
         job_completion_poll_interval=0.1,
     )
     runner.run_worker()
-    assert api.get_workflow_is_complete()
+    assert api.get_workflows_is_complete_key(db.workflow.key)
 
-    df = make_job_process_stats_dataframe(api)
+    df = make_job_process_stats_dataframe(api, db.workflow.key)
     assert isinstance(df, pl.DataFrame)
     assert len(df) == 9
 
-    dfs = make_compute_node_stats_dataframes(api)
+    dfs = make_compute_node_stats_dataframes(api, db.workflow.key)
     for df in dfs.values():
         assert isinstance(df, pl.DataFrame)
 

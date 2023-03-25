@@ -7,58 +7,45 @@ from swagger_client.rest import ApiException
 
 def test_api_nodes_by_key(completed_workflow):
     """Tests API commands to get documents stored by the 'key' parameter."""
-    api, _, _ = completed_workflow
+    db, _, _ = completed_workflow
+    api = db.api
     names = [
-        "compute_nodes",
         "compute_node_stats",
+        "compute_nodes",
         "events",
-        "jobs",
+        "files",
         "job_process_stats",
+        "jobs",
+        "local_schedulers",
+        "resource_requirements",
         "results",
         "user_data",
     ]
 
     for name in names:
-        results = getattr(api, f"get_{name}")()
+        results = getattr(api, f"get_{name}_workflow")(db.workflow.key)
         if results.items:
             item = results.items[0]
             if not isinstance(item, dict):
                 item = item.to_dict()
             key = _get_key(item)
-            val = getattr(api, f"get_{name}_key")(key)
+            val = getattr(api, f"get_{name}_workflow_key")(db.workflow.key, key)
             if not isinstance(val, dict):
                 val = val.to_dict()
             assert val == item
-            getattr(api, f"delete_{name}_key")(key)
+            getattr(api, f"delete_{name}_workflow_key")(db.workflow.key, key)
             with pytest.raises(ApiException):
-                val = getattr(api, f"get_{name}_key")(key)
+                val = getattr(api, f"get_{name}_workflow_key")(db.workflow.key, key)
 
-        getattr(api, f"delete_{name}")()
-        result = getattr(api, f"get_{name}")()
-        assert len(result.items) == 0
-
-
-def test_api_nodes_by_name(completed_workflow):
-    """Tests API commands to get documents stored by the 'name' parameter."""
-    api, _, _ = completed_workflow
-    names = ["local_schedulers", "files", "resource_requirements"]
-    for name in names:
-        results = getattr(api, f"get_{name}")()
-        if results.items:
-            val = getattr(api, f"get_{name}_key")(results.items[0].name)
-            assert val.to_dict() == results.items[0].to_dict()
-            getattr(api, f"delete_{name}_key")(results.items[0].name)
-            with pytest.raises(ApiException):
-                val = getattr(api, f"get_{name}_key")(results.items[0].name)
-
-        getattr(api, f"delete_{name}")()
-        result = getattr(api, f"get_{name}")()
+        getattr(api, f"delete_{name}_workflow")(db.workflow.key)
+        result = getattr(api, f"get_{name}_workflow")(db.workflow.key)
         assert len(result.items) == 0
 
 
 def test_api_edges(completed_workflow):
     """Tests API commands for edges."""
-    api, _, _ = completed_workflow
+    db, _, _ = completed_workflow
+    api = db.api
     names = [
         "blocks",
         "executed",
@@ -72,36 +59,37 @@ def test_api_edges(completed_workflow):
         "stores",
     ]
     for name in names:
-        result = api.get_edges_name(name)
+        result = api.get_edges_workflow_name(db.workflow.key, name)
         if result.items:
             item = result.items[0]
             if not isinstance(item, dict):
                 item = item.to_dict()
             key = _get_key(item)
-            val = api.get_edges_name_key(name, key)
+            val = api.get_edges_workflow_name_key(db.workflow.key, name, key)
             if not isinstance(val, dict):
                 val = val.to_dict()
             assert val == item
-            api.delete_edges_name_key(name, key)
+            api.delete_edges_workflow_name_key(db.workflow.key, name, key)
             with pytest.raises(ApiException):
-                val = api.get_edges_name_key(name, key)
+                val = api.get_edges_workflow_name_key(db.workflow.key, name, key)
 
-        api.delete_edges_name(name)
-        result = api.get_edges_name(name)
+        api.delete_edges_workflow_name(db.workflow.key, name)
+        result = api.get_edges_workflow_name(db.workflow.key, name)
         assert len(result.items) == 0
 
 
 def test_api_workflow_status(completed_workflow):
     """Tests API commands to manage workflow status."""
-    api, _, _ = completed_workflow
-    status = api.get_workflow_status()
+    db, _, _ = completed_workflow
+    api = db.api
+    status = api.get_workflows_status_key(db.workflow.key)
     orig = status.run_id
     status.run_id += 1
-    api.put_workflow_status(status)
-    new_status = api.get_workflow_status()
+    api.put_workflows_status_key(status, db.workflow.key)
+    new_status = api.get_workflows_status_key(db.workflow.key)
     assert new_status.run_id == orig + 1
-    api.put_workflow_status_reset()
-    new_status = api.get_workflow_status()
+    api.post_workflows_reset_status_key(db.workflow.key)
+    new_status = api.get_workflows_status_key(db.workflow.key)
     assert new_status.run_id == 0
 
 

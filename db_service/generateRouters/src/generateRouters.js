@@ -7,114 +7,325 @@ const documents = [
     name: 'AWS compute node configuration',
     description: 'AWS compute node configuration',
     collection: 'aws_schedulers',
-    collection_var_name: 'awsSchedulers',
     schema: 'awsScheduler',
     batch_schema: 'batchAwsSchedulers',
-    key: 'name',
+    filter_fields: [
+      {
+        name: '_key',
+        type: 'joi.string()',
+      },
+      {
+        name: 'name',
+        type: 'joi.string()',
+      },
+    ],
   },
   {
     name: 'compute node',
     description: 'Compute node used for running jobs',
     collection: 'compute_nodes',
-    collection_var_name: 'computeNodes',
     schema: 'computeNode',
     batch_schema: 'batchComputeNodes',
+    filter_fields: [
+      {
+        name: '_key',
+        type: 'joi.string()',
+      },
+      {
+        name: 'hostname',
+        type: 'joi.string()',
+      },
+      {
+        name: 'is_active',
+        type: 'joi.boolean()',
+      },
+    ],
   },
   {
     name: 'compute node statistics',
     description: 'Compute node resource utilization statistics',
     collection: 'compute_node_stats',
-    collection_var_name: 'computeNodeStats',
     schema: 'computeNodeStats',
     batch_schema: 'batchComputeNodeStats',
+    filter_fields: [
+      {
+        name: '_key',
+        type: 'joi.string()',
+      },
+      {
+        name: 'hostname',
+        type: 'joi.string()',
+      },
+    ],
   },
   {
     name: 'event',
     description: 'User-defined event',
     collection: 'events',
-    collection_var_name: 'events',
     schema: 'object',
     batch_schema: 'batchObjects',
+    filter_fields: [
+      {
+        name: '_key',
+        type: 'joi.string()',
+      },
+    ],
   },
   {
     name: 'file',
     description: 'Job input or output files',
     collection: 'files',
-    collection_var_name: 'files',
     schema: 'file',
     batch_schema: 'batchFiles',
-    key: 'name',
+    filter_fields: [
+      {
+        name: '_key',
+        type: 'joi.string()',
+      },
+      {
+        name: 'name',
+        type: 'joi.string()',
+      },
+      {
+        name: 'path',
+        type: 'joi.string()',
+      },
+    ],
   },
   {
     name: 'job',
     description: 'Job',
     collection: 'jobs',
-    collection_var_name: 'jobs',
-    custom_imports: `const query = require('../../query');\nconst utils = require('../../utils');`,
     custom_convert: `utils.convertJobForApi`,
-    custom_post: `query.addJob`,
+    custom_post: `documents.addJob`,
     schema: 'job',
     batch_schema: 'batchJobs',
+    filter_fields: [
+      {
+        name: '_key',
+        type: 'joi.string()',
+      },
+      {
+        name: 'name',
+        type: 'joi.string()',
+      },
+      {
+        name: 'command',
+        type: 'joi.string()',
+      },
+      {
+        name: 'run_id',
+        type: 'joi.number().integer()',
+      },
+      {
+        name: 'status',
+        type: 'joi.string()',
+      },
+      {
+        name: 'cancel_on_blocking_job_failure',
+        type: 'joi.boolean()',
+      },
+      {
+        name: 'interruptible',
+        type: 'joi.boolean()',
+      },
+    ],
   },
   {
     name: 'job process statistics',
     description: 'Job process resource utilization statistics',
     collection: 'job_process_stats',
-    collection_var_name: 'jobProcessStats',
     schema: 'jobProcessStats',
     batch_schema: 'batchJobProcessStats',
+    filter_fields: [
+      {
+        name: '_key',
+        type: 'joi.string()',
+      },
+      {
+        name: 'job_key',
+        type: 'joi.string()',
+      },
+      {
+        name: 'run_id',
+        type: 'joi.number().integer()',
+      },
+    ],
   },
   {
     name: 'local compute node configuration',
     description: 'Local compute node configuration',
     collection: 'local_schedulers',
-    collection_var_name: 'localSchedulers',
     schema: 'localScheduler',
     batch_schema: 'batchLocalSchedulers',
-    key: 'name',
+    filter_fields: [
+      {
+        name: '_key',
+        type: 'joi.string()',
+      },
+      {
+        name: 'memory',
+        type: 'joi.string()',
+      },
+      {
+        name: 'num_cpus',
+        type: 'joi.number().integer()',
+      },
+    ],
   },
   {
     name: 'resource requirements',
     description: 'Job resource requirements',
     collection: 'resource_requirements',
-    collection_var_name: 'resourceRequirements',
     schema: 'resourceRequirements',
     batch_schema: 'batchResourceRequirements',
-    key: 'name',
+    filter_fields: [
+      {
+        name: '_key',
+        type: 'joi.string()',
+      },
+      {
+        name: 'name',
+        type: 'joi.string()',
+      },
+      {
+        name: 'memory',
+        type: 'joi.string()',
+      },
+      {
+        name: 'num_cpus',
+        type: 'joi.number().integer()',
+      },
+      {
+        name: 'num_gpus',
+        type: 'joi.number().integer()',
+      },
+      {
+        name: 'num_nodes',
+        type: 'joi.number().integer()',
+      },
+      {
+        name: 'runtime',
+        type: 'joi.string()',
+      },
+    ],
   },
   {
     name: 'result',
     description: 'Result of a job',
     collection: 'results',
-    collection_var_name: 'results',
     schema: 'result',
     batch_schema: 'batchResults',
+    filter_fields: [
+      {
+        name: '_key',
+        type: 'joi.string()',
+      },
+      {
+        name: 'job_key',
+        type: 'joi.string()',
+      },
+      {
+        name: 'run_id',
+        type: 'joi.number().integer()',
+      },
+      {
+        name: 'return_code',
+        type: 'joi.number().integer()',
+      },
+      {
+        name: 'status',
+        type: 'joi.string()',
+      },
+    ],
   },
   {
     name: 'scheduled compute node',
     description: 'Compute nodes scheduled to complete jobs',
     collection: 'scheduled_compute_nodes',
-    collection_var_name: 'scheduledComputeNodes',
     schema: 'scheduledComputeNode',
     batch_schema: 'batchScheduledComputeNodes',
-    key: 'scheduler_id',
+    filter_fields: ['_key', 'scheduler_id', 'scheduler_config_id', 'status'],
+    filter_fields: [
+      {
+        name: '_key',
+        type: 'joi.string()',
+      },
+      {
+        name: 'scheduler_id',
+        type: 'joi.string()',
+      },
+      {
+        name: 'scheduler_config_id',
+        type: 'joi.string()',
+      },
+      {
+        name: 'status',
+        type: 'joi.string()',
+      },
+    ],
   },
   {
     name: 'SLURM compute node configuration',
     description: 'SLURM compute node configuration',
     collection: 'slurm_schedulers',
-    collection_var_name: 'slurmSchedulers',
     schema: 'slurmScheduler',
     batch_schema: 'batchSlurmSchedulers',
-    key: 'name',
+    filter_fields: [
+      {
+        name: '_key',
+        type: 'joi.string()',
+      },
+      {
+        name: 'name',
+        type: 'joi.string()',
+      },
+      {
+        name: 'account',
+        type: 'joi.string()',
+      },
+      {
+        name: 'gres',
+        type: 'joi.string()',
+      },
+      {
+        name: 'mem',
+        type: 'joi.string()',
+      },
+      {
+        name: 'nodes',
+        type: 'joi.number().integer()',
+      },
+      {
+        name: 'partition',
+        type: 'joi.string()',
+      },
+      {
+        name: 'qos',
+        type: 'joi.string()',
+      },
+      {
+        name: 'tmp',
+        type: 'joi.string()',
+      },
+      {
+        name: 'walltime',
+        type: 'joi.string()',
+      },
+    ],
   },
   {
     name: 'user data',
     description: 'Input or output user data for a job',
     collection: 'user_data',
-    collection_var_name: 'userData',
     schema: 'object',
     batch_schema: 'batchObjects',
+    filter_fields: [
+      {
+        name: '_key',
+        type: 'joi.string()',
+      },
+    ],
   },
 ];
 
@@ -131,7 +342,7 @@ function renderTemplate(doc) {
     doc.a_or_an = vowels.has(doc.name[0]) ? 'an' : 'a';
     const template = data.toString();
     const text = Mustache.render(template, doc);
-    const filename = `../src/api/generated/${doc.collection_var_name}.js`;
+    const filename = `../src/api/generated/${doc.collection}.js`;
     fs.writeFile(`${filename}`, text, (err) => {
       if (err) {
         throw err;

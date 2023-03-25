@@ -25,6 +25,7 @@ def export(ctx):
 
 
 @click.command(name="json")
+@click.argument("workflow_key")
 @click.option(
     "-d",
     "--directory",
@@ -42,7 +43,7 @@ def export(ctx):
     help="Overwrite directory if it exists.",
 )
 @click.pass_obj
-def export_json(api, directory, force):
+def export_json(api, workflow_key, directory, force):
     """Export workflow database to this directory in JSON format."""
     if directory.exists():
         if force:
@@ -67,7 +68,7 @@ def export_json(api, directory, force):
         else:
             filename = directory / f"{name}.json"
         with open(filename, "w", encoding="utf-8") as f_out:
-            args = (name,) if name in _EDGES else tuple()
+            args = (workflow_key, name) if name in _EDGES else (workflow_key,)
             for item in iter_documents(func, *args):
                 if name in ("events", "user_data"):
                     f_out.write(json.dumps(item))
@@ -78,6 +79,7 @@ def export_json(api, directory, force):
 
 
 @click.command()
+@click.argument("workflow_key")
 @click.option(
     "-F",
     "--filename",
@@ -95,7 +97,7 @@ def export_json(api, directory, force):
     help="Overwrite file if it exists.",
 )
 @click.pass_obj
-def sqlite(api, filename, force):
+def sqlite(api, workflow_key, filename, force):
     """Export workflow database to this SQLite file."""
     if filename.exists():
         if force:
@@ -109,17 +111,17 @@ def sqlite(api, filename, force):
 
     # TODO: Get workflow_status
     for name, func in _get_db_documents(api).items():
-        if name in ("compute_node_stats", "compute_nodes"):
+        if "compute_node_stats" in name or "compute_nodes" in name:
             # TODO: determine how to record the nested data. JSON string?
             continue
         found_first = False
         rows = []
-        args = (name,) if name in _EDGES else tuple()
+        args = (workflow_key, name) if name in _EDGES else (workflow_key,)
         for item in iter_documents(func, *args):
             row = item if isinstance(item, dict) else item.to_dict()
             if "to" in row:
                 row["_to"] = row.pop("to")
-            if name in ("events", "user_data"):
+            if "events" in name or "user_data" in name:
                 data = {}
                 db_keys = {"_id", "_rev", "_key"}
                 for field in set(row.keys()).difference(db_keys):
@@ -141,27 +143,27 @@ def sqlite(api, filename, force):
 
 def _get_db_documents(api: DefaultApi):
     return {
-        "blocks": api.get_edges_name,
-        "compute_node_stats": api.get_compute_node_stats,
-        "compute_nodes": api.get_compute_nodes,
-        "events": api.get_events,
-        "files": api.get_files,
-        "aws_schedulers": api.get_aws_schedulers,
-        "local_schedulers": api.get_local_schedulers,
-        "slurm_schedulers": api.get_slurm_schedulers,
-        "job_process_stats": api.get_job_process_stats,
-        "jobs": api.get_jobs,
-        "needs": api.get_edges_name,
-        "node_used": api.get_edges_name,
-        "process_used": api.get_edges_name,
-        "produces": api.get_edges_name,
-        "requires": api.get_edges_name,
-        "resource_requirements": api.get_resource_requirements,
-        "results": api.get_results,
-        "returned": api.get_edges_name,
-        "scheduled_bys": api.get_edges_name,
-        "stores": api.get_edges_name,
-        "user_data": api.get_user_data,
+        "blocks": api.get_edges_workflow_name,
+        "compute_node_stats": api.get_compute_node_stats_workflow,
+        "compute_nodes": api.get_compute_nodes_workflow,
+        "events": api.get_events_workflow,
+        "files": api.get_files_workflow,
+        "aws_schedulers": api.get_aws_schedulers_workflow,
+        "local_schedulers": api.get_local_schedulers_workflow,
+        "slurm_schedulers": api.get_slurm_schedulers_workflow,
+        "job_process_stats": api.get_job_process_stats_workflow,
+        "jobs": api.get_jobs_workflow,
+        "needs": api.get_edges_workflow_name,
+        "node_used": api.get_edges_workflow_name,
+        "process_used": api.get_edges_workflow_name,
+        "produces": api.get_edges_workflow_name,
+        "requires": api.get_edges_workflow_name,
+        "resource_requirements": api.get_resource_requirements_workflow,
+        "results": api.get_results_workflow,
+        "returned": api.get_edges_workflow_name,
+        "scheduled_bys": api.get_edges_workflow_name,
+        "stores": api.get_edges_workflow_name,
+        "user_data": api.get_user_data_workflow,
     }
 
 
