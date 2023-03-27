@@ -6307,7 +6307,6 @@ components:
     workflow_key_model_9:
       required:
       - scheduler_config_id
-      - scheduler_id
       - status
       type: object
       properties:
@@ -6511,7 +6510,6 @@ components:
     scheduled_compute_nodes_workflow_model:
       required:
       - scheduler_config_id
-      - scheduler_id
       - status
       type: object
       properties:

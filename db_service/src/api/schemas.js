@@ -238,7 +238,7 @@ const autoTuneStatus = joi.object().required().keys({
 });
 
 const scheduledComputeNode = joi.object().required().keys({
-  scheduler_id: joi.string().required(),
+  scheduler_id: joi.string().optional(),
   scheduler_config_id: joi.string().required(),
   status: joi.string().required(),
   _key: joi.string(),

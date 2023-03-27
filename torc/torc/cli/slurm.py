@@ -16,7 +16,6 @@ from torc.hpc.common import HpcType
 from torc.hpc.hpc_manager import HpcManager
 from torc.hpc.slurm_interface import SlurmInterface
 from torc.job_runner import JobRunner, convert_end_time_to_duration_str
-from torc.loggers import setup_logging
 from torc.utils.run_command import get_cli_string
 from .common import make_text_table, setup_cli_logging, path_callback
 
@@ -25,10 +24,8 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-@click.pass_context
-def slurm(ctx):
+def slurm():
     """SLURM commands"""
-    setup_cli_logging(ctx, 2, __name__)
 
 
 @click.command()
@@ -81,9 +78,14 @@ def slurm(ctx):
     help="Request nodes that have at least this amount of storage scratch space.",
 )
 @click.option("-w", "--walltime", default="04:00:00", show_default=True, help="Per-node walltime.")
+@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
-def add_config(api, name, account, gres, mem, nodes, partition, qos, tmp, walltime):
+@click.pass_context
+def add_config(
+    ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, walltime, workflow_key
+):
     """Add a SLURM config to the database."""
+    setup_cli_logging(ctx, 3, __name__)
     config = {
         "account": account,
         "gres": gres,
@@ -94,31 +96,29 @@ def add_config(api, name, account, gres, mem, nodes, partition, qos, tmp, wallti
         "tmp": tmp,
         "walltime": walltime,
     }
-    api.post_slurm_schedulers(SlurmSchedulersWorkflowModel(name=name, **config))
-    print(f"Added SLURM configuration {name} to database", file=sys.stderr)
+    api.post_slurm_schedulers_workflow(
+        SlurmSchedulersWorkflowModel(name=name, **config), workflow_key
+    )
+    logger.info("Added SLURM configuration %s to database", name, file=sys.stderr)
 
 
 @click.command()
+@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
-def show_configs(api):
+@click.pass_context
+def list_configs(ctx, api, workflow_key):
     """Show the current SLURM configs in the database."""
-    items = (x.to_dict() for x in iter_documents(api.get_slurm_schedulers))
-    table = make_text_table(items, "SLURM Configurations", exclude_columns=["key", "rev"])
+    setup_cli_logging(ctx, 3, __name__)
+    items = (x.to_dict() for x in iter_documents(api.get_slurm_schedulers_workflow, workflow_key))
+    table = make_text_table(items, "SLURM Configurations", exclude_columns=["id", "rev"])
     if table.rows:
         print(table)
     else:
-        print("There are no SLURM configurations", file=sys.stderr)
+        logger.info("There are no SLURM configurations")
 
 
 @click.command()
-@click.argument("scheduler-config-id")
-@click.option(
-    "-i",
-    "--index",
-    default=1,
-    show_default=True,
-    help="Starting index for HPC job names",
-)
+@click.argument("scheduler-config-key")
 @click.option(
     "-j",
     "--job-prefix",
@@ -142,53 +142,57 @@ def show_configs(api):
     help="Output directory for compute nodes",
     callback=path_callback,
 )
+@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
-def schedule_nodes(ctx, api, scheduler_config_id, index, job_prefix, num_hpc_jobs, output):
+def schedule_nodes(ctx, api, scheduler_config_key, job_prefix, num_hpc_jobs, output, workflow_key):
     """Schedule nodes with SLURM to run jobs."""
     # TODO: if workflow isn't started, start it?
+    setup_cli_logging(ctx, 3, __name__)
     logger.info(get_cli_string())
     output.mkdir(exist_ok=True)
-    fields = scheduler_config_id.split("/")
-    if len(fields) != 2:
-        logger.info("Invalid scheduler ID format: %s", scheduler_config_id)
-        sys.exit(1)
-    scheduler_type, key = fields
-    if scheduler_type != "slurm_schedulers":
-        logger.info("Invalid database collection name: %s", scheduler_type)
-        sys.exit(1)
-
-    config = remove_db_keys(api.get_slurm_schedulers_key(key).to_dict())
-    config.pop("name")
+    config = api.get_slurm_schedulers_workflow_key(workflow_key, scheduler_config_key)
+    data = remove_db_keys(config.to_dict())
+    data.pop("name")
     hpc_type = HpcType("slurm")
-    mgr = HpcManager(config, hpc_type, output)
-    database_url = ctx.parent.parent.parent.params["database_url"]
-    runner_script = f"torc -u {database_url} hpc slurm run-jobs"
+    mgr = HpcManager(data, hpc_type, output)
+    database_url = api.api_client.configuration.host
+    runner_script = f"torc -u {database_url} hpc slurm run-jobs -k {workflow_key}"
     job_ids = []
-    for i in range(index, num_hpc_jobs + 1):
-        name = f"{job_prefix}_{i}"
-        job_id = mgr.submit(output, name, runner_script, keep_submission_script=True)
-        job_ids.append(job_id)
-        api.post_scheduled_compute_nodes(
+    for _ in range(num_hpc_jobs):
+        node = api.post_scheduled_compute_nodes_workflow(
             ScheduledComputeNodesWorkflowModel(
-                scheduler_id=job_id, scheduler_config_id=scheduler_config_id, status="pending"
-            )
+                scheduler_config_id=config.id, status="uninitialized"
+            ),
+            workflow_key,
         )
+        name = f"{job_prefix}_{node.key}"
+        try:
+            # TODO: keep_submission_script false
+            job_id = mgr.submit(output, name, runner_script, keep_submission_script=True)
+        except Exception:
+            api.delete_scheduled_compute_nodes_workflow_key(node.key)
+            raise
 
-    api.post_events(
+        node.scheduler_id = job_id
+        node.status = "pending"
+        api.put_scheduled_compute_nodes_workflow_key(node, workflow_key, node.key)
+        job_ids.append(job_id)
+
+    api.post_events_workflow(
         {
             "category": "scheduler",
             "type": "submit",
             "num_jobs": len(job_ids),
             "job_ids": job_ids,
-            "scheduler_config_id": scheduler_config_id,
+            "scheduler_config_id": config.id,
             "message": f"Submitted {len(job_ids)} job requests to {hpc_type.value}",
-        }
+        },
+        workflow_key,
     )
 
 
 @click.command()
-@click.argument("workflow_key")
 @click.option(
     "-o",
     "--output",
@@ -196,20 +200,18 @@ def schedule_nodes(ctx, api, scheduler_config_id, index, job_prefix, num_hpc_job
     show_default=True,
     callback=path_callback,
 )
+@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
-def run_jobs(ctx, api, workflow_key, output):
+def run_jobs(ctx, api, output, workflow_key):
     """Run workflow jobs on a SLURM compute node."""
-    # TODO: make unique
-    hostname = socket.gethostname()
-    filename = output / f"slurm_runner_{hostname}.log"
-    my_logger = setup_logging(__name__, filename=filename, mode="a")
-    my_logger.info(get_cli_string())
-    my_logger.info(
-        "Run jobs on %s for workflow %s", hostname, ctx.obj.api_client.configuration.host
-    )
     intf = SlurmInterface()
     slurm_job_id = intf.get_current_job_id()
+    hostname = socket.gethostname()
+    log_file = output / f"slurm_runner_{hostname}_{slurm_job_id}.log"
+    my_logger = setup_cli_logging(ctx, 3, __name__, filename=log_file)
+    my_logger.info(get_cli_string())
+    my_logger.info("Run jobs on %s for workflow %s", hostname, api.api_client.configuration.host)
     scheduler = {
         "node_names": intf.list_active_nodes(slurm_job_id),
         "environment_variables": intf.get_environment_variables(),
@@ -220,26 +222,40 @@ def run_jobs(ctx, api, workflow_key, output):
     buffer = timedelta(minutes=2)
     end_time = intf.get_job_end_time() - buffer
     time_limit = convert_end_time_to_duration_str(end_time)
-    # scheduled_compute_node = api.get_scheduled_compute_nodes_key(slurm_job_id)
+    nodes = api.get_scheduled_compute_nodes_workflow(workflow_key, scheduler_id=slurm_job_id).items
+    num_nodes = len(nodes)
+    if num_nodes == 0:
+        node = None
+        scheduler_config_id = None
+    elif num_nodes == 1:
+        node = nodes[0]
+        scheduler_config_id = node.scheduler_config_id
+    else:
+        raise Exception(f"num_nodes with {slurm_job_id=} cannot be {num_nodes=}")
+
     workflow = api.get_workflows_key(workflow_key)
     runner = JobRunner(
         api,
         workflow,
         output,
         time_limit=time_limit,
-        # scheduler_config_id=scheduled_compute_node.scheduler_config_id,
+        scheduler_config_id=scheduler_config_id,
     )
-    # node = api.get_scheduled_compute_nodes_key(slurm_job_id)
-    # node.status = "active"
-    # node = api.put_scheduled_compute_nodes_key(node, slurm_job_id)
-    my_logger.info("Start workflow on compute node %s", socket.gethostname())
+
+    if node is not None:
+        node.status = "active"
+        node = api.put_scheduled_compute_nodes_workflow_key(node, workflow_key, node.key)
+
+    my_logger.info("Start workflow on compute node %s", hostname)
     runner.run_worker(scheduler=scheduler)
-    # node.status = "complete"
-    # node = api.put_scheduled_compute_nodes_key(node, slurm_job_id)
+
+    if node is not None:
+        node.status = "complete"
+        api.put_scheduled_compute_nodes_workflow_key(node, workflow_key, node.key)
     # TODO: schedule more nodes if needed
 
 
 slurm.add_command(add_config)
+slurm.add_command(list_configs)
 slurm.add_command(run_jobs)
 slurm.add_command(schedule_nodes)
-slurm.add_command(show_configs)
