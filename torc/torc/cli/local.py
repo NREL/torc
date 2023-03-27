@@ -19,7 +19,7 @@ def local():
 
 
 @click.command()
-@click.argument("workflow_key")
+@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.option(
     "-o",
     "--output",

@@ -341,14 +341,20 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
 
 
 @pytest.fixture
-def import_workflow_cli(tmp_path):
+def create_workflow_cli(tmp_path):
     """Creates a temporary workflow with the CLI."""
     file = Path(__file__).parent.parent.parent / "examples" / "independent_workflow.json5"
-    workflow_key_regex = re.compile(r"into key=(\d+)\s")
+    workflow_key_regex = re.compile(r"with key=(\d+)\s")
     output = {}
-    check_run_command(f"torc -u {URL} workflows import {file}", output=output)
+    check_run_command(f"torc -u {URL} workflows create-from-json-file {file}", output=output)
     match = workflow_key_regex.search(output["stderr"])
     assert match
     key = match.group(1)
     yield key, URL, tmp_path
-    check_run_command(f"torc -u {URL} workflows delete {key}")
+    check_run_command(f"torc -u {URL} workflows delete -k {key}")
+
+
+@pytest.fixture
+def db_api():
+    """Returns an api instance."""
+    yield _initialize_api(), URL

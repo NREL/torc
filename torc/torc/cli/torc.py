@@ -5,11 +5,14 @@ import logging
 import click
 
 from torc.api import make_api
+from torc.cli.compute_nodes import compute_nodes
+from torc.cli.events import events
 from torc.cli.export import export
+from torc.cli.files import files
 from torc.cli.hpc import hpc
 from torc.cli.jobs import jobs
 from torc.cli.local import local
-from torc.cli.show import show
+from torc.cli.results import results
 from torc.cli.workflows import workflows
 from torc.utils.timing import timer_stats_collector
 
@@ -77,9 +80,12 @@ def callback(*args, **kwargs):  # pylint: disable=unused-argument
     timer_stats_collector.log_stats()
 
 
+cli.add_command(compute_nodes)
+cli.add_command(events)
 cli.add_command(export)
+cli.add_command(files)
 cli.add_command(hpc)
 cli.add_command(jobs)
 cli.add_command(local)
-cli.add_command(show)
+cli.add_command(results)
 cli.add_command(workflows)

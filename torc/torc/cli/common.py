@@ -81,6 +81,19 @@ def path_callback(*args) -> Path:
     return Path(args[2])
 
 
+def parse_filters(filters):
+    """Parse filter options given on the command line."""
+    final = {}
+    for flt in filters:
+        fields = flt.split("=")
+        if len(fields) != 2:
+            logger.error("Invalid filter format: %s. Required: name=value", flt)
+            sys.exit(1)
+        final[fields[0]] = fields[1]
+
+    return final
+
+
 def setup_cli_logging(ctx, depth, name, filename=None, mode="w"):
     """Setup logging from a click context."""
     match depth:

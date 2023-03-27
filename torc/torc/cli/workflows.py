@@ -1,10 +1,13 @@
 """CLI commands to manage a workflow"""
 
+import getpass
 import json
 import logging
 import sys
 
 import click
+from swagger_client.models.jobs_workflow_model import JobsWorkflowModel
+from swagger_client.models.workflows_model import WorkflowsModel
 from swagger_client.models.workflow_specifications_model import WorkflowSpecificationsModel
 
 from torc.api import sanitize_workflow, iter_documents
@@ -21,39 +24,178 @@ def workflows():
     """Workflow commands"""
 
 
-@click.command(name="import")
-@click.argument("filename", type=click.Path(exists=True))
-@click.pass_obj
-@click.pass_context
-def import_workflow(ctx, api, filename):
-    """Import a workflow from a JSON/JSON5 file. Deletes any existing workflow."""
-    setup_cli_logging(ctx, 2, __name__)
-    spec = WorkflowSpecificationsModel(**sanitize_workflow(load_data(filename)))
-    workflow = api.post_workflow_specifications(spec)
-    logger.info("Imported the workflow from %s into key=%s", filename, workflow.key)
-
-
 @click.command()
-@click.argument("workflow_key")
+@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
 def cancel(ctx, api, workflow_key):
     """Cancel all jobs that are currently active in the workflow."""
     setup_cli_logging(ctx, 2, __name__)
     # TODO: find active nodes by scheduler type and send cancel commands
-    print(f"Cannot cancel workflow {api} {workflow_key}: not implemented yet:")
+    logger.error("Cannot cancel workflow %s %s: not implemented yet:", api, workflow_key)
     sys.exit(1)
 
 
 @click.command()
-@click.argument("workflow_key")
+@click.option(
+    "-d",
+    "--description",
+    type=str,
+    help="Workflow description",
+)
+@click.option(
+    "-k",
+    "--key",
+    type=str,
+    help="Workflow key. Default is to auto-generate",
+)
+@click.option(
+    "-n",
+    "--name",
+    type=str,
+    help="Workflow name",
+)
+@click.option(
+    "-u",
+    "--user",
+    type=str,
+    default=getpass.getuser(),
+    show_default=True,
+    help="Username",
+)
+@click.pass_obj
+@click.pass_context
+def create(ctx, api, description, key, name, user):
+    """Create a new workflow."""
+    setup_cli_logging(ctx, 2, __name__)
+    workflow = WorkflowsModel(
+        description=description,
+        key=key,
+        name=name,
+        user=user,
+    )
+    workflow = api.post_workflows(workflow)
+    logger.info("Created workflow with key=%s", workflow.key)
+
+
+@click.command()
+@click.argument("filename", type=click.Path(exists=True))
+@click.option(
+    "-d",
+    "--description",
+    type=str,
+    help="Workflow description",
+)
+@click.option(
+    "-k",
+    "--key",
+    type=str,
+    help="Workflow key. Default is to auto-generate",
+)
+@click.option(
+    "-n",
+    "--name",
+    type=str,
+    help="Workflow name",
+)
+@click.option(
+    "-u",
+    "--user",
+    type=str,
+    default=getpass.getuser(),
+    show_default=True,
+    help="Username",
+)
+@click.pass_obj
+@click.pass_context
+def create_from_commands_file(ctx, api, filename, description, key, name, user):
+    """Create a workflow from a text file containing job CLI commands."""
+    setup_cli_logging(ctx, 2, __name__)
+    commands = []
+    with open(filename, encoding="utf-8") as f_in:
+        for line in f_in:
+            line = line.strip()
+            if line:
+                commands.append(line)
+    workflow = WorkflowsModel(
+        description=description,
+        key=key,
+        name=name,
+        user=user,
+    )
+    workflow = api.post_workflows(workflow)
+    logger.info("Created workflow with key=%s", workflow.key)
+    for i, command in enumerate(commands, start=1):
+        name = str(i)
+        job = api.post_jobs_workflow(JobsWorkflowModel(name=name, command=command), workflow.key)
+        logger.info("Added job %s", job.key)
+
+
+@click.command()
+@click.argument("filename", type=click.Path(exists=True))
+@click.pass_obj
+@click.pass_context
+def create_from_json_file(ctx, api, filename):
+    """Create a workflow from a JSON/JSON5 file."""
+    setup_cli_logging(ctx, 2, __name__)
+    spec = WorkflowSpecificationsModel(**sanitize_workflow(load_data(filename)))
+    workflow = api.post_workflow_specifications(spec)
+    logger.info("Created a workflow from %s with key=%s", filename, workflow.key)
+
+
+@click.command()
+@click.option(
+    "-d",
+    "--description",
+    type=str,
+    help="Workflow description",
+)
+@click.option(
+    "-k",
+    "--workflow-key",
+    type=str,
+    required=True,
+    help="Workflow key.",
+)
+@click.option(
+    "-n",
+    "--name",
+    type=str,
+    help="Workflow name",
+)
+@click.option(
+    "-u",
+    "--user",
+    type=str,
+    default=getpass.getuser(),
+    show_default=True,
+    help="Username",
+)
+@click.pass_obj
+@click.pass_context
+def modify(ctx, api, description, workflow_key, name, user):
+    """Modify the workflow parameters."""
+    setup_cli_logging(ctx, 2, __name__)
+    workflow = api.get_workflows_key(workflow_key)
+    if description is not None:
+        workflow.description = description
+    if name is not None:
+        workflow.name = name
+    if user is not None:
+        workflow.user = user
+    workflow = api.put_workflows_key(workflow, workflow_key)
+    logger.info("Updated workflow %s", workflow.key)
+
+
+@click.command()
+@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
 def delete(ctx, api, workflow_key):
     """Delete the workflow."""
     setup_cli_logging(ctx, 2, __name__)
     api.delete_workflows_key(workflow_key)
-    print(f"Deleted workflow {workflow_key}")
+    logger.info("Deleted workflow %s", workflow_key)
 
 
 @click.command()
@@ -64,7 +206,7 @@ def delete_all(ctx, api):
     setup_cli_logging(ctx, 2, __name__)
     for workflow in iter_documents(api.get_workflows):
         api.delete_workflows_key(workflow.key)
-        print(f"Deleted workflow {workflow.key}")
+        logger.info("Deleted workflow %s", workflow.key)
 
 
 @click.command(name="list")
@@ -82,11 +224,11 @@ def list_workflows(ctx, api):
     if table.rows:
         print(table)
     else:
-        print("No workflows are stored")
+        logger.info("No workflows are stored")
 
 
 @click.command()
-@click.argument("workflow_key")
+@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
 def reset_status(ctx, api, workflow_key):
@@ -97,7 +239,7 @@ def reset_status(ctx, api, workflow_key):
 
 
 @click.command()
-@click.argument("workflow_key")
+@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
 def restart(ctx, api, workflow_key):
@@ -109,7 +251,7 @@ def restart(ctx, api, workflow_key):
 
 
 @click.command()
-@click.argument("workflow_key")
+@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
 def start(ctx, api, workflow_key):
@@ -121,7 +263,7 @@ def start(ctx, api, workflow_key):
 
 
 @click.command()
-@click.argument("workflow_key")
+@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.option(
     "--sanitize/--no-santize",
     default=True,
@@ -141,6 +283,28 @@ def show(ctx, api, workflow_key, sanitize):
 
 
 @click.command()
+@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
+@click.pass_obj
+@click.pass_context
+def show_config(ctx, api, workflow_key):
+    """Show the workflow config."""
+    setup_cli_logging(ctx, 2, __name__)
+    config = api.get_workflows_config_key(workflow_key)
+    print(json.dumps(config.to_dict(), indent=2))
+
+
+@click.command()
+@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
+@click.pass_obj
+@click.pass_context
+def show_status(ctx, api, workflow_key):
+    """Show the workflow status."""
+    setup_cli_logging(ctx, 2, __name__)
+    status = api.get_workflows_status_key(workflow_key)
+    print(json.dumps(status.to_dict(), indent=2))
+
+
+@click.command()
 @click.pass_obj
 @click.pass_context
 def example(ctx, api):
@@ -151,12 +315,17 @@ def example(ctx, api):
 
 
 workflows.add_command(cancel)
+workflows.add_command(create)
+workflows.add_command(create_from_commands_file)
+workflows.add_command(create_from_json_file)
+workflows.add_command(modify)
 workflows.add_command(delete)
 workflows.add_command(delete_all)
-workflows.add_command(import_workflow)
 workflows.add_command(list_workflows)
 workflows.add_command(reset_status)
 workflows.add_command(restart)
 workflows.add_command(start)
 workflows.add_command(show)
+workflows.add_command(show_config)
+workflows.add_command(show_status)
 workflows.add_command(example)
