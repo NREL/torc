@@ -6,7 +6,9 @@ import sys
 from datetime import timedelta
 
 import click
-from swagger_client.models.slurm_schedulers_workflow_model import SlurmSchedulersWorkflowModel
+from swagger_client.models.slurm_schedulers_workflow_model import (
+    SlurmSchedulersWorkflowModel,
+)
 from swagger_client.models.scheduled_compute_nodes_workflow_model import (
     ScheduledComputeNodesWorkflowModel,
 )
@@ -19,6 +21,7 @@ from torc.job_runner import JobRunner, convert_end_time_to_duration_str
 from torc.utils.run_command import get_cli_string
 from .common import (
     get_workflow_key_from_context,
+    prompt_user_for_document,
     make_text_table,
     setup_cli_logging,
     path_callback,
@@ -122,7 +125,6 @@ def list_configs(ctx, api):
 
 
 @click.command()
-@click.argument("scheduler-config-key")
 @click.option(
     "-j",
     "--job-prefix",
@@ -146,22 +148,51 @@ def list_configs(ctx, api):
     help="Output directory for compute nodes",
     callback=path_callback,
 )
+@click.option(
+    "-s",
+    "--scheduler-config-key",
+    type=str,
+    help="SlurmScheduler config key. Auto-selected if possible.",
+)
 @click.pass_obj
 @click.pass_context
-def schedule_nodes(ctx, api, scheduler_config_key, job_prefix, num_hpc_jobs, output):
+def schedule_nodes(ctx, api, job_prefix, num_hpc_jobs, output, scheduler_config_key):
     """Schedule nodes with SLURM to run jobs."""
     # TODO: if workflow isn't started, start it?
     setup_cli_logging(ctx, __name__)
-    workflow_key = get_workflow_key_from_context(ctx, api)
     logger.info(get_cli_string())
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    if scheduler_config_key is None:
+        params = ctx.find_root().params
+        if params["no_prompts"]:
+            logger.error("--scheduler-config_key must be set")
+            sys.exit(1)
+        # TODO: there is a lot more we could do to auto-select the config
+        msg = (
+            "\nThis command requires a scheduler config key and one was not provided. "
+            "Please choose one from below.\n"
+        )
+        config = prompt_user_for_document(
+            "scheduler_config",
+            api.get_slurm_schedulers_workflow,
+            workflow_key,
+            auto_select_one_option=True,
+            exclude_columns=("id", "rev"),
+            msg=msg,
+        )
+        if config is None:
+            logger.error("No schedulers are stored")
+            sys.exit(1)
+    else:
+        config = api.get_slurm_schedulers_workflow_key(workflow_key, scheduler_config_key)
+
     output.mkdir(exist_ok=True)
-    config = api.get_slurm_schedulers_workflow_key(workflow_key, scheduler_config_key)
     data = remove_db_keys(config.to_dict())
     data.pop("name")
     hpc_type = HpcType("slurm")
     mgr = HpcManager(data, hpc_type, output)
     database_url = api.api_client.configuration.host
-    runner_script = f"torc -u {database_url} hpc slurm run-jobs -k {workflow_key}"
+    runner_script = f"torc -k {workflow_key} -u {database_url} hpc slurm run-jobs"
     job_ids = []
     for _ in range(num_hpc_jobs):
         node = api.post_scheduled_compute_nodes_workflow(

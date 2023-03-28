@@ -45,30 +45,88 @@ def get_workflow_key_from_context(ctx, api):
         if params["no_prompts"]:
             logger.error("--workflow-key must be set")
             sys.exit(1)
-        exclude = ("id", "rev")
-        workflows = []
-        index_to_key = {}
-        for i, workflow in enumerate(iter_documents(api.get_workflows), start=1):
-            data = {"index": i}
-            data.update(workflow.to_dict())
-            index_to_key[i] = workflow.key
-            workflows.append(data)
-        table = make_text_table(workflows, "Workflows", exclude_columns=exclude)
-        if table.rows:
-            print(table)
-        else:
-            logger.info("No workflows are stored")
+        msg = (
+            "\nThis command requires a workflow key and one was not provided. "
+            "Please choose one from below.\n"
+        )
+        doc = prompt_user_for_document(
+            "workflow", api.get_workflows, exclude_columns=("id", "rev"), msg=msg
+        )
+        if doc is None:
+            logger.error("No workflows are stored")
             sys.exit(1)
-        while not params["workflow_key"]:
-            key = input("Workflow key is required. Select an index from above: >>> ").strip()
-            try:
-                selected_index = int(key)
-                params["workflow_key"] = index_to_key.get(selected_index)
-            except ValueError:
-                pass
-            if not params["workflow_key"]:
-                print(f"index={key} is an invalid choice")
-    return params["workflow_key"]
+        key = doc.key
+    else:
+        key = params["workflow_key"]
+    return key
+
+
+def prompt_user_for_document(
+    doc_type,
+    getter_func,
+    *args,
+    auto_select_one_option=False,
+    exclude_columns=None,
+    msg=None,
+    **kwargs,
+):
+    """Help a user select a document by printing a table of available documents.
+
+    Parameters
+    ----------
+    doc_type : string
+        Ex: 'workflow', 'job'
+    getter_func : function
+        Database API function that can be passed to iter_documents to retrieve documents.
+        *args and **kwargs are forwarded to that function.
+    exclude_columns : None or tuple
+        Columns to exclude from the printed table.
+    auto_select_one_option : bool
+        If True and there is only one document, return that document's key.
+    msg : str | None
+        If not None, print the message before printing the table.
+
+    Returns
+    -------
+    object | None
+        Swagger data model or None if no documents are stored.
+    """
+    docs = []
+    dicts = []
+    index_to_doc = {}
+    for i, doc in enumerate(iter_documents(getter_func, *args, **kwargs), start=1):
+        data = {"index": i}
+        data.update(doc.to_dict())
+        index_to_doc[i] = doc
+        dicts.append(data)
+        docs.append(doc)
+
+    if not docs:
+        logger.error("No items of type %s with matching criteria are stored.", doc_type)
+        return None
+
+    if len(docs) == 1 and auto_select_one_option:
+        return docs[0]
+
+    if msg:
+        print(msg)
+
+    table = make_text_table(dicts, doc_type, exclude_columns=exclude_columns)
+    if table.rows:
+        print(table)
+
+    doc = None
+    while not doc:
+        choice = input("Select an index: >>> ").strip()
+        try:
+            selected_index = int(choice)
+            doc = index_to_doc.get(selected_index)
+        except ValueError:
+            logger.error("Could not convert %s to an integer.", choice)
+        if not doc:
+            print(f"index={choice} is an invalid choice")
+
+    return doc
 
 
 def make_text_table(iterable, title, exclude_columns=None):
