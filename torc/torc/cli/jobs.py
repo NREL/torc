@@ -81,15 +81,16 @@ def add(ctx, api, cancel_on_blocking_job_failure, command, key, name):
 
 
 @click.command()
-@click.argument("key")
+@click.argument("job_keys", nargs=-1)
 @click.pass_obj
 @click.pass_context
-def delete(ctx, api, key):
-    """Delete the job in the workflow."""
+def delete(ctx, api, job_keys):
+    """Delete one or more jobs by key."""
     setup_cli_logging(ctx, __name__)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    api.delete_jobs_workflow_key(workflow_key, key)
-    logger.info("Deleted workflow=%s job=%s", workflow_key, key)
+    for key in job_keys:
+        api.delete_jobs_workflow_key(workflow_key, key)
+        logger.info("Deleted workflow=%s job=%s", workflow_key, key)
 
 
 @click.command()

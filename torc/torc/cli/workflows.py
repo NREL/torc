@@ -133,12 +133,25 @@ def create_from_commands_file(ctx, api, filename, description, key, name, user):
 
 @click.command()
 @click.argument("filename", type=click.Path(exists=True))
+@click.option(
+    "-u",
+    "--user",
+    type=str,
+    default=getpass.getuser(),
+    show_default=True,
+    help="Username",
+)
 @click.pass_obj
 @click.pass_context
-def create_from_json_file(ctx, api, filename):
+def create_from_json_file(ctx, api, filename, user):
     """Create a workflow from a JSON/JSON5 file."""
     setup_cli_logging(ctx, __name__)
-    spec = WorkflowSpecificationsModel(**sanitize_workflow(load_data(filename)))
+    data = sanitize_workflow(load_data(filename))
+    if data.get("user") != user:
+        if "user" in data:
+            logger.info("Overriding user=%s with %s", data["user"], user)
+        data["user"] = user
+    spec = WorkflowSpecificationsModel(**data)
     workflow = api.post_workflow_specifications(spec)
     logger.info("Created a workflow from %s with key=%s", filename, workflow.key)
 
@@ -182,14 +195,15 @@ def modify(ctx, api, description, name, user):
 
 
 @click.command()
+@click.argument("workflow_keys", nargs=-1)
 @click.pass_obj
 @click.pass_context
-def delete(ctx, api):
-    """Delete the workflow."""
+def delete(ctx, api, workflow_keys):
+    """Delete one or more workflows by key."""
     setup_cli_logging(ctx, __name__)
-    workflow_key = get_workflow_key_from_context(ctx, api)
-    api.delete_workflows_key(workflow_key)
-    logger.info("Deleted workflow %s", workflow_key)
+    for key in workflow_keys:
+        api.delete_workflows_key(key)
+        logger.info("Deleted workflow %s", key)
 
 
 @click.command()

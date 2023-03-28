@@ -51,15 +51,16 @@ def add(ctx, api, name, path):
 
 
 @click.command()
-@click.argument("key")
+@click.argument("file_keys", nargs=-1)
 @click.pass_obj
 @click.pass_context
-def delete(ctx, api, key):
-    """Delete the file in the workflow."""
+def delete(ctx, api, file_keys):
+    """Delete one or more files by key."""
     setup_cli_logging(ctx, __name__)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    api.delete_files_workflow_key(workflow_key, key)
-    logger.info("Deleted workflow=%s file=%s", workflow_key, key)
+    for key in file_keys:
+        api.delete_files_workflow_key(workflow_key, key)
+        logger.info("Deleted workflow=%s file=%s", workflow_key, key)
 
 
 @click.command()
