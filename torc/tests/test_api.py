@@ -90,7 +90,7 @@ def test_api_workflow_status(completed_workflow):
     assert new_status.run_id == orig + 1
     api.post_workflows_reset_status_key(db.workflow.key)
     new_status = api.get_workflows_status_key(db.workflow.key)
-    assert new_status.run_id == 0
+    assert new_status.run_id == orig + 1
 
 
 def _get_key(data: dict):

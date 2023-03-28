@@ -723,7 +723,6 @@ function resetWorkflowConfig(workflow) {
  */
 function resetWorkflowStatus(workflow) {
   const status = {
-    run_id: 0,
     is_canceled: false,
     scheduled_compute_node_ids: [],
     auto_tune_status: schemas.autoTuneStatus.validate({}).value,
@@ -735,7 +734,6 @@ function resetWorkflowStatus(workflow) {
   db.workflow_statuses.update(doc, doc);
 
   for (const job of iterWorkflowDocuments(workflow, 'jobs')) {
-    job.run_id = 0;
     job.status = JobStatus.Uninitialized;
     jobs.update(job, job);
   }

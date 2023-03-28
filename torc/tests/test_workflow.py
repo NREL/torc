@@ -215,10 +215,8 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
         assert api.get_jobs_workflow_key(db.workflow.key, job_key).run_id == 2
 
     api.post_workflows_reset_status_key(db.workflow.key)
-    assert api.get_workflows_status_key(db.workflow.key).run_id == 0
     for name in ("preprocess", "work1", "work2", "postprocess"):
         job = db.get_document("jobs", name)
-        assert job.run_id == 0
         assert job.status == "uninitialized"
 
 
