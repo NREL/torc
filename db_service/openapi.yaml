@@ -5167,7 +5167,6 @@ components:
             $ref: '#/components/schemas/workflow_specifications_schedulers_slurm_schedulers'
     files_workflow_model:
       required:
-      - name
       - path
       type: object
       properties:
@@ -5565,6 +5564,8 @@ components:
       properties:
         name:
           type: string
+        key:
+          type: string
         command:
           type: string
         user_data:
@@ -5595,8 +5596,6 @@ components:
           items:
             type: string
     resource_requirements_workflow_model:
-      required:
-      - name
       type: object
       properties:
         name:
@@ -5682,6 +5681,8 @@ components:
       properties:
         name:
           type: string
+        key:
+          type: string
         user:
           type: string
         description:
@@ -5750,8 +5751,6 @@ components:
         is_complete:
           type: boolean
     aws_schedulers_workflow_model:
-      required:
-      - name
       type: object
       properties:
         name:
@@ -5872,6 +5871,8 @@ components:
       properties:
         name:
           type: string
+        key:
+          type: string
         command:
           type: string
         user_data:
@@ -5991,7 +5992,6 @@ components:
     workflow_specifications_schedulers_slurm_schedulers:
       required:
       - account
-      - name
       - nodes
       type: object
       properties:
@@ -6223,8 +6223,6 @@ components:
         _rev:
           type: string
     workflow_key_model_3:
-      required:
-      - name
       type: object
       properties:
         name:
@@ -6237,7 +6235,6 @@ components:
           type: string
     workflow_key_model_2:
       required:
-      - name
       - path
       type: object
       properties:
@@ -6274,8 +6271,6 @@ components:
         _rev:
           type: string
     workflow_specifications_schedulers_aws_schedulers:
-      required:
-      - name
       type: object
       properties:
         name:
@@ -6376,8 +6371,6 @@ components:
         _rev:
           type: string
     workflow_key_model_7:
-      required:
-      - name
       type: object
       properties:
         name:
@@ -6437,7 +6430,6 @@ components:
     workflow_key_model_5:
       required:
       - account
-      - name
       - nodes
       type: object
       properties:
@@ -6566,7 +6558,6 @@ components:
     slurm_schedulers_workflow_model:
       required:
       - account
-      - name
       - nodes
       type: object
       properties:
@@ -6623,7 +6614,6 @@ components:
           type: string
     workflow_specifications_files:
       required:
-      - name
       - path
       type: object
       properties:
@@ -6643,6 +6633,8 @@ components:
       type: object
       properties:
         name:
+          type: string
+        key:
           type: string
         user:
           type: string
@@ -6666,8 +6658,6 @@ components:
           type: object
           properties: {}
     workflow_specifications_resource_requirements:
-      required:
-      - name
       type: object
       properties:
         name:

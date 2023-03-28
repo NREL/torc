@@ -20,6 +20,9 @@ router.post('/workflow_specifications', function(req, res) {
     user: spec.user,
     description: spec.description,
   };
+  if (spec.key != null) {
+    workflow._key = spec.key;
+  }
   try {
     const meta = documents.addWorkflow(workflow);
     Object.assign(workflow, meta);

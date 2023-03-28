@@ -67,17 +67,18 @@ function addJobSpecification(jobSpec, workflow) {
     getDocumentByUniqueFilter(rrCollection, {name: jobSpec.resource_requirements});
   }
 
-  const job = addJob(
-      {
-        name: jobSpec.name,
-        command: jobSpec.command,
-        cancel_on_blocking_job_failure: jobSpec.cancel_on_blocking_job_failure,
-        interruptible: jobSpec.interruptible,
-        run_id: 0,
-        internal: schemas.jobInternal.validate({}).value,
-      },
-      workflow,
-  );
+  const newJob = {
+    name: jobSpec.name,
+    command: jobSpec.command,
+    cancel_on_blocking_job_failure: jobSpec.cancel_on_blocking_job_failure,
+    interruptible: jobSpec.interruptible,
+    run_id: 0,
+    internal: schemas.jobInternal.validate({}).value,
+  };
+  if (jobSpec.key != null) {
+    newJob._key = jobSpec._key;
+  }
+  const job = addJob(newJob, workflow);
   for (const fileName of jobSpec.input_files) {
     const file = getDocumentByUniqueFilter(filesCollection, {name: fileName});
     const edge = {_from: job._id, _to: file._id};

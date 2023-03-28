@@ -52,7 +52,7 @@ const edge = joi.object().required().keys({
 });
 
 const file = joi.object().required().keys({
-  name: joi.string().required(),
+  name: joi.string().optional(),
   path: joi.string().required(),
   // file_hash: joi.string().optional(),
   st_mtime: joi.number().optional(),
@@ -92,6 +92,7 @@ const job = joi.object().required().keys({
 // This schema is used in the user workflow construction but is never stored.
 const jobSpecification = joi.object().required().keys({
   name: joi.string().optional(),
+  key: joi.string().optional(),
   command: joi.string().required(),
   user_data: joi.array().items(joi.object()).default([]),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
@@ -128,7 +129,7 @@ const readyJobsResourceRequirements = joi.object().required().keys({
 });
 
 const resourceRequirements = joi.object().required().keys({
-  name: joi.string().required(),
+  name: joi.string().optional(),
   num_cpus: joi.number().integer().default(1),
   num_gpus: joi.number().integer().default(0),
   num_nodes: joi.number().integer().default(1),
@@ -178,7 +179,7 @@ const workflowEstimate = joi.object().required().keys({
 
 const awsScheduler = joi.object().required().keys({
   // TODO
-  name: joi.string().required(),
+  name: joi.string().optional(),
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),
@@ -194,7 +195,7 @@ const localScheduler = joi.object().required().keys({
 });
 
 const slurmScheduler = joi.object().required().keys({
-  name: joi.string().required(),
+  name: joi.string().optional(),
   account: joi.string().required(),
   gres: joi.string().optional(),
   mem: joi.string().optional(),
@@ -216,6 +217,7 @@ const schedulers = joi.object().required().keys({
 
 const workflowSpecification = joi.object().required().keys({
   name: joi.string().optional(),
+  key: joi.string().optional(),
   user: joi.string().optional(),
   description: joi.string().optional(),
   jobs: joi.array().items(jobSpecification).default([]),
