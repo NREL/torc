@@ -10,7 +10,7 @@ def test_export(tmp_path, completed_workflow):
     """Tests the CLI commands that export data from the database."""
     db, _, output_dir = completed_workflow
     output_dir = tmp_path / "exports"
-    cmd = f"torc -u {db.url} export json {db.workflow.key} -d {output_dir} --force"
+    cmd = f"torc -k {db.workflow.key} -u {db.url} export json -d {output_dir} --force"
     subprocess.run(shlex.split(cmd), check=True)
     jobs_file = output_dir / "jobs.json"
     assert jobs_file.exists()
@@ -19,6 +19,6 @@ def test_export(tmp_path, completed_workflow):
     assert (output_dir / "edges" / "blocks.json").exists()
 
     filename = tmp_path / "db.sqlite"
-    cmd = f"torc -u {db.url} export sqlite {db.workflow.key} -F {filename} --force"
+    cmd = f"torc -k {db.workflow.key} -u {db.url} export sqlite -F {filename} --force"
     subprocess.run(shlex.split(cmd), check=True)
     assert filename.exists()

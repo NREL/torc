@@ -13,7 +13,7 @@ from swagger_client.models.workflow_specifications_model import WorkflowSpecific
 from torc.api import sanitize_workflow, iter_documents
 from torc.utils.files import load_data
 from torc.workflow_manager import WorkflowManager
-from .common import setup_cli_logging, make_text_table
+from .common import get_workflow_key_from_context, setup_cli_logging, make_text_table
 
 
 logger = logging.getLogger(__name__)
@@ -25,12 +25,12 @@ def workflows():
 
 
 @click.command()
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
 def cancel(ctx, api, workflow_key):
     """Cancel all jobs that are currently active in the workflow."""
-    setup_cli_logging(ctx, 2, __name__)
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     # TODO: find active nodes by scheduler type and send cancel commands
     logger.error("Cannot cancel workflow %s %s: not implemented yet:", api, workflow_key)
     sys.exit(1)
@@ -67,7 +67,7 @@ def cancel(ctx, api, workflow_key):
 @click.pass_context
 def create(ctx, api, description, key, name, user):
     """Create a new workflow."""
-    setup_cli_logging(ctx, 2, __name__)
+    setup_cli_logging(ctx, __name__)
     workflow = WorkflowsModel(
         description=description,
         key=key,
@@ -110,7 +110,7 @@ def create(ctx, api, description, key, name, user):
 @click.pass_context
 def create_from_commands_file(ctx, api, filename, description, key, name, user):
     """Create a workflow from a text file containing job CLI commands."""
-    setup_cli_logging(ctx, 2, __name__)
+    setup_cli_logging(ctx, __name__)
     commands = []
     with open(filename, encoding="utf-8") as f_in:
         for line in f_in:
@@ -137,7 +137,7 @@ def create_from_commands_file(ctx, api, filename, description, key, name, user):
 @click.pass_context
 def create_from_json_file(ctx, api, filename):
     """Create a workflow from a JSON/JSON5 file."""
-    setup_cli_logging(ctx, 2, __name__)
+    setup_cli_logging(ctx, __name__)
     spec = WorkflowSpecificationsModel(**sanitize_workflow(load_data(filename)))
     workflow = api.post_workflow_specifications(spec)
     logger.info("Created a workflow from %s with key=%s", filename, workflow.key)
@@ -149,13 +149,6 @@ def create_from_json_file(ctx, api, filename):
     "--description",
     type=str,
     help="Workflow description",
-)
-@click.option(
-    "-k",
-    "--workflow-key",
-    type=str,
-    required=True,
-    help="Workflow key.",
 )
 @click.option(
     "-n",
@@ -173,9 +166,10 @@ def create_from_json_file(ctx, api, filename):
 )
 @click.pass_obj
 @click.pass_context
-def modify(ctx, api, description, workflow_key, name, user):
+def modify(ctx, api, description, name, user):
     """Modify the workflow parameters."""
-    setup_cli_logging(ctx, 2, __name__)
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     workflow = api.get_workflows_key(workflow_key)
     if description is not None:
         workflow.description = description
@@ -188,12 +182,12 @@ def modify(ctx, api, description, workflow_key, name, user):
 
 
 @click.command()
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
-def delete(ctx, api, workflow_key):
+def delete(ctx, api):
     """Delete the workflow."""
-    setup_cli_logging(ctx, 2, __name__)
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     api.delete_workflows_key(workflow_key)
     logger.info("Deleted workflow %s", workflow_key)
 
@@ -203,7 +197,7 @@ def delete(ctx, api, workflow_key):
 @click.pass_context
 def delete_all(ctx, api):
     """Delete all workflows."""
-    setup_cli_logging(ctx, 2, __name__)
+    setup_cli_logging(ctx, __name__)
     for workflow in iter_documents(api.get_workflows):
         api.delete_workflows_key(workflow.key)
         logger.info("Deleted workflow %s", workflow.key)
@@ -214,7 +208,7 @@ def delete_all(ctx, api):
 @click.pass_context
 def list_workflows(ctx, api):
     """List all workflows."""
-    setup_cli_logging(ctx, 2, __name__)
+    setup_cli_logging(ctx, __name__)
     exclude = ("id", "rev")
     table = make_text_table(
         (x.to_dict() for x in iter_documents(api.get_workflows)),
@@ -228,42 +222,41 @@ def list_workflows(ctx, api):
 
 
 @click.command()
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
-def reset_status(ctx, api, workflow_key):
+def reset_status(ctx, api):
     """Reset the status of the workflow and all jobs."""
-    setup_cli_logging(ctx, 2, __name__)
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     api.post_workflows_reset_status(workflow_key)
     sys.exit(1)
 
 
 @click.command()
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
-def restart(ctx, api, workflow_key):
+def restart(ctx, api):
     """Restart the workflow defined in the database specified by the URL."""
-    setup_cli_logging(ctx, 2, __name__)
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     mgr = WorkflowManager(api, workflow_key)
     mgr.restart()
     # TODO: This could schedule nodes.
 
 
 @click.command()
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
-def start(ctx, api, workflow_key):
+def start(ctx, api):
     """Start the workflow defined in the database specified by the URL."""
-    setup_cli_logging(ctx, 2, __name__)
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     mgr = WorkflowManager(api, workflow_key)
     mgr.start()
     # TODO: This could schedule nodes.
 
 
 @click.command()
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.option(
     "--sanitize/--no-santize",
     default=True,
@@ -273,9 +266,10 @@ def start(ctx, api, workflow_key):
 )
 @click.pass_obj
 @click.pass_context
-def show(ctx, api, workflow_key, sanitize):
+def show(ctx, api, sanitize):
     """Show the workflow."""
-    setup_cli_logging(ctx, 2, __name__)
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     data = api.get_workflow_specifications_key(workflow_key).to_dict()
     if sanitize:
         sanitize_workflow(data)
@@ -283,23 +277,23 @@ def show(ctx, api, workflow_key, sanitize):
 
 
 @click.command()
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
-def show_config(ctx, api, workflow_key):
+def show_config(ctx, api):
     """Show the workflow config."""
-    setup_cli_logging(ctx, 2, __name__)
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     config = api.get_workflows_config_key(workflow_key)
     print(json.dumps(config.to_dict(), indent=2))
 
 
 @click.command()
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
-def show_status(ctx, api, workflow_key):
+def show_status(ctx, api):
     """Show the workflow status."""
-    setup_cli_logging(ctx, 2, __name__)
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     status = api.get_workflows_status_key(workflow_key)
     print(json.dumps(status.to_dict(), indent=2))
 
@@ -309,7 +303,7 @@ def show_status(ctx, api, workflow_key):
 @click.pass_context
 def example(ctx, api):
     """Show the example workflow."""
-    setup_cli_logging(ctx, 2, __name__)
+    setup_cli_logging(ctx, __name__)
     text = api.get_workflow_specifications_example().to_dict()
     print(json.dumps(text, indent=2))
 

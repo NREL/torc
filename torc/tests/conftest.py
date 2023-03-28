@@ -352,7 +352,7 @@ def create_workflow_cli(tmp_path):
     assert match
     key = match.group(1)
     yield key, URL, tmp_path
-    check_run_command(f"torc -u {URL} workflows delete -k {key}")
+    check_run_command(f"torc -k {key} -u {URL} workflows delete")
 
 
 @pytest.fixture

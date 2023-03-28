@@ -7,18 +7,17 @@ import click
 from torc.resource_monitor.reports import (
     make_compute_node_stats_text_tables,
 )
-from .common import setup_cli_logging
+from .common import get_workflow_key_from_context, setup_cli_logging
 
 
 logger = logging.getLogger(__name__)
 
 
 @click.group()
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_context
-def compute_nodes(ctx, workflow_key):  # pylint: disable=unused-argument
+def compute_nodes(ctx):  # pylint: disable=unused-argument
     """Compute node commands"""
-    setup_cli_logging(ctx, 1, __name__)
+    setup_cli_logging(ctx, __name__)
 
 
 @click.command()
@@ -34,7 +33,7 @@ def compute_nodes(ctx, workflow_key):  # pylint: disable=unused-argument
 @click.pass_context
 def list_resource_stats(ctx, api, exclude_process):
     """Show resource statistics from a workflow run."""
-    workflow_key = ctx.parent.params["workflow_key"]
+    workflow_key = get_workflow_key_from_context(ctx, api)
     for table in make_compute_node_stats_text_tables(
         api, workflow_key, exclude_process=exclude_process
     ).values():

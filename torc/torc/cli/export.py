@@ -11,7 +11,7 @@ from swagger_client import DefaultApi
 
 from torc.api import iter_documents
 from torc.utils.sql import make_table, insert_rows
-from .common import setup_cli_logging
+from .common import get_workflow_key_from_context, setup_cli_logging
 
 
 logger = logging.getLogger(__name__)
@@ -21,11 +21,10 @@ logger = logging.getLogger(__name__)
 @click.pass_context
 def export(ctx):
     """Export commands"""
-    setup_cli_logging(ctx, 1, __name__)
+    setup_cli_logging(ctx, __name__)
 
 
 @click.command(name="json")
-@click.argument("workflow_key")
 @click.option(
     "-d",
     "--directory",
@@ -43,8 +42,10 @@ def export(ctx):
     help="Overwrite directory if it exists.",
 )
 @click.pass_obj
-def export_json(api, workflow_key, directory, force):
+@click.pass_context
+def export_json(ctx, api, directory, force):
     """Export workflow database to this directory in JSON format."""
+    workflow_key = get_workflow_key_from_context(ctx, api)
     if directory.exists():
         if force:
             shutil.rmtree(directory)
@@ -79,7 +80,6 @@ def export_json(api, workflow_key, directory, force):
 
 
 @click.command()
-@click.argument("workflow_key")
 @click.option(
     "-F",
     "--filename",
@@ -97,8 +97,10 @@ def export_json(api, workflow_key, directory, force):
     help="Overwrite file if it exists.",
 )
 @click.pass_obj
-def sqlite(api, workflow_key, filename, force):
+@click.pass_context
+def sqlite(ctx, api, filename, force):
     """Export workflow database to this SQLite file."""
+    workflow_key = get_workflow_key_from_context(ctx, api)
     if filename.exists():
         if force:
             filename.unlink()

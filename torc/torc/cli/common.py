@@ -7,7 +7,7 @@ from pathlib import Path
 
 from prettytable import PrettyTable
 
-from torc.api import make_api
+from torc.api import iter_documents
 from torc.loggers import setup_logging
 
 
@@ -38,17 +38,37 @@ def check_output_directory(path: Path, force: bool):
     path.mkdir()
 
 
-def make_api_from_click_context(ctx, levels):
-    """Instantiate a Swagger API object from a click context."""
-    match levels:
-        case 1:
-            database_url = ctx.parent.params["database_url"]
-        case 2:
-            database_url = ctx.parent.parent.params["database_url"]
-        case _:
-            raise Exception(f"levels={levels} is not supported")
-
-    return make_api(database_url)
+def get_workflow_key_from_context(ctx, api):
+    """Get the workflow ID from a click context."""
+    params = ctx.find_root().params
+    if params["workflow_key"] is None:
+        if params["no_prompts"]:
+            logger.error("--workflow-key must be set")
+            sys.exit(1)
+        exclude = ("id", "rev")
+        workflows = []
+        index_to_key = {}
+        for i, workflow in enumerate(iter_documents(api.get_workflows), start=1):
+            data = {"index": i}
+            data.update(workflow.to_dict())
+            index_to_key[i] = workflow.key
+            workflows.append(data)
+        table = make_text_table(workflows, "Workflows", exclude_columns=exclude)
+        if table.rows:
+            print(table)
+        else:
+            logger.info("No workflows are stored")
+            sys.exit(1)
+        while not params["workflow_key"]:
+            key = input("Workflow key is required. Select an index from above: >>> ").strip()
+            try:
+                selected_index = int(key)
+                params["workflow_key"] = index_to_key.get(selected_index)
+            except ValueError:
+                pass
+            if not params["workflow_key"]:
+                print(f"index={key} is an invalid choice")
+    return params["workflow_key"]
 
 
 def make_text_table(iterable, title, exclude_columns=None):
@@ -94,18 +114,9 @@ def parse_filters(filters):
     return final
 
 
-def setup_cli_logging(ctx, depth, name, filename=None, mode="w"):
+def setup_cli_logging(ctx, name, filename=None, mode="w"):
     """Setup logging from a click context."""
-    match depth:
-        case 1:
-            params = ctx.parent.params
-        case 2:
-            params = ctx.parent.parent.params
-        case 3:
-            params = ctx.parent.parent.parent.params
-        case _:
-            raise Exception(f"Unsupported depth={depth}")
-
+    params = ctx.find_root().params
     return setup_logging(
         name,
         filename=filename,

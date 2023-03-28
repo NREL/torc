@@ -9,15 +9,19 @@ from torc.api import iter_documents
 from torc.resource_monitor.reports import (
     iter_job_process_stats,
 )
-from .common import setup_cli_logging, make_text_table, parse_filters
+from .common import (
+    get_workflow_key_from_context,
+    setup_cli_logging,
+    make_text_table,
+    parse_filters,
+)
 
 
 logger = logging.getLogger(__name__)
 
 
 @click.group()
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
-def jobs(workflow_key):  # pylint: disable=unused-argument
+def jobs():  # pylint: disable=unused-argument
     """Job commands"""
 
 
@@ -29,7 +33,7 @@ def jobs(workflow_key):  # pylint: disable=unused-argument
 # @click.pass_context
 # def cancel(ctx, api, workflow, key):
 #    """Cancel the job in the workflow."""
-#    setup_cli_logging(ctx, 2, __name__)
+#    setup_cli_logging(ctx, __name__)
 #    logger.info("Canceled workflow=%s job=%s", workflow, key)
 
 
@@ -64,8 +68,8 @@ def jobs(workflow_key):  # pylint: disable=unused-argument
 @click.pass_context
 def add(ctx, api, cancel_on_blocking_job_failure, command, key, name):
     """Delete the job in the workflow."""
-    setup_cli_logging(ctx, 2, __name__)
-    workflow_key = ctx.parent.params["workflow_key"]
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     job = JobsWorkflowModel(
         cancel_on_blocking_job_failure=cancel_on_blocking_job_failure,
         command=command,
@@ -82,8 +86,8 @@ def add(ctx, api, cancel_on_blocking_job_failure, command, key, name):
 @click.pass_context
 def delete(ctx, api, key):
     """Delete the job in the workflow."""
-    setup_cli_logging(ctx, 2, __name__)
-    workflow_key = ctx.parent.params["workflow_key"]
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     api.delete_jobs_workflow_key(workflow_key, key)
     logger.info("Deleted workflow=%s job=%s", workflow_key, key)
 
@@ -93,8 +97,8 @@ def delete(ctx, api, key):
 @click.pass_context
 def delete_all(ctx, api):
     """Delete all jobs in the workflow."""
-    setup_cli_logging(ctx, 2, __name__)
-    workflow_key = ctx.parent.params["workflow_key"]
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     for job in iter_documents(api.get_jobs_workflow, workflow_key):
         api.delete_jobs_workflow_key(workflow_key, job.key)
         logger.info("Deleted job %s", job.key)
@@ -120,8 +124,8 @@ def list_jobs(ctx, api, filters):
     2. List only jobs with run_id=1 and status=done.
        $ torc jobs 91388876 list jobs -f run_id=1 -f status=done
     """
-    setup_cli_logging(ctx, 2, __name__)
-    workflow_key = ctx.parent.params["workflow_key"]
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     # TODO: restore interruptible when it is supported
     exclude = ("id", "rev", "internal", "interruptible")
     filters = parse_filters(filters)
@@ -141,7 +145,7 @@ def list_jobs(ctx, api, filters):
 @click.pass_context
 def list_process_stats(ctx, api):
     """Show per-job process resource statistics from a workflow run."""
-    workflow_key = ctx.parent.params["workflow_key"]
+    workflow_key = get_workflow_key_from_context(ctx, api)
     table = make_text_table(
         iter_job_process_stats(api, workflow_key), "Job Process Resource Utilization Statistics"
     )

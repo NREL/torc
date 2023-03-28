@@ -5,15 +5,19 @@ import logging
 import click
 
 from torc.api import iter_documents
-from .common import setup_cli_logging, make_text_table, parse_filters
+from .common import (
+    get_workflow_key_from_context,
+    setup_cli_logging,
+    make_text_table,
+    parse_filters,
+)
 
 
 logger = logging.getLogger(__name__)
 
 
 @click.group()
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
-def results(workflow_key):  # pylint: disable=unused-argument
+def results():  # pylint: disable=unused-argument
     """result commands"""
 
 
@@ -37,8 +41,8 @@ def list_results(ctx, api, filters):
     2. List only results with name=result1
        $ torc results 91388876 list results -f return_code=1
     """
-    setup_cli_logging(ctx, 2, __name__)
-    workflow_key = ctx.parent.params["workflow_key"]
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     exclude = ("id", "rev")
     filters = parse_filters(filters)
     table = make_text_table(

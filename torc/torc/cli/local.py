@@ -7,7 +7,7 @@ from pathlib import Path
 import click
 
 from torc.job_runner import JobRunner
-from .common import path_callback, setup_cli_logging
+from .common import get_workflow_key_from_context, path_callback, setup_cli_logging
 
 
 logger = logging.getLogger(__name__)
@@ -19,7 +19,6 @@ def local():
 
 
 @click.command()
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.option(
     "-o",
     "--output",
@@ -29,12 +28,13 @@ def local():
 )
 @click.pass_obj
 @click.pass_context
-def run_jobs(ctx, api, workflow_key, output: Path):
+def run_jobs(ctx, api, output: Path):
     """Run workflow jobs on a local system."""
+    workflow_key = get_workflow_key_from_context(ctx, api)
     output.mkdir(exist_ok=True)
     hostname = socket.gethostname()
     log_file = output / f"worker_{hostname}.log"
-    setup_cli_logging(ctx, 2, __name__, filename=log_file, mode="a")
+    setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
     workflow = api.get_workflows_key(workflow_key)
     runner = JobRunner(api, workflow, output)
     runner.run_worker()

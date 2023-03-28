@@ -17,7 +17,12 @@ from torc.hpc.hpc_manager import HpcManager
 from torc.hpc.slurm_interface import SlurmInterface
 from torc.job_runner import JobRunner, convert_end_time_to_duration_str
 from torc.utils.run_command import get_cli_string
-from .common import make_text_table, setup_cli_logging, path_callback
+from .common import (
+    get_workflow_key_from_context,
+    make_text_table,
+    setup_cli_logging,
+    path_callback,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -78,14 +83,12 @@ def slurm():
     help="Request nodes that have at least this amount of storage scratch space.",
 )
 @click.option("-w", "--walltime", default="04:00:00", show_default=True, help="Per-node walltime.")
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
-def add_config(
-    ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, walltime, workflow_key
-):
+def add_config(ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, walltime):
     """Add a SLURM config to the database."""
-    setup_cli_logging(ctx, 3, __name__)
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     config = {
         "account": account,
         "gres": gres,
@@ -106,9 +109,10 @@ def add_config(
 @click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
-def list_configs(ctx, api, workflow_key):
+def list_configs(ctx, api):
     """Show the current SLURM configs in the database."""
-    setup_cli_logging(ctx, 3, __name__)
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     items = (x.to_dict() for x in iter_documents(api.get_slurm_schedulers_workflow, workflow_key))
     table = make_text_table(items, "SLURM Configurations", exclude_columns=["id", "rev"])
     if table.rows:
@@ -142,13 +146,13 @@ def list_configs(ctx, api, workflow_key):
     help="Output directory for compute nodes",
     callback=path_callback,
 )
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
-def schedule_nodes(ctx, api, scheduler_config_key, job_prefix, num_hpc_jobs, output, workflow_key):
+def schedule_nodes(ctx, api, scheduler_config_key, job_prefix, num_hpc_jobs, output):
     """Schedule nodes with SLURM to run jobs."""
     # TODO: if workflow isn't started, start it?
-    setup_cli_logging(ctx, 3, __name__)
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
     logger.info(get_cli_string())
     output.mkdir(exist_ok=True)
     config = api.get_slurm_schedulers_workflow_key(workflow_key, scheduler_config_key)
@@ -200,16 +204,16 @@ def schedule_nodes(ctx, api, scheduler_config_key, job_prefix, num_hpc_jobs, out
     show_default=True,
     callback=path_callback,
 )
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
-def run_jobs(ctx, api, output, workflow_key):
+def run_jobs(ctx, api, output):
     """Run workflow jobs on a SLURM compute node."""
+    workflow_key = get_workflow_key_from_context(ctx, api)
     intf = SlurmInterface()
     slurm_job_id = intf.get_current_job_id()
     hostname = socket.gethostname()
     log_file = output / f"slurm_runner_{hostname}_{slurm_job_id}.log"
-    my_logger = setup_cli_logging(ctx, 3, __name__, filename=log_file)
+    my_logger = setup_cli_logging(ctx, __name__, filename=log_file)
     my_logger.info(get_cli_string())
     my_logger.info("Run jobs on %s for workflow %s", hostname, api.api_client.configuration.host)
     scheduler = {

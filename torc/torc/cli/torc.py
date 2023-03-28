@@ -50,6 +50,22 @@ def _get_log_level_from_str(*args):
     callback=_get_log_level_from_str,
 )
 @click.option(
+    "-k",
+    "--workflow-key",
+    type=str,
+    envvar="TORC_WORKFLOW_ID",
+    help="Workflow key, required for many commands. "
+    "User will be prompted if it is missing unless --no-prompts is set.",
+)
+@click.option(
+    "-n",
+    "--no-prompts",
+    default=False,
+    is_flag=True,
+    show_default=True,
+    help="Disable all user prompts.",
+)
+@click.option(
     "--timings/--no-timings",
     default=False,
     is_flag=True,
@@ -65,7 +81,9 @@ def _get_log_level_from_str(*args):
     help="Database URL. Ex: http://localhost:8529/_db/workflows/torc-service",
 )
 @click.pass_context
-def cli(ctx, console_level, file_level, timings, database_url):  # pylint: disable=unused-argument
+def cli(
+    ctx, console_level, file_level, workflow_key, no_prompts, timings, database_url
+):  # pylint: disable=unused-argument
     """torc commands"""
     if timings:
         timer_stats_collector.enable()

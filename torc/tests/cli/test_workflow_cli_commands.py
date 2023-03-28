@@ -14,14 +14,14 @@ def test_workflow_commands(create_workflow_cli):
     """Tests workflow CLI commands."""
     key, url, output_dir = create_workflow_cli
     hostname = socket.gethostname()
-    check_run_command(f"torc -u {url} workflows start -k {key}")
-    check_run_command(f"torc -u {url} local run-jobs -k {key} -o {output_dir}")
+    check_run_command(f"torc -k {key} -u {url} workflows start")
+    check_run_command(f"torc -k {key} -u {url} local run-jobs -o {output_dir}")
     _run_and_check_output(
-        f"torc -u {url} jobs -k {key} list-process-stats",
+        f"torc -k {key} -u {url} jobs list-process-stats",
         ("max_cpu_percent", "max_memory_gb"),
     )
     _run_and_check_output(
-        f"torc -u {url} compute-nodes -k {key} list-resource-stats",
+        f"torc -k {key} -u {url} compute-nodes list-resource-stats",
         (
             hostname,
             "resource_type",
@@ -32,12 +32,12 @@ def test_workflow_commands(create_workflow_cli):
         ),
     )
     _run_and_check_output(
-        f"torc -u {url} compute-nodes -k {key} list-resource-stats -x",
+        f"torc -k {key} -u {url} compute-nodes list-resource-stats -x",
         (hostname, "resource_type", "percent", "Memory", "CPU"),
     )
-    _run_and_check_output(f"torc -u {url} results -k {key} list", ("job_key", "return_code"))
+    _run_and_check_output(f"torc -k {key} -u {url} results list", ("job_key", "return_code"))
     output = {}
-    check_run_command(f"torc -u {url} events -k {key} list", output=output)
+    check_run_command(f"torc -k {key} -u {url} events list", output=output)
     data = json.loads(output["stdout"])
     assert isinstance(data, list) and data
 
@@ -89,26 +89,26 @@ def test_job_commands(create_workflow_cli):
     """Tests job CLI commands."""
     key, url, _ = create_workflow_cli
     add_key_regex = re.compile(r"Added job with key=(\d+)\s")
-    _run_and_check_jobs_list_output(f"torc -u {url} jobs -k {key} list", 3)
+    _run_and_check_jobs_list_output(f"torc -k {key} -u {url} jobs list", 3)
 
     output = {}
     check_run_command(
-        f"torc -u {url} jobs -k {key} add -c 'bash my_script.sh' -n new_job",
+        f"torc -k {key} -u {url} jobs add -c 'bash my_script.sh' -n new_job",
         output=output,
     )
     match = add_key_regex.search(output["stderr"])
     assert match
     job_key = match.group(1)
 
-    _run_and_check_jobs_list_output(f"torc -u {url} jobs -k {key} list", 4)
-    check_run_command(f"torc -u {url} jobs -k {key} delete {job_key}")
-    _run_and_check_jobs_list_output(f"torc -u {url} jobs -k {key} list", 3)
+    _run_and_check_jobs_list_output(f"torc -k {key} -u {url} jobs list", 4)
+    check_run_command(f"torc -k {key} -u {url} jobs delete {job_key}")
+    _run_and_check_jobs_list_output(f"torc -k {key} -u {url} jobs list", 3)
     _run_and_check_jobs_list_output(
-        f"torc -u {url} jobs -k {key} list -f name=medium -f run_id=0", 1
+        f"torc -k {key} -u {url} jobs list -f name=medium -f run_id=0", 1
     )
-    check_run_command(f"torc -u {url} jobs -k {key} delete-all")
+    check_run_command(f"torc -k {key} -u {url} jobs delete-all")
     _run_and_check_jobs_list_output(
-        f"torc -u {url} jobs -k {key} list -f name=medium -f run_id=0", None
+        f"torc -k {key} -u {url} jobs list -f name=medium -f run_id=0", None
     )
 
 
