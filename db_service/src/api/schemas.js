@@ -13,6 +13,7 @@ const workerResources = joi.object().required().keys({
 const computeNode = joi.object().required().keys({
   hostname: joi.string().required(),
   start_time: joi.string().required(),
+  duration_seconds: joi.number().optional(),
   is_active: joi.boolean().optional(),
   resources: workerResources,
   scheduler: joi.object().default({}),
@@ -159,6 +160,7 @@ const computeNodeResourceStatConfig = joi.object().keys({
   include_child_processes: joi.boolean().default(true),
   recurse_child_processes: joi.boolean().default(false),
   monitor_type: joi.string().default('aggregation'),
+  make_plots: joi.boolean().default(true),
   interval: joi.number().default(10),
 });
 

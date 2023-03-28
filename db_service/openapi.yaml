@@ -5784,6 +5784,8 @@ components:
           type: string
         start_time:
           type: string
+        duration_seconds:
+          type: number
         is_active:
           type: boolean
         resources:
@@ -5921,6 +5923,8 @@ components:
           type: string
         start_time:
           type: string
+        duration_seconds:
+          type: number
         is_active:
           type: boolean
         resources:
@@ -6140,6 +6144,8 @@ components:
           type: string
         start_time:
           type: string
+        duration_seconds:
+          type: number
         is_active:
           type: boolean
         resources:
@@ -6505,6 +6511,9 @@ components:
         monitor_type:
           type: string
           default: aggregation
+        make_plots:
+          type: boolean
+          default: true
         interval:
           type: number
     scheduled_compute_nodes_workflow_model:
