@@ -15,13 +15,20 @@ from pydantic import BaseModel  # pylint: disable=no-name-in-module
 from pydantic.json import timedelta_isoformat  # pylint: disable=no-name-in-module
 from swagger_client import DefaultApi
 from swagger_client.models.compute_nodes_workflow_model import ComputeNodesWorkflowModel
-from swagger_client.models.compute_node_stats_workflow_model import ComputeNodeStatsWorkflowModel
-from swagger_client.models.compute_node_statsworkflow_stats import ComputeNodeStatsworkflowStats
+from swagger_client.models.compute_node_stats_workflow_model import (
+    ComputeNodeStatsWorkflowModel,
+)
+from swagger_client.models.compute_node_statsworkflow_stats import (
+    ComputeNodeStatsworkflowStats,
+)
 from swagger_client.models.workflow_name_model import WorkflowNameModel
-from swagger_client.models.job_process_stats_workflow_model import JobProcessStatsWorkflowModel
+from swagger_client.models.job_process_stats_workflow_model import (
+    JobProcessStatsWorkflowModel,
+)
 from swagger_client.models.prepare_jobs_for_submission_key_model import (
     PrepareJobsForSubmissionKeyModel,
 )
+from swagger_client.models.workflows_model import WorkflowsModel
 
 from torc.api import send_api_command
 from torc.common import JOB_STDIO_DIR, STATS_DIR
@@ -47,7 +54,7 @@ class JobRunner:
     def __init__(
         self,
         api: DefaultApi,
-        workflow,  # TODO DT: type
+        workflow: WorkflowsModel,
         output_dir: Path,
         job_completion_poll_interval=10,
         database_poll_interval=600,
@@ -87,7 +94,7 @@ class JobRunner:
         self._resources = PrepareJobsForSubmissionKeyModel(**self._orig_resources.to_dict())
         self._num_jobs = 0
         self._last_db_poll_time = 0
-        self._compute_node_db_id = None
+        self._compute_node = None
         self._stats = ComputeNodeResourceStatConfig(
             **(
                 api.get_workflows_config_key(
@@ -123,58 +130,18 @@ class JobRunner:
             Scheduler configuration parameters. Used only for logs and events.
 
         """
+        self._create_compute_node(scheduler)
         if self._stats.is_enabled():
             self._start_resource_monitor()
 
         try:
-            self._run_worker(scheduler)
+            self._run_until_complete()
         finally:
+            self._complete_compute_node()
             if self._stats.process:
                 self._stop_resource_monitor()
 
-    def _run_worker(self, scheduler):
-        start = time.time()
-        event = {
-            "category": "worker",
-            "type": "start",
-            "node_name": self._hostname,
-            "message": f"Worker started on {self._hostname}",
-        }
-        event.update(**self._orig_resources.to_dict())
-        send_api_command(self._api.post_events_workflow, event, self._workflow.key)
-        compute_node = ComputeNodesWorkflowModel(
-            hostname=self._hostname,
-            start_time=str(datetime.now()),
-            resources=self._orig_resources,
-            is_active=True,
-            scheduler=scheduler or {},
-        )
-        compute_node = send_api_command(
-            self._api.post_compute_nodes_workflow, compute_node, self._workflow.key
-        )
-        self._compute_node_db_id = compute_node._id  # pylint: disable=protected-access
-        self.wait()
-        compute_node.is_active = False
-        send_api_command(
-            self._api.put_compute_nodes_workflow_key,
-            compute_node,
-            self._workflow.key,
-            compute_node.key,
-        )  # ,  # pylint: disable=protected-access)
-        send_api_command(
-            self._api.post_events_workflow,
-            {
-                "category": "worker",
-                "type": "complete",
-                "num_jobs": self._num_jobs,
-                "duration_seconds": time.time() - start,
-                "message": f"Worker completed on {self._hostname}",
-            },
-            self._workflow.key,
-        )
-
-    def wait(self):
-        """Return once all jobs have completed."""
+    def _run_until_complete(self):
         timeout = _get_timeout(self._resources.time_limit)
         start_time = time.time()
 
@@ -223,6 +190,31 @@ class JobRunner:
         self._pids.clear()
         self._handle_completed_process_stats()
 
+    def _create_compute_node(self, scheduler):
+        compute_node = ComputeNodesWorkflowModel(
+            hostname=self._hostname,
+            start_time=str(datetime.now()),
+            resources=self._orig_resources,
+            is_active=True,
+            scheduler=scheduler or {},
+        )
+        self._compute_node = send_api_command(
+            self._api.post_compute_nodes_workflow, compute_node, self._workflow.key
+        )
+
+    def _complete_compute_node(self):
+        self._compute_node.is_active = False
+        self._compute_node.duration_seconds = (
+            time.time()
+            - datetime.strptime(self._compute_node.start_time, "%Y-%m-%d %H:%M:%S.%f").timestamp()
+        )
+        send_api_command(
+            self._api.put_compute_nodes_workflow_key,
+            self._compute_node,
+            self._workflow.key,
+            self._compute_node.key,
+        )
+
     def _cancel_outstanding_jobs(self):
         return self._process_completions(cancel=True)
 
@@ -242,7 +234,9 @@ class JobRunner:
 
     def _decrement_resources(self, job):
         job_resources = send_api_command(
-            self._api.get_jobs_resource_requirements_workflow_key, self._workflow.key, job.key
+            self._api.get_jobs_resource_requirements_workflow_key,
+            self._workflow.key,
+            job.key,
         )
         job_memory_gb = get_memory_gb(job_resources.memory)
         self._resources.num_cpus -= job_resources.num_cpus
@@ -254,7 +248,9 @@ class JobRunner:
 
     def _increment_resources(self, job):
         job_resources = send_api_command(
-            self._api.get_jobs_resource_requirements_workflow_key, self._workflow.key, job.key
+            self._api.get_jobs_resource_requirements_workflow_key,
+            self._workflow.key,
+            job.key,
         )
         job_memory_gb = get_memory_gb(job_resources.memory)
         self._resources.num_cpus += job_resources.num_cpus
@@ -354,7 +350,7 @@ class JobRunner:
         send_api_command(
             self._api.post_edges_workflow_name,
             WorkflowNameModel(
-                _from=self._compute_node_db_id,
+                _from=self._compute_node.id,
                 to=job.db_job._id,  # pylint: disable=protected-access
             ),
             self._workflow.key,
@@ -384,7 +380,7 @@ class JobRunner:
         if self._stats.monitor_type == "aggregation":
             args = (child_conn, self._stats, pids, None)
         elif self._stats.monitor_type == "periodic":
-            db_file = self._stats_dir / f"{self._hostname}__{int(time.time())}.sqlite"
+            db_file = self._stats_dir / f"compute_node_{self._compute_node.key}.sqlite"
             args = (child_conn, self._stats, pids, db_file)
         else:
             raise Exception(f"Unsupported monitor_type={self._stats.monitor_type}")
@@ -460,7 +456,7 @@ class JobRunner:
         send_api_command(
             self._api.post_edges_workflow_name,
             WorkflowNameModel(
-                _from=self._compute_node_db_id,
+                _from=self._compute_node.id,
                 to=res._id,  # pylint: disable=protected-access
             ),
             self._workflow.key,
@@ -500,7 +496,9 @@ class JobRunner:
 
     def _update_file_info(self, job):
         for file in send_api_command(
-            self._api.get_files_produced_by_job_workflow_key, self._workflow.key, job.key
+            self._api.get_files_produced_by_job_workflow_key,
+            self._workflow.key,
+            job.key,
         ).items:
             path = make_path(file.path)
             # file.file_hash = compute_file_hash(path)

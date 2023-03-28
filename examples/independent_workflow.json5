@@ -76,6 +76,7 @@
       "process": true,
       "include_child_processes": true,
       "recurse_child_processes": false,
+      "monitor_type": "periodic",
       "interval": 1
     }
   }

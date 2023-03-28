@@ -74,7 +74,7 @@ def test_run_workflow(diamond_workflow):
 
     events = db.list_documents("events")
     # start for workflow, start and stop for worker, start and stop for each job
-    assert len(events) == 1 + 2 * 4 + 2
+    assert len(events) == 1 + 2 * 4
 
     timer_stats_collector.log_stats()
     stats_file = output_dir / "stats.json"

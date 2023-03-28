@@ -64,6 +64,8 @@ def run_monitor_async(conn, config: ComputeNodeResourceStatConfig, pids, path=No
                     results = agg.finalize()
                     if store is not None:
                         store.flush()
+                        if config.make_plots:
+                            store.plot_to_file()
                     break
                 case _:
                     raise Exception(f"Received unknown command: {cmd}")
@@ -115,6 +117,7 @@ def run_monitor_sync(config: ComputeNodeResourceStatConfig, pids, duration_secon
     results = agg.finalize()
     if store is not None:
         store.flush()
+        store.plot_to_file()
     collector.clear_cache()
     return results
 

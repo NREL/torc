@@ -48,7 +48,18 @@ setup(
         "Programming Language :: Python :: 3.10",
     ],
     test_suite="tests",
-    install_requires=["click", "json5", "polars", "psutil", "prettytable", "pydantic", "s3path"],
+    install_requires=[
+        "click",
+        "connectorx",
+        "json5",
+        "plotly",
+        "polars",
+        "psutil",
+        "prettytable",
+        "pyarrow",
+        "pydantic",
+        "s3path",
+    ],
     extras_require={
         "dev": [
             "black",

@@ -1,7 +1,13 @@
 """Stores time-series resource utilization stats."""
 
 import logging
+import socket
+from datetime import datetime
 from pathlib import Path
+
+import plotly.graph_objects as go
+import polars as pl
+from plotly.subplots import make_subplots
 
 from torc.resource_monitor.models import ResourceType, ComputeNodeResourceStatConfig
 from torc.utils.sql import insert_rows, make_table
@@ -61,7 +67,7 @@ class ResourceStatStore:
         make_table(
             self._db_file,
             ResourceType.PROCESS.value.lower(),
-            {"rss": 0.0, "cpu_percent": 0.0, "job_key": ""},
+            {"rss": 0.0, "cpu_percent": 0.0, "job_key": "", "timestamp": ""},
         )
         self._bufs[ResourceType.PROCESS] = []
 
@@ -74,6 +80,7 @@ class ResourceStatStore:
                 name = name.replace(char, "_")
             converted[name] = val
 
+        converted["timestamp"] = ""
         return converted
 
     def _add_stats(self, resource_type, values):
@@ -92,19 +99,68 @@ class ResourceStatStore:
         for resource_type in ResourceType:
             self._flush_resource_type(resource_type)
 
+    def plot_to_file(self):
+        """Plots the stats to an HTML file."""
+        base_name = self._db_file.stem
+        for resource_type in ResourceType:
+            rtype = resource_type.value.lower()
+            query = f"select * from {rtype}"
+            df = pl.read_sql(query, f"sqlite://{self._db_file}").with_columns(
+                pl.col("timestamp").str.strptime(pl.Datetime, fmt="%Y-%m-%d %H:%M:%S.%f")
+            )
+            if len(df) == 0:
+                continue
+            if resource_type != ResourceType.PROCESS:
+                df = df.select([pl.col(pl.Float64), pl.col(pl.Int64), pl.col("timestamp")])
+            if resource_type == ResourceType.PROCESS:
+                fig = make_subplots(specs=[[{"secondary_y": True}]])
+                for key, _df in df.partition_by(
+                    groups="job_key", maintain_order=True, as_dict=True
+                ).items():
+                    fig.add_trace(
+                        go.Scatter(
+                            x=_df["timestamp"],
+                            y=_df["cpu_percent"],
+                            # Consider looking up the job name.
+                            name=f"{key} cpu_percent",
+                        )
+                    )
+                    fig.add_trace(
+                        go.Scatter(x=_df["timestamp"], y=_df["rss"], name=f"{key} rss"),
+                        secondary_y=True,
+                    )
+                fig.update_yaxes(title_text="CPU Percent", secondary_y=False)
+                fig.update_yaxes(title_text="RSS (Memory)", secondary_y=True)
+            else:
+                fig = go.Figure()
+                for column in set(df.columns) - {"timestamp"}:
+                    fig.add_trace(go.Scatter(x=df["timestamp"], y=df[column], name=column))
+
+            fig.update_xaxes(title_text="Time")
+            fig.update_layout(title=f"{socket.gethostname()} {resource_type.value} Utilization")
+            filename = self._db_file.parent / f"{base_name}__{rtype}.html"
+            fig.write_html(str(filename))
+            logger.info("Generated plot in %s", filename)
+
     def record_stats(self, stats):
         """Records resource stats information for the current interval."""
+        timestamp = str(datetime.now())
         if self._config.cpu:
+            stats[ResourceType.CPU]["timestamp"] = timestamp
             self._add_stats(ResourceType.CPU, tuple(stats[ResourceType.CPU].values()))
         if self._config.disk:
+            stats[ResourceType.DISK]["timestamp"] = timestamp
             self._add_stats(ResourceType.DISK, tuple(stats[ResourceType.DISK].values()))
         if self._config.memory:
+            stats[ResourceType.MEMORY]["timestamp"] = timestamp
             self._add_stats(ResourceType.MEMORY, tuple(stats[ResourceType.MEMORY].values()))
         if self._config.network:
+            stats[ResourceType.NETWORK]["timestamp"] = timestamp
             self._add_stats(ResourceType.NETWORK, tuple(stats[ResourceType.NETWORK].values()))
         if self._config.process:
             for name, _stats in stats[ResourceType.PROCESS].items():
                 _stats["job_key"] = name
+                _stats["timestamp"] = timestamp
                 self._add_stats(ResourceType.PROCESS, tuple(_stats.values()))
 
     @property

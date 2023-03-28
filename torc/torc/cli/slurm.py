@@ -122,7 +122,7 @@ def list_configs(ctx, api, workflow_key):
 @click.option(
     "-j",
     "--job-prefix",
-    default="job",
+    default="node",
     type=str,
     show_default=True,
     help="Prefix for HPC job names",

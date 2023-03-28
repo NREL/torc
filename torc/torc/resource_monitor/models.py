@@ -79,7 +79,12 @@ class ComputeNodeResourceStatConfig(TorcBaseModel):
         description="'aggregation' or 'periodic'. Keep aggregated stats in memory or record time-series data on an interval.",
         default=False,
     )
-    interval: int = Field(description="Interval in seconds on which to collect stats", default=10)
+    make_plots: bool = Field(
+        description="Make time-series plots if monitor_type is periodic.", default=True
+    )
+    interval: float = Field(
+        description="Interval in seconds on which to collect stats", default=10
+    )
 
     @classmethod
     def all_enabled(cls):

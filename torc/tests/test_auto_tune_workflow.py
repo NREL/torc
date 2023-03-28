@@ -110,6 +110,13 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
             assert job.status == "uninitialized"
 
     mgr.restart()
+
+    for job in api.get_jobs_workflow(db.workflow.key).items:
+        if job.key in auto_tune_job_keys:
+            assert job.status == "done"
+        else:
+            assert job.status == "ready"
+
     runner = JobRunner(
         api,
         db.workflow,
@@ -128,14 +135,19 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     for df in dfs.values():
         assert isinstance(df, pl.DataFrame)
 
+    stats_dir = output_dir / STATS_DIR
+    sqlite_files = [x for x in stats_dir.iterdir() if x.suffix == ".sqlite"]
+    html_files = [x for x in stats_dir.iterdir() if x.suffix == ".html"]
     if monitor_type == "periodic":
-        stats_dir = output_dir / STATS_DIR
-        files = [x for x in stats_dir.iterdir() if x.suffix == ".sqlite"]
-        assert files
-        for file in files:
+        assert sqlite_files
+        for file in sqlite_files:
             for table in ("cpu", "memory", "process"):
                 df = pl.read_sql(f"select * from {table}", f"sqlite://{file}")
                 assert len(df) > 0
             for table in ("disk", "network"):
                 df = pl.read_sql(f"select * from {table}", f"sqlite://{file}")
                 assert len(df) == 0
+        assert len(html_files) == 3 * 2  # 2 JobRunner instances, cpu + memory + process
+    else:
+        assert not sqlite_files
+        assert not html_files

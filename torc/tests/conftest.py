@@ -328,6 +328,7 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
                 process=True,
                 interval=0.1,
                 monitor_type=monitor_type,
+                make_plots=True,
             )
         ),
     )
