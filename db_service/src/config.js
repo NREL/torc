@@ -131,6 +131,15 @@ function getWorkflowCollection(workflow, baseName) {
 /**
  *
  * @param {Object} workflow
+ * @return {Object}
+ */
+function getWorkflowGraph(workflow) {
+  return graphModule._graph(getWorkflowGraphName(workflow));
+}
+
+/**
+ *
+ * @param {Object} workflow
  * @return {string}
  */
 function getWorkflowGraphName(workflow) {
@@ -144,5 +153,6 @@ module.exports = {
   createWorkflowCollections,
   getWorkflowCollection,
   getWorkflowCollectionName,
+  getWorkflowGraph,
   getWorkflowGraphName,
 };

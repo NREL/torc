@@ -139,13 +139,15 @@ router.delete('/{{collection}}/:workflow/:key', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(workflowKey, res);
   const doc = documents.getWorkflowDocument(workflow, '{{collection}}', key, res);
+  const collectionName = config.getWorkflowCollectionName(workflow, '{{collection}}');
+  const graph = config.getWorkflowGraph(workflow);
   try {
-    {{#custom_delete}}
-    {{{custom_delete}}}(doc);
-    {{/custom_delete}}
-    {{^custom_delete}}
-    db._remove(`${doc._id}`);
-    {{/custom_delete}}
+    if (config.DOCUMENT_COLLECTION_NAMES.includes('{{collection}}')) {
+      db._remove(`doc._id`);
+    } else {
+      // This removes all connected edges.
+      graph[collectionName].remove(`${doc._key}`);
+    }
     res.send(doc);
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Delete {{collection}} document with key=${key}`);
@@ -161,9 +163,17 @@ router.delete('/{{collection}}/:workflow/:key', function(req, res) {
 router.delete('/{{collection}}/:workflow', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const workflow = documents.getWorkflow(workflowKey, res);
+  const graph = config.getWorkflowGraph(workflow);
   const collectionName = config.getWorkflowCollectionName(workflow, '{{collection}}');
   try {
-    db._truncate(collectionName);
+    if (config.DOCUMENT_COLLECTION_NAMES.includes('{{collection}}')) {
+      db._truncate(collectionName);
+    } else {
+      for (const doc of graph[collectionName].all()) {
+        // This removes all connected edges.
+        graph[collectionName].remove(`${doc._key}`);
+      }
+    }
     res.send({message: 'Deleted all documents in the "{{collection}}" collection for workflow ${workflowKey}'});
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Delete all ${collectionName} documents`);
