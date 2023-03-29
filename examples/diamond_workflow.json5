@@ -1,141 +1,151 @@
 {
-  "jobs": [
+  jobs: [
     {
-      "name": "preprocess",
-      "command": "python tests/scripts/preprocess.py -i output_dir/inputs.json -o output_dir/f1.json",
-      "user_data": [],
-      "cancel_on_blocking_job_failure": true,
-      "interruptible": false,
-      "scheduler": "",
-      "resource_requirements": "small",
-      "input_files": [
+      name: "preprocess",
+      command: "python tests/scripts/preprocess.py -i output_dir/inputs.json -o output_dir/f1.json",
+      user_data: [],
+      cancel_on_blocking_job_failure: true,
+      interruptible: false,
+      scheduler: "",
+      resource_requirements: "small",
+      input_files: [
         "inputs"
       ],
-      "output_files": [
+      output_files: [
         "file1"
       ],
-      "blocked_by": []
+      blocked_by: []
     },
     {
-      "name": "work1",
-      "command": "python tests/scripts/work.py -i output_dir/f1.json -o output_dir/f2.json",
-      "user_data": [
+      name: "work1",
+      command: "python tests/scripts/work.py -i output_dir/f1.json -o output_dir/f2.json",
+      user_data: [
         {
-          "key1": "val1"
+          key1: "val1"
         }
       ],
-      "cancel_on_blocking_job_failure": true,
-      "interruptible": false,
-      "scheduler": "",
-      "resource_requirements": "medium",
-      "input_files": [
+      cancel_on_blocking_job_failure: true,
+      interruptible: false,
+      scheduler: "",
+      resource_requirements: "medium",
+      input_files: [
         "file1"
       ],
-      "output_files": [
+      output_files: [
         "file2"
       ],
-      "blocked_by": [
+      blocked_by: [
         "preprocess"
       ]
     },
     {
-      "name": "work2",
-      "command": "python tests/scripts/work.py -i output_dir/f1.json -o output_dir/f3.json",
-      "user_data": [],
-      "cancel_on_blocking_job_failure": true,
-      "interruptible": false,
-      "scheduler": "",
-      "resource_requirements": "large",
-      "input_files": [
+      name: "work2",
+      command: "python tests/scripts/work.py -i output_dir/f1.json -o output_dir/f3.json",
+      user_data: [],
+      cancel_on_blocking_job_failure: true,
+      interruptible: false,
+      scheduler: "",
+      resource_requirements: "large",
+      input_files: [
         "file1"
       ],
-      "output_files": [
+      output_files: [
         "file3"
       ],
-      "blocked_by": [
+      blocked_by: [
         "preprocess"
       ]
     },
     {
-      "name": "postprocess",
-      "command": "python tests/scripts/postprocess.py -i output_dir/f2.json -i output_dir/f3.json -o output_dir/f4.json",
-      "user_data": [],
-      "cancel_on_blocking_job_failure": true,
-      "interruptible": false,
-      "scheduler": "",
-      "resource_requirements": "small",
-      "input_files": [
+      name: "postprocess",
+      command: "python tests/scripts/postprocess.py -i output_dir/f2.json -i output_dir/f3.json -o output_dir/f4.json",
+      user_data: [],
+      cancel_on_blocking_job_failure: true,
+      interruptible: false,
+      scheduler: "",
+      resource_requirements: "small",
+      input_files: [
         "file3",
         "file2"
       ],
-      "output_files": [
+      output_files: [
         "file4"
       ],
-      "blocked_by": [
+      blocked_by: [
         "work2",
         "work1"
       ]
     }
   ],
-  "files": [
+  files: [
     {
-      "name": "inputs",
-      "path": "output_dir/inputs.json"
+      name: "inputs",
+      path: "output_dir/inputs.json"
     },
     {
-      "name": "file1",
-      "path": "output_dir/f1.json"
+      name: "file1",
+      path: "output_dir/f1.json"
     },
     {
-      "name": "file2",
-      "path": "output_dir/f2.json"
+      name: "file2",
+      path: "output_dir/f2.json"
     },
     {
-      "name": "file3",
-      "path": "output_dir/f3.json"
+      name: "file3",
+      path: "output_dir/f3.json"
     },
     {
-      "name": "file4",
-      "path": "output_dir/f4.json"
+      name: "file4",
+      path: "output_dir/f4.json"
     }
   ],
-  "resource_requirements": [
+  resource_requirements: [
     {
-      "name": "small",
-      "num_cpus": 1.0,
-      "num_gpus": 0.0,
-      "num_nodes": 1.0,
-      "memory": "1g",
-      "runtime": "P0DT1H"
+      name: "small",
+      num_cpus: 1.0,
+      num_gpus: 0.0,
+      num_nodes: 1.0,
+      memory: "1g",
+      runtime: "P0DT1H"
     },
     {
-      "name": "medium",
-      "num_cpus": 4.0,
-      "num_gpus": 0.0,
-      "num_nodes": 1.0,
-      "memory": "8g",
-      "runtime": "P0DT8H"
+      name: "medium",
+      num_cpus: 4.0,
+      num_gpus: 0.0,
+      num_nodes: 1.0,
+      memory: "8g",
+      runtime: "P0DT8H"
     },
     {
-      "name": "large",
-      "num_cpus": 8.0,
-      "num_gpus": 0.0,
-      "num_nodes": 1.0,
-      "memory": "16g",
-      "runtime": "P0DT12H"
+      name: "large",
+      num_cpus: 8.0,
+      num_gpus: 0.0,
+      num_nodes: 1.0,
+      memory: "16g",
+      runtime: "P0DT12H"
     }
   ],
-  "schedulers": {},
-  "config": {
-    "compute_node_resource_stats": {
-      "cpu": true,
-      "disk": false,
-      "memory": true,
-      "network": false,
-      "process": true,
-      "include_child_processes": true,
-      "recurse_child_processes": false,
-      "interval": 1
+  schedulers: {
+    slurm_schedulers: [
+      {
+        name: "short",
+        account: "my_account",
+        nodes: 1,
+        walltime: "04:00:00",
+      }
+    ],
+  },
+  config: {
+    compute_node_resource_stats: {
+      cpu: true,
+      disk: false,
+      memory: true,
+      network: false,
+      process: true,
+      include_child_processes: true,
+      recurse_child_processes: false,
+      monitor_type: "aggregation",
+      interval: 1
     }
   }
 }

@@ -1,83 +1,93 @@
 {
   name: "independent_workflow",
   description: "Workflow with independent jobs",
-  "jobs": [
+  jobs: [
     {
-      "name": "small",
-      "command": "python tests/scripts/resource_consumption.py -i 1 -c small",
-      "user_data": [],
-      "cancel_on_blocking_job_failure": true,
-      "interruptible": false,
-      "scheduler": "",
-      "resource_requirements": "small",
-      "input_files": [],
-      "output_files": [],
-      "blocked_by": []
+      name: "small",
+      command: "python tests/scripts/resource_consumption.py -i 1 -c small",
+      user_data: [],
+      cancel_on_blocking_job_failure: true,
+      interruptible: false,
+      scheduler: "",
+      resource_requirements: "small",
+      input_files: [],
+      output_files: [],
+      blocked_by: []
     },
     {
-      "name": "medium",
-      "command": "python tests/scripts/resource_consumption.py -i 1 -c medium",
-      "user_data": [],
-      "cancel_on_blocking_job_failure": true,
-      "interruptible": false,
-      "scheduler": "",
-      "resource_requirements": "medium",
-      "input_files": [],
-      "output_files": [],
-      "blocked_by": []
+      name: "medium",
+      command: "python tests/scripts/resource_consumption.py -i 1 -c medium",
+      user_data: [],
+      cancel_on_blocking_job_failure: true,
+      interruptible: false,
+      scheduler: "",
+      resource_requirements: "medium",
+      input_files: [],
+      output_files: [],
+      blocked_by: []
     },
     {
-      "name": "large",
-      "command": "python tests/scripts/resource_consumption.py -i 1 -c large",
-      "user_data": [],
-      "cancel_on_blocking_job_failure": true,
-      "interruptible": false,
-      "scheduler": "",
-      "resource_requirements": "large",
-      "input_files": [],
-      "output_files": [],
-      "blocked_by": []
+      name: "large",
+      command: "python tests/scripts/resource_consumption.py -i 1 -c large",
+      user_data: [],
+      cancel_on_blocking_job_failure: true,
+      interruptible: false,
+      scheduler: "",
+      resource_requirements: "large",
+      input_files: [],
+      output_files: [],
+      blocked_by: []
     }
   ],
-  "files": [],
-  "resource_requirements": [
+  files: [],
+  resource_requirements: [
     {
-      "name": "small",
-      "num_cpus": 1.0,
-      "num_gpus": 0.0,
-      "num_nodes": 1.0,
-      "memory": "1g",
-      "runtime": "P0DT1H"
+      name: "small",
+      num_cpus: 1.0,
+      num_gpus: 0.0,
+      num_nodes: 1.0,
+      memory: "1g",
+      runtime: "P0DT1H"
     },
     {
-      "name": "medium",
-      "num_cpus": 4.0,
-      "num_gpus": 0.0,
-      "num_nodes": 1.0,
-      "memory": "8g",
-      "runtime": "P0DT8H"
+      name: "medium",
+      num_cpus: 4.0,
+      num_gpus: 0.0,
+      num_nodes: 1.0,
+      memory: "8g",
+      runtime: "P0DT8H"
     },
     {
-      "name": "large",
-      "num_cpus": 8.0,
-      "num_gpus": 0.0,
-      "num_nodes": 1.0,
-      "memory": "16g",
-      "runtime": "P0DT12H"
+      name: "large",
+      num_cpus: 8.0,
+      num_gpus: 0.0,
+      num_nodes: 1.0,
+      memory: "16g",
+      runtime: "P0DT12H"
     }
   ],
-  "schedulers": {},
-  "config": {
-    "compute_node_resource_stats": {
-      "cpu": true,
-      "disk": false,
-      "memory": true,
-      "network": false,
-      "process": true,
-      "include_child_processes": true,
-      "recurse_child_processes": false,
-      "monitor_type": "periodic",
-      "interval": 1
+  "schedulers": {
+    "slurm_schedulers": [
+      {
+        "name": "short",
+        "account": "my_account",
+        "nodes": 1,
+        "walltime": "04:00:00",
+      }
+    ],
+  },
+  config: {
+    compute_node_resource_stats: {
+      cpu: true,
+      disk: false,
+      memory: true,
+      network: false,
+      process: true,
+      include_child_processes: true,
+      recurse_child_processes: false,
+      monitor_type: "periodic",
+      make_plots: true,
+      interval: 1
     }
   }
 }

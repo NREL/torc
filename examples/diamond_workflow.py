@@ -1,7 +1,6 @@
 """Example diamond workflow"""
 import json
 import logging
-import shutil
 from pathlib import Path
 
 from swagger_client.models.files_workflow_model import FilesWorkflowModel
@@ -22,17 +21,16 @@ WORK = Path("tests") / "worker" / "scripts" / "work.py"
 logger = logging.getLogger(__name__)
 
 
-def create_workflow(api, output_dir: Path):
+def create_workflow(api):
     """Creates a workflow with implicit job dependencies declared through files."""
-    output_dir.mkdir(exist_ok=True)
-    inputs_file = output_dir / "inputs.json"
-    inputs_file.write_text(json.dumps({"val": 5}))
+    inputs_file = Path("inputs.json")
+    inputs_file.write_text(json.dumps({"val": 5}), encoding="utf-8")
 
     inputs = FilesWorkflowModel(name="inputs", path=str(inputs_file))
-    f1 = FilesWorkflowModel(name="file1", path=str(output_dir / "f1.json"))
-    f2 = FilesWorkflowModel(name="file2", path=str(output_dir / "f2.json"))
-    f3 = FilesWorkflowModel(name="file3", path=str(output_dir / "f3.json"))
-    f4 = FilesWorkflowModel(name="file4", path=str(output_dir / "f4.json"))
+    f1 = FilesWorkflowModel(name="file1", path="f1.json")
+    f2 = FilesWorkflowModel(name="file2", path="f2.json")
+    f3 = FilesWorkflowModel(name="file3", path="f3.json")
+    f4 = FilesWorkflowModel(name="file4", path="f4.json")
 
     small = ResourceRequirementsWorkflowModel(
         name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
@@ -86,12 +84,8 @@ def create_workflow(api, output_dir: Path):
 
 def main():
     """Entry point"""
-    output_dir = Path("demo_diamond_workflow_output")
-    if output_dir.exists():
-        shutil.rmtree(output_dir)
-    output_dir.mkdir()
-    api = make_api("http://localhost:8529/_db/workflows/wms-service")
-    create_workflow(api, output_dir)
+    api = make_api("http://localhost:8529/_db/workflows/torc-service")
+    create_workflow(api)
 
 
 if __name__ == "__main__":
