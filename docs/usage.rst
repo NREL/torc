@@ -2,170 +2,153 @@
 Usage
 #####
 
+The ``torc`` CLI toolkit provides the simplest mechanism to build and manage workflows. It
+provides most functionality and this page describes on it. If you need or want more control, you
+are welcome to use the API through Swagger-generated libaries or API tools like ``curl``, `Postman
+<https://www.postman.com/>`_, and `Insomnia <https://insomnia.rest/>`_. You can also use Arango
+tools to manage data directly in the database.
+
+Torc CLI Details
+================
+The CLI toolkit contains some nuances that users should understand in order to have a good user
+experience. First, all of the commands described require connecting to the database. We recommend
+that you set this environment variable to avoid having to type it in every command.
+
+This works if you are running ArangoDB on your local computer. Change ``localhost`` to the hostname
+or IP address of your database server.
+
+.. code-block:: console
+
+   $ export TORC_DATABASE_URL=http://localhost:8529/_db/workflows/torc-service
+
+The other option is to pass the URL to every command.
+
+.. code-block:: console
+
+   $ torc -u http://localhost:8529/_db/workflows/torc-service workflows list
+
+Second, most commands are tied to one workflow in the database, and so the workflow identifier
+is critical. There are three ways to set it:
+
+1. Set it in every command with the ``-k`` or ``--workflow-key`` options.
+
+.. code-block:: console
+
+   $ torc -k 247827 jobs list
+
+2. Set an environment variable to apply it globally in one environment.
+
+.. code-block:: console
+
+   $ export TORC_WORKFLOW_ID=247827
+   $ torc jobs list
+
+3. Let the tool prompt you to pick.
+
+.. code-block:: console
+
+   $ torc jobs list
+
+   This command requires a workflow key and one was not provided. Please choose one from below.
+
+   +-----------------------------------------------------------+
+   |                             workflow                      |
+   +-------+--------------+-------+-----------------+----------+
+   | index |  name        |  user | description     |   key    |
+   +-------+--------------+-------+-----------------+----------+
+   |   1   | workflow1    | user1 | My workflow 1   | 92181686 |
+   |   2   | workflow2    | user2 | My workflow 2   | 92181834 |
+   +-------+--------------+-------+-----------------+----------+
+   workflow key is required. Select an index from above: >>> 2
+
 Configuration
 =============
-The ``torc`` tool offers several ways to configure a workflow. In all cases there is one database
-per workflow on a single instance of ArangoDB.
 
-There methods to configure a workflow are the following:
+The CLI toolkit provides these mechanisms to configure a workflow.
 
-1. HTTP API with JSON-formatted objects using ``curl``
-2. Python API
-3. Others? APIs for other languages can easily be generated. Please contact the developers if you
-   would like another option.
-4. ArangoDB UI. This is not great for configuring an entire workflow, but it is very convenient
-   for editing an existing workflow.
+1. Workflow specification in a JSON file. The JSON document fully defines a workflow and
+relationships between objects. Users can upload the workflow to the database with a CLI command.
 
-.. raw:: html
-
-   <hr>
-
-HTTP API
---------
-There is an API endpoint that provides an example workflow. You can redirect this to a file, get an
-idea of the required format, make your own version, and then send it back.
-
-Install ``jq`` from https://stedolan.github.io/jq/download/ in order to pretty-print the JSON text.
+Refer to this `example <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.json5>`_.
 
 .. code-block:: console
 
-    $ curl --silent -X GET http://localhost:8529/_db/workflows/torc-service/workflow/example | jq . > workflow.json
+   $ torc workflows create-from-json-file examples/diamond_workflow.json
+   2023-03-28 16:36:35,149 - INFO [torc.cli.workflows workflows.py:156] : Created a workflow from examples/diamond_workflow.json5 with key=92238688
 
-or if you have authentication enabled:
+2. Job definitions in a text file. Each job is a CLI command with options and arguments. The text
+file has one command on each line. The torc CLI tool creates an empty workflow, converts each
+command into a job, and adds the job. Users can add dependencies and other resources with torc
+CLI tools.
 
-.. code-block:: console
-
-    $ curl --user username:password --silent -X GET http://localhost:8529/_db/workflows/torc-service/workflow/example | jq . > workflow.json
-
-Edit file as desired and the post it back to the server.
-
-.. code-block:: console
-
-    $ curl --silent -X POST http://localhost:8529/_db/workflows/torc-service/workflow -d "$(cat workflow.json)"
-
-To view the current workflow:
+This example will create a workflow from 5 commands.
 
 .. code-block:: console
 
-    $ curl --silent -X GET http://localhost:8528/_db/workflows/torc-service/workflow | jq .
+   $ cat commands.txt
+   bash my_script.sh -i input1.json -o output1.json
+   bash my_script.sh -i input2.json -o output2.json
+   bash my_script.sh -i input3.json -o output3.json
 
-To delete the current workflow:
+   $ torc workflows create-from-commands-file commands.txt
 
-.. code-block:: console
-
-    $ curl --silent -X DELETE http://localhost:8529/_db/workflows/torc-service/workflow
-
-.. raw:: html
-
-   <hr>
-
-This example workflow is stored in https://github.nrel.gov/viz/torc/blob/main/examples/workflow.json
-
-Python API
-----------
-Refer to this Python script: https://github.nrel.gov/viz/torc/blob/main/examples/diamond_workflow.py
-
-Running it in a terminal will delete the existing workflow and then create the workflow
-described in :ref:`overview`.
+3. Build a workflow incrementally with torc CLI commands like the following:
 
 .. code-block:: console
 
-   $ python examples/diamond_workflow.py
+   $ torc workflows create -n my-workflow -d "My workflow"
+   2023-03-28 16:17:36,736 - INFO [torc.cli.workflows workflows.py:78] : Created workflow with key=92237770
+   $ export TORC_WORKFLOW_ID=92237770
+   $ torc jobs add -n job1 -c "bash my_script.sh -i input1.json -o output1.json"
+   2023-03-28 18:19:17,330 - INFO [torc.cli.jobs jobs.py:80] : Added job with key=92237922
 
-Run the example workflow. This will delete any existing workflow, create a new workflow, and then
-run it.
+4. Make your own API calls directly to the database. Here is one
+`script example <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py>`_.
 
-.. code-block:: console
 
-    python local_worker.py
-
-.. raw:: html
-
-   <hr>
-
-Execution
-=========
-
-Local system
-------------
-One-time installation:
-
-1. Create a virtual environment with your preferred tool (e.g., conda).
-2. Install the swagger client.
+Run a workflow
+==============
+This is an HPC example that schedules one node to do the work. Note that the paths to all relevant
+scripts need to correct.
 
 .. code-block:: console
 
-    $ pip install -e python_client
+   $ torc workflows create-from-json-file examples/independent_workflow.json5
+   2023-03-28 16:36:35,149 - INFO [torc.cli.workflows workflows.py:156] : Created a workflow from examples/independent_workflow.json5 with key=92238688
+   $ export TORC_WORKFLOW_ID=92238688
+   $ torc workflows start
+   2023-03-28 16:37:58,708 - INFO [torc.workflow_manager workflow_manager.py:99] : Started workflow
+   $ torc hpc slurm schedule-nodes -n1
+   # Monitor progress with torc or squeue
+   $ watch -n 10 squeue -u $USER
+   $ torc jobs list
 
-3. Install the ``torc`` package.
+.. note:: torc will not yet automatically schedule new nodes to run jobs that become unblocked.
+   You will have to run the schedule-nodes command again.
 
-.. code-block:: console
-
-    $ pip install -e worker
-
-4. Run the workflow.
-
-.. code-block:: console
-
-   $ torc workflow run-local http://localhost:8528/_db/workflows/torc-service
-
-.. raw:: html
-
-   <hr>
-
-SLURM worker on HPC via Python
-------------------------------
-1. Install the database and API service as described in :ref:`eagle_db_installation`.
-2. Install the ``torc`` package.
-3. Add your workflow to the database.
-4. Run this command to get a recommendation for how many compute nodes you need.
+When all jobs complete this command will show the job status as ``done``.
 
 .. code-block:: console
 
-   $ torc hpc recommend-nodes --num-cpus=36 DATABASE_URL
+   $ torc jobs list
 
-5. Create an HPC configuration file that defines the parameters to pass along to SLURM. Note that
-   you'll need to run this step multiple times if you require different types of nodes for
-   different jobs (like big-memory nodes for some jobs).
-
-   This command prints the available options. Customize as desired and create the file.
+This commmand will show the job results. A ``return_code`` of 0 is successful. Non-zero is a
+failure.
 
 .. code-block:: console
 
-   $ torc hpc slurm-config --help
+   $ torc results list
 
-6. Acquire the nodes by passing the HPC config file and the number of HPC job requests to make
-   (note that each job could acquire multiple nodes) to this command. The script passed to SLURM
-   will start a ``torc`` job-runner script on each node. When SLURM starts allocates a node and
-   starts that script, it will begin pulling and executing jobs from the database.
+This command will show per-job resource statistic summaries:
 
 .. code-block:: console
 
-   $ torc hpc schedule-nodes [OPTIONS] DATABASE_URL CONFIG_FILE NUM_HPC_JOBS
+   $ torc jobs list-process-stats
 
-As of now the orchestrator will not automatically schedule new nodes after blocked jobs become
-ready. We plan to add this functionality.
-
-Check job status in the database. If your node allocations have completed you can rerun steps 4-6.
-
-Here is the simplest way to check job status. If you have lots of jobs then you will want to run
-a query with filters directly against the database, such in the query page of the web UI.
-
-.. code-block:: console
-
-   $ curl --silent -X GET http://localhost:8529/_db/workflows/torc-service/jobs | jq .
-
-This example will show only job names and status.
-
-.. code-block:: console
-
-   $ curl --silent -X GET http://localhost:8529/_db/workflows/torc-service/jobs | jq '.items | .[] | [.name, .status]'
-
-.. raw:: html
-
-   <hr>
+Note that you can also get time-series resource utilization plots by setting ``monitor_interval``
+to ``periodic`` in the ``compute_node_resource_stats`` section of the workflow specification.
 
 Cloud Compute Nodes
--------------------
+===================
 We currently do not perform compute node scheduling, but plan to add it soon. The existing ``torc
-workflow run-local`` command will work on an allocated node.
+local run-jobs`` command will work on an allocated node.

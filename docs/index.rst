@@ -13,6 +13,8 @@ Features
 - Manage job dependencies.
 - Manage job resource requirements.
 - Auto-tune resource requirements.
+- Acquire compute resources.
+- Track resource utilization.
 - Support cloud and HPC environments simultaneously.
 - Support workflow restarts.
 
@@ -32,16 +34,20 @@ Torc relies heavily on the multi-model database `ArangoDB <https://www.arangodb.
 It uses graphs to store relationships/dependencies between workflow objects and documents
 for user-defined data.
 
-While the software implements some abstractions, like a custom HTTP API endpoint and several
-CLI commands, we recommend that users learn and use ArangoDB web UI and CLI tools to query results.
+Torc provides a moderately-comprehensive set of CLI commands and a custom HTTP API endpoint with
+auto-generated client API libraries. The goal is for users to not be forced to deal with ArangoDB
+directly, but there are still cases where that may be required. The web UI is particularly
+beneficial for useful for running queries and visualizing workflow graphs.
+``arangodump/arangorestore`` are great for backups.
+
+Here are documentation links for some of their tools:
 
 - Web UI: https://www.arangodb.com/docs/stable/programs-web-interface.html
 - Queries: https://www.arangodb.com/docs/stable/programs-web-interface-aql-editor.html
 - Shell: https://www.arangodb.com/docs/stable/programs-arangosh.html
 - Export: https://www.arangodb.com/docs/stable/programs-arangoexport.html
+- Backups: https://www.arangodb.com/docs/stable/programs-arangodump.html
 - HTTP API: https://www.arangodb.com/docs/stable/http/
-
-The web UI is particularly useful for running queries and visualizing workflow graphs.
 
 .. raw:: html
 

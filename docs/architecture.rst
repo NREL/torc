@@ -12,19 +12,32 @@ Architecture
 
   - The software package auto-generates client APIs in common programming languages with ``Swagger``
     tools.
-  - Users can use a client API or send commands through ``curl`` with JSON documents.
+  - Users can use a client API or send commands through ``curl`` (or any client API tool) with
+    JSON documents.
 
 - User defines a workflow through the API.
 
   - API exists in common programming languages, HTTP, and JSON.
+  - The software package provides a suite of CLI commands to manage workflows in the database.
+    This toolkit abstracts the database implementation details from the user.
 
 Database layout/schema
 ======================
 
-Each database in an ArangoDB instance can store one workflow. The nodes, edges, and documents
-discussed below are part of one database. Each database also has one API service. User
-authentication is specific to each database. This supports a multi-tenant configuration where
-different users can store and manage their own workflows.
+This section describes how torc defines and gives access to collections in ArangoDB.
+
+An ArangoDB instance can host many databases. Each database can store many collections. Each
+database can install multiple API services.
+
+Torc is designed to store hundreds-to-thousands of workflows for a team of 10-20 users in one
+database. Each workflow gets its own set of job/file/result collections. Each user has read/write
+access to their own database but not others. This is differentiated from a solution where end users
+do not have direct access to the database, and instead store data indirectly through an application
+with its own access control system.
+
+Torc installs one API service in each database to facilitate management through client software.
+
+The nodes, edges, and documents discussed below are part of one workflow in one database.
 
 Nodes
 -----
@@ -38,6 +51,9 @@ Nodes
 - compute nodes
 - compute node stats
 - job process stats
+
+.. note:: When looking at the collections in ArangoDB tools you will see that each collection name
+   includes its workflow identifier.
 
 Job Restarts
 ~~~~~~~~~~~~
@@ -63,8 +79,7 @@ Edges
 Documents
 ---------
 
-- events: Orchestration software posts events when starting and completing worker nodes and jobs.
-  etc.
+- events: Torc posts events when starting and completing worker nodes and jobs.
 
 Users can post their own events. Common structure is TBD.
 
@@ -107,29 +122,32 @@ resource availability.
 
 Worker node scheduling
 ----------------------
-TBD. Currently, the user must start their own nodes. It would not be difficult to write an
-application to acquire nodes based on initial job readiness and then subsequently acquire more
-nodes as needed.
+Currently, the user must schedule compute nodes with a torc CLI tool. In the near future we plan
+to add functionality to do this automatically - including scheduling new nodes as needed.
 
 The HPC case is straightforward. The user can provide the account and desired QoS. The worker nodes
-will be scheduled with their credentials because they will submit the start command in a terminal.
+will be scheduled with their credentials because they will submit the start command in a session
+on a login node.
 
 The cloud case is similarly straightforward if the user is willing to pay full price (aka AWS On
 Demand). It is more challenging if the user wants to use something like AWS Spot Pricing. The tool
 would need to detect interruptions and be intelligent about selecting compute nodes that are
-available.
+available. That is TBD.
 
 User Interface
 --------------
-There are two basic mechanisms for users to define workflow:
+Torc provides these mechanisms for users to define workflows:
 
-1. Direct: Define nodes and edges through database calls. Requires that the user understand the
-database schema. Relationships between jobs and files are defined in edges and not through
-primary key / foreign key relationships in tables.
+1. torc CLI tools. The toolkit provides most functionality required for users.
 
-2. Job definition abstraction: Define dependency nodes like files and resource requirements but
-then use the JobDefinition abstraction that includes the names of each dependent node. This is
-analagous to primary key / foreign key relationships in tables. This is likely simpler for users.
+2. API calls using Swagger-auto-generated client libraries. The torc CLI tools use a Python client.
+We can generate others that users want.
+
+3. API calls using client API tools: ``curl``, `Postman <https://www.postman.com/>`_,
+`Insomnia <https://insomnia.rest/>`_, etc.
+
+The first option abstracts the database schema from the user. The latter two require a fair
+understanding of the implementation.
 
 Database choice
 ===============

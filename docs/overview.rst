@@ -133,3 +133,11 @@ Jobs can post events with structured data to aid analysis and debug.
    digraph event_graph {
       "work1" -> "{timestamp: '2/1/2023 12:00:00', error: 'Something bad happened'}";
    }
+
+Or store result data.
+
+.. graphviz::
+
+   digraph event_graph {
+      "work2" -> "{timestamp: '2/1/2023 12:00:00', result: 2.158}";
+   }

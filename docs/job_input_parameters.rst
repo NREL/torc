@@ -1,8 +1,8 @@
 ####################
 Job Input Parameters
 ####################
-In all cases the database requires that each job have a unique name. If this is not natural for
-some use cases then we can make a helper script to generate unique names.
+
+There are two options for running jobs with input parameters.
 
 CLI Commands
 ============
@@ -11,5 +11,5 @@ user adds one job for each permutation of commands, arguments, and options.
 
 Database
 ========
-User stores input parameters for each job in the database. Each job has a unique name and can be
-retrieved in the API with it. When a job starts it sends an HTTP GET request to read its inputs.
+Users store job input parameters in ``user_data`` collections in the database and then the job
+script send API calls to retrieve them at runtime.
