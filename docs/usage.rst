@@ -15,13 +15,11 @@ experience.
 
 General Usage
 -------------
-The torc CLI commands are hierarchical with help at every level. For example,
+The torc CLI commands are hierarchical with help at every level. For example:
 
 .. code-block:: console
 
-   # Print commands at this level
    $ torc
-   # Print help for all options at this level.
    $ torc --help
 
    $ torc workflows
@@ -90,7 +88,7 @@ Configuration
 The CLI toolkit provides these mechanisms to configure a workflow.
 
 1. Workflow specification in a JSON file. The JSON document fully defines a workflow and
-relationships between objects. Users can upload the workflow to the database with a CLI command.
+   relationships between objects. Users can upload the workflow to the database with a CLI command.
 
 Refer to this `example <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.json5>`_.
 
@@ -103,11 +101,11 @@ input/output relationships.
    2023-03-28 16:36:35,149 - INFO [torc.cli.workflows workflows.py:156] : Created a workflow from examples/diamond_workflow.json5 with key=92238688
 
 2. Job definitions in a text file. Each job is a CLI command with options and arguments. The text
-file has one command on each line. The torc CLI tool creates an empty workflow, converts each
-command into a job, and adds the job. Users can add dependencies and other resources with torc
-CLI tools.
+   file has one command on each line. The torc CLI tool creates an empty workflow, converts each
+   command into a job, and adds the job. Users can add dependencies and other resources with torc
+   CLI tools.
 
-This example will create a workflow from 5 commands.
+   This example will create a workflow from 5 commands.
 
 .. code-block:: console
 
@@ -129,7 +127,7 @@ This example will create a workflow from 5 commands.
    2023-03-28 18:19:17,330 - INFO [torc.cli.jobs jobs.py:80] : Added job with key=92237922
 
 4. Make your own API calls directly to the database. Here is one
-`script example <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py>`_.
+   `script example <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py>`_.
 
 Job Input/Output Data
 =====================

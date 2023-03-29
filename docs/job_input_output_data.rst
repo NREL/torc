@@ -1,4 +1,4 @@
-.. _job_input_output_data::
+.. _job_input_output_data:
 
 #####################
 Job Input/Output Data
@@ -35,9 +35,54 @@ Torc CLI
 
 .. code-block:: console
 
-   $ torc jobs get-user-data 92181820
-   {'_key': '92340378', '_rev': '_fw08x8a---', 'key3': 'val3'}
-   {'_key': '92340362', '_rev': '_fw08x4m---', 'key1': 'val1', 'key2': 'val2'}
+   $ torc jobs list-user-data 92181820
+   [
+     {
+       "_key": "92340362",
+       "_rev": "_fw4IkZ----",
+       "key3": "val3"
+     },
+     {
+       "_key": "92340378",
+       "_rev": "_fw4IkX----",
+       "key1": "val1",
+       "key2": "val2"
+     }
+   ]
+
+
+.. code-block:: console
+
+   $ torc user-data add "{key1: 'val1', key2: 'val2'}" "{key3: 'val3'}"
+   2023-03-29 09:45:59,678 - INFO [torc.cli.user_data user_data.py:41] : Added user_data key=92398595
+   2023-03-29 09:45:59,736 - INFO [torc.cli.user_data user_data.py:41] : Added user_data key=92398602
+
+   $ torc user-data list
+   [
+     {
+       "_key": "92398595",
+       "_rev": "_fw4IkX----",
+       "key1": "val1",
+       "key2": "val2"
+     },
+     {
+       "_key": "92398602",
+       "_rev": "_fw4IkZ----",
+       "key3": "val3"
+     }
+   ]
+
+   $ torc user-data get 92398595
+   {
+     '_key': '92398595',
+     '_rev': '_fw2IcgK---',
+     'key1': 'val1',
+     'key2': 'val2'
+   }
+
+   $ torc user-data delete 92398595 92398602
+   2023-03-29 09:47:56,772 - INFO [torc.cli.user_data user_data.py:54] : Deleted user_data=92398595
+   2023-03-29 09:47:56,799 - INFO [torc.cli.user_data user_data.py:54] : Deleted user_data=92398602
 
 
 Python API client
@@ -51,8 +96,8 @@ Python API client
     configuration = Configuration()
     configuration.host = "http://localhost:8529/_db/workflows/torc-service"
     api = DefaultApi(ApiClient(configuration))
-    workflow_key = "92181686"
-    job_key = "92181820"
+    workflow_key = "92400133"
+    job_key = "92400255"
     data = [
         {
             "key1": "val1",
@@ -68,3 +113,7 @@ Python API client
 
     result = api.get_jobs_user_data_workflow_key(workflow_key, job_key)
     print(f"Job key={job_key} stores {result.items}")
+
+    workflow_user_data = api.post_user_data_workflow(data[0], workflow_key)
+    result = api.get_user_data_workflow_key(workflow_key, workflow_user_data["_key"])
+    print(f"Workflow stores user data {result}")

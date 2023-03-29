@@ -1,7 +1,7 @@
 """CLI commands to manage jobs"""
 
+import json
 import logging
-import pprint
 
 import click
 import json5
@@ -106,14 +106,14 @@ def add_user_data(ctx, api, job_key, data):
 @click.argument("job_key")
 @click.pass_obj
 @click.pass_context
-def get_user_data(ctx, api, job_key):
-    """Get all user data stored for a job."""
+def list_user_data(ctx, api, job_key):
+    """List all user data stored for a job."""
     setup_cli_logging(ctx, __name__)
     workflow_key = get_workflow_key_from_context(ctx, api)
     resp = api.get_jobs_user_data_workflow_key(workflow_key, job_key)
     for item in resp.items:
         item.pop("_id")
-        pprint.pprint(item)
+    print(json.dumps(resp.items, indent=2))
 
 
 @click.command()
@@ -194,7 +194,7 @@ def list_process_stats(ctx, api):
 
 jobs.add_command(add)
 jobs.add_command(add_user_data)
-jobs.add_command(get_user_data)
+jobs.add_command(list_user_data)
 # jobs.add_command(cancel)
 jobs.add_command(delete)
 jobs.add_command(delete_all)

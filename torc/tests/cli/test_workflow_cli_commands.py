@@ -101,6 +101,24 @@ def test_job_commands(create_workflow_cli):
     job_key = match.group(1)
 
     _run_and_check_jobs_list_output(f"torc -k {key} -u {url} jobs list", 4)
+
+    user_data = {"key1": "val1"}
+    ud_regex = re.compile(r"Added user_data key=(\d+)")
+    output = {}
+    check_run_command(
+        f"torc -k {key} -u {url} jobs add-user-data {job_key} '{json.dumps(user_data)}'",
+        output=output,
+    )
+    match = ud_regex.search(output["stderr"])
+    assert match
+    ud_key = match.group(1)
+    _run_and_check_output(
+        f"torc -k {key} -u {url} jobs list-user-data {job_key}", ("key1", ("val1"))
+    )
+    _run_and_check_output(f"torc -k {key} -u {url} user-data get {ud_key}", ("key1", ("val1")))
+    _run_and_check_output(f"torc -k {key} -u {url} user-data list", ("key1", ("val1")))
+    check_run_command(f"torc -k {key} -u {url} user-data delete {ud_key}")
+
     check_run_command(f"torc -k {key} -u {url} jobs delete {job_key}")
     _run_and_check_jobs_list_output(f"torc -k {key} -u {url} jobs list", 3)
     _run_and_check_jobs_list_output(

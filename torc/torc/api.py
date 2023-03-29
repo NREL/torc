@@ -26,8 +26,7 @@ def iter_documents(func, *args, batch_size=1000, **kwargs):
     has_more = True
     while has_more:
         result = func(*args, skip=skip, limit=batch_size, **kwargs)
-        for item in result.items:
-            yield item
+        yield from result.items
         skip += result.count
         has_more = result.has_more
 

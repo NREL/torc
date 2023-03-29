@@ -141,10 +141,10 @@ Torc provides these mechanisms for users to define workflows:
 1. torc CLI tools. The toolkit provides most functionality required for users.
 
 2. API calls using Swagger-auto-generated client libraries. The torc CLI tools use a Python client.
-We can generate others that users want.
+   We can generate others that users want.
 
 3. API calls using client API tools: ``curl``, `Postman <https://www.postman.com/>`_,
-`Insomnia <https://insomnia.rest/>`_, etc.
+   `Insomnia <https://insomnia.rest/>`_, etc.
 
 The first option abstracts the database schema from the user. The latter two require a fair
 understanding of the implementation.
