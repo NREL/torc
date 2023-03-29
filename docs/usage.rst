@@ -10,9 +10,30 @@ tools to manage data directly in the database.
 
 Torc CLI Details
 ================
-The CLI toolkit contains some nuances that users should understand in order to have a good user
-experience. First, all of the commands described require connecting to the database. We recommend
-that you set this environment variable to avoid having to type it in every command.
+The CLI toolkit contains some nuances that users should understand in order to have a good
+experience.
+
+General Usage
+-------------
+The torc CLI commands are hierarchical with help at every level. For example,
+
+.. code-block:: console
+
+   # Print commands at this level
+   $ torc
+   # Print help for all options at this level.
+   $ torc --help
+
+   $ torc workflows
+   $ torc workflows --help
+
+   $ torc hpc slurm --help
+
+Database Connection
+-------------------
+
+All of the commands described here require connecting to the database. We recommend that you set
+this environment variable to avoid having to type it in every command.
 
 This works if you are running ArangoDB on your local computer. Change ``localhost`` to the hostname
 or IP address of your database server.
@@ -27,8 +48,10 @@ The other option is to pass the URL to every command.
 
    $ torc -u http://localhost:8529/_db/workflows/torc-service workflows list
 
-Second, most commands are tied to one workflow in the database, and so the workflow identifier
-is critical. There are three ways to set it:
+Workflow Key
+------------
+Most commands are tied to one workflow in the database, and so the workflow identifier is critical.
+There are three ways to set it:
 
 1. Set it in every command with the ``-k`` or ``--workflow-key`` options.
 
@@ -71,6 +94,9 @@ relationships between objects. Users can upload the workflow to the database wit
 
 Refer to this `example <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.json5>`_.
 
+Note that in this example torc determines the order of execution of jobs based on the job/file
+input/output relationships.
+
 .. code-block:: console
 
    $ torc workflows create-from-json-file examples/diamond_workflow.json
@@ -105,6 +131,10 @@ This example will create a workflow from 5 commands.
 4. Make your own API calls directly to the database. Here is one
 `script example <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py>`_.
 
+Job Input/Output Data
+=====================
+Refer to :ref:`job_input_output_data` for a discussion of of how to store in input and output
+data for jobs.
 
 Run a workflow
 ==============

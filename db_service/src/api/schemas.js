@@ -118,6 +118,10 @@ const jobProcessStats = joi.object().required().keys({
   _rev: joi.string(),
 });
 
+const jobUserDataResponse = joi.object().required().keys({
+  items: joi.object(),
+});
+
 const readyJobsResourceRequirements = joi.object().required().keys({
   num_jobs: joi.number().integer().required(),
   num_cpus: joi.number().integer().required(),
@@ -422,6 +426,7 @@ module.exports = {
   jobSpecification,
   jobInternal,
   jobProcessStats,
+  jobUserDataResponse,
   localScheduler,
   object,
   readyJobsResourceRequirements,

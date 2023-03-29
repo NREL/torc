@@ -69,8 +69,7 @@ You will be at a prompt like this::
     127.0.0.1:8529@_system>
 
 Here is the ``arangosh`` command to create a database. You can use any name; all examples in this
-page use ``workflows``. Note that there can only be one workflow per database, but you can create
-as many databases as you want.
+page use ``workflows``.
 
 .. code-block:: console
 

@@ -56,7 +56,7 @@ on your browser. You can also use Arango's JavaScript REPL via ``arangosh``.
 
 .. note:: The default username/password used by the container instructions is ``root/openSesame``.
 
-Create a database called ``workflows`` in the web UI or ``arangosh``.
+Create a database in the web UI or ``arangosh``.
 
 .. raw:: html
 
@@ -70,8 +70,8 @@ You will be at a prompt like this::
     127.0.0.1:8529@_system>
 
 Here is the ``arangosh`` command to create a database. You can use any name; all examples in this
-page use ``workflows``. Note that there can only be one workflow per database, but you can create
-as many databases as you want.
+page use ``workflows``. Note that the name shows up in the the API endpoint that you'll create
+in the next step.
 
 .. code-block:: console
 

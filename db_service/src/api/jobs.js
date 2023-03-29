@@ -225,13 +225,13 @@ router.get('jobs/user_data/:workflow/:key', function(req, res) {
   const job = documents.getWorkflowDocument(workflow, 'jobs', key, res);
   try {
     // Shouldn't need skip and limit, but that could be added.
-    res.send(query.getUserDataStoredByJob(job, workflow));
+    res.send({items: query.getUserDataStoredByJob(job, workflow)});
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Get jobs user_data key=${key}`);
   }
 })
     .pathParam('workflow', joi.string().required(), 'Workflow key')
     .pathParam('key', joi.string().required(), 'Job key')
-    .response(joi.object().required(), 'All user data stored for the job.')
+    .response(schemas.jobUserDataResponse, 'All user data stored for the job.')
     .summary('Retrieve all user data for a job.')
     .description('Retrieve all user data for a job.');

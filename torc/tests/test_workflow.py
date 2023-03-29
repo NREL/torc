@@ -28,8 +28,8 @@ def test_run_workflow(diamond_workflow):
     user_data_work1 = api.get_jobs_user_data_workflow_key(
         db.workflow.key, db.get_document_key("jobs", "work1")
     )
-    assert len(user_data_work1) == 1
-    assert user_data_work1[0]["key1"] == "val1"
+    assert len(user_data_work1.items) == 1
+    assert user_data_work1.items[0]["key1"] == "val1"
     mgr = WorkflowManager(api, db.workflow.key)
     config = api.get_workflows_config_key(db.workflow.key)
     config.compute_node_resource_stats.cpu = True
@@ -69,7 +69,7 @@ def test_run_workflow(diamond_workflow):
     user_data_work1 = api.get_jobs_user_data_workflow_key(
         db.workflow.key, db.get_document_key("jobs", "work1")
     )
-    assert len(user_data_work1) == 2
+    assert len(user_data_work1.items) == 2
     api.post_user_data_workflow(result_data_overall, db.workflow.key)
 
     events = db.list_documents("events")

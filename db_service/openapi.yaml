@@ -4780,7 +4780,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/inline_response_200_27'
         "500":
           description: Default error response.
           content:
@@ -5595,6 +5595,12 @@ components:
           type: array
           items:
             type: string
+    inline_response_200_27:
+      type: object
+      properties:
+        items:
+          type: object
+          properties: {}
     resource_requirements_workflow_model:
       type: object
       properties:

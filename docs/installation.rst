@@ -19,7 +19,7 @@ this repository.
 
 6. Install the pre-built Python client into the virutal environment. Location is TBD.
 
-.. todo:: Figure out where to store the python client.
+.. todo:: Figure out where to store the python client where users can access it. New repo?
 
 .. code-block:: console
 

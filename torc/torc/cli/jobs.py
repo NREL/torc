@@ -1,8 +1,10 @@
 """CLI commands to manage jobs"""
 
 import logging
+import pprint
 
 import click
+import json5
 from swagger_client.models.jobs_workflow_model import JobsWorkflowModel
 
 from torc.api import iter_documents
@@ -67,7 +69,7 @@ def jobs():  # pylint: disable=unused-argument
 @click.pass_obj
 @click.pass_context
 def add(ctx, api, cancel_on_blocking_job_failure, command, key, name):
-    """Delete the job in the workflow."""
+    """Add a job to the workflow."""
     setup_cli_logging(ctx, __name__)
     workflow_key = get_workflow_key_from_context(ctx, api)
     job = JobsWorkflowModel(
@@ -78,6 +80,40 @@ def add(ctx, api, cancel_on_blocking_job_failure, command, key, name):
     )
     job = api.post_jobs_workflow(job, workflow_key)
     logger.info("Added job with key=%s", job.key)
+
+
+@click.command()
+@click.argument("job_key")
+@click.argument("data", nargs=-1)
+@click.pass_obj
+@click.pass_context
+def add_user_data(ctx, api, job_key, data):
+    """Add user data to a job. Each item must be a single JSON object encoded in a JSON5 string.
+
+    \b
+    Example:
+    $ torc jobs add-user-data 92339718 "{key1: 'val1', key2: 'val2'}" "{key3: 'val3'}"
+    """
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    for item in data:
+        user_data = json5.loads(item)
+        ud = api.post_jobs_user_data_workflow_key(user_data, workflow_key, job_key)
+        logger.info("Added user_data key=%s to job key=%s", ud["_key"], job_key)
+
+
+@click.command()
+@click.argument("job_key")
+@click.pass_obj
+@click.pass_context
+def get_user_data(ctx, api, job_key):
+    """Get all user data stored for a job."""
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    resp = api.get_jobs_user_data_workflow_key(workflow_key, job_key)
+    for item in resp.items:
+        item.pop("_id")
+        pprint.pprint(item)
 
 
 @click.command()
@@ -157,6 +193,8 @@ def list_process_stats(ctx, api):
 
 
 jobs.add_command(add)
+jobs.add_command(add_user_data)
+jobs.add_command(get_user_data)
 # jobs.add_command(cancel)
 jobs.add_command(delete)
 jobs.add_command(delete_all)
