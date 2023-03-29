@@ -12,20 +12,31 @@ Installation
 
 3. Clone the ``torc`` repository to computer where you will submit and run jobs.
 
+.. code-block:: console
+
+   $ git clone https://github.nrel.gov/viz/wms.git
+
 4. Create a Python 3.10 virtual environment (e.g., conda).
+
+.. code-block:: console
+
+   $ conda create -n torc python=3.10
+   $ conda activate torc
 
 5. Install the Python package ``torc`` into that environment. It is in the ``torc`` directory of
    this repository.
 
+.. code-block:: console
+
+   $ pip install -e wms/torc
+
 6. Install the pre-built Python client into the virutal environment. Location is TBD.
 
-.. todo:: Figure out where to store the python client where users can access it. New repo?
+.. todo:: Figure out where to store the python client where users can access it.
 
 .. code-block:: console
 
-   $ conda activate torc
    $ pip install -e python_client
-   $ pip install -e <path-to-local-torc-repository>/torc
 
 Refer to :ref:`generate_client_apis` to generate a new API after changing the API endpoint.
 
