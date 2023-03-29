@@ -2,6 +2,7 @@
 
 import abc
 import logging
+import os
 import shlex
 import subprocess
 import sys
@@ -136,7 +137,9 @@ class AsyncCliCommand(AsyncJobBase):
         # pylint: disable=consider-using-with
         self._stdout_fp = open(stdout_filename, "w", encoding="utf-8")
         self._stderr_fp = open(stderr_filename, "w", encoding="utf-8")
-        self._pipe = subprocess.Popen(cmd, stdout=self._stdout_fp, stderr=self._stderr_fp)
+        env = os.environ.copy()
+        env["TORC_JOB_KEY"] = self._db_job.key
+        self._pipe = subprocess.Popen(cmd, stdout=self._stdout_fp, stderr=self._stderr_fp, env=env)
         # pylint: enable=consider-using-with
         self._is_running = True
 
