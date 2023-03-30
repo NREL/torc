@@ -11,7 +11,6 @@ for (const name of [
 ) {
   if (!db._collection(name)) {
     db._createDocumentCollection(name);
-    console.log(`Created document collection ${name}`);
   }
 }
 
@@ -25,5 +24,4 @@ if (!graphModule._list().includes(graphName)) {
         status,
       ],
   );
-  console.log(`Created graph ${graphName}`);
 }

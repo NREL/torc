@@ -101,7 +101,6 @@ function createWorkflowCollections(workflow) {
   for (const name of DOCUMENT_COLLECTION_NAMES) {
     db._createDocumentCollection(getWorkflowCollectionName(workflow, name));
   }
-  console.log(`Created graph ${graphName}`);
 }
 
 /**
