@@ -97,7 +97,7 @@ def list_files(ctx, api, filters):
     """
     setup_cli_logging(ctx, __name__)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    exclude = ("id", "rev", "file_hash")
+    exclude = ("id", "rev")
     filters = parse_filters(filters)
     table = make_text_table(
         (x.to_dict() for x in iter_documents(api.get_files_workflow, workflow_key, **filters)),
