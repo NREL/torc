@@ -131,6 +131,4 @@ dmypy.json
 db_service/README.md
 db_service/.swagger-codegen/
 db_service/.swagger-codegen-ignore
-db_service/src/api/generated/*
 db_service/node_modules/*
-db_service/generateRouters/node_modules/*

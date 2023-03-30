@@ -6,15 +6,14 @@ import shutil
 import sys
 from pathlib import Path
 
-from prettytable import PrettyTable
 from swagger_client.models.files_workflow_model import FilesWorkflowModel
 from swagger_client.models.job_specifications_workflow_model import JobSpecificationsWorkflowModel
 from swagger_client.models.resource_requirements_workflow_model import (
     ResourceRequirementsWorkflowModel,
 )
 from swagger_client.models.workflow_specifications_model import WorkflowSpecificationsModel
-from swagger_client.models.workflowsconfigkey_compute_node_resource_stats import (
-    WorkflowsconfigkeyComputeNodeResourceStats,
+from swagger_client.models.workflow_config_compute_node_resource_stats import (
+    WorkflowConfigComputeNodeResourceStats,
 )
 from swagger_client.models.workflow_config_model import WorkflowConfigModel
 
@@ -89,7 +88,7 @@ def create_workflow(api, output_dir: Path):
         jobs=[preprocess, work1, work2, postprocess],
         resource_requirements=[small, medium, large],
         config=WorkflowConfigModel(
-            compute_node_resource_stats=WorkflowsconfigkeyComputeNodeResourceStats(
+            compute_node_resource_stats=WorkflowConfigComputeNodeResourceStats(
                 cpu=True,
                 memory=True,
                 process=True,
@@ -123,7 +122,7 @@ def restart_workflow(api, output_dir: Path, workflow):
 
 def main():
     """Entry point"""
-    usage = f"Usage: python {sys.argv[0]} create|estimate|run|restart"
+    usage = f"Usage: python {sys.argv[0]} create|run|restart"
     if len(sys.argv) == 1:
         print(usage, file=sys.stderr)
         sys.exit(1)
@@ -137,13 +136,6 @@ def main():
         if output_dir.exists():
             shutil.rmtree(output_dir)
         create_workflow(api, output_dir)
-    elif mode == "estimate":
-        data = api.post_workflows_estimate()
-        table = PrettyTable(title="Resource Estimates")
-        table.field_names = ("round", "num_jobs", "num_cpus", "memory_gb", "num_gpus")
-        for i, row in enumerate(data.estimates_by_round, start=1):
-            table.add_row((i, row["num_jobs"], row["num_cpus"], row["memory_gb"], row["num_gpus"]))
-        print(table)
     elif mode == "run":
         workflow = create_workflow(api, output_dir)
         run_workflow(api, output_dir, workflow)

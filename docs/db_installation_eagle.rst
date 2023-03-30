@@ -83,18 +83,6 @@ page use ``workflows``.
    to do on your local computer. When there is a shared directory on Eagle, this step won't be
    necessary.
 
-Change to the ``generateRouters`` directory in order to auto-generate several API router files.
-
-.. code-block:: console
-
-    $ npm install
-    $ rm -r ../src/api/generated/*
-    $ generateRouters
-
-It should have generated several files in ``db_service/src/api/generated``.
-
-Change back to the ``db_service`` directory and create the API service package.
-
 .. code-block:: console
 
     $ npm install
