@@ -3,9 +3,9 @@ const joi = require('joi');
 const db = require('@arangodb').db;
 const {MAX_TRANSFER_RECORDS} = require('../defs');
 const {JobStatus} = require('../defs');
-const documents = require('../documents');
 const utils = require('../utils');
 const query = require('../query');
+const documents = require('../documents');
 const schemas = require('./schemas');
 const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
@@ -119,22 +119,6 @@ router.get('/workflows/ready_job_requirements/:key', function(req, res) {
     .response(schemas.readyJobsResourceRequirements, 'result')
     .summary('Return the resource requirements for ready jobs.')
     .description(`Return the resource requirements for jobs with a status of ready.`);
-
-router.post('/workflows/estimate/:key', function(req, res) {
-  const key = req.pathParams.key;
-  const workflow = documents.getWorkflow(key, res);
-  try {
-    const result = query.estimateWorkflow(workflow);
-    res.send(result);
-  } catch (e) {
-    utils.handleArangoApiErrors(e, res, `Estimate workflow key=${key}`);
-  }
-})
-    .pathParam('key', joi.string().required(), 'Workflow key')
-    .response(schemas.workflowEstimate, 'result')
-    .summary('Perform a dry run of all jobs to estimate required resources.')
-    .description(`Perform a dry run of all jobs to estimate required resources.
-      Only valid if jobs have similar runtimes`);
 
 router.post('/workflows/initialize_jobs/:key', function(req, res) {
   const key = req.pathParams.key;
@@ -292,19 +276,3 @@ router.put('/workflows/status/:key', function(req, res) {
     .response(schemas.workflowStatus)
     .summary('Reports the workflow status.')
     .description('Reports the workflow status.');
-
-router.post('/workflows/estimate/:key', function(req, res) {
-  const key = req.pathParams.key;
-  const workflow = documents.getWorkflow(key, res);
-  try {
-    const result = query.estimateWorkflow(workflow);
-    res.send(result);
-  } catch (e) {
-    utils.handleArangoApiErrors(e, res, `Estimate workflow key=${key}`);
-  }
-})
-    .pathParam('key', joi.string().required(), 'Workflow key')
-    .response(schemas.workflowEstimate, 'result')
-    .summary('Perform a dry run of all jobs to estimate required resources.')
-    .description(`Perform a dry run of all jobs to estimate required resources.
-      Only valid if jobs have similar runtimes`);

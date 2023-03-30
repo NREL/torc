@@ -177,10 +177,6 @@ const workflowConfig = joi.object().required().keys({
   _rev: joi.string().optional(),
 });
 
-const workflowEstimate = joi.object().required().keys({
-  estimates_by_round: joi.array().items(readyJobsResourceRequirements),
-});
-
 const awsScheduler = joi.object().required().keys({
   // TODO
   name: joi.string().optional(),
@@ -439,6 +435,5 @@ module.exports = {
   workflow,
   workflowSpecification,
   workflowConfig,
-  workflowEstimate,
   workflowStatus,
 };

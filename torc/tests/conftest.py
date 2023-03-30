@@ -22,8 +22,8 @@ from swagger_client.models.resource_requirements_workflow_model import (
 )
 from swagger_client.models.workflow_specifications_model import WorkflowSpecificationsModel
 from swagger_client.models.results_workflow_model import ResultsWorkflowModel
-from swagger_client.models.workflowsconfigkey_compute_node_resource_stats import (
-    WorkflowsconfigkeyComputeNodeResourceStats,
+from swagger_client.models.workflow_config_compute_node_resource_stats import (
+    WorkflowConfigComputeNodeResourceStats,
 )
 from swagger_client.models.workflow_config_model import WorkflowConfigModel
 
@@ -322,7 +322,7 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
         resource_requirements=[small, medium, large],
         schedulers=WorkflowSpecificationsSchedulers(local_schedulers=[scheduler]),
         config=WorkflowConfigModel(
-            compute_node_resource_stats=WorkflowsconfigkeyComputeNodeResourceStats(
+            compute_node_resource_stats=WorkflowConfigComputeNodeResourceStats(
                 cpu=True,
                 memory=True,
                 process=True,

@@ -2,10 +2,9 @@
 const {query} = require('@arangodb');
 const db = require('@arangodb').db;
 const {GiB, JobStatus, GRAPH_NAME} = require('./defs');
-const config = require('./config');
-const documents = require('./documents');
 const schemas = require('./api/schemas');
 const utils = require('./utils');
+const config = require('./config');
 
 /**
  * Add 'blocks' edges between jobs by looking at their file edges.
@@ -54,47 +53,6 @@ function addBlocksEdgesFromFiles(workflow) {
       }
     }
   }
-}
-
-
-/**
- * Perform a dry run of all jobs to get a rough estimate of how many rounds
- * and resources are required.
- * @param {Object} workflow
- * @return {Object}
- */
-function estimateWorkflow(workflow) {
-  const byRounds = [];
-  resetJobStatus(workflow);
-  initializeJobStatus(workflow);
-  const jobs = config.getWorkflowCollection(workflow, 'jobs');
-  const returned = config.getWorkflowCollection(workflow, 'returned');
-
-  do {
-    const reqs = getReadyJobRequirements(workflow);
-    byRounds.push(reqs);
-    if (reqs.num_jobs == 0) {
-      break;
-    }
-    for (const job of jobs.byExample({status: JobStatus.Ready})) {
-      job.status = JobStatus.Done;
-      let result = {
-        job_key: job._key,
-        return_code: 0,
-        completion_time: new Date().toISOString(),
-        exec_time_minutes: 5,
-        status: job.status,
-      };
-      // TODO: this is not being cleaned up.
-      result = documents.addResult(result, workflow);
-      returned.save({_from: job._id, _to: result._id});
-      manageJobStatusChange(job, workflow);
-    }
-  } while (!isWorkflowComplete(workflow));
-  resetJobStatus(workflow);
-  initializeJobStatus(workflow);
-
-  return {estimates_by_round: byRounds};
 }
 
 /**
@@ -917,7 +875,6 @@ function updateWorkflowConfig(workflow, config) {
 
 module.exports = {
   addBlocksEdgesFromFiles,
-  estimateWorkflow,
   getReadyJobRequirements,
   getBlockingJobs,
   getFilesNeededByJob,

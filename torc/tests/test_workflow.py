@@ -220,13 +220,6 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
         assert job.status == "uninitialized"
 
 
-def test_estimate_workflow(diamond_workflow):
-    """Test the estimate workflow feature."""
-    db = diamond_workflow[0]
-    estimate = db.api.post_workflows_estimate_key(db.workflow.key)
-    assert estimate.estimates_by_round
-
-
 @pytest.mark.parametrize("num_jobs", [5])
 def test_ready_job_requirements(independent_job_workflow):
     """Test the API command for getting resource requirements for ready jobs."""
