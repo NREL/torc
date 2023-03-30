@@ -167,33 +167,12 @@ failure.
 
    $ torc results list
 
-This command will show per-job resource statistic summaries:
-
-.. code-block:: console
-
-   $ torc jobs list-process-stats
-
-Note that you can also get time-series resource utilization plots by setting ``monitor_interval``
-to ``periodic`` in the ``compute_node_resource_stats`` section of the workflow specification.
-
 Resource Utilization Statistics
 ===============================
 Torc will optionally monitor resource utilization on compute nodes. You can define these settings
 in the ``config`` field of the workflow specification JSON5 file.
 
-Setting ``cpu``, ``disk``, ``memory``, or ``network`` to true will track those resources on the
-compute node overall. Setting ``process`` to true will track CPU and memory usage on a per-job
-basis.
-
-You can set ``monitor_type`` to these options:
-
-- ``aggregation``: Track min/max/average stats in memory and record the results in the database.
-- ``periodic``: Record time-series data on an interval in per-node SQLite database files.
-
-If ``monitor_type = periodic`` and ``make_plots = true`` then torc will generate HTML plots of the
-results.
-
-.. code-block:: json
+.. code-block:: JavaScript
 
    config: {
      compute_node_resource_stats: {
@@ -210,8 +189,19 @@ results.
      }
    }
 
-These command will print summaries of the stats in the terminal:
+Setting ``cpu``, ``disk``, ``memory``, or ``network`` to true will track those resources on the
+compute node overall. Setting ``process`` to true will track CPU and memory usage on a per-job
+basis.
 
+You can set ``monitor_type`` to these options:
+
+- ``aggregation``: Track min/max/average stats in memory and record the results in the database.
+- ``periodic``: Record time-series data on an interval in per-node SQLite database files.
+
+If ``monitor_type = periodic`` and ``make_plots = true`` then torc will generate HTML plots of the
+results.
+
+These command will print summaries of the stats in the terminal:
 
 .. code-block:: console
 
