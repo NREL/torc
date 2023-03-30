@@ -145,6 +145,7 @@
       include_child_processes: true,
       recurse_child_processes: false,
       monitor_type: "aggregation",
+      make_plots: true,
       interval: 1
     }
   }

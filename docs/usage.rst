@@ -176,6 +176,48 @@ This command will show per-job resource statistic summaries:
 Note that you can also get time-series resource utilization plots by setting ``monitor_interval``
 to ``periodic`` in the ``compute_node_resource_stats`` section of the workflow specification.
 
+Resource Utilization Statistics
+===============================
+Torc will optionally monitor resource utilization on compute nodes. You can define these settings
+in the ``config`` field of the workflow specification JSON5 file.
+
+Setting ``cpu``, ``disk``, ``memory``, or ``network`` to true will track those resources on the
+compute node overall. Setting ``process`` to true will track CPU and memory usage on a per-job
+basis.
+
+You can set ``monitor_type`` to these options:
+
+- ``aggregation``: Track min/max/average stats in memory and record the results in the database.
+- ``periodic``: Record time-series data on an interval in per-node SQLite database files.
+
+If ``monitor_type = periodic`` and ``make_plots = true`` then torc will generate HTML plots of the
+results.
+
+.. code-block:: json
+
+   config: {
+     compute_node_resource_stats: {
+       cpu: true,
+       disk: false,
+       memory: true,
+       network: false,
+       process: true,
+       include_child_processes: true,
+       recurse_child_processes: false,
+       monitor_type: "aggregation",
+       make_plots: true,
+       interval: 1
+     }
+   }
+
+These command will print summaries of the stats in the terminal:
+
+
+.. code-block:: console
+
+   $ torc jobs list-process-stats
+   $ torc compute-nodes list-resource-stats
+
 Cloud Compute Nodes
 ===================
 We currently do not perform compute node scheduling, but plan to add it soon. The existing ``torc
