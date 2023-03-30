@@ -4,9 +4,10 @@
 const db = require('@arangodb').db;
 const graphModule = require('@arangodb/general-graph');
 const {JobStatus} = require('./defs');
+const utils = require('./utils');
 const config = require('./config');
 const schemas = require('./api/schemas');
-const utils = require('./utils');
+const query = require('./query');
 
 /**
  * Add a file document to the database.
@@ -214,9 +215,9 @@ function addWorkflow(doc) {
  * @param {Object} workflow
  */
 function deleteWorkflow(workflow) {
-  const graphName = config.getWorkflowGraphName(workflow);
-  if (graphModule._list().includes(graphName)) {
-    graphModule._drop(graphName, true);
+  const workflowGraphName = config.getWorkflowGraphName(workflow);
+  if (graphModule._list().includes(workflowGraphName)) {
+    graphModule._drop(workflowGraphName, true);
   }
   for (const name of config.DOCUMENT_COLLECTION_NAMES) {
     const collectionName = config.getWorkflowCollectionName(workflow, name);
@@ -224,7 +225,13 @@ function deleteWorkflow(workflow) {
       db._drop(collectionName);
     }
   }
-  db._remove(workflow._id);
+
+  const workflowConfig = query.getWorkflowConfig(workflow);
+  const status = query.getWorkflowStatus(workflow);
+  const graph = graphModule._graph(config.GRAPH_NAME);
+  graph.workflow_configs.remove(workflowConfig._id);
+  graph.workflow_statuses.remove(status._id);
+  graph.workflows.remove(workflow._id);
 }
 
 /**

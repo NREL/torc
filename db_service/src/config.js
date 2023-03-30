@@ -147,8 +147,9 @@ function getWorkflowGraphName(workflow) {
 }
 
 module.exports = {
-  EDGE_NAMES,
   DOCUMENT_COLLECTION_NAMES,
+  EDGE_NAMES,
+  GRAPH_NAME,
   VERTEX_NAMES,
   createWorkflowCollections,
   getWorkflowCollection,
