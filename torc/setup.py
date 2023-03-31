@@ -14,10 +14,13 @@ here = os.path.abspath(os.path.dirname(__file__))
 with open("README.md", encoding="utf-8") as f:
     readme = f.read()
 
+version = None
 with open(os.path.join(here, "torc", "version.py"), encoding="utf-8") as f:
-    version = f.read()
+    for line in f:
+        if line.startswith("__version__"):
+            version = line.strip().split()[2].strip('"').strip("'")
 
-version = version.split()[2].strip('"').strip("'")
+assert version is not None
 
 
 setup(
