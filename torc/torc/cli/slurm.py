@@ -109,7 +109,7 @@ def add_config(ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, w
     api.post_slurm_schedulers_workflow(
         SlurmSchedulersWorkflowModel(name=name, **config), workflow_key
     )
-    logger.info("Added SLURM configuration %s to database", name, file=sys.stderr)
+    logger.info("Added SLURM configuration %s to database", name)
 
 
 @click.command()
