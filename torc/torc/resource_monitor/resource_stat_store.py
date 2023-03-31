@@ -24,7 +24,7 @@ class ResourceStatStore:
         config: ComputeNodeResourceStatConfig,
         db_file: Path,
         stats,
-        buffered_write_count=30,
+        buffered_write_count=50,
     ):
         self._config = config
         self._buffered_write_count = buffered_write_count
