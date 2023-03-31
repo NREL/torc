@@ -2445,6 +2445,13 @@ paths:
         explode: true
         schema:
           type: string
+      - name: job_name
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
       - name: run_id
         in: query
         required: false
@@ -5210,12 +5217,15 @@ components:
       - completion_time
       - exec_time_minutes
       - job_key
+      - job_name
       - return_code
       - run_id
       - status
       type: object
       properties:
         job_key:
+          type: string
+        job_name:
           type: string
         run_id:
           type: integer
@@ -6036,12 +6046,15 @@ components:
       - completion_time
       - exec_time_minutes
       - job_key
+      - job_name
       - return_code
       - run_id
       - status
       type: object
       properties:
         job_key:
+          type: string
+        job_name:
           type: string
         run_id:
           type: integer
@@ -6259,12 +6272,15 @@ components:
       - completion_time
       - exec_time_minutes
       - job_key
+      - job_name
       - return_code
       - run_id
       - status
       type: object
       properties:
         job_key:
+          type: string
+        job_name:
           type: string
         run_id:
           type: integer

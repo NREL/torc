@@ -109,6 +109,7 @@ class AsyncCliCommand(AsyncJobBase):
         assert self._is_complete
         return ResultsWorkflowModel(
             job_key=self.key,
+            job_name=self._db_job.name,
             run_id=self._db_job.run_id,
             return_code=self._return_code,
             exec_time_minutes=self._exec_time_s / 60,

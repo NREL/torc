@@ -147,6 +147,7 @@ const resourceRequirements = joi.object().required().keys({
 
 const result = joi.object().required().keys({
   job_key: joi.string().required(),
+  job_name: joi.string().required(),
   run_id: joi.number().integer().required(),
   return_code: joi.number().integer().required(),
   exec_time_minutes: joi.number().required(),
