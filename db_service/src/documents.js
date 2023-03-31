@@ -211,6 +211,17 @@ function addWorkflow(doc) {
 }
 
 /**
+ * Cancel the workflow and all active jobs.
+ * @param {Object} workflow
+ */
+function cancelWorkflow(workflow) {
+  const status = query.getWorkflowStatus(workflow);
+  status.is_canceled = true;
+  db.workflow_statuses.update(status, status);
+  query.cancelWorkflowJobs(workflow);
+}
+
+/**
  * Delete all documents connected to the workflow.
  * @param {Object} workflow
  */
@@ -338,6 +349,7 @@ module.exports = {
   addScheduler,
   addUserData,
   addWorkflow,
+  cancelWorkflow,
   deleteWorkflow,
   getSchedulerConfig,
   getWorkflow,

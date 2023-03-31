@@ -26,7 +26,11 @@ class AsyncJobBase(abc.ABC):
 
     @abc.abstractmethod
     def cancel(self):
-        """Cancel the job."""
+        """Cancel the job. Does not wait to confirm. Call wait_for_cancelation afterwards."""
+
+    @abc.abstractmethod
+    def wait_for_cancelation(self, timeout_seconds=30):
+        """Waits to confirm that the job has finished."""
 
     @property
     @abc.abstractmethod
@@ -79,12 +83,15 @@ class AsyncCliCommand(AsyncJobBase):
 
     def cancel(self):
         self._pipe.kill()
+
+    def wait_for_cancelation(self, timeout_seconds=30):
         killed = False
-        for _ in range(10):
+        for _ in range(timeout_seconds):
             if self._pipe.poll() is not None:
                 killed = True
                 logger.info("Killed job %s", self.key)
                 break
+            time.sleep(1)
         if not killed:
             logger.warning("Timed out waiting for job %s to complete after being killed", self.key)
 

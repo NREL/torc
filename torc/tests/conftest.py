@@ -39,6 +39,7 @@ WORK = Path("tests") / "scripts" / "work.py"
 INVALID = Path("tests") / "scripts" / "invalid.py"
 NOOP = Path("tests") / "scripts" / "noop.py"
 RC_JOB = Path("tests") / "scripts" / "resource_consumption.py"
+SLEEP_JOB = Path("tests") / "scripts" / "sleep.py"
 URL = "http://localhost:8529/_db/workflows/torc-service"
 
 
@@ -338,6 +339,38 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
     scheduler = db.get_document("local_schedulers", "test")
     api.post_workflows_initialize_jobs_key(workflow.key)
     yield db, scheduler.id, output_dir, monitor_type
+    api.delete_workflows_key(workflow.key)
+
+
+@pytest.fixture
+def cancelable_workflow(tmp_path):
+    """Creates a workflow with jobs that can be canceled."""
+    api = _initialize_api()
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    scheduler = LocalSchedulersWorkflowModel(name="test")
+    jobs = [
+        JobSpecificationsWorkflowModel(
+            name="job1",
+            command=f"python {SLEEP_JOB} 1000",
+        ),
+        JobSpecificationsWorkflowModel(
+            name="job2",
+            command=f"python {SLEEP_JOB} 1000",
+        ),
+    ]
+
+    spec = WorkflowSpecificationsModel(
+        jobs=jobs,
+        schedulers=WorkflowSpecificationsSchedulers(local_schedulers=[scheduler]),
+    )
+
+    workflow = api.post_workflow_specifications(spec)
+    db = DatabaseInterface(api, workflow)
+    scheduler = db.get_document("local_schedulers", "test")
+    api.post_workflows_initialize_jobs_key(workflow.key)
+    yield db, scheduler.id, output_dir
     api.delete_workflows_key(workflow.key)
 
 

@@ -3,7 +3,6 @@
 import getpass
 import json
 import logging
-import sys
 
 import click
 from swagger_client.models.jobs_workflow_model import JobsWorkflowModel
@@ -25,15 +24,15 @@ def workflows():
 
 
 @click.command()
+@click.argument("workflow_keys", nargs=-1)
 @click.pass_obj
 @click.pass_context
-def cancel(ctx, api, workflow_key):
-    """Cancel all jobs that are currently active in the workflow."""
+def cancel(ctx, api, workflow_keys):
+    """Cancel one or more workflows."""
     setup_cli_logging(ctx, __name__)
-    workflow_key = get_workflow_key_from_context(ctx, api)
-    # TODO: find active nodes by scheduler type and send cancel commands
-    logger.error("Cannot cancel workflow %s %s: not implemented yet:", api, workflow_key)
-    sys.exit(1)
+    for key in workflow_keys:
+        api.put_workflows_cancel_key(key)
+        logger.info("Canceled workflow %s", key)
 
 
 @click.command()
@@ -243,7 +242,6 @@ def reset_status(ctx, api):
     setup_cli_logging(ctx, __name__)
     workflow_key = get_workflow_key_from_context(ctx, api)
     api.post_workflows_reset_status(workflow_key)
-    sys.exit(1)
 
 
 @click.command()

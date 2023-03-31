@@ -6,7 +6,7 @@ from pathlib import Path
 
 import click
 
-from torc.job_runner import JobRunner
+from torc.job_runner import JobRunner, JOB_COMPLETION_POLL_INTERVAL
 from .common import get_workflow_key_from_context, path_callback, setup_cli_logging
 
 
@@ -26,9 +26,16 @@ def local():
     show_default=True,
     callback=path_callback,
 )
+@click.option(
+    "-p",
+    "--poll-interval",
+    default=JOB_COMPLETION_POLL_INTERVAL,
+    show_default=True,
+    help="Poll interval for job completions",
+)
 @click.pass_obj
 @click.pass_context
-def run_jobs(ctx, api, output: Path):
+def run_jobs(ctx, api, output: Path, poll_interval):
     """Run workflow jobs on a local system."""
     workflow_key = get_workflow_key_from_context(ctx, api)
     output.mkdir(exist_ok=True)
@@ -36,7 +43,7 @@ def run_jobs(ctx, api, output: Path):
     log_file = output / f"worker_{hostname}.log"
     setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
     workflow = api.get_workflows_key(workflow_key)
-    runner = JobRunner(api, workflow, output)
+    runner = JobRunner(api, workflow, output, job_completion_poll_interval=poll_interval)
     runner.run_worker()
 
 

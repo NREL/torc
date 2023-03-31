@@ -56,6 +56,36 @@ function addBlocksEdgesFromFiles(workflow) {
 }
 
 /**
+ * Cancel all active jobs in the workflow.
+ * @param {Object} workflow
+ */
+function cancelWorkflowJobs(workflow) {
+  const collection = config.getWorkflowCollection(workflow, 'jobs');
+  const collectionName = config.getWorkflowCollectionName(workflow, 'jobs');
+
+  db._executeTransaction({
+    collections: {
+      exclusive: collectionName,
+      allowImplicit: false,
+    },
+    action: function() {
+      const cursor = query`
+        FOR job IN ${collection}
+          FILTER job.status == ${JobStatus.Submitted}
+          || job.status == ${JobStatus.SubmittedPending}
+          RETURN job
+      `;
+
+      for (const job of cursor) {
+        job.status = JobStatus.Canceled;
+        collection.update(job, job);
+        // TODO: should there be a result?
+      }
+    },
+  });
+}
+
+/**
  * Get information about the resources required for currently-available jobs.
  * @param {Object} workflow
  * @return {Object}
@@ -513,6 +543,9 @@ function isJobStatusComplete(status) {
  * @return {bool}
  */
 function isWorkflowComplete(workflow) {
+  // TODO: This function will be called a lot - by every compute node on some interval.
+  // May need to ensure that jobs or at least their status are always cached.
+  // Or track job completions, which could easily end up being wrong.
   const collection = config.getWorkflowCollection(workflow, 'jobs');
   const cursor = query({count: true})`
     FOR job in ${collection}
@@ -763,6 +796,9 @@ function processAutoTuneResourceRequirementsResults(workflow) {
     const maxCpusUsed = stats.max_cpu_percent == 0 ? 1 : Math.ceil(stats.max_cpu_percent / 100);
     const rr = getJobResourceRequirements(job, workflow);
     const result = getLatestJobResult(job, workflow);
+    if (result == null) {
+      throw new Error(`No job result for ${job._key} - ${job.status}. Cannot complete auto-tune.`);
+    }
     const oldRr = JSON.parse(JSON.stringify(rr));
     rr.num_cpus = maxCpusUsed;
     rr.memory = maxMemory;
@@ -875,6 +911,7 @@ function updateWorkflowConfig(workflow, config) {
 
 module.exports = {
   addBlocksEdgesFromFiles,
+  cancelWorkflowJobs,
   getReadyJobRequirements,
   getBlockingJobs,
   getFilesNeededByJob,

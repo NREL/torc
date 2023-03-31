@@ -4988,6 +4988,41 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
+  /workflows/cancel/{key}:
+    put:
+      tags: []
+      summary: Cancel workflow.
+      description: Cancel workflow. Workers will detect the status change and cancel
+        jobs.
+      operationId: put_workflows_cancel_key
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*': {}
+        required: false
+      responses:
+        "200":
+          description: message
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
   /workflows/reset_status/{key}:
     post:
       tags: []
@@ -5317,9 +5352,12 @@ components:
           type: boolean
     inline_response_200_22:
       required:
+      - is_canceled
       - is_complete
       type: object
       properties:
+        is_canceled:
+          type: boolean
         is_complete:
           type: boolean
     inline_response_200_21:

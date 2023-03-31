@@ -94,8 +94,9 @@ router.delete('/workflows/:key', function(req, res) {
 router.get('/workflows/is_complete/:key', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
+  const status = query.getWorkflowStatus(workflow);
   try {
-    res.send({is_complete: query.isWorkflowComplete(workflow)});
+    res.send({is_canceled: status.is_canceled, is_complete: query.isWorkflowComplete(workflow)});
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Check workflow is_complete key=${key}`);
   }
@@ -209,6 +210,21 @@ router.get('/workflows/config/:key', function(req, res) {
     .response(schemas.workflowConfig)
     .summary('Reports the workflow config.')
     .description('Reports the workflow config.');
+
+router.put('/workflows/cancel/:key', function(req, res) {
+  const key = req.pathParams.key;
+  const workflow = documents.getWorkflow(key, res);
+  try {
+    documents.cancelWorkflow(workflow);
+    res.send({message: `Canceled workflow`});
+  } catch (e) {
+    utils.handleArangoApiErrors(e, res, `Cancel workflow key=${key}`);
+  }
+})
+    .pathParam('key', joi.string().required(), 'Workflow key')
+    .response(joi.object(), 'message')
+    .summary('Cancel workflow.')
+    .description(`Cancel workflow. Workers will detect the status change and cancel jobs.`);
 
 router.put('/workflows/config/:key', function(req, res) {
   const key = req.pathParams.key;

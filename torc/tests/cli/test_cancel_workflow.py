@@ -1,0 +1,40 @@
+"""Tests the cancel-workflow command."""
+
+import subprocess
+import time
+
+from torc.api import iter_documents
+
+
+def test_cancel_workflow(cancelable_workflow):
+    """Tests the cancel-workflow command."""
+    db = cancelable_workflow[0]
+    api = db.api
+    workflow_key = db.workflow.key
+
+    cmd = [
+        "torc",
+        "-k",
+        workflow_key,
+        "-u",
+        api.api_client.configuration.host,
+        "local",
+        "run-jobs",
+        "-p",
+        "1",
+    ]
+    with subprocess.Popen(cmd) as pipe:
+        time.sleep(2)
+        assert pipe.poll() is None
+        subprocess.run(
+            ["torc", "-u", api.api_client.configuration.host, "workflows", "cancel", workflow_key],
+            check=True,
+        )
+        status = api.get_workflows_status_key(workflow_key)
+        assert status.is_canceled
+        result = api.get_workflows_is_complete_key(workflow_key)
+        assert result.is_complete
+        pipe.communicate()
+        assert pipe.returncode == 0
+        for job in iter_documents(api.get_jobs_workflow, workflow_key):
+            assert job.status == "canceled"

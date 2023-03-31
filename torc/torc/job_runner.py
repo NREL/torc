@@ -45,6 +45,8 @@ from torc.utils.timing import timer_stats_collector, Timer
 from .async_cli_command import AsyncCliCommand
 from .common import KiB, MiB, GiB, TiB
 
+JOB_COMPLETION_POLL_INTERVAL = 60
+
 logger = logging.getLogger(__name__)
 
 
@@ -56,7 +58,7 @@ class JobRunner:
         api: DefaultApi,
         workflow: WorkflowsModel,
         output_dir: Path,
-        job_completion_poll_interval=10,
+        job_completion_poll_interval=JOB_COMPLETION_POLL_INTERVAL,
         database_poll_interval=600,
         time_limit=None,
         resources=None,
@@ -92,7 +94,6 @@ class JobRunner:
         self._orig_resources = resources or _get_system_resources(time_limit)
         self._orig_resources.scheduler_config_id = self._scheduler_config_id
         self._resources = PrepareJobsForSubmissionKeyModel(**self._orig_resources.to_dict())
-        self._num_jobs = 0
         self._last_db_poll_time = 0
         self._compute_node = None
         self._stats = ComputeNodeResourceStatConfig(
@@ -145,22 +146,9 @@ class JobRunner:
         timeout = _get_timeout(self._resources.time_limit)
         start_time = time.time()
 
-        def timed_out():
-            return time.time() - start_time > timeout
-
-        while (
-            not send_api_command(
-                self._api.get_workflows_is_complete_key, self._workflow.key
-            ).is_complete
-            or not timed_out()
-        ):
-            status = send_api_command(self._api.get_workflows_status_key, self._workflow.key)
-            if status.is_canceled:
-                logger.info("Detected a canceled workflow. Cancel all outstanding jobs and exit.")
-                num_completed = self._cancel_outstanding_jobs()
-                break
-
-            num_completed = self._process_completions(cancel=False)
+        result = send_api_command(self._api.get_workflows_is_complete_key, self._workflow.key)
+        while not result.is_complete and not time.time() - start_time > timeout:
+            num_completed = self._process_completions()
             num_started = 0
             if num_completed > 0 or self._is_time_to_poll_database():
                 num_started = self._run_ready_jobs()
@@ -186,6 +174,11 @@ class JobRunner:
 
             time.sleep(self._poll_interval)
             # TODO: check time remaining and then for interruptible jobs
+            result = send_api_command(self._api.get_workflows_is_complete_key, self._workflow.key)
+
+        if result.is_canceled:
+            logger.info("Detected a canceled workflow. Cancel all outstanding jobs and exit.")
+            self._cancel_jobs(list(self._outstanding_jobs.values()))
 
         self._pids.clear()
         self._handle_completed_process_stats()
@@ -214,9 +207,6 @@ class JobRunner:
             self._workflow.key,
             self._compute_node.key,
         )
-
-    def _cancel_outstanding_jobs(self):
-        return self._process_completions(cancel=True)
 
     def _complete_job(self, job, result):
         job = send_api_command(
@@ -300,21 +290,17 @@ class JobRunner:
             self._workflow.key,
         )
 
-    def _process_completions(self, cancel=False):
+    def _process_completions(self):
         done_jobs = []
         db_jobs = {}
         for job in self._outstanding_jobs.values():
-            if cancel:
-                job.cancel()
             if job.is_complete():
                 result = job.get_result()
                 done_jobs.append(result)
                 db_jobs[job.key] = job.db_job
                 self._increment_resources(job.db_job)
                 self._log_job_complete_event(job.key, result.status)
-                if not cancel:
-                    self._update_file_info(job)
-                    self._num_jobs += 1
+                self._update_file_info(job)
 
         for result in done_jobs:
             self._outstanding_jobs.pop(result.job_key)
@@ -328,6 +314,21 @@ class JobRunner:
         else:
             logger.debug("Found 0 completions")
         return len(done_jobs)
+
+    def _cancel_jobs(self, jobs):
+        for job in jobs:
+            # Note that the database API service changes job status to canceled.
+            job.cancel()
+        for job in jobs:
+            job.wait_for_cancelation()
+            assert job.is_complete()
+            self._outstanding_jobs.pop(job.db_job.key)
+            self._increment_resources(job.db_job)
+            self._log_job_complete_event(job.key, "canceled")
+            # Don't post results for canceled jobs.
+            if self._stats.process:
+                self._jobs_pending_process_stat_completion.append(job.db_job.key)
+                self._pids.pop(job.db_job.key)
 
     def _run_job(self, job: AsyncCliCommand):
         job.run(self._output_dir)

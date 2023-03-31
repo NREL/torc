@@ -167,6 +167,15 @@ failure.
 
    $ torc results list
 
+Cancel a workflow
+=================
+This CLI command will cancel a workflow as well as all active jobs. It may take 1-2 minutes for
+compute nodes to kill their jobs and exit.
+
+.. code-block:: console
+
+   $ torc workflow cancel <workflow_key>
+
 Resource Utilization Statistics
 ===============================
 Torc will optionally monitor resource utilization on compute nodes. You can define these settings

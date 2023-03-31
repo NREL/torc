@@ -62,6 +62,7 @@ const file = joi.object().required().keys({
 });
 
 const isComplete = joi.object().required().keys({
+  is_canceled: joi.boolean().required(),
   is_complete: joi.boolean().required(),
 });
 

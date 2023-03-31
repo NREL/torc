@@ -17,7 +17,11 @@ from torc.api import iter_documents, remove_db_keys
 from torc.hpc.common import HpcType
 from torc.hpc.hpc_manager import HpcManager
 from torc.hpc.slurm_interface import SlurmInterface
-from torc.job_runner import JobRunner, convert_end_time_to_duration_str
+from torc.job_runner import (
+    JobRunner,
+    convert_end_time_to_duration_str,
+    JOB_COMPLETION_POLL_INTERVAL,
+)
 from torc.utils.run_command import get_cli_string
 from .common import (
     get_workflow_key_from_context,
@@ -235,9 +239,16 @@ def schedule_nodes(ctx, api, job_prefix, num_hpc_jobs, output, scheduler_config_
     show_default=True,
     callback=path_callback,
 )
+@click.option(
+    "-p",
+    "--poll-interval",
+    default=JOB_COMPLETION_POLL_INTERVAL,
+    show_default=True,
+    help="Poll interval for job completions",
+)
 @click.pass_obj
 @click.pass_context
-def run_jobs(ctx, api, output):
+def run_jobs(ctx, api, output, poll_interval):
     """Run workflow jobs on a SLURM compute node."""
     workflow_key = get_workflow_key_from_context(ctx, api)
     intf = SlurmInterface()
@@ -275,6 +286,7 @@ def run_jobs(ctx, api, output):
         output,
         time_limit=time_limit,
         scheduler_config_id=scheduler_config_id,
+        job_completion_poll_interval=poll_interval,
     )
 
     if node is not None:
