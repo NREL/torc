@@ -99,8 +99,8 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     )
     for rr in (small, medium, large):
         assert rr.runtime == "P0DT0H1M"
-        # This is unreliable.
-        # assert rr.num_cpus in (1, 2)
+        # This is totally unreliable and sometimes is high as 54 on a 16-core system.
+        assert rr.num_cpus in range(1, 8)
         assert rr.memory.lower() == "1g"
 
     for job in api.get_jobs_workflow(db.workflow.key).items:
@@ -122,10 +122,10 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
         db.workflow,
         output_dir,
         resources=resources,
-        job_completion_poll_interval=0.1,
+        job_completion_poll_interval=1,
     )
     runner.run_worker()
-    assert api.get_workflows_is_complete_key(db.workflow.key)
+    assert api.get_workflows_is_complete_key(db.workflow.key).is_complete
 
     df = make_job_process_stats_dataframe(api, db.workflow.key)
     assert isinstance(df, pl.DataFrame)

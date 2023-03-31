@@ -150,7 +150,7 @@ class JobRunner:
         while not result.is_complete and not time.time() - start_time > timeout:
             num_completed = self._process_completions()
             num_started = 0
-            if num_completed > 0 or self._is_time_to_poll_database():
+            if num_completed > 0 or self._is_time_to_poll_database() or not self._outstanding_jobs:
                 num_started = self._run_ready_jobs()
 
             if num_started == 0 and not self._outstanding_jobs:
@@ -366,7 +366,8 @@ class JobRunner:
             self._resources,
             self._workflow.key,
         )
-        logger.info("%s jobs are ready for submission", len(ready_jobs))
+        if ready_jobs:
+            logger.info("%s jobs are ready for submission", len(ready_jobs))
         for job in ready_jobs:
             self._run_job(AsyncCliCommand(job))
             self._decrement_resources(job)

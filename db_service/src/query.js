@@ -641,7 +641,6 @@ function prepareJobsForSubmission(workflow, workerResources, limit) {
       allowImplicit: false,
     },
     action: function() {
-      const db = require('@arangodb').db;
       const cursor = query`
         FOR job IN ${collection}
           FILTER job.status == ${JobStatus.Ready}
