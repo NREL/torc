@@ -33,6 +33,7 @@ def cancel(ctx, api, workflow_keys):
     for key in workflow_keys:
         api.put_workflows_cancel_key(key)
         logger.info("Canceled workflow %s", key)
+        # TODO: lookup scheduled compute nodes and cancel them.
 
 
 @click.command()
