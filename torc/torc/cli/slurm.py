@@ -113,7 +113,6 @@ def add_config(ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, w
 
 
 @click.command()
-@click.option("-k", "--workflow-key", type=str, required=True, help="Workflow key")
 @click.pass_obj
 @click.pass_context
 def list_configs(ctx, api):
