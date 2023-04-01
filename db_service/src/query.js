@@ -633,7 +633,6 @@ function prepareJobsForSubmission(workflow, workerResources, limit) {
   const schedulerConfigId = workerResources.scheduler_config_id == null ? '' :
     workerResources.scheduler_config_id;
   // TODO: numGpus
-  const jobsCollection = config.getWorkflowCollection(workflow, 'jobs');
 
   db._executeTransaction({
     collections: {
@@ -648,7 +647,7 @@ function prepareJobsForSubmission(workflow, workerResources, limit) {
             && job.internal.num_cpus < ${availableCpus}
             && job.internal.runtime_seconds < ${workerTimeLimit}
             && job.internal.num_nodes == ${workerResources.num_nodes}
-            && (${schedulerConfigId} == ''
+            && (${schedulerConfigId} == '' || job.internal.scheduler_config_id == ''
             || job.internal.scheduler_config_id == ${schedulerConfigId})
           LIMIT ${queryLimit}
           RETURN job
@@ -662,7 +661,7 @@ function prepareJobsForSubmission(workflow, workerResources, limit) {
           job.internal.memory_bytes <= availableMemory
         ) {
           job.status = JobStatus.SubmittedPending;
-          const meta = jobsCollection.update(job, job);
+          const meta = collection.update(job, job);
           Object.assign(job, meta);
           jobs.push(job);
           availableCpus -= job.internal.num_cpus;

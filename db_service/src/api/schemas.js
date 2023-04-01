@@ -139,7 +139,7 @@ const resourceRequirements = joi.object().required().keys({
   num_gpus: joi.number().integer().default(0),
   num_nodes: joi.number().integer().default(1),
   memory: joi.string().default('1m'),
-  runtime: joi.string().default('P0DT1H'), // ISO 8601 encoding for duration
+  runtime: joi.string().default('P0DT1M'), // ISO 8601 encoding for duration
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),
