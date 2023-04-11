@@ -7,7 +7,12 @@ from pathlib import Path
 import click
 
 from torc.job_runner import JobRunner, JOB_COMPLETION_POLL_INTERVAL
-from .common import get_workflow_key_from_context, path_callback, setup_cli_logging
+from .common import (
+    check_database_url,
+    get_workflow_key_from_context,
+    path_callback,
+    setup_cli_logging,
+)
 
 
 logger = logging.getLogger(__name__)
@@ -33,17 +38,25 @@ def local():
     show_default=True,
     help="Poll interval for job completions",
 )
+@click.option(
+    "-t",
+    "--time-limit",
+    help="Time limit ISO 8601 time duration format (like 'P0DT24H'), defaults to no limit.",
+)
 @click.pass_obj
 @click.pass_context
-def run_jobs(ctx, api, output: Path, poll_interval):
+def run_jobs(ctx, api, output: Path, poll_interval, time_limit):
     """Run workflow jobs on a local system."""
     workflow_key = get_workflow_key_from_context(ctx, api)
     output.mkdir(exist_ok=True)
     hostname = socket.gethostname()
     log_file = output / f"worker_{hostname}.log"
     setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
+    check_database_url(api)
     workflow = api.get_workflows_key(workflow_key)
-    runner = JobRunner(api, workflow, output, job_completion_poll_interval=poll_interval)
+    runner = JobRunner(
+        api, workflow, output, job_completion_poll_interval=poll_interval, time_limit=time_limit
+    )
     runner.run_worker()
 
 

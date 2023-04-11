@@ -6,10 +6,11 @@ import click
 
 from torc.api import iter_documents
 from .common import (
+    check_database_url,
     get_workflow_key_from_context,
     setup_cli_logging,
-    make_text_table,
     parse_filters,
+    print_items,
 )
 
 
@@ -36,24 +37,24 @@ def list_results(ctx, api, filters):
 
     \b
     Examples:
-    1. List all results.
-       $ torc results 91388876 list results
+    1. List all results in a table.
+       $ torc results list
     2. List only results with name=result1
-       $ torc results 91388876 list results -f return_code=1
+       $ torc results list -f return_code=1
+    3. List all results in JSON format.
+       $ torc -F json results 91388876 list results
     """
     setup_cli_logging(ctx, __name__)
+    check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     exclude = ("id", "rev")
     filters = parse_filters(filters)
-    table = make_text_table(
-        (x.to_dict() for x in iter_documents(api.get_results_workflow, workflow_key, **filters)),
-        "results",
-        exclude_columns=exclude,
+    table_title = f"Results in workflow {workflow_key}"
+    items = (
+        x.to_dict()
+        for x in iter_documents(api.get_workflows_workflow_results, workflow_key, **filters)
     )
-    if table.rows:
-        print(table)
-    else:
-        print("No results are stored")
+    print_items(ctx, items, table_title=table_title, json_key="results", exclude_columns=exclude)
 
 
 results.add_command(list_results)

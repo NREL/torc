@@ -73,6 +73,8 @@ Here is the ``arangosh`` command to create a database. You can use any name; all
 page use ``workflows``. Note that the name shows up in the the API endpoint that you'll create
 in the next step.
 
+.. note:: If you want to run the torc test suite, the database name must be ``test-workflows``.
+
 .. code-block:: console
 
    127.0.0.1:8529@_system> db._createDatabase('workflows')

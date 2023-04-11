@@ -1,3 +1,5 @@
+.. _installation:
+
 ############
 Installation
 ############
@@ -37,6 +39,10 @@ Installation
 .. code-block:: console
 
    $ pip install -e python_client
+
+7. Optionally install ``jq`` from https://stedolan.github.io/jq/download/ for parsing JSON.
+   This tool is very useful when sending API requests with ``curl`` or dumping torc output to
+   JSON.
 
 Refer to :ref:`generate_client_apis` to generate a new API after changing the API endpoint.
 

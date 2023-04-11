@@ -26,7 +26,7 @@ function addRouterMethods(router, descriptor) {
  * @param {Object} descriptor
  */
 function addPostMethod(router, descriptor) {
-  router.post(`/${descriptor.collection}/:workflow`, function(req, res) {
+  router.post(`/workflows/:workflow/${descriptor.collection}`, function(req, res) {
     const workflowKey = req.pathParams.workflow;
     const workflow = documents.getWorkflow(workflowKey, res);
     let doc = req.body;
@@ -59,14 +59,14 @@ function addPostMethod(router, descriptor) {
  * @param {Object} descriptor
  */
 function addPutMethod(router, descriptor) {
-  router.put(`/${descriptor.collection}/:workflow/:key`, function(req, res) {
+  router.put(`/workflows/:workflow/${descriptor.collection}/:key`, function(req, res) {
     const key = req.pathParams.key;
     const workflowKey = req.pathParams.workflow;
     const workflow = documents.getWorkflow(workflowKey, res);
     const collection = config.getWorkflowCollection(workflow, descriptor.collection);
     let doc = req.body;
     if (doc._rev == null) {
-      res.throw(400, `Updating a document of type ${descriptor.name} requires the existing revision`);
+      res.throw(400, `Updating a document requires the existing revision`);
     }
     if (key != doc._key) {
       res.throw(400, `key=${key} does not match ${doc._key}`);
@@ -97,7 +97,7 @@ function addPutMethod(router, descriptor) {
  * @param {Object} descriptor
  */
 function addGetOneMethod(router, descriptor) {
-  router.get(`/${descriptor.collection}/:workflow/:key`, function(req, res) {
+  router.get(`/workflows/:workflow/${descriptor.collection}/:key`, function(req, res) {
     const workflowKey = req.pathParams.workflow;
     const key = req.pathParams.key;
     const workflow = documents.getWorkflow(workflowKey, res);
@@ -114,8 +114,8 @@ function addGetOneMethod(router, descriptor) {
       .pathParam('workflow', joi.string().required(), 'Workflow key')
       .pathParam('key', joi.string().required(), `key of the ${descriptor.collection} document`)
       .response(descriptor.schema)
-      .summary(`Retrieve the ${descriptor.name} for an key.`)
-      .description(`Retrieve the document for a key from the "${descriptor.collection}" collection.`);
+      .summary(`Retrieve the ${descriptor.name} for a key.`)
+      .description(`Retrieve the document from the "${descriptor.collection}" collection by key.`);
 }
 
 /**
@@ -124,7 +124,7 @@ function addGetOneMethod(router, descriptor) {
  * @param {Object} descriptor
  */
 function addGetAllMethod(router, descriptor) {
-  const getAll = router.get(`/${descriptor.collection}/:workflow`, function(req, res) {
+  const getAll = router.get(`/workflows/:workflow/${descriptor.collection}`, function(req, res) {
     const qp = req.queryParams;
     const limit = utils.getItemsLimit(qp.limit);
     const workflowKey = req.pathParams.workflow;
@@ -159,7 +159,8 @@ function addGetAllMethod(router, descriptor) {
       .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
       .response(descriptor.batchSchema)
       .summary(`Retrieve all ${descriptor.name} documents`)
-      .description(`Retrieve all documents from the "${descriptor.collection}" collection for one workflow.`);
+      .description(`Retrieve all documents from the "${descriptor.collection}" collection for ` +
+      `one workflow.`);
   for (const filterField of descriptor.filterFields) {
     getAll.queryParam(filterField.name, filterField.type);
   }
@@ -171,7 +172,7 @@ function addGetAllMethod(router, descriptor) {
  * @param {Object} descriptor
  */
 function addDeleteOneMethod(router, descriptor) {
-  router.delete(`/${descriptor.collection}/:workflow/:key`, function(req, res) {
+  router.delete(`/workflows/:workflow/${descriptor.collection}/:key`, function(req, res) {
     const workflowKey = req.pathParams.workflow;
     const key = req.pathParams.key;
     const workflow = documents.getWorkflow(workflowKey, res);
@@ -187,7 +188,8 @@ function addDeleteOneMethod(router, descriptor) {
       }
       res.send(doc);
     } catch (e) {
-      utils.handleArangoApiErrors(e, res, `Delete ${descriptor.collection} document with key=${key}`);
+      utils.handleArangoApiErrors(e, res,
+          `Delete ${descriptor.collection} document with key=${key}`);
     }
   })
       .pathParam('workflow', joi.string().required(), 'Workflow key')
@@ -204,7 +206,7 @@ function addDeleteOneMethod(router, descriptor) {
  * @param {Object} descriptor
  */
 function addDeleteAllMethod(router, descriptor) {
-  router.delete(`/${descriptor.collection}/:workflow`, function(req, res) {
+  router.delete(`/workflows/:workflow/${descriptor.collection}`, function(req, res) {
     const workflowKey = req.pathParams.workflow;
     const workflow = documents.getWorkflow(workflowKey, res);
     const graph = config.getWorkflowGraph(workflow);
@@ -218,7 +220,8 @@ function addDeleteAllMethod(router, descriptor) {
           graph[collectionName].remove(doc._key);
         }
       }
-      res.send({message: `Deleted all documents in the "${descriptor.collection}" collection for workflow ${workflowKey}`});
+      res.send({message: `Deleted all documents in the "${descriptor.collection}" collection ` +
+      `for workflow ${workflowKey}`});
     } catch (e) {
       utils.handleArangoApiErrors(e, res, `Delete all ${collectionName} documents`);
     }
@@ -227,7 +230,8 @@ function addDeleteAllMethod(router, descriptor) {
       .body(joi.object().optional())
       .response(joi.object(), 'message')
       .summary(`Delete all documents of type ${descriptor.name} for a workflow`)
-      .description(`Delete all documents from the "${descriptor.collection}" collection for a workflow.`);
+      .description(`Delete all documents from the "${descriptor.collection}" collection for a ` +
+        `workflow.`);
 }
 
 module.exports = {

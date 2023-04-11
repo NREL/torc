@@ -128,7 +128,7 @@ const ROUTE_DESCRIPTORS = [
         type: joi.boolean(),
       },
       {
-        name: 'interruptible',
+        name: 'supports_termination',
         type: joi.boolean(),
       },
     ],
@@ -272,8 +272,8 @@ const ROUTE_DESCRIPTORS = [
     ],
   },
   {
-    name: 'SLURM compute node configuration',
-    description: 'SLURM compute node configuration',
+    name: 'Slurm compute node configuration',
+    description: 'Slurm compute node configuration',
     collection: 'slurm_schedulers',
     schema: schemas.slurmScheduler,
     batchSchema: schemas.batchSlurmSchedulers,

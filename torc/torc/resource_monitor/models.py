@@ -24,11 +24,11 @@ class TorcBaseModel(BaseModel):
 class ResourceType(enum.Enum):
     """Types of resources to monitor"""
 
-    CPU = "CPU"
-    DISK = "Disk"
-    MEMORY = "Memory"
-    NETWORK = "Network"
-    PROCESS = "Process"
+    CPU = "cpu"
+    DISK = "disk"
+    MEMORY = "memory"
+    NETWORK = "network"
+    PROCESS = "process"
 
 
 class IpcMonitorCommands(enum.Enum):

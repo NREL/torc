@@ -43,7 +43,7 @@ class HpcManager:
 
         return ret
 
-    def check_status(self, job_id=None):
+    def get_status(self, job_id=None):
         """Return the status of a job by ID.
 
         Parameters
@@ -56,11 +56,11 @@ class HpcManager:
         HpcJobStatus
 
         """
-        info = self._intf.check_status(job_id=job_id)
+        info = self._intf.get_status(job_id=job_id)
         logger.debug("info=%s", info)
         return info.status
 
-    def check_statuses(self):
+    def get_statuses(self):
         """Check the statuses of all user jobs.
 
         Returns
@@ -69,7 +69,7 @@ class HpcManager:
             key is job_id, value is HpcJobStatus
 
         """
-        return self._intf.check_statuses()
+        return self._intf.get_statuses()
 
     def get_job_stats(self, job_id):
         """Get stats for job ID.

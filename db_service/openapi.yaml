@@ -3,15 +3,15 @@ info:
   description: ""
   license: {}
 servers:
-- url: /_db/workflows/torc-service
+- url: /_db/test-workflows/torc-service
 paths:
-  /aws_schedulers/{workflow}:
+  /workflows/{workflow}/aws_schedulers:
     get:
       tags: []
       summary: Retrieve all AWS compute node configuration documents
       description: Retrieve all documents from the "aws_schedulers" collection for
         one workflow.
-      operationId: get_aws_schedulers_workflow
+      operationId: get_workflows_workflow_aws_schedulers
       parameters:
       - name: workflow
         in: path
@@ -70,7 +70,7 @@ paths:
       summary: Store a AWS compute node configuration.
       description: Store a AWS compute node configuration in the "aws_schedulers"
         collection.
-      operationId: post_aws_schedulers_workflow
+      operationId: post_workflows_workflow_aws_schedulers
       parameters:
       - name: workflow
         in: path
@@ -85,7 +85,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/aws_schedulers_workflow_model'
+              $ref: '#/components/schemas/workflow_aws_schedulers_model'
         required: true
       responses:
         "200":
@@ -93,7 +93,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/aws_schedulers_workflow_model'
+                $ref: '#/components/schemas/workflow_aws_schedulers_model'
         "500":
           description: Default error response.
           content:
@@ -107,7 +107,7 @@ paths:
       summary: Delete all documents of type AWS compute node configuration for a workflow
       description: Delete all documents from the "aws_schedulers" collection for a
         workflow.
-      operationId: delete_aws_schedulers_workflow
+      operationId: delete_workflows_workflow_aws_schedulers
       parameters:
       - name: workflow
         in: path
@@ -138,12 +138,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /aws_schedulers/{workflow}/{key}:
+  /workflows/{workflow}/aws_schedulers/{key}:
     get:
       tags: []
-      summary: Retrieve the AWS compute node configuration for an key.
-      description: Retrieve the document for a key from the "aws_schedulers" collection.
-      operationId: get_aws_schedulers_workflow_key
+      summary: Retrieve the AWS compute node configuration for a key.
+      description: Retrieve the document from the "aws_schedulers" collection by key.
+      operationId: get_workflows_workflow_aws_schedulers_key
       parameters:
       - name: workflow
         in: path
@@ -167,7 +167,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/aws_schedulers_workflow_model'
+                $ref: '#/components/schemas/workflow_aws_schedulers_model'
         "500":
           description: Default error response.
           content:
@@ -179,7 +179,7 @@ paths:
       tags: []
       summary: Update AWS compute node configuration
       description: Update a document in the "aws_schedulers" collection.
-      operationId: put_aws_schedulers_workflow_key
+      operationId: put_workflows_workflow_aws_schedulers_key
       parameters:
       - name: workflow
         in: path
@@ -202,7 +202,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow_key_model'
+              $ref: '#/components/schemas/aws_schedulers_key_model'
         required: true
       responses:
         "200":
@@ -210,7 +210,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model'
+                $ref: '#/components/schemas/aws_schedulers_key_model'
         "500":
           description: Default error response.
           content:
@@ -223,7 +223,7 @@ paths:
       tags: []
       summary: Delete a document of type AWS compute node configuration
       description: Deletes a document from the "aws_schedulers" collection by key.
-      operationId: delete_aws_schedulers_workflow_key
+      operationId: delete_workflows_workflow_aws_schedulers_key
       parameters:
       - name: workflow
         in: path
@@ -253,7 +253,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model'
+                $ref: '#/components/schemas/aws_schedulers_key_model'
         "500":
           description: Default error response.
           content:
@@ -262,13 +262,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /compute_nodes/{workflow}:
+  /workflows/{workflow}/compute_nodes:
     get:
       tags: []
       summary: Retrieve all compute node documents
       description: Retrieve all documents from the "compute_nodes" collection for
         one workflow.
-      operationId: get_compute_nodes_workflow
+      operationId: get_workflows_workflow_compute_nodes
       parameters:
       - name: workflow
         in: path
@@ -333,7 +333,7 @@ paths:
       tags: []
       summary: Store a compute node.
       description: Store a compute node in the "compute_nodes" collection.
-      operationId: post_compute_nodes_workflow
+      operationId: post_workflows_workflow_compute_nodes
       parameters:
       - name: workflow
         in: path
@@ -348,7 +348,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/compute_nodes_workflow_model'
+              $ref: '#/components/schemas/workflow_compute_nodes_model'
         required: true
       responses:
         "200":
@@ -370,7 +370,7 @@ paths:
       summary: Delete all documents of type compute node for a workflow
       description: Delete all documents from the "compute_nodes" collection for a
         workflow.
-      operationId: delete_compute_nodes_workflow
+      operationId: delete_workflows_workflow_compute_nodes
       parameters:
       - name: workflow
         in: path
@@ -401,12 +401,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /compute_nodes/{workflow}/{key}:
+  /workflows/{workflow}/compute_nodes/{key}:
     get:
       tags: []
-      summary: Retrieve the compute node for an key.
-      description: Retrieve the document for a key from the "compute_nodes" collection.
-      operationId: get_compute_nodes_workflow_key
+      summary: Retrieve the compute node for a key.
+      description: Retrieve the document from the "compute_nodes" collection by key.
+      operationId: get_workflows_workflow_compute_nodes_key
       parameters:
       - name: workflow
         in: path
@@ -442,7 +442,7 @@ paths:
       tags: []
       summary: Update compute node
       description: Update a document in the "compute_nodes" collection.
-      operationId: put_compute_nodes_workflow_key
+      operationId: put_workflows_workflow_compute_nodes_key
       parameters:
       - name: workflow
         in: path
@@ -465,7 +465,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow_key_model_1'
+              $ref: '#/components/schemas/compute_nodes_key_model'
         required: true
       responses:
         "200":
@@ -486,7 +486,7 @@ paths:
       tags: []
       summary: Delete a document of type compute node
       description: Deletes a document from the "compute_nodes" collection by key.
-      operationId: delete_compute_nodes_workflow_key
+      operationId: delete_workflows_workflow_compute_nodes_key
       parameters:
       - name: workflow
         in: path
@@ -525,13 +525,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /compute_node_stats/{workflow}:
+  /workflows/{workflow}/compute_node_stats:
     get:
       tags: []
       summary: Retrieve all compute node statistics documents
       description: Retrieve all documents from the "compute_node_stats" collection
         for one workflow.
-      operationId: get_compute_node_stats_workflow
+      operationId: get_workflows_workflow_compute_node_stats
       parameters:
       - name: workflow
         in: path
@@ -589,7 +589,7 @@ paths:
       tags: []
       summary: Store a compute node statistics.
       description: Store a compute node statistics in the "compute_node_stats" collection.
-      operationId: post_compute_node_stats_workflow
+      operationId: post_workflows_workflow_compute_node_stats
       parameters:
       - name: workflow
         in: path
@@ -604,7 +604,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/compute_node_stats_workflow_model'
+              $ref: '#/components/schemas/workflow_compute_node_stats_model'
         required: true
       responses:
         "200":
@@ -626,7 +626,7 @@ paths:
       summary: Delete all documents of type compute node statistics for a workflow
       description: Delete all documents from the "compute_node_stats" collection for
         a workflow.
-      operationId: delete_compute_node_stats_workflow
+      operationId: delete_workflows_workflow_compute_node_stats
       parameters:
       - name: workflow
         in: path
@@ -657,12 +657,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /compute_node_stats/{workflow}/{key}:
+  /workflows/{workflow}/compute_node_stats/{key}:
     get:
       tags: []
-      summary: Retrieve the compute node statistics for an key.
-      description: Retrieve the document for a key from the "compute_node_stats" collection.
-      operationId: get_compute_node_stats_workflow_key
+      summary: Retrieve the compute node statistics for a key.
+      description: Retrieve the document from the "compute_node_stats" collection
+        by key.
+      operationId: get_workflows_workflow_compute_node_stats_key
       parameters:
       - name: workflow
         in: path
@@ -698,7 +699,7 @@ paths:
       tags: []
       summary: Update compute node statistics
       description: Update a document in the "compute_node_stats" collection.
-      operationId: put_compute_node_stats_workflow_key
+      operationId: put_workflows_workflow_compute_node_stats_key
       parameters:
       - name: workflow
         in: path
@@ -721,7 +722,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow_key_model_2'
+              $ref: '#/components/schemas/compute_node_stats_key_model'
         required: true
       responses:
         "200":
@@ -743,7 +744,7 @@ paths:
       summary: Delete a document of type compute node statistics
       description: Deletes a document from the "compute_node_stats" collection by
         key.
-      operationId: delete_compute_node_stats_workflow_key
+      operationId: delete_workflows_workflow_compute_node_stats_key
       parameters:
       - name: workflow
         in: path
@@ -782,12 +783,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /events/{workflow}:
+  /workflows/{workflow}/events:
     get:
       tags: []
       summary: Retrieve all event documents
       description: Retrieve all documents from the "events" collection for one workflow.
-      operationId: get_events_workflow
+      operationId: get_workflows_workflow_events
       parameters:
       - name: workflow
         in: path
@@ -838,7 +839,7 @@ paths:
       tags: []
       summary: Store a event.
       description: Store a event in the "events" collection.
-      operationId: post_events_workflow
+      operationId: post_workflows_workflow_events
       parameters:
       - name: workflow
         in: path
@@ -874,7 +875,7 @@ paths:
       tags: []
       summary: Delete all documents of type event for a workflow
       description: Delete all documents from the "events" collection for a workflow.
-      operationId: delete_events_workflow
+      operationId: delete_workflows_workflow_events
       parameters:
       - name: workflow
         in: path
@@ -905,12 +906,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /events/{workflow}/{key}:
+  /workflows/{workflow}/events/{key}:
     get:
       tags: []
-      summary: Retrieve the event for an key.
-      description: Retrieve the document for a key from the "events" collection.
-      operationId: get_events_workflow_key
+      summary: Retrieve the event for a key.
+      description: Retrieve the document from the "events" collection by key.
+      operationId: get_workflows_workflow_events_key
       parameters:
       - name: workflow
         in: path
@@ -946,7 +947,7 @@ paths:
       tags: []
       summary: Update event
       description: Update a document in the "events" collection.
-      operationId: put_events_workflow_key
+      operationId: put_workflows_workflow_events_key
       parameters:
       - name: workflow
         in: path
@@ -990,7 +991,7 @@ paths:
       tags: []
       summary: Delete a document of type event
       description: Deletes a document from the "events" collection by key.
-      operationId: delete_events_workflow_key
+      operationId: delete_workflows_workflow_events_key
       parameters:
       - name: workflow
         in: path
@@ -1029,12 +1030,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /files/{workflow}:
+  /workflows/{workflow}/files:
     get:
       tags: []
       summary: Retrieve all file documents
       description: Retrieve all documents from the "files" collection for one workflow.
-      operationId: get_files_workflow
+      operationId: get_workflows_workflow_files
       parameters:
       - name: workflow
         in: path
@@ -1099,7 +1100,7 @@ paths:
       tags: []
       summary: Store a file.
       description: Store a file in the "files" collection.
-      operationId: post_files_workflow
+      operationId: post_workflows_workflow_files
       parameters:
       - name: workflow
         in: path
@@ -1114,7 +1115,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/files_workflow_model'
+              $ref: '#/components/schemas/workflow_files_model'
         required: true
       responses:
         "200":
@@ -1122,7 +1123,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/files_workflow_model'
+                $ref: '#/components/schemas/workflow_files_model'
         "500":
           description: Default error response.
           content:
@@ -1135,7 +1136,7 @@ paths:
       tags: []
       summary: Delete all documents of type file for a workflow
       description: Delete all documents from the "files" collection for a workflow.
-      operationId: delete_files_workflow
+      operationId: delete_workflows_workflow_files
       parameters:
       - name: workflow
         in: path
@@ -1166,12 +1167,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /files/{workflow}/{key}:
+  /workflows/{workflow}/files/{key}:
     get:
       tags: []
-      summary: Retrieve the file for an key.
-      description: Retrieve the document for a key from the "files" collection.
-      operationId: get_files_workflow_key
+      summary: Retrieve the file for a key.
+      description: Retrieve the document from the "files" collection by key.
+      operationId: get_workflows_workflow_files_key
       parameters:
       - name: workflow
         in: path
@@ -1195,7 +1196,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/files_workflow_model'
+                $ref: '#/components/schemas/workflow_files_model'
         "500":
           description: Default error response.
           content:
@@ -1207,7 +1208,7 @@ paths:
       tags: []
       summary: Update file
       description: Update a document in the "files" collection.
-      operationId: put_files_workflow_key
+      operationId: put_workflows_workflow_files_key
       parameters:
       - name: workflow
         in: path
@@ -1230,7 +1231,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow_key_model_3'
+              $ref: '#/components/schemas/files_key_model'
         required: true
       responses:
         "200":
@@ -1238,7 +1239,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model_3'
+                $ref: '#/components/schemas/files_key_model'
         "500":
           description: Default error response.
           content:
@@ -1251,7 +1252,7 @@ paths:
       tags: []
       summary: Delete a document of type file
       description: Deletes a document from the "files" collection by key.
-      operationId: delete_files_workflow_key
+      operationId: delete_workflows_workflow_files_key
       parameters:
       - name: workflow
         in: path
@@ -1281,7 +1282,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model_3'
+                $ref: '#/components/schemas/files_key_model'
         "500":
           description: Default error response.
           content:
@@ -1290,12 +1291,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /jobs/{workflow}:
+  /workflows/{workflow}/jobs:
     get:
       tags: []
       summary: Retrieve all job documents
       description: Retrieve all documents from the "jobs" collection for one workflow.
-      operationId: get_jobs_workflow
+      operationId: get_workflows_workflow_jobs
       parameters:
       - name: workflow
         in: path
@@ -1363,7 +1364,7 @@ paths:
         explode: true
         schema:
           type: boolean
-      - name: interruptible
+      - name: supports_termination
         in: query
         required: false
         style: form
@@ -1388,7 +1389,7 @@ paths:
       tags: []
       summary: Store a job.
       description: Store a job in the "jobs" collection.
-      operationId: post_jobs_workflow
+      operationId: post_workflows_workflow_jobs
       parameters:
       - name: workflow
         in: path
@@ -1403,7 +1404,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/jobs_workflow_model'
+              $ref: '#/components/schemas/workflow_jobs_model'
         required: true
       responses:
         "200":
@@ -1424,7 +1425,7 @@ paths:
       tags: []
       summary: Delete all documents of type job for a workflow
       description: Delete all documents from the "jobs" collection for a workflow.
-      operationId: delete_jobs_workflow
+      operationId: delete_workflows_workflow_jobs
       parameters:
       - name: workflow
         in: path
@@ -1455,12 +1456,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /jobs/{workflow}/{key}:
+  /workflows/{workflow}/jobs/{key}:
     get:
       tags: []
-      summary: Retrieve the job for an key.
-      description: Retrieve the document for a key from the "jobs" collection.
-      operationId: get_jobs_workflow_key
+      summary: Retrieve the job for a key.
+      description: Retrieve the document from the "jobs" collection by key.
+      operationId: get_workflows_workflow_jobs_key
       parameters:
       - name: workflow
         in: path
@@ -1496,7 +1497,7 @@ paths:
       tags: []
       summary: Update job
       description: Update a document in the "jobs" collection.
-      operationId: put_jobs_workflow_key
+      operationId: put_workflows_workflow_jobs_key
       parameters:
       - name: workflow
         in: path
@@ -1519,7 +1520,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow_key_model_4'
+              $ref: '#/components/schemas/jobs_key_model'
         required: true
       responses:
         "200":
@@ -1540,7 +1541,7 @@ paths:
       tags: []
       summary: Delete a document of type job
       description: Deletes a document from the "jobs" collection by key.
-      operationId: delete_jobs_workflow_key
+      operationId: delete_workflows_workflow_jobs_key
       parameters:
       - name: workflow
         in: path
@@ -1579,13 +1580,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /job_process_stats/{workflow}:
+  /workflows/{workflow}/job_process_stats:
     get:
       tags: []
       summary: Retrieve all job process statistics documents
       description: Retrieve all documents from the "job_process_stats" collection
         for one workflow.
-      operationId: get_job_process_stats_workflow
+      operationId: get_workflows_workflow_job_process_stats
       parameters:
       - name: workflow
         in: path
@@ -1650,7 +1651,7 @@ paths:
       tags: []
       summary: Store a job process statistics.
       description: Store a job process statistics in the "job_process_stats" collection.
-      operationId: post_job_process_stats_workflow
+      operationId: post_workflows_workflow_job_process_stats
       parameters:
       - name: workflow
         in: path
@@ -1665,7 +1666,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/job_process_stats_workflow_model'
+              $ref: '#/components/schemas/workflow_job_process_stats_model'
         required: true
       responses:
         "200":
@@ -1673,7 +1674,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/job_process_stats_workflow_model'
+                $ref: '#/components/schemas/workflow_job_process_stats_model'
         "500":
           description: Default error response.
           content:
@@ -1687,7 +1688,7 @@ paths:
       summary: Delete all documents of type job process statistics for a workflow
       description: Delete all documents from the "job_process_stats" collection for
         a workflow.
-      operationId: delete_job_process_stats_workflow
+      operationId: delete_workflows_workflow_job_process_stats
       parameters:
       - name: workflow
         in: path
@@ -1718,12 +1719,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /job_process_stats/{workflow}/{key}:
+  /workflows/{workflow}/job_process_stats/{key}:
     get:
       tags: []
-      summary: Retrieve the job process statistics for an key.
-      description: Retrieve the document for a key from the "job_process_stats" collection.
-      operationId: get_job_process_stats_workflow_key
+      summary: Retrieve the job process statistics for a key.
+      description: Retrieve the document from the "job_process_stats" collection by
+        key.
+      operationId: get_workflows_workflow_job_process_stats_key
       parameters:
       - name: workflow
         in: path
@@ -1747,7 +1749,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/job_process_stats_workflow_model'
+                $ref: '#/components/schemas/workflow_job_process_stats_model'
         "500":
           description: Default error response.
           content:
@@ -1759,7 +1761,7 @@ paths:
       tags: []
       summary: Update job process statistics
       description: Update a document in the "job_process_stats" collection.
-      operationId: put_job_process_stats_workflow_key
+      operationId: put_workflows_workflow_job_process_stats_key
       parameters:
       - name: workflow
         in: path
@@ -1782,7 +1784,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow_key_model_5'
+              $ref: '#/components/schemas/job_process_stats_key_model'
         required: true
       responses:
         "200":
@@ -1790,7 +1792,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model_5'
+                $ref: '#/components/schemas/job_process_stats_key_model'
         "500":
           description: Default error response.
           content:
@@ -1803,7 +1805,7 @@ paths:
       tags: []
       summary: Delete a document of type job process statistics
       description: Deletes a document from the "job_process_stats" collection by key.
-      operationId: delete_job_process_stats_workflow_key
+      operationId: delete_workflows_workflow_job_process_stats_key
       parameters:
       - name: workflow
         in: path
@@ -1833,7 +1835,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model_5'
+                $ref: '#/components/schemas/job_process_stats_key_model'
         "500":
           description: Default error response.
           content:
@@ -1842,13 +1844,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /local_schedulers/{workflow}:
+  /workflows/{workflow}/local_schedulers:
     get:
       tags: []
       summary: Retrieve all local compute node configuration documents
       description: Retrieve all documents from the "local_schedulers" collection for
         one workflow.
-      operationId: get_local_schedulers_workflow
+      operationId: get_workflows_workflow_local_schedulers
       parameters:
       - name: workflow
         in: path
@@ -1914,7 +1916,7 @@ paths:
       summary: Store a local compute node configuration.
       description: Store a local compute node configuration in the "local_schedulers"
         collection.
-      operationId: post_local_schedulers_workflow
+      operationId: post_workflows_workflow_local_schedulers
       parameters:
       - name: workflow
         in: path
@@ -1929,7 +1931,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/local_schedulers_workflow_model'
+              $ref: '#/components/schemas/workflow_local_schedulers_model'
         required: true
       responses:
         "200":
@@ -1937,7 +1939,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/local_schedulers_workflow_model'
+                $ref: '#/components/schemas/workflow_local_schedulers_model'
         "500":
           description: Default error response.
           content:
@@ -1952,7 +1954,7 @@ paths:
         workflow
       description: Delete all documents from the "local_schedulers" collection for
         a workflow.
-      operationId: delete_local_schedulers_workflow
+      operationId: delete_workflows_workflow_local_schedulers
       parameters:
       - name: workflow
         in: path
@@ -1983,12 +1985,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /local_schedulers/{workflow}/{key}:
+  /workflows/{workflow}/local_schedulers/{key}:
     get:
       tags: []
-      summary: Retrieve the local compute node configuration for an key.
-      description: Retrieve the document for a key from the "local_schedulers" collection.
-      operationId: get_local_schedulers_workflow_key
+      summary: Retrieve the local compute node configuration for a key.
+      description: Retrieve the document from the "local_schedulers" collection by
+        key.
+      operationId: get_workflows_workflow_local_schedulers_key
       parameters:
       - name: workflow
         in: path
@@ -2012,7 +2015,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/local_schedulers_workflow_model'
+                $ref: '#/components/schemas/workflow_local_schedulers_model'
         "500":
           description: Default error response.
           content:
@@ -2024,7 +2027,7 @@ paths:
       tags: []
       summary: Update local compute node configuration
       description: Update a document in the "local_schedulers" collection.
-      operationId: put_local_schedulers_workflow_key
+      operationId: put_workflows_workflow_local_schedulers_key
       parameters:
       - name: workflow
         in: path
@@ -2047,7 +2050,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow_key_model_6'
+              $ref: '#/components/schemas/local_schedulers_key_model'
         required: true
       responses:
         "200":
@@ -2055,7 +2058,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model_6'
+                $ref: '#/components/schemas/local_schedulers_key_model'
         "500":
           description: Default error response.
           content:
@@ -2068,7 +2071,7 @@ paths:
       tags: []
       summary: Delete a document of type local compute node configuration
       description: Deletes a document from the "local_schedulers" collection by key.
-      operationId: delete_local_schedulers_workflow_key
+      operationId: delete_workflows_workflow_local_schedulers_key
       parameters:
       - name: workflow
         in: path
@@ -2098,7 +2101,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model_6'
+                $ref: '#/components/schemas/local_schedulers_key_model'
         "500":
           description: Default error response.
           content:
@@ -2107,13 +2110,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /resource_requirements/{workflow}:
+  /workflows/{workflow}/resource_requirements:
     get:
       tags: []
       summary: Retrieve all resource requirements documents
       description: Retrieve all documents from the "resource_requirements" collection
         for one workflow.
-      operationId: get_resource_requirements_workflow
+      operationId: get_workflows_workflow_resource_requirements
       parameters:
       - name: workflow
         in: path
@@ -2206,7 +2209,7 @@ paths:
       tags: []
       summary: Store a resource requirements.
       description: Store a resource requirements in the "resource_requirements" collection.
-      operationId: post_resource_requirements_workflow
+      operationId: post_workflows_workflow_resource_requirements
       parameters:
       - name: workflow
         in: path
@@ -2221,7 +2224,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/resource_requirements_workflow_model'
+              $ref: '#/components/schemas/workflow_resource_requirements_model'
         required: true
       responses:
         "200":
@@ -2229,7 +2232,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/resource_requirements_workflow_model'
+                $ref: '#/components/schemas/workflow_resource_requirements_model'
         "500":
           description: Default error response.
           content:
@@ -2243,7 +2246,7 @@ paths:
       summary: Delete all documents of type resource requirements for a workflow
       description: Delete all documents from the "resource_requirements" collection
         for a workflow.
-      operationId: delete_resource_requirements_workflow
+      operationId: delete_workflows_workflow_resource_requirements
       parameters:
       - name: workflow
         in: path
@@ -2274,13 +2277,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /resource_requirements/{workflow}/{key}:
+  /workflows/{workflow}/resource_requirements/{key}:
     get:
       tags: []
-      summary: Retrieve the resource requirements for an key.
-      description: Retrieve the document for a key from the "resource_requirements"
-        collection.
-      operationId: get_resource_requirements_workflow_key
+      summary: Retrieve the resource requirements for a key.
+      description: Retrieve the document from the "resource_requirements" collection
+        by key.
+      operationId: get_workflows_workflow_resource_requirements_key
       parameters:
       - name: workflow
         in: path
@@ -2304,7 +2307,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/resource_requirements_workflow_model'
+                $ref: '#/components/schemas/workflow_resource_requirements_model'
         "500":
           description: Default error response.
           content:
@@ -2316,7 +2319,7 @@ paths:
       tags: []
       summary: Update resource requirements
       description: Update a document in the "resource_requirements" collection.
-      operationId: put_resource_requirements_workflow_key
+      operationId: put_workflows_workflow_resource_requirements_key
       parameters:
       - name: workflow
         in: path
@@ -2339,7 +2342,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow_key_model_7'
+              $ref: '#/components/schemas/resource_requirements_key_model'
         required: true
       responses:
         "200":
@@ -2347,7 +2350,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model_7'
+                $ref: '#/components/schemas/resource_requirements_key_model'
         "500":
           description: Default error response.
           content:
@@ -2361,7 +2364,7 @@ paths:
       summary: Delete a document of type resource requirements
       description: Deletes a document from the "resource_requirements" collection
         by key.
-      operationId: delete_resource_requirements_workflow_key
+      operationId: delete_workflows_workflow_resource_requirements_key
       parameters:
       - name: workflow
         in: path
@@ -2391,7 +2394,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model_7'
+                $ref: '#/components/schemas/resource_requirements_key_model'
         "500":
           description: Default error response.
           content:
@@ -2400,12 +2403,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /results/{workflow}:
+  /workflows/{workflow}/results:
     get:
       tags: []
       summary: Retrieve all result documents
       description: Retrieve all documents from the "results" collection for one workflow.
-      operationId: get_results_workflow
+      operationId: get_workflows_workflow_results
       parameters:
       - name: workflow
         in: path
@@ -2491,7 +2494,7 @@ paths:
       tags: []
       summary: Store a result.
       description: Store a result in the "results" collection.
-      operationId: post_results_workflow
+      operationId: post_workflows_workflow_results
       parameters:
       - name: workflow
         in: path
@@ -2506,7 +2509,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/results_workflow_model'
+              $ref: '#/components/schemas/workflow_results_model'
         required: true
       responses:
         "200":
@@ -2514,7 +2517,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/results_workflow_model'
+                $ref: '#/components/schemas/workflow_results_model'
         "500":
           description: Default error response.
           content:
@@ -2527,7 +2530,7 @@ paths:
       tags: []
       summary: Delete all documents of type result for a workflow
       description: Delete all documents from the "results" collection for a workflow.
-      operationId: delete_results_workflow
+      operationId: delete_workflows_workflow_results
       parameters:
       - name: workflow
         in: path
@@ -2558,12 +2561,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /results/{workflow}/{key}:
+  /workflows/{workflow}/results/{key}:
     get:
       tags: []
-      summary: Retrieve the result for an key.
-      description: Retrieve the document for a key from the "results" collection.
-      operationId: get_results_workflow_key
+      summary: Retrieve the result for a key.
+      description: Retrieve the document from the "results" collection by key.
+      operationId: get_workflows_workflow_results_key
       parameters:
       - name: workflow
         in: path
@@ -2587,7 +2590,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/results_workflow_model'
+                $ref: '#/components/schemas/workflow_results_model'
         "500":
           description: Default error response.
           content:
@@ -2599,7 +2602,7 @@ paths:
       tags: []
       summary: Update result
       description: Update a document in the "results" collection.
-      operationId: put_results_workflow_key
+      operationId: put_workflows_workflow_results_key
       parameters:
       - name: workflow
         in: path
@@ -2622,7 +2625,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow_key_model_8'
+              $ref: '#/components/schemas/results_key_model'
         required: true
       responses:
         "200":
@@ -2630,7 +2633,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model_8'
+                $ref: '#/components/schemas/results_key_model'
         "500":
           description: Default error response.
           content:
@@ -2643,7 +2646,7 @@ paths:
       tags: []
       summary: Delete a document of type result
       description: Deletes a document from the "results" collection by key.
-      operationId: delete_results_workflow_key
+      operationId: delete_workflows_workflow_results_key
       parameters:
       - name: workflow
         in: path
@@ -2673,7 +2676,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model_8'
+                $ref: '#/components/schemas/results_key_model'
         "500":
           description: Default error response.
           content:
@@ -2682,13 +2685,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /scheduled_compute_nodes/{workflow}:
+  /workflows/{workflow}/scheduled_compute_nodes:
     get:
       tags: []
       summary: Retrieve all scheduled compute node documents
       description: Retrieve all documents from the "scheduled_compute_nodes" collection
         for one workflow.
-      operationId: get_scheduled_compute_nodes_workflow
+      operationId: get_workflows_workflow_scheduled_compute_nodes
       parameters:
       - name: workflow
         in: path
@@ -2761,7 +2764,7 @@ paths:
       summary: Store a scheduled compute node.
       description: Store a scheduled compute node in the "scheduled_compute_nodes"
         collection.
-      operationId: post_scheduled_compute_nodes_workflow
+      operationId: post_workflows_workflow_scheduled_compute_nodes
       parameters:
       - name: workflow
         in: path
@@ -2776,7 +2779,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/scheduled_compute_nodes_workflow_model'
+              $ref: '#/components/schemas/workflow_scheduled_compute_nodes_model'
         required: true
       responses:
         "200":
@@ -2784,7 +2787,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/scheduled_compute_nodes_workflow_model'
+                $ref: '#/components/schemas/workflow_scheduled_compute_nodes_model'
         "500":
           description: Default error response.
           content:
@@ -2798,7 +2801,7 @@ paths:
       summary: Delete all documents of type scheduled compute node for a workflow
       description: Delete all documents from the "scheduled_compute_nodes" collection
         for a workflow.
-      operationId: delete_scheduled_compute_nodes_workflow
+      operationId: delete_workflows_workflow_scheduled_compute_nodes
       parameters:
       - name: workflow
         in: path
@@ -2829,13 +2832,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /scheduled_compute_nodes/{workflow}/{key}:
+  /workflows/{workflow}/scheduled_compute_nodes/{key}:
     get:
       tags: []
-      summary: Retrieve the scheduled compute node for an key.
-      description: Retrieve the document for a key from the "scheduled_compute_nodes"
-        collection.
-      operationId: get_scheduled_compute_nodes_workflow_key
+      summary: Retrieve the scheduled compute node for a key.
+      description: Retrieve the document from the "scheduled_compute_nodes" collection
+        by key.
+      operationId: get_workflows_workflow_scheduled_compute_nodes_key
       parameters:
       - name: workflow
         in: path
@@ -2859,7 +2862,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/scheduled_compute_nodes_workflow_model'
+                $ref: '#/components/schemas/workflow_scheduled_compute_nodes_model'
         "500":
           description: Default error response.
           content:
@@ -2871,7 +2874,7 @@ paths:
       tags: []
       summary: Update scheduled compute node
       description: Update a document in the "scheduled_compute_nodes" collection.
-      operationId: put_scheduled_compute_nodes_workflow_key
+      operationId: put_workflows_workflow_scheduled_compute_nodes_key
       parameters:
       - name: workflow
         in: path
@@ -2894,7 +2897,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow_key_model_9'
+              $ref: '#/components/schemas/scheduled_compute_nodes_key_model'
         required: true
       responses:
         "200":
@@ -2902,7 +2905,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model_9'
+                $ref: '#/components/schemas/scheduled_compute_nodes_key_model'
         "500":
           description: Default error response.
           content:
@@ -2916,7 +2919,7 @@ paths:
       summary: Delete a document of type scheduled compute node
       description: Deletes a document from the "scheduled_compute_nodes" collection
         by key.
-      operationId: delete_scheduled_compute_nodes_workflow_key
+      operationId: delete_workflows_workflow_scheduled_compute_nodes_key
       parameters:
       - name: workflow
         in: path
@@ -2946,7 +2949,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model_9'
+                $ref: '#/components/schemas/scheduled_compute_nodes_key_model'
         "500":
           description: Default error response.
           content:
@@ -2955,13 +2958,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /slurm_schedulers/{workflow}:
+  /workflows/{workflow}/slurm_schedulers:
     get:
       tags: []
-      summary: Retrieve all SLURM compute node configuration documents
+      summary: Retrieve all Slurm compute node configuration documents
       description: Retrieve all documents from the "slurm_schedulers" collection for
         one workflow.
-      operationId: get_slurm_schedulers_workflow
+      operationId: get_workflows_workflow_slurm_schedulers
       parameters:
       - name: workflow
         in: path
@@ -3073,10 +3076,10 @@ paths:
       security: []
     post:
       tags: []
-      summary: Store a SLURM compute node configuration.
-      description: Store a SLURM compute node configuration in the "slurm_schedulers"
+      summary: Store a Slurm compute node configuration.
+      description: Store a Slurm compute node configuration in the "slurm_schedulers"
         collection.
-      operationId: post_slurm_schedulers_workflow
+      operationId: post_workflows_workflow_slurm_schedulers
       parameters:
       - name: workflow
         in: path
@@ -3087,19 +3090,19 @@ paths:
         schema:
           type: string
       requestBody:
-        description: Result of a SLURM compute node configuration.
+        description: Result of a Slurm compute node configuration.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/slurm_schedulers_workflow_model'
+              $ref: '#/components/schemas/workflow_slurm_schedulers_model'
         required: true
       responses:
         "200":
-          description: Result of a SLURM compute node configuration.
+          description: Result of a Slurm compute node configuration.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/slurm_schedulers_workflow_model'
+                $ref: '#/components/schemas/workflow_slurm_schedulers_model'
         "500":
           description: Default error response.
           content:
@@ -3110,11 +3113,11 @@ paths:
       x-codegen-request-body-name: body
     delete:
       tags: []
-      summary: Delete all documents of type SLURM compute node configuration for a
+      summary: Delete all documents of type Slurm compute node configuration for a
         workflow
       description: Delete all documents from the "slurm_schedulers" collection for
         a workflow.
-      operationId: delete_slurm_schedulers_workflow
+      operationId: delete_workflows_workflow_slurm_schedulers
       parameters:
       - name: workflow
         in: path
@@ -3145,12 +3148,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /slurm_schedulers/{workflow}/{key}:
+  /workflows/{workflow}/slurm_schedulers/{key}:
     get:
       tags: []
-      summary: Retrieve the SLURM compute node configuration for an key.
-      description: Retrieve the document for a key from the "slurm_schedulers" collection.
-      operationId: get_slurm_schedulers_workflow_key
+      summary: Retrieve the Slurm compute node configuration for a key.
+      description: Retrieve the document from the "slurm_schedulers" collection by
+        key.
+      operationId: get_workflows_workflow_slurm_schedulers_key
       parameters:
       - name: workflow
         in: path
@@ -3174,7 +3178,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/slurm_schedulers_workflow_model'
+                $ref: '#/components/schemas/workflow_slurm_schedulers_model'
         "500":
           description: Default error response.
           content:
@@ -3184,9 +3188,9 @@ paths:
       security: []
     put:
       tags: []
-      summary: Update SLURM compute node configuration
+      summary: Update Slurm compute node configuration
       description: Update a document in the "slurm_schedulers" collection.
-      operationId: put_slurm_schedulers_workflow_key
+      operationId: put_workflows_workflow_slurm_schedulers_key
       parameters:
       - name: workflow
         in: path
@@ -3198,26 +3202,26 @@ paths:
           type: string
       - name: key
         in: path
-        description: key of the SLURM compute node configuration.
+        description: key of the Slurm compute node configuration.
         required: true
         style: simple
         explode: false
         schema:
           type: string
       requestBody:
-        description: SLURM compute node configuration to update in the collection.
+        description: Slurm compute node configuration to update in the collection.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow_key_model_10'
+              $ref: '#/components/schemas/slurm_schedulers_key_model'
         required: true
       responses:
         "200":
-          description: SLURM compute node configuration updated in the collection.
+          description: Slurm compute node configuration updated in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model_10'
+                $ref: '#/components/schemas/slurm_schedulers_key_model'
         "500":
           description: Default error response.
           content:
@@ -3228,9 +3232,9 @@ paths:
       x-codegen-request-body-name: body
     delete:
       tags: []
-      summary: Delete a document of type SLURM compute node configuration
+      summary: Delete a document of type Slurm compute node configuration
       description: Deletes a document from the "slurm_schedulers" collection by key.
-      operationId: delete_slurm_schedulers_workflow_key
+      operationId: delete_workflows_workflow_slurm_schedulers_key
       parameters:
       - name: workflow
         in: path
@@ -3256,11 +3260,11 @@ paths:
         required: false
       responses:
         "200":
-          description: SLURM compute node configuration stored in the collection.
+          description: Slurm compute node configuration stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model_10'
+                $ref: '#/components/schemas/slurm_schedulers_key_model'
         "500":
           description: Default error response.
           content:
@@ -3269,13 +3273,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /user_data/{workflow}:
+  /workflows/{workflow}/user_data:
     get:
       tags: []
       summary: Retrieve all user data documents
       description: Retrieve all documents from the "user_data" collection for one
         workflow.
-      operationId: get_user_data_workflow
+      operationId: get_workflows_workflow_user_data
       parameters:
       - name: workflow
         in: path
@@ -3326,7 +3330,7 @@ paths:
       tags: []
       summary: Store a user data.
       description: Store a user data in the "user_data" collection.
-      operationId: post_user_data_workflow
+      operationId: post_workflows_workflow_user_data
       parameters:
       - name: workflow
         in: path
@@ -3362,7 +3366,7 @@ paths:
       tags: []
       summary: Delete all documents of type user data for a workflow
       description: Delete all documents from the "user_data" collection for a workflow.
-      operationId: delete_user_data_workflow
+      operationId: delete_workflows_workflow_user_data
       parameters:
       - name: workflow
         in: path
@@ -3393,12 +3397,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /user_data/{workflow}/{key}:
+  /workflows/{workflow}/user_data/{key}:
     get:
       tags: []
-      summary: Retrieve the user data for an key.
-      description: Retrieve the document for a key from the "user_data" collection.
-      operationId: get_user_data_workflow_key
+      summary: Retrieve the user data for a key.
+      description: Retrieve the document from the "user_data" collection by key.
+      operationId: get_workflows_workflow_user_data_key
       parameters:
       - name: workflow
         in: path
@@ -3434,7 +3438,7 @@ paths:
       tags: []
       summary: Update user data
       description: Update a document in the "user_data" collection.
-      operationId: put_user_data_workflow_key
+      operationId: put_workflows_workflow_user_data_key
       parameters:
       - name: workflow
         in: path
@@ -3478,7 +3482,7 @@ paths:
       tags: []
       summary: Delete a document of type user data
       description: Deletes a document from the "user_data" collection by key.
-      operationId: delete_user_data_workflow_key
+      operationId: delete_workflows_workflow_user_data_key
       parameters:
       - name: workflow
         in: path
@@ -3517,12 +3521,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /edges/{workflow}/{name}:
+  /workflows/{workflow}/edges/{name}:
     get:
       tags: []
       summary: Retrieve all edges from the designated collection.
       description: Retrieve all edges from the designated collection.
-      operationId: get_edges_workflow_name
+      operationId: get_workflows_workflow_edges_name
       parameters:
       - name: workflow
         in: path
@@ -3574,7 +3578,7 @@ paths:
       tags: []
       summary: Store an edge between two vertexes.
       description: Store an edge between two vertexes in the designated collection.
-      operationId: post_edges_workflow_name
+      operationId: post_workflows_workflow_edges_name
       parameters:
       - name: workflow
         in: path
@@ -3597,7 +3601,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow_name_model'
+              $ref: '#/components/schemas/edges_name_model'
         required: true
       responses:
         "200":
@@ -3605,7 +3609,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_name_model'
+                $ref: '#/components/schemas/edges_name_model'
         "500":
           description: Default error response.
           content:
@@ -3618,7 +3622,7 @@ paths:
       tags: []
       summary: Delete all edges from the designated collection
       description: Deletes all edges from the designated collection.
-      operationId: delete_edges_workflow_name
+      operationId: delete_workflows_workflow_edges_name
       parameters:
       - name: workflow
         in: path
@@ -3657,12 +3661,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /edges/{workflow}/{name}/{key}:
+  /workflows/{workflow}/edges/{name}/{key}:
     get:
       tags: []
       summary: Retrieve an edge
       description: Retrieves an edge from the designated collection by key.
-      operationId: get_edges_workflow_name_key
+      operationId: get_workflows_workflow_edges_name_key
       parameters:
       - name: workflow
         in: path
@@ -3694,7 +3698,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_name_model'
+                $ref: '#/components/schemas/edges_name_model'
         "500":
           description: Default error response.
           content:
@@ -3706,7 +3710,7 @@ paths:
       tags: []
       summary: Delete an edge
       description: Deletes an edge from the designated collection by key.
-      operationId: delete_edges_workflow_name_key
+      operationId: delete_workflows_workflow_edges_name_key
       parameters:
       - name: workflow
         in: path
@@ -3744,7 +3748,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_name_model'
+                $ref: '#/components/schemas/edges_name_model'
         "500":
           description: Default error response.
           content:
@@ -3753,12 +3757,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /files/produced_by_job/{workflow}/{key}:
+  /workflows/{workflow}/files/produced_by_job/{key}:
     get:
       tags: []
       summary: Retrieve files produced by a job
       description: Retrieves files from the "files" collection produced by a job.
-      operationId: get_files_produced_by_job_workflow_key
+      operationId: get_workflows_workflow_files_produced_by_job_key
       parameters:
       - name: workflow
         in: path
@@ -3806,12 +3810,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-  /job_specifications/{workflow}:
+  /workflows/{workflow}/job_specifications:
     get:
       tags: []
       summary: Retrieve all job definitions
       description: Retrieves all job definitions. Limit output with skip and limit.
-      operationId: get_job_specifications_workflow
+      operationId: get_workflows_workflow_job_specifications
       parameters:
       - name: workflow
         in: path
@@ -3855,7 +3859,7 @@ paths:
       tags: []
       summary: Store a job and create edges.
       description: Store a job in the "jobs" collection and create edges.
-      operationId: post_job_specifications_workflow
+      operationId: post_workflows_workflow_job_specifications
       parameters:
       - name: workflow
         in: path
@@ -3870,7 +3874,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/job_specifications_workflow_model'
+              $ref: '#/components/schemas/workflow_job_specifications_model'
         required: true
       responses:
         "200":
@@ -3887,12 +3891,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /job_specifications/{workflow}/{key}:
+  /workflows/{workflow}/job_specifications/{key}:
     get:
       tags: []
       summary: Retrieve a job
       description: Retrieves a job from the "jobs" collection by key.
-      operationId: get_job_specifications_workflow_key
+      operationId: get_workflows_workflow_job_specifications_key
       parameters:
       - name: workflow
         in: path
@@ -3924,12 +3928,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-  /job_keys/{workflow}:
+  /workflows/{workflow}/job_keys:
     get:
       tags: []
       summary: Retrieve all job keys for a workflow.
       description: Retrieves all job keys from the "jobs" collection for a workflow.
-      operationId: get_job_keys_workflow
+      operationId: get_workflows_workflow_job_keys
       parameters:
       - name: workflow
         in: path
@@ -3953,12 +3957,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-  /jobs/find_by_status/{workflow}/{status}:
+  /workflows/{workflow}/jobs/find_by_status/{status}:
     get:
       tags: []
       summary: Retrieve all jobs with a specific status
       description: Retrieves all jobs from the "jobs" collection with a specific status.
-      operationId: get_jobs_find_by_status_workflow_status
+      operationId: get_workflows_workflow_jobs_find_by_status_status
       parameters:
       - name: workflow
         in: path
@@ -4006,12 +4010,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-  /jobs/find_by_needs_file/{workflow}/{key}:
+  /workflows/{workflow}/jobs/find_by_needs_file/{key}:
     get:
       tags: []
       summary: Retrieve all jobs that need a file
       description: Retrieves all jobs connected to a file by the needs edge.
-      operationId: get_jobs_find_by_needs_file_workflow_key
+      operationId: get_workflows_workflow_jobs_find_by_needs_file_key
       parameters:
       - name: workflow
         in: path
@@ -4059,12 +4063,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-  /jobs/resource_requirements/{workflow}/{key}:
+  /workflows/{workflow}/jobs/resource_requirements/{key}:
     get:
       tags: []
       summary: Retrieve the resource requirements for a job.
       description: Retrieve the resource requirements for a job by its key.
-      operationId: get_jobs_resource_requirements_workflow_key
+      operationId: get_workflows_workflow_jobs_resource_requirements_key
       parameters:
       - name: workflow
         in: path
@@ -4088,7 +4092,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_key_model_7'
+                $ref: '#/components/schemas/resource_requirements_key_model'
         "500":
           description: Default error response.
           content:
@@ -4096,12 +4100,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-  /jobs/process_stats/{workflow}/{key}:
+  /workflows/{workflow}/jobs/process_stats/{key}:
     get:
       tags: []
       summary: Retrieve the job process stats for a job.
       description: Retrieve the job process stats for a job by its key.
-      operationId: get_jobs_process_stats_workflow_key
+      operationId: get_workflows_workflow_jobs_process_stats_key
       parameters:
       - name: workflow
         in: path
@@ -4127,7 +4131,7 @@ paths:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/workflow_key_model_5'
+                  $ref: '#/components/schemas/job_process_stats_key_model'
         "500":
           description: Default error response.
           content:
@@ -4135,12 +4139,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-  /jobs/complete_job/{workflow}/{key}/{status}/{rev}:
+  /workflows/{workflow}/jobs/complete_job/{key}/{status}/{rev}:
     post:
       tags: []
       summary: Complete a job and add a result.
       description: "Complete a job, connect it to a result, and manage side effects."
-      operationId: post_jobs_complete_job_workflow_key_status_rev
+      operationId: post_workflows_workflow_jobs_complete_job_key_status_rev
       parameters:
       - name: workflow
         in: path
@@ -4196,12 +4200,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /jobs/manage_status_change/{workflow}/{key}/{status}/{rev}:
+  /workflows/{workflow}/jobs/manage_status_change/{key}/{status}/{rev}:
     put:
       tags: []
       summary: Change the status of a job and manage side effects.
       description: Change the status of a job and manage side effects.
-      operationId: put_jobs_manage_status_change_workflow_key_status_rev
+      operationId: put_workflows_workflow_jobs_manage_status_change_key_status_rev
       parameters:
       - name: workflow
         in: path
@@ -4254,12 +4258,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /jobs/user_data/{workflow}/{key}:
+  /workflows/{workflow}/jobs/user_data/{key}:
     get:
       tags: []
       summary: Retrieve all user data for a job.
       description: Retrieve all user data for a job.
-      operationId: get_jobs_user_data_workflow_key
+      operationId: get_workflows_workflow_jobs_user_data_key
       parameters:
       - name: workflow
         in: path
@@ -4295,7 +4299,7 @@ paths:
       tags: []
       summary: Store user data for a job.
       description: Store user data for a job and connect the two vertexes.
-      operationId: post_jobs_user_data_workflow_key
+      operationId: post_workflows_workflow_jobs_user_data_key
       parameters:
       - name: workflow
         in: path
@@ -4335,13 +4339,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /results/find_by_job/{workflow}/{key}:
+  /workflows/{workflow}/results/find_by_job/{key}:
     get:
       tags: []
       summary: Retrieve the latest result for a job
       description: Retrieve the latest result for a job. Throws an error if no result
         is stored.
-      operationId: get_results_find_by_job_workflow_key
+      operationId: get_workflows_workflow_results_find_by_job_key
       parameters:
       - name: workflow
         in: path
@@ -4559,6 +4563,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
+  /workflow_specifications/template:
+    get:
+      tags: []
+      summary: Retrieve the workflow specification template
+      description: Retrieve the workflow specification template in JSON format.
+      operationId: get_workflow_specifications_template
+      responses:
+        "200":
+          description: Workflow template
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_20'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
   /workflows:
     get:
       tags: []
@@ -4582,6 +4606,27 @@ paths:
         schema:
           type: number
           default: 1000.0
+      - name: name
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: user
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: description
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
       responses:
         "200":
           description: HTTP 200 OK.
@@ -4691,7 +4736,7 @@ paths:
     delete:
       tags: []
       summary: Delete a workflow
-      description: Deletes document from the "workflows" collection by key.
+      description: Deletes a document from the "workflows" collection by key.
       operationId: delete_workflows_key
       parameters:
       - name: key
@@ -4851,9 +4896,7 @@ paths:
           content:
             application/json:
               schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/workflow_key_model_4'
+                $ref: '#/components/schemas/inline_response_200_24'
         "500":
           description: Default error response.
           content:
@@ -5085,7 +5128,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_24'
+                $ref: '#/components/schemas/inline_response_200_25'
         "500":
           description: Default error response.
           content:
@@ -5120,7 +5163,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_24'
+                $ref: '#/components/schemas/inline_response_200_25'
         "500":
           description: Default error response.
           content:
@@ -5129,32 +5172,50 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
+  /workflows/collection_names/{key}:
+    get:
+      tags: []
+      summary: Retrieve all collection names for one workflow.
+      description: Retrieve all collection names for one workflow.
+      operationId: get_workflows_collection_names_key
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_26'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
 components:
   schemas:
-    workflow_key_model_10:
+    compute_node_stats_key_model:
       required:
-      - account
-      - nodes
+      - hostname
+      - timestamp
       type: object
       properties:
-        name:
+        hostname:
           type: string
-        account:
-          type: string
-        gres:
-          type: string
-        mem:
-          type: string
-        nodes:
-          type: integer
-        partition:
-          type: string
-        qos:
-          type: string
-          default: normal
-        tmp:
-          type: string
-        walltime:
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflowsworkflowcompute_node_stats_stats'
+        timestamp:
           type: string
         _key:
           type: string
@@ -5168,49 +5229,113 @@ components:
         aws_schedulers:
           type: array
           items:
-            $ref: '#/components/schemas/workflow_key_model'
+            $ref: '#/components/schemas/aws_schedulers_key_model'
         local_schedulers:
           type: array
           items:
-            $ref: '#/components/schemas/workflow_key_model_6'
+            $ref: '#/components/schemas/local_schedulers_key_model'
         slurm_schedulers:
           type: array
           items:
-            $ref: '#/components/schemas/workflow_key_model_10'
-    files_workflow_model:
+            $ref: '#/components/schemas/slurm_schedulers_key_model'
+    workflow_job_process_stats_model:
       required:
-      - path
+      - avg_cpu_percent
+      - avg_rss
+      - job_key
+      - max_cpu_percent
+      - max_rss
+      - num_samples
+      - run_id
+      - timestamp
       type: object
       properties:
-        name:
+        job_key:
           type: string
-        path:
-          type: string
-        st_mtime:
+        run_id:
+          type: integer
+        avg_cpu_percent:
           type: number
+        max_cpu_percent:
+          type: number
+        avg_rss:
+          type: number
+        max_rss:
+          type: number
+        num_samples:
+          type: integer
+        timestamp:
+          type: string
         _key:
           type: string
         _id:
           type: string
         _rev:
           type: string
-    compute_nodesworkflow_resources:
+    workflow_results_model:
       required:
-      - memory_gb
-      - num_cpus
+      - completion_time
+      - exec_time_minutes
+      - job_key
+      - job_name
+      - return_code
+      - run_id
+      - status
       type: object
       properties:
+        job_key:
+          type: string
+        job_name:
+          type: string
+        run_id:
+          type: integer
+        return_code:
+          type: integer
+        exec_time_minutes:
+          type: number
+        completion_time:
+          type: string
+        status:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    workflow_aws_schedulers_model:
+      type: object
+      properties:
+        name:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    resource_requirements_key_model:
+      type: object
+      properties:
+        name:
+          type: string
         num_cpus:
           type: integer
-        memory_gb:
-          type: number
         num_gpus:
           type: integer
         num_nodes:
           type: integer
-        time_limit:
-          type: object
-        scheduler_config_id:
+        memory:
+          type: string
+          default: 1m
+        runtime:
+          type: string
+          default: P0DT1M
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
           type: string
     status_rev_model:
       required:
@@ -5290,40 +5415,6 @@ components:
           default: true
         interval:
           type: number
-    compute_node_stats_workflow_model:
-      required:
-      - hostname
-      - timestamp
-      type: object
-      properties:
-        hostname:
-          type: string
-        stats:
-          type: array
-          items:
-            $ref: '#/components/schemas/compute_node_statsworkflow_stats'
-        timestamp:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    jobsworkflow_internal:
-      type: object
-      properties:
-        memory_bytes:
-          type: integer
-        num_cpus:
-          type: integer
-        num_gpus:
-          type: integer
-        runtime_seconds:
-          type: number
-        scheduler_config_id:
-          type: string
-          default: ""
     inline_response_500:
       required:
       - error
@@ -5349,7 +5440,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/workflow_key_model_5'
+            $ref: '#/components/schemas/job_process_stats_key_model'
         skip:
           type: integer
         max_limit:
@@ -5394,23 +5485,13 @@ components:
         has_more:
           type: boolean
     inline_response_200_24:
-      required:
-      - auto_tune_status
-      - is_canceled
-      - run_id
       type: object
       properties:
-        is_canceled:
-          type: boolean
-        run_id:
-          type: integer
-        auto_tune_status:
-          $ref: '#/components/schemas/workflowsstatuskey_auto_tune_status'
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/jobs_key_model'
+        reason:
           type: string
     workflowsstatuskey_auto_tune_status:
       type: object
@@ -5422,6 +5503,40 @@ components:
           type: array
           items:
             type: string
+    job_process_stats_key_model:
+      required:
+      - avg_cpu_percent
+      - avg_rss
+      - job_key
+      - max_cpu_percent
+      - max_rss
+      - num_samples
+      - run_id
+      - timestamp
+      type: object
+      properties:
+        job_key:
+          type: string
+        run_id:
+          type: integer
+        avg_cpu_percent:
+          type: number
+        max_cpu_percent:
+          type: number
+        avg_rss:
+          type: number
+        max_rss:
+          type: number
+        num_samples:
+          type: integer
+        timestamp:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
     inline_response_200_23:
       required:
       - max_memory_gb
@@ -5483,7 +5598,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/workflow_key_model_3'
+            $ref: '#/components/schemas/files_key_model'
         skip:
           type: integer
         max_limit:
@@ -5506,7 +5621,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/workflow_key_model_4'
+            $ref: '#/components/schemas/jobs_key_model'
         skip:
           type: integer
         max_limit:
@@ -5521,25 +5636,25 @@ components:
       type: object
       properties:
         name:
-          type: string
+          type: object
         key:
           type: string
         user:
-          type: string
+          type: object
         description:
-          type: string
+          type: object
         jobs:
           type: array
           items:
-            $ref: '#/components/schemas/job_specifications_workflow_model'
+            $ref: '#/components/schemas/workflow_job_specifications_model'
         files:
           type: array
           items:
-            $ref: '#/components/schemas/workflow_key_model_3'
+            $ref: '#/components/schemas/files_key_model'
         resource_requirements:
           type: array
           items:
-            $ref: '#/components/schemas/workflow_key_model_7'
+            $ref: '#/components/schemas/resource_requirements_key_model'
         schedulers:
           $ref: '#/components/schemas/workflow_specifications_schedulers'
         config:
@@ -5559,104 +5674,46 @@ components:
         cancel_on_blocking_job_failure:
           type: boolean
           default: true
-        interruptible:
+        supports_termination:
           type: boolean
           default: false
         run_id:
           type: integer
         internal:
-          $ref: '#/components/schemas/jobsworkflow_internal'
+          $ref: '#/components/schemas/workflowsworkflowjobs_internal'
         _key:
           type: string
         _id:
           type: string
         _rev:
           type: string
-    job_process_stats_workflow_model:
+    inline_response_200_26:
+      type: object
+      properties:
+        names:
+          type: array
+          items:
+            type: string
+    inline_response_200_25:
       required:
-      - avg_cpu_percent
-      - avg_rss
-      - job_key
-      - max_cpu_percent
-      - max_rss
-      - num_samples
+      - auto_tune_status
+      - is_canceled
       - run_id
-      - timestamp
       type: object
       properties:
-        job_key:
-          type: string
+        is_canceled:
+          type: boolean
         run_id:
           type: integer
-        avg_cpu_percent:
-          type: number
-        max_cpu_percent:
-          type: number
-        avg_rss:
-          type: number
-        max_rss:
-          type: number
-        num_samples:
-          type: integer
-        timestamp:
-          type: string
+        auto_tune_status:
+          $ref: '#/components/schemas/workflowsstatuskey_auto_tune_status'
         _key:
           type: string
         _id:
           type: string
         _rev:
           type: string
-    resource_requirements_workflow_model:
-      type: object
-      properties:
-        name:
-          type: string
-        num_cpus:
-          type: integer
-        num_gpus:
-          type: integer
-        num_nodes:
-          type: integer
-        memory:
-          type: string
-          default: 1m
-        runtime:
-          type: string
-          default: P0DT1H
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    jobs_workflow_model:
-      required:
-      - command
-      type: object
-      properties:
-        name:
-          type: string
-        command:
-          type: string
-        status:
-          type: string
-        cancel_on_blocking_job_failure:
-          type: boolean
-          default: true
-        interruptible:
-          type: boolean
-          default: false
-        run_id:
-          type: integer
-        internal:
-          $ref: '#/components/schemas/jobsworkflow_internal'
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    workflow_name_model:
+    edges_name_model:
       required:
       - _from
       - _to
@@ -5665,6 +5722,24 @@ components:
         _from:
           type: string
         _to:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    workflow_scheduled_compute_nodes_model:
+      required:
+      - scheduler_config_id
+      - status
+      type: object
+      properties:
+        scheduler_id:
+          type: string
+        scheduler_config_id:
+          type: string
+        status:
           type: string
         _key:
           type: string
@@ -5721,16 +5796,11 @@ components:
           type: string
         _rev:
           type: string
-    local_schedulers_workflow_model:
+    aws_schedulers_key_model:
       type: object
       properties:
         name:
           type: string
-          default: default
-        memory:
-          type: string
-        num_cpus:
-          type: integer
         _key:
           type: string
         _id:
@@ -5749,7 +5819,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/workflow_key_model_2'
+            $ref: '#/components/schemas/compute_node_stats_key_model'
         skip:
           type: integer
         max_limit:
@@ -5771,19 +5841,8 @@ components:
         stats:
           type: array
           items:
-            $ref: '#/components/schemas/compute_node_statsworkflow_stats'
+            $ref: '#/components/schemas/workflowsworkflowcompute_node_stats_stats'
         timestamp:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    aws_schedulers_workflow_model:
-      type: object
-      properties:
-        name:
           type: string
         _key:
           type: string
@@ -5814,7 +5873,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/workflow_key_model_7'
+            $ref: '#/components/schemas/resource_requirements_key_model'
         skip:
           type: integer
         max_limit:
@@ -5837,7 +5896,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/workflow_key_model_6'
+            $ref: '#/components/schemas/local_schedulers_key_model'
         skip:
           type: integer
         max_limit:
@@ -5860,7 +5919,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/workflow_key_model_9'
+            $ref: '#/components/schemas/scheduled_compute_nodes_key_model'
         skip:
           type: integer
         max_limit:
@@ -5894,44 +5953,37 @@ components:
           type: integer
         has_more:
           type: boolean
-    job_specifications_workflow_model:
+    slurm_schedulers_key_model:
       required:
-      - command
+      - account
+      - nodes
       type: object
       properties:
         name:
           type: string
-        key:
+        account:
           type: string
-        command:
+        gres:
           type: string
-        user_data:
-          type: array
-          items:
-            type: object
-            properties: {}
-        cancel_on_blocking_job_failure:
-          type: boolean
-          default: true
-        interruptible:
-          type: boolean
-          default: false
-        scheduler:
-          type: object
-        resource_requirements:
+        mem:
           type: string
-        input_files:
-          type: array
-          items:
-            type: string
-        output_files:
-          type: array
-          items:
-            type: string
-        blocked_by:
-          type: array
-          items:
-            type: string
+        nodes:
+          type: integer
+        partition:
+          type: string
+        qos:
+          type: string
+          default: normal
+        tmp:
+          type: string
+        walltime:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
     workflow_config_key_model:
       type: object
       properties:
@@ -5943,26 +5995,27 @@ components:
           type: string
         _rev:
           type: string
-    compute_nodes_workflow_model:
+    jobs_key_model:
       required:
-      - hostname
-      - resources
-      - start_time
+      - command
       type: object
       properties:
-        hostname:
+        name:
           type: string
-        start_time:
+        command:
           type: string
-        duration_seconds:
-          type: number
-        is_active:
+        status:
+          type: string
+        cancel_on_blocking_job_failure:
           type: boolean
-        resources:
-          $ref: '#/components/schemas/compute_nodesworkflow_resources'
-        scheduler:
-          type: object
-          properties: {}
+          default: true
+        supports_termination:
+          type: boolean
+          default: false
+        run_id:
+          type: integer
+        internal:
+          $ref: '#/components/schemas/workflowsworkflowjobs_internal'
         _key:
           type: string
         _id:
@@ -5984,11 +6037,77 @@ components:
           type: string
         _rev:
           type: string
+    workflow_slurm_schedulers_model:
+      required:
+      - account
+      - nodes
+      type: object
+      properties:
+        name:
+          type: string
+        account:
+          type: string
+        gres:
+          type: string
+        mem:
+          type: string
+        nodes:
+          type: integer
+        partition:
+          type: string
+        qos:
+          type: string
+          default: normal
+        tmp:
+          type: string
+        walltime:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
     inline_response_200_18:
       type: object
       properties:
         compute_node_resource_stats:
           $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    files_key_model:
+      required:
+      - path
+      type: object
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        st_mtime:
+          type: number
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    scheduled_compute_nodes_key_model:
+      required:
+      - scheduler_config_id
+      - status
+      type: object
+      properties:
+        scheduler_id:
+          type: string
+        scheduler_config_id:
+          type: string
+        status:
+          type: string
         _key:
           type: string
         _id:
@@ -6007,7 +6126,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/workflow_name_model'
+            $ref: '#/components/schemas/edges_name_model'
         skip:
           type: integer
         max_limit:
@@ -6030,7 +6149,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/workflow_key_model_10'
+            $ref: '#/components/schemas/slurm_schedulers_key_model'
         skip:
           type: integer
         max_limit:
@@ -6041,55 +6160,103 @@ components:
           type: integer
         has_more:
           type: boolean
-    results_workflow_model:
-      required:
-      - completion_time
-      - exec_time_minutes
-      - job_key
-      - job_name
-      - return_code
-      - run_id
-      - status
-      type: object
-      properties:
-        job_key:
-          type: string
-        job_name:
-          type: string
-        run_id:
-          type: integer
-        return_code:
-          type: integer
-        exec_time_minutes:
-          type: number
-        completion_time:
-          type: string
-        status:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
     inline_response_200_17:
       type: object
       properties:
         items:
           type: object
           properties: {}
-    workflow_key_model:
+    inline_response_200_16:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
       type: object
       properties:
-        name:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_job_specifications_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    compute_nodes_key_model:
+      required:
+      - hostname
+      - resources
+      - start_time
+      type: object
+      properties:
+        hostname:
           type: string
+        start_time:
+          type: string
+        duration_seconds:
+          type: number
+        is_active:
+          type: boolean
+        resources:
+          $ref: '#/components/schemas/workflowsworkflowcompute_nodes_resources'
+        scheduler:
+          type: object
+          properties: {}
         _key:
           type: string
         _id:
           type: string
         _rev:
           type: string
-    compute_node_statsworkflow_stats:
+    inline_response_200:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/aws_schedulers_key_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    workflowsworkflowcompute_nodes_resources:
+      required:
+      - memory_gb
+      - num_cpus
+      type: object
+      properties:
+        num_cpus:
+          type: integer
+        memory_gb:
+          type: number
+        num_gpus:
+          type: integer
+        num_nodes:
+          type: integer
+        time_limit:
+          type: object
+        scheduler_config_id:
+          type: string
+    workflowsworkflowcompute_node_stats_stats:
       required:
       - average
       - maximum
@@ -6113,191 +6280,6 @@ components:
           type: integer
         job_key:
           type: string
-    inline_response_200_16:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/job_specifications_workflow_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    workflow_key_model_4:
-      required:
-      - command
-      type: object
-      properties:
-        name:
-          type: string
-        command:
-          type: string
-        status:
-          type: string
-        cancel_on_blocking_job_failure:
-          type: boolean
-          default: true
-        interruptible:
-          type: boolean
-          default: false
-        run_id:
-          type: integer
-        internal:
-          $ref: '#/components/schemas/jobsworkflow_internal'
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    workflow_key_model_3:
-      required:
-      - path
-      type: object
-      properties:
-        name:
-          type: string
-        path:
-          type: string
-        st_mtime:
-          type: number
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    workflow_key_model_2:
-      required:
-      - hostname
-      - timestamp
-      type: object
-      properties:
-        hostname:
-          type: string
-        stats:
-          type: array
-          items:
-            $ref: '#/components/schemas/compute_node_statsworkflow_stats'
-        timestamp:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    workflow_key_model_1:
-      required:
-      - hostname
-      - resources
-      - start_time
-      type: object
-      properties:
-        hostname:
-          type: string
-        start_time:
-          type: string
-        duration_seconds:
-          type: number
-        is_active:
-          type: boolean
-        resources:
-          $ref: '#/components/schemas/compute_nodesworkflow_resources'
-        scheduler:
-          type: object
-          properties: {}
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/workflow_key_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    workflow_key_model_9:
-      required:
-      - scheduler_config_id
-      - status
-      type: object
-      properties:
-        scheduler_id:
-          type: string
-        scheduler_config_id:
-          type: string
-        status:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    workflow_key_model_8:
-      required:
-      - completion_time
-      - exec_time_minutes
-      - job_key
-      - job_name
-      - return_code
-      - run_id
-      - status
-      type: object
-      properties:
-        job_key:
-          type: string
-        job_name:
-          type: string
-        run_id:
-          type: integer
-        return_code:
-          type: integer
-        exec_time_minutes:
-          type: number
-        completion_time:
-          type: string
-        status:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
     status_key_model:
       required:
       - auto_tune_status
@@ -6317,30 +6299,7 @@ components:
           type: string
         _rev:
           type: string
-    workflow_key_model_7:
-      type: object
-      properties:
-        name:
-          type: string
-        num_cpus:
-          type: integer
-        num_gpus:
-          type: integer
-        num_nodes:
-          type: integer
-        memory:
-          type: string
-          default: 1m
-        runtime:
-          type: string
-          default: P0DT1H
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    workflow_key_model_6:
+    workflow_local_schedulers_model:
       type: object
       properties:
         name:
@@ -6350,58 +6309,6 @@ components:
           type: string
         num_cpus:
           type: integer
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    workflow_key_model_5:
-      required:
-      - avg_cpu_percent
-      - avg_rss
-      - job_key
-      - max_cpu_percent
-      - max_rss
-      - num_samples
-      - run_id
-      - timestamp
-      type: object
-      properties:
-        job_key:
-          type: string
-        run_id:
-          type: integer
-        avg_cpu_percent:
-          type: number
-        max_cpu_percent:
-          type: number
-        avg_rss:
-          type: number
-        max_rss:
-          type: number
-        num_samples:
-          type: integer
-        timestamp:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    scheduled_compute_nodes_workflow_model:
-      required:
-      - scheduler_config_id
-      - status
-      type: object
-      properties:
-        scheduler_id:
-          type: string
-        scheduler_config_id:
-          type: string
-        status:
-          type: string
         _key:
           type: string
         _id:
@@ -6441,6 +6348,32 @@ components:
           type: string
         _rev:
           type: string
+    workflow_compute_nodes_model:
+      required:
+      - hostname
+      - resources
+      - start_time
+      type: object
+      properties:
+        hostname:
+          type: string
+        start_time:
+          type: string
+        duration_seconds:
+          type: number
+        is_active:
+          type: boolean
+        resources:
+          $ref: '#/components/schemas/workflowsworkflowcompute_nodes_resources'
+        scheduler:
+          type: object
+          properties: {}
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
     inline_response_200_1_items:
       required:
       - hostname
@@ -6467,30 +6400,19 @@ components:
           type: string
         _rev:
           type: string
-    slurm_schedulers_workflow_model:
+    workflow_compute_node_stats_model:
       required:
-      - account
-      - nodes
+      - hostname
+      - timestamp
       type: object
       properties:
-        name:
+        hostname:
           type: string
-        account:
-          type: string
-        gres:
-          type: string
-        mem:
-          type: string
-        nodes:
-          type: integer
-        partition:
-          type: string
-        qos:
-          type: string
-          default: normal
-        tmp:
-          type: string
-        walltime:
+        stats:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflowsworkflowcompute_node_stats_stats'
+        timestamp:
           type: string
         _key:
           type: string
@@ -6509,32 +6431,198 @@ components:
           type: string
         _rev:
           type: string
+    workflow_resource_requirements_model:
+      type: object
+      properties:
+        name:
+          type: string
+        num_cpus:
+          type: integer
+        num_gpus:
+          type: integer
+        num_nodes:
+          type: integer
+        memory:
+          type: string
+          default: 1m
+        runtime:
+          type: string
+          default: P0DT1M
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    local_schedulers_key_model:
+      type: object
+      properties:
+        name:
+          type: string
+          default: default
+        memory:
+          type: string
+        num_cpus:
+          type: integer
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    workflow_files_model:
+      required:
+      - path
+      type: object
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        st_mtime:
+          type: number
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    workflow_jobs_model:
+      required:
+      - command
+      type: object
+      properties:
+        name:
+          type: string
+        command:
+          type: string
+        status:
+          type: string
+        cancel_on_blocking_job_failure:
+          type: boolean
+          default: true
+        supports_termination:
+          type: boolean
+          default: false
+        run_id:
+          type: integer
+        internal:
+          $ref: '#/components/schemas/workflowsworkflowjobs_internal'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
     workflow_specifications_model:
+      type: object
+      properties:
+        name:
+          type: object
+        key:
+          type: string
+        user:
+          type: object
+        description:
+          type: object
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_job_specifications_model'
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/files_key_model'
+        resource_requirements:
+          type: array
+          items:
+            $ref: '#/components/schemas/resource_requirements_key_model'
+        schedulers:
+          $ref: '#/components/schemas/workflow_specifications_schedulers'
+        config:
+          type: object
+          properties: {}
+    workflow_job_specifications_model:
+      required:
+      - command
       type: object
       properties:
         name:
           type: string
         key:
           type: string
-        user:
+        command:
           type: string
-        description:
-          type: string
-        jobs:
+        user_data:
           type: array
           items:
-            $ref: '#/components/schemas/job_specifications_workflow_model'
-        files:
-          type: array
-          items:
-            $ref: '#/components/schemas/workflow_key_model_3'
-        resource_requirements:
-          type: array
-          items:
-            $ref: '#/components/schemas/workflow_key_model_7'
-        schedulers:
-          $ref: '#/components/schemas/workflow_specifications_schedulers'
-        config:
+            type: object
+            properties: {}
+        cancel_on_blocking_job_failure:
+          type: boolean
+          default: true
+        supports_termination:
+          type: boolean
+          default: false
+        scheduler:
           type: object
-          properties: {}
+        resource_requirements:
+          type: string
+        input_files:
+          type: array
+          items:
+            type: string
+        output_files:
+          type: array
+          items:
+            type: string
+        blocked_by:
+          type: array
+          items:
+            type: string
+    workflowsworkflowjobs_internal:
+      type: object
+      properties:
+        memory_bytes:
+          type: integer
+        num_cpus:
+          type: integer
+        num_gpus:
+          type: integer
+        runtime_seconds:
+          type: number
+        scheduler_config_id:
+          type: string
+          default: ""
+    results_key_model:
+      required:
+      - completion_time
+      - exec_time_minutes
+      - job_key
+      - job_name
+      - return_code
+      - run_id
+      - status
+      type: object
+      properties:
+        job_key:
+          type: string
+        job_name:
+          type: string
+        run_id:
+          type: integer
+        return_code:
+          type: integer
+        exec_time_minutes:
+          type: number
+        completion_time:
+          type: string
+        status:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
 x-original-swagger-version: "2.0"

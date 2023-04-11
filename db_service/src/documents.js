@@ -72,7 +72,7 @@ function addJobSpecification(jobSpec, workflow) {
     name: jobSpec.name,
     command: jobSpec.command,
     cancel_on_blocking_job_failure: jobSpec.cancel_on_blocking_job_failure,
-    interruptible: jobSpec.interruptible,
+    supports_termination: jobSpec.supports_termination,
     run_id: 0,
     internal: schemas.jobInternal.validate({}).value,
   };
@@ -339,6 +339,25 @@ function getDocument(collection, documentType, key, res) {
   }
 }
 
+/**
+ * Return all collection names for a workflow.
+ * @param {Object} workflow
+ * @return {Array}
+ */
+function listWorkflowCollectionNames(workflow) {
+  const names = [];
+  for (const name of config.DOCUMENT_COLLECTION_NAMES) {
+    names.push(config.getWorkflowCollectionName(workflow, name));
+  }
+  for (const name of config.VERTEX_NAMES) {
+    names.push(config.getWorkflowCollectionName(workflow, name));
+  }
+  for (const name of config.EDGE_NAMES) {
+    names.push(config.getWorkflowCollectionName(workflow, name));
+  }
+  return names;
+}
+
 
 module.exports = {
   addFile,
@@ -354,4 +373,5 @@ module.exports = {
   getSchedulerConfig,
   getWorkflow,
   getWorkflowDocument,
+  listWorkflowCollectionNames,
 };

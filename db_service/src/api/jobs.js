@@ -10,7 +10,7 @@ const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
 module.exports = router;
 
-router.get('/job_keys/:workflow', function(req, res) {
+router.get('workflows/:workflow/job_keys', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const workflow = documents.getWorkflow(workflowKey, res);
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
@@ -25,7 +25,7 @@ router.get('/job_keys/:workflow', function(req, res) {
     .summary('Retrieve all job keys for a workflow.')
     .description('Retrieves all job keys from the "jobs" collection for a workflow.');
 
-router.get('/jobs/find_by_status/:workflow/:status', function(req, res) {
+router.get('/workflows/:workflow/jobs/find_by_status/:status', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const workflow = documents.getWorkflow(workflowKey, res);
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
@@ -50,7 +50,7 @@ router.get('/jobs/find_by_status/:workflow/:status', function(req, res) {
     .summary('Retrieve all jobs with a specific status')
     .description('Retrieves all jobs from the "jobs" collection with a specific status.');
 
-router.get('/jobs/find_by_needs_file/:workflow/:key', function(req, res) {
+router.get('/workflows/:workflow/jobs/find_by_needs_file/:key', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(workflowKey, res);
@@ -89,7 +89,7 @@ router.get('/jobs/find_by_needs_file/:workflow/:key', function(req, res) {
     .summary('Retrieve all jobs that need a file')
     .description('Retrieves all jobs connected to a file by the needs edge.');
 
-router.get('/jobs/resource_requirements/:workflow/:key', function(req, res) {
+router.get('/workflows/:workflow/jobs/resource_requirements/:key', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(workflowKey, res);
@@ -107,7 +107,7 @@ router.get('/jobs/resource_requirements/:workflow/:key', function(req, res) {
     .summary('Retrieve the resource requirements for a job.')
     .description('Retrieve the resource requirements for a job by its key.');
 
-router.get('/jobs/process_stats/:workflow/:key', function(req, res) {
+router.get('/workflows/:workflow/jobs/process_stats/:key', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(workflowKey, res);
@@ -125,7 +125,7 @@ router.get('/jobs/process_stats/:workflow/:key', function(req, res) {
     .summary('Retrieve the job process stats for a job.')
     .description('Retrieve the job process stats for a job by its key.');
 
-router.post('jobs/complete_job/:workflow/:key/:status/:rev', function(req, res) {
+router.post('/workflows/:workflow/jobs/complete_job/:key/:status/:rev', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
   const status = req.pathParams.status;
@@ -140,9 +140,6 @@ router.post('jobs/complete_job/:workflow/:key/:status/:rev', function(req, res) 
     res.throw(409, `Revision conflict for ${job._id}: _rev=${job._rev}`);
   }
 
-  if (job.status == status) {
-    res.throw(400, `Job ${job._id} already has status=${status}`);
-  }
   job.status = status;
   try {
     const meta = documents.addResult(result, workflow);
@@ -165,7 +162,7 @@ router.post('jobs/complete_job/:workflow/:key/:status/:rev', function(req, res) 
     .summary('Complete a job and add a result.')
     .description('Complete a job, connect it to a result, and manage side effects.');
 
-router.put('jobs/manage_status_change/:workflow/:key/:status/:rev', function(req, res) {
+router.put('/workflows/:workflow/jobs/manage_status_change/:key/:status/:rev', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
   const status = req.pathParams.status;
@@ -196,7 +193,7 @@ router.put('jobs/manage_status_change/:workflow/:key/:status/:rev', function(req
     .summary('Change the status of a job and manage side effects.')
     .description('Change the status of a job and manage side effects.');
 
-router.post('jobs/user_data/:workflow/:key', function(req, res) {
+router.post('/workflows/:workflow/jobs/user_data/:key', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(workflowKey, res);
@@ -218,7 +215,7 @@ router.post('jobs/user_data/:workflow/:key', function(req, res) {
     .summary('Store user data for a job.')
     .description('Store user data for a job and connect the two vertexes.');
 
-router.get('jobs/user_data/:workflow/:key', function(req, res) {
+router.get('/workflows/:workflow/jobs/user_data/:key', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(workflowKey, res);

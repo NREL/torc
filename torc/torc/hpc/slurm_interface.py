@@ -1,13 +1,14 @@
-"""SLURM management functionality"""
+"""Slurm management functionality"""
 
 import logging
 import os
 import re
+import subprocess
 from datetime import datetime
 
 from torc.exceptions import ExecutionError
 from torc.utils.files import create_script
-from torc.utils.run_command import check_run_command, run_command
+from torc.utils.run_command import run_command
 from .common import HpcJobStats, HpcJobStatus, HpcJobInfo
 from .hpc_interface import HpcInterface
 
@@ -28,10 +29,10 @@ class SlurmInterface(HpcInterface):
     _REGEX_SBATCH_OUTPUT = re.compile(r"Submitted batch job (\d+)")
 
     def cancel_job(self, job_id):
-        return run_command(f"scancel {job_id}")
+        return subprocess.call(["scancel", job_id])
 
-    def check_status(self, job_id=None):
-        field_names = ("jobid", "state")
+    def get_status(self, job_id):
+        field_names = ("jobid", "name", "state")
         cmd = f"squeue -u {self.USER} --Format \"{','.join(field_names)}\" -h -j {job_id}"
 
         output = {}
@@ -63,7 +64,7 @@ class SlurmInterface(HpcInterface):
         )
         return job_info
 
-    def check_statuses(self):
+    def get_statuses(self):
         field_names = ("jobid", "state")
         cmd = f"squeue -u {self.USER} --Format \"{','.join(field_names)}\" -h"
 
@@ -131,19 +132,20 @@ class SlurmInterface(HpcInterface):
         return {k: v for k, v in os.environ.items() if "SLURM" in k}
 
     def get_job_end_time(self):
-        cmd = f"squeue -j {self.get_current_job_id()} --format='%20e'"
-        output = {}
-        check_run_command(cmd, output=output)
-        timestamp = output["stdout"].split("\n")[1].replace('"', "").strip()
+        cmd = ["squeue", "-j", self.get_current_job_id(), "--format='%20e'"]
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, check=True)
+        timestamp = proc.stdout.decode("utf-8").replace("'", "").strip().split("\n")[1].strip()
         return datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
 
     def get_job_stats(self, job_id):
-        cmd = (
-            f"sacct -j {job_id} --format=JobID,JobName%20,state,start,end,Account,Partition%15,QOS"
-        )
-        output = {}
-        check_run_command(cmd, output=output)
-        result = output["stdout"].strip().split("\n")
+        cmd = [
+            "sacct",
+            "-j",
+            job_id,
+            "--format=JobID,JobName%20,state,start,end,Account,Partition%15,QOS",
+        ]
+        proc = subprocess.run(cmd, stdout=subprocess.PIPE, check=True)
+        result = proc.stdout.decode("utf-8").strip().split("\n")
         if len(result) != 6:
             raise Exception(f"Unknown output for sacct: {result} length={len(result)}")
 
@@ -190,18 +192,24 @@ class SlurmInterface(HpcInterface):
         return int(os.environ["SLURM_CPUS_ON_NODE"])
 
     def list_active_nodes(self, job_id):
-        out1 = {}
         # It's possible that 500 characters won't be enough, even with the compact format.
         # Compare the node count against the result to make sure we got all nodes.
         # There should be a better way to get this.
-        check_run_command(f'squeue -j {job_id} --format="%5D %500N" -h', out1)
-        result = out1["stdout"].strip().split()
+        proc = subprocess.run(
+            ["squeue", "-j", job_id, "--format='%5D %500N'", "-h"],
+            stdout=subprocess.PIPE,
+            check=True,
+        )
+        result = proc.stdout.decode("utf-8").replace("'", "").strip().split()
         assert len(result) == 2, str(result)
         num_nodes = int(result[0])
         nodes_compact = result[1]
-        out2 = {}
-        check_run_command(f'scontrol show hostnames "{nodes_compact}"', out2)
-        nodes = [x for x in out2["stdout"].split("\n") if x != ""]
+        proc = subprocess.run(
+            ["scontrol", "show", "hostnames", f"'{nodes_compact}'"],
+            stdout=subprocess.PIPE,
+            check=True,
+        )
+        nodes = [x for x in proc.stdout.decode("utf-8").split("\n") if x != ""]
         if len(nodes) != num_nodes:
             raise Exception(f"Bug in parsing node names. Found={len(nodes)} Actual={num_nodes}")
         return nodes

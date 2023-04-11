@@ -1,5 +1,6 @@
 """Common functions for CLI commands"""
 
+import json
 import logging
 import shutil
 import sys
@@ -9,9 +10,31 @@ from prettytable import PrettyTable
 
 from torc.api import iter_documents
 from torc.loggers import setup_logging
+from torc.torc_rc import TorcRuntimeConfig
 
 
 logger = logging.getLogger(__name__)
+
+
+def check_database_url(api):
+    """Raises an exception if a database URL is not set."""
+    if api is None:
+        # TODO: should be called from CLI endpoints
+        rc_path = TorcRuntimeConfig.path()
+        print(
+            "The database_url, in the format \n"
+            "    http://<database_hostname>:8529/_db/<database_name>/torc-service,\n"
+            "    such as http://localhost:8529/_db/workflows/torc-service,\n"
+            "must be set in one of the following:\n"
+            "  - CLI option:\n"
+            "    $ torc -u URL\n"
+            "   - environment variable TORC_DATABASE_URL\n"
+            "    $ export TORC_DATABASE_URL=URL\n"
+            f"  - torc runtime config file: {rc_path}\n"
+            "    Set the value for the field database_url.\n",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
 
 def check_output_directory(path: Path, force: bool):
@@ -21,7 +44,7 @@ def check_output_directory(path: Path, force: bool):
     ----------
     path : Path
     force : bool
-        If False and the directory exists and has content, exit.
+        If False and the directory exists and has content, exit. If True, delete the contents.
     """
     if path.exists():
         if not bool(path.iterdir()):
@@ -36,6 +59,46 @@ def check_output_directory(path: Path, force: bool):
             sys.exit(1)
 
     path.mkdir()
+
+
+def check_output_path(path: Path, force: bool):
+    """Ensures that the parameter path does not exist.
+
+    Parameters
+    ----------
+    path : Path
+    force : bool
+        If True and the path exists, delete it.
+    """
+    if path.exists():
+        if force:
+            path.unlink()
+        else:
+            print(
+                f"{path} already exists. Choose a different name or pass --force to overwrite it.",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+
+
+def get_log_level_from_str(level):
+    """Convert a log level string to logging type."""
+    match level:
+        case "debug":
+            return logging.DEBUG
+        case "info":
+            return logging.INFO
+        case "warning":
+            return logging.WARNING
+        case "error":
+            return logging.ERROR
+        case _:
+            raise Exception(f"Unsupported level={level}")
+
+
+def get_output_format_from_context(ctx) -> str:
+    """Get the workflow ID from a click context."""
+    return ctx.find_root().params["output_format"]
 
 
 def get_workflow_key_from_context(ctx, api):
@@ -59,6 +122,25 @@ def get_workflow_key_from_context(ctx, api):
     else:
         key = params["workflow_key"]
     return key
+
+
+def print_items(ctx, items, table_title, json_key, exclude_columns=None, indent=None):
+    """Print items in either a table or JSON format, based on what is set in ctx."""
+    output_format = get_output_format_from_context(ctx)
+    if output_format == "text":
+        table = make_text_table(items, table_title, exclude_columns=exclude_columns)
+        if table.rows:
+            print(table)
+        else:
+            logger.info("No %s are stored", json_key)
+    else:
+        assert output_format == "json", output_format
+        rows = []
+        for item in items:
+            for column in exclude_columns or []:
+                item.pop(column)
+            rows.append(item)
+        print(json.dumps({json_key: rows}, indent=indent))
 
 
 def prompt_user_for_document(

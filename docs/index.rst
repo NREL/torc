@@ -60,6 +60,7 @@ Here are documentation links for some of their tools:
 
    overview
    installation
+   quick_start
    usage
    architecture
    job_input_output_data

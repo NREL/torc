@@ -60,8 +60,16 @@ router.get('/workflows', function(req, res) {
   try {
     const qp = req.queryParams;
     const limit = utils.getItemsLimit(qp.limit);
-    const items = collection.all().skip(qp.skip).limit(limit).toArray();
-    res.send(utils.makeCursorResult(items, qp.skip, limit, collection.count()));
+    const example = {};
+    for (const filterField of ['description', 'name', 'user']) {
+      if (qp[filterField] != null) {
+        example[filterField] = qp[filterField];
+      }
+    }
+    const items = Object.keys(example).length == 0 ?
+      collection.all().skip(qp.skip).limit(limit) :
+      collection.byExample(example).skip(qp.skip).limit(limit);
+    res.send(utils.makeCursorResult(items.toArray(), qp.skip, limit, collection.count()));
   } catch (e) {
     if (e.isArangoError) {
       res.throw(400, `${e}`, e);
@@ -71,6 +79,9 @@ router.get('/workflows', function(req, res) {
 })
     .queryParam('skip', joi.number().default(0))
     .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .queryParam('name', joi.string())
+    .queryParam('user', joi.string())
+    .queryParam('description', joi.string())
     .response(schemas.batchWorkflows)
     .summary('Retrieve all workflows')
     .description('Retrieves all documents from the "workflows" collection.');
@@ -89,7 +100,7 @@ router.delete('/workflows/:key', function(req, res) {
     .body(joi.object().optional())
     .response(schemas.workflow, 'workflow stored in the collection.')
     .summary('Delete a workflow')
-    .description('Deletes document from the "workflows" collection by key.');
+    .description('Deletes a document from the "workflows" collection by key.');
 
 router.get('/workflows/is_complete/:key', function(req, res) {
   const key = req.pathParams.key;
@@ -147,12 +158,13 @@ router.post('/workflows/prepare_jobs_for_submission/:key', function(req, res) {
     } else {
       const resources = req.body;
       const qp = req.queryParams == null ? {} : req.queryParams;
-      const jobs = query.prepareJobsForSubmission(workflow, resources, qp.limit);
+      const reason = {message: ''};
+      const jobs = query.prepareJobsForSubmission(workflow, resources, qp.limit, reason);
       const items = [];
       for (const job of jobs) {
         items.push(utils.convertJobForApi(job));
       }
-      res.send(jobs);
+      res.send({jobs: jobs, reason: reason.message});
     }
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `prepare_jobs_for_submission workflow key=${key}`);
@@ -161,7 +173,10 @@ router.post('/workflows/prepare_jobs_for_submission/:key', function(req, res) {
     .pathParam('key', joi.string().required(), 'Workflow key')
     .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
     .body(schemas.workerResources, 'Available worker resources.')
-    .response(joi.array().items(schemas.job), 'Jobs that are ready for submission.')
+    .response(joi.object().required().keys(
+        {jobs: joi.array().items(schemas.job), reason: joi.string()}),
+    'Jobs that are ready for submission.',
+    )
     .summary('Return ready jobs')
     .description('Return jobs that are ready for submission. Sets status to submitted_pending');
 
@@ -292,3 +307,12 @@ router.put('/workflows/status/:key', function(req, res) {
     .response(schemas.workflowStatus)
     .summary('Reports the workflow status.')
     .description('Reports the workflow status.');
+
+router.get('/workflows/collection_names/:key', function(req, res) {
+  const workflow = documents.getWorkflow(req.pathParams.key, res);
+  res.send({names: documents.listWorkflowCollectionNames(workflow)});
+})
+    .pathParam('key', joi.string().required(), 'Workflow key')
+    .response(joi.object().required().keys({names: joi.array().items(joi.string())}))
+    .summary('Retrieve all collection names for one workflow.')
+    .description('Retrieve all collection names for one workflow.');

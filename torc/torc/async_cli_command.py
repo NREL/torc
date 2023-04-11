@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from swagger_client.models.results_workflow_model import ResultsWorkflowModel
+from swagger_client.models.workflow_results_model import WorkflowResultsModel
 
 from torc.common import JOB_STDIO_DIR
 
@@ -26,11 +26,11 @@ class AsyncJobBase(abc.ABC):
 
     @abc.abstractmethod
     def cancel(self):
-        """Cancel the job. Does not wait to confirm. Call wait_for_cancelation afterwards."""
+        """Cancel the job. Does not wait to confirm. Call wait_for_completion afterwards."""
 
     @abc.abstractmethod
-    def wait_for_cancelation(self, timeout_seconds=30):
-        """Waits to confirm that the job has finished."""
+    def wait_for_completion(self, status, timeout_seconds=30):
+        """Waits to confirm that the job has finished after being sent SIGKILL or SIGTERM."""
 
     @property
     @abc.abstractmethod
@@ -48,8 +48,12 @@ class AsyncJobBase(abc.ABC):
 
         Returns
         -------
-        ResultsWorkflowModel
+        WorkflowResultsModel
         """
+
+    @abc.abstractmethod
+    def terminate(self):
+        """Terminate the job with SIGTERM to allow a graceful exit before a node times out."""
 
     @abc.abstractmethod
     def is_complete(self):
@@ -84,18 +88,18 @@ class AsyncCliCommand(AsyncJobBase):
     def cancel(self):
         self._pipe.kill()
 
-    def wait_for_cancelation(self, timeout_seconds=30):
-        killed = False
+    def wait_for_completion(self, status, timeout_seconds=30):
+        complete = False
         for _ in range(timeout_seconds):
             if self._pipe.poll() is not None:
-                killed = True
-                logger.info("Killed job %s", self.key)
+                complete = True
+                logger.info("job %s has exited", self.key)
                 break
             time.sleep(1)
-        if not killed:
-            logger.warning("Timed out waiting for job %s to complete after being killed", self.key)
+        if not complete:
+            logger.warning("Timed out waiting for job %s to complete", self.key)
 
-        self._complete("canceled")
+        self._complete(status)
 
     @property
     def db_job(self):
@@ -107,7 +111,7 @@ class AsyncCliCommand(AsyncJobBase):
 
     def get_result(self):
         assert self._is_complete
-        return ResultsWorkflowModel(
+        return WorkflowResultsModel(
             job_key=self.key,
             job_name=self._db_job.name,
             run_id=self._db_job.run_id,
@@ -116,6 +120,9 @@ class AsyncCliCommand(AsyncJobBase):
             completion_time=self._completion_time,
             status=self._status,
         )
+
+    def terminate(self):
+        self._pipe.terminate()
 
     def is_complete(self):
         if self._is_complete:

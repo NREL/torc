@@ -1,4 +1,4 @@
-"""Tests the cancel-workflow command."""
+"""Tests jobs that support termination."""
 
 import subprocess
 import time
@@ -6,8 +6,8 @@ import time
 from torc.api import iter_documents
 
 
-def test_cancel_workflow(cancelable_workflow, tmp_path):
-    """Tests the cancel-workflow command."""
+def test_terminated_jobs(cancelable_workflow, tmp_path):
+    """Tests that jobs can be terminated on a compute node timeout."""
     db = cancelable_workflow[0]
     api = db.api
     workflow_key = db.workflow.key
@@ -23,24 +23,28 @@ def test_cancel_workflow(cancelable_workflow, tmp_path):
         "run-jobs",
         "-p",
         "1",
+        "-t",
+        "P0DT5S",
         "-o",
         str(output_dir),
     ]
     with subprocess.Popen(cmd) as pipe:
-        time.sleep(2)
-        assert pipe.poll() is None
-        subprocess.run(
-            ["torc", "-u", api.api_client.configuration.host, "workflows", "cancel", workflow_key],
-            check=True,
-        )
-        status = api.get_workflows_status_key(workflow_key)
-        assert status.is_canceled
+        done = False
+        for _ in range(100):
+            if pipe.poll() is not None:
+                done = True
+                break
+            time.sleep(1)
+
+        if not done:
+            pipe.kill()
+        assert done
         result = api.get_workflows_is_complete_key(workflow_key)
         assert result.is_complete
         pipe.communicate()
         assert pipe.returncode == 0
         for job in iter_documents(api.get_workflows_workflow_jobs, workflow_key):
-            assert job.status == "canceled"
+            assert job.status == "terminated"
         for result in iter_documents(api.get_workflows_workflow_results, workflow_key):
-            assert result.return_code != 0
-            assert result.status == "canceled"
+            assert result.return_code == 0
+            assert result.status == "terminated"

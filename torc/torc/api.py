@@ -67,6 +67,10 @@ def sanitize_workflow(data: dict):
     for item in itertools.chain([data["config"]], data["files"], data["resource_requirements"]):
         for key in _DATABASE_KEYS:
             item.pop(key, None)
+    if "jobs" in data and not data["jobs"]:
+        data.pop("jobs")
+    if "resource_requirements" in data and not data["resource_requirements"]:
+        data.pop("resource_requirements")
     if "files" in data and not data["files"]:
         data.pop("files")
     for file in data.get("files", []):

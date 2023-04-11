@@ -46,7 +46,7 @@ Nodes
 - files
 - job resource requirements
 - results
-- scheduler configurations (SLURM, AWS, etc.)
+- scheduler configurations (Slurm, AWS, etc.)
 - user data (any number of arbitrary objects)
 - compute nodes
 - compute node stats
@@ -73,7 +73,7 @@ Edges
 - produces: job produces a file
 - requires: job has a set of resource requirements
 - returned: job returned a result
-- scheduled_by: job is scheduled by a specific scheduler, like SLURM or AWS Batch
+- scheduled_by: job is scheduled by a specific scheduler, like Slurm or AWS Batch
 - stores: job stores one or more user data objects
 
 Documents
@@ -90,7 +90,7 @@ Job Statuses
 - **blocked**: The job cannot start because of dependencies.
 - **submitted_pending**: The job was given to a compute node but is not yet running.
 - **submitted**: The job is running on a compute node.
-- **interrupted**: Compute node timeout occurred and the job was notified to checkpoint and shut
+- **terminated**: Compute node timeout occurred and the job was notified to checkpoint and shut
   down.
 - **done**: The job finished. It may or may not have completed successfully.
 - **canceled**: A blocking job failed and so the job never ran.
@@ -106,7 +106,7 @@ Job Statuses
       "ready" -> "submitted_pending";
       "submitted_pending" -> "submitted";
       "submitted" -> "done";
-      "submitted" -> "interrupted";
+      "submitted" -> "terminated";
       "blocked" -> "canceled";
       "blocked" -> "ready";
    }

@@ -14,8 +14,7 @@ const JobStatus = {
   // A blocking job failed and so the job never ran.
   Canceled: 'canceled',
   // Compute node timeout occurred and the job was notified to checkpoint and shut down.
-  // TODO: not implemented
-  // Interrupted: 'interrupted',
+  Terminated: 'terminated',
   // The job finished. It may or may not have completed successfully.
   Done: 'done',
   // The job can be submitted.

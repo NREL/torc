@@ -2,11 +2,11 @@
   jobs: [
     {
       name: "preprocess",
-      command: "python tests/scripts/preprocess.py -i output_dir/inputs.json -o output_dir/f1.json",
+      command: "python tests/scripts/preprocess.py -i output/inputs.json -o output/f1.json",
       user_data: [],
       cancel_on_blocking_job_failure: true,
-      interruptible: false,
-      scheduler: "",
+      supports_termination: false,
+      scheduler: "slurm_schedulers/debug",
       resource_requirements: "small",
       input_files: [
         "inputs"
@@ -18,15 +18,15 @@
     },
     {
       name: "work1",
-      command: "python tests/scripts/work.py -i output_dir/f1.json -o output_dir/f2.json",
+      command: "python tests/scripts/work.py -i output/f1.json -o output/f2.json",
       user_data: [
         {
           key1: "val1"
         }
       ],
       cancel_on_blocking_job_failure: true,
-      interruptible: false,
-      scheduler: "",
+      supports_termination: false,
+      scheduler: "slurm_schedulers/debug",
       resource_requirements: "medium",
       input_files: [
         "file1"
@@ -40,11 +40,11 @@
     },
     {
       name: "work2",
-      command: "python tests/scripts/work.py -i output_dir/f1.json -o output_dir/f3.json",
+      command: "python tests/scripts/work.py -i output/f1.json -o output/f3.json",
       user_data: [],
       cancel_on_blocking_job_failure: true,
-      interruptible: false,
-      scheduler: "",
+      supports_termination: false,
+      scheduler: "slurm_schedulers/debug",
       resource_requirements: "large",
       input_files: [
         "file1"
@@ -58,11 +58,11 @@
     },
     {
       name: "postprocess",
-      command: "python tests/scripts/postprocess.py -i output_dir/f2.json -i output_dir/f3.json -o output_dir/f4.json",
+      command: "python tests/scripts/postprocess.py -i output/f2.json -i output/f3.json -o output/f4.json",
       user_data: [],
       cancel_on_blocking_job_failure: true,
-      interruptible: false,
-      scheduler: "",
+      supports_termination: false,
+      scheduler: "slurm_schedulers/debug",
       resource_requirements: "small",
       input_files: [
         "file3",
@@ -80,58 +80,60 @@
   files: [
     {
       name: "inputs",
-      path: "output_dir/inputs.json"
+      path: "output/inputs.json"
     },
     {
       name: "file1",
-      path: "output_dir/f1.json"
+      path: "output/f1.json"
     },
     {
       name: "file2",
-      path: "output_dir/f2.json"
+      path: "output/f2.json"
     },
     {
       name: "file3",
-      path: "output_dir/f3.json"
+      path: "output/f3.json"
     },
     {
       name: "file4",
-      path: "output_dir/f4.json"
+      path: "output/f4.json"
     }
   ],
   resource_requirements: [
     {
       name: "small",
-      num_cpus: 1.0,
-      num_gpus: 0.0,
-      num_nodes: 1.0,
+      num_cpus: 1,
+      num_gpus: 0,
+      num_nodes: 1,
       memory: "1g",
-      runtime: "P0DT1H"
+      runtime: "P0DT5M"
     },
     {
       name: "medium",
-      num_cpus: 4.0,
-      num_gpus: 0.0,
-      num_nodes: 1.0,
+      num_cpus: 4,
+      num_gpus: 0,
+      num_nodes: 1,
       memory: "8g",
-      runtime: "P0DT8H"
+      runtime: "P0DT10M"
     },
     {
       name: "large",
-      num_cpus: 8.0,
-      num_gpus: 0.0,
-      num_nodes: 1.0,
+      num_cpus: 8,
+      num_gpus: 0,
+      num_nodes: 1,
       memory: "16g",
-      runtime: "P0DT12H"
+      runtime: "P0DT20M"
     }
   ],
   schedulers: {
     slurm_schedulers: [
       {
-        name: "short",
+        name: "debug",
         account: "my_account",
         nodes: 1,
-        walltime: "04:00:00",
+        partition: "debug",
+        qos: "standby",
+        walltime: "01:00:00",
       }
     ],
   },
@@ -144,7 +146,7 @@
       process: true,
       include_child_processes: true,
       recurse_child_processes: false,
-      monitor_type: "aggregation",
+      monitor_type: "periodic",
       make_plots: true,
       interval: 1
     }

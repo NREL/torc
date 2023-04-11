@@ -3,33 +3,33 @@
 # pylint: disable=redefined-outer-name,duplicate-code
 
 import json
-import re
 from datetime import datetime
 from pathlib import Path
 
 import pytest
-
+from click.testing import CliRunner
 from swagger_client import ApiClient, DefaultApi
 from swagger_client.configuration import Configuration
 from swagger_client.models.workflow_specifications_schedulers import (
     WorkflowSpecificationsSchedulers,
 )
-from swagger_client.models.files_workflow_model import FilesWorkflowModel
-from swagger_client.models.local_schedulers_workflow_model import LocalSchedulersWorkflowModel
-from swagger_client.models.job_specifications_workflow_model import JobSpecificationsWorkflowModel
-from swagger_client.models.resource_requirements_workflow_model import (
-    ResourceRequirementsWorkflowModel,
+from swagger_client.models.workflow_files_model import WorkflowFilesModel
+from swagger_client.models.workflow_local_schedulers_model import WorkflowLocalSchedulersModel
+from swagger_client.models.workflow_job_specifications_model import WorkflowJobSpecificationsModel
+from swagger_client.models.workflow_resource_requirements_model import (
+    WorkflowResourceRequirementsModel,
 )
 from swagger_client.models.workflow_specifications_model import WorkflowSpecificationsModel
-from swagger_client.models.results_workflow_model import ResultsWorkflowModel
+from swagger_client.models.workflow_results_model import WorkflowResultsModel
 from swagger_client.models.workflow_config_compute_node_resource_stats import (
     WorkflowConfigComputeNodeResourceStats,
 )
 from swagger_client.models.workflow_config_model import WorkflowConfigModel
 
+from torc.api import iter_documents
+from torc.cli.torc import cli
 from torc.workflow_manager import WorkflowManager
 from torc.tests.database_interface import DatabaseInterface
-from torc.utils.run_command import check_run_command
 
 
 TEST_WORKFLOW = "test_workflow"
@@ -40,7 +40,22 @@ INVALID = Path("tests") / "scripts" / "invalid.py"
 NOOP = Path("tests") / "scripts" / "noop.py"
 RC_JOB = Path("tests") / "scripts" / "resource_consumption.py"
 SLEEP_JOB = Path("tests") / "scripts" / "sleep.py"
-URL = "http://localhost:8529/_db/workflows/torc-service"
+URL = "http://localhost:8529/_db/test-workflows/torc-service"
+
+
+def pytest_sessionstart(session):
+    """Records existing workflows."""
+    api = _initialize_api()
+    session.torc_workflow_keys = {x.key for x in iter_documents(api.get_workflows)}
+    api.api_client.close()
+
+
+def pytest_sessionfinish(session, exitstatus):  # pylint: disable=unused-argument
+    """Deletes any workflows created by the tests."""
+    api = _initialize_api()
+    for key in {x.key for x in iter_documents(api.get_workflows)} - session.torc_workflow_keys:
+        api.delete_workflows_key(key)
+    api.api_client.close()
 
 
 @pytest.fixture
@@ -52,24 +67,24 @@ def diamond_workflow(tmp_path):
     inputs_file = output_dir / "inputs.json"
     inputs_file.write_text(json.dumps({"val": 5}))
 
-    inputs = FilesWorkflowModel(name="inputs", path=str(inputs_file))
-    f1 = FilesWorkflowModel(name="file1", path=str(output_dir / "f1.json"))
-    f2 = FilesWorkflowModel(name="file2", path=str(output_dir / "f2.json"))
-    f3 = FilesWorkflowModel(name="file3", path=str(output_dir / "f3.json"))
-    f4 = FilesWorkflowModel(name="file4", path=str(output_dir / "f4.json"))
+    inputs = WorkflowFilesModel(name="inputs", path=str(inputs_file))
+    f1 = WorkflowFilesModel(name="file1", path=str(output_dir / "f1.json"))
+    f2 = WorkflowFilesModel(name="file2", path=str(output_dir / "f2.json"))
+    f3 = WorkflowFilesModel(name="file3", path=str(output_dir / "f3.json"))
+    f4 = WorkflowFilesModel(name="file4", path=str(output_dir / "f4.json"))
 
-    small = ResourceRequirementsWorkflowModel(
+    small = WorkflowResourceRequirementsModel(
         name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
     )
-    medium = ResourceRequirementsWorkflowModel(
+    medium = WorkflowResourceRequirementsModel(
         name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
     )
-    large = ResourceRequirementsWorkflowModel(
+    large = WorkflowResourceRequirementsModel(
         name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
     )
 
-    scheduler = LocalSchedulersWorkflowModel(name="test")
-    preprocess = JobSpecificationsWorkflowModel(
+    scheduler = WorkflowLocalSchedulersModel(name="test")
+    preprocess = WorkflowJobSpecificationsModel(
         name="preprocess",
         command=f"python {PREPROCESS} -i {inputs.path} -o {f1.path}",
         input_files=[inputs.name],
@@ -77,7 +92,7 @@ def diamond_workflow(tmp_path):
         resource_requirements=small.name,
         scheduler="local_schedulers/test",
     )
-    work1 = JobSpecificationsWorkflowModel(
+    work1 = WorkflowJobSpecificationsModel(
         name="work1",
         command=f"python {WORK} -i {f1.path} -o {f2.path}",
         user_data=[{"key1": "val1"}],
@@ -86,7 +101,7 @@ def diamond_workflow(tmp_path):
         resource_requirements=medium.name,
         scheduler="local_schedulers/test",
     )
-    work2 = JobSpecificationsWorkflowModel(
+    work2 = WorkflowJobSpecificationsModel(
         name="work2",
         command=f"python {WORK} -i {f1.path} -o {f3.path}",
         user_data=[{"key2": "val2"}],
@@ -95,7 +110,7 @@ def diamond_workflow(tmp_path):
         resource_requirements=large.name,
         scheduler="local_schedulers/test",
     )
-    postprocess = JobSpecificationsWorkflowModel(
+    postprocess = WorkflowJobSpecificationsModel(
         name="postprocess",
         command=f"python {POSTPROCESS} -i {f2.path} -i {f3.path} -o {f4.path}",
         input_files=[f2.name, f3.name],
@@ -117,6 +132,7 @@ def diamond_workflow(tmp_path):
     scheduler = db.get_document("local_schedulers", "test")
     yield db, scheduler.id, output_dir
     api.delete_workflows_key(workflow.key)
+    api.api_client.close()
 
 
 @pytest.fixture
@@ -124,12 +140,12 @@ def independent_job_workflow(num_jobs):
     """Creates a workflow out of independent jobs."""
     api = _initialize_api()
 
-    small = ResourceRequirementsWorkflowModel(
+    small = WorkflowResourceRequirementsModel(
         name="small", num_cpus=1, memory="1m", runtime="P0DT0H1M"
     )
     jobs = []
     for i in range(num_jobs):
-        job = JobSpecificationsWorkflowModel(
+        job = WorkflowJobSpecificationsModel(
             name=str(i),
             command="echo hello",
             resource_requirements=small.name,
@@ -142,6 +158,7 @@ def independent_job_workflow(num_jobs):
     api.post_workflows_initialize_jobs_key(workflow.key)
     yield db, num_jobs
     api.delete_workflows_key(workflow.key)
+    api.api_client.close()
 
 
 def _initialize_api():
@@ -154,11 +171,11 @@ def _initialize_api():
 def workflow_with_cancel(tmp_path, cancel_on_blocking_job_failure):
     """Creates a diamond workflow out of 4 jobs."""
     api = _initialize_api()
-    job1 = JobSpecificationsWorkflowModel(
+    job1 = WorkflowJobSpecificationsModel(
         name="job1",
         command=f"python {INVALID}",
     )
-    job2 = JobSpecificationsWorkflowModel(
+    job2 = WorkflowJobSpecificationsModel(
         name="job2",
         command=f"python {NOOP}",
         blocked_by=["job1"],
@@ -171,6 +188,7 @@ def workflow_with_cancel(tmp_path, cancel_on_blocking_job_failure):
     api.post_workflows_initialize_jobs_key(workflow.key)
     yield db, tmp_path, cancel_on_blocking_job_failure
     api.delete_workflows_key(workflow.key)
+    api.api_client.close()
 
 
 @pytest.fixture
@@ -183,16 +201,16 @@ def completed_workflow(diamond_workflow):
     status = api.get_workflows_status_key(db.workflow.key)
     status.run_id = 1
     api.put_workflows_status_key(status, db.workflow.key)
-    job_keys = [job.key for job in api.get_jobs_workflow(db.workflow.key).items]
+    job_keys = [job.key for job in api.get_workflows_workflow_jobs(db.workflow.key).items]
     for job_key in job_keys:
         # Completing a job this way will cause blocked jobs to change status and revision,
         # so we need to update each time.
-        job = api.get_jobs_workflow_key(db.workflow.key, job_key)
+        job = api.get_workflows_workflow_jobs_key(db.workflow.key, job_key)
         # Fake out what normally happens at submission time.
         job.run_id += 1
-        job = api.put_jobs_workflow_key(job, db.workflow.key, job_key)
+        job = api.put_workflows_workflow_jobs_key(job, db.workflow.key, job_key)
         status = "done"
-        result = ResultsWorkflowModel(
+        result = WorkflowResultsModel(
             job_key=job.key,
             job_name=job.name,
             run_id=job.run_id,
@@ -201,16 +219,16 @@ def completed_workflow(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.post_jobs_complete_job_workflow_key_status_rev(
+        job = api.post_workflows_workflow_jobs_complete_job_key_status_rev(
             result, db.workflow.key, job_key, status, job._rev  # pylint: disable=protected-access
         )
 
-    for file in api.get_files_workflow(db.workflow.key).items:
+    for file in api.get_workflows_workflow_files(db.workflow.key).items:
         path = Path(file.path)
         if not path.exists():
             path.touch()
             file.st_mtime = path.stat().st_mtime
-            api.put_files_workflow_key(file, db.workflow.key, file.key)
+            api.put_workflows_workflow_files_key(file, db.workflow.key, file.key)
 
     yield db, scheduler_config_id, output_dir
 
@@ -227,7 +245,7 @@ def incomplete_workflow(diamond_workflow):
     for name in ("preprocess", "work1"):
         job = db.get_document("jobs", name)
         status = "done"
-        result = ResultsWorkflowModel(
+        result = WorkflowResultsModel(
             job_key=job.key,
             job_name=job.name,
             run_id=job.run_id,
@@ -236,17 +254,19 @@ def incomplete_workflow(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.post_jobs_complete_job_workflow_key_status_rev(
+        job = api.post_workflows_workflow_jobs_complete_job_key_status_rev(
             result, db.workflow.key, job.id, status, job._rev  # pylint: disable=protected-access
         )
 
-        for file in api.get_files_produced_by_job_workflow_key(db.workflow.key, job.key).items:
+        for file in api.get_workflows_workflow_files_produced_by_job_key(
+            db.workflow.key, job.key
+        ).items:
             path = Path(file.path)
             if not path.exists():
                 path.touch()
                 # file.file_hash = compute_file_hash(path)
                 file.st_mtime = path.stat().st_mtime
-                api.put_files_workflow_key(file, db.workflow.key, file.key)
+                api.put_workflows_workflow_files_key(file, db.workflow.key, file.key)
 
     assert db.get_document("jobs", "preprocess").status == "done"
     assert db.get_document("jobs", "work1").status == "done"
@@ -280,20 +300,20 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
     output_dir = tmp_path / "output"
     output_dir.mkdir()
 
-    small = ResourceRequirementsWorkflowModel(
+    small = WorkflowResourceRequirementsModel(
         name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
     )
-    medium = ResourceRequirementsWorkflowModel(
+    medium = WorkflowResourceRequirementsModel(
         name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
     )
-    large = ResourceRequirementsWorkflowModel(
+    large = WorkflowResourceRequirementsModel(
         name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
     )
 
-    scheduler = LocalSchedulersWorkflowModel(name="test")
+    scheduler = WorkflowLocalSchedulersModel(name="test")
     num_jobs_per_category = 3
     small_jobs = [
-        JobSpecificationsWorkflowModel(
+        WorkflowJobSpecificationsModel(
             name=f"job_small{i}",
             command=f"python {RC_JOB} -i {i} -c small",
             resource_requirements=small.name,
@@ -302,7 +322,7 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
         for i in range(1, num_jobs_per_category + 1)
     ]
     medium_jobs = [
-        JobSpecificationsWorkflowModel(
+        WorkflowJobSpecificationsModel(
             name=f"job_medium{i}",
             command=f"python {RC_JOB} -i {i} -c medium",
             resource_requirements=medium.name,
@@ -311,7 +331,7 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
         for i in range(1, num_jobs_per_category + 1)
     ]
     large_jobs = [
-        JobSpecificationsWorkflowModel(
+        WorkflowJobSpecificationsModel(
             name=f"job_large{i}",
             command=f"python {RC_JOB} -i {i} -c large",
             resource_requirements=large.name,
@@ -342,6 +362,7 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
     api.post_workflows_initialize_jobs_key(workflow.key)
     yield db, scheduler.id, output_dir, monitor_type
     api.delete_workflows_key(workflow.key)
+    api.api_client.close()
 
 
 @pytest.fixture
@@ -351,20 +372,28 @@ def cancelable_workflow(tmp_path):
     output_dir = tmp_path / "output"
     output_dir.mkdir()
 
-    scheduler = LocalSchedulersWorkflowModel(name="test")
+    small = WorkflowResourceRequirementsModel(
+        name="small", num_cpus=1, memory="1g", runtime="P0DT1S"
+    )
+    scheduler = WorkflowLocalSchedulersModel(name="test")
     jobs = [
-        JobSpecificationsWorkflowModel(
+        WorkflowJobSpecificationsModel(
             name="job1",
             command=f"python {SLEEP_JOB} 1000",
+            resource_requirements="small",
+            supports_termination=True,
         ),
-        JobSpecificationsWorkflowModel(
+        WorkflowJobSpecificationsModel(
             name="job2",
             command=f"python {SLEEP_JOB} 1000",
+            resource_requirements="small",
+            supports_termination=True,
         ),
     ]
 
     spec = WorkflowSpecificationsModel(
         jobs=jobs,
+        resource_requirements=[small],
         schedulers=WorkflowSpecificationsSchedulers(local_schedulers=[scheduler]),
     )
 
@@ -374,23 +403,39 @@ def cancelable_workflow(tmp_path):
     api.post_workflows_initialize_jobs_key(workflow.key)
     yield db, scheduler.id, output_dir
     api.delete_workflows_key(workflow.key)
+    api.api_client.close()
 
 
-@pytest.fixture
-def create_workflow_cli(tmp_path):
+@pytest.fixture()
+def create_workflow_cli(tmp_path_factory):
     """Creates a temporary workflow with the CLI."""
+    tmp_path = tmp_path_factory.mktemp("torc")
     file = Path(__file__).parent.parent.parent / "examples" / "independent_workflow.json5"
-    workflow_key_regex = re.compile(r"with key=(\d+)\s")
-    output = {}
-    check_run_command(f"torc -u {URL} workflows create-from-json-file {file}", output=output)
-    match = workflow_key_regex.search(output["stderr"])
-    assert match
-    key = match.group(1)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        cli, ["-u", URL, "-F", "json", "workflows", "create-from-json-file", str(file)]
+    )
+    assert result.exit_code == 0
+    key = json.loads(result.stdout)["key"]
     yield key, URL, tmp_path
-    check_run_command(f"torc -k {key} -u {URL} workflows delete")
+    result = runner.invoke(cli, ["-k", key, "-u", URL, "workflows", "delete", key])
+    assert result.exit_code == 0
 
 
 @pytest.fixture
 def db_api():
     """Returns an api instance."""
-    yield _initialize_api(), URL
+    api = _initialize_api()
+    yield api, URL
+    api.api_client.close()
+
+
+def pytest_addoption(parser):
+    """Create a CLI parameter for slurm_account"""
+    parser.addoption("--slurm-account", action="store", default="")
+
+
+@pytest.fixture(scope="session")
+def slurm_account(pytestconfig):
+    """Access the CLI parameter for slurm_account"""
+    return pytestconfig.getoption("slurm_account")

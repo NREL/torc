@@ -23,7 +23,7 @@ def iter_compute_node_stats(api, workflow_key, exclude_process=False):
     ------
     dict
     """
-    for node_stats in iter_documents(api.get_compute_node_stats_workflow, workflow_key):
+    for node_stats in iter_documents(api.get_workflows_workflow_compute_node_stats, workflow_key):
         hostname = node_stats.hostname
         for stat in node_stats.stats:
             if exclude_process and stat.resource_type == "Process":
@@ -53,9 +53,9 @@ def iter_job_process_stats(api, workflow_key):
     ------
     dict
     """
-    for job in iter_documents(api.get_jobs_workflow, workflow_key):
+    for job in iter_documents(api.get_workflows_workflow_jobs, workflow_key):
         for stat in send_api_command(
-            api.get_jobs_process_stats_workflow_key, workflow_key, job.key
+            api.get_workflows_workflow_jobs_process_stats_key, workflow_key, job.key
         ):
             stats = remove_db_keys(stat.to_dict())
             yield {
@@ -70,6 +70,21 @@ def iter_job_process_stats(api, workflow_key):
             }
 
 
+def list_job_process_stats(api, workflow_key) -> list[dict]:
+    """Return a list of all job process resource utilization stats.
+
+    Parameters
+    ----------
+    api : DefaultApi
+    workflow_key : str
+
+    Returns
+    ------
+    list[dict]
+    """
+    return list(iter_job_process_stats(api, workflow_key))
+
+
 def make_compute_node_stats_dataframes(api, workflow_key) -> pl.DataFrame:
     """Return a dict of DataFrame instances for each resource type."""
     by_resource_type = defaultdict(list)
@@ -77,6 +92,11 @@ def make_compute_node_stats_dataframes(api, workflow_key) -> pl.DataFrame:
         by_resource_type[stat["resource_type"]].append(stat)
 
     return {k: pl.from_records(v) for k, v in by_resource_type.items()}
+
+
+def list_compute_node_stats(api, workflow_key, exclude_process=False) -> list[dict]:
+    """Return a list of resource statistics."""
+    return list(iter_compute_node_stats(api, workflow_key, exclude_process=exclude_process))
 
 
 def make_compute_node_stats_text_tables(

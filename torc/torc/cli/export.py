@@ -2,16 +2,15 @@
 
 import json
 import logging
-import shutil
-import sys
 from pathlib import Path
+from pydoc import locate
 
 import click
 from swagger_client import DefaultApi
 
 from torc.api import iter_documents
 from torc.utils.sql import make_table, insert_rows
-from .common import get_workflow_key_from_context, setup_cli_logging
+from .common import check_database_url, setup_cli_logging, check_output_path
 
 
 logger = logging.getLogger(__name__)
@@ -24,62 +23,8 @@ def export(ctx):
     setup_cli_logging(ctx, __name__)
 
 
-@click.command(name="json")
-@click.option(
-    "-d",
-    "--directory",
-    default="exported_workflow_json",
-    show_default=True,
-    callback=lambda *x: Path(x[2]),
-    help="Directory to create exported files",
-)
-@click.option(
-    "-f",
-    "--force",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Overwrite directory if it exists.",
-)
-@click.pass_obj
-@click.pass_context
-def export_json(ctx, api, directory, force):
-    """Export workflow database to this directory in JSON format."""
-    workflow_key = get_workflow_key_from_context(ctx, api)
-    if directory.exists():
-        if force:
-            shutil.rmtree(directory)
-        else:
-            print(
-                f"{directory} already exists. Choose a different path or pass --force to overwrite",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-
-    directory.mkdir()
-    edges_directory = directory / "edges"
-    edges_directory.mkdir()
-
-    # TODO: Delete this and use arangodump instead.
-    # TODO: This doesn't handle batching and will not get all data.
-    # TODO: Get workflow_status
-    for name, func in _get_db_documents(api).items():
-        if name in _EDGES:
-            filename = directory / "edges" / f"{name}.json"
-        else:
-            filename = directory / f"{name}.json"
-        with open(filename, "w", encoding="utf-8") as f_out:
-            args = (workflow_key, name) if name in _EDGES else (workflow_key,)
-            for item in iter_documents(func, *args):
-                if name in ("events", "user_data"):
-                    f_out.write(json.dumps(item))
-                else:
-                    f_out.write(json.dumps(item.to_dict()))
-                f_out.write("\n")
-        print(f"Exported {name} values to {filename}")
-
-
 @click.command()
+@click.argument("workflow_keys", nargs=-1)
 @click.option(
     "-F",
     "--filename",
@@ -97,76 +42,121 @@ def export_json(ctx, api, directory, force):
     help="Overwrite file if it exists.",
 )
 @click.pass_obj
-@click.pass_context
-def sqlite(ctx, api, filename, force):
+def sqlite(api, workflow_keys, filename, force):
     """Export workflow database to this SQLite file."""
-    workflow_key = get_workflow_key_from_context(ctx, api)
-    if filename.exists():
-        if force:
-            filename.unlink()
-        else:
-            print(
-                f"{filename} already exists. Choose a different path or pass --force to overwrite",
-                file=sys.stderr,
-            )
-            sys.exit(1)
+    check_database_url(api)
+    check_output_path(filename, force)
+    workflows = []
+    workflow_configs = []
+    workflow_statuses = []
+    tables = set()
+    if workflow_keys:
+        selected_workflows = (api.get_workflows_key(x) for x in workflow_keys)
+    else:
+        selected_workflows = iter_documents(api.get_workflows)
+    for workflow in selected_workflows:
+        config = api.get_workflows_config_key(workflow.key)
+        config_as_dict = config.to_dict()
+        config_as_dict["compute_node_resource_stats"] = json.dumps(
+            config_as_dict["compute_node_resource_stats"]
+        )
+        status = api.get_workflows_status_key(workflow.key)
+        status_as_dict = status.to_dict()
+        status_as_dict["auto_tune_status"] = json.dumps(status_as_dict["auto_tune_status"])
+        if not workflows:
+            _make_sql_table(workflow, workflow.to_dict(), filename, "workflows")
+            _make_sql_table(config, config_as_dict, filename, "workflow_configs")
+            _make_sql_table(status, status_as_dict, filename, "workflow_statuses")
+        workflows.append(tuple(workflow.to_dict().values()))
+        workflow_configs.append(tuple(config_as_dict.values()))
+        workflow_statuses.append(tuple(status_as_dict.values()))
 
-    # TODO: Get workflow_status
-    for name, func in _get_db_documents(api).items():
-        if "compute_node_stats" in name or "compute_nodes" in name:
-            # TODO: determine how to record the nested data. JSON string?
-            continue
-        found_first = False
-        rows = []
-        args = (workflow_key, name) if name in _EDGES else (workflow_key,)
-        for item in iter_documents(func, *args):
-            row = item if isinstance(item, dict) else item.to_dict()
-            if "to" in row:
-                row["_to"] = row.pop("to")
-            if "events" in name or "user_data" in name:
-                data = {}
-                db_keys = {"_id", "_rev", "_key"}
-                for field in set(row.keys()).difference(db_keys):
-                    data[field] = row.pop(field)
-                row["data"] = json.dumps(data)
+        for name in api.get_workflows_collection_names_key(workflow.key).names:
+            basename = name.split("__")[0]
+            func = _get_db_documents_func(api, basename)
 
-            if not found_first:
-                make_table(filename, name, row, primary_key=_PRIMARY_KEYS[name])
-                found_first = True
-            rows.append(tuple(row.values()))
-        if rows:
-            insert_rows(filename, name, rows)
+            rows = []
+            args = (workflow.key, basename) if basename in _EDGES else (workflow.key,)
+            for item in iter_documents(func, *args):
+                row = item if isinstance(item, dict) else item.to_dict()
+                if "to" in row:
+                    # Swagger converts Arango's '_to' to 'to', but leaves '_from'.
+                    # Persist Arango names.
+                    row["_to"] = row.pop("to")
+                if basename in ("events", "user_data"):
+                    # Put variable, user-defined names in a 'data' column as JSON.
+                    data = {}
+                    db_keys = {"_id", "_rev", "_key"}
+                    for field in set(row.keys()).difference(db_keys):
+                        data[field] = row.pop(field)
+                    row["data"] = json.dumps(data)
+                elif basename == "jobs":
+                    row.pop("internal")
+                row["workflow_key"] = workflow.key
+                for key, val in row.items():
+                    if isinstance(val, (dict, list)):
+                        row[key] = json.dumps(val)
+                if basename not in tables:
+                    _make_sql_table(item, row, filename, basename)
+                    tables.add(basename)
 
-    print(f"Exported workflow database to {filename}")
+                rows.append(tuple(row.values()))
+            if rows:
+                insert_rows(filename, basename, rows)
+
+    if workflows:
+        insert_rows(filename, "workflows", workflows)
+        insert_rows(filename, "workflow_configs", workflow_configs)
+        insert_rows(filename, "workflow_statuses", workflow_statuses)
+
+    if workflow_keys:
+        keys = " ".join(workflow_keys)
+        logger.info("Exported database to %s for workflow keys %s", filename, keys)
+    else:
+        logger.info("Exported database to %s for all workflows", filename)
 
 
-# TODO: make test that verifies that this list is synced with the database.
+def _make_sql_table(item, row, filename, basename):
+    if isinstance(item, dict):
+        types = None
+    else:
+        types = {}
+        for key, val in type(item).swagger_types.items():
+            if val == "object":
+                types[key] = str
+            else:
+                types[key] = locate(val) or str
+        types["workflow_key"] = str
+        if "to" in types:
+            types["_to"] = types.pop("to")
+    make_table(filename, basename, row, primary_key="key", types=types)
 
 
-def _get_db_documents(api: DefaultApi):
-    return {
-        "blocks": api.get_edges_workflow_name,
-        "compute_node_stats": api.get_compute_node_stats_workflow,
-        "compute_nodes": api.get_compute_nodes_workflow,
-        "events": api.get_events_workflow,
-        "files": api.get_files_workflow,
-        "aws_schedulers": api.get_aws_schedulers_workflow,
-        "local_schedulers": api.get_local_schedulers_workflow,
-        "slurm_schedulers": api.get_slurm_schedulers_workflow,
-        "job_process_stats": api.get_job_process_stats_workflow,
-        "jobs": api.get_jobs_workflow,
-        "needs": api.get_edges_workflow_name,
-        "node_used": api.get_edges_workflow_name,
-        "process_used": api.get_edges_workflow_name,
-        "produces": api.get_edges_workflow_name,
-        "requires": api.get_edges_workflow_name,
-        "resource_requirements": api.get_resource_requirements_workflow,
-        "results": api.get_results_workflow,
-        "returned": api.get_edges_workflow_name,
-        "scheduled_bys": api.get_edges_workflow_name,
-        "stores": api.get_edges_workflow_name,
-        "user_data": api.get_user_data_workflow,
-    }
+_DB_ACCESSOR_FUNCS = {
+    "blocks": "get_workflows_workflow_edges_name",
+    "executed": "get_workflows_workflow_edges_name",
+    "compute_node_stats": "get_workflows_workflow_compute_node_stats",
+    "compute_nodes": "get_workflows_workflow_compute_nodes",
+    "events": "get_workflows_workflow_events",
+    "files": "get_workflows_workflow_files",
+    "aws_schedulers": "get_workflows_workflow_aws_schedulers",
+    "local_schedulers": "get_workflows_workflow_local_schedulers",
+    "slurm_schedulers": "get_workflows_workflow_slurm_schedulers",
+    "job_process_stats": "get_workflows_workflow_job_process_stats",
+    "jobs": "get_workflows_workflow_jobs",
+    "needs": "get_workflows_workflow_edges_name",
+    "node_used": "get_workflows_workflow_edges_name",
+    "process_used": "get_workflows_workflow_edges_name",
+    "produces": "get_workflows_workflow_edges_name",
+    "requires": "get_workflows_workflow_edges_name",
+    "resource_requirements": "get_workflows_workflow_resource_requirements",
+    "results": "get_workflows_workflow_results",
+    "returned": "get_workflows_workflow_edges_name",
+    "scheduled_bys": "get_workflows_workflow_edges_name",
+    "scheduled_compute_nodes": "get_workflows_workflow_scheduled_compute_nodes",
+    "stores": "get_workflows_workflow_edges_name",
+    "user_data": "get_workflows_workflow_user_data",
+}
 
 
 _EDGES = {
@@ -181,28 +171,16 @@ _EDGES = {
     "scheduled_bys",
     "stores",
 }
-_PRIMARY_KEYS = {
-    "compute_node_stats": "key",
-    "compute_nodes": "key",
-    "executed": "key",
-    "events": "key",
-    "jobs": "name",
-    "files": "name",
-    "aws_schedulers": "name",
-    "local_schedulers": "name",
-    "slurm_schedulers": "name",
-    "resource_requirements": "name",
-    "user_data": "key",
-    "blocks": "key",
-    "needs": "key",
-    "node_used": "key",
-    "produces": "key",
-    "requires": "key",
-    "results": "key",
-    "returned": "key",
-    "scheduled_bys": "key",
-    "stores": "key",
-}
 
-export.add_command(export_json)
+
+def _get_db_documents_func(api: DefaultApi, name):
+    func_name = _DB_ACCESSOR_FUNCS.get(name)
+    if func_name is None:
+        raise Exception(
+            f"collection {name=} is not stored in {__file__=}. Check if the database "
+            "been updated."
+        )
+    return getattr(api, func_name)
+
+
 export.add_command(sqlite)

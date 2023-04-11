@@ -14,23 +14,23 @@ import psutil
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 from pydantic.json import timedelta_isoformat  # pylint: disable=no-name-in-module
 from swagger_client import DefaultApi
-from swagger_client.models.compute_nodes_workflow_model import ComputeNodesWorkflowModel
-from swagger_client.models.compute_node_stats_workflow_model import (
-    ComputeNodeStatsWorkflowModel,
+from swagger_client.models.workflow_compute_nodes_model import WorkflowComputeNodesModel
+from swagger_client.models.workflow_compute_node_stats_model import (
+    WorkflowComputeNodeStatsModel,
 )
-from swagger_client.models.compute_node_statsworkflow_stats import (
-    ComputeNodeStatsworkflowStats,
+from swagger_client.models.workflowsworkflowcompute_node_stats_stats import (
+    WorkflowsworkflowcomputeNodeStatsStats,
 )
-from swagger_client.models.workflow_name_model import WorkflowNameModel
-from swagger_client.models.job_process_stats_workflow_model import (
-    JobProcessStatsWorkflowModel,
+from swagger_client.models.edges_name_model import EdgesNameModel
+from swagger_client.models.workflow_job_process_stats_model import (
+    WorkflowJobProcessStatsModel,
 )
 from swagger_client.models.prepare_jobs_for_submission_key_model import (
     PrepareJobsForSubmissionKeyModel,
 )
 from swagger_client.models.workflows_model import WorkflowsModel
 
-from torc.api import send_api_command
+from torc.api import send_api_command, iter_documents
 from torc.common import JOB_STDIO_DIR, STATS_DIR
 from torc.resource_monitor.models import (
     ComputeNodeResourceStatConfig,
@@ -173,18 +173,19 @@ class JobRunner:
                 self._update_pids_to_monitor()
 
             time.sleep(self._poll_interval)
-            # TODO: check time remaining and then for interruptible jobs
             result = send_api_command(self._api.get_workflows_is_complete_key, self._workflow.key)
 
         if result.is_canceled:
             logger.info("Detected a canceled workflow. Cancel all outstanding jobs and exit.")
             self._cancel_jobs(list(self._outstanding_jobs.values()))
 
+        self._terminate_jobs(list(self._outstanding_jobs.values()))
+
         self._pids.clear()
         self._handle_completed_process_stats()
 
     def _create_compute_node(self, scheduler):
-        compute_node = ComputeNodesWorkflowModel(
+        compute_node = WorkflowComputeNodesModel(
             hostname=self._hostname,
             start_time=str(datetime.now()),
             resources=self._orig_resources,
@@ -192,7 +193,9 @@ class JobRunner:
             scheduler=scheduler or {},
         )
         self._compute_node = send_api_command(
-            self._api.post_compute_nodes_workflow, compute_node, self._workflow.key
+            self._api.post_workflows_workflow_compute_nodes,
+            compute_node,
+            self._workflow.key,
         )
 
     def _complete_compute_node(self):
@@ -202,19 +205,19 @@ class JobRunner:
             - datetime.strptime(self._compute_node.start_time, "%Y-%m-%d %H:%M:%S.%f").timestamp()
         )
         send_api_command(
-            self._api.put_compute_nodes_workflow_key,
+            self._api.put_workflows_workflow_compute_nodes_key,
             self._compute_node,
             self._workflow.key,
             self._compute_node.key,
         )
 
-    def _complete_job(self, job, result):
+    def _complete_job(self, job, result, status):
         job = send_api_command(
-            self._api.post_jobs_complete_job_workflow_key_status_rev,
+            self._api.post_workflows_workflow_jobs_complete_job_key_status_rev,
             result,
             self._workflow.key,
             job.id,
-            "done",
+            status,
             job._rev,  # pylint: disable=protected-access
         )
         return job
@@ -224,7 +227,7 @@ class JobRunner:
 
     def _decrement_resources(self, job):
         job_resources = send_api_command(
-            self._api.get_jobs_resource_requirements_workflow_key,
+            self._api.get_workflows_workflow_jobs_resource_requirements_key,
             self._workflow.key,
             job.key,
         )
@@ -238,7 +241,7 @@ class JobRunner:
 
     def _increment_resources(self, job):
         job_resources = send_api_command(
-            self._api.get_jobs_resource_requirements_workflow_key,
+            self._api.get_workflows_workflow_jobs_resource_requirements_key,
             self._workflow.key,
             job.key,
         )
@@ -265,7 +268,7 @@ class JobRunner:
 
     def _log_job_start_event(self, job_key: str):
         send_api_command(
-            self._api.post_events_workflow,
+            self._api.post_workflows_workflow_events,
             {
                 "category": "job",
                 "type": "start",
@@ -278,7 +281,7 @@ class JobRunner:
 
     def _log_job_complete_event(self, job_key: str, status: str):
         send_api_command(
-            self._api.post_events_workflow,
+            self._api.post_workflows_workflow_events,
             {
                 "category": "job",
                 "type": "complete",
@@ -292,22 +295,13 @@ class JobRunner:
 
     def _process_completions(self):
         done_jobs = []
-        db_jobs = {}
         for job in self._outstanding_jobs.values():
             if job.is_complete():
-                result = job.get_result()
-                done_jobs.append(result)
-                db_jobs[job.key] = job.db_job
-                self._increment_resources(job.db_job)
-                self._log_job_complete_event(job.key, result.status)
+                done_jobs.append(job)
                 self._update_file_info(job)
 
-        for result in done_jobs:
-            self._outstanding_jobs.pop(result.job_key)
-            if self._stats.process:
-                self._jobs_pending_process_stat_completion.append(result.job_key)
-                self._pids.pop(result.job_key)
-            self._complete_job(db_jobs[result.job_key], result)
+        for job in done_jobs:
+            self._cleanup_job(job, "done")
 
         if done_jobs:
             logger.info("Found %s completions", len(done_jobs))
@@ -319,16 +313,42 @@ class JobRunner:
         for job in jobs:
             # Note that the database API service changes job status to canceled.
             job.cancel()
+            logger.info("Canceled job key=%s name=%s", job.key, job.db_job.name)
+
+        status = "canceled"
         for job in jobs:
-            job.wait_for_cancelation()
+            job.wait_for_completion(status)
             assert job.is_complete()
-            self._outstanding_jobs.pop(job.db_job.key)
-            self._increment_resources(job.db_job)
-            self._log_job_complete_event(job.key, "canceled")
-            # Don't post results for canceled jobs.
-            if self._stats.process:
-                self._jobs_pending_process_stat_completion.append(job.db_job.key)
-                self._pids.pop(job.db_job.key)
+            job.db_job = send_api_command(
+                self._api.get_workflows_workflow_jobs_key,
+                self._workflow.key,
+                job.key,
+            )
+            self._cleanup_job(job, status)
+
+    def _terminate_jobs(self, jobs):
+        terminated_jobs = []
+        for job in jobs:
+            if job.db_job.supports_termination:
+                job.terminate()
+                logger.info("Terminated job key=%s name=%s", job.key, job.db_job.name)
+                terminated_jobs.append(job)
+
+        status = "terminated"
+        for job in terminated_jobs:
+            job.wait_for_completion("terminated")
+            assert job.is_complete()
+            self._cleanup_job(job, status)
+
+    def _cleanup_job(self, job: AsyncCliCommand, status):
+        self._outstanding_jobs.pop(job.key)
+        self._increment_resources(job.db_job)
+        result = job.get_result()
+        self._log_job_complete_event(job.key, status)
+        self._complete_job(job.db_job, result, status)
+        if self._stats.process:
+            self._jobs_pending_process_stat_completion.append(job.key)
+            self._pids.pop(job.key)
 
     def _run_job(self, job: AsyncCliCommand):
         job.run(self._output_dir)
@@ -336,10 +356,13 @@ class JobRunner:
         # The database changes db_job._rev on every update.
         # This reassigns job.db_job in order to stay current.
         job.db_job = send_api_command(
-            self._api.put_jobs_workflow_key, job.db_job, self._workflow.key, job.key
+            self._api.put_workflows_workflow_jobs_key,
+            job.db_job,
+            self._workflow.key,
+            job.key,
         )
         job.db_job = send_api_command(
-            self._api.put_jobs_manage_status_change_workflow_key_status_rev,
+            self._api.put_workflows_workflow_jobs_manage_status_change_key_status_rev,
             self._workflow.key,
             job.key,
             "submitted",
@@ -349,8 +372,8 @@ class JobRunner:
         if self._stats.process:
             self._pids[job.key] = job.pid
         send_api_command(
-            self._api.post_edges_workflow_name,
-            WorkflowNameModel(
+            self._api.post_workflows_workflow_edges_name,
+            EdgesNameModel(
                 _from=self._compute_node.id,
                 to=job.db_job._id,  # pylint: disable=protected-access
             ),
@@ -366,14 +389,16 @@ class JobRunner:
             self._resources,
             self._workflow.key,
         )
-        if ready_jobs:
-            logger.info("%s jobs are ready for submission", len(ready_jobs))
-        for job in ready_jobs:
+        if ready_jobs.jobs:
+            logger.info("%s jobs are ready for submission", len(ready_jobs.jobs))
+        else:
+            logger.info("Reason: %s", ready_jobs.reason)
+        for job in ready_jobs.jobs:
             self._run_job(AsyncCliCommand(job))
             self._decrement_resources(job)
 
         self._last_db_poll_time = time.time()
-        return len(ready_jobs)
+        return len(ready_jobs.jobs)
 
     def _start_resource_monitor(self):
         self._parent_monitor_conn, child_conn = multiprocessing.Pipe()
@@ -422,12 +447,12 @@ class JobRunner:
                 self._post_job_process_stats(result)
             if results.results:
                 send_api_command(
-                    self._api.post_compute_node_stats_workflow,
-                    ComputeNodeStatsWorkflowModel(
+                    self._api.post_workflows_workflow_compute_node_stats,
+                    WorkflowComputeNodeStatsModel(
                         hostname=self._hostname,
                         # These json methods let Pydantic run its data type conversions.
                         stats=[
-                            ComputeNodeStatsworkflowStats(**json.loads(x.json()))
+                            WorkflowsworkflowcomputeNodeStatsStats(**json.loads(x.json()))
                             for x in results.results
                         ],
                         timestamp=str(datetime.now()),
@@ -444,20 +469,21 @@ class JobRunner:
 
     def _post_compute_node_stats(self, results: ComputeNodeResourceStatResults):
         res = send_api_command(
-            self._api.post_compute_node_stats_workflow,
-            ComputeNodeStatsWorkflowModel(
+            self._api.post_workflows_workflow_compute_node_stats,
+            WorkflowComputeNodeStatsModel(
                 hostname=self._hostname,
                 # These json methods let Pydantic run its data type conversions.
                 stats=[
-                    ComputeNodeStatsworkflowStats(**json.loads(x.json())) for x in results.results
+                    WorkflowsworkflowcomputeNodeStatsStats(**json.loads(x.json()))
+                    for x in results.results
                 ],
                 timestamp=str(datetime.now()),
             ),
             self._workflow.key,
         )
         send_api_command(
-            self._api.post_edges_workflow_name,
-            WorkflowNameModel(
+            self._api.post_workflows_workflow_edges_name,
+            EdgesNameModel(
                 _from=self._compute_node.id,
                 to=res._id,  # pylint: disable=protected-access
             ),
@@ -470,11 +496,13 @@ class JobRunner:
 
     def _post_job_process_stats(self, result: ProcessStatResults):
         run_id = send_api_command(
-            self._api.get_jobs_workflow_key, self._workflow.key, result.job_key
+            self._api.get_workflows_workflow_jobs_key,
+            self._workflow.key,
+            result.job_key,
         ).run_id
         res = send_api_command(
-            self._api.post_job_process_stats_workflow,
-            JobProcessStatsWorkflowModel(
+            self._api.post_workflows_workflow_job_process_stats,
+            WorkflowJobProcessStatsModel(
                 avg_cpu_percent=result.average["cpu_percent"],
                 max_cpu_percent=result.maximum["cpu_percent"],
                 avg_rss=result.average["rss"],
@@ -487,8 +515,8 @@ class JobRunner:
             self._workflow.key,
         )
         send_api_command(
-            self._api.post_edges_workflow_name,
-            WorkflowNameModel(
+            self._api.post_workflows_workflow_edges_name,
+            EdgesNameModel(
                 _from=f"jobs__{self._workflow.key}/{result.job_key}",
                 to=res._id,  # pylint: disable=protected-access
             ),
@@ -497,15 +525,20 @@ class JobRunner:
         )
 
     def _update_file_info(self, job):
-        for file in send_api_command(
-            self._api.get_files_produced_by_job_workflow_key,
+        for file in iter_documents(
+            self._api.get_workflows_workflow_files_produced_by_job_key,
             self._workflow.key,
             job.key,
-        ).items:
+        ):
             path = make_path(file.path)
             # file.file_hash = compute_file_hash(path)
             file.st_mtime = path.stat().st_mtime
-            send_api_command(self._api.put_files_workflow_key, file, self._workflow.key, file.key)
+            send_api_command(
+                self._api.put_workflows_workflow_files_key,
+                file,
+                self._workflow.key,
+                file.key,
+            )
 
 
 def _get_system_resources(time_limit):

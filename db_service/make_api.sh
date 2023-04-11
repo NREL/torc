@@ -12,7 +12,7 @@ user="root"
 if [ ! -z ${TORC_PASSWORD} ]; then
     user="${user}:${TORC_PASSWORD}"
 fi
-swagger=$(curl -u ${user} --silent -X GET ${TORC_URL}/_db/workflows/_admin/aardvark/foxxes/docs/swagger.json\?mount\=%2Ftorc-service)
+swagger=$(curl -u ${user} --silent -X GET ${TORC_URL}/_db/test-workflows/_admin/aardvark/foxxes/docs/swagger.json\?mount\=%2Ftorc-service)
 ret=$?
 if [ $ret -ne 0 ]; then
     echo "Failed to download swagger.json"
@@ -55,4 +55,9 @@ rm swagger.json
 python_dir=python_client
 rm -rf $python_dir
 mkdir $python_dir
-java -jar ${SWAGGER_CODEGEN_CLI} generate --lang=python --input-spec=openapi.yaml -o $python_dir
+java -jar ${SWAGGER_CODEGEN_CLI} generate --lang=python --input-spec=openapi.yaml -o ${python_dir}
+# Workaround for this issue: https://github.com/swagger-api/swagger-codegen/issues/9991
+# It is fixed in the openapi-generator, but that doesn't work with our openapi.yaml - and haven't
+# debugged it.
+sed -i .bk "s/def __del__/def close/" ${python_dir}/swagger_client/api_client.py
+rm -f ${python_dir}/swagger_client/api_client.py.bk

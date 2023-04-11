@@ -1,24 +1,15 @@
 """Tests database export functionality."""
 
-import shlex
-import subprocess
+from click.testing import CliRunner
 
-from torc.utils.files import load_line_delimited_json
+from torc.cli.torc import cli
 
 
 def test_export(tmp_path, completed_workflow):
     """Tests the CLI commands that export data from the database."""
-    db, _, output_dir = completed_workflow
-    output_dir = tmp_path / "exports"
-    cmd = f"torc -k {db.workflow.key} -u {db.url} export json -d {output_dir} --force"
-    subprocess.run(shlex.split(cmd), check=True)
-    jobs_file = output_dir / "jobs.json"
-    assert jobs_file.exists()
-    jobs = load_line_delimited_json(jobs_file)
-    assert len(jobs) == 4
-    assert (output_dir / "edges" / "blocks.json").exists()
-
+    db = completed_workflow[0]
     filename = tmp_path / "db.sqlite"
-    cmd = f"torc -k {db.workflow.key} -u {db.url} export sqlite -F {filename} --force"
-    subprocess.run(shlex.split(cmd), check=True)
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(cli, ["-u", db.url, "export", "sqlite", "-F", filename, "--force"])
+    assert result.exit_code == 0
     assert filename.exists()

@@ -26,7 +26,7 @@ class HpcInterface(abc.ABC):
         """
 
     @abc.abstractmethod
-    def check_status(self, job_id):
+    def get_status(self, job_id):
         """Check the status of a job.
         Handles transient errors for up to one minute.
 
@@ -47,7 +47,7 @@ class HpcInterface(abc.ABC):
         """
 
     @abc.abstractmethod
-    def check_statuses(self):
+    def get_statuses(self):
         """Check the statuses of all user jobs.
         Handles transient errors for up to one minute.
 

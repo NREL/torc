@@ -6,7 +6,7 @@ import logging
 import click
 
 from torc.api import iter_documents, remove_db_keys
-from .common import get_workflow_key_from_context, setup_cli_logging
+from .common import check_database_url, get_workflow_key_from_context, setup_cli_logging
 
 
 logger = logging.getLogger(__name__)
@@ -31,9 +31,11 @@ def list_events(ctx, api):
        $ torc events 91388876 list events -f run_id=1 -f status=done
     """
     setup_cli_logging(ctx, __name__)
+    check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     data = []
-    for event in iter_documents(api.get_events_workflow, workflow_key):
+    # TODO: filtering? Not all columns are the same. Are any guaranteed? Tables?
+    for event in iter_documents(api.get_workflows_workflow_events, workflow_key):
         data.append(remove_db_keys(event))
     print(json.dumps(data, indent=2))
 

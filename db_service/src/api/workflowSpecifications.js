@@ -1,7 +1,5 @@
 'use strict';
 const joi = require('joi');
-const db = require('@arangodb').db;
-const {JobStatus, MAX_TRANSFER_RECORDS} = require('../defs');
 const config = require('../config');
 const documents = require('../documents');
 const query = require('../query');
@@ -133,6 +131,29 @@ router.get('/workflow_specifications/example', function(req, res) {
     .response(schemas.workflowSpecification, 'Example workflow')
     .summary('Retrieve an example workflow specification')
     .description('Retrieves an example workflow specification in JSON format.');
+
+router.get('/workflow_specifications/template', function(req, res) {
+  const spec = {
+    name: '',
+    description: '',
+    user: '',
+    files: [],
+    jobs: [],
+    resource_requirements: [],
+    schedulers: {
+      aws_schedulers: [],
+      local_schedulers: [],
+      slurm_schedulers: [],
+    },
+    config: schemas.workflowConfig.validate({}).value,
+  };
+
+  delete spec.key;
+  res.send(spec);
+})
+    .response(schemas.workflowSpecification, 'Workflow template')
+    .summary('Retrieve the workflow specification template')
+    .description('Retrieve the workflow specification template in JSON format.');
 
 /**
  * Add all items defined in a workflow to the database.

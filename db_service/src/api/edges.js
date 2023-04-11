@@ -1,8 +1,6 @@
 'use strict';
 const joi = require('joi');
 const db = require('@arangodb').db;
-const errors = require('@arangodb').errors;
-const DOC_NOT_FOUND = errors.ERROR_ARANGO_DOCUMENT_NOT_FOUND.code;
 const {MAX_TRANSFER_RECORDS} = require('../defs');
 const config = require('../config');
 const documents = require('../documents');
@@ -12,7 +10,7 @@ const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
 module.exports = router;
 
-router.post('/edges/:workflow/:name', function(req, res) {
+router.post('/workflows/:workflow/edges/:name', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const name = req.pathParams.name;
   const workflow = documents.getWorkflow(workflowKey, res);
@@ -32,7 +30,7 @@ router.post('/edges/:workflow/:name', function(req, res) {
     .summary('Store an edge between two vertexes.')
     .description('Store an edge between two vertexes in the designated collection.');
 
-router.get('/edges/:workflow/:name/:key', function(req, res) {
+router.get('/workflows/:workflow/edges/:name/:key', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const name = req.pathParams.name;
   const key = req.pathParams.key;
@@ -52,7 +50,7 @@ router.get('/edges/:workflow/:name/:key', function(req, res) {
     .summary('Retrieve an edge')
     .description('Retrieves an edge from the designated collection by key.');
 
-router.get('/edges/:workflow/:name', function(req, res) {
+router.get('/workflows/:workflow/edges/:name', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const name = req.pathParams.name;
   const workflow = documents.getWorkflow(workflowKey, res);
@@ -74,7 +72,7 @@ router.get('/edges/:workflow/:name', function(req, res) {
     .summary('Retrieve all edges from the designated collection.')
     .description('Retrieve all edges from the designated collection.');
 
-router.delete('/edges/:workflow/:name/:key', function(req, res) {
+router.delete('/workflows/:workflow/edges/:name/:key', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const name = req.pathParams.name;
   const key = req.pathParams.key;
@@ -96,7 +94,7 @@ router.delete('/edges/:workflow/:name/:key', function(req, res) {
     .summary('Delete an edge')
     .description('Deletes an edge from the designated collection by key.');
 
-router.delete('/edges/:workflow/:name', function(req, res) {
+router.delete('/workflows/:workflow/edges/:name', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const name = req.pathParams.name;
   const workflow = documents.getWorkflow(workflowKey, res);

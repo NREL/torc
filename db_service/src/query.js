@@ -534,7 +534,8 @@ function isJobInitiallyBlocked(job, workflow) {
  * @return {bool}
  */
 function isJobStatusComplete(status) {
-  return status == JobStatus.Done || status == JobStatus.Canceled;
+  return status == JobStatus.Done || status == JobStatus.Canceled ||
+    status == JobStatus.Terminated;
 }
 
 /**
@@ -552,6 +553,7 @@ function isWorkflowComplete(workflow) {
       FILTER !(
         job.status == ${JobStatus.Done}
         OR job.status == ${JobStatus.Canceled}
+        OR job.status == ${JobStatus.Terminated}
         OR job.status == ${JobStatus.Disabled}
       )
       LIMIT 1
@@ -618,9 +620,10 @@ function manageJobStatusChange(job, workflow) {
  * @param {Object} workflow
  * @param {Object} workerResources
  * @param {Number} limit
+ * @param {Object} reason
  * @return {Array}
  */
-function prepareJobsForSubmission(workflow, workerResources, limit) {
+function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
   const jobs = [];
   const collection = config.getWorkflowCollection(workflow, 'jobs');
   const collectionName = config.getWorkflowCollectionName(workflow, 'jobs');
@@ -640,7 +643,7 @@ function prepareJobsForSubmission(workflow, workerResources, limit) {
       allowImplicit: false,
     },
     action: function() {
-      const cursor = query`
+      const cursor = query({count: true})`
         FOR job IN ${collection}
           FILTER job.status == ${JobStatus.Ready}
             && job.internal.memory_bytes < ${availableMemory}
@@ -674,6 +677,11 @@ function prepareJobsForSubmission(workflow, workerResources, limit) {
     },
   });
 
+  if (jobs.length == 0) {
+    reason.message = `No jobs matched status='ready' memory_bytes < ${availableMemory} ` +
+      `num_cpus < ${availableCpus} runtime_seconds < ${workerTimeLimit} ` +
+      `num_nodes == ${workerResources.num_nodes} scheduler_config_id == ${schedulerConfigId}`;
+  }
   // console.log(`Prepared ${jobs.length} jobs for submission.`);
   return jobs;
 }

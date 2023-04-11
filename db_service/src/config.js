@@ -73,7 +73,11 @@ function createWorkflowCollections(workflow) {
   const scheduledBys = graphModule._relation(names.scheduledBys, names.jobs,
       [names.localSchedulers, names.awsSchedulers, names.slurmSchedulers]);
   const stores = graphModule._relation(names.stores, names.jobs, names.userData);
-  const nodeUsed = graphModule._relation(names.nodeUsed, names.computeNodes, names.computeNodeStats);
+  const nodeUsed = graphModule._relation(
+      names.nodeUsed,
+      names.computeNodes,
+      names.computeNodeStats,
+  );
   const processUsed = graphModule._relation(names.processUsed, names.jobs, names.jobProcessStats);
 
   const actual = Object.keys(names).length;

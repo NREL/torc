@@ -6,10 +6,10 @@ import shutil
 import sys
 from pathlib import Path
 
-from swagger_client.models.files_workflow_model import FilesWorkflowModel
-from swagger_client.models.job_specifications_workflow_model import JobSpecificationsWorkflowModel
-from swagger_client.models.resource_requirements_workflow_model import (
-    ResourceRequirementsWorkflowModel,
+from swagger_client.models.workflow_files_model import WorkflowFilesModel
+from swagger_client.models.workflow_job_specifications_model import WorkflowJobSpecificationsModel
+from swagger_client.models.workflow_resource_requirements_model import (
+    WorkflowResourceRequirementsModel,
 )
 from swagger_client.models.workflow_specifications_model import WorkflowSpecificationsModel
 from swagger_client.models.workflow_config_compute_node_resource_stats import (
@@ -37,30 +37,30 @@ def create_workflow(api, output_dir: Path):
     inputs_file = output_dir / "inputs.json"
     inputs_file.write_text(json.dumps({"val": 5}))
 
-    inputs = FilesWorkflowModel(name="inputs", path=str(inputs_file))
-    f1 = FilesWorkflowModel(name="file1", path=str(output_dir / "f1.json"))
-    f2 = FilesWorkflowModel(name="file2", path=str(output_dir / "f2.json"))
-    f3 = FilesWorkflowModel(name="file3", path=str(output_dir / "f3.json"))
-    f4 = FilesWorkflowModel(name="file4", path=str(output_dir / "f4.json"))
+    inputs = WorkflowFilesModel(name="inputs", path=str(inputs_file))
+    f1 = WorkflowFilesModel(name="file1", path=str(output_dir / "f1.json"))
+    f2 = WorkflowFilesModel(name="file2", path=str(output_dir / "f2.json"))
+    f3 = WorkflowFilesModel(name="file3", path=str(output_dir / "f3.json"))
+    f4 = WorkflowFilesModel(name="file4", path=str(output_dir / "f4.json"))
 
-    small = ResourceRequirementsWorkflowModel(
+    small = WorkflowResourceRequirementsModel(
         name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
     )
-    medium = ResourceRequirementsWorkflowModel(
+    medium = WorkflowResourceRequirementsModel(
         name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
     )
-    large = ResourceRequirementsWorkflowModel(
+    large = WorkflowResourceRequirementsModel(
         name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
     )
 
-    preprocess = JobSpecificationsWorkflowModel(
+    preprocess = WorkflowJobSpecificationsModel(
         name="preprocess",
         command=f"python {PREPROCESS} -i {inputs.path} -o {f1.path}",
         input_files=[inputs.name],
         output_files=[f1.name],
         resource_requirements=small.name,
     )
-    work1 = JobSpecificationsWorkflowModel(
+    work1 = WorkflowJobSpecificationsModel(
         name="work1",
         command=f"python {WORK} -i {f1.path} -o {f2.path}",
         user_data=[{"key1": "val1"}],
@@ -68,14 +68,14 @@ def create_workflow(api, output_dir: Path):
         output_files=[f2.name],
         resource_requirements=medium.name,
     )
-    work2 = JobSpecificationsWorkflowModel(
+    work2 = WorkflowJobSpecificationsModel(
         name="work2",
         command=f"python {WORK} -i {f1.path} -o {f3.path}",
         input_files=[f1.name],
         output_files=[f3.name],
         resource_requirements=large.name,
     )
-    postprocess = JobSpecificationsWorkflowModel(
+    postprocess = WorkflowJobSpecificationsModel(
         name="postprocess",
         command=f"python {POSTPROCESS} -i {f2.path} -i {f3.path} -o {f4.path}",
         input_files=[f2.name, f3.name],

@@ -5,7 +5,9 @@ import logging
 import click
 
 from torc.api import make_api
+from torc.cli.common import get_log_level_from_str
 from torc.cli.compute_nodes import compute_nodes
+from torc.cli.config import config
 from torc.cli.events import events
 from torc.cli.export import export
 from torc.cli.files import files
@@ -15,45 +17,34 @@ from torc.cli.local import local
 from torc.cli.results import results
 from torc.cli.user_data import user_data
 from torc.cli.workflows import workflows
+from torc.torc_rc import TorcRuntimeConfig
 from torc.utils.timing import timer_stats_collector
 
 
-def _get_log_level_from_str(*args):
-    level = args[2]
-    match level:
-        case "debug":
-            return logging.DEBUG
-        case "info":
-            return logging.INFO
-        case "warning":
-            return logging.WARNING
-        case "error":
-            return logging.ERROR
-        case _:
-            raise Exception(f"Unsupported level={level}")
+logger = logging.getLogger(__name__)
+_config = TorcRuntimeConfig.load()
 
 
 @click.group()
 @click.option(
     "-c",
     "--console-level",
-    default="info",
+    default=_config.console_level,
     show_default=True,
     help="Console log level.",
-    callback=_get_log_level_from_str,
 )
 @click.option(
     "-f",
     "--file-level",
-    default="info",
+    default=_config.file_level,
     show_default=True,
     help="File log level.",
-    callback=_get_log_level_from_str,
 )
 @click.option(
     "-k",
     "--workflow-key",
     type=str,
+    default=_config.workflow_key,
     envvar="TORC_WORKFLOW_ID",
     help="Workflow key, required for many commands. "
     "User will be prompted if it is missing unless --no-prompts is set.",
@@ -67,8 +58,16 @@ def _get_log_level_from_str(*args):
     help="Disable all user prompts.",
 )
 @click.option(
+    "-F",
+    "--output-format",
+    default=_config.output_format,
+    type=click.Choice(["text", "json"]),
+    show_default=True,
+    help="Output format for get/list commands. Not all commands support all formats.",
+)
+@click.option(
     "--timings/--no-timings",
-    default=False,
+    default=_config.timings,
     is_flag=True,
     show_default=True,
     help="Enable tracking of function timings.",
@@ -77,29 +76,43 @@ def _get_log_level_from_str(*args):
     "-u",
     "--database-url",
     type=str,
-    required=True,
+    default=_config.database_url,
     envvar="TORC_DATABASE_URL",
     help="Database URL. Ex: http://localhost:8529/_db/workflows/torc-service",
 )
 @click.pass_context
 def cli(
-    ctx, console_level, file_level, workflow_key, no_prompts, timings, database_url
+    ctx,
+    console_level,
+    file_level,
+    workflow_key,
+    no_prompts,
+    output_format,
+    timings,
+    database_url,
 ):  # pylint: disable=unused-argument
     """torc commands"""
     if timings:
         timer_stats_collector.enable()
     else:
         timer_stats_collector.disable()
-    ctx.obj = make_api(database_url)
+    ctx.params["console_level"] = get_log_level_from_str(console_level)
+    ctx.params["file_level"] = get_log_level_from_str(file_level)
+    if database_url:
+        ctx.obj = make_api(database_url)
 
 
 @cli.result_callback()
-def callback(*args, **kwargs):  # pylint: disable=unused-argument
+@click.pass_obj
+def callback(api, *args, **kwargs):  # pylint: disable=unused-argument
     """Log timer stats at exit."""
     timer_stats_collector.log_stats()
+    if api is not None:
+        api.api_client.close()
 
 
 cli.add_command(compute_nodes)
+cli.add_command(config)
 cli.add_command(events)
 cli.add_command(export)
 cli.add_command(files)

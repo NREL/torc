@@ -108,12 +108,12 @@ Python API client
         },
     ]
     for item in data:
-        result = api.post_jobs_user_data_workflow_key(item, workflow_key, job_key)
+        result = api.post_workflows_workflow_jobs_user_data_key(item, workflow_key, job_key)
         print(f"Added user data key={result['_key']}")
 
-    result = api.get_jobs_user_data_workflow_key(workflow_key, job_key)
+    result = api.get_workflows_workflow_jobs_user_data_key(workflow_key, job_key)
     print(f"Job key={job_key} stores {result.items}")
 
-    workflow_user_data = api.post_user_data_workflow(data[0], workflow_key)
-    result = api.get_user_data_workflow_key(workflow_key, workflow_user_data["_key"])
+    workflow_user_data = api.post_workflows_workflow_user_data(data[0], workflow_key)
+    result = api.get_workflows_workflow_user_data_key(workflow_key, workflow_user_data["_key"])
     print(f"Workflow stores user data {result}")

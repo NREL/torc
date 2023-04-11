@@ -46,11 +46,13 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     }
     num_enabled = 0
     groups = set()
-    for job in iter_documents(api.get_jobs_workflow, db.workflow.key):
+    for job in iter_documents(api.get_workflows_workflow_jobs, db.workflow.key):
         if job.key in auto_tune_job_keys:
             assert job.status == "ready"
             num_enabled += 1
-            rr = api.get_jobs_resource_requirements_workflow_key(db.workflow.key, job.key)
+            rr = api.get_workflows_workflow_jobs_resource_requirements_key(
+                db.workflow.key, job.key
+            )
             assert rr.name not in groups
             groups.add(rr.name)
         else:
@@ -75,7 +77,7 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     assert api.get_workflows_is_complete_key(db.workflow.key)
 
     stats_by_key = {
-        x: api.get_jobs_process_stats_workflow_key(db.workflow.key, x)[0]
+        x: api.get_workflows_workflow_jobs_process_stats_key(db.workflow.key, x)[0]
         for x in auto_tune_job_keys
     }
     assert (
@@ -88,13 +90,13 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     )
 
     api.post_workflows_process_auto_tune_resource_requirements_results_key(db.workflow.key)
-    small = api.get_resource_requirements_workflow_key(
+    small = api.get_workflows_workflow_resource_requirements_key(
         db.workflow.key, db.get_document_key("resource_requirements", "small")
     )
-    medium = api.get_resource_requirements_workflow_key(
+    medium = api.get_workflows_workflow_resource_requirements_key(
         db.workflow.key, db.get_document_key("resource_requirements", "medium")
     )
-    large = api.get_resource_requirements_workflow_key(
+    large = api.get_workflows_workflow_resource_requirements_key(
         db.workflow.key, db.get_document_key("resource_requirements", "large")
     )
     for rr in (small, medium, large):
@@ -103,7 +105,7 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
         assert rr.num_cpus in range(1, 8)
         assert rr.memory.lower() == "1g"
 
-    for job in api.get_jobs_workflow(db.workflow.key).items:
+    for job in api.get_workflows_workflow_jobs(db.workflow.key).items:
         if job.key in auto_tune_job_keys:
             assert job.status == "done"
         else:
@@ -111,7 +113,7 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
 
     mgr.restart()
 
-    for job in api.get_jobs_workflow(db.workflow.key).items:
+    for job in api.get_workflows_workflow_jobs(db.workflow.key).items:
         if job.key in auto_tune_job_keys:
             assert job.status == "done"
         else:

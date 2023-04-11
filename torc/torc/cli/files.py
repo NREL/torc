@@ -1,16 +1,19 @@
 """CLI commands to manage files"""
 
+import json
 import logging
 
 import click
-from swagger_client.models.files_workflow_model import FilesWorkflowModel
+from swagger_client.models.workflow_files_model import WorkflowFilesModel
 
 from torc.api import iter_documents
 from .common import (
+    check_database_url,
+    get_output_format_from_context,
     get_workflow_key_from_context,
     setup_cli_logging,
-    make_text_table,
     parse_filters,
+    print_items,
 )
 
 
@@ -18,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-def files():  # pylint: disable=unused-argument
+def files():
     """File commands"""
 
 
@@ -41,13 +44,18 @@ def files():  # pylint: disable=unused-argument
 def add(ctx, api, name, path):
     """Add a file to the workflow."""
     setup_cli_logging(ctx, __name__)
+    check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    file = FilesWorkflowModel(
+    output_format = get_output_format_from_context(ctx)
+    file = WorkflowFilesModel(
         name=name,
         path=path,
     )
     file = api.post_files_workflow(file, workflow_key)
-    logger.info("Added file with key=%s", file.key)
+    if output_format == "text":
+        logger.info("Added file with key=%s", file.key)
+    else:
+        print(json.dumps({"key": file.key}))
 
 
 @click.command()
@@ -57,9 +65,10 @@ def add(ctx, api, name, path):
 def delete(ctx, api, file_keys):
     """Delete one or more files by key."""
     setup_cli_logging(ctx, __name__)
+    check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     for key in file_keys:
-        api.delete_files_workflow_key(workflow_key, key)
+        api.delete_workflows_workflow_files_key(workflow_key, key)
         logger.info("Deleted workflow=%s file=%s", workflow_key, key)
 
 
@@ -69,9 +78,10 @@ def delete(ctx, api, file_keys):
 def delete_all(ctx, api):
     """Delete all files in the workflow."""
     setup_cli_logging(ctx, __name__)
+    check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    for file in iter_documents(api.get_files_workflow, workflow_key):
-        api.delete_files_workflow_key(workflow_key, file.key)
+    for file in iter_documents(api.get_workflows_workflow_files, workflow_key):
+        api.delete_workflows_workflow_files_key(workflow_key, file.key)
         logger.info("Deleted file %s", file.key)
 
 
@@ -90,28 +100,26 @@ def list_files(ctx, api, filters):
 
     \b
     Examples:
-    1. List all files.
-       $ torc files 91388876 list files
+    1. List all files in a table.
+       $ torc files list
     2. List only files with name=file1
-       $ torc files 91388876 list files -f name=file1
+       $ torc files list -f name=file1
+    3. List all files in JSON format.
+       $ torc -F json files list
     """
     setup_cli_logging(ctx, __name__)
+    check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     exclude = ("id", "rev")
     filters = parse_filters(filters)
-    table = make_text_table(
-        (x.to_dict() for x in iter_documents(api.get_files_workflow, workflow_key, **filters)),
-        "files",
-        exclude_columns=exclude,
+    table_title = f"Files in workflow {workflow_key}"
+    items = (
+        x.to_dict() for x in iter_documents(api.workflows_workflow_files, workflow_key, **filters)
     )
-    if table.rows:
-        print(table)
-    else:
-        print("No files are stored")
+    print_items(ctx, items, table_title=table_title, json_key="files", exclude_columns=exclude)
 
 
 files.add_command(add)
-# files.add_command(cancel)
 files.add_command(delete)
 files.add_command(delete_all)
 files.add_command(list_files)

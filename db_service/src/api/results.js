@@ -1,15 +1,13 @@
 'use strict';
 const joi = require('joi');
-const db = require('@arangodb').db;
 const createRouter = require('@arangodb/foxx/router');
-const config = require('../config');
 const documents = require('../documents');
 const query = require('../query');
 const schemas = require('./schemas');
 const router = createRouter();
 module.exports = router;
 
-router.get('/results/find_by_job/:workflow/:key', function(req, res) {
+router.get('/workflows/:workflow/results/find_by_job/:key', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(workflowKey, res);

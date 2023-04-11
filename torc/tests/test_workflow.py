@@ -25,7 +25,7 @@ def test_run_workflow(diamond_workflow):
     db, scheduler_config_id, output_dir = diamond_workflow
     api = db.api
     timer_stats_collector.enable()
-    user_data_work1 = api.get_jobs_user_data_workflow_key(
+    user_data_work1 = api.get_workflows_workflow_jobs_user_data_key(
         db.workflow.key, db.get_document_key("jobs", "work1")
     )
     assert len(user_data_work1.items) == 1
@@ -50,7 +50,7 @@ def test_run_workflow(diamond_workflow):
 
     assert api.get_workflows_is_complete_key(db.workflow.key)
     for name in ["preprocess", "work1", "work2", "postprocess"]:
-        result = api.get_results_find_by_job_workflow_key(
+        result = api.get_workflows_workflow_results_find_by_job_key(
             db.workflow.key, db.get_document_key("jobs", name)
         )
         assert result.return_code == 0
@@ -63,14 +63,14 @@ def test_run_workflow(diamond_workflow):
 
     result_data_work1 = {"result": 1}
     result_data_overall = {"overall_result": 2}
-    api.post_jobs_user_data_workflow_key(
+    api.post_workflows_workflow_jobs_user_data_key(
         result_data_work1, db.workflow.key, db.get_document_key("jobs", "work1")
     )
-    user_data_work1 = api.get_jobs_user_data_workflow_key(
+    user_data_work1 = api.get_workflows_workflow_jobs_user_data_key(
         db.workflow.key, db.get_document_key("jobs", "work1")
     )
     assert len(user_data_work1.items) == 2
-    api.post_user_data_workflow(result_data_overall, db.workflow.key)
+    api.post_workflows_workflow_user_data(result_data_overall, db.workflow.key)
 
     events = db.list_documents("events")
     # start for workflow, start and stop for worker, start and stop for each job
@@ -97,7 +97,7 @@ def test_cancel_with_failed_job(workflow_with_cancel):
     runner.run_worker()
     assert api.get_workflows_is_complete_key(db.workflow.key)
     assert db.get_document("jobs", "job1").status == "done"
-    result = api.get_results_find_by_job_workflow_key(
+    result = api.get_workflows_workflow_results_find_by_job_key(
         db.workflow.key, db.get_document_key("jobs", "job1")
     )
     assert result.return_code == 1
@@ -210,9 +210,9 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
     assert sorted(expected) == _get_job_keys_by_event(stage2_events, "complete")
 
     for job_key in {preprocess, work1, work2, postprocess}.difference(expected):
-        assert api.get_jobs_workflow_key(db.workflow.key, job_key).run_id == 1
+        assert api.get_workflows_workflow_jobs_key(db.workflow.key, job_key).run_id == 1
     for job_key in expected:
-        assert api.get_jobs_workflow_key(db.workflow.key, job_key).run_id == 2
+        assert api.get_workflows_workflow_jobs_key(db.workflow.key, job_key).run_id == 2
 
     api.post_workflows_reset_status_key(db.workflow.key)
     for name in ("preprocess", "work1", "work2", "postprocess"):
@@ -248,7 +248,7 @@ def test_run_independent_job_workflow(independent_job_workflow, tmp_path):
 
     assert db.api.get_workflows_is_complete_key(db.workflow.key)
     for name in (str(i) for i in range(num_jobs)):
-        result = db.api.get_results_find_by_job_workflow_key(
+        result = db.api.get_workflows_workflow_results_find_by_job_key(
             db.workflow.key, db.get_document_key("jobs", name)
         )
         assert result.return_code == 0
@@ -290,7 +290,7 @@ def test_concurrent_submitters(independent_job_workflow, tmp_path):
     assert ret == 0
     assert db.api.get_workflows_is_complete_key(db.workflow.key)
     for name in (str(i) for i in range(num_jobs)):
-        result = db.api.get_results_find_by_job_workflow_key(
+        result = db.api.get_workflows_workflow_results_find_by_job_key(
             db.workflow.key, db.get_document_key("jobs", name)
         )
         assert result.return_code == 0

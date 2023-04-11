@@ -11,7 +11,7 @@ const router = createRouter();
 module.exports = router;
 
 
-router.get('/files/produced_by_job/:workflow/:key', function(req, res) {
+router.get('/workflows/:workflow/files/produced_by_job/:key', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(workflowKey, res);

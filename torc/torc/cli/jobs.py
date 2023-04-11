@@ -5,17 +5,20 @@ import logging
 
 import click
 import json5
-from swagger_client.models.jobs_workflow_model import JobsWorkflowModel
+from swagger_client.models.workflow_jobs_model import WorkflowJobsModel
 
 from torc.api import iter_documents
 from torc.resource_monitor.reports import (
     iter_job_process_stats,
+    list_job_process_stats,
 )
 from .common import (
+    check_database_url,
+    get_output_format_from_context,
     get_workflow_key_from_context,
     setup_cli_logging,
-    make_text_table,
     parse_filters,
+    print_items,
 )
 
 
@@ -23,7 +26,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-def jobs():  # pylint: disable=unused-argument
+def jobs():
     """Job commands"""
 
 
@@ -71,15 +74,20 @@ def jobs():  # pylint: disable=unused-argument
 def add(ctx, api, cancel_on_blocking_job_failure, command, key, name):
     """Add a job to the workflow."""
     setup_cli_logging(ctx, __name__)
+    check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    job = JobsWorkflowModel(
+    output_format = get_output_format_from_context(ctx)
+    job = WorkflowJobsModel(
         cancel_on_blocking_job_failure=cancel_on_blocking_job_failure,
         command=command,
         key=key,
         name=name,
     )
-    job = api.post_jobs_workflow(job, workflow_key)
-    logger.info("Added job with key=%s", job.key)
+    job = api.post_workflows_workflow_jobs(job, workflow_key)
+    if output_format == "text":
+        logger.info("Added job with key=%s", job.key)
+    else:
+        print(json.dumps({"key": job.key}))
 
 
 @click.command()
@@ -95,11 +103,20 @@ def add_user_data(ctx, api, job_key, data):
     $ torc jobs add-user-data 92339718 "{key1: 'val1', key2: 'val2'}" "{key3: 'val3'}"
     """
     setup_cli_logging(ctx, __name__)
+    check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
+    output_format = get_output_format_from_context(ctx)
+    keys = []
     for item in data:
         user_data = json5.loads(item)
-        ud = api.post_jobs_user_data_workflow_key(user_data, workflow_key, job_key)
-        logger.info("Added user_data key=%s to job key=%s", ud["_key"], job_key)
+        ud = api.post_workflows_workflow_jobs_user_data_key(user_data, workflow_key, job_key)
+        keys.append(ud["_key"])
+
+    if output_format == "text":
+        for key in keys:
+            logger.info("Added user_data key=%s to job key=%s", key, job_key)
+    else:
+        print(json.dumps({"keys": keys}))
 
 
 @click.command()
@@ -109,8 +126,9 @@ def add_user_data(ctx, api, job_key, data):
 def list_user_data(ctx, api, job_key):
     """List all user data stored for a job."""
     setup_cli_logging(ctx, __name__)
+    check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    resp = api.get_jobs_user_data_workflow_key(workflow_key, job_key)
+    resp = api.get_workflows_workflow_jobs_user_data_key(workflow_key, job_key)
     for item in resp.items:
         item.pop("_id")
     print(json.dumps(resp.items, indent=2))
@@ -123,9 +141,10 @@ def list_user_data(ctx, api, job_key):
 def delete(ctx, api, job_keys):
     """Delete one or more jobs by key."""
     setup_cli_logging(ctx, __name__)
+    check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     for key in job_keys:
-        api.delete_jobs_workflow_key(workflow_key, key)
+        api.delete_workflows_workflow_jobs_key(workflow_key, key)
         logger.info("Deleted workflow=%s job=%s", workflow_key, key)
 
 
@@ -135,9 +154,10 @@ def delete(ctx, api, job_keys):
 def delete_all(ctx, api):
     """Delete all jobs in the workflow."""
     setup_cli_logging(ctx, __name__)
+    check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    for job in iter_documents(api.get_jobs_workflow, workflow_key):
-        api.delete_jobs_workflow_key(workflow_key, job.key)
+    for job in iter_documents(api.get_workflows_workflow_jobs, workflow_key):
+        api.delete_workflows_workflow_jobs_key(workflow_key, job.key)
         logger.info("Deleted job %s", job.key)
 
 
@@ -156,40 +176,49 @@ def list_jobs(ctx, api, filters):
 
     \b
     Examples:
-    1. List all jobs.
-       $ torc jobs 91388876 list jobs
+    1. List all jobs in a table.
+       $ torc jobs list jobs
     2. List only jobs with run_id=1 and status=done.
-       $ torc jobs 91388876 list jobs -f run_id=1 -f status=done
+       $ torc jobs list jobs -f run_id=1 -f status=done
+    3. List all jobs in JSON format.
+       $ torc -F json jobs list
     """
     setup_cli_logging(ctx, __name__)
+    check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    # TODO: restore interruptible when it is supported
-    exclude = ("id", "rev", "internal", "interruptible")
     filters = parse_filters(filters)
-    table = make_text_table(
-        (x.to_dict() for x in iter_documents(api.get_jobs_workflow, workflow_key, **filters)),
-        "Jobs",
-        exclude_columns=exclude,
+    items = (
+        x.to_dict()
+        for x in iter_documents(api.get_workflows_workflow_jobs, workflow_key, **filters)
     )
-    if table.rows:
-        print(table)
-    else:
-        print("No jobs are stored")
+    exclude = ("id", "rev", "internal")
+    table_title = f"Jobs in workflow {workflow_key}"
+    print_items(ctx, items, table_title=table_title, json_key="jobs", exclude_columns=exclude)
 
 
 @click.command()
 @click.pass_obj
 @click.pass_context
 def list_process_stats(ctx, api):
-    """Show per-job process resource statistics from a workflow run."""
+    """List per-job process resource statistics from a workflow run.
+
+    \b
+    Examples:
+    1. List stats for all jobs in a table.
+       $ torc jobs list-process-stats
+    2. List all stats in JSON format.
+       $ torc -F json jobs list-process-stats
+    """
+    setup_cli_logging(ctx, __name__)
+    check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    table = make_text_table(
-        iter_job_process_stats(api, workflow_key), "Job Process Resource Utilization Statistics"
-    )
-    if table.rows:
-        print(table)
+    output_format = get_output_format_from_context(ctx)
+    if output_format == "text":
+        items = iter_job_process_stats(api, workflow_key)
+        table_title = f"Job Process Resource Utilization Statistics for workflow {workflow_key}"
+        print_items(ctx, items, table_title=table_title, json_key="stats")
     else:
-        logger.info("No stats are stored")
+        print(json.dumps({"stats": list_job_process_stats(api, workflow_key)}))
 
 
 jobs.add_command(add)

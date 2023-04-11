@@ -10,7 +10,7 @@ const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
 module.exports = router;
 
-router.post('/job_specifications/:workflow', function(req, res) {
+router.post('/workflows/:workflow/job_specifications', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const workflow = documents.getWorkflow(workflowKey, res);
   try {
@@ -26,7 +26,7 @@ router.post('/job_specifications/:workflow', function(req, res) {
     .summary('Store a job and create edges.')
     .description('Store a job in the "jobs" collection and create edges.');
 
-router.get('/job_specifications/:workflow/:key', function(req, res) {
+router.get('/workflows/:workflow/job_specifications/:key', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(workflowKey, res);
@@ -43,7 +43,7 @@ router.get('/job_specifications/:workflow/:key', function(req, res) {
     .summary('Retrieve a job')
     .description('Retrieves a job from the "jobs" collection by key.');
 
-router.get('/job_specifications/:workflow', function(req, res) {
+router.get('/workflows/:workflow/job_specifications', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const workflow = documents.getWorkflow(workflowKey, res);
   const jobs = config.getWorkflowCollection(workflow, 'jobs');

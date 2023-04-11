@@ -79,7 +79,7 @@ const job = joi.object().required().keys({
   command: joi.string().required(),
   status: joi.string(),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
-  interruptible: joi.boolean().default(false),
+  supports_termination: joi.boolean().default(false),
   run_id: joi.number().integer().default(0),
   // This only exists to all prepareJobsForSubmission to take less time to find
   // jobs with exclusive access.
@@ -97,7 +97,7 @@ const jobSpecification = joi.object().required().keys({
   command: joi.string().required(),
   user_data: joi.array().items(joi.object()).default([]),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
-  interruptible: joi.boolean().default(false),
+  supports_termination: joi.boolean().default(false),
   scheduler: joi.string().default('').allow(''),
   resource_requirements: joi.string().optional(),
   input_files: joi.array().items(joi.string()).default([]),
@@ -218,10 +218,10 @@ const schedulers = joi.object().required().keys({
 });
 
 const workflowSpecification = joi.object().required().keys({
-  name: joi.string().optional(),
+  name: joi.string().optional().allow(null, ''),
   key: joi.string().optional(),
-  user: joi.string().optional(),
-  description: joi.string().optional(),
+  user: joi.string().optional().allow(null, ''),
+  description: joi.string().optional().allow(null, ''),
   jobs: joi.array().items(jobSpecification).default([]),
   files: joi.array().items(file).default([]),
   resource_requirements: joi.array().items(resourceRequirements).default([]),

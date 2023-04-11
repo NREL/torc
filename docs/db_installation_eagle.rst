@@ -10,7 +10,7 @@ Database Installation on Eagle
 
 .. warning:: Do not run ArangoDB on a login node.
 
-This script will acquire a node and start the database in a container. Edit the SLURM and
+This script will acquire a node and start the database in a container. Edit the Slurm and
 ArangoDB parameters as needed. ArangoDB will store its data in ``arangodb3`` and
 ``arangodb3-apps``. Reuse these directories if you start a new session later.
 
@@ -33,7 +33,7 @@ ArangoDB parameters as needed. ArangoDB will store its data in ``arangodb3`` and
         -B arangodb3-apps:/var/lib/arangodb3-apps \
         /scratch/dthom/containers/arangodb.sif
 
-Copy that text into ``batch_arangod.sh`` and submit it to SLURM. ``tail`` will print text
+Copy that text into ``batch_arangod.sh`` and submit it to Slurm. ``tail`` will print text
 from ``arangod`` when it starts.
 
 .. code-block:: console
