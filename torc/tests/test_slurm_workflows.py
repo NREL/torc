@@ -20,7 +20,7 @@ from torc.utils.files import load_data, dump_data
 
 
 try:
-    subprocess.call(["squeue --help"])
+    subprocess.call(["squeue", "--help"])
 except FileNotFoundError:
     pytest.skip("skipping slurm tests", allow_module_level=True)
 
@@ -68,9 +68,11 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
     data = load_data(dst_file)
     for scheduler in data["schedulers"]["slurm_schedulers"]:
         scheduler["account"] = slurm_account
-    dump_data(data, dst_file)
+    dump_data(data, dst_file, indent=2)
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(cli, ["-F", "json", "workflows", "create-from-json-file", str(file)])
+    result = runner.invoke(
+        cli, ["-F", "json", "workflows", "create-from-json-file", str(dst_file)]
+    )
     assert result.exit_code == 0
     key = json.loads(result.stdout)["key"]
 
