@@ -68,6 +68,50 @@ function getTimeDurationInSeconds(duration) {
 }
 
 /**
+ * Return the walltime in seconds.
+ * @param {string} duration - Duration in HH:MM:SS or variants
+ * @return {number} - Duration in seconds
+ */
+function getWalltimeInSeconds(duration) {
+  // From Slurm docs:
+  // Acceptable time formats include "minutes", "minutes:seconds", "hours:minutes:seconds",
+  // "days-hours", "days-hours:minutes" and "days-hours:minutes:seconds".
+
+  // hours:minutes:seconds
+  let result = duration.match(/^([0-9]+):([0-9]+):([0-9]+)$/);
+  if (result != null) {
+    return result[1] * 3600 + result[2] * 60 + result[3];
+  }
+  // days-hours:minutes:seconds
+  result = duration.match(/^([0-9]+)-([0-9]+):([0-9]+):([0-9]+)$/);
+  if (result != null) {
+    return result[1] * 3600 * 24 + result[2] * 3600 + result[3] * 60 + result[4];
+  }
+  // days-hours:minutes
+  result = duration.match(/^([0-9]+)-([0-9]+):([0-9]+)$/);
+  if (result != null) {
+    return result[1] * 3600 * 24 + result[2] * 3600 + result[3] * 60;
+  }
+  // minutes
+  result = duration.match(/^([0-9]+)$/);
+  if (result != null) {
+    return result[1] * 60;
+  }
+  // minutes:seconds
+  result = duration.match(/^([0-9]+):([0-9]+)$/);
+  if (result != null) {
+    return result[1] * 60 + result[2];
+  }
+  // days-hours
+  result = duration.match(/^([0-9]+)-([0-9]+)$/);
+  if (result != null) {
+    return result[1] * 3600 * 24 + result[2] * 3600;
+  }
+
+  throw new Error(`Walltime format ${duration} is not supported`);
+}
+
+/**
  * Return the number of records to send.
  * @param {string} limit
  * @return {number}
@@ -92,7 +136,8 @@ function makeCursorResult(items, skip, limit, totalCount) {
     max_limit: MAX_TRANSFER_RECORDS,
     count: items.length,
     total_count: totalCount,
-    has_more: skip >= items.length ? false : skip + items.length < totalCount,
+    has_more: skip >= items.length || limit >= items.length ? false :
+      skip + items.length < totalCount,
   };
 }
 
@@ -129,6 +174,7 @@ module.exports = {
   convertJobForApi,
   getItemsLimit,
   getTimeDurationInSeconds,
+  getWalltimeInSeconds,
   getMemoryInBytes,
   handleArangoApiErrors,
   makeCursorResult,

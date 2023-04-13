@@ -79,7 +79,6 @@ function cancelWorkflowJobs(workflow) {
       for (const job of cursor) {
         job.status = JobStatus.Canceled;
         collection.update(job, job);
-        // TODO: should there be a result?
       }
     },
   });
@@ -88,9 +87,10 @@ function cancelWorkflowJobs(workflow) {
 /**
  * Get information about the resources required for currently-available jobs.
  * @param {Object} workflow
+ * @param {string} schedulerConfigId
  * @return {Object}
  */
-function getReadyJobRequirements(workflow) {
+function getReadyJobRequirements(workflow, schedulerConfigId) {
   let numCpus = 0;
   let numGpus = 0;
   let numJobs = 0;
@@ -102,6 +102,9 @@ function getReadyJobRequirements(workflow) {
 
   const collection = config.getWorkflowCollection(workflow, 'jobs');
   for (const job of collection.byExample({status: JobStatus.Ready})) {
+    if (schedulerConfigId != null && job.internal.scheduler_config_id != schedulerConfigId) {
+      continue;
+    }
     const reqs = getJobResourceRequirements(job, workflow);
     numJobs += 1;
     numCpus += reqs.num_cpus;
@@ -439,17 +442,21 @@ function getWorkflowStatus(workflow) {
 function initializeJobStatus(workflow) {
   // TODO: Can this be more efficient with one traversal?
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
-  for (const job of jobs.all()) {
-    // TODO: filter?
-    if (job.status == JobStatus.Disabled) {
-      continue;
-    }
+  const schedulers = getSchedulers(workflow);
+  const cursor = query()`
+    FOR job IN ${jobs}
+      FILTER job.status != ${JobStatus.Disabled}
+      RETURN job
+  `;
+  for (const job of cursor) {
     const jobResources = getJobResourceRequirements(job, workflow);
     if (job.internal == null) {
       job.internal = schemas.jobInternal.validate({}).value;
     }
     const scheduler = getJobScheduler(job, workflow);
-    if (scheduler != null) {
+    if (scheduler == null) {
+      job.internal.scheduler_config_id = selectBestSchedulerForJob(job, schedulers)._id;
+    } else {
       job.internal.scheduler_config_id = scheduler._id;
     }
     job.internal.memory_bytes = utils.getMemoryInBytes(jobResources.memory);
@@ -466,6 +473,51 @@ function initializeJobStatus(workflow) {
   console.log(
       `Initialized all incomplete job status to ${JobStatus.Ready} or ${JobStatus.Blocked}`,
   );
+}
+
+/**
+ * Return the ID of the best scheduler for job. Barely functional.
+ * @param {Object} job
+ * @param {Array} schedulers
+ * @return {string}
+ */
+function selectBestSchedulerForJob(job, schedulers) {
+  const allSchedulers = schedulers.slurmSchedulers.concat(schedulers.awsSchedulers,
+      schedulers.localSchedulers);
+  if (allSchedulers.length == 1) {
+    const scheduler = allSchedulers[0];
+    if (schedulers.slurmSchedulers.length == 1) {
+      if (job.internal.runtime_seconds <= schedulers.durationToSeconds.get(scheduler.walltime)) {
+        // TODO: this really needs to convert all Slurm strings into common units and then compare.
+        return scheduler;
+      }
+    } else {
+      return scheduler;
+    }
+  }
+  // TODO: Figure out the best when there are multiple matches.
+  return '';
+}
+
+/**
+ * Return all stored schedulers.
+ * @param {Object} workflow
+ * @return {Object}
+ */
+function getSchedulers(workflow) {
+  const schedulers = {
+    awsSchedulers: config.getWorkflowCollection(workflow, 'aws_schedulers').toArray(),
+    localSchedulers: config.getWorkflowCollection(workflow, 'local_schedulers').toArray(),
+    slurmSchedulers: config.getWorkflowCollection(workflow, 'slurm_schedulers').toArray(),
+    durationToSeconds: new Map(),
+  };
+  for (const scheduler of schedulers.slurmSchedulers) {
+    if (!schedulers.durationToSeconds.has(scheduler.walltime)) {
+      const durationSeconds = utils.getWalltimeInSeconds(scheduler.walltime);
+      schedulers.durationToSeconds.set(scheduler.walltime, durationSeconds);
+    }
+  }
+  return schedulers;
 }
 
 /**

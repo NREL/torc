@@ -6,7 +6,7 @@ const workerResources = joi.object().required().keys({
   memory_gb: joi.number().required(),
   num_gpus: joi.number().integer().default(0),
   num_nodes: joi.number().integer().default(1),
-  time_limit: [joi.string().optional(), joi.allow(null)], // ISO 8601 encoding for timedeltas
+  time_limit: joi.string().optional().allow(null), // ISO 8601 encoding for timedeltas
   scheduler_config_id: joi.string().optional(),
 });
 

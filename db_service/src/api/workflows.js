@@ -119,15 +119,18 @@ router.get('/workflows/is_complete/:key', function(req, res) {
 
 router.get('/workflows/ready_job_requirements/:key', function(req, res) {
   const key = req.pathParams.key;
+  const schedulerConfigId = req.queryParams.scheduler_config_id;
   const workflow = documents.getWorkflow(key, res);
   try {
-    const result = query.getReadyJobRequirements(workflow);
+    const result = query.getReadyJobRequirements(workflow, schedulerConfigId);
     res.send(result);
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Get ready_job_requirements key=${key}`);
   }
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
+    .queryParam('scheduler_config_id', joi.string().optional().allow(null, ''),
+        'Limit output to jobs assigned this scheduler.')
     .response(schemas.readyJobsResourceRequirements, 'result')
     .summary('Return the resource requirements for ready jobs.')
     .description(`Return the resource requirements for jobs with a status of ready.`);
