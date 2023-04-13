@@ -12,7 +12,7 @@ Installation
 2. If running on a local computer or cloud environment, install a database with ArangoDB. Refer to
    the links below.
 
-3. Clone the ``torc`` repository to computer where you will submit and run jobs.
+3. Clone the ``torc`` repository to a computer where you will submit and run jobs.
 
 .. code-block:: console
 

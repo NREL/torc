@@ -1,10 +1,10 @@
 .. _overview:
 
-########
-Overview
-########
+#################
+Workflow Overview
+#################
 
-This page illustrates the objectives of this orchestrator with an example workflow.
+This page illustrates the objectives of torc with an example workflow.
 
 The workflow has four jobs:
 

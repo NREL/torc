@@ -2,7 +2,7 @@
 Architecture
 ############
 
-- Store information about jobs and dependencies in a graph database.
+- Store information about jobs and dependencies in the ArangoDB graph database.
 - A server implements an HTTP API endpoint that manages the database.
 
   - With ArangoDB as the database, this API endpoint is a service inside the database.
@@ -20,6 +20,27 @@ Architecture
   - API exists in common programming languages, HTTP, and JSON.
   - The software package provides a suite of CLI commands to manage workflows in the database.
     This toolkit abstracts the database implementation details from the user.
+
+ArangoDB
+========
+Torc relies heavily on the multi-model database `ArangoDB <https://www.arangodb.com/>`_.
+It uses graphs to store relationships/dependencies between workflow objects and documents
+for user-defined data.
+
+Torc provides a moderately-comprehensive set of CLI commands and a custom HTTP API endpoint with
+auto-generated client API libraries. The goal is for users to not be forced to deal with ArangoDB
+directly, but there are still cases where that may be required. The web UI is particularly
+beneficial for useful for running queries and visualizing workflow graphs.
+``arangodump/arangorestore`` are great for backups.
+
+Here are documentation links for some of their tools:
+
+- Web UI: https://www.arangodb.com/docs/stable/programs-web-interface.html
+- Queries: https://www.arangodb.com/docs/stable/programs-web-interface-aql-editor.html
+- Shell: https://www.arangodb.com/docs/stable/programs-arangosh.html
+- Export: https://www.arangodb.com/docs/stable/programs-arangoexport.html
+- Backups: https://www.arangodb.com/docs/stable/programs-arangodump.html
+- HTTP API: https://www.arangodb.com/docs/stable/http/
 
 Database layout/schema
 ======================
@@ -82,38 +103,6 @@ Documents
 - events: Torc posts events when starting and completing worker nodes and jobs.
 
 Users can post their own events. Common structure is TBD.
-
-Job Statuses
-============
-- **uninitialized**: Initial state. Not yet known if it is blocked or ready.
-- **ready**: The job can be submitted.
-- **blocked**: The job cannot start because of dependencies.
-- **submitted_pending**: The job was given to a compute node but is not yet running.
-- **submitted**: The job is running on a compute node.
-- **terminated**: Compute node timeout occurred and the job was notified to checkpoint and shut
-  down.
-- **done**: The job finished. It may or may not have completed successfully.
-- **canceled**: A blocking job failed and so the job never ran.
-- **disabled**: The job cannot run or change state.
-
-.. graphviz::
-
-   digraph job_statuses {
-      "uninitialized" -> "ready";
-      "uninitialized" -> "blocked";
-      "uninitialized" -> "disabled";
-      "disabled" -> "uninitialized";
-      "ready" -> "submitted_pending";
-      "submitted_pending" -> "submitted";
-      "submitted" -> "done";
-      "submitted" -> "terminated";
-      "blocked" -> "canceled";
-      "blocked" -> "ready";
-   }
-
-.. raw:: html
-
-   <hr>
 
 Worker nodes
 ============
