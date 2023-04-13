@@ -18,9 +18,11 @@ def events():  # pylint: disable=unused-argument
 
 
 @click.command(name="list")
+@click.option("-l", "--limit", type=int, help="Limit the output to this number of jobs.")
+@click.option("-s", "--skip", default=0, type=int, help="Skip this number of jobs.")
 @click.pass_obj
 @click.pass_context
-def list_events(ctx, api):
+def list_events(ctx, api, limit, skip):
     """List all events in a workflow.
 
     \b
@@ -34,8 +36,11 @@ def list_events(ctx, api):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     data = []
+    kwargs = {"skip": skip}
+    if limit is not None:
+        kwargs["limit"] = limit
     # TODO: filtering? Not all columns are the same. Are any guaranteed? Tables?
-    for event in iter_documents(api.get_workflows_workflow_events, workflow_key):
+    for event in iter_documents(api.get_workflows_workflow_events, workflow_key, **kwargs):
         data.append(remove_db_keys(event))
     print(json.dumps(data, indent=2))
 

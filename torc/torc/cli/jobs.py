@@ -169,9 +169,11 @@ def delete_all(ctx, api):
     type=str,
     help="Filter the values according to each key=value pair.",
 )
+@click.option("-l", "--limit", type=int, help="Limit the output to this number of jobs.")
+@click.option("-s", "--skip", default=0, type=int, help="Skip this number of jobs.")
 @click.pass_obj
 @click.pass_context
-def list_jobs(ctx, api, filters):
+def list_jobs(ctx, api, filters, limit, skip):
     """List all jobs in a workflow.
 
     \b
@@ -187,19 +189,31 @@ def list_jobs(ctx, api, filters):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     filters = parse_filters(filters)
+    filters["skip"] = skip
+    if limit is not None:
+        filters["limit"] = limit
     items = (
         x.to_dict()
         for x in iter_documents(api.get_workflows_workflow_jobs, workflow_key, **filters)
     )
     exclude = ("id", "rev", "internal")
     table_title = f"Jobs in workflow {workflow_key}"
-    print_items(ctx, items, table_title=table_title, json_key="jobs", exclude_columns=exclude)
+    print_items(
+        ctx,
+        items,
+        table_title=table_title,
+        json_key="jobs",
+        exclude_columns=exclude,
+        start_index=skip,
+    )
 
 
 @click.command()
+@click.option("-l", "--limit", type=int, help="Limit the output to this number of jobs.")
+@click.option("-s", "--skip", default=0, type=int, help="Skip this number of jobs.")
 @click.pass_obj
 @click.pass_context
-def list_process_stats(ctx, api):
+def list_process_stats(ctx, api, limit, skip):
     """List per-job process resource statistics from a workflow run.
 
     \b
@@ -213,12 +227,15 @@ def list_process_stats(ctx, api):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
+    kwargs = {"skip": skip}
+    if limit is not None:
+        kwargs["limit"] = limit
     if output_format == "text":
-        items = iter_job_process_stats(api, workflow_key)
+        items = iter_job_process_stats(api, workflow_key, **kwargs)
         table_title = f"Job Process Resource Utilization Statistics for workflow {workflow_key}"
-        print_items(ctx, items, table_title=table_title, json_key="stats")
+        print_items(ctx, items, table_title=table_title, json_key="stats", start_index=skip)
     else:
-        print(json.dumps({"stats": list_job_process_stats(api, workflow_key)}))
+        print(json.dumps({"stats": list_job_process_stats(api, workflow_key, **kwargs)}))
 
 
 jobs.add_command(add)

@@ -125,12 +125,10 @@ class WorkflowManager:
                 self._update_jobs_on_file_change(file)
 
     def _reset_job_status(self):
-        for status in ("canceled", "submitted", "submitted_pending"):
-            # TODO: This query will be throttled. Handle batching. Do it generically so that all
-            # similar iterations can use it.
-            for job in send_api_command(
+        for status in ("canceled", "submitted", "submitted_pending", "terminated"):
+            for job in iter_documents(
                 self._api.get_workflows_workflow_jobs_find_by_status_status, self._key, status
-            ).items:
+            ):
                 job.status = "uninitialized"
                 send_api_command(
                     self._api.put_workflows_workflow_jobs_key, job, self._key, job.key

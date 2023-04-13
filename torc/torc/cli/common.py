@@ -112,6 +112,7 @@ def get_workflow_key_from_context(ctx, api):
             "\nThis command requires a workflow key and one was not provided. "
             "Please choose one from below.\n"
         )
+        # TODO: filter by user. Still might have issues with hundreds of workflows
         doc = prompt_user_for_document(
             "workflow", api.get_workflows, exclude_columns=("id", "rev"), msg=msg
         )
@@ -124,11 +125,15 @@ def get_workflow_key_from_context(ctx, api):
     return key
 
 
-def print_items(ctx, items, table_title, json_key, exclude_columns=None, indent=None):
+def print_items(
+    ctx, items, table_title, json_key, exclude_columns=None, indent=None, start_index=0
+):
     """Print items in either a table or JSON format, based on what is set in ctx."""
     output_format = get_output_format_from_context(ctx)
     if output_format == "text":
-        table = make_text_table(items, table_title, exclude_columns=exclude_columns)
+        table = make_text_table(
+            items, table_title, exclude_columns=exclude_columns, start_index=start_index
+        )
         if table.rows:
             print(table)
         else:
@@ -176,11 +181,9 @@ def prompt_user_for_document(
     docs = []
     dicts = []
     index_to_doc = {}
-    for i, doc in enumerate(iter_documents(getter_func, *args, **kwargs), start=1):
-        data = {"index": i}
-        data.update(doc.to_dict())
+    for i, doc in enumerate(iter_documents(getter_func, *args, **kwargs)):
         index_to_doc[i] = doc
-        dicts.append(data)
+        dicts.append(doc.to_dict())
         docs.append(doc)
 
     if not docs:
@@ -211,7 +214,7 @@ def prompt_user_for_document(
     return doc
 
 
-def make_text_table(iterable, title, exclude_columns=None):
+def make_text_table(iterable, title, exclude_columns=None, start_index=0):
     """Return a PrettyTable from an iterable.
 
     Parameters
@@ -221,18 +224,23 @@ def make_text_table(iterable, title, exclude_columns=None):
     title : str
     exclude_columns : None | list
         Keys of each dict in iterable to exclude. Mutates iterable.
+    start_index : int
 
     Returns
     -------
     PrettyTable
     """
     table = PrettyTable(title=title)
-    for i, item in enumerate(iterable):
+    for i, item in enumerate(iterable, start=start_index):
         for column in exclude_columns or []:
             item.pop(column)
-        if i == 0:
-            table.field_names = tuple(item.keys())
-        table.add_row(item.values())
+        if i == start_index:
+            field_names = list(item.keys())
+            field_names.insert(0, "index")
+            table.field_names = field_names
+        row = list(item.values())
+        row.insert(0, i)
+        table.add_row(row)
     return table
 
 

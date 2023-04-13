@@ -41,7 +41,7 @@ def iter_compute_node_stats(api, workflow_key, exclude_process=False):
                 yield row
 
 
-def iter_job_process_stats(api, workflow_key):
+def iter_job_process_stats(api, workflow_key, **kwargs):
     """Return a generator over all job process resource utilization stats.
 
     Parameters
@@ -53,7 +53,7 @@ def iter_job_process_stats(api, workflow_key):
     ------
     dict
     """
-    for job in iter_documents(api.get_workflows_workflow_jobs, workflow_key):
+    for job in iter_documents(api.get_workflows_workflow_jobs, workflow_key, **kwargs):
         for stat in send_api_command(
             api.get_workflows_workflow_jobs_process_stats_key, workflow_key, job.key
         ):
@@ -70,7 +70,7 @@ def iter_job_process_stats(api, workflow_key):
             }
 
 
-def list_job_process_stats(api, workflow_key) -> list[dict]:
+def list_job_process_stats(api, workflow_key, **kwargs) -> list[dict]:
     """Return a list of all job process resource utilization stats.
 
     Parameters
@@ -82,7 +82,7 @@ def list_job_process_stats(api, workflow_key) -> list[dict]:
     ------
     list[dict]
     """
-    return list(iter_job_process_stats(api, workflow_key))
+    return list(iter_job_process_stats(api, workflow_key, **kwargs))
 
 
 def make_compute_node_stats_dataframes(api, workflow_key) -> pl.DataFrame:

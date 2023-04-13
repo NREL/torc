@@ -1,15 +1,11 @@
 """Tests the workflow CLI commands."""
 
 import json
-import re
 import socket
 
 from click.testing import CliRunner
 
 from torc.cli.torc import cli
-
-
-WORKFLOW_KEY_REGEX = re.compile(r"with key=(\d+)\s")
 
 
 def test_workflow_commands(create_workflow_cli):
@@ -19,6 +15,7 @@ def test_workflow_commands(create_workflow_cli):
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(cli, ["-k", key, "-u", url, "workflows", "start"])
     assert result.exit_code == 0
+
     result = runner.invoke(cli, ["-k", key, "-u", url, "local", "run-jobs", "-o", str(output_dir)])
     assert result.exit_code == 0
     output = _get_text_and_json_outputs(["-k", key, "-u", url, "jobs", "list-process-stats"])
@@ -46,6 +43,46 @@ def test_workflow_commands(create_workflow_cli):
         ["-k", key, "-u", url, "-F", "json", "events", "list"]
     )
     assert isinstance(events, list) and events
+    result = runner.invoke(cli, ["-k", key, "-u", url, "workflows", "reset-status"])
+
+
+def test_slurm_config_commands(create_workflow_cli):
+    """Tests slurm config CLI commands."""
+    key, url, _ = create_workflow_cli
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(cli, ["-k", key, "-u", url, "workflows", "start"])
+    assert result.exit_code == 0
+    output = _run_and_convert_output_from_json(
+        ["-F", "json", "-k", key, "-u", url, "workflows", "list-scheduler-configs"]
+    )
+    assert output["ids"]
+    scheduler_id = output["ids"][0]
+    output = _run_and_convert_output_from_json(
+        ["-F", "json", "-k", key, "-u", url, "workflows", "recommend-nodes", "-s", scheduler_id]
+    )
+    assert output["num_nodes_by_cpus"] == 1
+
+    output = _run_and_convert_output_from_json(
+        ["-F", "json", "-k", key, "-u", url, "hpc", "slurm", "list-configs"]
+    )
+
+    assert output["configs"]
+    assert output["configs"][0]["id"] == scheduler_id
+    assert output["configs"][0]["walltime"] == "04:00:00"
+    config_key = output["configs"][0]["key"]
+
+    new_walltime = "02:00:00"
+    result = runner.invoke(
+        cli,
+        ["-k", key, "-u", url, "hpc", "slurm", "modify-config", config_key, "-w", new_walltime],
+    )
+    assert result.exit_code == 0
+
+    output = _run_and_convert_output_from_json(
+        ["-F", "json", "-k", key, "-u", url, "hpc", "slurm", "list-configs"]
+    )
+    assert output["configs"]
+    assert output["configs"][0]["walltime"] == new_walltime
 
 
 def test_create_workflow_from_commands_file(db_api, tmp_path):

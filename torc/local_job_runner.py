@@ -131,7 +131,7 @@ def main():
 
     setup_logging(__name__)
 
-    api = make_api("http://localhost:8529/_db/workflows/torc-service")
+    api = make_api("http://localhost:8529/_db/test-workflows/torc-service")
     output_dir = Path("output_dir")
     mode = sys.argv[1]
     if mode == "create":

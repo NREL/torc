@@ -3,6 +3,8 @@
 import getpass
 import json
 import logging
+import math
+import sys
 
 import click
 from swagger_client.models.workflow_jobs_model import WorkflowJobsModel
@@ -263,6 +265,29 @@ def delete_all(ctx, api):
         logger.info("Deleted workflow %s", workflow.key)
 
 
+@click.command()
+@click.pass_obj
+@click.pass_context
+def list_scheduler_configs(ctx, api):
+    """List the scheduler configs in the database."""
+    setup_cli_logging(ctx, __name__)
+    check_database_url(api)
+    output_format = get_output_format_from_context(ctx)
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    items = []
+    for scheduler in ("aws_schedulers", "local_schedulers", "slurm_schedulers"):
+        method = getattr(api, f"get_workflows_workflow_{scheduler}")
+        for doc in iter_documents(method, workflow_key):
+            items.append(doc.id)
+
+    if output_format == "text":
+        logger.info("Scheduler configs in workflow %s", workflow_key)
+        for item in items:
+            print(item)
+    else:
+        print(json.dumps({"ids": items}))
+
+
 @click.command(name="list")
 @click.option(
     "-f",
@@ -294,6 +319,51 @@ def list_workflows(ctx, api, filters):
 
 
 @click.command()
+@click.option(
+    "-c",
+    "--num-cpus",
+    type=int,
+    default=36,
+    help="Number of CPUs per node",
+    show_default=True,
+)
+@click.option(
+    "-s",
+    "--scheduler-config-id",
+    type=str,
+    help="Limit output to jobs assigned this scheduler config ID. Refer to list-scheduler-configs.",
+)
+@click.pass_obj
+@click.pass_context
+def recommend_nodes(ctx, api, num_cpus, scheduler_config_id):
+    """Recommend compute nodes to schedule."""
+    setup_cli_logging(ctx, __name__)
+    check_database_url(api)
+    output_format = get_output_format_from_context(ctx)
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    if scheduler_config_id is None:
+        reqs = api.get_workflows_ready_job_requirements_key(workflow_key)
+    else:
+        reqs = api.get_workflows_ready_job_requirements_key(
+            workflow_key, scheduler_config_id=scheduler_config_id
+        )
+    if reqs.num_jobs == 0:
+        logger.error("No jobs are in the ready state. You many need to run 'torc workflows start'")
+        sys.exit(0)
+
+    num_nodes_by_cpus = math.ceil(reqs.num_cpus / num_cpus)
+    if output_format == "text":
+        print(f"Requirements for jobs in the ready state: \n{reqs}")
+        print(f"Based on CPUs, number of required nodes = {num_nodes_by_cpus}")
+    else:
+        print(
+            json.dumps(
+                {"ready_job_requirements": reqs.to_dict(), "num_nodes_by_cpus": num_nodes_by_cpus}
+            )
+        )
+
+
+@click.command()
 @click.pass_obj
 @click.pass_context
 def reset_status(ctx, api):
@@ -301,7 +371,8 @@ def reset_status(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    api.post_workflows_reset_status(workflow_key)
+    api.post_workflows_reset_status_key(workflow_key)
+    logger.info("Reset workflow status")
 
 
 @click.command()
@@ -405,7 +476,9 @@ workflows.add_command(create_from_json_file)
 workflows.add_command(modify)
 workflows.add_command(delete)
 workflows.add_command(delete_all)
+workflows.add_command(list_scheduler_configs)
 workflows.add_command(list_workflows)
+workflows.add_command(recommend_nodes)
 workflows.add_command(reset_status)
 workflows.add_command(restart)
 workflows.add_command(start)

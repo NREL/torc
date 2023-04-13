@@ -30,9 +30,11 @@ def results():  # pylint: disable=unused-argument
     type=str,
     help="Filter the values according to each key=value pair.",
 )
+@click.option("-l", "--limit", type=int, help="Limit the output to this number of jobs.")
+@click.option("-s", "--skip", default=0, type=int, help="Skip this number of jobs.")
 @click.pass_obj
 @click.pass_context
-def list_results(ctx, api, filters):
+def list_results(ctx, api, filters, limit, skip):
     """List all results in a workflow.
 
     \b
@@ -49,12 +51,22 @@ def list_results(ctx, api, filters):
     workflow_key = get_workflow_key_from_context(ctx, api)
     exclude = ("id", "rev")
     filters = parse_filters(filters)
+    filters["skip"] = skip
+    if limit is not None:
+        filters["limit"] = limit
     table_title = f"Results in workflow {workflow_key}"
     items = (
         x.to_dict()
         for x in iter_documents(api.get_workflows_workflow_results, workflow_key, **filters)
     )
-    print_items(ctx, items, table_title=table_title, json_key="results", exclude_columns=exclude)
+    print_items(
+        ctx,
+        items,
+        table_title=table_title,
+        json_key="results",
+        exclude_columns=exclude,
+        start_index=skip,
+    )
 
 
 results.add_command(list_results)

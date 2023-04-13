@@ -8,7 +8,10 @@ from swagger_client.configuration import Configuration
 from torc.utils.timing import timer_stats_collector, Timer
 
 
-def iter_documents(func, *args, batch_size=1000, **kwargs):
+DEFAULT_BATCH_SIZE = 1000
+
+
+def iter_documents(func, *args, skip=0, limit=DEFAULT_BATCH_SIZE, **kwargs):
     """Return a generator of documents where the API service employs batching.
 
     Parameters
@@ -22,10 +25,9 @@ def iter_documents(func, *args, batch_size=1000, **kwargs):
     ------
     Swagger model or dict, depending on what the API function returns
     """
-    skip = 0
     has_more = True
     while has_more:
-        result = func(*args, skip=skip, limit=batch_size, **kwargs)
+        result = func(*args, skip=skip, limit=limit, **kwargs)
         yield from result.items
         skip += result.count
         has_more = result.has_more

@@ -49,7 +49,7 @@ def slurm():
     "--name",
     required=True,
     type=str,
-    help="Name to use as a primary key in the database",
+    help="Name of config",
 )
 @click.option(
     "-a",
@@ -92,7 +92,9 @@ def slurm():
     type=str,
     help="Request nodes that have at least this amount of storage scratch space.",
 )
-@click.option("-w", "--walltime", default="04:00:00", show_default=True, help="Per-node walltime.")
+@click.option(
+    "-w", "--walltime", default="04:00:00", show_default=True, help="Slurm job walltime."
+)
 @click.pass_obj
 @click.pass_context
 def add_config(ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, walltime):
@@ -121,6 +123,90 @@ def add_config(ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, w
 
 
 @click.command()
+@click.argument("slurm_config_key")
+@click.option(
+    "-N",
+    "--name",
+    type=str,
+    help="Name of config",
+)
+@click.option(
+    "-a",
+    "--account",
+    type=str,
+    help="HPC account",
+)
+@click.option(
+    "-g",
+    "--gres",
+    type=str,
+    help="Request nodes that have at least this number of GPUs. Ex: 'gpu:2'",
+)
+@click.option(
+    "-m",
+    "--mem",
+    type=str,
+    help="Request nodes that have at least this amount of memory. Ex: '180G'",
+)
+@click.option(
+    "-n",
+    "--nodes",
+    type=int,
+    help="Number of nodes to use for each job",
+)
+@click.option("-p", "--partition", help="HPC partition. Default is determinted by the scheduler")
+@click.option(
+    "-q",
+    "--qos",
+    show_default=True,
+    help="Controls priority of the jobs.",
+)
+@click.option(
+    "-t",
+    "--tmp",
+    type=str,
+    help="Request nodes that have at least this amount of storage scratch space.",
+)
+@click.option("-w", "--walltime", show_default=True, help="Slurm job walltime.")
+@click.pass_obj
+@click.pass_context
+def modify_config(ctx, api, slurm_config_key, **kwargs):
+    """Modify a Slurm config in the database."""
+    setup_cli_logging(ctx, __name__)
+    check_database_url(api)
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    output_format = get_output_format_from_context(ctx)
+    scheduler = api.get_workflows_workflow_slurm_schedulers_key(workflow_key, slurm_config_key)
+    changed = False
+    for param in (
+        "name",
+        "account",
+        "gres",
+        "mem",
+        "nodes",
+        "partition",
+        "qos",
+        "tmp",
+        "walltime",
+    ):
+        val = kwargs[param]
+        if val is not None:
+            setattr(scheduler, param, val)
+            changed = True
+
+    if changed:
+        scheduler = api.put_workflows_workflow_slurm_schedulers_key(
+            scheduler, workflow_key, slurm_config_key
+        )
+        if output_format == "text":
+            logger.info("Modified Slurm configuration %s to database", slurm_config_key)
+        else:
+            print(json.dumps({"key": slurm_config_key}))
+    else:
+        logger.info("No changes requested")
+
+
+@click.command()
 @click.pass_obj
 @click.pass_context
 def list_configs(ctx, api):
@@ -133,7 +219,7 @@ def list_configs(ctx, api):
         x.to_dict()
         for x in iter_documents(api.get_workflows_workflow_slurm_schedulers, workflow_key)
     )
-    exclude = ("id", "rev")
+    exclude = ("rev",)
     print_items(ctx, items, table_title=table_title, json_key="configs", exclude_columns=exclude)
 
 
@@ -335,6 +421,7 @@ def run_jobs(ctx, api, output, poll_interval):
 
 
 slurm.add_command(add_config)
+slurm.add_command(modify_config)
 slurm.add_command(list_configs)
 slurm.add_command(run_jobs)
 slurm.add_command(schedule_nodes)

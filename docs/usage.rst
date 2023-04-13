@@ -254,6 +254,22 @@ scripts need to correct.
 
 .. code-block:: console
 
+   $ torc workflows recommend-nodes
+
+.. code-block:: console
+
+   Requirements for jobs in the ready state:
+   {'max_memory_gb': 16.0,
+    'max_num_nodes': 1,
+    'max_runtime': 'P0DT12H',
+    'memory_gb': 25.0,
+    'num_cpus': 13,
+    'num_gpus': 0,
+    'num_jobs': 3}
+   Based on CPUs, number of required nodes = 1
+
+.. code-block:: console
+
    $ torc hpc slurm schedule-nodes -n1
 
 Monitor progress with torc or squeue.
