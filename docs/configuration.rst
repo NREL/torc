@@ -7,6 +7,8 @@ Configuration
 Torc provides these mechanisms to configure a workflow of jobs. Refer to :ref:`jobs` for
 complete information about how to define jobs.
 
+.. _workflow_specification:
+
 Workflow Specification
 ======================
 Workflow specification in a JSON file. The JSON document fully defines a workflow and

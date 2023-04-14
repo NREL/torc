@@ -2,6 +2,13 @@
 Architecture
 ############
 
+.. toctree::
+   :maxdepth: 3
+
+   hpc_workflow
+
+Overview
+========
 - Store information about jobs and dependencies in the ArangoDB graph database.
 - A server implements an HTTP API endpoint that manages the database.
 
