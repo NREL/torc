@@ -1,4 +1,4 @@
-# Prototype workflow management software
+# Torc workflow management software
 
 This software package orchestrates execution of a workflow of jobs on distributed computing resources.
 
