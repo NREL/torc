@@ -49,6 +49,14 @@ def cancel(ctx, api, workflow_keys):
 
 @click.command()
 @click.option(
+    "-U",
+    "--update-rc-with-key",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Update torc runtime config file with the created workflow key.",
+)
+@click.option(
     "-d",
     "--description",
     type=str,
@@ -76,7 +84,7 @@ def cancel(ctx, api, workflow_keys):
 )
 @click.pass_obj
 @click.pass_context
-def create(ctx, api, description, key, name, user):
+def create(ctx, api, update_rc_with_key, description, key, name, user):
     """Create a new workflow."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -92,10 +100,20 @@ def create(ctx, api, description, key, name, user):
         logger.info("Created a workflow with key=%s", workflow.key)
     else:
         print(json.dumps({"key": workflow.key}))
+    if update_rc_with_key:
+        _update_torc_rc(api, workflow)
 
 
 @click.command()
 @click.argument("filename", type=click.Path(exists=True))
+@click.option(
+    "-U",
+    "--update-rc-with-key",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Update torc runtime config file with the created workflow key.",
+)
 @click.option(
     "-d",
     "--description",
@@ -124,7 +142,9 @@ def create(ctx, api, description, key, name, user):
 )
 @click.pass_obj
 @click.pass_context
-def create_from_commands_file(ctx, api, filename, description, key, name, user):
+def create_from_commands_file(
+    ctx, api, update_rc_with_key, filename, description, key, name, user
+):
     """Create a workflow from a text file containing job CLI commands."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -151,6 +171,8 @@ def create_from_commands_file(ctx, api, filename, description, key, name, user):
         api.post_workflows_workflow_jobs(
             WorkflowJobsModel(name=name, command=command), workflow.key
         )
+    if update_rc_with_key:
+        _update_torc_rc(api, workflow)
 
 
 @click.command()
@@ -185,20 +207,13 @@ def create_from_json_file(ctx, api, filename, update_rc_with_key, user):
     output_format = get_output_format_from_context(ctx)
     spec = WorkflowSpecificationsModel(**data)
     workflow = api.post_workflow_specifications(spec)
-    if update_rc_with_key:
-        config = TorcRuntimeConfig.load()
-        config.workflow_key = workflow.key
-        path = config.path()
-        logger.info("Updating %s with workflow_key=%s", path, config.workflow_key)
-        if config.database_url != api.api_client.configuration.host:
-            config.database_url = api.api_client.configuration.host
-            logger.info("Updating %s with database_url=%s", path, config.database_url)
-        config.dump()
 
     if output_format == "text":
         logger.info("Created a workflow from %s with key=%s", filename, workflow.key)
     else:
         print(json.dumps({"filename": filename, "key": workflow.key}))
+    if update_rc_with_key:
+        _update_torc_rc(api, workflow)
 
 
 @click.command()
@@ -467,6 +482,17 @@ def template(ctx, api):
     data = api.get_workflow_specifications_template().to_dict()
     data.pop("key", None)
     print(json.dumps(data, indent=2))
+
+
+def _update_torc_rc(api, workflow):
+    config = TorcRuntimeConfig.load()
+    config.workflow_key = workflow.key
+    path = config.path()
+    logger.info("Updating %s with workflow_key=%s", path, config.workflow_key)
+    if config.database_url != api.api_client.configuration.host:
+        config.database_url = api.api_client.configuration.host
+        logger.info("Updating %s with database_url=%s", path, config.database_url)
+    config.dump()
 
 
 workflows.add_command(cancel)
