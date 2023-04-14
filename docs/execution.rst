@@ -17,6 +17,8 @@ key to the local torc rc file. You will need to change this if you change workfl
 
    2023-03-28 16:36:35,149 - INFO [torc.cli.workflows workflows.py:156] : Created a workflow from examples/independent_workflow.json5 with key=92238688
 
+This command will identify relationships between workflow objects and initialize the job status.
+
 .. code-block:: console
 
    $ torc workflows start
@@ -24,6 +26,9 @@ key to the local torc rc file. You will need to change this if you change workfl
 .. code-block:: console
 
    2023-03-28 16:37:58,708 - INFO [torc.workflow_manager workflow_manager.py:99] : Started workflow
+
+This command asks the database to give a recommendation on how many compute nodes should be
+scheduled given that each node has 36 CPUs.
 
 .. code-block:: console
 
@@ -40,6 +45,8 @@ key to the local torc rc file. You will need to change this if you change workfl
     'num_gpus': 0,
     'num_jobs': 3}
    Based on CPUs, number of required nodes = 1
+
+This command schedules one compute node.
 
 .. code-block:: console
 
@@ -81,3 +88,10 @@ compute nodes to kill their jobs and exit.
 .. code-block:: console
 
    $ torc workflow cancel <workflow_key>
+
+Parallelization within a compute node
+=====================================
+Torc attempts to maximize parallelization of jobs on a single node based on the job resource
+requirement definitions. Be aware of the fact that the default number CPUs for a job is one, and so
+it is critical that you define these values conservatively. Refer to
+:ref:`job_resource_requirements` for more information.

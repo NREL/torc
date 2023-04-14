@@ -8,10 +8,7 @@ import json5
 from swagger_client.models.workflow_jobs_model import WorkflowJobsModel
 
 from torc.api import iter_documents
-from torc.resource_monitor.reports import (
-    iter_job_process_stats,
-    list_job_process_stats,
-)
+from torc.resource_monitor.reports import iter_job_process_stats
 from .common import (
     check_database_url,
     get_output_format_from_context,
@@ -226,16 +223,44 @@ def list_process_stats(ctx, api, limit, skip):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    output_format = get_output_format_from_context(ctx)
     kwargs = {"skip": skip}
     if limit is not None:
         kwargs["limit"] = limit
-    if output_format == "text":
-        items = iter_job_process_stats(api, workflow_key, **kwargs)
-        table_title = f"Job Process Resource Utilization Statistics for workflow {workflow_key}"
-        print_items(ctx, items, table_title=table_title, json_key="stats", start_index=skip)
-    else:
-        print(json.dumps({"stats": list_job_process_stats(api, workflow_key, **kwargs)}))
+    items = iter_job_process_stats(api, workflow_key, **kwargs)
+    table_title = f"Job Process Resource Utilization Statistics for workflow {workflow_key}"
+    print_items(ctx, items, table_title=table_title, json_key="stats", start_index=skip)
+
+
+@click.command()
+@click.option("-l", "--limit", type=int, help="Limit the output to this number of jobs.")
+@click.option("-s", "--skip", default=0, type=int, help="Skip this number of jobs.")
+@click.pass_obj
+@click.pass_context
+def list_resource_requirements(ctx, api, limit, skip):
+    """List per-job resource requirements."""
+    setup_cli_logging(ctx, __name__)
+    check_database_url(api)
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    kwargs = {"skip": skip}
+    if limit is not None:
+        kwargs["limit"] = limit
+
+    items = []
+    # TODO: make one API command for this
+    for job in iter_documents(api.get_workflows_workflow_jobs, workflow_key, **kwargs):
+        rr = api.get_workflows_workflow_jobs_resource_requirements_key(workflow_key, job.key)
+        item = {"job_key": job.key, "job_name": job.name}
+        item.update(rr.to_dict())
+        for field in ("id", "rev"):
+            item.pop(field)
+        items.append(item)
+    table_title = f"Job Resource Requirements for workflow {workflow_key}"
+    print_items(
+        ctx, items, table_title=table_title, json_key="resource_requirements", start_index=skip
+    )
+
+
+# TODO: add a command to assign resource requirements
 
 
 jobs.add_command(add)
@@ -246,3 +271,4 @@ jobs.add_command(delete)
 jobs.add_command(delete_all)
 jobs.add_command(list_jobs)
 jobs.add_command(list_process_stats)
+jobs.add_command(list_resource_requirements)

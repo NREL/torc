@@ -26,6 +26,34 @@ Torc Parameters
   workflow is restarted.
 - **run_id**: Integer representing one job execution. Starts at one and increases every time the
 
+.. _job_resource_requirements:
+
+Resource Requirements
+=====================
+You can store definitions of job resource requirements in the database and then associate them with
+jobs. This is critical because it informs torc about what jobs can be run in parallel on a single
+compute node.
+
+The recommended way of defining these relationships is through the workflow specification (JSON5)
+file. One set of resource requirements looks like this:
+
+.. code-block:: JavaScript
+
+    {
+      name: "large",
+      num_cpus: 36,
+      num_gpus: 0,
+      num_nodes: 1,
+      memory: "80g",
+      runtime: "P0DT12H"
+    }
+
+This says that any job assigned these requirements will consume 36 CPUs, 80 GB of memory, and run
+for 12 hours.
+
+You assign one or more jobs to these requirements in the ``resource_requirements`` field of the job
+specification: ``resource_requirements: "large"``.
+
 .. _job_input_output_data:
 
 Job Input/Output Data

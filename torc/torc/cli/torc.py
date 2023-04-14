@@ -14,6 +14,7 @@ from torc.cli.files import files
 from torc.cli.hpc import hpc
 from torc.cli.jobs import jobs
 from torc.cli.local import local
+from torc.cli.resource_requirements import resource_requirements
 from torc.cli.results import results
 from torc.cli.user_data import user_data
 from torc.cli.workflows import workflows
@@ -119,6 +120,7 @@ cli.add_command(files)
 cli.add_command(hpc)
 cli.add_command(jobs)
 cli.add_command(local)
+cli.add_command(resource_requirements)
 cli.add_command(results)
 cli.add_command(user_data)
 cli.add_command(workflows)

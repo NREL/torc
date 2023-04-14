@@ -46,6 +46,16 @@ def test_workflow_commands(create_workflow_cli):
     result = runner.invoke(cli, ["-k", key, "-u", url, "workflows", "reset-status"])
 
 
+def test_resource_requirement_commands(create_workflow_cli):
+    """Tests resource requirement CLI commands."""
+    key, url, _ = create_workflow_cli
+    output = _run_and_convert_output_from_json(
+        ["-F", "json", "-k", key, "-u", url, "resource-requirements", "list"]
+    )
+    assert output["resource_requirements"]
+    # TODO: test modify
+
+
 def test_slurm_config_commands(create_workflow_cli):
     """Tests slurm config CLI commands."""
     key, url, _ = create_workflow_cli
