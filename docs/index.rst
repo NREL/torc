@@ -29,6 +29,7 @@ Refer to :ref:`overview` for an illustration of its capabilities.
    getting_started
    usage
    architecture
+   reference
 
 
 Indices and tables

@@ -7,8 +7,17 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 -- Project information -----------------------------------------------------
 https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 """
+# pylint: skip-file
+# flake8: noqa
+import sys
+
+sys.path.append("../db_service/python_client")  # For swagger_client
 
 import sphinx_rtd_theme
+
+from swagger_client.api import default_api
+
+import torc
 
 project = "wms"
 copyright = "2023, Daniel Thom"  # pylint: disable=redefined-builtin
@@ -21,9 +30,12 @@ release = "0.1.0"
 extensions = [
     "sphinx.ext.githubpages",
     "sphinx.ext.graphviz",
+    "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx_copybutton",
+    "sphinx_click",
+    "sphinxcontrib.openapi",
 ]
 
 templates_path = ["_templates"]
@@ -43,4 +55,7 @@ html_theme_options = {
 }
 html_static_path = ["_static"]
 
+todo_include_todos = True
+autoclass_content = "both"
+autodoc_member_order = "bysource"
 todo_include_todos = True

@@ -1,4 +1,4 @@
-"""Helper functions to access the API"""
+"""Functions to access the Torc Database API"""
 
 import itertools
 
@@ -9,6 +9,13 @@ from torc.utils.timing import timer_stats_collector, Timer
 
 
 DEFAULT_BATCH_SIZE = 1000
+
+
+def make_api(database_url) -> DefaultApi:
+    """Instantiate a Swagger API object from a database URL."""
+    configuration = Configuration()
+    configuration.host = database_url
+    return DefaultApi(ApiClient(configuration))
 
 
 def iter_documents(func, *args, skip=0, limit=DEFAULT_BATCH_SIZE, **kwargs):
@@ -31,13 +38,6 @@ def iter_documents(func, *args, skip=0, limit=DEFAULT_BATCH_SIZE, **kwargs):
         yield from result.items
         skip += result.count
         has_more = result.has_more
-
-
-def make_api(database_url) -> DefaultApi:
-    """Instantiate a Swagger API object from a database URL."""
-    configuration = Configuration()
-    configuration.host = database_url
-    return DefaultApi(ApiClient(configuration))
 
 
 _DATABASE_KEYS = {"_id", "_key", "_rev", "id", "key", "rev"}
