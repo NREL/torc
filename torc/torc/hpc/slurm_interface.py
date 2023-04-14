@@ -209,7 +209,7 @@ class SlurmInterface(HpcInterface):
             stdout=subprocess.PIPE,
             check=True,
         )
-        nodes = [x for x in proc.stdout.decode("utf-8").split("\n") if x != ""]
+        nodes = [x for x in proc.stdout.decode("utf-8").replace("'", "").split("\n") if x != ""]
         if len(nodes) != num_nodes:
             raise Exception(f"Bug in parsing node names. Found={len(nodes)} Actual={num_nodes}")
         return nodes
