@@ -219,7 +219,7 @@ def completed_workflow(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.post_workflows_workflow_jobs_complete_job_key_status_rev(
+        job = api.post_workflows_workflow_jobs_key_complete_job_status_rev(
             result, db.workflow.key, job_key, status, job._rev  # pylint: disable=protected-access
         )
 
@@ -254,7 +254,7 @@ def incomplete_workflow(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.post_workflows_workflow_jobs_complete_job_key_status_rev(
+        job = api.post_workflows_workflow_jobs_key_complete_job_status_rev(
             result, db.workflow.key, job.id, status, job._rev  # pylint: disable=protected-access
         )
 

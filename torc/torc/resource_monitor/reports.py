@@ -55,7 +55,7 @@ def iter_job_process_stats(api, workflow_key, **kwargs):
     """
     for job in iter_documents(api.get_workflows_workflow_jobs, workflow_key, **kwargs):
         for stat in send_api_command(
-            api.get_workflows_workflow_jobs_process_stats_key, workflow_key, job.key
+            api.get_workflows_workflow_jobs_key_process_stats, workflow_key, job.key
         ):
             stats = remove_db_keys(stat.to_dict())
             yield {

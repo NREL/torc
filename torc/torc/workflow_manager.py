@@ -163,7 +163,7 @@ class WorkflowManager:
             if job.status in ("done", "canceled"):
                 status = "uninitialized"
                 send_api_command(
-                    self._api.put_workflows_workflow_jobs_manage_status_change_key_status_rev,
+                    self._api.put_workflows_workflow_jobs_key_manage_status_change_status_rev,
                     self._key,
                     job.key,
                     status,

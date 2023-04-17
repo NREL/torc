@@ -50,7 +50,7 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
         if job.key in auto_tune_job_keys:
             assert job.status == "ready"
             num_enabled += 1
-            rr = api.get_workflows_workflow_jobs_resource_requirements_key(
+            rr = api.get_workflows_workflow_jobs_key_resource_requirements(
                 db.workflow.key, job.key
             )
             assert rr.name not in groups
@@ -77,7 +77,7 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     assert api.get_workflows_is_complete_key(db.workflow.key)
 
     stats_by_key = {
-        x: api.get_workflows_workflow_jobs_process_stats_key(db.workflow.key, x)[0]
+        x: api.get_workflows_workflow_jobs_key_process_stats(db.workflow.key, x)[0]
         for x in auto_tune_job_keys
     }
     assert (

@@ -4070,12 +4070,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-  /workflows/{workflow}/jobs/resource_requirements/{key}:
+  /workflows/{workflow}/jobs/{key}/resource_requirements:
     get:
       tags: []
       summary: Retrieve the resource requirements for a job.
       description: Retrieve the resource requirements for a job by its key.
-      operationId: get_workflows_workflow_jobs_resource_requirements_key
+      operationId: get_workflows_workflow_jobs_key_resource_requirements
       parameters:
       - name: workflow
         in: path
@@ -4157,12 +4157,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /workflows/{workflow}/jobs/process_stats/{key}:
+  /workflows/{workflow}/jobs/{key}/process_stats:
     get:
       tags: []
       summary: Retrieve the job process stats for a job.
       description: Retrieve the job process stats for a job by its key.
-      operationId: get_workflows_workflow_jobs_process_stats_key
+      operationId: get_workflows_workflow_jobs_key_process_stats
       parameters:
       - name: workflow
         in: path
@@ -4196,12 +4196,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-  /workflows/{workflow}/jobs/complete_job/{key}/{status}/{rev}:
+  /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}:
     post:
       tags: []
       summary: Complete a job and add a result.
       description: "Complete a job, connect it to a result, and manage side effects."
-      operationId: post_workflows_workflow_jobs_complete_job_key_status_rev
+      operationId: post_workflows_workflow_jobs_key_complete_job_status_rev
       parameters:
       - name: workflow
         in: path
@@ -4257,12 +4257,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /workflows/{workflow}/jobs/manage_status_change/{key}/{status}/{rev}:
+  /workflows/{workflow}/jobs/{key}/manage_status_change/{status}/{rev}:
     put:
       tags: []
       summary: Change the status of a job and manage side effects.
       description: Change the status of a job and manage side effects.
-      operationId: put_workflows_workflow_jobs_manage_status_change_key_status_rev
+      operationId: put_workflows_workflow_jobs_key_manage_status_change_status_rev
       parameters:
       - name: workflow
         in: path
@@ -4315,12 +4315,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /workflows/{workflow}/jobs/user_data/{key}:
+  /workflows/{workflow}/jobs/{key}/user_data:
     get:
       tags: []
       summary: Retrieve all user data for a job.
       description: Retrieve all user data for a job.
-      operationId: get_workflows_workflow_jobs_user_data_key
+      operationId: get_workflows_workflow_jobs_key_user_data
       parameters:
       - name: workflow
         in: path
@@ -4356,7 +4356,7 @@ paths:
       tags: []
       summary: Store user data for a job.
       description: Store user data for a job and connect the two vertexes.
-      operationId: post_workflows_workflow_jobs_user_data_key
+      operationId: post_workflows_workflow_jobs_key_user_data
       parameters:
       - name: workflow
         in: path

@@ -25,7 +25,7 @@ def test_run_workflow(diamond_workflow):
     db, scheduler_config_id, output_dir = diamond_workflow
     api = db.api
     timer_stats_collector.enable()
-    user_data_work1 = api.get_workflows_workflow_jobs_user_data_key(
+    user_data_work1 = api.get_workflows_workflow_jobs_key_user_data(
         db.workflow.key, db.get_document_key("jobs", "work1")
     )
     assert len(user_data_work1.items) == 1
@@ -63,10 +63,10 @@ def test_run_workflow(diamond_workflow):
 
     result_data_work1 = {"result": 1}
     result_data_overall = {"overall_result": 2}
-    api.post_workflows_workflow_jobs_user_data_key(
+    api.post_workflows_workflow_jobs_key_user_data(
         result_data_work1, db.workflow.key, db.get_document_key("jobs", "work1")
     )
-    user_data_work1 = api.get_workflows_workflow_jobs_user_data_key(
+    user_data_work1 = api.get_workflows_workflow_jobs_key_user_data(
         db.workflow.key, db.get_document_key("jobs", "work1")
     )
     assert len(user_data_work1.items) == 2

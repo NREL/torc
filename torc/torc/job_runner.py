@@ -213,7 +213,7 @@ class JobRunner:
 
     def _complete_job(self, job, result, status):
         job = send_api_command(
-            self._api.post_workflows_workflow_jobs_complete_job_key_status_rev,
+            self._api.post_workflows_workflow_jobs_key_complete_job_status_rev,
             result,
             self._workflow.key,
             job.id,
@@ -227,7 +227,7 @@ class JobRunner:
 
     def _decrement_resources(self, job):
         job_resources = send_api_command(
-            self._api.get_workflows_workflow_jobs_resource_requirements_key,
+            self._api.get_workflows_workflow_jobs_key_resource_requirements,
             self._workflow.key,
             job.key,
         )
@@ -241,7 +241,7 @@ class JobRunner:
 
     def _increment_resources(self, job):
         job_resources = send_api_command(
-            self._api.get_workflows_workflow_jobs_resource_requirements_key,
+            self._api.get_workflows_workflow_jobs_key_resource_requirements,
             self._workflow.key,
             job.key,
         )
@@ -362,7 +362,7 @@ class JobRunner:
             job.key,
         )
         job.db_job = send_api_command(
-            self._api.put_workflows_workflow_jobs_manage_status_change_key_status_rev,
+            self._api.put_workflows_workflow_jobs_key_manage_status_change_status_rev,
             self._workflow.key,
             job.key,
             "submitted",

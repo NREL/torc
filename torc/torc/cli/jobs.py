@@ -106,7 +106,7 @@ def add_user_data(ctx, api, job_key, data):
     keys = []
     for item in data:
         user_data = json5.loads(item)
-        ud = api.post_workflows_workflow_jobs_user_data_key(user_data, workflow_key, job_key)
+        ud = api.post_workflows_workflow_jobs_key_user_data(user_data, workflow_key, job_key)
         keys.append(ud["_key"])
 
     if output_format == "text":
@@ -125,7 +125,7 @@ def list_user_data(ctx, api, job_key):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    resp = api.get_workflows_workflow_jobs_user_data_key(workflow_key, job_key)
+    resp = api.get_workflows_workflow_jobs_key_user_data(workflow_key, job_key)
     for item in resp.items:
         item.pop("_id")
     print(json.dumps(resp.items, indent=2))
