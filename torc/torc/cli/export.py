@@ -71,7 +71,7 @@ def sqlite(api, workflow_keys, filename, force):
         workflow_configs.append(tuple(config_as_dict.values()))
         workflow_statuses.append(tuple(status_as_dict.values()))
 
-        for name in api.get_workflows_collection_names_key(workflow.key).names:
+        for name in api.get_workflows_key_collection_names(workflow.key).names:
             basename = name.split("__")[0]
             func = _get_db_documents_func(api, basename)
 

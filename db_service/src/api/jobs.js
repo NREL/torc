@@ -63,20 +63,7 @@ router.get('/workflows/:workflow/jobs/find_by_needs_file/:key', function(req, re
   const limit = utils.getItemsLimit(qp.limit);
   try {
     const cursor = query.getJobsThatNeedFile(file, workflow);
-    // TODO: how to do this with Arango cursor?
-    const items = [];
-    let i = 0;
-    for (const item of cursor) {
-      if (i > qp.skip) {
-        i++;
-        continue;
-      }
-      items.push(utils.convertJobForApi(item));
-      if (items.length == limit) {
-        break;
-      }
-    }
-    res.send(utils.makeCursorResult(items, qp.skip, limit, cursor.count()));
+    res.send(utils.makeCursorResultFromIteration(cursor, qp.skip, limit, utils.convertJobForApi));
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Get jobs find_by_needs_file key=${key}`);
   }
@@ -106,6 +93,26 @@ router.get('/workflows/:workflow/jobs/resource_requirements/:key', function(req,
     .response(schemas.resourceRequirements, 'Resource requirements for the job.')
     .summary('Retrieve the resource requirements for a job.')
     .description('Retrieve the resource requirements for a job by its key.');
+
+router.put('/workflows/:workflow/jobs/:key/resource_requirements/:rr_key', function(req, res) {
+  const workflowKey = req.pathParams.workflow;
+  const key = req.pathParams.key;
+  const rrKey = req.pathParams.rr_key;
+  const workflow = documents.getWorkflow(workflowKey, res);
+  const job = documents.getWorkflowDocument(workflow, 'jobs', key, res);
+  const rr = documents.getWorkflowDocument(workflow, 'resource_requirements', rrKey, res);
+  try {
+    const edge = query.setOrReplaceJobResourceRequirements(job, rr, workflow);
+    res.send(edge);
+  } catch (e) {
+    utils.handleArangoApiErrors(e, res, `Get jobs resource_requirements key=${key}`);
+  }
+})
+    .pathParam('workflow', joi.string().required(), 'Workflow key')
+    .pathParam('key', joi.string().required(), 'Job key')
+    .response(schemas.edge, 'Requires edge that connects the job and resource requirements.')
+    .summary('Set the resource requirements for a job.')
+    .description('Set the resource requirements for a job, replacing any current value.');
 
 router.get('/workflows/:workflow/jobs/process_stats/:key', function(req, res) {
   const workflowKey = req.pathParams.workflow;

@@ -113,7 +113,7 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
 
     mgr.restart()
 
-    for job in api.get_workflows_workflow_jobs(db.workflow.key).items:
+    for job in iter_documents(api.get_workflows_workflow_jobs, db.workflow.key):
         if job.key in auto_tune_job_keys:
             assert job.status == "done"
         else:

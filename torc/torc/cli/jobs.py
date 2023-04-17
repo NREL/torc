@@ -232,35 +232,29 @@ def list_process_stats(ctx, api, limit, skip):
 
 
 @click.command()
-@click.option("-l", "--limit", type=int, help="Limit the output to this number of jobs.")
-@click.option("-s", "--skip", default=0, type=int, help="Skip this number of jobs.")
+@click.argument("resource_requirements_key")
+@click.argument("job_keys", nargs=-1)
 @click.pass_obj
 @click.pass_context
-def list_resource_requirements(ctx, api, limit, skip):
-    """List per-job resource requirements."""
+def assign_resource_requirements(ctx, api, resource_requirements_key, job_keys):
+    """Assign resource requirements to one or more jobs."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    kwargs = {"skip": skip}
-    if limit is not None:
-        kwargs["limit"] = limit
+    output_format = get_output_format_from_context(ctx)
+    edges = []
+    for job_key in job_keys:
+        edge = api.put_workflows_workflow_jobs_key_resource_requirements_rr_key(
+            workflow_key, job_key, resource_requirements_key
+        )
+        edges.append(edge.to_dict())
 
-    items = []
-    # TODO: make one API command for this
-    for job in iter_documents(api.get_workflows_workflow_jobs, workflow_key, **kwargs):
-        rr = api.get_workflows_workflow_jobs_resource_requirements_key(workflow_key, job.key)
-        item = {"job_key": job.key, "job_name": job.name}
-        item.update(rr.to_dict())
-        for field in ("id", "rev"):
-            item.pop(field)
-        items.append(item)
-    table_title = f"Job Resource Requirements for workflow {workflow_key}"
-    print_items(
-        ctx, items, table_title=table_title, json_key="resource_requirements", start_index=skip
-    )
-
-
-# TODO: add a command to assign resource requirements
+    if output_format == "text":
+        logger.info("Added resource requirements with key=%s", resource_requirements_key)
+        for edge in edges:
+            logger.info("Stored job requirements via edge %s", edge)
+    else:
+        print(json.dumps({"key": resource_requirements_key, "edges": edges}))
 
 
 jobs.add_command(add)
@@ -271,4 +265,4 @@ jobs.add_command(delete)
 jobs.add_command(delete_all)
 jobs.add_command(list_jobs)
 jobs.add_command(list_process_stats)
-jobs.add_command(list_resource_requirements)
+jobs.add_command(assign_resource_requirements)

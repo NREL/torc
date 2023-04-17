@@ -6,6 +6,7 @@ import socket
 from click.testing import CliRunner
 
 from torc.cli.torc import cli
+from torc.cli.collections import JOIN_COLLECTIONS
 
 
 def test_workflow_commands(create_workflow_cli):
@@ -42,6 +43,10 @@ def test_workflow_commands(create_workflow_cli):
     events = _run_and_convert_output_from_json(
         ["-k", key, "-u", url, "-F", "json", "events", "list"]
     )
+
+    for name in JOIN_COLLECTIONS:
+        _get_text_and_json_outputs(["-k", key, "-u", url, "collections", "join", name])
+
     assert isinstance(events, list) and events
     result = runner.invoke(cli, ["-k", key, "-u", url, "workflows", "reset-status"])
 
@@ -53,7 +58,113 @@ def test_resource_requirement_commands(create_workflow_cli):
         ["-F", "json", "-k", key, "-u", url, "resource-requirements", "list"]
     )
     assert output["resource_requirements"]
-    # TODO: test modify
+
+    output_assignments = _run_and_convert_output_from_json(
+        [
+            "-F",
+            "json",
+            "-k",
+            key,
+            "-u",
+            url,
+            "resource-requirements",
+            "add",
+            "-n",
+            "medium",
+            "-c",
+            "4",
+            "-m",
+            "5g",
+            "-r",
+            "P0DT1H",
+            "-a",
+        ]
+    )
+    rr_key = output_assignments["key"]
+
+    def check_expected_rr_key(rr_key):
+        output_list = _run_and_convert_output_from_json(
+            [
+                "-F",
+                "json",
+                "-k",
+                key,
+                "-u",
+                url,
+                "collections",
+                "join",
+                "job-requirements",
+            ]
+        )
+        assert output_list["items"]
+        for item in output_list["items"]:
+            assert item["to"]["_key"] == rr_key
+        return output_list["items"]
+
+    check_expected_rr_key(rr_key)
+
+    new_rr = _run_and_convert_output_from_json(
+        [
+            "-F",
+            "json",
+            "-k",
+            key,
+            "-u",
+            url,
+            "resource-requirements",
+            "add",
+            "-n",
+            "large",
+            "-c",
+            "16",
+            "-m",
+            "60g",
+            "-r",
+            "P0DT12H",
+        ]
+    )
+    # The jobs shouldn't have changed requirements.
+    joined_items = check_expected_rr_key(rr_key)
+    job_keys = [x["from"]["_key"] for x in joined_items]
+    output_assignments = _run_and_convert_output_from_json(
+        [
+            "-F",
+            "json",
+            "-k",
+            key,
+            "-u",
+            url,
+            "jobs",
+            "assign-resource-requirements",
+            new_rr["key"],
+        ]
+        + job_keys
+    )
+    check_expected_rr_key(new_rr["key"])
+
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        cli,
+        [
+            "-F",
+            "json",
+            "-k",
+            key,
+            "-u",
+            url,
+            "resource-requirements",
+            "modify",
+            new_rr["key"],
+            "-c",
+            "36",
+            "-r",
+            "P0DT24H",
+        ],
+    )
+    assert result.exit_code == 0
+    for item in check_expected_rr_key(new_rr["key"]):
+        assert item["to"]["num_cpus"] == 36
+        assert item["to"]["runtime"] == "P0DT24H"
 
 
 def test_slurm_config_commands(create_workflow_cli):
@@ -68,7 +179,18 @@ def test_slurm_config_commands(create_workflow_cli):
     assert output["ids"]
     scheduler_id = output["ids"][0]
     output = _run_and_convert_output_from_json(
-        ["-F", "json", "-k", key, "-u", url, "workflows", "recommend-nodes", "-s", scheduler_id]
+        [
+            "-F",
+            "json",
+            "-k",
+            key,
+            "-u",
+            url,
+            "workflows",
+            "recommend-nodes",
+            "-s",
+            scheduler_id,
+        ]
     )
     assert output["num_nodes_by_cpus"] == 1
 
@@ -84,7 +206,18 @@ def test_slurm_config_commands(create_workflow_cli):
     new_walltime = "02:00:00"
     result = runner.invoke(
         cli,
-        ["-k", key, "-u", url, "hpc", "slurm", "modify-config", config_key, "-w", new_walltime],
+        [
+            "-k",
+            key,
+            "-u",
+            url,
+            "hpc",
+            "slurm",
+            "modify-config",
+            config_key,
+            "-w",
+            new_walltime,
+        ],
     )
     assert result.exit_code == 0
 
@@ -243,6 +376,15 @@ def test_job_commands(create_workflow_cli):
         ],
         0,
     )
+
+
+def test_collections_list_command(create_workflow_cli):
+    """Tests collections list CLI commands."""
+    key, url, _ = create_workflow_cli
+    names = _run_and_convert_output_from_json(
+        ["-k", key, "-u", url, "-F", "json", "collections", "list"]
+    )["names"]
+    assert set(("files", "events", "jobs", "needs")).issubset(set(names))
 
 
 def _run_and_check_output(cmd, expected_strings):

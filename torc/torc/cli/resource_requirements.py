@@ -66,10 +66,18 @@ def resource_requirements():
     show_default=True,
     help="Number of compute nodes required by a job",
 )
+@click.option(
+    "-a",
+    "--apply-to-all-jobs",
+    default=False,
+    is_flag=True,
+    show_default=True,
+    help="Apply these requirements to all jobs in the workflow.",
+)
 @click.pass_obj
 @click.pass_context
-def add(ctx, api, name, num_cpus, memory, runtime, num_nodes):
-    """Add a job to the workflow."""
+def add(ctx, api, name, num_cpus, memory, runtime, num_nodes, apply_to_all_jobs):
+    """Add a resource requirements definition to the workflow."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
@@ -82,10 +90,20 @@ def add(ctx, api, name, num_cpus, memory, runtime, num_nodes):
         num_nodes=num_nodes,
     )
     rr = api.post_workflows_workflow_resource_requirements(rr, workflow_key)
+    edges = []
+    if apply_to_all_jobs:
+        for job in iter_documents(api.get_workflows_workflow_jobs, workflow_key):
+            edge = api.put_workflows_workflow_jobs_key_resource_requirements_rr_key(
+                workflow_key, job.key, rr.key
+            )
+            edges.append(edge.to_dict())
+
     if output_format == "text":
         logger.info("Added resource requirements with key=%s", rr.key)
+        for edge in edges:
+            logger.info("Stored job requirements via edge %s", edge)
     else:
-        print(json.dumps({"key": rr.key}))
+        print(json.dumps({"key": rr.key, "edges": edges}))
 
 
 @click.command()
@@ -143,7 +161,10 @@ def modify(ctx, api, resource_requirements_key, **kwargs):
             rr, workflow_key, resource_requirements_key
         )
         if output_format == "text":
-            logger.info("Modified resource requirements %s to database", resource_requirements_key)
+            logger.info(
+                "Modified resource requirements %s to database",
+                resource_requirements_key,
+            )
         else:
             print(json.dumps({"key": resource_requirements_key}))
     else:
@@ -190,10 +211,17 @@ def delete_all(ctx, api):
     help="Filter the values according to each key=value pair.",
 )
 @click.option(
-    "-l", "--limit", type=int, help="Limit the output to this number of resource_requirements."
+    "-l",
+    "--limit",
+    type=int,
+    help="Limit the output to this number of resource_requirements.",
 )
 @click.option(
-    "-s", "--skip", default=0, type=int, help="Skip this number of resource_requirements."
+    "-s",
+    "--skip",
+    default=0,
+    type=int,
+    help="Skip this number of resource_requirements.",
 )
 @click.pass_obj
 @click.pass_context
