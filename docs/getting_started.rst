@@ -8,4 +8,3 @@ Getting Started
 
    installation
    quick_start
-   how_tos

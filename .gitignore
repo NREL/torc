@@ -132,3 +132,4 @@ db_service/README.md
 db_service/.swagger-codegen/
 db_service/.swagger-codegen-ignore
 db_service/node_modules/*
+docs/openapi.yaml

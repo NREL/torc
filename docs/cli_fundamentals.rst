@@ -33,9 +33,6 @@ needed):
 .. code-block:: console
 
    $ torc config create -u http://localhost:8529/_db/workflows/torc-service
-
-.. code-block:: console
-
    Wrote torc config to /Users/dthom/.torc.json5
 
 Environment variable
@@ -84,9 +81,6 @@ There are four ways to set it:
 .. code-block:: console
 
    $ torc jobs list
-
-.. code-block:: console
-
    This command requires a workflow key and one was not provided. Please choose one from below.
 
    +-----------------------------------------------------------+
@@ -118,4 +112,4 @@ be able to pipe the stdout of a command to ``jq`` for pretty-printing or further
 
 .. code-block:: console
 
-   $ torc -k 94954625 jobs list | jq .
+   $ torc -F json -k 94954625 jobs list | jq .

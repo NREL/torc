@@ -68,9 +68,6 @@ List all workflows
 .. code-block:: console
 
    $ curl --silent -X GET http://localhost:8529/_db/test-workflows/torc-service/workflows | jq .
-
-.. code-block:: console
-
    {
      "items": [
        {
@@ -96,9 +93,6 @@ Get one workflow
 .. code-block:: console
 
    $ curl --silent -X GET http://localhost:8529/_db/test-workflows/torc-service/workflows/95587030 | jq .
-
-.. code-block:: console
-
    {
      "_key": "95587030",
      "_id": "workflows/95587030",
@@ -121,9 +115,6 @@ Get one job in one workflow
 .. code-block:: console
 
    $ curl --silent -X GET http://localhost:8529/_db/test-workflows/torc-service/workflows/95587030/jobs/95587160 | jq .
-
-.. code-block:: console
-
    {
      "_key": "95587160",
      "_id": "jobs__95587030/95587160",
@@ -149,9 +140,6 @@ Here are two examples:
 .. code-block:: console
 
    $ curl -u root:openSesame --silent GET http://localhost:8529/_db/test-workflows/_api/document/workflows/95587030 | jq .
-
-.. code-block:: console
-
    {
      "_key": "95587030",
      "_id": "workflows/95587030",
@@ -164,9 +152,6 @@ Here are two examples:
 .. code-block:: console
 
    $ curl -u root:openSesame --silent GET http://localhost:8529/_db/test-workflows/_api/document/jobs__95587030/95587152 | jq .
-
-.. code-block:: console
-
    {
      "_key": "95587152",
      "_id": "jobs__95587030/95587152",

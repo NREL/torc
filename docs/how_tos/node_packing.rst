@@ -33,14 +33,14 @@ that you are defining your workflow in a workflow specification file as describe
 .. code-block:: JavaScript
 
     resource_requirements: [
-        {
-          name: "small",
-          num_cpus: 1,
-          num_gpus: 0,
-          num_nodes: 1,
-          memory: "2g",
-          runtime: "P0DT30M"
-        },
+      {
+        name: "small",
+        num_cpus: 1,
+        num_gpus: 0,
+        num_nodes: 1,
+        memory: "2g",
+        runtime: "P0DT30M"
+      },
     ],
 
 3. Specify a ``resource_requirements`` name for each job.
@@ -52,9 +52,11 @@ that you are defining your workflow in a workflow specification file as describe
 
 .. code-block:: JavaScript
 
-    {
-      name: "work1",
-      command: "python work.py",
-      scheduler: "slurm_schedulers/standard",
-      resource_requirements: "small",
-    }
+    jobs: [
+      {
+        name: "work1",
+        command: "python work.py",
+        scheduler: "slurm_schedulers/standard",
+        resource_requirements: "small",
+      }
+    ]

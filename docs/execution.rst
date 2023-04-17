@@ -12,9 +12,6 @@ key to the local torc rc file. You will need to change this if you change workfl
 .. code-block:: console
 
    $ torc workflows create-from-json-file -U examples/independent_workflow.json5
-
-.. code-block:: console
-
    2023-03-28 16:36:35,149 - INFO [torc.cli.workflows workflows.py:156] : Created a workflow from examples/independent_workflow.json5 with key=92238688
 
 This command will identify relationships between workflow objects and initialize the job status.
@@ -22,9 +19,6 @@ This command will identify relationships between workflow objects and initialize
 .. code-block:: console
 
    $ torc workflows start
-
-.. code-block:: console
-
    2023-03-28 16:37:58,708 - INFO [torc.workflow_manager workflow_manager.py:99] : Started workflow
 
 This command asks the database to give a recommendation on how many compute nodes should be
@@ -33,9 +27,6 @@ scheduled given that each node has 36 CPUs.
 .. code-block:: console
 
    $ torc workflows recommend-nodes -n 36
-
-.. code-block:: console
-
    Requirements for jobs in the ready state:
    {'max_memory_gb': 16.0,
     'max_num_nodes': 1,

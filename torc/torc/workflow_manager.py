@@ -86,6 +86,7 @@ class WorkflowManager:
             send_api_command(
                 self._api.post_workflows_auto_tune_resource_requirements_key, self._key
             )
+            logger.info("Enabled auto-tuning of resource requirements.")
 
         send_api_command(
             self._api.post_workflows_workflow_events,

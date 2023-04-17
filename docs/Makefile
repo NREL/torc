@@ -8,6 +8,11 @@ SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = .
 BUILDDIR      = _build
 
+export SWAGGER_CODEGEN_CLI=${HOME}/projects/rest/swagger-codegen-cli.jar
+export TORC_URL=http://localhost:8529
+export TORC_PASSWORD=openSesame
+export PYTHON_CLIENT=${BUILDDIR}/python_client
+
 # Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
@@ -18,6 +23,13 @@ help:
 # "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+
+${BUILDDIR}/python_client:
+	bash ../db_service/make_api.sh
+	python fix_docstring_errors.py ${BUILDDIR}/python_client/swagger_client/api/default_api.py
+
+html: ${BUILDDIR}/python_client
+	${SPHINXBUILD} -M html ${SOURCEDIR} ${BUILDDIR}
 
 github: html
 	-git branch -D gh-pages

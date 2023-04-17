@@ -10,8 +10,9 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html#project-informatio
 # pylint: skip-file
 # flake8: noqa
 import sys
+from pathlib import Path
 
-sys.path.append("../db_service/python_client")  # For swagger_client
+sys.path.append(str(Path("_build") / "python_client"))  # For swagger_client
 
 import sphinx_rtd_theme
 
@@ -59,3 +60,9 @@ todo_include_todos = True
 autoclass_content = "both"
 autodoc_member_order = "bysource"
 todo_include_todos = True
+copybutton_only_copy_prompt_lines = True
+copybutton_exclude = ".linenos, .gp, .go"
+copybutton_line_continuation_character = "\\"
+copybutton_here_doc_delimiter = "EOT"
+copybutton_prompt_text = "$"
+copybutton_copy_empty_lines = False

@@ -8,14 +8,14 @@ are welcome to use the API through Swagger-generated libaries or API tools like 
 <https://www.postman.com/>`_, and `Insomnia <https://insomnia.rest/>`_. You can also use Arango
 tools to manage data directly in the database.
 
-
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    cli_fundamentals
    configuration
-   execution
    jobs
+   execution
    resource_utilization
-   cloud
+   environments
+   how_tos

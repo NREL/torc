@@ -32,9 +32,6 @@ Here's how to upload the workflow to the database:
 .. code-block:: console
 
    $ torc workflows create-from-json-file examples/diamond_workflow.json
-
-.. code-block:: console
-
    2023-03-28 16:36:35,149 - INFO [torc.cli.workflows workflows.py:156] : Created a workflow from examples/diamond_workflow.json5 with key=92238688
 
 Commands File
@@ -65,17 +62,11 @@ be required if your workflow exceeds the size that can be transferred in one HTT
 .. code-block:: console
 
    $ torc workflows create -n my-workflow -d "My workflow"
-
-.. code-block:: console
-
    2023-03-28 16:17:36,736 - INFO [torc.cli.workflows workflows.py:78] : Created workflow with key=92237770
 
 .. code-block:: console
 
    $ torc -k 92237770 jobs add -n job1 -c "bash my_script.sh -i input1.json -o output1.json"
-
-.. code-block:: console
-
    2023-03-28 18:19:17,330 - INFO [torc.cli.jobs jobs.py:80] : Added job with key=92237922
 
 API calls
