@@ -71,6 +71,10 @@ const ROUTE_DESCRIPTORS = [
         name: '_key',
         type: joi.string(),
       },
+      {
+        name: 'category',
+        type: joi.string(),
+      },
     ],
   },
   {
