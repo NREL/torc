@@ -12,7 +12,9 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html#project-informatio
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path("_build") / "python_client"))  # For swagger_client
+# Use the client built for docs rather than the one for db_service.
+sys.path.remove(str(Path(".").absolute().parent / "db_service" / "python_client"))
+sys.path.append(str(Path("_build") / "python_client"))
 
 import sphinx_rtd_theme
 

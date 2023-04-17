@@ -24,11 +24,11 @@ help:
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-${BUILDDIR}/python_client:
+${PYTHON_CLIENT}:
 	bash ../db_service/make_api.sh
-	python fix_docstring_errors.py ${BUILDDIR}/python_client/swagger_client/api/default_api.py
+	python fix_docstring_errors.py ${PYTHON_CLIENT}/swagger_client/api/default_api.py
 
-html: ${BUILDDIR}/python_client
+html: ${PYTHON_CLIENT}
 	${SPHINXBUILD} -M html ${SOURCEDIR} ${BUILDDIR}
 
 github: html
