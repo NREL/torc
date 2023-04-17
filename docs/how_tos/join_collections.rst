@@ -15,7 +15,7 @@ command.
 
 .. code-block:: console
 
-    torc collections join --help
+    $ torc collections join --help
     Usage: torc collections join [OPTIONS] {compute-node-executed-jobs|compute-
                                  node-utilization|job-blocks|job-needs-file|job-
                                  produces-file|job-requirements|job-results|job-
@@ -61,7 +61,7 @@ The above CLI command actually invokes a much more flexible CLI command:
 
 .. code-block:: console
 
-    torc collections join-by-edge --help
+    $ torc collections join-by-edge --help
     Usage: torc collections join-by-edge [OPTIONS] COLLECTION EDGE
 
       Join a collection with one or more other collections connected by an edge.
