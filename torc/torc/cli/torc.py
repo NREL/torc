@@ -6,6 +6,7 @@ import click
 
 from torc.api import make_api
 from torc.cli.common import get_log_level_from_str
+from torc.cli.collections import collections
 from torc.cli.compute_nodes import compute_nodes
 from torc.cli.config import config
 from torc.cli.events import events
@@ -112,6 +113,7 @@ def callback(api, *args, **kwargs):  # pylint: disable=unused-argument
         api.api_client.close()
 
 
+cli.add_command(collections)
 cli.add_command(compute_nodes)
 cli.add_command(config)
 cli.add_command(events)

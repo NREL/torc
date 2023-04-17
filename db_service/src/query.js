@@ -272,6 +272,38 @@ function getJobResourceRequirements(job, workflow) {
 }
 
 /**
+ * Set the job's resource requirements, removing any current requires edge.
+ * @param {Object} job
+ * @param {Object} resourceRequirements
+ * @param {Object} workflow
+ * @return {Object}
+ */
+function setOrReplaceJobResourceRequirements(job, resourceRequirements, workflow) {
+  const graph = config.getWorkflowGraph(workflow);
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'requires');
+  const requiresCollection = config.getWorkflowCollection(workflow, 'requires');
+  const cursor = query({count: true})`
+    FOR v, e
+      IN 1
+      OUTBOUND ${job._id}
+      GRAPH ${graphName}
+      OPTIONS { edgeCollections: ${edgeName} }
+      RETURN e._id
+  `;
+  const count = cursor.count();
+  if (count == 1) {
+    graph[edgeName].remove(cursor.next());
+  } else if (count > 1) {
+    throw new Error(`Bug: requires edge count for ${job._id} cannot be greater than 1: ${count}`);
+  }
+  const edge = {_from: job._id, _to: resourceRequirements._id};
+  const meta = requiresCollection.save(edge);
+  Object.assign(edge, meta);
+  return edge;
+}
+
+/**
  * Return the job's scheduler, returning null if one isn't defined.
  * @param {Object} job
  * @param {Object} workflow
@@ -482,8 +514,10 @@ function initializeJobStatus(workflow) {
  * @return {string}
  */
 function selectBestSchedulerForJob(job, schedulers) {
-  const allSchedulers = schedulers.slurmSchedulers.concat(schedulers.awsSchedulers,
-      schedulers.localSchedulers);
+  const allSchedulers = schedulers.slurmSchedulers.concat(
+      schedulers.awsSchedulers,
+      schedulers.localSchedulers,
+  );
   if (allSchedulers.length == 1) {
     const scheduler = allSchedulers[0];
     if (schedulers.slurmSchedulers.length == 1) {
@@ -636,6 +670,64 @@ function listJobProcessStats(job, workflow) {
     results.sort((x, y) => x.run_id - y.run_id);
   }
   return results;
+}
+
+/**
+ * Join two collections by an inbound edge.
+ * @param {Object} workflow
+ * @param {string} fromCollectionBase
+ * @param {string} edgeBase
+ * @param {number} skip
+ * @param {number} limit
+ * @return {Object}
+ */
+function joinCollectionsByInboundEdge(workflow, fromCollectionBase, edgeBase, skip, limit) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const fromCollection = config.getWorkflowCollection(workflow, fromCollectionBase)
+      .all()
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+  const edgeName = config.getWorkflowCollectionName(workflow, edgeBase);
+  const cursor = query({count: true})`
+    FOR x in ${fromCollection}
+      FOR v, e, p
+          IN 1
+          INBOUND x._id
+          GRAPH ${graphName}
+          OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
+          RETURN {from: p.vertices[1], to: x}
+  `;
+  return cursor;
+}
+
+/**
+ * Join two collections by an outbound edge.
+ * @param {Object} workflow
+ * @param {string} fromCollectionBase
+ * @param {string} edgeBase
+ * @param {number} skip
+ * @param {number} limit
+ * @return {Object}
+ */
+function joinCollectionsByOutboundEdge(workflow, fromCollectionBase, edgeBase, skip, limit) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const fromCollection = config.getWorkflowCollection(workflow, fromCollectionBase)
+      .all()
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+  const edgeName = config.getWorkflowCollectionName(workflow, edgeBase);
+  const cursor = query({count: true})`
+    FOR x in ${fromCollection}
+      FOR v, e, p
+          IN 1
+          OUTBOUND x._id
+          GRAPH ${graphName}
+          OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
+          RETURN {from: x, to: p.vertices[1]}
+  `;
+  return cursor;
 }
 
 /**
@@ -869,6 +961,7 @@ function processAutoTuneResourceRequirementsResults(workflow) {
     const rrCollection = config.getWorkflowCollection(workflow, 'resource_requirements');
     rrCollection.update(rr, rr);
     const event = {
+      timestamp: (new Date()).toISOString(),
       category: 'resource_requirements',
       type: 'update',
       name: rr.name,
@@ -989,6 +1082,8 @@ module.exports = {
   isJobStatusComplete,
   isWorkflowComplete,
   iterWorkflowDocuments,
+  joinCollectionsByInboundEdge,
+  joinCollectionsByOutboundEdge,
   listJobProcessStats,
   manageJobStatusChange,
   prepareJobsForSubmission,
@@ -996,6 +1091,7 @@ module.exports = {
   resetJobStatus,
   resetWorkflowConfig,
   resetWorkflowStatus,
+  setOrReplaceJobResourceRequirements,
   setupAutoTuneResourceRequirements,
   updateBlockedJobsFromCompletion,
   updateWorkflowConfig,

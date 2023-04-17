@@ -142,6 +142,35 @@ function makeCursorResult(items, skip, limit, totalCount) {
 }
 
 /**
+ * Make a cursor result by iterating over an ArangoQueryCursor. This is very inefficient
+ * if it is called multiple times for multiple batches. Should only be used when there
+ * isn't a way of using skip and limit in the Arango query.
+ * @param {ArangoQueryCursor} cursor
+ * @param {number} skip
+ * @param {number} limit
+ * @param {function} func
+ * @return {Array}
+ */
+function makeCursorResultFromIteration(cursor, skip, limit, func) {
+  const items = [];
+  let i = 0;
+  for (let item of cursor) {
+    if (i > skip) {
+      i++;
+      continue;
+    }
+    if (func != null) {
+      item = func(item);
+    }
+    items.push(item);
+    if (items.length == limit) {
+      break;
+    }
+  }
+  return makeCursorResult(items, skip, limit, cursor.count());
+}
+
+/**
  * Convert the job for delivery to an API client.
  * @param {Object} job
  * @return {Object}
@@ -178,5 +207,6 @@ module.exports = {
   getMemoryInBytes,
   handleArangoApiErrors,
   makeCursorResult,
+  makeCursorResultFromIteration,
   product,
 };

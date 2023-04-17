@@ -143,7 +143,7 @@ def print_items(
         rows = []
         for item in items:
             for column in exclude_columns or []:
-                item.pop(column)
+                item.pop(column, None)
             rows.append(item)
         print(json.dumps({json_key: rows}, indent=indent))
 
@@ -233,7 +233,7 @@ def make_text_table(iterable, title, exclude_columns=None, start_index=0):
     table = PrettyTable(title=title)
     for i, item in enumerate(iterable, start=start_index):
         for column in exclude_columns or []:
-            item.pop(column)
+            item.pop(column, None)
         if i == start_index:
             field_names = list(item.keys())
             field_names.insert(0, "index")

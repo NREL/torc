@@ -311,7 +311,7 @@ router.put('/workflows/status/:key', function(req, res) {
     .summary('Reports the workflow status.')
     .description('Reports the workflow status.');
 
-router.get('/workflows/collection_names/:key', function(req, res) {
+router.get('/workflows/:key/collection_names', function(req, res) {
   const workflow = documents.getWorkflow(req.pathParams.key, res);
   res.send({names: documents.listWorkflowCollectionNames(workflow)});
 })
@@ -319,3 +319,66 @@ router.get('/workflows/collection_names/:key', function(req, res) {
     .response(joi.object().required().keys({names: joi.array().items(joi.string())}))
     .summary('Retrieve all collection names for one workflow.')
     .description('Retrieve all collection names for one workflow.');
+
+router.get('/workflows/:key/join_by_inbound_edge/:collection/:edge', function(req, res) {
+  const key = req.pathParams.key;
+  const collection = req.pathParams.collection;
+  const edge = req.pathParams.edge;
+  const qp = req.queryParams;
+  const limit = utils.getItemsLimit(qp.limit);
+  const workflow = documents.getWorkflow(key);
+  try {
+    const cursor = query.joinCollectionsByInboundEdge(workflow, collection, edge, qp.skip, limit);
+    res.send(utils.makeCursorResult(convertItems(cursor), qp.skip, limit, cursor.count()));
+  } catch (e) {
+    utils.handleArangoApiErrors(e, res, 'Join by inbound edge');
+  }
+})
+    .pathParam('collection', joi.string().required(), 'From collection')
+    .pathParam('edge', joi.string().required(), 'Edge name')
+    .queryParam('skip', joi.number().default(0))
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .response(schemas.batchObjects)
+    .summary('Retrieve a joined table of two collections.')
+    .description('Retrieve a table of the collections joined by an inbound edge.');
+
+router.get('/workflows/:key/join_by_outbound_edge/:collection/:edge', function(req, res) {
+  const key = req.pathParams.key;
+  const collection = req.pathParams.collection;
+  const edge = req.pathParams.edge;
+  const qp = req.queryParams;
+  const limit = utils.getItemsLimit(qp.limit);
+  const workflow = documents.getWorkflow(key);
+  try {
+    const cursor = query.joinCollectionsByOutboundEdge(workflow, collection, edge, qp.skip, limit);
+    res.send(utils.makeCursorResult(convertItems(cursor), qp.skip, limit, cursor.count()));
+  } catch (e) {
+    utils.handleArangoApiErrors(e, res, 'Join by outbound edge');
+  }
+})
+    .pathParam('collection', joi.string().required(), 'From collection')
+    .pathParam('edge', joi.string().required(), 'Edge name')
+    .queryParam('skip', joi.number().default(0))
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .response(schemas.batchObjects)
+    .summary('Retrieve a joined table of two collections.')
+    .description('Retrieve a table of the collections joined by an outbound edge.');
+
+/**
+ * Convert items in a cursor per the normal API rules.
+ * @param {Object} cursor
+ * @return {Array}
+ */
+function convertItems(cursor) {
+  const items = [];
+  for (const item of cursor) {
+    if (item.from._id.split('__')[0] == 'jobs') {
+      item.from = utils.convertJobForApi(item.from);
+    }
+    if (item.to._id.split('__')[0] == 'jobs') {
+      item.to = utils.convertJobForApi(item.to);
+    }
+    items.push(item);
+  }
+  return items;
+}

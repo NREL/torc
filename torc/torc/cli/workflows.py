@@ -9,7 +9,9 @@ import sys
 import click
 from swagger_client.models.workflow_jobs_model import WorkflowJobsModel
 from swagger_client.models.workflows_model import WorkflowsModel
-from swagger_client.models.workflow_specifications_model import WorkflowSpecificationsModel
+from swagger_client.models.workflow_specifications_model import (
+    WorkflowSpecificationsModel,
+)
 
 from torc.api import sanitize_workflow, iter_documents
 from torc.torc_rc import TorcRuntimeConfig
@@ -330,7 +332,33 @@ def list_workflows(ctx, api, filters):
     table_title = "Workflows"
     filters = parse_filters(filters)
     items = (x.to_dict() for x in iter_documents(api.get_workflows, **filters))
-    print_items(ctx, items, table_title=table_title, json_key="workflows", exclude_columns=exclude)
+    print_items(
+        ctx,
+        items,
+        table_title=table_title,
+        json_key="workflows",
+        exclude_columns=exclude,
+    )
+
+
+@click.command()
+@click.pass_obj
+@click.pass_context
+def process_auto_tune_resource_requirements_results(ctx, api):
+    """Process the results of the first round of auto-tuning resource requirements."""
+    setup_cli_logging(ctx, __name__)
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    api.post_workflows_process_auto_tune_resource_requirements_results_key(workflow_key)
+    url = api.api_client.configuration.host
+    rr_cmd = f"torc -k {workflow_key} -u {url} resource-requirements list"
+    events_cmd = f"torc -k {workflow_key} -u {url} events list -f category=resource_requirements"
+    logger.info(
+        "Updated resource requirements. Look at current requirements with "
+        "\n  '%s'\n and at "
+        "changes by reading the events with \n  '%s'\n",
+        rr_cmd,
+        events_cmd,
+    )
 
 
 @click.command()
@@ -373,7 +401,10 @@ def recommend_nodes(ctx, api, num_cpus, scheduler_config_id):
     else:
         print(
             json.dumps(
-                {"ready_job_requirements": reqs.to_dict(), "num_nodes_by_cpus": num_nodes_by_cpus}
+                {
+                    "ready_job_requirements": reqs.to_dict(),
+                    "num_nodes_by_cpus": num_nodes_by_cpus,
+                }
             )
         )
 
@@ -404,15 +435,26 @@ def restart(ctx, api):
 
 
 @click.command()
+@click.option(
+    "-a",
+    "--auto-tune-resource-requirements",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Setup the workflow such that only one job from each resource group is run in the first "
+    "round. Upon completion torc will look at actual resource utilization of those jobs and "
+    "apply the results to the resource requirements definitions. When jobs finish, please call "
+    "'torc workflows process_auto_tune_resource_requirements_results' to update the requirements.",
+)
 @click.pass_obj
 @click.pass_context
-def start(ctx, api):
+def start(ctx, api, auto_tune_resource_requirements):
     """Start the workflow defined in the database specified by the URL."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     mgr = WorkflowManager(api, workflow_key)
-    mgr.start()
+    mgr.start(auto_tune_resource_requirements=auto_tune_resource_requirements)
     # TODO: This could schedule nodes.
 
 
@@ -504,6 +546,7 @@ workflows.add_command(delete)
 workflows.add_command(delete_all)
 workflows.add_command(list_scheduler_configs)
 workflows.add_command(list_workflows)
+workflows.add_command(process_auto_tune_resource_requirements_results)
 workflows.add_command(recommend_nodes)
 workflows.add_command(reset_status)
 workflows.add_command(restart)

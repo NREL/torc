@@ -30,6 +30,10 @@ function addPostMethod(router, descriptor) {
     const workflowKey = req.pathParams.workflow;
     const workflow = documents.getWorkflow(workflowKey, res);
     let doc = req.body;
+
+    if (descriptor.collection == 'events' && !('timestamp' in doc)) {
+      doc.timestamp = (new Date()).toISOString();
+    }
     try {
       if (descriptor.customPost != null) {
         descriptor.customPost(doc, workflow);

@@ -821,6 +821,13 @@ paths:
         explode: true
         schema:
           type: string
+      - name: category
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
       responses:
         "200":
           description: HTTP 200 OK.
@@ -4100,6 +4107,56 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
+  /workflows/{workflow}/jobs/{key}/resource_requirements/{rr_key}:
+    put:
+      tags: []
+      summary: Set the resource requirements for a job.
+      description: "Set the resource requirements for a job, replacing any current\
+        \ value."
+      operationId: put_workflows_workflow_jobs_key_resource_requirements_rr_key
+      parameters:
+      - name: workflow
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: key
+        in: path
+        description: Job key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: rr_key
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*': {}
+        required: false
+      responses:
+        "200":
+          description: Requires edge that connects the job and resource requirements.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/edges_name_model'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
   /workflows/{workflow}/jobs/process_stats/{key}:
     get:
       tags: []
@@ -4768,6 +4825,155 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
+  /workflows/{key}/collection_names:
+    get:
+      tags: []
+      summary: Retrieve all collection names for one workflow.
+      description: Retrieve all collection names for one workflow.
+      operationId: get_workflows_key_collection_names
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_22'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /workflows/{key}/join_by_inbound_edge/{collection}/{edge}:
+    get:
+      tags: []
+      summary: Retrieve a joined table of two collections.
+      description: Retrieve a table of the collections joined by an inbound edge.
+      operationId: get_workflows_key_join_by_inbound_edge_collection_edge
+      parameters:
+      - name: key
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: collection
+        in: path
+        description: From collection
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: edge
+        in: path
+        description: Edge name
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: skip
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 0.0
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 1000.0
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_5'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /workflows/{key}/join_by_outbound_edge/{collection}/{edge}:
+    get:
+      tags: []
+      summary: Retrieve a joined table of two collections.
+      description: Retrieve a table of the collections joined by an outbound edge.
+      operationId: get_workflows_key_join_by_outbound_edge_collection_edge
+      parameters:
+      - name: key
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: collection
+        in: path
+        description: From collection
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: edge
+        in: path
+        description: Edge name
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: skip
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 0.0
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 1000.0
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_5'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
   /workflows/is_complete/{key}:
     get:
       tags: []
@@ -4789,7 +4995,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_22'
+                $ref: '#/components/schemas/inline_response_200_23'
         "500":
           description: Default error response.
           content:
@@ -4829,7 +5035,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_23'
+                $ref: '#/components/schemas/inline_response_200_24'
         "500":
           description: Default error response.
           content:
@@ -4907,7 +5113,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_24'
+                $ref: '#/components/schemas/inline_response_200_25'
         "500":
           description: Default error response.
           content:
@@ -5139,7 +5345,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_25'
+                $ref: '#/components/schemas/inline_response_200_26'
         "500":
           description: Default error response.
           content:
@@ -5174,36 +5380,6 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_25'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /workflows/collection_names/{key}:
-    get:
-      tags: []
-      summary: Retrieve all collection names for one workflow.
-      description: Retrieve all collection names for one workflow.
-      operationId: get_workflows_collection_names_key
-      parameters:
-      - name: key
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: HTTP 200 OK.
-          content:
-            application/json:
-              schema:
                 $ref: '#/components/schemas/inline_response_200_26'
         "500":
           description: Default error response.
@@ -5212,6 +5388,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
+      x-codegen-request-body-name: body
 components:
   schemas:
     compute_node_stats_key_model:
@@ -5463,15 +5640,12 @@ components:
         has_more:
           type: boolean
     inline_response_200_22:
-      required:
-      - is_canceled
-      - is_complete
       type: object
       properties:
-        is_canceled:
-          type: boolean
-        is_complete:
-          type: boolean
+        names:
+          type: array
+          items:
+            type: string
     inline_response_200_21:
       required:
       - count
@@ -5496,13 +5670,29 @@ components:
         has_more:
           type: boolean
     inline_response_200_24:
+      required:
+      - max_memory_gb
+      - max_num_nodes
+      - max_runtime
+      - memory_gb
+      - num_cpus
+      - num_gpus
+      - num_jobs
       type: object
       properties:
-        jobs:
-          type: array
-          items:
-            $ref: '#/components/schemas/jobs_key_model'
-        reason:
+        num_jobs:
+          type: integer
+        num_cpus:
+          type: integer
+        num_gpus:
+          type: integer
+        memory_gb:
+          type: number
+        max_memory_gb:
+          type: number
+        max_num_nodes:
+          type: integer
+        max_runtime:
           type: string
     workflowsstatuskey_auto_tune_status:
       type: object
@@ -5550,29 +5740,14 @@ components:
           type: string
     inline_response_200_23:
       required:
-      - max_memory_gb
-      - max_num_nodes
-      - max_runtime
-      - memory_gb
-      - num_cpus
-      - num_gpus
-      - num_jobs
+      - is_canceled
+      - is_complete
       type: object
       properties:
-        num_jobs:
-          type: integer
-        num_cpus:
-          type: integer
-        num_gpus:
-          type: integer
-        memory_gb:
-          type: number
-        max_memory_gb:
-          type: number
-        max_num_nodes:
-          type: integer
-        max_runtime:
-          type: string
+        is_canceled:
+          type: boolean
+        is_complete:
+          type: boolean
     inline_response_200_5:
       required:
       - count
@@ -5699,13 +5874,6 @@ components:
         _rev:
           type: string
     inline_response_200_26:
-      type: object
-      properties:
-        names:
-          type: array
-          items:
-            type: string
-    inline_response_200_25:
       required:
       - auto_tune_status
       - is_canceled
@@ -5723,6 +5891,15 @@ components:
         _id:
           type: string
         _rev:
+          type: string
+    inline_response_200_25:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/jobs_key_model'
+        reason:
           type: string
     edges_name_model:
       required:

@@ -52,12 +52,14 @@ swap_text "s/PUT/put/g"
 swap_text "s/_body/_model/g"
 rm swagger.json
 
-python_dir=python_client
-rm -rf $python_dir
-mkdir $python_dir
-java -jar ${SWAGGER_CODEGEN_CLI} generate --lang=python --input-spec=openapi.yaml -o ${python_dir}
+if [ -z ${PYTHON_CLIENT} ]; then
+    PYTHON_CLIENT=./python_client
+fi
+rm -rf ${PYTHON_CLIENT}
+mkdir ${PYTHON_CLIENT}
+java -jar ${SWAGGER_CODEGEN_CLI} generate --lang=python --input-spec=openapi.yaml -o ${PYTHON_CLIENT}
 # Workaround for this issue: https://github.com/swagger-api/swagger-codegen/issues/9991
 # It is fixed in the openapi-generator, but that doesn't work with our openapi.yaml - and haven't
 # debugged it.
-sed -i .bk "s/def __del__/def close/" ${python_dir}/swagger_client/api_client.py
-rm -f ${python_dir}/swagger_client/api_client.py.bk
+sed -i .bk "s/def __del__/def close/" ${PYTHON_CLIENT}/swagger_client/api_client.py
+rm -f ${PYTHON_CLIENT}/swagger_client/api_client.py.bk
