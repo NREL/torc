@@ -1,16 +1,12 @@
 """Example diamond workflow"""
+
+import getpass
 import json
 import logging
 from pathlib import Path
 
-from swagger_client.models.workflow_files_model import WorkflowFilesModel
-from swagger_client.models.workflow_job_specifications_model import WorkflowJobSpecificationsModel
-from swagger_client.models.workflow_resource_requirements_model import (
-    WorkflowResourceRequirementsModel,
-)
-from swagger_client.models.workflow_specifications_model import WorkflowSpecificationsModel
-
 from torc.api import make_api
+from torc.workflow_builder import WorkflowBuilder
 
 
 TEST_WORKFLOW = "test_workflow"
@@ -23,33 +19,34 @@ logger = logging.getLogger(__name__)
 
 def create_workflow(api):
     """Creates a workflow with implicit job dependencies declared through files."""
+    builder = WorkflowBuilder()
     inputs_file = Path("inputs.json")
     inputs_file.write_text(json.dumps({"val": 5}), encoding="utf-8")
 
-    inputs = WorkflowFilesModel(name="inputs", path=str(inputs_file))
-    f1 = WorkflowFilesModel(name="file1", path="f1.json")
-    f2 = WorkflowFilesModel(name="file2", path="f2.json")
-    f3 = WorkflowFilesModel(name="file3", path="f3.json")
-    f4 = WorkflowFilesModel(name="file4", path="f4.json")
+    inputs = builder.add_file(name="inputs", path=str(inputs_file))
+    f1 = builder.add_file(name="file1", path="f1.json")
+    f2 = builder.add_file(name="file2", path="f2.json")
+    f3 = builder.add_file(name="file3", path="f3.json")
+    f4 = builder.add_file(name="file4", path="f4.json")
 
-    small = WorkflowResourceRequirementsModel(
+    small = builder.add_resource_requirements(
         name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
     )
-    medium = WorkflowResourceRequirementsModel(
+    medium = builder.add_resource_requirements(
         name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
     )
-    large = WorkflowResourceRequirementsModel(
+    large = builder.add_resource_requirements(
         name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
     )
 
-    preprocess = WorkflowJobSpecificationsModel(
+    builder.add_job(
         name="preprocess",
         command=f"python {PREPROCESS} -i {inputs.path} -o {f1.path}",
         input_files=[inputs.name],
         output_files=[f1.name],
         resource_requirements=small.name,
     )
-    work1 = WorkflowJobSpecificationsModel(
+    builder.add_job(
         name="work1",
         command=f"python {WORK} -i {f1.path} -o {f2.path}",
         user_data=[{"key1": "val1"}],
@@ -57,14 +54,14 @@ def create_workflow(api):
         output_files=[f2.name],
         resource_requirements=medium.name,
     )
-    work2 = WorkflowJobSpecificationsModel(
+    builder.add_job(
         name="work2",
         command=f"python {WORK} -i {f1.path} -o {f3.path}",
         input_files=[f1.name],
         output_files=[f3.name],
         resource_requirements=large.name,
     )
-    postprocess = WorkflowJobSpecificationsModel(
+    builder.add_job(
         name="postprocess",
         command=f"python {POSTPROCESS} -i {f2.path} -i {f3.path} -o {f4.path}",
         input_files=[f2.name, f3.name],
@@ -72,10 +69,10 @@ def create_workflow(api):
         resource_requirements=small.name,
     )
 
-    spec = WorkflowSpecificationsModel(
-        files=[inputs, f1, f2, f3, f4],
-        jobs=[preprocess, work1, work2, postprocess],
-        resource_requirements=[small, medium, large],
+    spec = builder.build(
+        user=getpass.getuser(),
+        name="diamond_workflow",
+        description="Example diamond workflow",
     )
     workflow = api.post_workflow_specifications(spec)
     api.post_workflows_initialize_jobs_key(workflow.key)
@@ -84,7 +81,7 @@ def create_workflow(api):
 
 def main():
     """Entry point"""
-    api = make_api("http://localhost:8529/_db/workflows/torc-service")
+    api = make_api("http://localhost:8529/_db/test-workflows/torc-service")
     create_workflow(api)
 
 

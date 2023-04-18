@@ -13,7 +13,6 @@ from swagger_client.configuration import Configuration
 from swagger_client.models.workflow_specifications_schedulers import (
     WorkflowSpecificationsSchedulers,
 )
-from swagger_client.models.workflow_files_model import WorkflowFilesModel
 from swagger_client.models.workflow_local_schedulers_model import WorkflowLocalSchedulersModel
 from swagger_client.models.workflow_job_specifications_model import WorkflowJobSpecificationsModel
 from swagger_client.models.workflow_resource_requirements_model import (
@@ -28,6 +27,7 @@ from swagger_client.models.workflow_config_model import WorkflowConfigModel
 
 from torc.api import iter_documents
 from torc.cli.torc import cli
+from torc.workflow_builder import WorkflowBuilder
 from torc.workflow_manager import WorkflowManager
 from torc.tests.database_interface import DatabaseInterface
 
@@ -67,24 +67,25 @@ def diamond_workflow(tmp_path):
     inputs_file = output_dir / "inputs.json"
     inputs_file.write_text(json.dumps({"val": 5}))
 
-    inputs = WorkflowFilesModel(name="inputs", path=str(inputs_file))
-    f1 = WorkflowFilesModel(name="file1", path=str(output_dir / "f1.json"))
-    f2 = WorkflowFilesModel(name="file2", path=str(output_dir / "f2.json"))
-    f3 = WorkflowFilesModel(name="file3", path=str(output_dir / "f3.json"))
-    f4 = WorkflowFilesModel(name="file4", path=str(output_dir / "f4.json"))
+    builder = WorkflowBuilder()
+    inputs = builder.add_file(name="inputs", path=str(inputs_file))
+    f1 = builder.add_file(name="file1", path=str(output_dir / "f1.json"))
+    f2 = builder.add_file(name="file2", path=str(output_dir / "f2.json"))
+    f3 = builder.add_file(name="file3", path=str(output_dir / "f3.json"))
+    f4 = builder.add_file(name="file4", path=str(output_dir / "f4.json"))
 
-    small = WorkflowResourceRequirementsModel(
+    small = builder.add_resource_requirements(
         name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
     )
-    medium = WorkflowResourceRequirementsModel(
+    medium = builder.add_resource_requirements(
         name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
     )
-    large = WorkflowResourceRequirementsModel(
+    large = builder.add_resource_requirements(
         name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
     )
 
-    scheduler = WorkflowLocalSchedulersModel(name="test")
-    preprocess = WorkflowJobSpecificationsModel(
+    scheduler = builder.add_local_scheduler(name="test")
+    builder.add_job(
         name="preprocess",
         command=f"python {PREPROCESS} -i {inputs.path} -o {f1.path}",
         input_files=[inputs.name],
@@ -92,7 +93,7 @@ def diamond_workflow(tmp_path):
         resource_requirements=small.name,
         scheduler="local_schedulers/test",
     )
-    work1 = WorkflowJobSpecificationsModel(
+    builder.add_job(
         name="work1",
         command=f"python {WORK} -i {f1.path} -o {f2.path}",
         user_data=[{"key1": "val1"}],
@@ -101,7 +102,7 @@ def diamond_workflow(tmp_path):
         resource_requirements=medium.name,
         scheduler="local_schedulers/test",
     )
-    work2 = WorkflowJobSpecificationsModel(
+    builder.add_job(
         name="work2",
         command=f"python {WORK} -i {f1.path} -o {f3.path}",
         user_data=[{"key2": "val2"}],
@@ -110,7 +111,7 @@ def diamond_workflow(tmp_path):
         resource_requirements=large.name,
         scheduler="local_schedulers/test",
     )
-    postprocess = WorkflowJobSpecificationsModel(
+    builder.add_job(
         name="postprocess",
         command=f"python {POSTPROCESS} -i {f2.path} -i {f3.path} -o {f4.path}",
         input_files=[f2.name, f3.name],
@@ -119,13 +120,7 @@ def diamond_workflow(tmp_path):
         scheduler="local_schedulers/test",
     )
 
-    spec = WorkflowSpecificationsModel(
-        files=[inputs, f1, f2, f3, f4],
-        jobs=[preprocess, work1, work2, postprocess],
-        resource_requirements=[small, medium, large],
-        schedulers=WorkflowSpecificationsSchedulers(local_schedulers=[scheduler]),
-    )
-
+    spec = builder.build()
     workflow = api.post_workflow_specifications(spec)
     db = DatabaseInterface(api, workflow)
     api.post_workflows_initialize_jobs_key(workflow.key)

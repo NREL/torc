@@ -46,13 +46,19 @@ This page assumes that you have a database and have completed the torc installat
    2023-03-28 16:37:58,708 - INFO [torc.workflow_manager workflow_manager.py:99] : Started workflow
 
 8. Schedule HPC nodes where X below is the number of nodes to acquire with the scheduler defined
-   in step 5.
+   in step 6.
 
 .. note:: This step will not always be required. We plan to do this automatically.
 
 .. code-block:: console
 
-   $ torc -k 94956990 hpc slurm schedule-nodes -nX
+   $ torc -k 94956990 hpc slurm schedule-nodes -n X
+
+You can optionally ask for a recommendation for the number of nodes with this command:
+
+.. code-block:: console
+
+   $ torc workflows recommend-nodes --num-cpus 36
 
 9. Monitor progress with torc or squeue
 
