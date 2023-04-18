@@ -66,6 +66,16 @@ const isComplete = joi.object().required().keys({
   is_complete: joi.boolean().required(),
 });
 
+const sparkConfParam = joi.object().required().keys({
+  name: joi.string().required(),
+  value: joi.string().required(),
+});
+
+const sparkSubmitParams = joi.object().keys({
+  master_url: joi.string().optional(),
+  conf: joi.array().items(sparkConfParam),
+});
+
 const jobInternal = joi.object().required().keys({
   memory_bytes: joi.number().integer().default(0.0),
   num_cpus: joi.number().integer().default(0.0),
@@ -81,6 +91,7 @@ const job = joi.object().required().keys({
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   supports_termination: joi.boolean().default(false),
   run_id: joi.number().integer().default(0),
+  spark_params: sparkSubmitParams,
   // This only exists to all prepareJobsForSubmission to take less time to find
   // jobs with exclusive access.
   internal: jobInternal.optional().default(jobInternal.validate({}).value),
@@ -99,6 +110,7 @@ const jobSpecification = joi.object().required().keys({
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   supports_termination: joi.boolean().default(false),
   scheduler: joi.string().default('').allow(''),
+  spark_params: sparkSubmitParams,
   resource_requirements: joi.string().optional(),
   input_files: joi.array().items(joi.string()).default([]),
   output_files: joi.array().items(joi.string()).default([]),
@@ -433,6 +445,8 @@ module.exports = {
   scheduledComputeNode,
   schedulers,
   slurmScheduler,
+  sparkConfParam,
+  sparkSubmitParams,
   workerResources,
   workflow,
   workflowSpecification,

@@ -5865,6 +5865,8 @@ components:
           default: false
         run_id:
           type: integer
+        spark_params:
+          $ref: '#/components/schemas/workflowsworkflowjobs_spark_params'
         internal:
           $ref: '#/components/schemas/workflowsworkflowjobs_internal'
         _key:
@@ -6038,6 +6040,18 @@ components:
           type: string
         _rev:
           type: string
+    workflowsworkflowjobs_spark_params:
+      type: object
+      properties:
+        use_spark_submit:
+          type: boolean
+          default: true
+        master_url:
+          type: string
+        conf:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflowsworkflowjobs_spark_params_conf'
     workflow_config_model:
       type: object
       properties:
@@ -6202,6 +6216,8 @@ components:
           default: false
         run_id:
           type: integer
+        spark_params:
+          $ref: '#/components/schemas/workflowsworkflowjobs_spark_params'
         internal:
           $ref: '#/components/schemas/workflowsworkflowjobs_internal'
         _key:
@@ -6642,6 +6658,16 @@ components:
           type: string
         _rev:
           type: string
+    workflowsworkflowjobs_spark_params_conf:
+      required:
+      - name
+      - value
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
     local_schedulers_key_model:
       type: object
       properties:
@@ -6694,6 +6720,8 @@ components:
           default: false
         run_id:
           type: integer
+        spark_params:
+          $ref: '#/components/schemas/workflowsworkflowjobs_spark_params'
         internal:
           $ref: '#/components/schemas/workflowsworkflowjobs_internal'
         _key:
@@ -6754,6 +6782,8 @@ components:
           default: false
         scheduler:
           type: object
+        spark_params:
+          $ref: '#/components/schemas/workflowsworkflowjobs_spark_params'
         resource_requirements:
           type: string
         input_files:

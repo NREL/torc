@@ -348,7 +348,7 @@ router.get('/workflows/:key/join_by_outbound_edge/:collection/:edge', function(r
   const edge = req.pathParams.edge;
   const qp = req.queryParams;
   const limit = utils.getItemsLimit(qp.limit);
-  const workflow = documents.getWorkflow(key);
+  const workflow = documents.getWorkflow(key, res);
   try {
     const cursor = query.joinCollectionsByOutboundEdge(workflow, collection, edge, qp.skip, limit);
     res.send(utils.makeCursorResult(convertItems(cursor), qp.skip, limit, cursor.count()));

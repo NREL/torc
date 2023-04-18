@@ -72,6 +72,7 @@ function addJobSpecification(jobSpec, workflow) {
     name: jobSpec.name,
     command: jobSpec.command,
     cancel_on_blocking_job_failure: jobSpec.cancel_on_blocking_job_failure,
+    spark_params: jobSpec.sparkParams,
     supports_termination: jobSpec.supports_termination,
     run_id: 0,
     internal: schemas.jobInternal.validate({}).value,

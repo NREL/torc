@@ -146,7 +146,6 @@ class AsyncCliCommand(AsyncJobBase):
         assert self._pipe is None
         self._start_time = time.time()
 
-        cmd = shlex.split(self._db_job.command, posix="win" not in sys.platform)
         stdout_filename = output_dir / JOB_STDIO_DIR / f"{self.key}.o"
         stderr_filename = output_dir / JOB_STDIO_DIR / f"{self.key}.e"
         # pylint: disable=consider-using-with
@@ -154,9 +153,27 @@ class AsyncCliCommand(AsyncJobBase):
         self._stderr_fp = open(stderr_filename, "w", encoding="utf-8")
         env = os.environ.copy()
         env["TORC_JOB_KEY"] = self._db_job.key
-        self._pipe = subprocess.Popen(cmd, stdout=self._stdout_fp, stderr=self._stderr_fp, env=env)
+        if self._db_job.spark_params:
+            self._pipe = self._run_spark_command(env=env)
+        else:
+            self._pipe = self._run_command(self._db_job.command, env=env)
         # pylint: enable=consider-using-with
         self._is_running = True
+
+    def _run_command(self, command, env):
+        cmd = shlex.split(command, posix="win" not in sys.platform)
+        return subprocess.Popen(cmd, stdout=self._stdout_fp, stderr=self._stderr_fp, env=env)
+
+    def _run_slurm_command(self, env):
+        # TODO: run through srun with cpu_bind
+        pass
+
+    def _run_spark_command(self, env):
+        params = self._db_job.spark_params
+        conf_params = [f"--conf {name}={value}" for name, value in params.conf]
+        conf_str = " ".join(conf_params)
+        cmd = f"spark-submit --master={params.master_url} {conf_str} {self._db_job.command}"
+        return self._run_command(cmd, env)
 
     def _complete(self, status):
         self._return_code = self._pipe.returncode
