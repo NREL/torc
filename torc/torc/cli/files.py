@@ -114,7 +114,8 @@ def list_files(ctx, api, filters):
     filters = parse_filters(filters)
     table_title = f"Files in workflow {workflow_key}"
     items = (
-        x.to_dict() for x in iter_documents(api.workflows_workflow_files, workflow_key, **filters)
+        x.to_dict()
+        for x in iter_documents(api.get_workflows_workflow_files, workflow_key, **filters)
     )
     print_items(ctx, items, table_title=table_title, json_key="files", exclude_columns=exclude)
 
