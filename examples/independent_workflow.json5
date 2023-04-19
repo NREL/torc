@@ -5,7 +5,6 @@
     {
       name: "small",
       command: "python tests/scripts/resource_consumption.py -i 1 -c small",
-      user_data: [],
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
       scheduler: "",
@@ -17,7 +16,6 @@
     {
       name: "medium",
       command: "python tests/scripts/resource_consumption.py -i 1 -c medium",
-      user_data: [],
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
       scheduler: "",
@@ -29,7 +27,6 @@
     {
       name: "large",
       command: "python tests/scripts/resource_consumption.py -i 1 -c large",
-      user_data: [],
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
       scheduler: "",

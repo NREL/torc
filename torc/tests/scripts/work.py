@@ -12,8 +12,9 @@ from pathlib import Path
 if len(sys.argv) != 5:
     raise Exception(f"bad inputs in work.py: {sys.argv}")
 
+workflow_key = os.environ["TORC_WORKFLOW_KEY"]
 job_key = os.environ["TORC_JOB_KEY"]
-print(f"running {sys.argv} {job_key=}")
+print(f"running {sys.argv} {workflow_key=} {job_key=}")
 input_file = Path(sys.argv[2])
 output_file = Path(sys.argv[4])
 if not input_file.exists():

@@ -71,6 +71,11 @@ def sanitize_workflow(data: dict):
             item.pop(key, None)
     if "jobs" in data and not data["jobs"]:
         data.pop("jobs")
+    for job in data.get("jobs", []):
+        # This is a messy workaround for the fact that the job schema is not ideal and does
+        # not allow nulls for spark_params.
+        if "spark_params" in job and job["spark_params"] is None:
+            job.pop("spark_params")
     if "resource_requirements" in data and not data["resource_requirements"]:
         data.pop("resource_requirements")
     if "files" in data and not data["files"]:

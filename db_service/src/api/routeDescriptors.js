@@ -328,12 +328,20 @@ const ROUTE_DESCRIPTORS = [
     name: 'user data',
     description: 'Input or output user data for a job',
     collection: 'user_data',
-    schema: joi.object().required(),
-    batchSchema: schemas.batchObjects,
+    schema: schemas.userData,
+    batchSchema: schemas.batchUserData,
     filterFields: [
       {
         name: '_key',
         type: joi.string(),
+      },
+      {
+        name: 'name',
+        type: joi.string(),
+      },
+      {
+        name: 'is_ephemeral',
+        type: joi.boolean(),
       },
     ],
   },

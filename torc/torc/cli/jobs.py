@@ -4,7 +4,6 @@ import json
 import logging
 
 import click
-import json5
 from swagger_client.models.workflow_jobs_model import WorkflowJobsModel
 
 from torc.api import iter_documents
@@ -89,46 +88,31 @@ def add(ctx, api, cancel_on_blocking_job_failure, command, key, name):
 
 @click.command()
 @click.argument("job_key")
-@click.argument("data", nargs=-1)
+@click.option(
+    "--stores/--consumes",
+    is_flag=True,
+    default=True,
+    show_default=True,
+    help="List data that is either stored by the job or consumed by the job.",
+)
 @click.pass_obj
 @click.pass_context
-def add_user_data(ctx, api, job_key, data):
-    """Add user data to a job. Each item must be a single JSON object encoded in a JSON5 string.
-
-    \b
-    Example:
-    $ torc jobs add-user-data 92339718 "{key1: 'val1', key2: 'val2'}" "{key3: 'val3'}"
-    """
+def list_user_data(ctx, api, job_key, stores):
+    """List all user data stored or consumed for a job."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    output_format = get_output_format_from_context(ctx)
-    keys = []
-    for item in data:
-        user_data = json5.loads(item)
-        ud = api.post_workflows_workflow_jobs_key_user_data(user_data, workflow_key, job_key)
-        keys.append(ud["_key"])
-
-    if output_format == "text":
-        for key in keys:
-            logger.info("Added user_data key=%s to job key=%s", key, job_key)
+    if stores:
+        method = api.get_workflows_workflow_jobs_key_user_data_stores
     else:
-        print(json.dumps({"keys": keys}))
-
-
-@click.command()
-@click.argument("job_key")
-@click.pass_obj
-@click.pass_context
-def list_user_data(ctx, api, job_key):
-    """List all user data stored for a job."""
-    setup_cli_logging(ctx, __name__)
-    check_database_url(api)
-    workflow_key = get_workflow_key_from_context(ctx, api)
-    resp = api.get_workflows_workflow_jobs_key_user_data(workflow_key, job_key)
+        method = api.get_workflows_workflow_jobs_key_user_data_consumes
+    resp = method(workflow_key, job_key)
+    items = []
     for item in resp.items:
-        item.pop("_id")
-    print(json.dumps(resp.items, indent=2))
+        item = item.to_dict()
+        item.pop("id")
+        items.append(item)
+    print(json.dumps(items, indent=2))
 
 
 @click.command()
@@ -166,11 +150,19 @@ def delete_all(ctx, api):
     type=str,
     help="Filter the values according to each key=value pair.",
 )
+@click.option(
+    "-x",
+    "--exclude",
+    multiple=True,
+    type=str,
+    help="Exclude this column name. Accepts multiple",
+    callback=lambda *x: set(x[2]),
+)
 @click.option("-l", "--limit", type=int, help="Limit the output to this number of jobs.")
 @click.option("-s", "--skip", default=0, type=int, help="Skip this number of jobs.")
 @click.pass_obj
 @click.pass_context
-def list_jobs(ctx, api, filters, limit, skip):
+def list_jobs(ctx, api, filters, exclude, limit, skip):
     """List all jobs in a workflow.
 
     \b
@@ -193,7 +185,7 @@ def list_jobs(ctx, api, filters, limit, skip):
         x.to_dict()
         for x in iter_documents(api.get_workflows_workflow_jobs, workflow_key, **filters)
     )
-    exclude = ("id", "rev", "internal")
+    exclude = ["id", "rev", "internal"] + list(exclude)
     table_title = f"Jobs in workflow {workflow_key}"
     print_items(
         ctx,
@@ -258,7 +250,6 @@ def assign_resource_requirements(ctx, api, resource_requirements_key, job_keys):
 
 
 jobs.add_command(add)
-jobs.add_command(add_user_data)
 jobs.add_command(list_user_data)
 # jobs.add_command(cancel)
 jobs.add_command(delete)

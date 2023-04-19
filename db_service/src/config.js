@@ -3,6 +3,7 @@ const graphModule = require('@arangodb/general-graph');
 const {GRAPH_NAME} = require('./defs');
 const EDGE_NAMES = [
   'blocks',
+  'consumes',
   'executed',
   'needs',
   'node_used',
@@ -54,6 +55,7 @@ function createWorkflowCollections(workflow) {
     userData: getWorkflowCollectionName(workflow, 'user_data'),
     // edges between vertexes
     blocks: getWorkflowCollectionName(workflow, 'blocks'),
+    consumes: getWorkflowCollectionName(workflow, 'consumes'),
     executed: getWorkflowCollectionName(workflow, 'executed'),
     needs: getWorkflowCollectionName(workflow, 'needs'),
     produces: getWorkflowCollectionName(workflow, 'produces'),
@@ -72,6 +74,7 @@ function createWorkflowCollections(workflow) {
   const returned = graphModule._relation(names.returned, names.jobs, names.results);
   const scheduledBys = graphModule._relation(names.scheduledBys, names.jobs,
       [names.localSchedulers, names.awsSchedulers, names.slurmSchedulers]);
+  const consumes = graphModule._relation(names.consumes, names.jobs, names.userData);
   const stores = graphModule._relation(names.stores, names.jobs, names.userData);
   const nodeUsed = graphModule._relation(
       names.nodeUsed,
@@ -90,6 +93,7 @@ function createWorkflowCollections(workflow) {
       graphName,
       [
         blocks,
+        consumes,
         executed,
         needs,
         nodeUsed,

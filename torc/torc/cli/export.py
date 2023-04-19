@@ -134,6 +134,7 @@ def _make_sql_table(item, row, filename, basename):
 
 _DB_ACCESSOR_FUNCS = {
     "blocks": "get_workflows_workflow_edges_name",
+    "consumes": "get_workflows_workflow_edges_name",
     "executed": "get_workflows_workflow_edges_name",
     "compute_node_stats": "get_workflows_workflow_compute_node_stats",
     "compute_nodes": "get_workflows_workflow_compute_nodes",
@@ -161,6 +162,7 @@ _DB_ACCESSOR_FUNCS = {
 
 _EDGES = {
     "blocks",
+    "consumes",
     "executed",
     "needs",
     "node_used",

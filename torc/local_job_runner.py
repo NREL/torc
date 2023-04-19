@@ -63,7 +63,6 @@ def create_workflow(api, output_dir: Path):
     work1 = WorkflowJobSpecificationsModel(
         name="work1",
         command=f"python {WORK} -i {f1.path} -o {f2.path}",
-        user_data=[{"key1": "val1"}],
         input_files=[f1.name],
         output_files=[f2.name],
         resource_requirements=medium.name,

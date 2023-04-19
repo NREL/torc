@@ -271,6 +271,12 @@ def schedule_nodes(
     check_database_url(api)
     logger.info(get_cli_string())
     workflow_key = get_workflow_key_from_context(ctx, api)
+
+    ready_jobs = api.get_workflows_workflow_jobs(workflow_key, status="ready", limit=1)
+    if not ready_jobs.items:
+        logger.error("No jobs are in the ready state")
+        sys.exit(1)
+
     output_format = get_output_format_from_context(ctx)
     if scheduler_config_key is None:
         params = ctx.find_root().params
@@ -341,7 +347,7 @@ def schedule_nodes(
     )
 
     if output_format == "text":
-        logger.info("Scheduled compute node job IDs %s", job_ids)
+        logger.info("Scheduled compute node job IDs: %s", " ".join(job_ids))
     else:
         print(json.dumps({"job_ids": job_ids, "keys": node_keys}))
 

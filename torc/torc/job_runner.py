@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 import multiprocessing
 import re
 import socket
@@ -143,6 +144,7 @@ class JobRunner:
                 self._stop_resource_monitor()
 
     def _run_until_complete(self):
+        os.environ["TORC_WORKFLOW_KEY"] = self._workflow.key
         timeout = _get_timeout(self._resources.time_limit)
         start_time = time.time()
 
@@ -298,6 +300,7 @@ class JobRunner:
         for job in self._outstanding_jobs.values():
             if job.is_complete():
                 done_jobs.append(job)
+                # TODO: check return code first
                 self._update_file_info(job)
 
         for job in done_jobs:
@@ -531,6 +534,13 @@ class JobRunner:
             job.key,
         ):
             path = make_path(file.path)
+            if not path.exists():
+                logger.warning(
+                    "Job %s should have produced file %s, but it does not exist",
+                    job.key,
+                    file.path,
+                )
+                continue
             # file.file_hash = compute_file_hash(path)
             file.st_mtime = path.stat().st_mtime
             send_api_command(

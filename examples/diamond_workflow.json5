@@ -3,7 +3,6 @@
     {
       name: "preprocess",
       command: "python tests/scripts/preprocess.py -i output/inputs.json -o output/f1.json",
-      user_data: [],
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
       scheduler: "slurm_schedulers/debug",
@@ -19,11 +18,7 @@
     {
       name: "work1",
       command: "python tests/scripts/work.py -i output/f1.json -o output/f2.json",
-      user_data: [
-        {
-          key1: "val1"
-        }
-      ],
+      consumes_user_data: ["my_val"],
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
       scheduler: "slurm_schedulers/debug",
@@ -41,7 +36,6 @@
     {
       name: "work2",
       command: "python tests/scripts/work.py -i output/f1.json -o output/f3.json",
-      user_data: [],
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
       scheduler: "slurm_schedulers/debug",
@@ -59,7 +53,6 @@
     {
       name: "postprocess",
       command: "python tests/scripts/postprocess.py -i output/f2.json -i output/f3.json -o output/f4.json",
-      user_data: [],
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
       scheduler: "slurm_schedulers/debug",
@@ -137,6 +130,15 @@
       }
     ],
   },
+  user_data: [
+    {
+      name: "my_val",
+      is_ephemeral: false,
+      data: {
+        key1: "val1",
+      },
+    }
+  ],
   config: {
     compute_node_resource_stats: {
       cpu: true,

@@ -227,6 +227,19 @@ JOIN_COLLECTIONS = {
         ],
         "exclude_to": ["job_key"],
     },
+    "job-consumes-data": {
+        "collection": "jobs",
+        "edge": "consumes",
+        "outbound": True,
+        "exclude_from": [
+            "command",
+            "cancel_on_blocking_job_failure",
+            "run_id",
+            "status",
+            "supports_termination",
+        ],
+        "exclude_to": [],
+    },
     "job-stores-data": {
         "collection": "jobs",
         "edge": "stores",

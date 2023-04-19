@@ -73,6 +73,7 @@ const sparkConfParam = joi.object().required().keys({
 
 const sparkSubmitParams = joi.object().keys({
   master_url: joi.string().optional(),
+  conf_dir: joi.string().optional(),
   conf: joi.array().items(sparkConfParam),
 });
 
@@ -91,7 +92,8 @@ const job = joi.object().required().keys({
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   supports_termination: joi.boolean().default(false),
   run_id: joi.number().integer().default(0),
-  spark_params: sparkSubmitParams,
+  // TODO: Want to allow nulls but doing so means that there is no Swagger type.
+  spark_params: sparkSubmitParams.optional(), // .allow(null),
   // This only exists to all prepareJobsForSubmission to take less time to find
   // jobs with exclusive access.
   internal: jobInternal.optional().default(jobInternal.validate({}).value),
@@ -106,11 +108,12 @@ const jobSpecification = joi.object().required().keys({
   name: joi.string().optional(),
   key: joi.string().optional(),
   command: joi.string().required(),
-  user_data: joi.array().items(joi.object()).default([]),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   supports_termination: joi.boolean().default(false),
   scheduler: joi.string().default('').allow(''),
-  spark_params: sparkSubmitParams,
+  spark_params: sparkSubmitParams.optional(),
+  consumes_user_data: joi.array().items(joi.string()).optional().default([]),
+  stores_user_data: joi.array().items(joi.string()).optional().default([]),
   resource_requirements: joi.string().optional(),
   input_files: joi.array().items(joi.string()).default([]),
   output_files: joi.array().items(joi.string()).default([]),
@@ -131,7 +134,7 @@ const jobProcessStats = joi.object().required().keys({
   _rev: joi.string(),
 });
 
-const jobUserDataResponse = joi.object().required().keys({
+const listItemsResponse = joi.object().required().keys({
   items: joi.object(),
 });
 
@@ -143,6 +146,15 @@ const readyJobsResourceRequirements = joi.object().required().keys({
   max_memory_gb: joi.number().required(),
   max_num_nodes: joi.number().integer().required(),
   max_runtime: joi.string().required(),
+});
+
+const userData = joi.object().required().keys({
+  is_ephemeral: joi.boolean().default(false),
+  name: joi.string().optional(),
+  data: joi.object().optional(),
+  _key: joi.string(),
+  _id: joi.string(),
+  _rev: joi.string(),
 });
 
 const resourceRequirements = joi.object().required().keys({
@@ -236,6 +248,7 @@ const workflowSpecification = joi.object().required().keys({
   description: joi.string().optional().allow(null, ''),
   jobs: joi.array().items(jobSpecification).default([]),
   files: joi.array().items(file).default([]),
+  user_data: joi.array().items(userData).default([]),
   resource_requirements: joi.array().items(resourceRequirements).default([]),
   schedulers: schedulers.optional().default(schedulers.validate({}).value),
   config: joi.object().default(workflowConfig.validate({}).value),
@@ -354,6 +367,15 @@ const batchFiles = joi.object().required().keys({
   has_more: joi.boolean().required(),
 });
 
+const batchUserData = joi.object().required().keys({
+  items: joi.array().items(userData),
+  skip: joi.number().integer().required(),
+  max_limit: joi.number().integer().required(),
+  count: joi.number().integer().required(),
+  total_count: joi.number().integer().required(),
+  has_more: joi.boolean().required(),
+});
+
 const batchResourceRequirements = joi.object().required().keys({
   items: joi.array().items(resourceRequirements),
   skip: joi.number().integer().required(),
@@ -425,6 +447,7 @@ module.exports = {
   batchResults,
   batchScheduledComputeNodes,
   batchSlurmSchedulers,
+  batchUserData,
   batchWorkflows,
   computeNode,
   computeNodeResourceStatConfig,
@@ -436,7 +459,7 @@ module.exports = {
   jobSpecification,
   jobInternal,
   jobProcessStats,
-  jobUserDataResponse,
+  listItemsResponse,
   localScheduler,
   object,
   readyJobsResourceRequirements,
@@ -447,6 +470,7 @@ module.exports = {
   slurmScheduler,
   sparkConfParam,
   sparkSubmitParams,
+  userData,
   workerResources,
   workflow,
   workflowSpecification,

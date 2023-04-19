@@ -40,9 +40,13 @@ def test_api_nodes_by_key(create_workflow_cli):
             with pytest.raises(ApiException):
                 getattr(api, f"get_workflows_workflow_{name}_key")(workflow_key, key)
             val = _fix_fields(name, remove_db_keys(val))
+            if name == "jobs" and "spark_params" in val and val["spark_params"] is None:
+                val.pop("spark_params")
             val2 = getattr(api, f"post_workflows_workflow_{name}")(val, workflow_key)
             if not isinstance(val2, dict):
                 val2 = val2.to_dict()
+            if name == "jobs" and "spark_params" in val2 and val2["spark_params"] is None:
+                val2.pop("spark_params")
             key = _get_key(val2)
             field_to_change = field
             if field_to_change is None:

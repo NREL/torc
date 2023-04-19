@@ -45,11 +45,11 @@ def create_workflow(api):
         input_files=[inputs.name],
         output_files=[f1.name],
         resource_requirements=small.name,
+        consumes_user_data=["my_val"],
     )
     builder.add_job(
         name="work1",
         command=f"python {WORK} -i {f1.path} -o {f2.path}",
-        user_data=[{"key1": "val1"}],
         input_files=[f1.name],
         output_files=[f2.name],
         resource_requirements=medium.name,
@@ -67,6 +67,11 @@ def create_workflow(api):
         input_files=[f2.name, f3.name],
         output_files=[f4.name],
         resource_requirements=small.name,
+    )
+    builder.add_user_data(
+        name="my_val",
+        is_ephemeral=False,
+        data={"key1": "val1"},
     )
 
     spec = builder.build(

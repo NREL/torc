@@ -62,12 +62,16 @@ Job Input/Output Data
 Torc provides a mechanism for users to store input and output data in the database. This data can
 be stored on a per-job basis or for the overall workflow.
 
+You can store job-to-job relationships if one job stores data that will be consumed by one or more
+other jobs. This is analagous to job-file-job relationships discussed elsewhere. In both cases torc
+will sequence execution of jobs based on these dependencies.
+
 One way to run jobs with different parameters is to pass those parameters as command-line arguments
 and options. A second way is to store the input parameters in the ``user_data`` collection of the
 database. A common runner script can pull the parameters for each specific job at runtime.
 
-.. note:: Torc sets the environment variable TORC_JOB_KEY with each job's unique key. Scripts can
-   use this value to retrieve data from the database.
+.. note:: Torc sets the environment variables TORC_WORKFLOW_KEY and TORC_JOB_KEY. Scripts can
+   use these values to retrieve data from the database.
 
 Jobs can also store result data and metatdata in the database.
 
@@ -76,17 +80,15 @@ Jobs can also store result data and metatdata in the database.
 
 Here is how to store and retrieve user data from torc CLI commands and API commands.
 
-These examples add two JSON objects to the job.
-
 Torc CLI
 --------
 
+Add data to the database.
+
 .. code-block:: console
 
-   $ torc jobs add-user-data 92181820 "{key1: 'val1', key2: 'val2'}" "{key3: 'val3'}"
-   2023-03-29 08:21:33,553 - INFO [torc.cli.jobs jobs.py:103] : Added user_data key=92340362 to job key=92181820
-   2023-03-29 08:21:33,613 - INFO [torc.cli.jobs jobs.py:103] : Added user_data key=92340378 to job key=92181820
-
+   $ torc user-data add -n my_val -s 92181820 -d "{key1: 'val1', key2: 'val2'}"
+   2023-03-29 09:45:59,678 - INFO [torc.cli.user_data user_data.py:41] : Added user_data key=92398595
 
 .. code-block:: console
 
@@ -108,10 +110,6 @@ Torc CLI
 
 .. code-block:: console
 
-   $ torc user-data add "{key1: 'val1', key2: 'val2'}" "{key3: 'val3'}"
-   2023-03-29 09:45:59,678 - INFO [torc.cli.user_data user_data.py:41] : Added user_data key=92398595
-   2023-03-29 09:45:59,736 - INFO [torc.cli.user_data user_data.py:41] : Added user_data key=92398602
-
    $ torc user-data list
    [
      {
@@ -120,11 +118,6 @@ Torc CLI
        "key1": "val1",
        "key2": "val2"
      },
-     {
-       "_key": "92398602",
-       "_rev": "_fw4IkZ----",
-       "key3": "val3"
-     }
    ]
 
    $ torc user-data get 92398595
@@ -139,6 +132,13 @@ Torc CLI
    2023-03-29 09:47:56,772 - INFO [torc.cli.user_data user_data.py:54] : Deleted user_data=92398595
    2023-03-29 09:47:56,799 - INFO [torc.cli.user_data user_data.py:54] : Deleted user_data=92398602
 
+Add a placeholder item to the database. The actual data will be populated in the database by job
+92340392 and then consumed by job 92340393. Torc will ensure that 92340393 cannot run until
+92340392 completes.
+
+.. code-block:: console
+
+   $ torc user-data add --name output_data1 --stores 92340392 --consumes 92340393
 
 Python API client
 -----------------
@@ -166,7 +166,7 @@ Python API client
         result = api.post_workflows_workflow_jobs_key_user_data(item, workflow_key, job_key)
         print(f"Added user data key={result['_key']}")
 
-    result = api.get_workflows_workflow_jobs_key_user_data(workflow_key, job_key)
+    result = api.get_workflows_workflow_jobs_key_user_data_stores(workflow_key, job_key)
     print(f"Job key={job_key} stores {result.items}")
 
     workflow_user_data = api.post_workflows_workflow_user_data(data[0], workflow_key)

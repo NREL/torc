@@ -205,13 +205,13 @@ class SlurmInterface(HpcInterface):
         num_nodes = int(result[0])
         nodes_compact = result[1]
         proc = subprocess.run(
-            ["scontrol", "show", "hostnames", f"'{nodes_compact}'"],
+            ["scontrol", "show", "hostnames", nodes_compact],
             stdout=subprocess.PIPE,
             check=True,
         )
-        nodes = [x for x in proc.stdout.decode("utf-8").replace("'", "").split("\n") if x != ""]
+        nodes = proc.stdout.decode("utf-8").strip().split("\n")
         if len(nodes) != num_nodes:
-            raise Exception(f"Bug in parsing node names. Found={len(nodes)} Actual={num_nodes}")
+            raise Exception(f"Bug in parsing node names. {nodes=} {num_nodes=}")
         return nodes
 
     def submit(self, filename):

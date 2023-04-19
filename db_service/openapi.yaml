@@ -3319,13 +3319,27 @@ paths:
         explode: true
         schema:
           type: string
+      - name: name
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: is_ephemeral
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
       responses:
         "200":
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_5'
+                $ref: '#/components/schemas/inline_response_200_15'
         "500":
           description: Default error response.
           content:
@@ -3352,7 +3366,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/workflow_user_data_model'
         required: true
       responses:
         "200":
@@ -3360,7 +3374,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/workflow_user_data_model'
         "500":
           description: Default error response.
           content:
@@ -3433,7 +3447,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/workflow_user_data_model'
         "500":
           description: Default error response.
           content:
@@ -3468,7 +3482,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/user_data_key_model'
         required: true
       responses:
         "200":
@@ -3476,7 +3490,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/user_data_key_model'
         "500":
           description: Default error response.
           content:
@@ -3519,7 +3533,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/user_data_key_model'
         "500":
           description: Default error response.
           content:
@@ -3573,7 +3587,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_15'
+                $ref: '#/components/schemas/inline_response_200_16'
         "500":
           description: Default error response.
           content:
@@ -3854,7 +3868,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_16'
+                $ref: '#/components/schemas/inline_response_200_17'
         "500":
           description: Default error response.
           content:
@@ -4316,42 +4330,6 @@ paths:
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/jobs/{key}/user_data:
-    get:
-      tags: []
-      summary: Retrieve all user data for a job.
-      description: Retrieve all user data for a job.
-      operationId: get_workflows_workflow_jobs_key_user_data
-      parameters:
-      - name: workflow
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      - name: key
-        in: path
-        description: Job key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: All user data stored for the job.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_17'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
     post:
       tags: []
       summary: Store user data for a job.
@@ -4379,7 +4357,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: '#/components/schemas/key_user_data_model'
         required: true
       responses:
         "200":
@@ -4387,7 +4365,7 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/key_user_data_model'
         "500":
           description: Default error response.
           content:
@@ -4396,6 +4374,80 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
+  /workflows/{workflow}/jobs/{key}/user_data_stores:
+    get:
+      tags: []
+      summary: Retrieve all user data for a job.
+      description: Retrieve all user data for a job.
+      operationId: get_workflows_workflow_jobs_key_user_data_stores
+      parameters:
+      - name: workflow
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: key
+        in: path
+        description: Job key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: All user data stored for the job.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_15'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /workflows/{workflow}/jobs/{key}/user_data_consumes:
+    get:
+      tags: []
+      summary: Retrieve all user data consumed by a job.
+      description: Retrieve all user data consumed by a job.
+      operationId: get_workflows_workflow_jobs_key_user_data_consumes
+      parameters:
+      - name: workflow
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: key
+        in: path
+        description: Job key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: All user data consumed by the job.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_15'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
   /workflows/{workflow}/results/find_by_job/{key}:
     get:
       tags: []
@@ -5491,6 +5543,23 @@ components:
           type: string
         _rev:
           type: string
+    key_user_data_model:
+      type: object
+      properties:
+        is_ephemeral:
+          type: boolean
+          default: false
+        name:
+          type: string
+        data:
+          type: object
+          properties: {}
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
     workflow_aws_schedulers_model:
       type: object
       properties:
@@ -5837,6 +5906,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/files_key_model'
+        user_data:
+          type: array
+          items:
+            $ref: '#/components/schemas/key_user_data_model'
         resource_requirements:
           type: array
           items:
@@ -6020,6 +6093,23 @@ components:
           type: integer
         has_more:
           type: boolean
+    user_data_key_model:
+      type: object
+      properties:
+        is_ephemeral:
+          type: boolean
+          default: false
+        name:
+          type: string
+        data:
+          type: object
+          properties: {}
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
     inline_response_200_4:
       required:
       - hostname
@@ -6043,10 +6133,9 @@ components:
     workflowsworkflowjobs_spark_params:
       type: object
       properties:
-        use_spark_submit:
-          type: boolean
-          default: true
         master_url:
+          type: string
+        conf_dir:
           type: string
         conf:
           type: array
@@ -6330,7 +6419,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/edges_name_model'
+            $ref: '#/components/schemas/key_user_data_model'
         skip:
           type: integer
         max_limit:
@@ -6365,12 +6454,6 @@ components:
         has_more:
           type: boolean
     inline_response_200_17:
-      type: object
-      properties:
-        items:
-          type: object
-          properties: {}
-    inline_response_200_16:
       required:
       - count
       - has_more
@@ -6383,6 +6466,29 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/workflow_job_specifications_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    inline_response_200_16:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/edges_name_model'
         skip:
           type: integer
         max_limit:
@@ -6624,6 +6730,23 @@ components:
           type: string
         _rev:
           type: string
+    workflow_user_data_model:
+      type: object
+      properties:
+        is_ephemeral:
+          type: boolean
+          default: false
+        name:
+          type: string
+        data:
+          type: object
+          properties: {}
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
     config_key_model:
       type: object
       properties:
@@ -6749,6 +6872,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/files_key_model'
+        user_data:
+          type: array
+          items:
+            $ref: '#/components/schemas/key_user_data_model'
         resource_requirements:
           type: array
           items:
@@ -6769,11 +6896,6 @@ components:
           type: string
         command:
           type: string
-        user_data:
-          type: array
-          items:
-            type: object
-            properties: {}
         cancel_on_blocking_job_failure:
           type: boolean
           default: true
@@ -6784,6 +6906,14 @@ components:
           type: object
         spark_params:
           $ref: '#/components/schemas/workflowsworkflowjobs_spark_params'
+        consumes_user_data:
+          type: array
+          items:
+            type: string
+        stores_user_data:
+          type: array
+          items:
+            type: string
         resource_requirements:
           type: string
         input_files:

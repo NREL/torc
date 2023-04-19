@@ -105,7 +105,7 @@ router.put('/workflows/:workflow/jobs/:key/resource_requirements/:rr_key', funct
     const edge = query.setOrReplaceJobResourceRequirements(job, rr, workflow);
     res.send(edge);
   } catch (e) {
-    utils.handleArangoApiErrors(e, res, `Get jobs resource_requirements key=${key}`);
+    utils.handleArangoApiErrors(e, res, `Update jobs resource_requirements key=${key}`);
   }
 })
     .pathParam('workflow', joi.string().required(), 'Workflow key')
@@ -123,7 +123,7 @@ router.get('/workflows/:workflow/jobs/:key/process_stats', function(req, res) {
     const result = query.listJobProcessStats(doc, workflow);
     res.send(result);
   } catch (e) {
-    utils.handleArangoApiErrors(e, res, `Get jobs process_stats key=${key}`);
+    utils.handleArangoApiErrors(e, res, `Update jobs process_stats key=${key}`);
   }
 })
     .pathParam('workflow', joi.string().required(), 'Workflow key')
@@ -217,25 +217,51 @@ router.post('/workflows/:workflow/jobs/:key/user_data', function(req, res) {
 })
     .pathParam('workflow', joi.string().required(), 'Workflow key')
     .pathParam('key', joi.string().required(), 'Job key')
-    .body(joi.object().required(), 'User data for the job.')
-    .response(joi.object().required(), 'Database information for the user data.')
+    .body(schemas.userData, 'User data for the job.')
+    .response(schemas.userData, 'Database information for the user data.')
     .summary('Store user data for a job.')
     .description('Store user data for a job and connect the two vertexes.');
 
-router.get('/workflows/:workflow/jobs/:key/user_data', function(req, res) {
+router.get('/workflows/:workflow/jobs/:key/user_data_stores', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(workflowKey, res);
   const job = documents.getWorkflowDocument(workflow, 'jobs', key, res);
   try {
     // Shouldn't need skip and limit, but that could be added.
-    res.send({items: query.getUserDataStoredByJob(job, workflow)});
+    const items = query.getUserDataStoredByJob(job, workflow);
+    if (items.length > MAX_TRANSFER_RECORDS) {
+      throw new Error(`Bug: unhandled case where length of items is too big: ${items.length}`);
+    }
+    res.send(utils.makeCursorResult(items, 0, MAX_TRANSFER_RECORDS, items.length));
   } catch (e) {
-    utils.handleArangoApiErrors(e, res, `Get jobs user_data key=${key}`);
+    utils.handleArangoApiErrors(e, res, `Get jobs user_data stored key=${key}`);
   }
 })
     .pathParam('workflow', joi.string().required(), 'Workflow key')
     .pathParam('key', joi.string().required(), 'Job key')
-    .response(schemas.jobUserDataResponse, 'All user data stored for the job.')
+    .response(schemas.batchUserData, 'All user data stored for the job.')
     .summary('Retrieve all user data for a job.')
     .description('Retrieve all user data for a job.');
+
+router.get('/workflows/:workflow/jobs/:key/user_data_consumes', function(req, res) {
+  const workflowKey = req.pathParams.workflow;
+  const key = req.pathParams.key;
+  const workflow = documents.getWorkflow(workflowKey, res);
+  const job = documents.getWorkflowDocument(workflow, 'jobs', key, res);
+  try {
+    // Shouldn't need skip and limit, but that could be added.
+    const items = query.getUserDataConsumedByJob(job, workflow);
+    if (items.length > MAX_TRANSFER_RECORDS) {
+      throw new Error(`Bug: unhandled case where length of items is too big: ${items.length}`);
+    }
+    res.send(utils.makeCursorResult(items, 0, MAX_TRANSFER_RECORDS, items.length));
+  } catch (e) {
+    utils.handleArangoApiErrors(e, res, `Get jobs user_data consumed key=${key}`);
+  }
+})
+    .pathParam('workflow', joi.string().required(), 'Workflow key')
+    .pathParam('key', joi.string().required(), 'Job key')
+    .response(schemas.batchUserData, 'All user data consumed by the job.')
+    .summary('Retrieve all user data consumed by a job.')
+    .description('Retrieve all user data consumed by a job.');

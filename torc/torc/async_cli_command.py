@@ -153,6 +153,7 @@ class AsyncCliCommand(AsyncJobBase):
         self._stderr_fp = open(stderr_filename, "w", encoding="utf-8")
         env = os.environ.copy()
         env["TORC_JOB_KEY"] = self._db_job.key
+        # TORC_WORKFLOW_KEY is also set
         if self._db_job.spark_params:
             self._pipe = self._run_spark_command(env=env)
         else:
@@ -170,8 +171,10 @@ class AsyncCliCommand(AsyncJobBase):
 
     def _run_spark_command(self, env):
         params = self._db_job.spark_params
-        conf_params = [f"--conf {name}={value}" for name, value in params.conf]
+        conf_params = [f"--conf {x.name}={x.value}" for x in params.conf]
         conf_str = " ".join(conf_params)
+        if params.conf_dir:
+            env["SPARK_CONF_DIR"] = params.conf_dir
         cmd = f"spark-submit --master={params.master_url} {conf_str} {self._db_job.command}"
         return self._run_command(cmd, env)
 

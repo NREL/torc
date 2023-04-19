@@ -45,9 +45,11 @@ function addJobSpecification(jobSpec, workflow) {
   const needsCollection = config.getWorkflowCollection(workflow, 'needs');
   const producesCollection = config.getWorkflowCollection(workflow, 'produces');
   const requiresCollection = config.getWorkflowCollection(workflow, 'requires');
+  const consumesCollection = config.getWorkflowCollection(workflow, 'consumes');
   const rrCollection = config.getWorkflowCollection(workflow, 'resource_requirements');
   const scheduledBysCollection = config.getWorkflowCollection(workflow, 'scheduled_bys');
   const storesCollection = config.getWorkflowCollection(workflow, 'stores');
+  const userDataCollection = config.getWorkflowCollection(workflow, 'user_data');
 
   let schedulerConfigId = null;
 
@@ -64,6 +66,12 @@ function addJobSpecification(jobSpec, workflow) {
   if (jobSpec.scheduler != '') {
     schedulerConfigId = getSchedulerConfig(jobSpec.scheduler, workflow)._id;
   }
+  for (const name of jobSpec.consumes_user_data) {
+    getDocumentByUniqueFilter(userDataCollection, {name: name});
+  }
+  for (const name of jobSpec.stores_user_data) {
+    getDocumentByUniqueFilter(userDataCollection, {name: name});
+  }
   if (jobSpec.resource_requirements != null) {
     getDocumentByUniqueFilter(rrCollection, {name: jobSpec.resource_requirements});
   }
@@ -72,7 +80,7 @@ function addJobSpecification(jobSpec, workflow) {
     name: jobSpec.name,
     command: jobSpec.command,
     cancel_on_blocking_job_failure: jobSpec.cancel_on_blocking_job_failure,
-    spark_params: jobSpec.sparkParams,
+    spark_params: jobSpec.spark_params,
     supports_termination: jobSpec.supports_termination,
     run_id: 0,
     internal: schemas.jobInternal.validate({}).value,
@@ -96,6 +104,16 @@ function addJobSpecification(jobSpec, workflow) {
     const edge = {_from: blockingJob._id, _to: job._id};
     blocksCollection.save(edge);
   }
+  for (const name of jobSpec.consumes_user_data) {
+    const userData = getDocumentByUniqueFilter(userDataCollection, {name: name});
+    const edge = {_from: job._id, _to: userData._id};
+    consumesCollection.save(edge);
+  }
+  for (const name of jobSpec.stores_user_data) {
+    const userData = getDocumentByUniqueFilter(userDataCollection, {name: name});
+    const edge = {_from: job._id, _to: userData._id};
+    storesCollection.save(edge);
+  }
   if (jobSpec.resource_requirements != null) {
     const rr = getDocumentByUniqueFilter(rrCollection, {name: jobSpec.resource_requirements});
     const edge = {_from: job._id, _to: rr._id};
@@ -104,10 +122,6 @@ function addJobSpecification(jobSpec, workflow) {
   if (schedulerConfigId != null) {
     const edge = {_from: job._id, _to: schedulerConfigId};
     scheduledBysCollection.save(edge);
-  }
-  for (const userData of jobSpec.user_data) {
-    const doc = addUserData(userData, workflow);
-    storesCollection.save({_from: job._id, _to: doc._id});
   }
   return job;
 }
@@ -220,6 +234,19 @@ function cancelWorkflow(workflow) {
   status.is_canceled = true;
   db.workflow_statuses.update(status, status);
   query.cancelWorkflowJobs(workflow);
+}
+
+/**
+ * Clear all ephemeral user data.
+ * @param {Object} workflow
+ */
+function clearEphemeralUserData(workflow) {
+  const collection = config.getWorkflowCollection(workflow, 'user_data');
+  for (const item of collection.byExample({is_ephemeral: true})) {
+    for (const key of Object.keys(item.data)) {
+      delete item.data[key];
+    }
+  }
 }
 
 /**
@@ -370,6 +397,7 @@ module.exports = {
   addUserData,
   addWorkflow,
   cancelWorkflow,
+  clearEphemeralUserData,
   deleteWorkflow,
   getSchedulerConfig,
   getWorkflow,

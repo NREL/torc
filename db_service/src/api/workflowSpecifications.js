@@ -178,6 +178,9 @@ function addWorkflowSpecification(spec, workflow) {
   for (const item of spec.resource_requirements) {
     documents.addResourceRequirements(item, workflow);
   }
+  for (const item of spec.user_data) {
+    documents.addUserData(item, workflow);
+  }
   for (const item of spec.jobs) {
     documents.addJobSpecification(item, workflow);
   }
@@ -193,6 +196,7 @@ function checkDependencies(workflow) {
   const schedulerConfigs = new Set();
   const jobs = new Set();
   const resourceRequirements = new Set();
+  const userDataNames = new Set();
 
   for (const item of workflow.files) {
     files.add(item.name);
@@ -211,6 +215,9 @@ function checkDependencies(workflow) {
   }
   for (const item of workflow.resource_requirements) {
     resourceRequirements.add(item.name);
+  }
+  for (const item of workflow.user_data) {
+    userDataNames.add(item.name);
   }
 
   for (const job of workflow.jobs) {
@@ -232,6 +239,16 @@ function checkDependencies(workflow) {
     if (job.scheduler != '') {
       if (!schedulerConfigs.has(job.scheduler)) {
         throw new Error(`Invalid scheduler=${job.scheduler} in job=${JSON.stringify(job)}`);
+      }
+    }
+    for (const name of job.consumes_user_data) {
+      if (!userDataNames.has(name)) {
+        throw new Error(`Invalid consumes_user_data=${name} in job ${JSON.stringify(job)}`);
+      }
+    }
+    for (const name of job.stores_user_data) {
+      if (!userDataNames.has(name)) {
+        throw new Error(`Invalid stores_user_data=${name} in job ${JSON.stringify(job)}`);
       }
     }
     const rr = job.resource_requirements;

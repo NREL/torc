@@ -162,7 +162,7 @@ def modify(ctx, api, resource_requirements_key, **kwargs):
         )
         if output_format == "text":
             logger.info(
-                "Modified resource requirements %s to database",
+                "Modified resource requirements key = %s",
                 resource_requirements_key,
             )
         else:

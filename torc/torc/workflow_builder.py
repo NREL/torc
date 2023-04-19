@@ -23,6 +23,7 @@ from swagger_client.models.workflow_slurm_schedulers_model import (
 from swagger_client.models.workflow_specifications_schedulers import (
     WorkflowSpecificationsSchedulers,
 )
+from swagger_client.models.workflow_user_data_model import WorkflowUserDataModel
 
 
 class WorkflowBuilder:
@@ -32,9 +33,11 @@ class WorkflowBuilder:
         self._files = []
         self._jobs = []
         self._resource_requirements = []
+        self._resources = []
         self._aws_schedulers = []
         self._local_schedulers = []
         self._slurm_schedulers = []
+        self._user_data = []
 
     def add_file(self, *args, **kwargs) -> WorkflowFilesModel:
         """Add a file and return it."""
@@ -66,6 +69,11 @@ class WorkflowBuilder:
         self._slurm_schedulers.append(WorkflowSlurmSchedulersModel(*args, **kwargs))
         return self._slurm_schedulers[-1]
 
+    def add_user_data(self, *args, **kwargs) -> WorkflowUserDataModel:
+        """Add user data and return it."""
+        self._user_data.append(WorkflowUserDataModel(*args, **kwargs))
+        return self._user_data[-1]
+
     def build(self, *args, **kwargs) -> WorkflowSpecificationsModel:
         """Build a workflow specification from the stored parameters."""
         return WorkflowSpecificationsModel(
@@ -78,5 +86,6 @@ class WorkflowBuilder:
                 local_schedulers=self._local_schedulers or None,
                 slurm_schedulers=self._slurm_schedulers or None,
             ),
+            user_data=self._user_data,
             **kwargs
         )

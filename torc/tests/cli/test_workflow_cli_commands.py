@@ -321,13 +321,17 @@ def test_job_commands(create_workflow_cli):
         url,
         "-F",
         "json",
-        "jobs",
-        "add-user-data",
+        "user-data",
+        "add",
+        "-n",
+        "my-output",
+        "-s",
         job_key,
+        "-d",
         f"'{json.dumps(user_data)}'",
     ]
     result = _run_and_convert_output_from_json(cmd)
-    ud_key = result["keys"][0]
+    ud_key = result["key"]
     _run_and_check_output(
         ["-k", key, "-u", url, "jobs", "list-user-data", job_key], ("key1", "val1")
     )

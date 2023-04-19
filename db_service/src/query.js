@@ -56,6 +56,54 @@ function addBlocksEdgesFromFiles(workflow) {
 }
 
 /**
+ * Add 'blocks' edges between jobs by looking at their user_data consumes/stores edges.
+ * @param {Object} workflow
+ */
+function addBlocksEdgesFromUserData(workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const blocksCollection = config.getWorkflowCollection(workflow, 'blocks');
+  const consumes = config.getWorkflowCollectionName(workflow, 'consumes');
+  const consumesCollection = config.getWorkflowCollection(workflow, 'consumes');
+  const stores = config.getWorkflowCollectionName(workflow, 'stores');
+  const userData = config.getWorkflowCollection(workflow, 'user_data');
+  for (const item of userData.all()) {
+    const fromVertices = query`
+      FOR v
+          IN 1
+          INBOUND ${item._id}
+          GRAPH ${graphName}
+          OPTIONS { edgeCollections: ${stores} }
+          RETURN v._id
+    `;
+    if (fromVertices.count() > 0) {
+      const toVertices = query`
+        FOR v
+            IN 1
+            INBOUND ${item._id}
+            GRAPH ${graphName}
+            OPTIONS { edgeCollections: ${consumes} }
+            RETURN v._id
+      `;
+      for (const item of utils.product(
+          fromVertices.toArray(),
+          toVertices.toArray(),
+      )) {
+        const fromVertex = item[0];
+        const toVertex = item[1];
+        const cursor = query({count: true})`
+            FOR edge IN ${consumesCollection}
+              FILTER edge._from == ${fromVertex} AND edge._to == ${toVertex}
+              RETURN edge
+            `;
+        if (cursor.count() == 0) {
+          blocksCollection.save({_from: fromVertex, _to: toVertex});
+        }
+      }
+    }
+  }
+}
+
+/**
  * Cancel all active jobs in the workflow.
  * @param {Object} workflow
  */
@@ -403,6 +451,29 @@ function getLatestJobResult(job, workflow) {
   }
 
   return results.slice(-1)[0];
+}
+
+/**
+ * Return the user data consumed by the job.
+ * @param {Object} job
+ * @param {Object} workflow
+ * @return {ArangoQueryCursor}
+ */
+function getUserDataConsumedByJob(job, workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'consumes');
+  const cursor = query({count: true})`
+    FOR v, e, p
+      IN 1
+      OUTBOUND ${job._id}
+      GRAPH ${graphName}
+      OPTIONS { edgeCollections: ${edgeName} }
+      RETURN p.vertices[1]
+  `;
+  if (cursor.count() == 0) {
+    return [];
+  }
+  return cursor.toArray();
 }
 
 /**
@@ -790,9 +861,9 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
       const cursor = query({count: true})`
         FOR job IN ${collection}
           FILTER job.status == ${JobStatus.Ready}
-            && job.internal.memory_bytes < ${availableMemory}
-            && job.internal.num_cpus < ${availableCpus}
-            && job.internal.runtime_seconds < ${workerTimeLimit}
+            && job.internal.memory_bytes <= ${availableMemory}
+            && job.internal.num_cpus <= ${availableCpus}
+            && job.internal.runtime_seconds <= ${workerTimeLimit}
             && job.internal.num_nodes == ${workerResources.num_nodes}
             && (${schedulerConfigId} == '' || job.internal.scheduler_config_id == ''
             || job.internal.scheduler_config_id == ${schedulerConfigId})
@@ -822,9 +893,9 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
   });
 
   if (jobs.length == 0) {
-    reason.message = `No jobs matched status='ready' memory_bytes < ${availableMemory} ` +
-      `num_cpus < ${availableCpus} runtime_seconds < ${workerTimeLimit} ` +
-      `num_nodes == ${workerResources.num_nodes} scheduler_config_id == ${schedulerConfigId}`;
+    reason.message = `No jobs matched status='ready', memory_bytes <= ${availableMemory}, ` +
+      `num_cpus <= ${availableCpus}, runtime_seconds <= ${workerTimeLimit}, ` +
+      `num_nodes == ${workerResources.num_nodes}, scheduler_config_id == ${schedulerConfigId}`;
   }
   // console.log(`Prepared ${jobs.length} jobs for submission.`);
   return jobs;
@@ -1062,6 +1133,7 @@ function updateWorkflowConfig(workflow, config) {
 
 module.exports = {
   addBlocksEdgesFromFiles,
+  addBlocksEdgesFromUserData,
   cancelWorkflowJobs,
   getReadyJobRequirements,
   getBlockingJobs,
@@ -1073,6 +1145,7 @@ module.exports = {
   getJobsThatNeedFile,
   listJobResults,
   getLatestJobResult,
+  getUserDataConsumedByJob,
   getUserDataStoredByJob,
   getWorkflowConfig,
   getWorkflowStatus,

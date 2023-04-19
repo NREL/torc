@@ -94,6 +94,7 @@ Edges
 -----
 
 - blocks: job blocks another job
+- consumes: job consumes user data object in the database
 - executed: compute_node executed jobs
 - needs: job needs a file
 - nodes_used: compute nodes used resources - connects compute nodes to usage stats
@@ -101,7 +102,7 @@ Edges
 - produces: job produces a file
 - requires: job has a set of resource requirements
 - returned: job returned a result
-- scheduled_by: job is scheduled by a specific scheduler, like Slurm or AWS Batch
+- scheduled_bys: job is scheduled by a specific scheduler, like Slurm or AWS Batch
 - stores: job stores one or more user data objects
 
 Documents

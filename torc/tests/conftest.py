@@ -96,7 +96,7 @@ def diamond_workflow(tmp_path):
     builder.add_job(
         name="work1",
         command=f"python {WORK} -i {f1.path} -o {f2.path}",
-        user_data=[{"key1": "val1"}],
+        consumes_user_data=["my_val1"],
         input_files=[f1.name],
         output_files=[f2.name],
         resource_requirements=medium.name,
@@ -105,7 +105,7 @@ def diamond_workflow(tmp_path):
     builder.add_job(
         name="work2",
         command=f"python {WORK} -i {f1.path} -o {f3.path}",
-        user_data=[{"key2": "val2"}],
+        consumes_user_data=["my_val2"],
         input_files=[f1.name],
         output_files=[f3.name],
         resource_requirements=large.name,
@@ -118,6 +118,16 @@ def diamond_workflow(tmp_path):
         output_files=[f4.name],
         resource_requirements=small.name,
         scheduler="local_schedulers/test",
+    )
+    builder.add_user_data(
+        name="my_val1",
+        is_ephemeral=False,
+        data={"key1": "val1"},
+    )
+    builder.add_user_data(
+        name="my_val2",
+        is_ephemeral=False,
+        data={"key2": "val2"},
     )
 
     spec = builder.build()

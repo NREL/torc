@@ -10,6 +10,9 @@ import pytest
 from swagger_client.models.prepare_jobs_for_submission_key_model import (
     PrepareJobsForSubmissionKeyModel,
 )
+from swagger_client.models.workflow_user_data_model import (
+    WorkflowUserDataModel,
+)
 
 from torc.common import GiB
 from torc.job_runner import JobRunner
@@ -25,11 +28,11 @@ def test_run_workflow(diamond_workflow):
     db, scheduler_config_id, output_dir = diamond_workflow
     api = db.api
     timer_stats_collector.enable()
-    user_data_work1 = api.get_workflows_workflow_jobs_key_user_data(
+    user_data_work1 = api.get_workflows_workflow_jobs_key_user_data_consumes(
         db.workflow.key, db.get_document_key("jobs", "work1")
     )
     assert len(user_data_work1.items) == 1
-    assert user_data_work1.items[0]["key1"] == "val1"
+    assert user_data_work1.items[0].data["key1"] == "val1"
     mgr = WorkflowManager(api, db.workflow.key)
     config = api.get_workflows_config_key(db.workflow.key)
     config.compute_node_resource_stats.cpu = True
@@ -61,16 +64,26 @@ def test_run_workflow(diamond_workflow):
         # assert file.file_hash
         assert file.st_mtime
 
-    result_data_work1 = {"result": 1}
-    result_data_overall = {"overall_result": 2}
-    api.post_workflows_workflow_jobs_key_user_data(
+    result_data_work1 = WorkflowUserDataModel(name="result1", data={"result": 1})
+    result_data_overall = WorkflowUserDataModel(name="overall_result", data={"overall_result": 2})
+    result_data_work1 = api.post_workflows_workflow_jobs_key_user_data(
         result_data_work1, db.workflow.key, db.get_document_key("jobs", "work1")
     )
-    user_data_work1 = api.get_workflows_workflow_jobs_key_user_data(
+    ud_work1_consumes = api.get_workflows_workflow_jobs_key_user_data_consumes(
         db.workflow.key, db.get_document_key("jobs", "work1")
     )
-    assert len(user_data_work1.items) == 2
-    api.post_workflows_workflow_user_data(result_data_overall, db.workflow.key)
+    assert len(ud_work1_consumes.items) == 1
+    ud_work1_produces = api.get_workflows_workflow_jobs_key_user_data_stores(
+        db.workflow.key, db.get_document_key("jobs", "work1")
+    )
+    assert len(ud_work1_produces.items) == 1
+    result_data_overall = api.post_workflows_workflow_user_data(
+        result_data_overall, db.workflow.key
+    )
+    assert (
+        api.get_workflows_workflow_user_data_key(db.workflow.key, result_data_overall.key).name
+        == "overall_result"
+    )
 
     events = db.list_documents("events")
     # start for workflow, start and stop for worker, start and stop for each job

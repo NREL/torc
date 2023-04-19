@@ -139,7 +139,9 @@ router.post('/workflows/initialize_jobs/:key', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   try {
+    documents.clearEphemeralUserData(workflow);
     query.addBlocksEdgesFromFiles(workflow);
+    query.addBlocksEdgesFromUserData(workflow);
     query.initializeJobStatus(workflow);
     res.send({message: 'Initialized job status'});
   } catch (e) {
