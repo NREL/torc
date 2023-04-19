@@ -17,8 +17,8 @@ This is the recommended process because the JSON file defines everything about t
 
 Refer to this `example <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.json5>`_.
 
-..note:: In that example torc determines the order of execution of jobs based on the job/file
-input/output relationships.
+.. note:: In that example torc determines the order of execution of jobs based on the job/file
+   input/output relationships.
 
 You can create an empty version of this file with the command below. Save the output to a file
 and customize as you wish.
