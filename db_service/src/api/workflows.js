@@ -182,8 +182,38 @@ router.post('/workflows/prepare_jobs_for_submission/:key', function(req, res) {
         {jobs: joi.array().items(schemas.job), reason: joi.string()}),
     'Jobs that are ready for submission.',
     )
-    .summary('Return ready jobs')
-    .description('Return jobs that are ready for submission. Sets status to submitted_pending');
+    .summary('Return ready jobs, accounting for resource requirements.')
+    .description('Return jobs that are ready for submission and meet worker resource ' +
+    'Sets status to submitted_pending.');
+
+router.post('/workflows/:key/prepare_next_jobs_for_submission', function(req, res) {
+  const key = req.pathParams.key;
+  const limit = req.queryParams.limit;
+  const workflow = documents.getWorkflow(key, res);
+  try {
+    const status = query.getWorkflowStatus(workflow);
+    if (status.is_canceled) {
+      res.send([]);
+    } else {
+      const jobs = query.prepareJobsForSubmissionNoResourceChecks(workflow, limit);
+      const items = [];
+      for (const job of jobs) {
+        items.push(utils.convertJobForApi(job));
+      }
+      res.send({jobs: jobs});
+    }
+  } catch (e) {
+    utils.handleArangoApiErrors(e, res, `prepare_jobs_for_submission workflow key=${key}`);
+  }
+})
+    .pathParam('key', joi.string().required(), 'Workflow key')
+    .queryParam('limit', joi.number().default(1))
+    .response(joi.object().required().keys({jobs: joi.array().items(schemas.job)}),
+        'Jobs that are ready for submission.',
+    )
+    .summary('Return user-requested number of ready jobs.')
+    .description('Return user-requested number of jobs that are ready for submission. ' +
+      'Sets status to submitted_pending.');
 
 router.post('/workflows/auto_tune_resource_requirements/:key', function(req, res) {
   const key = req.pathParams.key;

@@ -901,6 +901,44 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
   return jobs;
 }
 
+/**
+ * Prepare a list of jobs for submission with noo resource requirement considerations.
+ * @param {Object} workflow
+ * @param {Number} limit
+ * @return {Array}
+ */
+function prepareJobsForSubmissionNoResourceChecks(workflow, limit) {
+  const jobs = [];
+  const collection = config.getWorkflowCollection(workflow, 'jobs');
+  const collectionName = config.getWorkflowCollectionName(workflow, 'jobs');
+
+  db._executeTransaction({
+    collections: {
+      exclusive: collectionName,
+      allowImplicit: false,
+    },
+    action: function() {
+      const cursor = query({count: true})`
+        FOR job IN ${collection}
+          FILTER job.status == ${JobStatus.Ready}
+          LIMIT ${limit}
+          RETURN job
+      `;
+
+      // This implementation stores the job resource information in the internal object
+      // so that it doesn't have to run a graph query while holding an exclusive lock.
+      for (const job of cursor) {
+        job.status = JobStatus.SubmittedPending;
+        const meta = collection.update(job, job);
+        Object.assign(job, meta);
+        jobs.push(job);
+      }
+    },
+  });
+
+  return jobs;
+}
+
 /** Reset job status to uninitialized.
  * @param {Object} workflow
  */
@@ -1160,6 +1198,7 @@ module.exports = {
   listJobProcessStats,
   manageJobStatusChange,
   prepareJobsForSubmission,
+  prepareJobsForSubmissionNoResourceChecks,
   processAutoTuneResourceRequirementsResults,
   resetJobStatus,
   resetWorkflowConfig,

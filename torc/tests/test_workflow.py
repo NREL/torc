@@ -4,6 +4,7 @@ import json
 import logging
 import subprocess
 import time
+from datetime import datetime
 from pathlib import Path
 
 import pytest
@@ -13,6 +14,7 @@ from swagger_client.models.prepare_jobs_for_submission_key_model import (
 from swagger_client.models.workflow_user_data_model import (
     WorkflowUserDataModel,
 )
+from swagger_client.models.workflow_results_model import WorkflowResultsModel
 
 from torc.common import GiB
 from torc.job_runner import JobRunner
@@ -51,7 +53,7 @@ def test_run_workflow(diamond_workflow):
     )
     runner.run_worker()
 
-    assert api.get_workflows_is_complete_key(db.workflow.key)
+    assert api.get_workflows_is_complete_key(db.workflow.key).is_complete
     for name in ["preprocess", "work1", "work2", "postprocess"]:
         result = api.get_workflows_workflow_results_find_by_job_key(
             db.workflow.key, db.get_document_key("jobs", name)
@@ -113,7 +115,7 @@ def test_run_workflow_user_data_dependencies(diamond_workflow_user_data):
     )
     runner.run_worker()
 
-    assert api.get_workflows_is_complete_key(db.workflow.key)
+    assert api.get_workflows_is_complete_key(db.workflow.key).is_complete
     for name in ["preprocess", "work1", "work2", "postprocess"]:
         result = api.get_workflows_workflow_results_find_by_job_key(
             db.workflow.key, db.get_document_key("jobs", name)
@@ -134,6 +136,25 @@ def test_run_workflow_user_data_dependencies(diamond_workflow_user_data):
     # TODO: workflow restarts does not support changes to user_data yet
 
 
+def test_prepare_next_jobs_for_submission(diamond_workflow):
+    """Test the API command prepare_next_jobs_for_submission."""
+    db = diamond_workflow[0]
+    api = db.api
+    mgr = WorkflowManager(api, db.workflow.key)
+    mgr.start()
+    result = api.post_workflows_key_prepare_next_jobs_for_submission(db.workflow.key, limit=5)
+    assert len(result.jobs) == 1
+    _fake_complete_job(api, db.workflow.key, result.jobs[0])
+    result = api.post_workflows_key_prepare_next_jobs_for_submission(db.workflow.key, limit=5)
+    assert len(result.jobs) == 2
+    for job in result.jobs:
+        _fake_complete_job(api, db.workflow.key, job)
+    result = api.post_workflows_key_prepare_next_jobs_for_submission(db.workflow.key, limit=5)
+    assert len(result.jobs) == 1
+    _fake_complete_job(api, db.workflow.key, result.jobs[0])
+    assert api.get_workflows_is_complete_key(db.workflow.key).is_complete
+
+
 @pytest.mark.parametrize("cancel_on_blocking_job_failure", [True, False])
 def test_cancel_with_failed_job(workflow_with_cancel):
     """Test the cancel_on_blocking_job_failure feature for jobs."""
@@ -145,7 +166,7 @@ def test_cancel_with_failed_job(workflow_with_cancel):
         api, db.workflow, output_dir, time_limit="P0DT24H", job_completion_poll_interval=0.1
     )
     runner.run_worker()
-    assert api.get_workflows_is_complete_key(db.workflow.key)
+    assert api.get_workflows_is_complete_key(db.workflow.key).is_complete
     assert db.get_document("jobs", "job1").status == "done"
     result = api.get_workflows_workflow_results_find_by_job_key(
         db.workflow.key, db.get_document_key("jobs", "job1")
@@ -237,7 +258,7 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
     )
     runner.run_worker()
 
-    assert api.get_workflows_is_complete_key(db.workflow.key)
+    assert api.get_workflows_is_complete_key(db.workflow.key).is_complete
     stage2_events = db.list_documents("events")
     preprocess = db.get_document_key("jobs", "preprocess")
     work1 = db.get_document_key("jobs", "work1")
@@ -296,7 +317,7 @@ def test_run_independent_job_workflow(independent_job_workflow, tmp_path):
     )
     runner.run_worker()
 
-    assert db.api.get_workflows_is_complete_key(db.workflow.key)
+    assert db.api.get_workflows_is_complete_key(db.workflow.key).is_complete
     for name in (str(i) for i in range(num_jobs)):
         result = db.api.get_workflows_workflow_results_find_by_job_key(
             db.workflow.key, db.get_document_key("jobs", name)
@@ -338,12 +359,30 @@ def test_concurrent_submitters(independent_job_workflow, tmp_path):
         time.sleep(1)
 
     assert ret == 0
-    assert db.api.get_workflows_is_complete_key(db.workflow.key)
+    assert db.api.get_workflows_is_complete_key(db.workflow.key).is_complete
     for name in (str(i) for i in range(num_jobs)):
         result = db.api.get_workflows_workflow_results_find_by_job_key(
             db.workflow.key, db.get_document_key("jobs", name)
         )
         assert result.return_code == 0
+
+
+def _fake_complete_job(api, workflow_key, job):
+    job.run_id += 1
+    job = api.put_workflows_workflow_jobs_key(job, workflow_key, job.key)
+    status = "done"
+    result = WorkflowResultsModel(
+        job_key=job.key,
+        job_name=job.name,
+        run_id=job.run_id,
+        return_code=0,
+        exec_time_minutes=5,
+        completion_time=str(datetime.now()),
+        status=status,
+    )
+    job = api.post_workflows_workflow_jobs_key_complete_job_status_rev(
+        result, workflow_key, job.key, status, job._rev  # pylint: disable=protected-access
+    )
 
 
 def _get_job_keys_by_event(events, type_):

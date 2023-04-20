@@ -4877,6 +4877,49 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
+  /workflows/{key}/prepare_next_jobs_for_submission:
+    post:
+      tags: []
+      summary: Return user-requested number of ready jobs.
+      description: Return user-requested number of jobs that are ready for submission.
+        Sets status to submitted_pending.
+      operationId: post_workflows_key_prepare_next_jobs_for_submission
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 1.0
+      requestBody:
+        content:
+          '*/*': {}
+        required: false
+      responses:
+        "200":
+          description: Jobs that are ready for submission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_22'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
   /workflows/{key}/collection_names:
     get:
       tags: []
@@ -4898,7 +4941,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_22'
+                $ref: '#/components/schemas/inline_response_200_23'
         "500":
           description: Default error response.
           content:
@@ -5047,7 +5090,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_23'
+                $ref: '#/components/schemas/inline_response_200_24'
         "500":
           description: Default error response.
           content:
@@ -5087,7 +5130,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_24'
+                $ref: '#/components/schemas/inline_response_200_25'
         "500":
           description: Default error response.
           content:
@@ -5132,8 +5175,9 @@ paths:
   /workflows/prepare_jobs_for_submission/{key}:
     post:
       tags: []
-      summary: Return ready jobs
-      description: Return jobs that are ready for submission. Sets status to submitted_pending
+      summary: "Return ready jobs, accounting for resource requirements."
+      description: Return jobs that are ready for submission and meet worker resource
+        Sets status to submitted_pending.
       operationId: post_workflows_prepare_jobs_for_submission_key
       parameters:
       - name: key
@@ -5165,7 +5209,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_25'
+                $ref: '#/components/schemas/inline_response_200_26'
         "500":
           description: Default error response.
           content:
@@ -5397,7 +5441,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_26'
+                $ref: '#/components/schemas/inline_response_200_27'
         "500":
           description: Default error response.
           content:
@@ -5432,7 +5476,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_26'
+                $ref: '#/components/schemas/inline_response_200_27'
         "500":
           description: Default error response.
           content:
@@ -5711,10 +5755,10 @@ components:
     inline_response_200_22:
       type: object
       properties:
-        names:
+        jobs:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/jobs_key_model'
     inline_response_200_21:
       required:
       - count
@@ -5740,29 +5784,14 @@ components:
           type: boolean
     inline_response_200_24:
       required:
-      - max_memory_gb
-      - max_num_nodes
-      - max_runtime
-      - memory_gb
-      - num_cpus
-      - num_gpus
-      - num_jobs
+      - is_canceled
+      - is_complete
       type: object
       properties:
-        num_jobs:
-          type: integer
-        num_cpus:
-          type: integer
-        num_gpus:
-          type: integer
-        memory_gb:
-          type: number
-        max_memory_gb:
-          type: number
-        max_num_nodes:
-          type: integer
-        max_runtime:
-          type: string
+        is_canceled:
+          type: boolean
+        is_complete:
+          type: boolean
     workflowsstatuskey_auto_tune_status:
       type: object
       properties:
@@ -5808,15 +5837,12 @@ components:
         _rev:
           type: string
     inline_response_200_23:
-      required:
-      - is_canceled
-      - is_complete
       type: object
       properties:
-        is_canceled:
-          type: boolean
-        is_complete:
-          type: boolean
+        names:
+          type: array
+          items:
+            type: string
     inline_response_200_5:
       required:
       - count
@@ -5949,6 +5975,56 @@ components:
         _rev:
           type: string
     inline_response_200_26:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/jobs_key_model'
+        reason:
+          type: string
+    inline_response_200_25:
+      required:
+      - max_memory_gb
+      - max_num_nodes
+      - max_runtime
+      - memory_gb
+      - num_cpus
+      - num_gpus
+      - num_jobs
+      type: object
+      properties:
+        num_jobs:
+          type: integer
+        num_cpus:
+          type: integer
+        num_gpus:
+          type: integer
+        memory_gb:
+          type: number
+        max_memory_gb:
+          type: number
+        max_num_nodes:
+          type: integer
+        max_runtime:
+          type: string
+    edges_name_model:
+      required:
+      - _from
+      - _to
+      type: object
+      properties:
+        _from:
+          type: string
+        _to:
+          type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    inline_response_200_27:
       required:
       - auto_tune_status
       - is_canceled
@@ -5961,31 +6037,6 @@ components:
           type: integer
         auto_tune_status:
           $ref: '#/components/schemas/workflowsstatuskey_auto_tune_status'
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_25:
-      type: object
-      properties:
-        jobs:
-          type: array
-          items:
-            $ref: '#/components/schemas/jobs_key_model'
-        reason:
-          type: string
-    edges_name_model:
-      required:
-      - _from
-      - _to
-      type: object
-      properties:
-        _from:
-          type: string
-        _to:
-          type: string
         _key:
           type: string
         _id:
