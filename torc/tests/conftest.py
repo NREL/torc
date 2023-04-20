@@ -36,6 +36,9 @@ TEST_WORKFLOW = "test_workflow"
 PREPROCESS = Path("tests") / "scripts" / "preprocess.py"
 POSTPROCESS = Path("tests") / "scripts" / "postprocess.py"
 WORK = Path("tests") / "scripts" / "work.py"
+PREPROCESS_UD = Path("tests") / "scripts" / "preprocess_ud.py"
+POSTPROCESS_UD = Path("tests") / "scripts" / "postprocess_ud.py"
+WORK_UD = Path("tests") / "scripts" / "work_ud.py"
 INVALID = Path("tests") / "scripts" / "invalid.py"
 NOOP = Path("tests") / "scripts" / "noop.py"
 RC_JOB = Path("tests") / "scripts" / "resource_consumption.py"
@@ -60,7 +63,7 @@ def pytest_sessionfinish(session, exitstatus):  # pylint: disable=unused-argumen
 
 @pytest.fixture
 def diamond_workflow(tmp_path):
-    """Creates a diamond workflow out of 4 jobs."""
+    """Creates a diamond workflow out of 4 jobs using file-based dependencies."""
     api = _initialize_api()
     output_dir = tmp_path / "output"
     output_dir.mkdir()
@@ -128,6 +131,75 @@ def diamond_workflow(tmp_path):
         name="my_val2",
         is_ephemeral=False,
         data={"key2": "val2"},
+    )
+
+    spec = builder.build()
+    workflow = api.post_workflow_specifications(spec)
+    db = DatabaseInterface(api, workflow)
+    api.post_workflows_initialize_jobs_key(workflow.key)
+    scheduler = db.get_document("local_schedulers", "test")
+    yield db, scheduler.id, output_dir
+    api.delete_workflows_key(workflow.key)
+    api.api_client.close()
+
+
+@pytest.fixture
+def diamond_workflow_user_data(tmp_path):
+    """Creates a diamond workflow out of 4 jobs using user-data-based dependencies."""
+    api = _initialize_api()
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    builder = WorkflowBuilder()
+    inputs = builder.add_user_data(name="inputs", data={"val": 5})
+    d1 = builder.add_user_data(name="data1")
+    d2 = builder.add_user_data(name="data2")
+    d3 = builder.add_user_data(name="data3")
+    d4 = builder.add_user_data(name="data4")
+    d5 = builder.add_user_data(name="data5")
+
+    small = builder.add_resource_requirements(
+        name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
+    )
+    medium = builder.add_resource_requirements(
+        name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
+    )
+    large = builder.add_resource_requirements(
+        name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
+    )
+
+    scheduler = builder.add_local_scheduler(name="test")
+    builder.add_job(
+        name="preprocess",
+        command=f"python {PREPROCESS_UD}",
+        consumes_user_data=[inputs.name],
+        stores_user_data=[d1.name, d2.name],
+        resource_requirements=small.name,
+        scheduler="local_schedulers/test",
+    )
+    builder.add_job(
+        name="work1",
+        command=f"python {WORK_UD}",
+        consumes_user_data=[d1.name],
+        stores_user_data=[d3.name],
+        resource_requirements=medium.name,
+        scheduler="local_schedulers/test",
+    )
+    builder.add_job(
+        name="work2",
+        command=f"python {WORK_UD}",
+        consumes_user_data=[d2.name],
+        stores_user_data=[d4.name],
+        resource_requirements=large.name,
+        scheduler="local_schedulers/test",
+    )
+    builder.add_job(
+        name="postprocess",
+        command=f"python {POSTPROCESS_UD}",
+        consumes_user_data=[d3.name, d4.name],
+        stores_user_data=[d5.name],
+        resource_requirements=small.name,
+        scheduler="local_schedulers/test",
     )
 
     spec = builder.build()

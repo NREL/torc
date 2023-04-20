@@ -17,7 +17,14 @@ class DatabaseInterface:
 
     @staticmethod
     def _map_names_to_keys(api: DefaultApi, workflow_key):
-        doc_types = ("events", "files", "jobs", "local_schedulers", "resource_requirements")
+        doc_types = (
+            "events",
+            "files",
+            "jobs",
+            "local_schedulers",
+            "resource_requirements",
+            "user_data",
+        )
         lookup = defaultdict(dict)
         for doc_type in doc_types:
             method = getattr(api, f"get_workflows_workflow_{doc_type}")

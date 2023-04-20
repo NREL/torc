@@ -78,14 +78,14 @@ class WorkflowBuilder:
         """Build a workflow specification from the stored parameters."""
         return WorkflowSpecificationsModel(
             *args,
-            files=self._files,
-            jobs=self._jobs,
-            resource_requirements=self._resource_requirements,
+            files=self._files or None,
+            jobs=self._jobs or None,
+            resource_requirements=self._resource_requirements or None,
             schedulers=WorkflowSpecificationsSchedulers(
                 aws_schedulers=self._aws_schedulers or None,
                 local_schedulers=self._local_schedulers or None,
                 slurm_schedulers=self._slurm_schedulers or None,
             ),
-            user_data=self._user_data,
+            user_data=self._user_data or None,
             **kwargs
         )

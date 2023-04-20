@@ -97,6 +97,43 @@ def test_run_workflow(diamond_workflow):
     timer_stats_collector.log_stats(clear=True)
 
 
+def test_run_workflow_user_data_dependencies(diamond_workflow_user_data):
+    """Test execution of diamond workflow with user data dependencies."""
+    db, scheduler_config_id, output_dir = diamond_workflow_user_data
+    api = db.api
+    mgr = WorkflowManager(api, db.workflow.key)
+    mgr.start()
+    runner = JobRunner(
+        api,
+        db.workflow,
+        output_dir,
+        time_limit="P0DT24H",
+        job_completion_poll_interval=0.1,
+        scheduler_config_id=scheduler_config_id,
+    )
+    runner.run_worker()
+
+    assert api.get_workflows_is_complete_key(db.workflow.key)
+    for name in ["preprocess", "work1", "work2", "postprocess"]:
+        result = api.get_workflows_workflow_results_find_by_job_key(
+            db.workflow.key, db.get_document_key("jobs", name)
+        )
+        assert result.return_code == 0
+
+    expected_total = 0
+    for name in ("inputs", "data1", "data2", "data3", "data4", "data5"):
+        ud = db.get_document("user_data", name)
+        assert ud.data
+        if name == "inputs":
+            expected_total = ud.data["val"] + 1 + 1 + ud.data["val"] + 2 + 1
+        if name == "data5":
+            assert expected_total != 0
+            assert "result" in ud.data, ud.data
+            assert ud.data["result"] == expected_total
+
+    # TODO: workflow restarts does not support changes to user_data yet
+
+
 @pytest.mark.parametrize("cancel_on_blocking_job_failure", [True, False])
 def test_cancel_with_failed_job(workflow_with_cancel):
     """Test the cancel_on_blocking_job_failure feature for jobs."""
