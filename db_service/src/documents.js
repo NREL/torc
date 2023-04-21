@@ -79,8 +79,8 @@ function addJobSpecification(jobSpec, workflow) {
   const newJob = {
     name: jobSpec.name,
     command: jobSpec.command,
+    invocation_script: jobSpec.invocation_script,
     cancel_on_blocking_job_failure: jobSpec.cancel_on_blocking_job_failure,
-    spark_params: jobSpec.spark_params,
     supports_termination: jobSpec.supports_termination,
     run_id: 0,
     internal: schemas.jobInternal.validate({}).value,
@@ -242,9 +242,12 @@ function cancelWorkflow(workflow) {
  */
 function clearEphemeralUserData(workflow) {
   const collection = config.getWorkflowCollection(workflow, 'user_data');
+  // TODO: better filter
   for (const item of collection.byExample({is_ephemeral: true})) {
-    for (const key of Object.keys(item.data)) {
-      delete item.data[key];
+    if (item.data != null) {
+      for (const key of Object.keys(item.data)) {
+        delete item.data[key];
+      }
     }
   }
 }

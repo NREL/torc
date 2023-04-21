@@ -67,24 +67,18 @@ def sanitize_workflow(data: dict):
     the database.
     """
     for item in itertools.chain([data["config"]], data["files"], data["resource_requirements"]):
-        for key in _DATABASE_KEYS:
-            item.pop(key, None)
-    if "jobs" in data and not data["jobs"]:
-        data.pop("jobs")
-    for job in data.get("jobs", []):
-        # This is a messy workaround for the fact that the job schema is not ideal and does
-        # not allow nulls for spark_params.
-        if "spark_params" in job and job["spark_params"] is None:
-            job.pop("spark_params")
-    if "resource_requirements" in data and not data["resource_requirements"]:
-        data.pop("resource_requirements")
-    if "files" in data and not data["files"]:
-        data.pop("files")
-    for file in data.get("files", []):
-        for field in ("file_hash", "st_mtime"):
-            if field in file and file[field] is None:
-                file.pop(field)
+        if item is not None:
+            for key in _DATABASE_KEYS:
+                item.pop(key, None)
+    for collection in ("jobs", "resource_requirements", "files", "schedulers"):
+        if collection in data and not data[collection]:
+            data.pop(collection)
+    for collection in ("jobs", "resource_requirements", "files"):
+        for item in data.get(collection, []):
+            for field in [k for k, v in item.items() if not v]:
+                item.pop(field)
     for field in ("aws_schedulers", "local_schedulers", "slurm_schedulers"):
-        if field in data["schedulers"] and not data["schedulers"][field]:
+        schedulers = data.get("schedulers", {})
+        if schedulers and field in schedulers and not schedulers[field]:
             data["schedulers"].pop(field)
     return data

@@ -2455,13 +2455,6 @@ paths:
         explode: true
         schema:
           type: string
-      - name: job_name
-        in: query
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
       - name: run_id
         in: query
         required: false
@@ -5561,15 +5554,12 @@ components:
       - completion_time
       - exec_time_minutes
       - job_key
-      - job_name
       - return_code
       - run_id
       - status
       type: object
       properties:
         job_key:
-          type: string
-        job_name:
           type: string
         run_id:
           type: integer
@@ -5643,15 +5633,12 @@ components:
       - completion_time
       - exec_time_minutes
       - job_key
-      - job_name
       - return_code
       - run_id
       - status
       type: object
       properties:
         job_key:
-          type: string
-        job_name:
           type: string
         run_id:
           type: integer
@@ -5954,6 +5941,8 @@ components:
           type: string
         command:
           type: string
+        invocation_script:
+          type: object
         status:
           type: string
         cancel_on_blocking_job_failure:
@@ -5964,8 +5953,6 @@ components:
           default: false
         run_id:
           type: integer
-        spark_params:
-          $ref: '#/components/schemas/workflowsworkflowjobs_spark_params'
         internal:
           $ref: '#/components/schemas/workflowsworkflowjobs_internal'
         _key:
@@ -6181,17 +6168,6 @@ components:
           type: string
         _rev:
           type: string
-    workflowsworkflowjobs_spark_params:
-      type: object
-      properties:
-        master_url:
-          type: string
-        conf_dir:
-          type: string
-        conf:
-          type: array
-          items:
-            $ref: '#/components/schemas/workflowsworkflowjobs_spark_params_conf'
     workflow_config_model:
       type: object
       properties:
@@ -6346,6 +6322,8 @@ components:
           type: string
         command:
           type: string
+        invocation_script:
+          type: object
         status:
           type: string
         cancel_on_blocking_job_failure:
@@ -6356,8 +6334,6 @@ components:
           default: false
         run_id:
           type: integer
-        spark_params:
-          $ref: '#/components/schemas/workflowsworkflowjobs_spark_params'
         internal:
           $ref: '#/components/schemas/workflowsworkflowjobs_internal'
         _key:
@@ -6832,16 +6808,6 @@ components:
           type: string
         _rev:
           type: string
-    workflowsworkflowjobs_spark_params_conf:
-      required:
-      - name
-      - value
-      type: object
-      properties:
-        name:
-          type: string
-        value:
-          type: string
     local_schedulers_key_model:
       type: object
       properties:
@@ -6884,6 +6850,8 @@ components:
           type: string
         command:
           type: string
+        invocation_script:
+          type: object
         status:
           type: string
         cancel_on_blocking_job_failure:
@@ -6894,8 +6862,6 @@ components:
           default: false
         run_id:
           type: integer
-        spark_params:
-          $ref: '#/components/schemas/workflowsworkflowjobs_spark_params'
         internal:
           $ref: '#/components/schemas/workflowsworkflowjobs_internal'
         _key:
@@ -6947,6 +6913,8 @@ components:
           type: string
         command:
           type: string
+        invocation_script:
+          type: object
         cancel_on_blocking_job_failure:
           type: boolean
           default: true
@@ -6955,8 +6923,6 @@ components:
           default: false
         scheduler:
           type: object
-        spark_params:
-          $ref: '#/components/schemas/workflowsworkflowjobs_spark_params'
         consumes_user_data:
           type: array
           items:
@@ -6998,15 +6964,12 @@ components:
       - completion_time
       - exec_time_minutes
       - job_key
-      - job_name
       - return_code
       - run_id
       - status
       type: object
       properties:
         job_key:
-          type: string
-        job_name:
           type: string
         run_id:
           type: integer

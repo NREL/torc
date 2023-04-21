@@ -232,10 +232,6 @@ const ROUTE_DESCRIPTORS = [
         type: joi.string(),
       },
       {
-        name: 'job_name',
-        type: joi.string(),
-      },
-      {
         name: 'run_id',
         type: joi.number().integer(),
       },

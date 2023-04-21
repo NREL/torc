@@ -113,7 +113,6 @@ class AsyncCliCommand(AsyncJobBase):
         assert self._is_complete
         return WorkflowResultsModel(
             job_key=self.key,
-            job_name=self._db_job.name,
             run_id=self._db_job.run_id,
             return_code=self._return_code,
             exec_time_minutes=self._exec_time_s / 60,
@@ -154,14 +153,15 @@ class AsyncCliCommand(AsyncJobBase):
         env = os.environ.copy()
         env["TORC_JOB_KEY"] = self._db_job.key
         # TORC_WORKFLOW_KEY is also set
-        if self._db_job.spark_params:
-            self._pipe = self._run_spark_command(env=env)
+        if self._db_job.invocation_script:
+            self._pipe = self._run_invocation_script(env=env)
         else:
             self._pipe = self._run_command(self._db_job.command, env=env)
         # pylint: enable=consider-using-with
         self._is_running = True
 
     def _run_command(self, command, env):
+        logger.info("Run job=%s command %s", self._db_job.key, command)
         cmd = shlex.split(command, posix="win" not in sys.platform)
         return subprocess.Popen(cmd, stdout=self._stdout_fp, stderr=self._stderr_fp, env=env)
 
@@ -169,13 +169,8 @@ class AsyncCliCommand(AsyncJobBase):
         # TODO: run through srun with cpu_bind
         pass
 
-    def _run_spark_command(self, env):
-        params = self._db_job.spark_params
-        conf_params = [f"--conf {x.name}={x.value}" for x in params.conf]
-        conf_str = " ".join(conf_params)
-        if params.conf_dir:
-            env["SPARK_CONF_DIR"] = params.conf_dir
-        cmd = f"spark-submit --master={params.master_url} {conf_str} {self._db_job.command}"
+    def _run_invocation_script(self, env):
+        cmd = f"{self._db_job.invocation_script} {self._db_job.command}"
         return self._run_command(cmd, env)
 
     def _complete(self, status):

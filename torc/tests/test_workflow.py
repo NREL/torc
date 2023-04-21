@@ -373,7 +373,6 @@ def _fake_complete_job(api, workflow_key, job):
     status = "done"
     result = WorkflowResultsModel(
         job_key=job.key,
-        job_name=job.name,
         run_id=job.run_id,
         return_code=0,
         exec_time_minutes=5,

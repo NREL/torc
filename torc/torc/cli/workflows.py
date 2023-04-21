@@ -5,8 +5,10 @@ import json
 import logging
 import math
 import sys
+from pathlib import Path
 
 import click
+import json5
 from swagger_client.models.workflow_jobs_model import WorkflowJobsModel
 from swagger_client.models.workflows_model import WorkflowsModel
 from swagger_client.models.workflow_specifications_model import (
@@ -15,7 +17,6 @@ from swagger_client.models.workflow_specifications_model import (
 
 from torc.api import sanitize_workflow, iter_documents
 from torc.torc_rc import TorcRuntimeConfig
-from torc.utils.files import load_data
 from torc.workflow_manager import WorkflowManager
 from .common import (
     check_database_url,
@@ -178,7 +179,7 @@ def create_from_commands_file(
 
 
 @click.command()
-@click.argument("filename", type=click.Path(exists=True))
+@click.argument("filename", type=click.Path(exists=True), callback=lambda *x: Path(x[2]))
 @click.option(
     "-U",
     "--update-rc-with-key",
@@ -201,7 +202,9 @@ def create_from_json_file(ctx, api, filename, update_rc_with_key, user):
     """Create a workflow from a JSON/JSON5 file."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    data = sanitize_workflow(load_data(filename))
+    method = json5.load if filename.suffix == ".json5" else json.load
+    with open(filename, "r", encoding="utf-8") as f:
+        data = sanitize_workflow(method(f))
     if data.get("user") != user:
         if "user" in data:
             logger.info("Overriding user=%s with %s", data["user"], user)
@@ -213,7 +216,7 @@ def create_from_json_file(ctx, api, filename, update_rc_with_key, user):
     if output_format == "text":
         logger.info("Created a workflow from %s with key=%s", filename, workflow.key)
     else:
-        print(json.dumps({"filename": filename, "key": workflow.key}))
+        print(json.dumps({"filename": str(filename), "key": workflow.key}))
     if update_rc_with_key:
         _update_torc_rc(api, workflow)
 

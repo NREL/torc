@@ -2,6 +2,8 @@
 
 import json
 import socket
+import tempfile
+from pathlib import Path
 
 from click.testing import CliRunner
 
@@ -278,6 +280,13 @@ def test_workflow_example(db_api):
     cmd = ["-u", url, "-F", "json", "workflows", "example"]
     result = _run_and_convert_output_from_json(cmd)
     assert len(result["jobs"])
+    with tempfile.NamedTemporaryFile() as f:
+        f.close()
+        Path(f.name).write_text(json.dumps(result), encoding="utf-8")
+        cmd = ["-u", url, "workflows", "create-from-json-file", f.name]
+        runner = CliRunner(mix_stderr=False)
+        result = runner.invoke(cli, cmd)
+        assert result.exit_code == 0
 
 
 def test_workflow_template(db_api):

@@ -66,17 +66,6 @@ const isComplete = joi.object().required().keys({
   is_complete: joi.boolean().required(),
 });
 
-const sparkConfParam = joi.object().required().keys({
-  name: joi.string().required(),
-  value: joi.string().required(),
-});
-
-const sparkSubmitParams = joi.object().keys({
-  master_url: joi.string().optional(),
-  conf_dir: joi.string().optional(),
-  conf: joi.array().items(sparkConfParam),
-});
-
 const jobInternal = joi.object().required().keys({
   memory_bytes: joi.number().integer().default(0.0),
   num_cpus: joi.number().integer().default(0.0),
@@ -88,12 +77,11 @@ const jobInternal = joi.object().required().keys({
 const job = joi.object().required().keys({
   name: joi.string().optional(),
   command: joi.string().required(),
+  invocation_script: joi.string().optional().allow(null),
   status: joi.string(),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   supports_termination: joi.boolean().default(false),
   run_id: joi.number().integer().default(0),
-  // TODO: Want to allow nulls but doing so means that there is no Swagger type.
-  spark_params: sparkSubmitParams.optional(), // .allow(null),
   // This only exists to all prepareJobsForSubmission to take less time to find
   // jobs with exclusive access.
   internal: jobInternal.optional().default(jobInternal.validate({}).value),
@@ -108,10 +96,10 @@ const jobSpecification = joi.object().required().keys({
   name: joi.string().optional(),
   key: joi.string().optional(),
   command: joi.string().required(),
+  invocation_script: joi.string().optional().allow(null),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   supports_termination: joi.boolean().default(false),
   scheduler: joi.string().default('').allow(''),
-  spark_params: sparkSubmitParams.optional(),
   consumes_user_data: joi.array().items(joi.string()).optional().default([]),
   stores_user_data: joi.array().items(joi.string()).optional().default([]),
   resource_requirements: joi.string().optional(),
@@ -171,7 +159,6 @@ const resourceRequirements = joi.object().required().keys({
 
 const result = joi.object().required().keys({
   job_key: joi.string().required(),
-  job_name: joi.string().required(),
   run_id: joi.number().integer().required(),
   return_code: joi.number().integer().required(),
   exec_time_minutes: joi.number().required(),
@@ -468,8 +455,6 @@ module.exports = {
   scheduledComputeNode,
   schedulers,
   slurmScheduler,
-  sparkConfParam,
-  sparkSubmitParams,
   userData,
   workerResources,
   workflow,
