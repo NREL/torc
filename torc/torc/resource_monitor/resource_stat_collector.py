@@ -1,6 +1,7 @@
 """Monitors resource utilization statistics"""
 
 import logging
+import multiprocessing
 import time
 
 import psutil
@@ -41,6 +42,7 @@ class ResourceStatCollector:
         self._update_disk_stats(psutil.disk_io_counters())
         self._update_net_stats(psutil.net_io_counters())
         self._cached_processes = {}  # pid to psutil.Process
+        self._max_process_cpu_percent = multiprocessing.cpu_count() * 100
 
     def _update_disk_stats(self, data):
         for stat in self.DISK_STATS:
@@ -113,7 +115,7 @@ class ResourceStatCollector:
             try:
                 process = psutil.Process(pid)
                 # Initialize CPU utilization tracking per psutil docs.
-                process.cpu_percent(interval=0.2)
+                process.cpu_percent(interval=0.5)
                 self._cached_processes[pid] = process
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 logger.debug("Tried to construct Process for invalid pid=%s", pid)
@@ -153,10 +155,13 @@ class ResourceStatCollector:
             return None, children
         try:
             with process.oneshot():
-                stats = {
-                    "rss": process.memory_info().rss,
-                    "cpu_percent": process.cpu_percent(),
-                }
+                cpu_percent = process.cpu_percent()
+                rss = process.memory_info().rss
+                if cpu_percent > self._max_process_cpu_percent:
+                    logger.warning("Invalid process CPU measurement: %s", cpu_percent)
+                    cpu_percent = self._max_process_cpu_percent
+
+                stats = {"cpu_percent": cpu_percent, "rss": rss}
                 if config.include_child_processes:
                     for child in process.children(recursive=config.recurse_child_processes):
                         cached_child = self._get_process(child.pid)
