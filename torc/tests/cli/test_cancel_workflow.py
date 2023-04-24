@@ -33,9 +33,9 @@ def test_cancel_workflow(cancelable_workflow, tmp_path):
             ["torc", "-u", api.api_client.configuration.host, "workflows", "cancel", workflow_key],
             check=True,
         )
-        status = api.get_workflows_status_key(workflow_key)
+        status = api.get_workflows_key_status(workflow_key)
         assert status.is_canceled
-        result = api.get_workflows_is_complete_key(workflow_key)
+        result = api.get_workflows_key_is_complete(workflow_key)
         assert result.is_complete
         pipe.communicate()
         assert pipe.returncode == 0

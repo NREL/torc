@@ -68,8 +68,9 @@ class AsyncJobBase(abc.ABC):
 class AsyncCliCommand(AsyncJobBase):
     """Manages execution of an asynchronous CLI command."""
 
-    def __init__(self, job):
+    def __init__(self, job, log_prefix=None):
         self._db_job = job
+        self._log_prefix = log_prefix
         self._pipe = None
         self._is_running = False
         self._start_time = 0.0
@@ -145,8 +146,9 @@ class AsyncCliCommand(AsyncJobBase):
         assert self._pipe is None
         self._start_time = time.time()
 
-        stdout_filename = output_dir / JOB_STDIO_DIR / f"{self.key}.o"
-        stderr_filename = output_dir / JOB_STDIO_DIR / f"{self.key}.e"
+        basename = self.key if self._log_prefix is None else f"{self._log_prefix}_{self.key}"
+        stdout_filename = output_dir / JOB_STDIO_DIR / f"{basename}.o"
+        stderr_filename = output_dir / JOB_STDIO_DIR / f"{basename}.e"
         # pylint: disable=consider-using-with
         self._stdout_fp = open(stdout_filename, "w", encoding="utf-8")
         self._stderr_fp = open(stderr_filename, "w", encoding="utf-8")
@@ -164,10 +166,6 @@ class AsyncCliCommand(AsyncJobBase):
         logger.info("Run job=%s command %s", self._db_job.key, command)
         cmd = shlex.split(command, posix="win" not in sys.platform)
         return subprocess.Popen(cmd, stdout=self._stdout_fp, stderr=self._stderr_fp, env=env)
-
-    def _run_slurm_command(self, env):
-        # TODO: run through srun with cpu_bind
-        pass
 
     def _run_invocation_script(self, env):
         cmd = f"{self._db_job.invocation_script} {self._db_job.command}"

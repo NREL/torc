@@ -375,7 +375,7 @@ def run_jobs(ctx, api, output, poll_interval):
     intf = SlurmInterface()
     slurm_job_id = intf.get_current_job_id()
     hostname = socket.gethostname()
-    log_file = output / f"slurm_runner_{hostname}_{slurm_job_id}.log"
+    log_file = output / f"job_runner_slurm_{slurm_job_id}.log"
     my_logger = setup_cli_logging(ctx, __name__, filename=log_file)
     check_database_url(api)
     my_logger.info(get_cli_string())
@@ -411,6 +411,7 @@ def run_jobs(ctx, api, output, poll_interval):
         time_limit=time_limit,
         scheduler_config_id=scheduler_config_id,
         job_completion_poll_interval=poll_interval,
+        log_prefix=f"slurm_{slurm_job_id}",
     )
 
     if node is not None:

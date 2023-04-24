@@ -35,7 +35,7 @@ router.get('/workflows/:workflow/jobs/find_by_status/:status', function(req, res
     const cursor = jobs.byExample({status: req.pathParams.status});
     const items = [];
     for (const job of cursor.skip(qp.skip).limit(limit)) {
-      items.push(utils.convertJobForApi(job));
+      items.push(job);
     }
     res.send(utils.makeCursorResult(items, qp.skip, limit, cursor.count()));
   } catch (e) {
@@ -63,7 +63,7 @@ router.get('/workflows/:workflow/jobs/find_by_needs_file/:key', function(req, re
   const limit = utils.getItemsLimit(qp.limit);
   try {
     const cursor = query.getJobsThatNeedFile(file, workflow);
-    res.send(utils.makeCursorResultFromIteration(cursor, qp.skip, limit, utils.convertJobForApi));
+    res.send(utils.makeCursorResultFromIteration(cursor, qp.skip, limit));
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Get jobs find_by_needs_file key=${key}`);
   }
@@ -155,7 +155,9 @@ router.post('/workflows/:workflow/jobs/:key/complete_job/:status/:rev', function
     const returned = config.getWorkflowCollection(workflow, 'returned');
     returned.save({_from: job._id, _to: result._id});
     const updatedJob = query.manageJobStatusChange(job, workflow);
-    res.send(utils.convertJobForApi(updatedJob));
+    updatedJob.internal.hash = documents.computeJobInputHash(updatedJob, workflow);
+    documents.updateWorkflowDocument(workflow, 'jobs', updatedJob);
+    res.send(updatedJob);
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Complete job key=${key}`);
   }
@@ -187,7 +189,7 @@ router.put('/workflows/:workflow/jobs/:key/manage_status_change/:status/:rev', f
   job.status = status;
   try {
     const updatedJob = query.manageJobStatusChange(job, workflow);
-    res.send(utils.convertJobForApi(updatedJob));
+    res.send(updatedJob);
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Put jobs manage_status_change key=${key}`);
   }
@@ -229,7 +231,7 @@ router.get('/workflows/:workflow/jobs/:key/user_data_stores', function(req, res)
   const job = documents.getWorkflowDocument(workflow, 'jobs', key, res);
   try {
     // Shouldn't need skip and limit, but that could be added.
-    const items = query.getUserDataStoredByJob(job, workflow);
+    const items = query.listUserDataStoredByJob(job, workflow).toArray();
     if (items.length > MAX_TRANSFER_RECORDS) {
       throw new Error(`Bug: unhandled case where length of items is too big: ${items.length}`);
     }
@@ -251,7 +253,7 @@ router.get('/workflows/:workflow/jobs/:key/user_data_consumes', function(req, re
   const job = documents.getWorkflowDocument(workflow, 'jobs', key, res);
   try {
     // Shouldn't need skip and limit, but that could be added.
-    const items = query.getUserDataConsumedByJob(job, workflow);
+    const items = query.listUserDataConsumedByJob(job, workflow).toArray();
     if (items.length > MAX_TRANSFER_RECORDS) {
       throw new Error(`Bug: unhandled case where length of items is too big: ${items.length}`);
     }

@@ -45,7 +45,7 @@ def cancel(ctx, api, workflow_keys):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     for key in workflow_keys:
-        api.put_workflows_cancel_key(key)
+        api.put_workflows_key_cancel(key)
         logger.info("Canceled workflow %s", key)
         # TODO: lookup scheduled compute nodes and cancel them.
 
@@ -351,7 +351,7 @@ def process_auto_tune_resource_requirements_results(ctx, api):
     """Process the results of the first round of auto-tuning resource requirements."""
     setup_cli_logging(ctx, __name__)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    api.post_workflows_process_auto_tune_resource_requirements_results_key(workflow_key)
+    api.post_workflows_key_process_auto_tune_resource_requirements_results(workflow_key)
     url = api.api_client.configuration.host
     rr_cmd = f"torc -k {workflow_key} -u {url} resource-requirements list"
     events_cmd = f"torc -k {workflow_key} -u {url} events list -f category=resource_requirements"
@@ -388,9 +388,9 @@ def recommend_nodes(ctx, api, num_cpus, scheduler_config_id):
     output_format = get_output_format_from_context(ctx)
     workflow_key = get_workflow_key_from_context(ctx, api)
     if scheduler_config_id is None:
-        reqs = api.get_workflows_ready_job_requirements_key(workflow_key)
+        reqs = api.get_workflows_key_ready_job_requirements(workflow_key)
     else:
-        reqs = api.get_workflows_ready_job_requirements_key(
+        reqs = api.get_workflows_key_ready_job_requirements(
             workflow_key, scheduler_config_id=scheduler_config_id
         )
     if reqs.num_jobs == 0:
@@ -420,20 +420,28 @@ def reset_status(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    api.post_workflows_reset_status_key(workflow_key)
+    api.post_workflows_key_reset_status(workflow_key)
     logger.info("Reset workflow status")
 
 
 @click.command()
+@click.option(
+    "-i",
+    "--ignore-missing-data",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Ignore checks for missing files and user data documents.",
+)
 @click.pass_obj
 @click.pass_context
-def restart(ctx, api):
+def restart(ctx, api, ignore_missing_data):
     """Restart the workflow defined in the database specified by the URL."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     mgr = WorkflowManager(api, workflow_key)
-    mgr.restart()
+    mgr.restart(ignore_missing_data=ignore_missing_data)
     # TODO: This could schedule nodes.
 
 
@@ -449,15 +457,26 @@ def restart(ctx, api):
     "apply the results to the resource requirements definitions. When jobs finish, please call "
     "'torc workflows process_auto_tune_resource_requirements_results' to update the requirements.",
 )
+@click.option(
+    "-i",
+    "--ignore-missing-data",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Ignore checks for missing files and user data documents.",
+)
 @click.pass_obj
 @click.pass_context
-def start(ctx, api, auto_tune_resource_requirements):
+def start(ctx, api, auto_tune_resource_requirements, ignore_missing_data):
     """Start the workflow defined in the database specified by the URL."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     mgr = WorkflowManager(api, workflow_key)
-    mgr.start(auto_tune_resource_requirements=auto_tune_resource_requirements)
+    mgr.start(
+        auto_tune_resource_requirements=auto_tune_resource_requirements,
+        ignore_missing_data=ignore_missing_data,
+    )
     # TODO: This could schedule nodes.
 
 
@@ -490,7 +509,7 @@ def show_config(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    config = api.get_workflows_config_key(workflow_key)
+    config = api.get_workflows_key_config(workflow_key)
     print(json.dumps(config.to_dict(), indent=2))
 
 
@@ -502,7 +521,7 @@ def show_status(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    status = api.get_workflows_status_key(workflow_key)
+    status = api.get_workflows_key_status(workflow_key)
     print(json.dumps(status.to_dict(), indent=2))
 
 

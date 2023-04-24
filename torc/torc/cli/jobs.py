@@ -185,7 +185,14 @@ def list_jobs(ctx, api, filters, exclude, limit, skip):
         x.to_dict()
         for x in iter_documents(api.get_workflows_workflow_jobs, workflow_key, **filters)
     )
-    exclude = ["id", "rev", "internal"] + list(exclude)
+    exclude = [
+        "id",
+        "rev",
+        "cancel_on_blocking_job_failure",
+        "internal",
+        "invocation_script",
+        "supports_termination",
+    ] + list(exclude)
     table_title = f"Jobs in workflow {workflow_key}"
     print_items(
         ctx,

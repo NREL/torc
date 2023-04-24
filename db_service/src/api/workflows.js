@@ -1,4 +1,5 @@
 'use strict';
+'use strict';
 const joi = require('joi');
 const db = require('@arangodb').db;
 const {MAX_TRANSFER_RECORDS} = require('../defs');
@@ -35,7 +36,7 @@ router.put('/workflows/:key', function(req, res) {
     res.throw(400, `Updating a workflow requires the existing revision`);
   }
   try {
-    const meta = collection.update(doc, doc);
+    const meta = collection.update(doc, doc, {mergeObjects: false});
     Object.assign(doc, meta);
     res.send(doc);
   } catch (e) {
@@ -102,7 +103,7 @@ router.delete('/workflows/:key', function(req, res) {
     .summary('Delete a workflow')
     .description('Deletes a document from the "workflows" collection by key.');
 
-router.get('/workflows/is_complete/:key', function(req, res) {
+router.get('/workflows/:key/is_complete', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   const status = query.getWorkflowStatus(workflow);
@@ -117,7 +118,7 @@ router.get('/workflows/is_complete/:key', function(req, res) {
     .summary('Report whether the workflow is complete')
     .description('Reports true if all jobs in the workflow are complete.');
 
-router.get('/workflows/ready_job_requirements/:key', function(req, res) {
+router.get('/workflows/:key/ready_job_requirements', function(req, res) {
   const key = req.pathParams.key;
   const schedulerConfigId = req.queryParams.scheduler_config_id;
   const workflow = documents.getWorkflow(key, res);
@@ -135,7 +136,7 @@ router.get('/workflows/ready_job_requirements/:key', function(req, res) {
     .summary('Return the resource requirements for ready jobs.')
     .description(`Return the resource requirements for jobs with a status of ready.`);
 
-router.post('/workflows/initialize_jobs/:key', function(req, res) {
+router.post('/workflows/:key/initialize_jobs', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   try {
@@ -151,9 +152,55 @@ router.post('/workflows/initialize_jobs/:key', function(req, res) {
     .pathParam('key', joi.string().required(), 'Workflow key')
     .response(joi.object(), 'message')
     .summary('Initialize job relationships.')
-    .description('Initialize job relationships based on file relationships.');
+    .description('Initialize job relationships based on file and user_data relationships.');
 
-router.post('/workflows/prepare_jobs_for_submission/:key', function(req, res) {
+router.post('/workflows/:key/process_changed_job_inputs', function(req, res) {
+  const key = req.pathParams.key;
+  const workflow = documents.getWorkflow(key, res);
+  try {
+    documents.clearEphemeralUserData(workflow);
+    const reinitializedJobs = documents.processChangedJobInputs(workflow);
+    res.send({reinitialized_jobs: reinitializedJobs});
+  } catch (e) {
+    utils.handleArangoApiErrors(e, res, `Process changed user data workflow key=${key}`);
+  }
+})
+    .pathParam('key', joi.string().required(), 'Workflow key')
+    .response(schemas.processChangedJobInputsResponse)
+    .summary('Check for changed job inputs and update status accordingly.')
+    .description('Check for changed job inputs and update status accordingly.');
+
+router.get('/workflows/:key/missing_user_data', function(req, res) {
+  const key = req.pathParams.key;
+  const workflow = documents.getWorkflow(key, res);
+  try {
+    const missingUserData = query.listMissingUserData(workflow);
+    res.send({user_data: missingUserData});
+  } catch (e) {
+    utils.handleArangoApiErrors(e, res, `List missing user_data for workflow key=${key}`);
+  }
+})
+    .pathParam('key', joi.string().required(), 'Workflow key')
+    .response(schemas.missingUserDataResponse)
+    .summary('List missing user data that should exist.')
+    .description('List missing user data that should exist.');
+
+router.get('/workflows/:key/required_existing_files', function(req, res) {
+  const key = req.pathParams.key;
+  const workflow = documents.getWorkflow(key, res);
+  try {
+    const requiredFiles = query.listRequiredExistingFiles(workflow);
+    res.send({files: requiredFiles});
+  } catch (e) {
+    utils.handleArangoApiErrors(e, res, `List files that must exist for workflow key=${key}`);
+  }
+})
+    .pathParam('key', joi.string().required(), 'Workflow key')
+    .response(schemas.requiredExistingFilesResponse)
+    .summary('List files that must exist.')
+    .description('List files that must exist.');
+
+router.post('/workflows/:key/prepare_jobs_for_submission', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   try {
@@ -167,7 +214,7 @@ router.post('/workflows/prepare_jobs_for_submission/:key', function(req, res) {
       const jobs = query.prepareJobsForSubmission(workflow, resources, qp.limit, reason);
       const items = [];
       for (const job of jobs) {
-        items.push(utils.convertJobForApi(job));
+        items.push(job);
       }
       res.send({jobs: jobs, reason: reason.message});
     }
@@ -198,7 +245,7 @@ router.post('/workflows/:key/prepare_next_jobs_for_submission', function(req, re
       const jobs = query.prepareJobsForSubmissionNoResourceChecks(workflow, limit);
       const items = [];
       for (const job of jobs) {
-        items.push(utils.convertJobForApi(job));
+        items.push(job);
       }
       res.send({jobs: jobs});
     }
@@ -215,7 +262,7 @@ router.post('/workflows/:key/prepare_next_jobs_for_submission', function(req, re
     .description('Return user-requested number of jobs that are ready for submission. ' +
       'Sets status to submitted_pending.');
 
-router.post('/workflows/auto_tune_resource_requirements/:key', function(req, res) {
+router.post('/workflows/:key/auto_tune_resource_requirements', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   try {
@@ -230,7 +277,7 @@ router.post('/workflows/auto_tune_resource_requirements/:key', function(req, res
     .summary('Enable workflow for auto-tuning resource requirements.')
     .description('Enable workflow for auto-tuning resource requirements.');
 
-router.post('/workflows/process_auto_tune_resource_requirements_results/:key', function(req, res) {
+router.post('/workflows/:key/process_auto_tune_resource_requirements_results', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   try {
@@ -246,7 +293,7 @@ router.post('/workflows/process_auto_tune_resource_requirements_results/:key', f
     .summary('Process the results of auto-tuning resource requirements.')
     .description('Process the results of auto-tuning resource requirements.');
 
-router.get('/workflows/config/:key', function(req, res) {
+router.get('/workflows/:key/config', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   try {
@@ -261,7 +308,25 @@ router.get('/workflows/config/:key', function(req, res) {
     .summary('Reports the workflow config.')
     .description('Reports the workflow config.');
 
-router.put('/workflows/cancel/:key', function(req, res) {
+router.put('/workflows/:key/config', function(req, res) {
+  const key = req.pathParams.key;
+  const config = req.body;
+  // Validate that the workflow key is correct.
+  documents.getWorkflow(key, res);
+  try {
+    db.workflow_configs.update(config, config, {mergeObjects: false});
+    res.send(config);
+  } catch (e) {
+    utils.handleArangoApiErrors(e, res, `Update workflow config key=${key}`);
+  }
+})
+    .pathParam('key', joi.string().required(), 'Workflow key')
+    .body(schemas.workflowConfig, 'Updated workflow config')
+    .response(schemas.workflowConfig)
+    .summary('Reports the workflow config.')
+    .description('Reports the workflow config.');
+
+router.put('/workflows/:key/cancel', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   try {
@@ -276,25 +341,7 @@ router.put('/workflows/cancel/:key', function(req, res) {
     .summary('Cancel workflow.')
     .description(`Cancel workflow. Workers will detect the status change and cancel jobs.`);
 
-router.put('/workflows/config/:key', function(req, res) {
-  const key = req.pathParams.key;
-  const config = req.body;
-  // Validate that the workflow key is correct.
-  documents.getWorkflow(key, res);
-  try {
-    db.workflow_configs.update(config, config);
-    res.send(config);
-  } catch (e) {
-    utils.handleArangoApiErrors(e, res, `Update workflow config key=${key}`);
-  }
-})
-    .pathParam('key', joi.string().required(), 'Workflow key')
-    .body(schemas.workflowConfig, 'Updated workflow config')
-    .response(schemas.workflowConfig)
-    .summary('Reports the workflow config.')
-    .description('Reports the workflow config.');
-
-router.post('/workflows/reset_status/:key', function(req, res) {
+router.post('/workflows/:key/reset_status', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   try {
@@ -310,7 +357,7 @@ router.post('/workflows/reset_status/:key', function(req, res) {
     .summary('Reset job status.')
     .description(`Reset status for all jobs to ${JobStatus.Uninitialized}.`);
 
-router.get('/workflows/status/:key', function(req, res) {
+router.get('/workflows/:key/status', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   try {
@@ -325,13 +372,13 @@ router.get('/workflows/status/:key', function(req, res) {
     .summary('Reports the workflow status.')
     .description('Reports the workflow status.');
 
-router.put('/workflows/status/:key', function(req, res) {
+router.put('/workflows/:key/status', function(req, res) {
   const status = req.body;
   const key = req.pathParams.key;
   // Validate that the workflow key is correct.
   documents.getWorkflow(key, res);
   try {
-    db.workflow_statuses.update(status, status);
+    db.workflow_statuses.update(status, status, {mergeObjects: false});
     res.send(status);
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Update workflow status key=${key}`);
@@ -359,8 +406,16 @@ router.get('/workflows/:key/join_by_inbound_edge/:collection/:edge', function(re
   const qp = req.queryParams;
   const limit = utils.getItemsLimit(qp.limit);
   const workflow = documents.getWorkflow(key);
+  const filters = {};
+  if (qp.collection_key != null) {
+    filters._key = qp.collection_key;
+  }
+  if (qp.collection_name != null) {
+    filters.name = qp.collection_name;
+  }
   try {
-    const cursor = query.joinCollectionsByInboundEdge(workflow, collection, edge, qp.skip, limit);
+    const cursor = query.joinCollectionsByInboundEdge(
+        workflow, collection, edge, filters, qp.skip, limit);
     res.send(utils.makeCursorResult(convertItems(cursor), qp.skip, limit, cursor.count()));
   } catch (e) {
     utils.handleArangoApiErrors(e, res, 'Join by inbound edge');
@@ -368,6 +423,8 @@ router.get('/workflows/:key/join_by_inbound_edge/:collection/:edge', function(re
 })
     .pathParam('collection', joi.string().required(), 'From collection')
     .pathParam('edge', joi.string().required(), 'Edge name')
+    .queryParam('collection_key', joi.string().optional())
+    .queryParam('collection_name', joi.string().optional())
     .queryParam('skip', joi.number().default(0))
     .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
     .response(schemas.batchObjects)
@@ -381,8 +438,16 @@ router.get('/workflows/:key/join_by_outbound_edge/:collection/:edge', function(r
   const qp = req.queryParams;
   const limit = utils.getItemsLimit(qp.limit);
   const workflow = documents.getWorkflow(key, res);
+  const filters = {};
+  if (qp.collection_key != null) {
+    filters._key = qp.collection_key;
+  }
+  if (qp.collection_name != null) {
+    filters.name = qp.collection_name;
+  }
   try {
-    const cursor = query.joinCollectionsByOutboundEdge(workflow, collection, edge, qp.skip, limit);
+    const cursor = query.joinCollectionsByOutboundEdge(
+        workflow, collection, edge, filters, qp.skip, limit);
     res.send(utils.makeCursorResult(convertItems(cursor), qp.skip, limit, cursor.count()));
   } catch (e) {
     utils.handleArangoApiErrors(e, res, 'Join by outbound edge');
@@ -390,6 +455,8 @@ router.get('/workflows/:key/join_by_outbound_edge/:collection/:edge', function(r
 })
     .pathParam('collection', joi.string().required(), 'From collection')
     .pathParam('edge', joi.string().required(), 'Edge name')
+    .queryParam('collection_key', joi.string().optional())
+    .queryParam('collection_name', joi.string().optional())
     .queryParam('skip', joi.number().default(0))
     .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
     .response(schemas.batchObjects)
@@ -405,10 +472,10 @@ function convertItems(cursor) {
   const items = [];
   for (const item of cursor) {
     if (item.from._id.split('__')[0] == 'jobs') {
-      item.from = utils.convertJobForApi(item.from);
+      item.from = item.from;
     }
     if (item.to._id.split('__')[0] == 'jobs') {
-      item.to = utils.convertJobForApi(item.to);
+      item.to = item.to;
     }
     items.push(item);
   }

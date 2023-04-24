@@ -71,7 +71,8 @@ const jobInternal = joi.object().required().keys({
   num_cpus: joi.number().integer().default(0.0),
   num_gpus: joi.number().integer().default(0.0),
   runtime_seconds: joi.number().default(0.0),
-  scheduler_config_id: joi.string().optional().default(''),
+  scheduler_config_id: joi.string().optional().default('').allow(null, ''),
+  hash: joi.number().integer().default(0),
 });
 
 const job = joi.object().required().keys({
@@ -180,6 +181,18 @@ const computeNodeResourceStatConfig = joi.object().keys({
   monitor_type: joi.string().default('aggregation'),
   make_plots: joi.boolean().default(true),
   interval: joi.number().default(10),
+});
+
+const missingUserDataResponse = joi.object().required().keys({
+  user_data: joi.array().items(joi.string()),
+});
+
+const processChangedJobInputsResponse = joi.object().required().keys({
+  reinitialized_jobs: joi.array().items(joi.string()),
+});
+
+const requiredExistingFilesResponse = joi.object().required().keys({
+  files: joi.array().items(joi.string()),
 });
 
 const workflowConfig = joi.object().required().keys({
@@ -448,8 +461,11 @@ module.exports = {
   jobProcessStats,
   listItemsResponse,
   localScheduler,
+  missingUserDataResponse,
   object,
+  processChangedJobInputsResponse,
   readyJobsResourceRequirements,
+  requiredExistingFilesResponse,
   resourceRequirements,
   result,
   scheduledComputeNode,

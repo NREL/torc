@@ -6,6 +6,7 @@ import socket
 from pathlib import Path
 
 from torc.api import send_api_command, iter_documents
+from torc.exceptions import InvalidWorkflow
 
 
 logger = logging.getLogger(__name__)
@@ -25,25 +26,30 @@ class WorkflowManager:
         self._reset_job_status()
         self._process_changed_files()
         self._update_jobs_if_output_files_are_missing()
-        send_api_command(self._api.post_workflows_initialize_jobs_key, self._key)
-        # TODO: what if something about the jobs are changed? Hash all job dependencies in
-        # initialize_jobs and compare at restart?
-        # - input_files
-        # - output_files
-        # - user_data
-        # TODO: ensure that this function is idempotent.
+        response = send_api_command(
+            self._api.post_workflows_key_process_changed_job_inputs, self._key
+        )
+        if response.reinitialized_jobs:
+            logger.info(
+                "Changed job status to uninitialized because inputs were changed: %s",
+                " ".join(response.reinitialized_jobs),
+            )
+        send_api_command(self._api.post_workflows_key_initialize_jobs, self._key)
 
-    def restart(self, reinitialize=True):
+    def restart(self, reinitialize=True, ignore_missing_data=False):
         """Restart the workflow.
 
         Parameters
         ----------
-        reinitialize : bool, defaults to True
+        reinitialize : bool
             If True, call reinitialize_jobs. Set False if it was already called.
+        ignore_missing_data : bool
+            If True, ignore checks for missing files and user_data.
         """
-        status = send_api_command(self._api.get_workflows_status_key, self._key)
+        self._check_workflow(ignore_missing_data=ignore_missing_data)
+        status = send_api_command(self._api.get_workflows_key_status, self._key)
         status.run_id += 1
-        send_api_command(self._api.put_workflows_status_key, status, self._key)
+        send_api_command(self._api.put_workflows_key_status, status, self._key)
         if reinitialize:
             self.reinitialize_jobs()
         # TODO schedule workers.
@@ -66,25 +72,31 @@ class WorkflowManager:
             if path.exists():
                 file.st_mtime = path.stat().st_mtime
                 send_api_command(
-                    self._api.put_workflows_workflow_files_key, file, self._key, file.key
+                    self._api.put_workflows_workflow_files_key,
+                    file,
+                    self._key,
+                    file.key,
                 )
 
-    def start(self, auto_tune_resource_requirements=False):
+    def start(self, auto_tune_resource_requirements=False, ignore_missing_data=False):
         """Start a workflow.
 
         Parameters
         ----------
         auto_tune_resource_requirements : bool
             If True, configure the workflow to auto-tune resource requirements.
+        ignore_missing_data : bool
+            If True, ignore checks for missing files and user_data.
         """
+        self._check_workflow(ignore_missing_data=ignore_missing_data)
         self.initialize_files()
-        send_api_command(self._api.post_workflows_reset_status_key, self._key)
+        send_api_command(self._api.post_workflows_key_reset_status, self._key)
         # Set every job status to unknown/uninitialized.
-        send_api_command(self._api.post_workflows_initialize_jobs_key, self._key)
+        send_api_command(self._api.post_workflows_key_initialize_jobs, self._key)
 
         if auto_tune_resource_requirements:
             send_api_command(
-                self._api.post_workflows_auto_tune_resource_requirements_key, self._key
+                self._api.post_workflows_key_auto_tune_resource_requirements, self._key
             )
             logger.info("Enabled auto-tuning of resource requirements.")
 
@@ -101,6 +113,27 @@ class WorkflowManager:
         )
         logger.info("Started workflow")
         # TODO schedule workers.
+
+    def _check_workflow(self, ignore_missing_data=False):
+        self._check_workflow_user_data(ignore_missing_data)
+        self._check_workflow_files(ignore_missing_data)
+
+    def _check_workflow_files(self, ignore_missing_data):
+        if ignore_missing_data:
+            return
+        result = send_api_command(self._api.get_workflows_key_required_existing_files, self._key)
+        for key in result.files:
+            file = send_api_command(self._api.get_workflows_workflow_files_key, self._key, key)
+            if not Path(file.path).exists():
+                raise InvalidWorkflow(f"File {key=} {file.path=} should exist but does not.")
+
+    def _check_workflow_user_data(self, ignore_missing_data):
+        if ignore_missing_data:
+            return
+        result = send_api_command(self._api.get_workflows_key_missing_user_data, self._key)
+        if result.user_data:
+            msg = " ".join(result.user_data)
+            raise InvalidWorkflow(f"User data keys are missing data: {msg}")
 
     def _process_changed_files(self):
         for file in iter_documents(self._api.get_workflows_workflow_files, self._key):
@@ -120,7 +153,10 @@ class WorkflowManager:
                 if file.st_mtime and not new["exists"]:
                     file.st_mtime = None
                     send_api_command(
-                        self._api.put_workflows_workflow_files_key, file, self._key, file.key
+                        self._api.put_workflows_workflow_files_key,
+                        file,
+                        self._key,
+                        file.key,
                     )
                     logger.info("File %s was removed. Cleared file stats", file.name)
                 self._update_jobs_on_file_change(file)
@@ -128,7 +164,9 @@ class WorkflowManager:
     def _reset_job_status(self):
         for status in ("canceled", "submitted", "submitted_pending", "terminated"):
             for job in iter_documents(
-                self._api.get_workflows_workflow_jobs_find_by_status_status, self._key, status
+                self._api.get_workflows_workflow_jobs_find_by_status_status,
+                self._key,
+                status,
             ):
                 job.status = "uninitialized"
                 send_api_command(
@@ -138,16 +176,23 @@ class WorkflowManager:
 
     def _update_jobs_if_output_files_are_missing(self):
         for job in send_api_command(
-            self._api.get_workflows_workflow_jobs_find_by_status_status, self._key, "done"
+            self._api.get_workflows_workflow_jobs_find_by_status_status,
+            self._key,
+            "done",
         ).items:
             for file in send_api_command(
-                self._api.get_workflows_workflow_files_produced_by_job_key, self._key, job.key
+                self._api.get_workflows_workflow_files_produced_by_job_key,
+                self._key,
+                job.key,
             ).items:
                 path = Path(file.path)
                 if not path.exists():
                     job.status = "uninitialized"
                     send_api_command(
-                        self._api.put_workflows_workflow_jobs_key, job, self._key, job.key
+                        self._api.put_workflows_workflow_jobs_key,
+                        job,
+                        self._key,
+                        job.key,
                     )
                     logger.info(
                         "Changed job %s from done to %s because output file is missing",
@@ -158,7 +203,9 @@ class WorkflowManager:
 
     def _update_jobs_on_file_change(self, file):
         for job in iter_documents(
-            self._api.get_workflows_workflow_jobs_find_by_needs_file_key, self._key, file.key
+            self._api.get_workflows_workflow_jobs_find_by_needs_file_key,
+            self._key,
+            file.key,
         ):
             if job.status in ("done", "canceled"):
                 status = "uninitialized"

@@ -26,8 +26,8 @@ from swagger_client.models.edges_name_model import EdgesNameModel
 from swagger_client.models.workflow_job_process_stats_model import (
     WorkflowJobProcessStatsModel,
 )
-from swagger_client.models.prepare_jobs_for_submission_key_model import (
-    PrepareJobsForSubmissionKeyModel,
+from swagger_client.models.key_prepare_jobs_for_submission_model import (
+    KeyPrepareJobsForSubmissionModel,
 )
 from swagger_client.models.workflows_model import WorkflowsModel
 
@@ -64,6 +64,7 @@ class JobRunner:
         time_limit=None,
         resources=None,
         scheduler_config_id=None,
+        log_prefix=None,
     ):
         """Constructs a JobRunner.
 
@@ -78,12 +79,14 @@ class JobRunner:
             Max time in seconds in which the code should poll for job updates in the database.
         time_limit : None | str
             ISO 8601 time duration string. If None then there is no time limit.
-        resources : None | PrepareJobsForSubmissionKeyModel
+        resources : None | KeyPrepareJobsForSubmissionModel
             Resources of the compute node. If None, make system calls to check resources.
         scheduler_config_id : str
             ID of the scheduler config used to acquire this compute node.
             If set, use this ID to pull matching jobs. If not set, pull any job that meets the
             resource availability.
+        log_prefix : str
+            Prefix to use for job-specific log files.
         """
         self._api = api
         self._workflow = workflow
@@ -92,14 +95,15 @@ class JobRunner:
         self._db_poll_interval = database_poll_interval
         self._output_dir = output_dir
         self._scheduler_config_id = scheduler_config_id
+        self._log_prefix = log_prefix
         self._orig_resources = resources or _get_system_resources(time_limit)
         self._orig_resources.scheduler_config_id = self._scheduler_config_id
-        self._resources = PrepareJobsForSubmissionKeyModel(**self._orig_resources.to_dict())
+        self._resources = KeyPrepareJobsForSubmissionModel(**self._orig_resources.to_dict())
         self._last_db_poll_time = 0
         self._compute_node = None
         self._stats = ComputeNodeResourceStatConfig(
             **(
-                api.get_workflows_config_key(
+                api.get_workflows_key_config(
                     self._workflow.key
                 ).compute_node_resource_stats.to_dict()
             )
@@ -148,23 +152,26 @@ class JobRunner:
         timeout = _get_timeout(self._resources.time_limit)
         start_time = time.time()
 
-        result = send_api_command(self._api.get_workflows_is_complete_key, self._workflow.key)
+        result = send_api_command(self._api.get_workflows_key_is_complete, self._workflow.key)
         while not result.is_complete and not time.time() - start_time > timeout:
             num_completed = self._process_completions()
             num_started = 0
+            reason_none_started = None
             if num_completed > 0 or self._is_time_to_poll_database() or not self._outstanding_jobs:
-                num_started = self._run_ready_jobs()
+                num_started, reason_none_started = self._run_ready_jobs()
 
             if num_started == 0 and not self._outstanding_jobs:
                 if send_api_command(
-                    self._api.get_workflows_is_complete_key, self._workflow.key
+                    self._api.get_workflows_key_is_complete, self._workflow.key
                 ).is_complete:
                     logger.info("Workflow is complete.")
                 else:
                     # TODO: if there is remaining time for this node, consider waiting for new
                     # jobs to become available.
                     logger.info(
-                        "No jobs are outstanding on this node and no new jobs are available."
+                        "No jobs are outstanding on this node and no new jobs are available. "
+                        "Reason no jobs started: %s",
+                        reason_none_started,
                     )
                 break
 
@@ -175,7 +182,7 @@ class JobRunner:
                 self._update_pids_to_monitor()
 
             time.sleep(self._poll_interval)
-            result = send_api_command(self._api.get_workflows_is_complete_key, self._workflow.key)
+            result = send_api_command(self._api.get_workflows_key_is_complete, self._workflow.key)
 
         if result.is_canceled:
             logger.info("Detected a canceled workflow. Cancel all outstanding jobs and exit.")
@@ -387,21 +394,22 @@ class JobRunner:
         self._log_job_start_event(job.key)
 
     def _run_ready_jobs(self):
+        reason_none_started = None
         ready_jobs = send_api_command(
-            self._api.post_workflows_prepare_jobs_for_submission_key,
+            self._api.post_workflows_key_prepare_jobs_for_submission,
             self._resources,
             self._workflow.key,
         )
         if ready_jobs.jobs:
             logger.info("%s jobs are ready for submission", len(ready_jobs.jobs))
         else:
-            logger.info("Reason: %s", ready_jobs.reason)
+            reason_none_started = ready_jobs.reason
         for job in ready_jobs.jobs:
-            self._run_job(AsyncCliCommand(job))
+            self._run_job(AsyncCliCommand(job, log_prefix=self._log_prefix))
             self._decrement_resources(job)
 
         self._last_db_poll_time = time.time()
-        return len(ready_jobs.jobs)
+        return len(ready_jobs.jobs), reason_none_started
 
     def _start_resource_monitor(self):
         self._parent_monitor_conn, child_conn = multiprocessing.Pipe()
@@ -552,7 +560,7 @@ class JobRunner:
 
 
 def _get_system_resources(time_limit):
-    return PrepareJobsForSubmissionKeyModel(
+    return KeyPrepareJobsForSubmissionModel(
         num_cpus=psutil.cpu_count(),
         memory_gb=psutil.virtual_memory().total / GiB,
         num_nodes=1,

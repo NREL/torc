@@ -55,12 +55,12 @@ def sqlite(api, workflow_keys, filename, force):
     else:
         selected_workflows = iter_documents(api.get_workflows)
     for workflow in selected_workflows:
-        config = api.get_workflows_config_key(workflow.key)
+        config = api.get_workflows_key_config(workflow.key)
         config_as_dict = config.to_dict()
         config_as_dict["compute_node_resource_stats"] = json.dumps(
             config_as_dict["compute_node_resource_stats"]
         )
-        status = api.get_workflows_status_key(workflow.key)
+        status = api.get_workflows_key_status(workflow.key)
         status_as_dict = status.to_dict()
         status_as_dict["auto_tune_status"] = json.dumps(status_as_dict["auto_tune_status"])
         if not workflows:

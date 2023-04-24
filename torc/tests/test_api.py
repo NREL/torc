@@ -115,14 +115,14 @@ def test_api_workflow_status(completed_workflow):
     """Tests API commands to manage workflow status."""
     db, _, _ = completed_workflow
     api = db.api
-    status = api.get_workflows_status_key(db.workflow.key)
+    status = api.get_workflows_key_status(db.workflow.key)
     orig = status.run_id
     status.run_id += 1
-    api.put_workflows_status_key(status, db.workflow.key)
-    new_status = api.get_workflows_status_key(db.workflow.key)
+    api.put_workflows_key_status(status, db.workflow.key)
+    new_status = api.get_workflows_key_status(db.workflow.key)
     assert new_status.run_id == orig + 1
-    api.post_workflows_reset_status_key(db.workflow.key)
-    new_status = api.get_workflows_status_key(db.workflow.key)
+    api.post_workflows_key_reset_status(db.workflow.key)
+    new_status = api.get_workflows_key_status(db.workflow.key)
     assert new_status.run_id == orig + 1
 
 

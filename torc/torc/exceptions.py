@@ -11,3 +11,7 @@ class ExecutionError(TorcBaseException):
 
 class InvalidParameter(TorcBaseException):
     """Raised if a parameter is invalid."""
+
+
+class InvalidWorkflow(TorcBaseException):
+    """Raised if the workflow is invalid."""

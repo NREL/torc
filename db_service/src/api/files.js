@@ -21,7 +21,7 @@ router.get('/workflows/:workflow/files/produced_by_job/:key', function(req, res)
   try {
     const limit = utils.getItemsLimit(qp.limit);
     const job = jobs.document(key);
-    const cursor = query.getFilesProducedByJob(job, workflow);
+    const cursor = query.listFilesProducedByJob(job, workflow);
     // TODO: how to do this with Arango cursor?
     const items = [];
     let i = 0;

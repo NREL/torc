@@ -96,7 +96,7 @@ def create_workflow(api, output_dir: Path):
         ),
     )
     workflow = api.post_workflow_specifications(spec)
-    api.post_workflows_initialize_jobs_key(workflow.key)
+    api.post_workflows_key_initialize_jobs(workflow.key)
     logger.info("Created workflow %s", workflow.key)
     return workflow
 

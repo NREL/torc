@@ -77,7 +77,7 @@ function addPutMethod(router, descriptor) {
     }
 
     try {
-      const meta = collection.update(doc, doc);
+      const meta = collection.update(doc, doc, {mergeObjects: false});
       Object.assign(doc, meta);
       if (descriptor.customConvert) {
         doc = descriptor.customConvert(doc);

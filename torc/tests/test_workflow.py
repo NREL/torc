@@ -8,15 +8,17 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
-from swagger_client.models.prepare_jobs_for_submission_key_model import (
-    PrepareJobsForSubmissionKeyModel,
+from swagger_client.models.key_prepare_jobs_for_submission_model import (
+    KeyPrepareJobsForSubmissionModel,
 )
 from swagger_client.models.workflow_user_data_model import (
     WorkflowUserDataModel,
 )
 from swagger_client.models.workflow_results_model import WorkflowResultsModel
 
+from torc.api import iter_documents
 from torc.common import GiB
+from torc.exceptions import InvalidWorkflow
 from torc.job_runner import JobRunner
 from torc.utils.timing import timer_stats_collector
 from torc.workflow_manager import WorkflowManager
@@ -36,12 +38,12 @@ def test_run_workflow(diamond_workflow):
     assert len(user_data_work1.items) == 1
     assert user_data_work1.items[0].data["key1"] == "val1"
     mgr = WorkflowManager(api, db.workflow.key)
-    config = api.get_workflows_config_key(db.workflow.key)
+    config = api.get_workflows_key_config(db.workflow.key)
     config.compute_node_resource_stats.cpu = True
     config.compute_node_resource_stats.memory = True
     config.compute_node_resource_stats.process = True
     config.compute_node_resource_stats.interval = 1
-    api.put_workflows_config_key(config, db.workflow.key)
+    api.put_workflows_key_config(config, db.workflow.key)
     mgr.start()
     runner = JobRunner(
         api,
@@ -53,7 +55,7 @@ def test_run_workflow(diamond_workflow):
     )
     runner.run_worker()
 
-    assert api.get_workflows_is_complete_key(db.workflow.key).is_complete
+    assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
     for name in ["preprocess", "work1", "work2", "postprocess"]:
         result = api.get_workflows_workflow_results_find_by_job_key(
             db.workflow.key, db.get_document_key("jobs", name)
@@ -105,35 +107,119 @@ def test_run_workflow_user_data_dependencies(diamond_workflow_user_data):
     api = db.api
     mgr = WorkflowManager(api, db.workflow.key)
     mgr.start()
+    initial_value = db.get_document("user_data", "inputs").data["val"]
+
+    def run_jobs(initial_val):
+        runner = JobRunner(
+            api,
+            db.workflow,
+            output_dir,
+            time_limit="P0DT24H",
+            job_completion_poll_interval=0.1,
+            scheduler_config_id=scheduler_config_id,
+        )
+        runner.run_worker()
+
+        assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
+        for name in ["preprocess", "work1", "work2", "postprocess"]:
+            result = api.get_workflows_workflow_results_find_by_job_key(
+                db.workflow.key, db.get_document_key("jobs", name)
+            )
+            assert result.return_code == 0
+
+        expected_total = initial_val + 1 + 1 + initial_val + 2 + 1
+        for name in ("inputs", "data1", "data2", "data3", "data4", "data5"):
+            ud = db.get_document("user_data", name)
+            assert ud.data
+            if name == "data5":
+                assert "result" in ud.data, ud.data
+                assert ud.data["result"] == expected_total
+
+    run_jobs(initial_value)
+
+    mgr.restart()
+    assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
+
+    ud = db.get_document("user_data", "inputs")
+    new_value = 42
+    ud.data["val"] = new_value
+    api.put_workflows_workflow_user_data_key(ud, db.workflow.key, ud.key)
+    mgr.restart()
+    assert not api.get_workflows_key_is_complete(db.workflow.key).is_complete
+    for name in ["preprocess", "work1", "work2", "postprocess"]:
+        job = api.get_workflows_workflow_jobs_key(
+            db.workflow.key, db.get_document_key("jobs", name)
+        )
+        if job.name == "preprocess":
+            assert job.status == "ready"
+        else:
+            assert job.status == "blocked"
+
+    run_jobs(new_value)
+
+
+def test_run_workflow_user_data_ephemeral(workflow_with_ephemeral_resource, tmp_path):
+    """Test execution of diamond workflow with user data dependencies."""
+    db = workflow_with_ephemeral_resource
+    api = db.api
+    mgr = WorkflowManager(api, db.workflow.key)
+    mgr.start()
+    assert not db.get_document("user_data", "resource").data
     runner = JobRunner(
         api,
         db.workflow,
-        output_dir,
+        tmp_path,
         time_limit="P0DT24H",
         job_completion_poll_interval=0.1,
-        scheduler_config_id=scheduler_config_id,
     )
     runner.run_worker()
-
-    assert api.get_workflows_is_complete_key(db.workflow.key).is_complete
-    for name in ["preprocess", "work1", "work2", "postprocess"]:
-        result = api.get_workflows_workflow_results_find_by_job_key(
-            db.workflow.key, db.get_document_key("jobs", name)
-        )
+    assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
+    for result in iter_documents(api.get_workflows_workflow_results, db.workflow.key):
         assert result.return_code == 0
+    assert db.get_document("user_data", "resource").data
+    # Change the command so that the job gets rerun.
+    job = db.get_document("jobs", "use_resource")
+    job.command += " dummy_arg"
+    api.put_workflows_workflow_jobs_key(job, db.workflow.key, job.key)
+    mgr.restart()
+    assert not db.get_document("user_data", "resource").data
+    runner = JobRunner(
+        api,
+        db.workflow,
+        tmp_path,
+        time_limit="P0DT24H",
+        job_completion_poll_interval=0.1,
+    )
+    runner.run_worker()
+    assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
+    count = 0
+    for result in iter_documents(api.get_workflows_workflow_results, db.workflow.key):
+        assert result.return_code == 0
+        count += 1
+    assert count == 4
 
-    expected_total = 0
-    for name in ("inputs", "data1", "data2", "data3", "data4", "data5"):
-        ud = db.get_document("user_data", name)
-        assert ud.data
-        if name == "inputs":
-            expected_total = ud.data["val"] + 1 + 1 + ud.data["val"] + 2 + 1
-        if name == "data5":
-            assert expected_total != 0
-            assert "result" in ud.data, ud.data
-            assert ud.data["result"] == expected_total
 
-    # TODO: workflow restarts does not support changes to user_data yet
+def test_run_workflow_missing_files(diamond_workflow):
+    """Verify that the check for missing files works."""
+    db = diamond_workflow[0]
+    api = db.api
+    mgr = WorkflowManager(api, db.workflow.key)
+    file = db.get_document("files", "inputs")
+    Path(file.path).unlink()
+    with pytest.raises(InvalidWorkflow):
+        mgr.start()
+
+
+def test_run_workflow_missing_user_data(diamond_workflow_user_data):
+    """Verify that the check for missing user data works."""
+    db = diamond_workflow_user_data[0]
+    api = db.api
+    mgr = WorkflowManager(api, db.workflow.key)
+    ud = db.get_document("user_data", "inputs")
+    ud.data.clear()
+    api.put_workflows_workflow_user_data_key(ud, db.workflow.key, ud.key)
+    with pytest.raises(InvalidWorkflow):
+        mgr.start()
 
 
 def test_prepare_next_jobs_for_submission(diamond_workflow):
@@ -152,7 +238,7 @@ def test_prepare_next_jobs_for_submission(diamond_workflow):
     result = api.post_workflows_key_prepare_next_jobs_for_submission(db.workflow.key, limit=5)
     assert len(result.jobs) == 1
     _fake_complete_job(api, db.workflow.key, result.jobs[0])
-    assert api.get_workflows_is_complete_key(db.workflow.key).is_complete
+    assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
 
 
 @pytest.mark.parametrize("cancel_on_blocking_job_failure", [True, False])
@@ -166,7 +252,7 @@ def test_cancel_with_failed_job(workflow_with_cancel):
         api, db.workflow, output_dir, time_limit="P0DT24H", job_completion_poll_interval=0.1
     )
     runner.run_worker()
-    assert api.get_workflows_is_complete_key(db.workflow.key).is_complete
+    assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
     assert db.get_document("jobs", "job1").status == "done"
     result = api.get_workflows_workflow_results_find_by_job_key(
         db.workflow.key, db.get_document_key("jobs", "job1")
@@ -184,6 +270,47 @@ def test_reinitialize_workflow_noop(completed_workflow):
     for name in ("preprocess", "work1", "work2", "postprocess"):
         job = db.get_document("jobs", name)
         assert job.status == "done"
+
+
+@pytest.mark.parametrize(
+    "field", ["name", "run_id", "supports_termination", "cancel_on_blocking_job_failure"]
+)
+def test_reinitialize_workflow_changed_non_critical_fields(completed_workflow, field):
+    """Verify restart behavior with a changed fields that do not affect results."""
+    db, _, _ = completed_workflow
+    mgr = WorkflowManager(db.api, db.workflow.key)
+    preprocess = None
+    for job in iter_documents(db.api.get_workflows_workflow_jobs, db.workflow.key):
+        if job.name == "preprocess":
+            preprocess = job
+        assert job.status == "done"
+    new_values = {
+        "name": preprocess.name + " new name",
+        "run_id": 5,
+        "supports_termination": not preprocess.supports_termination,
+        "cancel_on_blocking_job_failure": not preprocess.cancel_on_blocking_job_failure,
+    }
+    setattr(preprocess, field, new_values[field])
+    db.api.put_workflows_workflow_jobs_key(preprocess, db.workflow.key, preprocess.key)
+    mgr.reinitialize_jobs()
+    for job in iter_documents(db.api.get_workflows_workflow_jobs, db.workflow.key):
+        assert job.status == "done"
+
+
+@pytest.mark.parametrize("field", ["command", "invocation_script"])
+def test_reinitialize_workflow_changed_critical_fields(completed_workflow, field):
+    """Verify restart behavior with a changed fields that do affect results."""
+    db, _, _ = completed_workflow
+    mgr = WorkflowManager(db.api, db.workflow.key)
+    job = db.get_document("jobs", "preprocess")
+    assert job.status == "done"
+    setattr(job, field, "new value")
+    db.api.put_workflows_workflow_jobs_key(job, db.workflow.key, job.key)
+    mgr.reinitialize_jobs()
+    assert db.get_document("jobs", "preprocess").status == "ready"
+    for name in ("work1", "work2", "postprocess"):
+        job = db.get_document("jobs", name)
+        assert job.status == "blocked"
 
 
 def test_reinitialize_workflow_input_file_updated(completed_workflow):
@@ -238,8 +365,8 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
     api = db.api
     (output_dir / missing_file).unlink()
     mgr = WorkflowManager(api, db.workflow.key)
-    mgr.restart()
-    status = api.get_workflows_status_key(db.workflow.key)
+    mgr.restart(ignore_missing_data=True)
+    status = api.get_workflows_key_status(db.workflow.key)
     assert status.run_id == 2
 
     stage1_events = db.list_documents("events")
@@ -258,7 +385,7 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
     )
     runner.run_worker()
 
-    assert api.get_workflows_is_complete_key(db.workflow.key).is_complete
+    assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
     stage2_events = db.list_documents("events")
     preprocess = db.get_document_key("jobs", "preprocess")
     work1 = db.get_document_key("jobs", "work1")
@@ -285,7 +412,7 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
     for job_key in expected:
         assert api.get_workflows_workflow_jobs_key(db.workflow.key, job_key).run_id == 2
 
-    api.post_workflows_reset_status_key(db.workflow.key)
+    api.post_workflows_key_reset_status(db.workflow.key)
     for name in ("preprocess", "work1", "work2", "postprocess"):
         job = db.get_document("jobs", name)
         assert job.status == "uninitialized"
@@ -295,7 +422,7 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
 def test_ready_job_requirements(independent_job_workflow):
     """Test the API command for getting resource requirements for ready jobs."""
     db, num_jobs = independent_job_workflow
-    reqs = db.api.get_workflows_ready_job_requirements_key(db.workflow.key)
+    reqs = db.api.get_workflows_key_ready_job_requirements(db.workflow.key)
     assert reqs.num_jobs == num_jobs
 
 
@@ -305,7 +432,7 @@ def test_run_independent_job_workflow(independent_job_workflow, tmp_path):
     db, num_jobs = independent_job_workflow
     mgr = WorkflowManager(db.api, db.workflow.key)
     mgr.start()
-    resources = PrepareJobsForSubmissionKeyModel(
+    resources = KeyPrepareJobsForSubmissionModel(
         num_cpus=2,
         num_gpus=0,
         memory_gb=16 * GiB,
@@ -317,7 +444,7 @@ def test_run_independent_job_workflow(independent_job_workflow, tmp_path):
     )
     runner.run_worker()
 
-    assert db.api.get_workflows_is_complete_key(db.workflow.key).is_complete
+    assert db.api.get_workflows_key_is_complete(db.workflow.key).is_complete
     for name in (str(i) for i in range(num_jobs)):
         result = db.api.get_workflows_workflow_results_find_by_job_key(
             db.workflow.key, db.get_document_key("jobs", name)
@@ -359,7 +486,7 @@ def test_concurrent_submitters(independent_job_workflow, tmp_path):
         time.sleep(1)
 
     assert ret == 0
-    assert db.api.get_workflows_is_complete_key(db.workflow.key).is_complete
+    assert db.api.get_workflows_key_is_complete(db.workflow.key).is_complete
     for name in (str(i) for i in range(num_jobs)):
         result = db.api.get_workflows_workflow_results_find_by_job_key(
             db.workflow.key, db.get_document_key("jobs", name)

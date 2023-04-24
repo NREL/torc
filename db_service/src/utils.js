@@ -171,16 +171,6 @@ function makeCursorResultFromIteration(cursor, skip, limit, func) {
 }
 
 /**
- * Convert the job for delivery to an API client.
- * @param {Object} job
- * @return {Object}
- */
-function convertJobForApi(job) {
-  delete job.internal;
-  return job;
-}
-
-/**
  * Return Arango error messages in http responses.
  * @param {Object} e
  * @param {Object} res
@@ -199,13 +189,33 @@ function handleArangoApiErrors(e, res, tag) {
   throw e;
 }
 
+/**
+ * Compute the hash of a string.
+ * @param {String} text
+ * @return {number}
+ */
+function hashCode(text) {
+  // Copied from
+  // https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript
+  let hash = 0;
+  if (text.length === 0) {
+    return hash;
+  }
+  for (let i = 0; i < text.length; i++) {
+    const chr = text.charCodeAt(i);
+    hash = ((hash << 5) - hash) + chr;
+    hash |= 0; // Convert to 32bit integer
+  }
+  return hash;
+}
+
 module.exports = {
-  convertJobForApi,
   getItemsLimit,
   getTimeDurationInSeconds,
   getWalltimeInSeconds,
   getMemoryInBytes,
   handleArangoApiErrors,
+  hashCode,
   makeCursorResult,
   makeCursorResultFromIteration,
   product,

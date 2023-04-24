@@ -42,6 +42,8 @@ WORK_UD = Path("tests") / "scripts" / "work_ud.py"
 INVALID = Path("tests") / "scripts" / "invalid.py"
 NOOP = Path("tests") / "scripts" / "noop.py"
 RC_JOB = Path("tests") / "scripts" / "resource_consumption.py"
+CREATE_RESOURCE_JOB = Path("tests") / "scripts" / "create_resource.py"
+USE_RESOURCE_JOB = Path("tests") / "scripts" / "use_resource.py"
 SLEEP_JOB = Path("tests") / "scripts" / "sleep.py"
 URL = "http://localhost:8529/_db/test-workflows/torc-service"
 
@@ -136,7 +138,7 @@ def diamond_workflow(tmp_path):
     spec = builder.build()
     workflow = api.post_workflow_specifications(spec)
     db = DatabaseInterface(api, workflow)
-    api.post_workflows_initialize_jobs_key(workflow.key)
+    api.post_workflows_key_initialize_jobs(workflow.key)
     scheduler = db.get_document("local_schedulers", "test")
     yield db, scheduler.id, output_dir
     api.delete_workflows_key(workflow.key)
@@ -205,9 +207,36 @@ def diamond_workflow_user_data(tmp_path):
     spec = builder.build()
     workflow = api.post_workflow_specifications(spec)
     db = DatabaseInterface(api, workflow)
-    api.post_workflows_initialize_jobs_key(workflow.key)
+    api.post_workflows_key_initialize_jobs(workflow.key)
     scheduler = db.get_document("local_schedulers", "test")
     yield db, scheduler.id, output_dir
+    api.delete_workflows_key(workflow.key)
+    api.api_client.close()
+
+
+@pytest.fixture
+def workflow_with_ephemeral_resource():
+    """Creates a workflow with one job that creates an ephemeral resource."""
+    api = _initialize_api()
+
+    builder = WorkflowBuilder()
+    resource = builder.add_user_data(name="resource", is_ephemeral=True)
+    builder.add_job(
+        name="create_resource",
+        command=f"python {CREATE_RESOURCE_JOB}",
+        stores_user_data=[resource.name],
+    )
+    builder.add_job(
+        name="use_resource",
+        command=f"python {USE_RESOURCE_JOB}",
+        consumes_user_data=[resource.name],
+    )
+
+    spec = builder.build()
+    workflow = api.post_workflow_specifications(spec)
+    db = DatabaseInterface(api, workflow)
+    api.post_workflows_key_initialize_jobs(workflow.key)
+    yield db
     api.delete_workflows_key(workflow.key)
     api.api_client.close()
 
@@ -232,7 +261,7 @@ def independent_job_workflow(num_jobs):
     spec = WorkflowSpecificationsModel(jobs=jobs, resource_requirements=[small])
     workflow = api.post_workflow_specifications(spec)
     db = DatabaseInterface(api, workflow)
-    api.post_workflows_initialize_jobs_key(workflow.key)
+    api.post_workflows_key_initialize_jobs(workflow.key)
     yield db, num_jobs
     api.delete_workflows_key(workflow.key)
     api.api_client.close()
@@ -262,7 +291,7 @@ def workflow_with_cancel(tmp_path, cancel_on_blocking_job_failure):
     spec = WorkflowSpecificationsModel(jobs=[job1, job2])
     workflow = api.post_workflow_specifications(spec)
     db = DatabaseInterface(api, workflow)
-    api.post_workflows_initialize_jobs_key(workflow.key)
+    api.post_workflows_key_initialize_jobs(workflow.key)
     yield db, tmp_path, cancel_on_blocking_job_failure
     api.delete_workflows_key(workflow.key)
     api.api_client.close()
@@ -275,9 +304,17 @@ def completed_workflow(diamond_workflow):
     api = db.api
     mgr = WorkflowManager(api, db.workflow.key)
     mgr.initialize_files()
-    status = api.get_workflows_status_key(db.workflow.key)
+    status = api.get_workflows_key_status(db.workflow.key)
     status.run_id = 1
-    api.put_workflows_status_key(status, db.workflow.key)
+    api.put_workflows_key_status(status, db.workflow.key)
+
+    for file in api.get_workflows_workflow_files(db.workflow.key).items:
+        path = Path(file.path)
+        if not path.exists():
+            path.touch()
+            file.st_mtime = path.stat().st_mtime
+            api.put_workflows_workflow_files_key(file, db.workflow.key, file.key)
+
     job_keys = [job.key for job in api.get_workflows_workflow_jobs(db.workflow.key).items]
     for job_key in job_keys:
         # Completing a job this way will cause blocked jobs to change status and revision,
@@ -298,13 +335,6 @@ def completed_workflow(diamond_workflow):
         job = api.post_workflows_workflow_jobs_key_complete_job_status_rev(
             result, db.workflow.key, job_key, status, job._rev  # pylint: disable=protected-access
         )
-
-    for file in api.get_workflows_workflow_files(db.workflow.key).items:
-        path = Path(file.path)
-        if not path.exists():
-            path.touch()
-            file.st_mtime = path.stat().st_mtime
-            api.put_workflows_workflow_files_key(file, db.workflow.key, file.key)
 
     yield db, scheduler_config_id, output_dir
 
@@ -434,7 +464,7 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
     workflow = api.post_workflow_specifications(spec)
     db = DatabaseInterface(api, workflow)
     scheduler = db.get_document("local_schedulers", "test")
-    api.post_workflows_initialize_jobs_key(workflow.key)
+    api.post_workflows_key_initialize_jobs(workflow.key)
     yield db, scheduler.id, output_dir, monitor_type
     api.delete_workflows_key(workflow.key)
     api.api_client.close()
@@ -475,7 +505,7 @@ def cancelable_workflow(tmp_path):
     workflow = api.post_workflow_specifications(spec)
     db = DatabaseInterface(api, workflow)
     scheduler = db.get_document("local_schedulers", "test")
-    api.post_workflows_initialize_jobs_key(workflow.key)
+    api.post_workflows_key_initialize_jobs(workflow.key)
     yield db, scheduler.id, output_dir
     api.delete_workflows_key(workflow.key)
     api.api_client.close()

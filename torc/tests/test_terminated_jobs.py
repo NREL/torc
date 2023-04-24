@@ -39,7 +39,7 @@ def test_terminated_jobs(cancelable_workflow, tmp_path):
         if not done:
             pipe.kill()
         assert done
-        result = api.get_workflows_is_complete_key(workflow_key)
+        result = api.get_workflows_key_is_complete(workflow_key)
         assert result.is_complete
         pipe.communicate()
         assert pipe.returncode == 0

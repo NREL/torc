@@ -4870,6 +4870,247 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
+  /workflows/{key}/is_complete:
+    get:
+      tags: []
+      summary: Report whether the workflow is complete
+      description: Reports true if all jobs in the workflow are complete.
+      operationId: get_workflows_key_is_complete
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_22'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /workflows/{key}/ready_job_requirements:
+    get:
+      tags: []
+      summary: Return the resource requirements for ready jobs.
+      description: Return the resource requirements for jobs with a status of ready.
+      operationId: get_workflows_key_ready_job_requirements
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: scheduler_config_id
+        in: query
+        description: Limit output to jobs assigned this scheduler.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          enum:
+          - "null"
+          - ""
+      responses:
+        "200":
+          description: result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_23'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /workflows/{key}/initialize_jobs:
+    post:
+      tags: []
+      summary: Initialize job relationships.
+      description: Initialize job relationships based on file and user_data relationships.
+      operationId: post_workflows_key_initialize_jobs
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*': {}
+        required: false
+      responses:
+        "200":
+          description: message
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /workflows/{key}/process_changed_job_inputs:
+    post:
+      tags: []
+      summary: Check for changed job inputs and update status accordingly.
+      description: Check for changed job inputs and update status accordingly.
+      operationId: post_workflows_key_process_changed_job_inputs
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*': {}
+        required: false
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_24'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /workflows/{key}/missing_user_data:
+    get:
+      tags: []
+      summary: List missing user data that should exist.
+      description: List missing user data that should exist.
+      operationId: get_workflows_key_missing_user_data
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_25'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /workflows/{key}/required_existing_files:
+    get:
+      tags: []
+      summary: List files that must exist.
+      description: List files that must exist.
+      operationId: get_workflows_key_required_existing_files
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_26'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /workflows/{key}/prepare_jobs_for_submission:
+    post:
+      tags: []
+      summary: "Return ready jobs, accounting for resource requirements."
+      description: Return jobs that are ready for submission and meet worker resource
+        Sets status to submitted_pending.
+      operationId: post_workflows_key_prepare_jobs_for_submission
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 1000.0
+      requestBody:
+        description: Available worker resources.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/key_prepare_jobs_for_submission_model'
+        required: true
+      responses:
+        "200":
+          description: Jobs that are ready for submission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_27'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
   /workflows/{key}/prepare_next_jobs_for_submission:
     post:
       tags: []
@@ -4904,7 +5145,274 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_22'
+                $ref: '#/components/schemas/inline_response_200_28'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /workflows/{key}/auto_tune_resource_requirements:
+    post:
+      tags: []
+      summary: Enable workflow for auto-tuning resource requirements.
+      description: Enable workflow for auto-tuning resource requirements.
+      operationId: post_workflows_key_auto_tune_resource_requirements
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*': {}
+        required: false
+      responses:
+        "200":
+          description: Message
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /workflows/{key}/process_auto_tune_resource_requirements_results:
+    post:
+      tags: []
+      summary: Process the results of auto-tuning resource requirements.
+      description: Process the results of auto-tuning resource requirements.
+      operationId: post_workflows_key_process_auto_tune_resource_requirements_results
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*': {}
+        required: false
+      responses:
+        "200":
+          description: Message
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /workflows/{key}/config:
+    get:
+      tags: []
+      summary: Reports the workflow config.
+      description: Reports the workflow config.
+      operationId: get_workflows_key_config
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_18'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+    put:
+      tags: []
+      summary: Reports the workflow config.
+      description: Reports the workflow config.
+      operationId: put_workflows_key_config
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: Updated workflow config
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/key_config_model'
+        required: true
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_18'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /workflows/{key}/cancel:
+    put:
+      tags: []
+      summary: Cancel workflow.
+      description: Cancel workflow. Workers will detect the status change and cancel
+        jobs.
+      operationId: put_workflows_key_cancel
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*': {}
+        required: false
+      responses:
+        "200":
+          description: message
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /workflows/{key}/reset_status:
+    post:
+      tags: []
+      summary: Reset job status.
+      description: Reset status for all jobs to uninitialized.
+      operationId: post_workflows_key_reset_status
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          '*/*': {}
+        required: false
+      responses:
+        "200":
+          description: message
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /workflows/{key}/status:
+    get:
+      tags: []
+      summary: Reports the workflow status.
+      description: Reports the workflow status.
+      operationId: get_workflows_key_status
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_29'
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+    put:
+      tags: []
+      summary: Reports the workflow status.
+      description: Reports the workflow status.
+      operationId: put_workflows_key_status
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        description: Updated workflow status
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/key_status_model'
+        required: true
+      responses:
+        "200":
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_200_29'
         "500":
           description: Default error response.
           content:
@@ -4934,7 +5442,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_23'
+                $ref: '#/components/schemas/inline_response_200_30'
         "500":
           description: Default error response.
           content:
@@ -4970,6 +5478,20 @@ paths:
         required: true
         style: simple
         explode: false
+        schema:
+          type: string
+      - name: collection_key
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: collection_name
+        in: query
+        required: false
+        style: form
+        explode: true
         schema:
           type: string
       - name: skip
@@ -5032,6 +5554,20 @@ paths:
         explode: false
         schema:
           type: string
+      - name: collection_key
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+      - name: collection_name
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
       - name: skip
         in: query
         required: false
@@ -5062,422 +5598,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-  /workflows/is_complete/{key}:
-    get:
-      tags: []
-      summary: Report whether the workflow is complete
-      description: Reports true if all jobs in the workflow are complete.
-      operationId: get_workflows_is_complete_key
-      parameters:
-      - name: key
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: HTTP 200 OK.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_24'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-  /workflows/ready_job_requirements/{key}:
-    get:
-      tags: []
-      summary: Return the resource requirements for ready jobs.
-      description: Return the resource requirements for jobs with a status of ready.
-      operationId: get_workflows_ready_job_requirements_key
-      parameters:
-      - name: key
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      - name: scheduler_config_id
-        in: query
-        description: Limit output to jobs assigned this scheduler.
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: string
-          enum:
-          - "null"
-          - ""
-      responses:
-        "200":
-          description: result
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_25'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-  /workflows/initialize_jobs/{key}:
-    post:
-      tags: []
-      summary: Initialize job relationships.
-      description: Initialize job relationships based on file relationships.
-      operationId: post_workflows_initialize_jobs_key
-      parameters:
-      - name: key
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        content:
-          '*/*': {}
-        required: false
-      responses:
-        "200":
-          description: message
-          content:
-            application/json:
-              schema:
-                type: object
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /workflows/prepare_jobs_for_submission/{key}:
-    post:
-      tags: []
-      summary: "Return ready jobs, accounting for resource requirements."
-      description: Return jobs that are ready for submission and meet worker resource
-        Sets status to submitted_pending.
-      operationId: post_workflows_prepare_jobs_for_submission_key
-      parameters:
-      - name: key
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      - name: limit
-        in: query
-        required: false
-        style: form
-        explode: true
-        schema:
-          type: number
-          default: 1000.0
-      requestBody:
-        description: Available worker resources.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/prepare_jobs_for_submission_key_model'
-        required: true
-      responses:
-        "200":
-          description: Jobs that are ready for submission.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_26'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /workflows/auto_tune_resource_requirements/{key}:
-    post:
-      tags: []
-      summary: Enable workflow for auto-tuning resource requirements.
-      description: Enable workflow for auto-tuning resource requirements.
-      operationId: post_workflows_auto_tune_resource_requirements_key
-      parameters:
-      - name: key
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        content:
-          '*/*': {}
-        required: false
-      responses:
-        "200":
-          description: Message
-          content:
-            application/json:
-              schema:
-                type: object
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /workflows/process_auto_tune_resource_requirements_results/{key}:
-    post:
-      tags: []
-      summary: Process the results of auto-tuning resource requirements.
-      description: Process the results of auto-tuning resource requirements.
-      operationId: post_workflows_process_auto_tune_resource_requirements_results_key
-      parameters:
-      - name: key
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        content:
-          '*/*': {}
-        required: false
-      responses:
-        "200":
-          description: Message
-          content:
-            application/json:
-              schema:
-                type: object
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /workflows/config/{key}:
-    get:
-      tags: []
-      summary: Reports the workflow config.
-      description: Reports the workflow config.
-      operationId: get_workflows_config_key
-      parameters:
-      - name: key
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: HTTP 200 OK.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_18'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-    put:
-      tags: []
-      summary: Reports the workflow config.
-      description: Reports the workflow config.
-      operationId: put_workflows_config_key
-      parameters:
-      - name: key
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        description: Updated workflow config
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/config_key_model'
-        required: true
-      responses:
-        "200":
-          description: HTTP 200 OK.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_18'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /workflows/cancel/{key}:
-    put:
-      tags: []
-      summary: Cancel workflow.
-      description: Cancel workflow. Workers will detect the status change and cancel
-        jobs.
-      operationId: put_workflows_cancel_key
-      parameters:
-      - name: key
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        content:
-          '*/*': {}
-        required: false
-      responses:
-        "200":
-          description: message
-          content:
-            application/json:
-              schema:
-                type: object
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /workflows/reset_status/{key}:
-    post:
-      tags: []
-      summary: Reset job status.
-      description: Reset status for all jobs to uninitialized.
-      operationId: post_workflows_reset_status_key
-      parameters:
-      - name: key
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        content:
-          '*/*': {}
-        required: false
-      responses:
-        "200":
-          description: message
-          content:
-            application/json:
-              schema:
-                type: object
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /workflows/status/{key}:
-    get:
-      tags: []
-      summary: Reports the workflow status.
-      description: Reports the workflow status.
-      operationId: get_workflows_status_key
-      parameters:
-      - name: key
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      responses:
-        "200":
-          description: HTTP 200 OK.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_27'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-    put:
-      tags: []
-      summary: Reports the workflow status.
-      description: Reports the workflow status.
-      operationId: put_workflows_status_key
-      parameters:
-      - name: key
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        description: Updated workflow status
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/status_key_model'
-        required: true
-      responses:
-        "200":
-          description: HTTP 200 OK.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_27'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
 components:
   schemas:
     compute_node_stats_key_model:
@@ -5500,6 +5620,43 @@ components:
           type: string
         _rev:
           type: string
+    key_prepare_jobs_for_submission_model:
+      required:
+      - memory_gb
+      - num_cpus
+      type: object
+      properties:
+        num_cpus:
+          type: integer
+        memory_gb:
+          type: number
+        num_gpus:
+          type: integer
+        num_nodes:
+          type: integer
+        time_limit:
+          type: object
+        scheduler_config_id:
+          type: string
+    key_status_model:
+      required:
+      - auto_tune_status
+      - is_canceled
+      - run_id
+      type: object
+      properties:
+        is_canceled:
+          type: boolean
+        run_id:
+          type: integer
+        auto_tune_status:
+          $ref: '#/components/schemas/workflowskeystatus_auto_tune_status'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
     workflow_specifications_schedulers:
       type: object
       properties:
@@ -5515,6 +5672,13 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/slurm_schedulers_key_model'
+    inline_response_200_30:
+      type: object
+      properties:
+        names:
+          type: array
+          items:
+            type: string
     workflow_job_process_stats_model:
       required:
       - avg_cpu_percent
@@ -5543,6 +5707,17 @@ components:
           type: integer
         timestamp:
           type: string
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
+    key_config_model:
+      type: object
+      properties:
+        compute_node_resource_stats:
+          $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
         _key:
           type: string
         _id:
@@ -5740,12 +5915,15 @@ components:
         has_more:
           type: boolean
     inline_response_200_22:
+      required:
+      - is_canceled
+      - is_complete
       type: object
       properties:
-        jobs:
-          type: array
-          items:
-            $ref: '#/components/schemas/jobs_key_model'
+        is_canceled:
+          type: boolean
+        is_complete:
+          type: boolean
     inline_response_200_21:
       required:
       - count
@@ -5770,22 +5948,9 @@ components:
         has_more:
           type: boolean
     inline_response_200_24:
-      required:
-      - is_canceled
-      - is_complete
       type: object
       properties:
-        is_canceled:
-          type: boolean
-        is_complete:
-          type: boolean
-    workflowsstatuskey_auto_tune_status:
-      type: object
-      properties:
-        enabled:
-          type: boolean
-          default: true
-        job_keys:
+        reinitialized_jobs:
           type: array
           items:
             type: string
@@ -5824,12 +5989,30 @@ components:
         _rev:
           type: string
     inline_response_200_23:
+      required:
+      - max_memory_gb
+      - max_num_nodes
+      - max_runtime
+      - memory_gb
+      - num_cpus
+      - num_gpus
+      - num_jobs
       type: object
       properties:
-        names:
-          type: array
-          items:
-            type: string
+        num_jobs:
+          type: integer
+        num_cpus:
+          type: integer
+        num_gpus:
+          type: integer
+        memory_gb:
+          type: number
+        max_memory_gb:
+          type: number
+        max_num_nodes:
+          type: integer
+        max_runtime:
+          type: string
     inline_response_200_5:
       required:
       - count
@@ -5961,40 +6144,46 @@ components:
           type: string
         _rev:
           type: string
+    inline_response_200_29:
+      required:
+      - auto_tune_status
+      - is_canceled
+      - run_id
+      type: object
+      properties:
+        is_canceled:
+          type: boolean
+        run_id:
+          type: integer
+        auto_tune_status:
+          $ref: '#/components/schemas/workflowskeystatus_auto_tune_status'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
     inline_response_200_26:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            type: string
+    inline_response_200_25:
+      type: object
+      properties:
+        user_data:
+          type: array
+          items:
+            type: string
+    inline_response_200_28:
       type: object
       properties:
         jobs:
           type: array
           items:
             $ref: '#/components/schemas/jobs_key_model'
-        reason:
-          type: string
-    inline_response_200_25:
-      required:
-      - max_memory_gb
-      - max_num_nodes
-      - max_runtime
-      - memory_gb
-      - num_cpus
-      - num_gpus
-      - num_jobs
-      type: object
-      properties:
-        num_jobs:
-          type: integer
-        num_cpus:
-          type: integer
-        num_gpus:
-          type: integer
-        memory_gb:
-          type: number
-        max_memory_gb:
-          type: number
-        max_num_nodes:
-          type: integer
-        max_runtime:
-          type: string
     edges_name_model:
       required:
       - _from
@@ -6012,23 +6201,13 @@ components:
         _rev:
           type: string
     inline_response_200_27:
-      required:
-      - auto_tune_status
-      - is_canceled
-      - run_id
       type: object
       properties:
-        is_canceled:
-          type: boolean
-        run_id:
-          type: integer
-        auto_tune_status:
-          $ref: '#/components/schemas/workflowsstatuskey_auto_tune_status'
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/jobs_key_model'
+        reason:
           type: string
     workflow_scheduled_compute_nodes_model:
       required:
@@ -6087,7 +6266,7 @@ components:
         is_active:
           type: boolean
         resources:
-          $ref: '#/components/schemas/prepare_jobs_for_submission_key_model'
+          $ref: '#/components/schemas/key_prepare_jobs_for_submission_model'
         scheduler:
           type: object
           properties: {}
@@ -6480,6 +6659,16 @@ components:
           type: integer
         has_more:
           type: boolean
+    workflowskeystatus_auto_tune_status:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+          default: true
+        job_keys:
+          type: array
+          items:
+            type: string
     inline_response_200_17:
       required:
       - count
@@ -6617,25 +6806,6 @@ components:
           type: integer
         job_key:
           type: string
-    status_key_model:
-      required:
-      - auto_tune_status
-      - is_canceled
-      - run_id
-      type: object
-      properties:
-        is_canceled:
-          type: boolean
-        run_id:
-          type: integer
-        auto_tune_status:
-          $ref: '#/components/schemas/workflowsstatuskey_auto_tune_status'
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
     workflow_local_schedulers_model:
       type: object
       properties:
@@ -6651,24 +6821,6 @@ components:
         _id:
           type: string
         _rev:
-          type: string
-    prepare_jobs_for_submission_key_model:
-      required:
-      - memory_gb
-      - num_cpus
-      type: object
-      properties:
-        num_cpus:
-          type: integer
-        memory_gb:
-          type: number
-        num_gpus:
-          type: integer
-        num_nodes:
-          type: integer
-        time_limit:
-          type: object
-        scheduler_config_id:
           type: string
     workflows_model:
       type: object
@@ -6727,7 +6879,7 @@ components:
         is_active:
           type: boolean
         resources:
-          $ref: '#/components/schemas/prepare_jobs_for_submission_key_model'
+          $ref: '#/components/schemas/key_prepare_jobs_for_submission_model'
         scheduler:
           type: object
           properties: {}
@@ -6768,17 +6920,6 @@ components:
         data:
           type: object
           properties: {}
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    config_key_model:
-      type: object
-      properties:
-        compute_node_resource_stats:
-          $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
         _key:
           type: string
         _id:
@@ -6957,8 +7098,9 @@ components:
         runtime_seconds:
           type: number
         scheduler_config_id:
-          type: string
-          default: ""
+          type: object
+        hash:
+          type: integer
     results_key_model:
       required:
       - completion_time

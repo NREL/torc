@@ -37,7 +37,7 @@ router.put('/workflow_config/:key', function(req, res) {
       const meta = db.workflow_config.save(doc);
       Object.assign(doc, meta);
     } else {
-      const meta = db.workflow_config.update(doc, doc);
+      const meta = db.workflow_config.update(doc, doc, {mergeObjects: false});
       Object.assign(doc, meta);
     }
     res.send(doc);

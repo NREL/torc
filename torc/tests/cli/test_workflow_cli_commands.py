@@ -45,6 +45,28 @@ def test_workflow_commands(create_workflow_cli):
     events = _run_and_convert_output_from_json(
         ["-k", key, "-u", url, "-F", "json", "events", "list"]
     )
+    job_key = _run_and_convert_output_from_json(
+        ["-k", key, "-u", url, "-F", "json", "jobs", "list"]
+    )["jobs"][0]["key"]
+    # Test filtering on the collections join command.
+    assert (
+        _run_and_convert_output_from_json(
+            [
+                "-k",
+                key,
+                "-u",
+                url,
+                "-F",
+                "json",
+                "collections",
+                "join",
+                "job-requirements",
+                "-f",
+                f"key={job_key}",
+            ]
+        )["items"][0]["to"]["name"]
+        == "small"
+    )
 
     for name in JOIN_COLLECTIONS:
         _get_text_and_json_outputs(["-k", key, "-u", url, "collections", "join", name])

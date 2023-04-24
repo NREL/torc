@@ -232,7 +232,7 @@ function addWorkflow(doc) {
 function cancelWorkflow(workflow) {
   const status = query.getWorkflowStatus(workflow);
   status.is_canceled = true;
-  db.workflow_statuses.update(status, status);
+  db.workflow_statuses.update(status, status, {mergeObjects: false});
   query.cancelWorkflowJobs(workflow);
 }
 
@@ -241,15 +241,34 @@ function cancelWorkflow(workflow) {
  * @param {Object} workflow
  */
 function clearEphemeralUserData(workflow) {
-  const collection = config.getWorkflowCollection(workflow, 'user_data');
-  // TODO: better filter
-  for (const item of collection.byExample({is_ephemeral: true})) {
+  for (const item of query.listUserDataWithEphemeralData(workflow)) {
     if (item.data != null) {
-      for (const key of Object.keys(item.data)) {
-        delete item.data[key];
+      const keys = Object.keys(item.data);
+      if (keys.length > 0) {
+        for (const key of Object.keys(item.data)) {
+          delete item.data[key];
+        }
+        updateWorkflowDocument(workflow, 'user_data', item);
       }
     }
   }
+}
+
+/**
+ * Compute a hash of all job inputs that can affect results.
+ * @param {Object} job
+ * @param {Object} workflow
+ * @return {number}
+ */
+function computeJobInputHash(job, workflow) {
+  const data = {
+    command: job.command,
+    invocation_script: job.invocation_script,
+    consumes_user_data_keys: query.listConsumesUserDataRevisions(job, workflow),
+    stores_user_data_keys: query.listStoresUserDataRevisions(job, workflow),
+    needs_file_keys: query.listNeedsFileRevisions(job, workflow),
+  };
+  return utils.hashCode(JSON.stringify(data));
 }
 
 /**
@@ -389,6 +408,40 @@ function listWorkflowCollectionNames(workflow) {
   return names;
 }
 
+/**
+ * Check for completed jobs that have had input changes and reinitialize them.
+ * There is no protection for concurrent requests.
+ * @param {Object} workflow
+ * @return {Array}
+ */
+function processChangedJobInputs(workflow) {
+  const jobsCollection = config.getWorkflowCollection(workflow, 'jobs');
+  const reinitializedJobs = [];
+
+  for (const job of jobsCollection.byExample({'status': JobStatus.Done})) {
+    const hash = computeJobInputHash(job, workflow);
+    if (hash != job.internal.hash) {
+      job.status = JobStatus.Uninitialized;
+      updateWorkflowDocument(workflow, 'jobs', job);
+      reinitializedJobs.push(job._key);
+    }
+  }
+  return reinitializedJobs;
+}
+
+/**
+ * Update the workflow document.
+ * @param {Object} workflow
+ * @param {String} documentType
+ * @param {String} doc
+ * @return {Object}
+ */
+function updateWorkflowDocument(workflow, documentType, doc) {
+  const collection = config.getWorkflowCollection(workflow, documentType);
+  const meta = collection.update(doc, doc, {mergeObjects: false});
+  Object.assign(doc, meta);
+  return doc;
+}
 
 module.exports = {
   addFile,
@@ -400,10 +453,13 @@ module.exports = {
   addUserData,
   addWorkflow,
   cancelWorkflow,
+  computeJobInputHash,
   clearEphemeralUserData,
   deleteWorkflow,
   getSchedulerConfig,
   getWorkflow,
   getWorkflowDocument,
   listWorkflowCollectionNames,
+  processChangedJobInputs,
+  updateWorkflowDocument,
 };

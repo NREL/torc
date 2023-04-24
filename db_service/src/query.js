@@ -126,7 +126,7 @@ function cancelWorkflowJobs(workflow) {
 
       for (const job of cursor) {
         job.status = JobStatus.Canceled;
-        collection.update(job, job);
+        collection.update(job, job, {mergeObjects: false});
       }
     },
   });
@@ -213,7 +213,7 @@ function getBlockingJobs(job, workflow) {
  * @param {Object} workflow
  * @return {ArangoQueryCursor}
  */
-function getFilesNeededByJob(job, workflow) {
+function listFilesNeededByJob(job, workflow) {
   const graphName = config.getWorkflowGraphName(workflow);
   const edgeName = config.getWorkflowCollectionName(workflow, 'needs');
   return query({count: true})`
@@ -232,7 +232,7 @@ function getFilesNeededByJob(job, workflow) {
  * @param {Object} workflow
  * @return {ArangoQueryCursor}
  */
-function getFilesProducedByJob(job, workflow) {
+function listFilesProducedByJob(job, workflow) {
   const graphName = config.getWorkflowGraphName(workflow);
   const edgeName = config.getWorkflowCollectionName(workflow, 'produces');
   return query({count: true})`
@@ -260,13 +260,13 @@ function getjobSpecification(job, workflow) {
   for (const blockingJob of getBlockingJobs(job, workflow)) {
     blockingJobs.push(blockingJob.name);
   }
-  for (const file of getFilesNeededByJob(job, workflow)) {
+  for (const file of listFilesNeededByJob(job, workflow)) {
     inputFiles.push(file.name);
   }
-  for (const file of getFilesProducedByJob(job, workflow)) {
+  for (const file of listFilesProducedByJob(job, workflow)) {
     outputFiles.push(file.name);
   }
-  for (const data of getUserDataStoredByJob(job, workflow)) {
+  for (const data of listUserDataStoredByJob(job, workflow)) {
     delete(data._id);
     delete(data._key);
     delete(data._rev);
@@ -459,10 +459,10 @@ function getLatestJobResult(job, workflow) {
  * @param {Object} workflow
  * @return {ArangoQueryCursor}
  */
-function getUserDataConsumedByJob(job, workflow) {
+function listUserDataConsumedByJob(job, workflow) {
   const graphName = config.getWorkflowGraphName(workflow);
   const edgeName = config.getWorkflowCollectionName(workflow, 'consumes');
-  const cursor = query({count: true})`
+  return query`
     FOR v, e, p
       IN 1
       OUTBOUND ${job._id}
@@ -470,10 +470,6 @@ function getUserDataConsumedByJob(job, workflow) {
       OPTIONS { edgeCollections: ${edgeName} }
       RETURN p.vertices[1]
   `;
-  if (cursor.count() == 0) {
-    return [];
-  }
-  return cursor.toArray();
 }
 
 /**
@@ -482,10 +478,10 @@ function getUserDataConsumedByJob(job, workflow) {
  * @param {Object} workflow
  * @return {ArangoQueryCursor}
  */
-function getUserDataStoredByJob(job, workflow) {
+function listUserDataStoredByJob(job, workflow) {
   const graphName = config.getWorkflowGraphName(workflow);
   const edgeName = config.getWorkflowCollectionName(workflow, 'stores');
-  const cursor = query({count: true})`
+  return query`
     FOR v, e, p
       IN 1
       OUTBOUND ${job._id}
@@ -493,10 +489,20 @@ function getUserDataStoredByJob(job, workflow) {
       OPTIONS { edgeCollections: ${edgeName} }
       RETURN p.vertices[1]
   `;
-  if (cursor.count() == 0) {
-    return [];
-  }
-  return cursor.toArray();
+}
+
+/**
+ * Return the user data with content in its data field.
+ * @param {Object} workflow
+ * @return {ArangoQueryCursor}
+ */
+function listUserDataWithEphemeralData(workflow) {
+  const collection = config.getWorkflowCollection(workflow, 'user_data');
+  return query`
+    FOR doc in ${collection}
+      FILTER doc.is_ephemeral && doc.data != NULL && LENGTH(doc.data) > 0
+      RETURN doc
+  `;
 }
 
 /**
@@ -571,7 +577,7 @@ function initializeJobStatus(workflow) {
     } else if (job.status != JobStatus.Done) {
       job.status = JobStatus.Ready;
     }
-    jobs.update(job, job);
+    jobs.update(job, job, {mergeObjects: false});
   }
   console.log(
       `Initialized all incomplete job status to ${JobStatus.Ready} or ${JobStatus.Blocked}`,
@@ -748,15 +754,27 @@ function listJobProcessStats(job, workflow) {
  * @param {Object} workflow
  * @param {string} fromCollectionBase
  * @param {string} edgeBase
+ * @param {Object} filters
  * @param {number} skip
  * @param {number} limit
  * @return {Object}
  */
-function joinCollectionsByInboundEdge(workflow, fromCollectionBase, edgeBase, skip, limit) {
+function joinCollectionsByInboundEdge(
+    workflow,
+    fromCollectionBase,
+    edgeBase,
+    filters,
+    skip,
+    limit,
+) {
   const graphName = config.getWorkflowGraphName(workflow);
-  const fromCollection = config.getWorkflowCollection(workflow, fromCollectionBase)
-      .all()
-      .skip(skip)
+  let fromCollection = config.getWorkflowCollection(workflow, fromCollectionBase);
+  if (filters != null && Object.keys(filters).length > 0) {
+    fromCollection = fromCollection.byExample(filters);
+  } else {
+    fromCollection = fromCollection.all();
+  }
+  fromCollection = fromCollection.skip(skip)
       .limit(limit)
       .toArray();
   const edgeName = config.getWorkflowCollectionName(workflow, edgeBase);
@@ -777,15 +795,27 @@ function joinCollectionsByInboundEdge(workflow, fromCollectionBase, edgeBase, sk
  * @param {Object} workflow
  * @param {string} fromCollectionBase
  * @param {string} edgeBase
+ * @param {Object} filters
  * @param {number} skip
  * @param {number} limit
  * @return {Object}
  */
-function joinCollectionsByOutboundEdge(workflow, fromCollectionBase, edgeBase, skip, limit) {
+function joinCollectionsByOutboundEdge(
+    workflow,
+    fromCollectionBase,
+    edgeBase,
+    filters,
+    skip,
+    limit,
+) {
   const graphName = config.getWorkflowGraphName(workflow);
-  const fromCollection = config.getWorkflowCollection(workflow, fromCollectionBase)
-      .all()
-      .skip(skip)
+  let fromCollection = config.getWorkflowCollection(workflow, fromCollectionBase);
+  if (filters != null && Object.keys(filters).length > 0) {
+    fromCollection = fromCollection.byExample(filters);
+  } else {
+    fromCollection = fromCollection.all();
+  }
+  fromCollection = fromCollection.skip(skip)
       .limit(limit)
       .toArray();
   const edgeName = config.getWorkflowCollectionName(workflow, edgeBase);
@@ -802,6 +832,125 @@ function joinCollectionsByOutboundEdge(workflow, fromCollectionBase, edgeBase, s
 }
 
 /**
+ * Return an array of file keys and revisions needed by the job.
+ * @param {Object} job
+ * @param {Object} workflow
+ * @return {Array}
+ */
+function listNeedsFileRevisions(job, workflow) {
+  const items = [];
+  for (const item of listFilesNeededByJob(job, workflow)) {
+    items.push({key: item._key, rev: item._rev});
+  }
+  items.sort((x, y) => x.key - y.key);
+  return items;
+}
+
+/**
+ * Return an array of user data keys and revisions consumed by the job.
+ * @param {Object} job
+ * @param {Object} workflow
+ * @return {Array}
+ */
+function listConsumesUserDataRevisions(job, workflow) {
+  const items = [];
+  for (const item of listUserDataConsumedByJob(job, workflow)) {
+    items.push({key: item._key, rev: item._rev});
+  }
+  items.sort((x, y) => x.key - y.key);
+  return items;
+}
+
+/**
+ * Return an array of user data keys and revisions stored by the job.
+ * @param {Object} job
+ * @param {Object} workflow
+ * @return {Array}
+ */
+function listStoresUserDataRevisions(job, workflow) {
+  const items = [];
+  for (const item of listUserDataStoredByJob(job, workflow)) {
+    items.push({key: item._key, rev: item._rev});
+  }
+  items.sort((x, y) => x.key - y.key);
+  return items;
+}
+
+/**
+ * Return an array of user_data keys whose data should exist but doesn't.
+ * @param {Object} workflow
+ * @return {Array}
+ */
+function listMissingUserData(workflow) {
+  const expectedUserData = [];
+  const missingUserData = [];
+  const consumesCollection = config.getWorkflowCollection(workflow, 'consumes');
+  const jobsCollection = config.getWorkflowCollection(workflow, 'jobs');
+  const storesCollection = config.getWorkflowCollection(workflow, 'stores');
+  const userDataCollection = config.getWorkflowCollection(workflow, 'user_data');
+
+  for (const edge of consumesCollection.all()) {
+    const udId = edge._to;
+    const storesEdge = storesCollection.byExample({_to: udId}).toArray();
+    if (storesEdge.length == 0) {
+      // This user data should have been added by the user.
+      expectedUserData.push(udId);
+    } else if (storesEdge.length == 1) {
+      const jobId = storesEdge[0]._from;
+      const job = jobsCollection.document(jobId);
+      if (job.status == JobStatus.Done) {
+        // This user data should have been added by the job.
+        expectedUserData.push(udId);
+      }
+    } else {
+      throw new Error(`A user_data document can never have more than 1 stores edge: ` +
+        `${JSON.stringify(storesEdge)}`);
+    }
+  }
+
+  for (const udId of expectedUserData) {
+    const ud = userDataCollection.document(udId);
+    if (Object.keys(ud.data).length == 0) {
+      missingUserData.push(ud._key);
+    }
+  }
+  return missingUserData;
+}
+
+/**
+ * Return an array of file keys whose path must exist.
+ * @param {Object} workflow
+ * @return {Array}
+ */
+function listRequiredExistingFiles(workflow) {
+  const requiredFiles = [];
+  const needsCollection = config.getWorkflowCollection(workflow, 'needs');
+  const jobsCollection = config.getWorkflowCollection(workflow, 'jobs');
+  const producesCollection = config.getWorkflowCollection(workflow, 'produces');
+
+  for (const edge of needsCollection.all()) {
+    const fileId = edge._to;
+    const producesEdge = producesCollection.byExample({_to: fileId}).toArray();
+    if (producesEdge.length == 0) {
+      // This file should have been created by the user.
+      requiredFiles.push(fileId);
+    } else if (producesEdge.length == 1) {
+      const jobId = producesEdge[0]._from;
+      const job = jobsCollection.document(jobId);
+      if (job.status == JobStatus.Done) {
+        // This user data should have been added by the job.
+        requiredFiles.push(fileId);
+      }
+    } else {
+      throw new Error(`A file document can never have more than 1 produces edge: ` +
+        `${JSON.stringify(producesEdge)}`);
+    }
+  }
+
+  return requiredFiles;
+}
+
+/**
  * Update a job status and manage all downstream consequences.
  * @param {Object} job
  * @param {Object} workflow
@@ -813,7 +962,7 @@ function manageJobStatusChange(job, workflow) {
   if (job.status == oldStatus) {
     return job;
   }
-  const meta = jobs.update(job, job);
+  const meta = jobs.update(job, job, {mergeObjects: false});
   Object.assign(job, meta);
 
   if (!isJobStatusComplete(oldStatus) && isJobStatusComplete(job.status)) {
@@ -879,7 +1028,7 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
           job.internal.memory_bytes <= availableMemory
         ) {
           job.status = JobStatus.SubmittedPending;
-          const meta = collection.update(job, job);
+          const meta = collection.update(job, job, {mergeObjects: false});
           Object.assign(job, meta);
           jobs.push(job);
           availableCpus -= job.internal.num_cpus;
@@ -929,7 +1078,7 @@ function prepareJobsForSubmissionNoResourceChecks(workflow, limit) {
       // so that it doesn't have to run a graph query while holding an exclusive lock.
       for (const job of cursor) {
         job.status = JobStatus.SubmittedPending;
-        const meta = collection.update(job, job);
+        const meta = collection.update(job, job, {mergeObjects: false});
         Object.assign(job, meta);
         jobs.push(job);
       }
@@ -939,6 +1088,32 @@ function prepareJobsForSubmissionNoResourceChecks(workflow, limit) {
   return jobs;
 }
 
+/**
+ * Process user data that was consumed by jobs and later changed, and reinitialize job status.
+ * There is no protection for concurrent requests.
+ * @param {Object} workflow
+ * @return {Array}
+ */
+function processConsumedUserData(workflow) {
+  const consumesCollection = config.getWorkflowCollection(workflow, 'consumes');
+  const jobsCollection = config.getWorkflowCollection(workflow, 'jobs');
+  const userDataCollection = config.getWorkflowCollection(workflow, 'user_data');
+  const reinitializedJobs = [];
+
+  for (const edge of consumesCollection.all()) {
+    const ud = userDataCollection.document(edge._to);
+    if (ud._rev != edge.consumed_revision) {
+      const job = jobsCollection.document(edge._from);
+      if (job.status == JobStatus.Done) {
+        job.status = JobStatus.Uninitialized;
+        jobsCollection.update(job, job, {mergeObjects: false});
+        reinitializedJobs.push(job._key);
+      }
+    }
+  }
+  return reinitializedJobs;
+}
+
 /** Reset job status to uninitialized.
  * @param {Object} workflow
  */
@@ -946,7 +1121,7 @@ function resetJobStatus(workflow) {
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
   for (const job of iterWorkflowDocuments(workflow, 'jobs')) {
     job.status = JobStatus.Uninitialized;
-    jobs.update(job, job);
+    jobs.update(job, job, {mergeObjects: false});
   }
   console.log(`Reset all job status to ${JobStatus.Uninitialized}`);
 }
@@ -964,7 +1139,7 @@ function resetWorkflowConfig(workflow) {
     db.workflow_config.save(config);
   } else {
     Object.assign(doc, config);
-    db.workflow_config.update(doc, doc);
+    db.workflow_config.update(doc, doc, {mergeObjects: false});
   }
 }
 
@@ -981,11 +1156,11 @@ function resetWorkflowStatus(workflow) {
 
   const doc = getWorkflowStatus(workflow);
   Object.assign(doc, status);
-  db.workflow_statuses.update(doc, doc);
+  db.workflow_statuses.update(doc, doc, {mergeObjects: false});
 
   for (const job of iterWorkflowDocuments(workflow, 'jobs')) {
     job.status = JobStatus.Uninitialized;
-    jobs.update(job, job);
+    jobs.update(job, job, {mergeObjects: false});
   }
   console.log(`Reset workflow status`);
 }
@@ -1019,13 +1194,13 @@ function setupAutoTuneResourceRequirements(workflow) {
       // This isn't atomic, but the user shouldn't call this in parallel.
       // Let Arango fail the operation if they do that.
       job.status = JobStatus.Disabled;
-      jobs.update(job, job);
+      jobs.update(job, job, {mergeObjects: false});
     } else {
       status.auto_tune_status.job_keys.push(job._key);
       groups.add(rr.name);
     }
   }
-  db.workflow_statuses.update(status, status);
+  db.workflow_statuses.update(status, status, {mergeObjects: false});
 }
 
 /**
@@ -1068,7 +1243,7 @@ function processAutoTuneResourceRequirementsResults(workflow) {
     }
     groupsUpdated.add(rr.name);
     const rrCollection = config.getWorkflowCollection(workflow, 'resource_requirements');
-    rrCollection.update(rr, rr);
+    rrCollection.update(rr, rr, {mergeObjects: false});
     const event = {
       timestamp: (new Date()).toISOString(),
       category: 'resource_requirements',
@@ -1090,10 +1265,10 @@ function processAutoTuneResourceRequirementsResults(workflow) {
         throw new Error(`Expected status disabled instead of ${job.status} for job ${job._key}`);
       }
       job.status = JobStatus.Uninitialized;
-      jobsCollection.update(job, job);
+      jobsCollection.update(job, job, {mergeObjects: false});
     }
   }
-  db.workflow_statuses.update(workflowStatus, workflowStatus);
+  db.workflow_statuses.update(workflowStatus, workflowStatus, {mergeObjects: false});
 }
 
 /**
@@ -1122,7 +1297,7 @@ function updateBlockedJobsFromCompletion(job, workflow) {
       } else {
         blockedJob.status = JobStatus.Ready;
       }
-      jobs.update(blockedJob, blockedJob);
+      jobs.update(blockedJob, blockedJob, {mergeObjects: false});
     }
   }
 }
@@ -1148,7 +1323,7 @@ function updateJobsFromCompletionReversal(job, workflow) {
   for (const downstreamJob of cursor) {
     if (downstreamJob.status != JobStatus.Uninitialized) {
       downstreamJob.status = JobStatus.Uninitialized;
-      jobs.update(downstreamJob, downstreamJob);
+      jobs.update(downstreamJob, downstreamJob, {mergeObjects: false});
       console.log(`Reset job=${downstreamJob._key} status to ${JobStatus.Uninitialized}`);
     }
   }
@@ -1164,7 +1339,7 @@ function updateWorkflowConfig(workflow, config) {
   const doc = getWorkflowConfig(workflow);
   Object.assign(doc, config);
   Object.assign(doc.compute_node_resource_stats, config.compute_node_resource_stats);
-  const meta = db.workflow_configs.update(doc, doc);
+  const meta = db.workflow_configs.update(doc, doc, {mergeObjects: false});
   Object.assign(doc, meta);
   return doc;
 }
@@ -1173,20 +1348,15 @@ module.exports = {
   addBlocksEdgesFromFiles,
   addBlocksEdgesFromUserData,
   cancelWorkflowJobs,
-  getReadyJobRequirements,
   getBlockingJobs,
-  getFilesNeededByJob,
-  getFilesProducedByJob,
-  getjobSpecification,
   getJobResourceRequirements,
   getJobScheduler,
   getJobsThatNeedFile,
-  listJobResults,
   getLatestJobResult,
-  getUserDataConsumedByJob,
-  getUserDataStoredByJob,
+  getReadyJobRequirements,
   getWorkflowConfig,
   getWorkflowStatus,
+  getjobSpecification,
   initializeJobStatus,
   isJobBlocked,
   isJobInitiallyBlocked,
@@ -1195,11 +1365,23 @@ module.exports = {
   iterWorkflowDocuments,
   joinCollectionsByInboundEdge,
   joinCollectionsByOutboundEdge,
+  listConsumesUserDataRevisions,
+  listFilesNeededByJob,
+  listFilesProducedByJob,
   listJobProcessStats,
+  listJobResults,
+  listMissingUserData,
+  listNeedsFileRevisions,
+  listRequiredExistingFiles,
+  listStoresUserDataRevisions,
+  listUserDataConsumedByJob,
+  listUserDataStoredByJob,
+  listUserDataWithEphemeralData,
   manageJobStatusChange,
   prepareJobsForSubmission,
   prepareJobsForSubmissionNoResourceChecks,
   processAutoTuneResourceRequirementsResults,
+  processConsumedUserData,
   resetJobStatus,
   resetWorkflowConfig,
   resetWorkflowStatus,

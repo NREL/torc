@@ -1,6 +1,5 @@
 'use strict';
 const joi = require('joi');
-const utils = require('../utils');
 const schemas = require('./schemas');
 const documents = require('../documents');
 
@@ -102,7 +101,6 @@ const ROUTE_DESCRIPTORS = [
     name: 'job',
     description: 'Job',
     collection: 'jobs',
-    customConvert: utils.convertJobForApi,
     customPost: documents.addJob,
     schema: schemas.job,
     batchSchema: schemas.batchJobs,
