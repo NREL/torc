@@ -158,40 +158,6 @@ declare that the work job will consume the data. Torc will sequence the jobs jus
 cluster-create script runs first, it uploads the URL, then, when the work script runs, it reads the
 URL and connects to the cluster.
 
-.. _job_status:
-
-Job Statuses
-============
-- **uninitialized**: Initial state. Not yet known if it is blocked or ready.
-- **ready**: The job can be submitted.
-- **blocked**: The job cannot start because of dependencies.
-- **submitted_pending**: The job was given to a compute node but is not yet running.
-- **submitted**: The job is running on a compute node.
-- **terminated**: Compute node timeout occurred and the job was notified to checkpoint and shut
-  down.
-- **done**: The job finished. It may or may not have completed successfully.
-- **canceled**: A blocking job failed and so the job never ran.
-- **disabled**: The job cannot run or change state.
-
-.. graphviz::
-
-   digraph job_statuses {
-      "uninitialized" -> "ready";
-      "uninitialized" -> "blocked";
-      "uninitialized" -> "disabled";
-      "disabled" -> "uninitialized";
-      "ready" -> "submitted_pending";
-      "submitted_pending" -> "submitted";
-      "submitted" -> "done";
-      "submitted" -> "terminated";
-      "blocked" -> "canceled";
-      "blocked" -> "ready";
-   }
-
-.. raw:: html
-
-   <hr>
-
 .. _job_graceful_shutdown:
 
 Graceful shutdown of jobs

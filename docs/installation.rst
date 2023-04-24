@@ -47,8 +47,8 @@ Installation
 Refer to :ref:`generate_client_apis` to generate a new API after changing the API endpoint.
 
 .. toctree::
-   :maxdepth: 3
-   :caption: Contents:
+   :maxdepth: 2
+   :hidden:
 
    db_installation_local
    db_installation_eagle

@@ -1,10 +1,11 @@
+.. _getting_started:
+
 ###############
 Getting Started
 ###############
 
 .. toctree::
-   :maxdepth: 3
-   :caption: Contents:
+   :maxdepth: 2
 
    installation
    quick_start

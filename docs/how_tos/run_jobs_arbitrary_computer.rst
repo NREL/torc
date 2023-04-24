@@ -1,6 +1,6 @@
-##############################
-Run Jobs on Arbitrary Computer
-##############################
+#################################
+Run Jobs on an Arbitrary Computer
+#################################
 You can run jobs from your workflow database on any computer that has network access to the
 database.
 

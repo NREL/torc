@@ -5,7 +5,7 @@ Node packing is a paradigm where you allocate an entire compute node for period 
 run as many jobs as possible in parallel given CPU and memory constraints. For example, if your
 compute node has 36 CPUs and 92 GB of memory and each job consumes 1 CPU and 2 GB of memory, you
 can run 36 jobs at once. Furthermore, if it takes a long time to acquire a compute node and your
-jobs are relatively short, you can hang onto that node for as long as possible.
+jobs are relatively short, you can keep that node for as long as possible.
 
 Here's how to employ node packing with Torc. This example assumes an HPC environment with Slurm and
 that you are defining your workflow in a workflow specification file as described in

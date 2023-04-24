@@ -3,13 +3,14 @@ Architecture
 ############
 
 .. toctree::
-   :maxdepth: 3
+   :maxdepth: 2
+   :hidden:
 
    hpc_workflow
 
 Overview
 ========
-- Store information about jobs and dependencies in the ArangoDB graph database.
+- Store information about jobs and dependencies in an ArangoDB graph database.
 - A server implements an HTTP API endpoint that manages the database.
 
   - With ArangoDB as the database, this API endpoint is a service inside the database.
@@ -28,26 +29,6 @@ Overview
   - The software package provides a suite of CLI commands to manage workflows in the database.
     This toolkit abstracts the database implementation details from the user.
 
-ArangoDB
-========
-Torc relies heavily on the multi-model database `ArangoDB <https://www.arangodb.com/>`_.
-It uses graphs to store relationships/dependencies between workflow objects and documents
-for user-defined data.
-
-Torc provides a moderately-comprehensive set of CLI commands and a custom HTTP API endpoint with
-auto-generated client API libraries. The goal is for users to not be forced to deal with ArangoDB
-directly, but there are still cases where that may be required. The web UI is particularly
-beneficial for useful for running queries and visualizing workflow graphs.
-``arangodump/arangorestore`` are great for backups.
-
-Here are documentation links for some of their tools:
-
-- Web UI: https://www.arangodb.com/docs/stable/programs-web-interface.html
-- Queries: https://www.arangodb.com/docs/stable/programs-web-interface-aql-editor.html
-- Shell: https://www.arangodb.com/docs/stable/programs-arangosh.html
-- Export: https://www.arangodb.com/docs/stable/programs-arangoexport.html
-- Backups: https://www.arangodb.com/docs/stable/programs-arangodump.html
-- HTTP API: https://www.arangodb.com/docs/stable/http/
 
 Database layout/schema
 ======================
@@ -82,28 +63,6 @@ Nodes
 
 .. note:: When looking at the collections in ArangoDB tools you will see that each collection name
    includes its workflow identifier.
-
-Job Restarts
-~~~~~~~~~~~~
-The orchestrator stores one result and process stats object for each run of a job in case a
-workflow is restarted.
-
-Those objects contain a ``run_id`` field that gets incremented each time a job runs.
-
-Edges
------
-
-- blocks: job blocks another job
-- consumes: job consumes user data object in the database
-- executed: compute_node executed jobs
-- needs: job needs a file
-- nodes_used: compute nodes used resources - connects compute nodes to usage stats
-- process_used: job processes used resources - connects jobs to process usage stats
-- produces: job produces a file
-- requires: job has a set of resource requirements
-- returned: job returned a result
-- scheduled_bys: job is scheduled by a specific scheduler, like Slurm or AWS Batch
-- stores: job stores one or more user data objects
 
 Documents
 ---------
@@ -145,14 +104,3 @@ Torc provides these mechanisms for users to define workflows:
 
 The first option abstracts the database schema from the user. The latter two require a fair
 understanding of the implementation.
-
-Database choice
-===============
-The current choice is ArangoDB because of these reasons:
-
-- It is a multi-model database that can simultaneously be a key-value store, document database, and
-  graph database.
-- Graph nodes and edges can store full JSON documents and filters can use those documents. Neo4j
-  can store key-value pairs but not nested structures. That may be limiting, especially for
-  user-defined events. Using Neo4j for storing job dependencies may require a second database.
-- ArangoDB provides built-in API services.

@@ -2,11 +2,12 @@
 HPC Compute Node Environment
 ############################
 
-When configuring your HPC environment for running torc, it's best to start from a clean directory.
-Torc will create log files and output directories on every compute node it uses.
+When configuring your HPC environment for running torc, it's best to start from a clean directory
+on the shared filesystem. Torc will create log files and output directories on every compute node
+it uses.
 
 Torc will run your jobs in the same environment without changing directories. You can setup your
-jobs to write files whereever you'd like, but it is recommended to write those files in the current
+jobs to write files wherever you'd like, but it is recommended to write those files in the current
 directory or a sub-directory.
 
 .. code-block:: console

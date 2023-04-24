@@ -16,14 +16,12 @@ from pathlib import Path
 sys.path.remove(str(Path(".").absolute().parent / "db_service" / "python_client"))
 sys.path.append(str(Path("_build") / "python_client"))
 
-import sphinx_rtd_theme
-
 from swagger_client.api import default_api
 
 import torc
 
-project = "wms"
-copyright = "2023, Daniel Thom"  # pylint: disable=redefined-builtin
+project = "torc"
+copyright = "2023, NREL"  # pylint: disable=redefined-builtin
 author = "Daniel Thom"
 release = "0.1.0"
 
@@ -48,13 +46,10 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "sphinx_rtd_theme"
-html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
+html_theme = "furo"
+html_title = "Torc Documentation"
 html_theme_options = {
-    "collapse_navigation": False,
-    "sticky_navigation": True,
-    "titles_only": False,
-    "navigation_depth": 2,
+    "navigation_with_keys": True,
 }
 html_static_path = ["_static"]
 

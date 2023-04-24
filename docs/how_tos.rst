@@ -1,17 +1,14 @@
+.. _how_tos:
+
 #######
 How Tos
 #######
+This section provides step-by-step instructions for specific tasks.
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Contents:
+   :maxdepth: 4
 
-   how_tos/hpc_compute_node_environment
-   how_tos/custom_invocation_environments
-   how_tos/node_packing
-   how_tos/auto_tune_resource_requirements
-   how_tos/run_jobs_arbitrary_computer
-   how_tos/join_collections
-   how_tos/passing_data_between_jobs
-   how_tos/hpc_multi_node_jobs
-   how_tos/api_access_with_curl
+   how_tos/compute_node_environments
+   how_tos/configuring_jobs
+   how_tos/managing_workflows
+   how_tos/api

@@ -73,3 +73,28 @@ Here is code in ``work2.py`` to read the data from the database.
 
     result = api.get_workflows_workflow_jobs_key_user_data_consumes(workflow_key, job_key)
     output_data1 = result.items[0]
+
+Here is a comparable example with a CLI command that joins the job and user_data collections and
+filters on the job consuming the data. You would need to parse the JSON yourself.
+
+.. code-block:: console
+
+    $ torc -k $TORC_WORKFLOW_KEY -F json collections join job-consumes-data -f key=$TORC_JOB_KEY
+    {
+      "items": [
+        {
+          "from": {
+            "_key": "96282248",
+            "name": "name: "my_job""
+          },
+          "to": {
+            "_key": "96282238",
+            "is_ephemeral": false,
+            "name": "output_data1",
+            "data": {
+              "result": 1.2
+            }
+          }
+        }
+      ]
+    }

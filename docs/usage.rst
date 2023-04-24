@@ -1,3 +1,5 @@
+.. _usage:
+
 #####
 Usage
 #####
@@ -9,8 +11,8 @@ are welcome to use the API through Swagger-generated libaries or API tools like 
 tools to manage data directly in the database.
 
 .. toctree::
-   :maxdepth: 3
-   :caption: Contents:
+   :maxdepth: 2
+   :hidden:
 
    cli_fundamentals
    configuration
@@ -18,4 +20,4 @@ tools to manage data directly in the database.
    execution
    resource_utilization
    environments
-   how_tos
+   debugging

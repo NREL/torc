@@ -32,10 +32,10 @@ Here's how to run multi-node jobs with torc:
 
 The torc API command is like this:
 
-.. code-block:: console
+.. code-block:: python
 
-   from torc.hpc.slurm_interface import SlurmInterface
+    from torc.hpc.slurm_interface import SlurmInterface
 
-   intf = SlurmInterface()
-   job_id = intf.get_current_job_id(job_id)
-   nodes = intf.list_active_nodes(job_id)
+    intf = SlurmInterface()
+    job_id = intf.get_current_job_id(job_id)
+    nodes = intf.list_active_nodes(job_id)

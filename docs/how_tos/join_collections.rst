@@ -3,13 +3,13 @@ Join Collections
 ################
 
 There are several scenarios where you will want to see the contents of two collections joined by a
-common key. One example is viewing job and result tables together. Torc often stores these types
-of relationships with edges in the graph database.
+common key. One example is viewing job and result collections together. Torc often stores these
+types of relationships with edges in the graph database.
 
 The torc HTTP API provides commands to join these collections.
 
-Torc CLI
-========
+Torc join CLI command
+=====================
 The torc CLI toolkit provides the easiest way to join these collections. Look at the help of this
 command.
 
@@ -55,8 +55,8 @@ Refer to the help for all possibilities.
 
 .. note:: Setting the output format to JSON with ``torc -F JSON`` may be helpful for this command.
 
-Flexible Torc CLI
-=================
+Torc join-by-edge CLI command
+=============================
 The above CLI command actually invokes a much more flexible CLI command:
 
 .. code-block:: console

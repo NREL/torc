@@ -5,31 +5,39 @@
 
 Torc User Guide
 ===============
-The torc workflow management system orchestrates execution of user jobs on distributed computing
+The torc workflow management system orchestrates the execution of jobs on distributed computing
 resources, including HPC and cloud environments.
 
 Torc provides these features:
 
 - Manage dependencies between jobs and resources.
-- Auto-tune resource requirements.
-- Track resource utilization.
 - Support workflow restarts, accounting for job failures, compute node timeouts, and program and
   data file files.
 - Persistent store for user input and output data.
+- Track resource utilization.
+- Auto-tune resource requirements.
 
+How to use this guide
+=====================
 
-Refer to :ref:`overview` for an illustration of its capabilities.
+- Refer to :ref:`overview` for an illustration of torc's capabilities.
+- Refer to :ref:`getting_started` for help with installation and a quick start.
+- Refer to :ref:`usage` for instructions on how to build and run workflows.
+- Refer to :ref:`how_tos` for step-by-step instructions for specific tasks.
+- Refer to :ref:`reference` for CLI and API documentation.
+- Refer to :ref:`behavioral_spec` for descriptions of what a user will observe when using torc.
 
 
 .. toctree::
-   :maxdepth: 3
-   :caption: Contents:
+   :maxdepth: 4
+   :hidden:
 
    overview
    getting_started
    usage
-   architecture
+   how_tos
    reference
+   behavioral_spec/main
 
 
 Indices and tables
