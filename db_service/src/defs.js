@@ -24,7 +24,6 @@ const JobStatus = {
   // The job was given to a compute node but is not yet running.
   SubmittedPending: 'submitted_pending',
   // The job cannot be run.
-  // TODO: Add feature auto-tune resource requirements by resourceRequirements group
   Disabled: 'disabled',
 };
 

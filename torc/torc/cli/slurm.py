@@ -266,7 +266,6 @@ def schedule_nodes(
     ctx, api, job_prefix, num_hpc_jobs, output, poll_interval, scheduler_config_key
 ):
     """Schedule nodes with Slurm to run jobs."""
-    # TODO: if workflow isn't started, start it?
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     logger.info(get_cli_string())

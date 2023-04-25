@@ -19,7 +19,6 @@ logger = logging.getLogger(__name__)
 def check_database_url(api):
     """Raises an exception if a database URL is not set."""
     if api is None:
-        # TODO: should be called from CLI endpoints
         rc_path = TorcRuntimeConfig.path()
         print(
             "The database_url, in the format \n"
