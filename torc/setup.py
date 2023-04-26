@@ -55,9 +55,6 @@ setup(
         "click",
         "connectorx",
         "json5",
-        "networkx",
-        "matplotlib",
-        "networkxgmml",
         "plotly",
         "polars",
         "psutil",
@@ -78,6 +75,13 @@ setup(
             "sphinx",
             "sphinx-click",
             "sphinxcontrib-openapi",
+        ],
+        "plots": [
+            "graphviz",
+            "networkx",
+            # "matplotlib",
+            "networkxgmml",
+            "pygraphviz",
         ],
     },
 )
