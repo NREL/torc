@@ -12,6 +12,7 @@ from torc.cli.config import config
 from torc.cli.events import events
 from torc.cli.export import export
 from torc.cli.files import files
+from torc.cli.graphs import graphs
 from torc.cli.hpc import hpc
 from torc.cli.jobs import jobs
 from torc.cli.local import local
@@ -119,6 +120,7 @@ cli.add_command(config)
 cli.add_command(events)
 cli.add_command(export)
 cli.add_command(files)
+cli.add_command(graphs)
 cli.add_command(hpc)
 cli.add_command(jobs)
 cli.add_command(local)
