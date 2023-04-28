@@ -73,3 +73,8 @@ API calls
 =========
 Make your own API calls directly to the database. Here is one
 `script example <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py>`_.
+
+Dependency graphs
+=================
+You may want to inspect your workflow graphs for proper dependency definitions. Refer to
+:ref:`plot_graphs` for instructions on how to create visualizations.

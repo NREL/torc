@@ -43,6 +43,10 @@ const computeNodeStats = joi.object().required().keys({
   _rev: joi.string(),
 });
 
+const dotGraphResponse = joi.object().required().keys({
+  graph: joi.string().required(),
+});
+
 const edge = joi.object().required().keys({
   _from: joi.string().required(),
   _to: joi.string().required(),
@@ -460,6 +464,7 @@ module.exports = {
   jobInternal,
   jobProcessStats,
   listItemsResponse,
+  dotGraphResponse,
   localScheduler,
   missingUserDataResponse,
   object,

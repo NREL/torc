@@ -1,8 +1,31 @@
+.. _plot_graphs:
+
 ###########
 Plot Graphs
 ###########
 
-This page describes how to create plots of dependency graphs in your workflow.
+This page describes how to create plots of dependency graphs of your workflow.
+
+Pre-defined graphs
+==================
+Torc can generate visualizations of these pre-defined graphs:
+
+- **job_job_dependencies**: Creates a plot showing job-to-job dependencies on the ``blocks`` edges.
+- **job_file_dependencies**: Creates a plot showing job-to-file dependencies on the ``produces``
+  and ``needs`` edges.
+- **job_user_data_dependencies**: Creates a plot showing job-to-user-data dependencies on the
+  ``stores`` and ``consumes`` edges.
+
+.. code-block:: console
+
+    $ torc graphs plot job_job_dependencies job_file_dependencies job_user_data_dependencies
+
+.. note:: Torc converts the workflow graphs into .dot files. If you want to keep the DOT files in
+   order to make customizations, append ``-k`` to the command.
+
+User-defined graphs
+===================
+Torc can also generate a visualization of any ``.xmgmml`` file exported from ArangoDB.
 
 **Pre-requisite**: You must be able to run the ArangoDB tool ``arangoexport``. The recommended way
 of running it is through Arango's Docker container. You can also install it locally; refer to
@@ -49,7 +72,7 @@ Here is an example ``arangoexport`` command to export one graph.
         --collection blocks__97903629 \
         --xgmml-label-only true \
         --xgmml-label-attribute name
-    Connected to ArangoDB 'http+tcp://127.0.0.1:8529, version: 3.10.2, database: 'test-workflows', username: 'root'
+    Connected to ArangoDB 'http+tcp://127.0.0.1:8529, version: 3.10.2, database: 'workflows', username: 'root'
     # Export graph with collections jobs__97903629, blocks__97903629 as 'job-blocks'
     # Exporting collection 'jobs__97903629'...
     # Exporting collection 'blocks__97903629'...
@@ -68,5 +91,5 @@ The file ``export/job-blocks.xgmml`` now exists.
 
 .. code-block:: console
 
-    $ torc graphs plot export/job-blocks.xgmml
+    $ torc graphs plot-xgmml export/job-blocks.xgmml
     Created job-blocks.png

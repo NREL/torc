@@ -8,6 +8,7 @@ from datetime import datetime
 from pathlib import Path
 
 import pytest
+from click.testing import CliRunner
 from swagger_client.models.key_prepare_jobs_for_submission_model import (
     KeyPrepareJobsForSubmissionModel,
 )
@@ -17,6 +18,7 @@ from swagger_client.models.workflow_user_data_model import (
 from swagger_client.models.workflow_results_model import WorkflowResultsModel
 
 from torc.api import iter_documents
+from torc.cli.torc import cli
 from torc.common import GiB
 from torc.exceptions import InvalidWorkflow
 from torc.job_runner import JobRunner
@@ -99,6 +101,29 @@ def test_run_workflow(diamond_workflow):
     timer_stats_collector.log_json_stats(stats_file, clear=True)
     assert stats_file.exists()
     timer_stats_collector.log_stats(clear=True)
+
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        cli,
+        [
+            "-k",
+            db.workflow.key,
+            "-u",
+            api.api_client.configuration.host,
+            "graphs",
+            "plot",
+            "-k",
+            "-o",
+            str(output_dir),
+            "job_job_dependencies",
+            "job_file_dependencies",
+            "job_user_data_dependencies",
+        ],
+    )
+    assert result.exit_code == 0
+    for name in ("job_file_dependencies", "job_file_dependencies", "job_user_data_dependencies"):
+        assert (output_dir / (name + ".dot")).exists()
+        assert (output_dir / (name + ".dot.png")).exists()
 
 
 def test_run_workflow_user_data_dependencies(diamond_workflow_user_data):
@@ -249,7 +274,11 @@ def test_cancel_with_failed_job(workflow_with_cancel):
     mgr = WorkflowManager(api, db.workflow.key)
     mgr.start()
     runner = JobRunner(
-        api, db.workflow, output_dir, time_limit="P0DT24H", job_completion_poll_interval=0.1
+        api,
+        db.workflow,
+        output_dir,
+        time_limit="P0DT24H",
+        job_completion_poll_interval=0.1,
     )
     runner.run_worker()
     assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
@@ -273,7 +302,8 @@ def test_reinitialize_workflow_noop(completed_workflow):
 
 
 @pytest.mark.parametrize(
-    "field", ["name", "run_id", "supports_termination", "cancel_on_blocking_job_failure"]
+    "field",
+    ["name", "run_id", "supports_termination", "cancel_on_blocking_job_failure"],
 )
 def test_reinitialize_workflow_changed_non_critical_fields(completed_workflow, field):
     """Verify restart behavior with a changed fields that do not affect results."""
@@ -440,7 +470,11 @@ def test_run_independent_job_workflow(independent_job_workflow, tmp_path):
         time_limit="P0DT24H",
     )
     runner = JobRunner(
-        db.api, db.workflow, tmp_path, resources=resources, job_completion_poll_interval=0.1
+        db.api,
+        db.workflow,
+        tmp_path,
+        resources=resources,
+        job_completion_poll_interval=0.1,
     )
     runner.run_worker()
 
@@ -507,7 +541,11 @@ def _fake_complete_job(api, workflow_key, job):
         status=status,
     )
     job = api.post_workflows_workflow_jobs_key_complete_job_status_rev(
-        result, workflow_key, job.key, status, job._rev  # pylint: disable=protected-access
+        result,
+        workflow_key,
+        job.key,
+        status,
+        job._rev,  # pylint: disable=protected-access
     )
 
 

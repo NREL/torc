@@ -7,6 +7,7 @@ const {JobStatus} = require('../defs');
 const utils = require('../utils');
 const query = require('../query');
 const documents = require('../documents');
+const graphs = require('../graphs');
 const schemas = require('./schemas');
 const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
@@ -421,6 +422,7 @@ router.get('/workflows/:key/join_by_inbound_edge/:collection/:edge', function(re
     utils.handleArangoApiErrors(e, res, 'Join by inbound edge');
   }
 })
+    .pathParam('key', joi.string().required(), 'Workflow key')
     .pathParam('collection', joi.string().required(), 'From collection')
     .pathParam('edge', joi.string().required(), 'Edge name')
     .queryParam('collection_key', joi.string().optional())
@@ -453,6 +455,7 @@ router.get('/workflows/:key/join_by_outbound_edge/:collection/:edge', function(r
     utils.handleArangoApiErrors(e, res, 'Join by outbound edge');
   }
 })
+    .pathParam('key', joi.string().required(), 'Workflow key')
     .pathParam('collection', joi.string().required(), 'From collection')
     .pathParam('edge', joi.string().required(), 'Edge name')
     .queryParam('collection_key', joi.string().optional())
@@ -462,6 +465,22 @@ router.get('/workflows/:key/join_by_outbound_edge/:collection/:edge', function(r
     .response(schemas.batchObjects)
     .summary('Retrieve a joined table of two collections.')
     .description('Retrieve a table of the collections joined by an outbound edge.');
+
+router.get('/workflows/:key/dot_graph/:name', function(req, res) {
+  const key = req.pathParams.key;
+  const name = req.pathParams.name;
+  const workflow = documents.getWorkflow(key, res);
+  try {
+    res.send({graph: graphs.makeDotGraph(workflow, name)});
+  } catch (e) {
+    utils.handleArangoApiErrors(e, res, 'Make DOT graph');
+  }
+})
+    .pathParam('key', joi.string().required(), 'Workflow key')
+    .pathParam('name', joi.string().required(), 'Graph name')
+    .response(schemas.dotGraphResponse)
+    .summary('Build a string for a DOT graph.')
+    .description('Build a string for a DOT graph.');
 
 /**
  * Convert items in a cursor per the normal API rules.
