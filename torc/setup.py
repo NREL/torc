@@ -54,6 +54,7 @@ setup(
     install_requires=[
         "click",
         "connectorx",
+        "graphviz",
         "json5",
         "plotly",
         "polars",
@@ -67,6 +68,7 @@ setup(
         "dev": [
             "black",
             "flake8",
+            "furo",
             "ghp-import",
             "pylint",
             "pytest",
@@ -75,11 +77,10 @@ setup(
             "sphinx",
             "sphinx-click",
             "sphinxcontrib-openapi",
+            "sphinx-copybutton",
         ],
         "plots": [
-            "graphviz",
             "networkx",
-            # "matplotlib",
             "networkxgmml",
             "pygraphviz",
         ],
