@@ -18,7 +18,10 @@ Installation
 
    $ git clone https://github.nrel.gov/viz/wms.git
 
-4. Create a Python 3.10 virtual environment (e.g., conda).
+4. Create a Python 3.10 virtual environment (e.g., conda). If you are not familiar with Python
+   virtual environments, install ``Miniconda`` (not ``Anaconda`` because it has unnecessary
+   packages) by following instructions at
+   https://conda.io/projects/conda/en/stable/user-guide/install/
 
 .. code-block:: console
 
