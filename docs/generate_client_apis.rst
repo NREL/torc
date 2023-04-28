@@ -48,3 +48,17 @@ Here is what the script performed:
 
 This procedure could be implemented to generate server stubs or additional client programming
 languages. Refer to the ``Swagger`` documentation for more information.
+
+5. Create the wheel.
+
+.. code-block:: console
+
+   $ cd python_client
+   $ python3 -m pip install --upgrade build
+   $ python3 -m build
+
+``dist/swagger_client-1.0.0-py3-none-any.whl`` can be distributed to users and installed with pip.
+
+.. code-block:: console
+
+    $ pip install dist/swagger_client-1.0.0-py3-none-any.whl

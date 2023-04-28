@@ -12,38 +12,35 @@ Installation
 2. If running on a local computer or cloud environment, install a database with ArangoDB. Refer to
    the links below.
 
-3. Clone the ``torc`` repository to a computer where you will submit and run jobs.
-
-.. code-block:: console
-
-   $ git clone https://github.nrel.gov/viz/wms.git
-
-4. Create a Python 3.10 virtual environment (e.g., conda). If you are not familiar with Python
+3. Create a Python 3.10+ virtual environment (e.g., conda). If you are not familiar with Python
    virtual environments, install ``Miniconda`` (not ``Anaconda`` because it has unnecessary
    packages) by following instructions at
    https://conda.io/projects/conda/en/stable/user-guide/install/
 
 .. code-block:: console
 
-   $ conda create -n torc python=3.10
+   $ conda create -y -n torc python=3.10
    $ conda activate torc
 
-5. Install the Python package ``torc`` into that environment. It is in the ``torc`` directory of
-   this repository.
+4. Install the Python package ``torc`` and the Swagger client that enables communication with the
+   database. The files will have names similar to ``torc-0.1.1-py3-none-any.whl`` and
+   ``swagger_client-1.0.0-py3-none-any.whl``.
+
+.. warning:: This path is on Eagle and is temporary. A persistent path is TBD.
 
 .. code-block:: console
 
+   $ pip install /scratch/dthom/torc/latest/*.whl
+
+Note that you can also install the ``torc`` package from a clone of the repository. This will give
+you the latest code from the ``main`` branch.
+
+.. code-block:: console
+
+   $ git clone https://github.nrel.gov/viz/wms.git
    $ pip install -e wms/torc
 
-6. Install the pre-built Python client into the virutal environment. Location is TBD.
-
-.. todo:: Figure out where to store the python client where users can access it.
-
-.. code-block:: console
-
-   $ pip install -e python_client
-
-7. Optionally install ``jq`` from https://stedolan.github.io/jq/download/ for parsing JSON.
+5. Optionally install ``jq`` from https://stedolan.github.io/jq/download/ for parsing JSON.
    This tool is very useful when sending API requests with ``curl`` or dumping torc output to
    JSON.
 
