@@ -67,7 +67,7 @@ class ResourceStatStore:
         make_table(
             self._db_file,
             ResourceType.PROCESS.value.lower(),
-            {"rss": 0.0, "cpu_percent": 0.0, "job_key": "", "timestamp": ""},
+            {"cpu_percent": 0.0, "rss": 0.0, "job_key": "", "timestamp": ""},
         )
         self._bufs[ResourceType.PROCESS] = []
 
@@ -106,16 +106,14 @@ class ResourceStatStore:
             rtype = resource_type.value.lower()
             query = f"select * from {rtype}"
             df = pl.read_sql(query, f"sqlite://{self._db_file}").with_columns(
-                pl.col("timestamp").str.strptime(pl.Datetime, fmt="%Y-%m-%d %H:%M:%S.%f")
+                pl.col("timestamp").str.strptime(pl.Datetime, fmt="%Y-%m-%d %H:%M:%S%.f")
             )
             if len(df) == 0:
                 continue
-            if resource_type != ResourceType.PROCESS:
-                df = df.select([pl.col(pl.Float64), pl.col(pl.Int64), pl.col("timestamp")])
             if resource_type == ResourceType.PROCESS:
                 fig = make_subplots(specs=[[{"secondary_y": True}]])
                 for key, _df in df.partition_by(
-                    groups="job_key", maintain_order=True, as_dict=True
+                    by="job_key", maintain_order=True, as_dict=True
                 ).items():
                     fig.add_trace(
                         go.Scatter(
@@ -132,6 +130,7 @@ class ResourceStatStore:
                 fig.update_yaxes(title_text="CPU Percent", secondary_y=False)
                 fig.update_yaxes(title_text="RSS (Memory)", secondary_y=True)
             else:
+                df = df.select([pl.col(pl.Float64), pl.col(pl.Int64), pl.col("timestamp")])
                 fig = go.Figure()
                 for column in set(df.columns) - {"timestamp"}:
                     fig.add_trace(go.Scatter(x=df["timestamp"], y=df[column], name=column))

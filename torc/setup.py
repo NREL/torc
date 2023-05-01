@@ -53,11 +53,11 @@ setup(
     test_suite="tests",
     install_requires=[
         "click",
-        "connectorx",
+        "connectorx>=0.3.1",
         "graphviz",
         "json5",
         "plotly",
-        "polars",
+        "polars~=0.17.9",
         "psutil",
         "prettytable",
         "pyarrow",
