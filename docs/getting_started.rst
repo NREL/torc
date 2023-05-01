@@ -8,4 +8,5 @@ Getting Started
    :maxdepth: 2
 
    installation
+   examples
    quick_start

@@ -12,3 +12,4 @@ This section provides step-by-step instructions for specific tasks.
    how_tos/configuring_jobs
    how_tos/managing_workflows
    how_tos/api
+   how_tos/backup

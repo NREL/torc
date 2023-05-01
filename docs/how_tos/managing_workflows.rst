@@ -7,3 +7,4 @@ Managing Workflows
 
    join_collections
    plot_graphs
+   query_with_sql

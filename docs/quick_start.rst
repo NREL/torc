@@ -3,6 +3,9 @@ HPC Quick Start
 ###############
 This page assumes that you have a database and have completed the torc installation instructions.
 
+You will have to use your own workflow scripts to follow along here. Refer to :ref:`examples` to
+run predefined workflows stored inside the torc repository.
+
 1. ssh to a login node on your HPC.
 2. Persist the database URL in your environment. Replace the hostname and database name.
 

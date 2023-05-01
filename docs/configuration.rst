@@ -11,11 +11,14 @@ complete information about how to define jobs.
 
 Workflow Specification
 ======================
-Workflow specification in a JSON file. The JSON document fully defines a workflow and
+Create a workflow specification in a JSON file. The JSON document fully defines a workflow and
 relationships between objects. Users can upload the workflow to the database with a CLI command.
 This is the recommended process because the JSON file defines everything about the workflow.
 
-Refer to this `example <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.json5>`_.
+Refer to :ref:`open_api_client_models` for a definition of the data model.
+
+For a specific example, refer to this
+`file <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.json5>`_.
 
 .. note:: In that example torc determines the order of execution of jobs based on the job/file
    input/output relationships.

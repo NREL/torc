@@ -1,3 +1,5 @@
+.. _open_api_client_models:
+
 #####################
 OpenAPI Client Models
 #####################
