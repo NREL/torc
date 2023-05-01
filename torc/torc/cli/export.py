@@ -43,7 +43,9 @@ def export(ctx):
 )
 @click.pass_obj
 def sqlite(api, workflow_keys, filename, force):
-    """Export workflow database to this SQLite file."""
+    """Export workflows stored in the database to this SQLite file. By default, export all
+    workflows. Limit the output tables by passing specific workflow keys as positional arguments.
+    """
     check_database_url(api)
     check_output_path(filename, force)
     workflows = []

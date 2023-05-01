@@ -18,8 +18,8 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-def results():  # pylint: disable=unused-argument
-    """result commands"""
+def results():
+    """Result commands"""
 
 
 @click.command(name="list")

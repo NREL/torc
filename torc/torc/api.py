@@ -40,7 +40,7 @@ def iter_documents(func, *args, skip=0, limit=DEFAULT_BATCH_SIZE, **kwargs):
         has_more = result.has_more
 
 
-_DATABASE_KEYS = {"_id", "_key", "_rev", "id", "key", "rev"}
+_DATABASE_KEYS = {"_id", "_key", "_rev", "_oldRev", "id", "key", "rev"}
 
 
 def remove_db_keys(data: dict):

@@ -1,9 +1,11 @@
 """Entry point for CLI commands"""
 
 import logging
+import sys
 
 import click
 
+import torc.version
 from torc.api import make_api
 from torc.cli.common import get_log_level_from_str
 from torc.cli.collections import collections
@@ -18,6 +20,7 @@ from torc.cli.jobs import jobs
 from torc.cli.local import local
 from torc.cli.resource_requirements import resource_requirements
 from torc.cli.results import results
+from torc.cli.stats import stats
 from torc.cli.user_data import user_data
 from torc.cli.workflows import workflows
 from torc.torc_rc import TorcRuntimeConfig
@@ -26,6 +29,14 @@ from torc.utils.timing import timer_stats_collector
 
 logger = logging.getLogger(__name__)
 _config = TorcRuntimeConfig.load()
+
+
+def _show_version(*args):
+    version = args[2]
+    if version:
+        print(f"torc version {torc.version.__version__}")
+        sys.exit(0)
+    return version
 
 
 @click.group()
@@ -48,7 +59,7 @@ _config = TorcRuntimeConfig.load()
     "--workflow-key",
     type=str,
     default=_config.workflow_key,
-    envvar="TORC_WORKFLOW_ID",
+    envvar="TORC_WORKFLOW_KEY",
     help="Workflow key, required for many commands. "
     "User will be prompted if it is missing unless --no-prompts is set.",
 )
@@ -83,6 +94,13 @@ _config = TorcRuntimeConfig.load()
     envvar="TORC_DATABASE_URL",
     help="Database URL. Ex: http://localhost:8529/_db/workflows/torc-service",
 )
+@click.option(
+    "--version",
+    callback=_show_version,
+    is_flag=True,
+    show_default=True,
+    help="Show version and exit",
+)
 @click.pass_context
 def cli(
     ctx,
@@ -93,6 +111,7 @@ def cli(
     output_format,
     timings,
     database_url,
+    version,
 ):  # pylint: disable=unused-argument
     """torc commands"""
     if timings:
@@ -126,5 +145,6 @@ cli.add_command(jobs)
 cli.add_command(local)
 cli.add_command(resource_requirements)
 cli.add_command(results)
+cli.add_command(stats)
 cli.add_command(user_data)
 cli.add_command(workflows)

@@ -101,7 +101,7 @@ def _join_by_edge(
         else api.get_workflows_key_join_by_inbound_edge_collection_edge
     )
     iterable = iter_documents(func, workflow_key, collection, edge, **filters)
-    base_exclude = ["_id", "_rev"]
+    base_exclude = ["_id", "_rev", "_oldRev"]
     items = []
     if output_format == "text":
         # Flatten the columns to make a table.

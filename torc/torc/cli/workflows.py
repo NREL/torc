@@ -16,6 +16,7 @@ from swagger_client.models.workflow_specifications_model import (
 )
 
 from torc.api import sanitize_workflow, iter_documents
+from torc.exceptions import InvalidWorkflow
 from torc.torc_rc import TorcRuntimeConfig
 from torc.workflow_manager import WorkflowManager
 from .common import (
@@ -473,10 +474,14 @@ def start(ctx, api, auto_tune_resource_requirements, ignore_missing_data):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     mgr = WorkflowManager(api, workflow_key)
-    mgr.start(
-        auto_tune_resource_requirements=auto_tune_resource_requirements,
-        ignore_missing_data=ignore_missing_data,
-    )
+    try:
+        mgr.start(
+            auto_tune_resource_requirements=auto_tune_resource_requirements,
+            ignore_missing_data=ignore_missing_data,
+        )
+    except InvalidWorkflow as exc:
+        logger.error("Invalid workflow: %s", exc)
+        sys.exit(1)
     # TODO: This could schedule nodes.
 
 
