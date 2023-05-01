@@ -47,7 +47,7 @@ router.get('/workflow_specifications/:key', function(req, res) {
   try {
     const jobs = [];
     for (const job of query.iterWorkflowDocuments(workflow, 'jobs')) {
-      jobs.push(query.getjobSpecification(job, workflow));
+      jobs.push(query.getJobSpecification(job, workflow));
     }
     const data = {
       config: query.getWorkflowConfig(workflow),
@@ -254,6 +254,17 @@ function checkDependencies(workflow) {
     const rr = job.resource_requirements;
     if (rr != null && !resourceRequirements.has(rr)) {
       throw new Error(`Invalid resource_requirements=${rr} in job ${JSON.stringify(job)}`);
+    }
+  }
+
+  for (const rjob of workflow.reschedule_jobs) {
+    for (const jobName of rjob.blocked_by) {
+      if (!jobs.has(jobName)) {
+        throw new Error(`reschedule job ${JSON.stringify(rjob)} has invalid blocked_by ${jobName}`);
+      }
+    }
+    if (!schedulerConfigs.has(rjob.scheduler)) {
+      throw new Error(`reschedule job ${JSON.stringify(rjob)} has invalid scheduler`);
     }
   }
 }

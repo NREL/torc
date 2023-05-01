@@ -251,11 +251,12 @@ function listFilesProducedByJob(job, workflow) {
  * @param {Object} workflow
  * @return {Object} - Instance of schemas.jobSpecification
  */
-function getjobSpecification(job, workflow) {
+function getJobSpecification(job, workflow) {
   const blockingJobs = [];
   const inputFiles = [];
   const outputFiles = [];
-  const userData = [];
+  const consumesUserData = [];
+  const storesUserData = [];
 
   for (const blockingJob of getBlockingJobs(job, workflow)) {
     blockingJobs.push(blockingJob.name);
@@ -266,11 +267,17 @@ function getjobSpecification(job, workflow) {
   for (const file of listFilesProducedByJob(job, workflow)) {
     outputFiles.push(file.name);
   }
+  for (const data of listUserDataConsumedByJob(job, workflow)) {
+    delete(data._id);
+    delete(data._key);
+    delete(data._rev);
+    consumesUserData.push(data.name);
+  }
   for (const data of listUserDataStoredByJob(job, workflow)) {
     delete(data._id);
     delete(data._key);
     delete(data._rev);
-    userData.push(data);
+    storesUserData.push(data.name);
   }
 
   const scheduler = getJobScheduler(job, workflow);
@@ -283,7 +290,8 @@ function getjobSpecification(job, workflow) {
     output_files: outputFiles,
     resource_requirements: getJobResourceRequirements(job, workflow).name,
     scheduler: scheduler == null ? '' : scheduler._id,
-    user_data: userData,
+    consumes_user_data: consumesUserData,
+    stores_user_data: storesUserData,
   };
 }
 
@@ -1356,7 +1364,7 @@ module.exports = {
   getReadyJobRequirements,
   getWorkflowConfig,
   getWorkflowStatus,
-  getjobSpecification,
+  getJobSpecification,
   initializeJobStatus,
   isJobBlocked,
   isJobInitiallyBlocked,
