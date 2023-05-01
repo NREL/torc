@@ -1,6 +1,7 @@
 """Tests the workflow CLI commands."""
 
 import json
+import shutil
 import socket
 import tempfile
 from pathlib import Path
@@ -9,6 +10,7 @@ from click.testing import CliRunner
 
 from torc.cli.torc import cli
 from torc.cli.collections import JOIN_COLLECTIONS
+from torc.common import STATS_DIR
 
 
 def test_workflow_commands(create_workflow_cli):
@@ -45,6 +47,7 @@ def test_workflow_commands(create_workflow_cli):
     events = _run_and_convert_output_from_json(
         ["-k", key, "-u", url, "-F", "json", "events", "list"]
     )
+    assert isinstance(events, list) and events
     job_key = _run_and_convert_output_from_json(
         ["-k", key, "-u", url, "-F", "json", "jobs", "list"]
     )["jobs"][0]["key"]
@@ -71,8 +74,20 @@ def test_workflow_commands(create_workflow_cli):
     for name in JOIN_COLLECTIONS:
         _get_text_and_json_outputs(["-k", key, "-u", url, "collections", "join", name])
 
-    assert isinstance(events, list) and events
+    stats_dir = output_dir / STATS_DIR
+    stats_files = [
+        x
+        for x in stats_dir.iterdir()
+        if x.name.startswith("compute_node") and x.suffix == ".sqlite"
+    ]
+    assert len(stats_files) == 1
+    # Create a copy to exercise the union code.
+    shutil.copyfile(stats_files[0], stats_dir / "compute_node_123.sqlite")
+    result = runner.invoke(cli, ["stats", "concatenate-process", str(stats_dir)])
+    assert result.exit_code == 0
+
     result = runner.invoke(cli, ["-k", key, "-u", url, "workflows", "reset-status"])
+    assert result.exit_code == 0
 
 
 def test_resource_requirement_commands(create_workflow_cli):
