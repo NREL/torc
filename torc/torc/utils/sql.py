@@ -41,7 +41,7 @@ def make_table(db_file, table, row, primary_key=None, types=None):
     schema_text = ", ".join(schema)
     cur.execute(f"CREATE TABLE {table}({schema_text})")
     con.commit()
-    logger.info("Created table=%s in db_file=%s", table, db_file)
+    logger.debug("Created table=%s in db_file=%s", table, db_file)
 
 
 def insert_rows(db_file, table, rows):
