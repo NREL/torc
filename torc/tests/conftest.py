@@ -3,6 +3,7 @@
 # pylint: disable=redefined-outer-name,duplicate-code
 
 import json
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -27,6 +28,7 @@ from swagger_client.models.workflow_config_model import WorkflowConfigModel
 
 from torc.api import iter_documents
 from torc.cli.torc import cli
+from torc.torc_rc import TorcRuntimeConfig
 from torc.workflow_builder import WorkflowBuilder
 from torc.workflow_manager import WorkflowManager
 from torc.tests.database_interface import DatabaseInterface
@@ -45,7 +47,6 @@ RC_JOB = Path("tests") / "scripts" / "resource_consumption.py"
 CREATE_RESOURCE_JOB = Path("tests") / "scripts" / "create_resource.py"
 USE_RESOURCE_JOB = Path("tests") / "scripts" / "use_resource.py"
 SLEEP_JOB = Path("tests") / "scripts" / "sleep.py"
-URL = "http://localhost:8529/_db/test-workflows/torc-service"
 
 
 def pytest_sessionstart(session):
@@ -268,8 +269,16 @@ def independent_job_workflow(num_jobs):
 
 
 def _initialize_api():
+    config = TorcRuntimeConfig.load()
+    if config.database_url is None:
+        print(
+            f"database_url must be set in {TorcRuntimeConfig.path()} to run this test",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     configuration = Configuration()
-    configuration.host = URL
+    configuration.host = config.database_url
     return DefaultApi(ApiClient(configuration))
 
 
@@ -333,7 +342,7 @@ def completed_workflow(diamond_workflow):
             status=status,
         )
         job = api.post_workflows_workflow_jobs_key_complete_job_status_rev(
-            result, db.workflow.key, job_key, status, job._rev  # pylint: disable=protected-access
+            result, db.workflow.key, job_key, status, job.rev
         )
 
     yield db, scheduler_config_id, output_dir
@@ -360,7 +369,7 @@ def incomplete_workflow(diamond_workflow):
             status=status,
         )
         job = api.post_workflows_workflow_jobs_key_complete_job_status_rev(
-            result, db.workflow.key, job.id, status, job._rev  # pylint: disable=protected-access
+            result, db.workflow.key, job.id, status, job.rev
         )
 
         for file in api.get_workflows_workflow_files_produced_by_job_key(
@@ -514,24 +523,27 @@ def cancelable_workflow(tmp_path):
 @pytest.fixture()
 def create_workflow_cli(tmp_path_factory):
     """Creates a temporary workflow with the CLI."""
+    api = _initialize_api()
+    url = api.api_client.configuration.host
     tmp_path = tmp_path_factory.mktemp("torc")
     file = Path(__file__).parent.parent.parent / "examples" / "independent_workflow.json5"
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
-        cli, ["-u", URL, "-F", "json", "workflows", "create-from-json-file", str(file)]
+        cli, ["-u", url, "-F", "json", "workflows", "create-from-json-file", str(file)]
     )
     assert result.exit_code == 0
     key = json.loads(result.stdout)["key"]
-    yield key, URL, tmp_path
-    result = runner.invoke(cli, ["-k", key, "-u", URL, "workflows", "delete", key])
+    yield key, url, tmp_path
+    result = runner.invoke(cli, ["-k", key, "-u", url, "workflows", "delete", key])
     assert result.exit_code == 0
+    api.api_client.close()
 
 
 @pytest.fixture
 def db_api():
     """Returns an api instance."""
     api = _initialize_api()
-    yield api, URL
+    yield api, api.api_client.configuration.host
     api.api_client.close()
 
 
