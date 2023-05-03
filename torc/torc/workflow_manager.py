@@ -52,7 +52,6 @@ class WorkflowManager:
         send_api_command(self._api.put_workflows_key_status, status, self._key)
         if reinitialize:
             self.reinitialize_jobs()
-        # TODO schedule workers.
         send_api_command(
             self._api.post_workflows_workflow_events,
             {
@@ -112,7 +111,6 @@ class WorkflowManager:
             self._key,
         )
         logger.info("Started workflow")
-        # TODO schedule workers.
 
     def _check_workflow(self, ignore_missing_data=False):
         self._check_workflow_user_data(ignore_missing_data)
