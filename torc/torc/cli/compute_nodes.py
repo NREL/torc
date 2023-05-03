@@ -5,6 +5,7 @@ import logging
 
 import click
 
+from torc.api import iter_documents
 from torc.resource_monitor.reports import (
     list_compute_node_stats,
     make_compute_node_stats_text_tables,
@@ -25,6 +26,23 @@ logger = logging.getLogger(__name__)
 def compute_nodes(ctx):  # pylint: disable=unused-argument
     """Compute node commands"""
     setup_cli_logging(ctx, __name__)
+
+
+@click.command(name="list")
+@click.pass_obj
+@click.pass_context
+def list_compute_nodes(ctx, api):
+    """List all compute nodes that partipcated in a workflow."""
+    check_database_url(api)
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    nodes = {
+        "compute_nodes": [
+            x.to_dict()
+            for x in iter_documents(api.get_workflows_workflow_compute_nodes, workflow_key)
+        ]
+    }
+    # This data can't easily be printed in table.
+    print(json.dumps(nodes, indent=2))
 
 
 @click.command()
@@ -62,4 +80,5 @@ def list_resource_stats(ctx, api, exclude_process):
         print(json.dumps({"stats": stats}))
 
 
+compute_nodes.add_command(list_compute_nodes)
 compute_nodes.add_command(list_resource_stats)
