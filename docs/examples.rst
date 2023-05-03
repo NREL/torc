@@ -31,8 +31,8 @@ torc works.
 
 Diamond Workflow
 ================
-The workflow specification ``examples/diamond_workflow.json5`` creates a workflow with four jobs
-that have dependencies based on the files that the jobs produce and consume. This is the same
+The workflow specification file ``examples/diamond_workflow.json5`` creates a workflow with four
+jobs that have dependencies based on the files that the jobs produce and consume. This is the same
 workflow described at :ref:`overview`.
 
 Ensure that you are in the ``torc`` directory. It has a ``tests`` subdirectory which is required by
@@ -126,3 +126,14 @@ Open the resulting files in an image viewer.
     |   2   |    work2    |     1     |       0        | 0.04883763392766317  | 2023-04-29T11:53:24.966426 |    done   |
     |   3   | postprocess |     1     |       0        | 0.04541379610697428  | 2023-04-29T11:53:27.917966 |    done   |
     +-------+-------------+-----------+----------------+----------------------+----------------------------+-----------+
+
+Slurm Diamond Workflow
+======================
+This example is similar to the previous example. It has these differences:
+
+- It must be run on an HPC with the Slurm scheduler.
+- It uses a default compute node as well as one with GPUs.
+- It uses torc's delayed-compute-node-scheduling feature.
+
+Follow the same steps except use the workflow specification file
+``examples/slurm_diamond_workflow.json5`` and run it in an HPC environment.

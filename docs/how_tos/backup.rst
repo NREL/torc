@@ -64,16 +64,6 @@ Restore
         --input-directory dump \
         --server.endpoint "http+tcp://<your-database-hostname>:8529"
 
-Workflow Specification
-======================
-You can convert your workflow to a torc worklow specification with the command below. Redirect the
-text to a file to save it. Then you can re-create it later with the ``create-from-json-file``
-command.
-
-.. code-block:: console
-
-    $ torc workflows show
-
 SQLite
 ======
 You can export your workflows to a SQLite file with the command below. There is currently no
@@ -82,3 +72,16 @@ support for restoring from the file, but we will eventually add it.
 .. code-block:: console
 
     $ torc export sqlite
+
+Workflow Specification
+======================
+You can convert your workflow to a torc worklow specification with the command below. Redirect the
+text to a file to save it. Then you can re-create it later with the ``create-from-json-file``
+command.
+
+.. warning:: This command may not work if the size of you worklow is greater than what can be
+   transferred in an HTTP API command.
+
+.. code-block:: console
+
+    $ torc workflows show

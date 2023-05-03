@@ -10,6 +10,8 @@ def test_export(tmp_path, completed_workflow):
     db = completed_workflow[0]
     filename = tmp_path / "db.sqlite"
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(cli, ["-u", db.url, "export", "sqlite", "-F", filename, "--force"])
+    result = runner.invoke(
+        cli, ["-u", db.url, "-k", db.workflow.key, "export", "sqlite", "-F", filename, "--force"]
+    )
     assert result.exit_code == 0
     assert filename.exists()

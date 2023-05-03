@@ -1,13 +1,12 @@
 {
-  name: "diamond_workflow",
-  description: "Demonstrate a workflow with job-file dependencies.",
+  name: "slurm_diamond_workflow",
+  description: "Demonstrate a Slurm workflow with job-file dependencies and delayed Slurm scheduling.",
   jobs: [
     {
       name: "preprocess",
       command: "python tests/scripts/preprocess.py -i output/inputs.json -o output/f1.json",
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
-      scheduler: "slurm_schedulers/debug",
       resource_requirements: "small",
       input_files: [
         "inputs"
@@ -23,7 +22,6 @@
       consumes_user_data: ["my_val"],
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
-      scheduler: "slurm_schedulers/debug",
       resource_requirements: "medium",
       input_files: [
         "file1"
@@ -40,8 +38,7 @@
       command: "python tests/scripts/work.py -i output/f1.json -o output/f3.json",
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
-      scheduler: "slurm_schedulers/debug",
-      resource_requirements: "large",
+      resource_requirements: "medium",
       input_files: [
         "file1"
       ],
@@ -54,11 +51,10 @@
     },
     {
       name: "postprocess",
-      command: "python tests/scripts/postprocess.py -i output/f2.json -i output/f3.json -o output/f4.json",
+      command: "python tests/scripts/postprocess_gpu.py -i output/f2.json -i output/f3.json -o output/f4.json",
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
-      scheduler: "slurm_schedulers/debug",
-      resource_requirements: "small",
+      resource_requirements: "gpu",
       input_files: [
         "file3",
         "file2"
@@ -70,7 +66,9 @@
         "work2",
         "work1"
       ],
-    },
+      scheduler: "slurm_schedulers/debug_gpu",
+      needs_compute_node_schedule: true,
+    }
   ],
   files: [
     {
@@ -105,30 +103,39 @@
     },
     {
       name: "medium",
-      num_cpus: 4,
+      num_cpus: 20,  // This means that two jobs can't run simultaneously on a 36-CPU system.
       num_gpus: 0,
       num_nodes: 1,
       memory: "8g",
       runtime: "P0DT10M"
     },
     {
-      name: "large",
+      name: "gpu",
       num_cpus: 8,
-      num_gpus: 0,
+      num_gpus: 2,
       num_nodes: 1,
       memory: "16g",
-      runtime: "P0DT20M"
-    }
+      runtime: "P0DT5M"
+    },
   ],
   schedulers: {
     slurm_schedulers: [
       {
         name: "debug",
-        account: "my_account",
+        account: "dsgrid",
         nodes: 1,
         partition: "debug",
         qos: "standby",
         walltime: "01:00:00",
+      },
+      {
+        name: "debug_gpu",
+        account: "dsgrid",
+        nodes: 1,
+        partition: "debug",
+        qos: "standby",
+        walltime: "01:00:00",
+        gres: "gpu:2",
       }
     ],
   },

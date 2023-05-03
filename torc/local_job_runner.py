@@ -105,9 +105,7 @@ def run_workflow(api, output_dir: Path, workflow):
     """Run the workflow stored in the database."""
     mgr = WorkflowManager(api, workflow.key)
     mgr.start()
-    runner = JobRunner(
-        api, workflow, output_dir, time_limit="P0DT24H", job_completion_poll_interval=1
-    )
+    runner = JobRunner(api, workflow, output_dir, job_completion_poll_interval=1)
     logger.info("Start workflow")
     runner.run_worker()
 
@@ -116,7 +114,7 @@ def restart_workflow(api, output_dir: Path, workflow):
     """Restart the workflow stored in the database."""
     mgr = WorkflowManager(api, workflow.key)
     mgr.reinitialize_jobs()
-    runner = JobRunner(api, workflow, output_dir, time_limit="P0DT24H")
+    runner = JobRunner(api, workflow, output_dir)
     logger.info("Start workflow")
     runner.run_worker()
 

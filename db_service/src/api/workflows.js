@@ -241,13 +241,9 @@ router.post('/workflows/:key/prepare_next_jobs_for_submission', function(req, re
   try {
     const status = query.getWorkflowStatus(workflow);
     if (status.is_canceled) {
-      res.send([]);
+      res.send({jobs: []});
     } else {
       const jobs = query.prepareJobsForSubmissionNoResourceChecks(workflow, limit);
-      const items = [];
-      for (const job of jobs) {
-        items.push(job);
-      }
       res.send({jobs: jobs});
     }
   } catch (e) {
@@ -262,6 +258,29 @@ router.post('/workflows/:key/prepare_next_jobs_for_submission', function(req, re
     .summary('Return user-requested number of ready jobs.')
     .description('Return user-requested number of jobs that are ready for submission. ' +
       'Sets status to submitted_pending.');
+
+router.post('/workflows/:key/prepare_jobs_for_scheduling', function(req, res) {
+  const key = req.pathParams.key;
+  const workflow = documents.getWorkflow(key, res);
+  try {
+    const status = query.getWorkflowStatus(workflow);
+    if (status.is_canceled) {
+      res.send({schedulers: []});
+    } else {
+      res.send({schedulers: query.prepareJobsForScheduling(workflow)});
+    }
+  } catch (e) {
+    utils.handleArangoApiErrors(e, res, `prepare_jobs_for_submission workflow key=${key}`);
+  }
+})
+    .pathParam('key', joi.string().required(), 'Workflow key')
+    .response(joi.object().required().keys({
+      schedulers: joi.array().items(joi.string()),
+    }),
+    'Schedulers that need to be activated.',
+    )
+    .summary('Return scheduler IDs that need to be activated.')
+    .description('Return scheduler IDs that need to be activated. Sets job status to scheduled.');
 
 router.post('/workflows/:key/auto_tune_resource_requirements', function(req, res) {
   const key = req.pathParams.key;

@@ -246,7 +246,7 @@ function listFilesProducedByJob(job, workflow) {
 }
 
 /**
- * Return a job definition.
+ * Return a job specification.
  * @param {Object} job - Instance of schemas.job
  * @param {Object} workflow
  * @return {Object} - Instance of schemas.jobSpecification
@@ -288,6 +288,7 @@ function getJobSpecification(job, workflow) {
     blocked_by: blockingJobs,
     input_files: inputFiles,
     output_files: outputFiles,
+    needs_compute_node_schedule: job.needs_compute_node_schedule,
     resource_requirements: getJobResourceRequirements(job, workflow).name,
     scheduler: scheduler == null ? '' : scheduler._id,
     consumes_user_data: consumesUserData,
@@ -579,6 +580,7 @@ function initializeJobStatus(workflow) {
     job.internal.memory_bytes = utils.getMemoryInBytes(jobResources.memory);
     job.internal.runtime_seconds = utils.getTimeDurationInSeconds(jobResources.runtime);
     job.internal.num_cpus = jobResources.num_cpus;
+    job.internal.num_gpus = jobResources.num_gpus;
     job.internal.num_nodes = jobResources.num_nodes;
     if (isJobInitiallyBlocked(job, workflow)) {
       job.status = JobStatus.Blocked;
@@ -1000,6 +1002,7 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
   const collection = config.getWorkflowCollection(workflow, 'jobs');
   const collectionName = config.getWorkflowCollectionName(workflow, 'jobs');
   let availableCpus = workerResources.num_cpus;
+  let availableGpus = workerResources.num_gpus;
   let availableMemory = workerResources.memory_gb * GiB;
   const queryLimit = limit == null ? availableCpus : limit;
   const workerTimeLimit =
@@ -1007,7 +1010,6 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
       Number.MAX_SAFE_INTEGER : utils.getTimeDurationInSeconds(workerResources.time_limit);
   const schedulerConfigId = workerResources.scheduler_config_id == null ? '' :
     workerResources.scheduler_config_id;
-  // TODO: numGpus
 
   db._executeTransaction({
     collections: {
@@ -1017,9 +1019,10 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
     action: function() {
       const cursor = query({count: true})`
         FOR job IN ${collection}
-          FILTER job.status == ${JobStatus.Ready}
+          FILTER job.status == ${JobStatus.Ready} || job.status == ${JobStatus.Scheduled}
             && job.internal.memory_bytes <= ${availableMemory}
             && job.internal.num_cpus <= ${availableCpus}
+            && job.internal.num_gpus <= ${availableGpus}
             && job.internal.runtime_seconds <= ${workerTimeLimit}
             && job.internal.num_nodes == ${workerResources.num_nodes}
             && (${schedulerConfigId} == '' || job.internal.scheduler_config_id == ''
@@ -1033,6 +1036,7 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
       for (const job of cursor) {
         if (
           job.internal.num_cpus <= availableCpus &&
+          job.internal.num_gpus <= availableGpus &&
           job.internal.memory_bytes <= availableMemory
         ) {
           job.status = JobStatus.SubmittedPending;
@@ -1040,6 +1044,7 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
           Object.assign(job, meta);
           jobs.push(job);
           availableCpus -= job.internal.num_cpus;
+          availableGpus -= job.internal.num_gpus;
           availableMemory -= job.internal.memory_bytes;
           if (availableCpus == 0 || availableMemory == 0) {
             break;
@@ -1051,7 +1056,8 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
 
   if (jobs.length == 0) {
     reason.message = `No jobs matched status='ready', memory_bytes <= ${availableMemory}, ` +
-      `num_cpus <= ${availableCpus}, runtime_seconds <= ${workerTimeLimit}, ` +
+      `num_cpus <= ${availableCpus}, num_gpus <= ${availableGpus}, ` +
+      `runtime_seconds <= ${workerTimeLimit}, ` +
       `num_nodes == ${workerResources.num_nodes}, scheduler_config_id == ${schedulerConfigId}`;
   }
   // console.log(`Prepared ${jobs.length} jobs for submission.`);
@@ -1059,7 +1065,7 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
 }
 
 /**
- * Prepare a list of jobs for submission with noo resource requirement considerations.
+ * Prepare a list of jobs for submission with no resource requirement considerations.
  * @param {Object} workflow
  * @param {Number} limit
  * @return {Array}
@@ -1077,7 +1083,7 @@ function prepareJobsForSubmissionNoResourceChecks(workflow, limit) {
     action: function() {
       const cursor = query({count: true})`
         FOR job IN ${collection}
-          FILTER job.status == ${JobStatus.Ready}
+          FILTER job.status == ${JobStatus.Ready} || job.status == ${JobStatus.Scheduled}
           LIMIT ${limit}
           RETURN job
       `;
@@ -1094,6 +1100,40 @@ function prepareJobsForSubmissionNoResourceChecks(workflow, limit) {
   });
 
   return jobs;
+}
+
+/**
+ * Return an array of schedulers that need to be scheduled. Changes job status to scheduled.
+ * @param {Object} workflow
+ * @return {Array}
+ */
+function prepareJobsForScheduling(workflow) {
+  const schedulers = [];
+  const collection = config.getWorkflowCollection(workflow, 'jobs');
+  const collectionName = config.getWorkflowCollectionName(workflow, 'jobs');
+
+  db._executeTransaction({
+    collections: {
+      exclusive: collectionName,
+      allowImplicit: false,
+    },
+    action: function() {
+      const cursor = query({count: true})`
+        FOR job IN ${collection}
+          FILTER job.status == ${JobStatus.Ready} && job.needs_compute_node_schedule
+          RETURN job
+      `;
+
+      for (const job of cursor) {
+        job.status = JobStatus.Scheduled;
+        const meta = collection.update(job, job, {mergeObjects: false});
+        Object.assign(job, meta);
+        schedulers.push(job.internal.scheduler_config_id);
+      }
+    },
+  });
+
+  return schedulers;
 }
 
 /**
@@ -1388,6 +1428,7 @@ module.exports = {
   manageJobStatusChange,
   prepareJobsForSubmission,
   prepareJobsForSubmissionNoResourceChecks,
+  prepareJobsForScheduling,
   processAutoTuneResourceRequirementsResults,
   processConsumedUserData,
   resetJobStatus,

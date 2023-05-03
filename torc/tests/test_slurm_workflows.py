@@ -2,15 +2,15 @@
 
 import json
 import shutil
-import subprocess
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
 
-from torc.api import make_api
+from torc.api import make_api, iter_documents
 from torc.cli.torc import cli
 from torc.common import STATS_DIR
 from torc.torc_rc import TorcRuntimeConfig
@@ -19,9 +19,7 @@ from torc.hpc.common import HpcJobStatus
 from torc.utils.files import load_data, dump_data
 
 
-try:
-    subprocess.call(["squeue", "--help"])
-except FileNotFoundError:
+if shutil.which("squeue") is None:
     pytest.skip("skipping slurm tests", allow_module_level=True)
 
 
@@ -60,7 +58,7 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
 
     inputs_file = script_output_dir / "inputs.json"
     inputs_file.write_text(json.dumps({"val": 5}))
-    file = Path(__file__).parent.parent.parent / "examples" / "diamond_workflow.json5"
+    file = Path(__file__).parent.parent.parent / "examples" / "slurm_diamond_workflow.json5"
     dst_file = output_dir / file.name
     if dst_file.exists():
         dst_file.unlink()
@@ -75,11 +73,17 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
     )
     assert result.exit_code == 0
     key = json.loads(result.stdout)["key"]
+    slurm_configs = [
+        x
+        for x in iter_documents(api.get_workflows_workflow_slurm_schedulers, key)
+        if x.name == "debug"
+    ]
+    assert slurm_configs
+    slurm_config = slurm_configs[0]
 
     try:
         result = runner.invoke(cli, ["-k", key, "workflows", "start"])
         assert result.exit_code == 0
-
         result = runner.invoke(
             cli,
             [
@@ -90,6 +94,8 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
                 "hpc",
                 "slurm",
                 "schedule-nodes",
+                "-s",
+                slurm_config.key,
                 "-n1",
                 "-o",
                 str(output_dir),
@@ -98,29 +104,47 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
             ],
         )
         assert result.exit_code == 0
-        job_ids = json.loads(result.stdout)["job_ids"]
 
-        intf = SlurmInterface()
         timeout = time.time() + 600
-        completed_jobs = []
-        print("\n", file=sys.stderr)
-        while time.time() < timeout and len(completed_jobs) < len(job_ids):
-            print("Sleep while waiting for SLURM jobs to finish", file=sys.stderr)
-            time.sleep(10)
-            for job_id in job_ids:
-                job_info = intf.get_status(job_id)
-                if job_info.status in (HpcJobStatus.COMPLETE, HpcJobStatus.NONE):
-                    print(
-                        f"SLURM {job_id=} is done; status={job_info.status}",
-                        file=sys.stderr,
-                    )
-                    completed_jobs.append(job_id)
+        done = True
+        while time.time() < timeout:
+            response = api.get_workflows_key_is_complete(key)
+            if response.is_complete:
+                done = True
+                break
+            time.sleep(1)
+        assert done
 
-        assert len(completed_jobs) == len(
-            job_ids
-        ), f"Timed out waiting for jobs to finish: {len(completed_jobs)=} {len(job_ids)=}"
+        result = runner.invoke(cli, ["-k", key, "compute-nodes", "list"])
+        assert result.exit_code == 0
+        nodes = json.loads(result.stdout)["compute_nodes"]
+        assert len(nodes) == 2
 
         results = api.get_workflows_workflow_results(key).items
+        assert len(results) == 4
+        for result in results:
+            assert result.return_code == 0
+
+        start_events = []
+        complete_events = []
+        for event in iter_documents(api.get_workflows_workflow_events, key):
+            if event.get("category") == "job" and event.get("type") in ("start", "complete"):
+                timestamp = datetime.strptime(event["timestamp"], "%Y-%m-%dT%H:%M:%S.%fZ")
+                item = {
+                    "key": int(event["key"]),
+                    "timestamp": timestamp,
+                }
+                events = start_events if event["type"] == "start" else complete_events
+                events.append(item)
+
+        assert len(start_events) == 4
+        assert len(complete_events) == 4
+        start_events.sort(key=lambda x: x["key"])
+        complete_events.sort(key=lambda x: x["key"])
+        work1_complete_time = complete_events[1]["timestamp"]
+        work2_start_time = start_events[2]["timestamp"]
+        assert work2_start_time > work1_complete_time
+
         assert len(results) == 4
         for result in results:
             assert result.return_code == 0
@@ -130,5 +154,26 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
         assert html_files
         sqlite_files = [x for x in stats_dir.iterdir() if x.suffix == ".sqlite"]
         assert sqlite_files
+        _wait_for_compute_nodes(api, key)
     finally:
         api.delete_workflows_key(key)
+
+
+def _wait_for_compute_nodes(api, key):
+    slurm_job_ids = {
+        x.scheduler["slurm_job_id"] for x in api.get_workflows_workflow_compute_nodes(key).items
+    }
+    intf = SlurmInterface()
+    timeout = time.time() + 300
+    while time.time() < timeout and slurm_job_ids:
+        print("Sleep while waiting for SLURM jobs to finish", file=sys.stderr)
+        completed_jobs = set()
+        time.sleep(3)
+        for job_id in slurm_job_ids:
+            job_info = intf.get_status(job_id)
+            if job_info.status in (HpcJobStatus.COMPLETE, HpcJobStatus.NONE):
+                print(f"SLURM {job_id=} is done; status={job_info.status}", file=sys.stderr)
+                completed_jobs.add(job_id)
+        slurm_job_ids.difference_update(completed_jobs)
+
+    assert not slurm_job_ids, f"Timed out waiting for jobs to finish: {slurm_job_ids=}"

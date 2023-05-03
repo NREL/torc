@@ -43,6 +43,7 @@ router.get('/workflow_specifications/:key', function(req, res) {
   const awsCollection = config.getWorkflowCollection(workflow, 'aws_schedulers');
   const localCollection = config.getWorkflowCollection(workflow, 'local_schedulers');
   const slurmCollection = config.getWorkflowCollection(workflow, 'slurm_schedulers');
+  const userDataCollection = config.getWorkflowCollection(workflow, 'user_data');
 
   try {
     const jobs = [];
@@ -59,6 +60,9 @@ router.get('/workflow_specifications/:key', function(req, res) {
         local_schedulers: localCollection.all().toArray(),
         slurm_schedulers: slurmCollection.all().toArray(),
       },
+      // TODO: may need to exclude this if too big.
+      // Or let the user opt-out.
+      user_data: userDataCollection.all().toArray(),
     };
     res.send(data);
   } catch (e) {
@@ -255,16 +259,9 @@ function checkDependencies(workflow) {
     if (rr != null && !resourceRequirements.has(rr)) {
       throw new Error(`Invalid resource_requirements=${rr} in job ${JSON.stringify(job)}`);
     }
-  }
-
-  for (const rjob of workflow.reschedule_jobs) {
-    for (const jobName of rjob.blocked_by) {
-      if (!jobs.has(jobName)) {
-        throw new Error(`reschedule job ${JSON.stringify(rjob)} has invalid blocked_by ${jobName}`);
-      }
-    }
-    if (!schedulerConfigs.has(rjob.scheduler)) {
-      throw new Error(`reschedule job ${JSON.stringify(rjob)} has invalid scheduler`);
+    if (job.needs_compute_node_schedule && (job.scheduler == null || job.scheduler == '')) {
+      throw new Error(`Setting needs_compute_node_schedule requires that scheduler be set: ` +
+        `${JSON.stringify(job)}`);
     }
   }
 }

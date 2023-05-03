@@ -80,7 +80,6 @@ def create_workflow(api):
         description="Example diamond workflow",
     )
     workflow = api.post_workflow_specifications(spec)
-    api.post_workflows_key_initialize_jobs(workflow.key)
     print(f"Created workflow {workflow.key} with 4 jobs")
 
 

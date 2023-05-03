@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 import socket
 import sys
 from datetime import timedelta
@@ -13,14 +14,17 @@ from swagger_client.models.workflow_slurm_schedulers_model import (
 from swagger_client.models.workflow_scheduled_compute_nodes_model import (
     WorkflowScheduledComputeNodesModel,
 )
+from swagger_client.models.key_prepare_jobs_for_submission_model import (
+    KeyPrepareJobsForSubmissionModel,
+)
 
+import torc.version
 from torc.api import iter_documents, remove_db_keys
 from torc.hpc.common import HpcType
 from torc.hpc.hpc_manager import HpcManager
 from torc.hpc.slurm_interface import SlurmInterface
 from torc.job_runner import (
     JobRunner,
-    convert_end_time_to_duration_str,
     JOB_COMPLETION_POLL_INTERVAL,
 )
 from torc.utils.run_command import get_cli_string
@@ -117,7 +121,7 @@ def add_config(ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, w
         WorkflowSlurmSchedulersModel(name=name, **config), workflow_key
     )
     if output_format == "text":
-        logger.info("Added Slurm configuration %s to database", name)
+        logger.info("Added Slurm configuration %s to the database", name)
     else:
         print(json.dumps({"key": scheduler.key}))
 
@@ -199,7 +203,7 @@ def modify_config(ctx, api, slurm_config_key, **kwargs):
             scheduler, workflow_key, slurm_config_key
         )
         if output_format == "text":
-            logger.info("Modified Slurm configuration %s to database", slurm_config_key)
+            logger.info("Modified Slurm configuration %s to the database", slurm_config_key)
         else:
             print(json.dumps({"key": slurm_config_key}))
     else:
@@ -269,9 +273,12 @@ def schedule_nodes(
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     logger.info(get_cli_string())
+    logger.info("torc version %s", torc.version.__version__)
     workflow_key = get_workflow_key_from_context(ctx, api)
 
     ready_jobs = api.get_workflows_workflow_jobs(workflow_key, status="ready", limit=1)
+    if not ready_jobs.items:
+        ready_jobs = api.get_workflows_workflow_jobs(workflow_key, status="scheduled", limit=1)
     if not ready_jobs.items:
         logger.error("No jobs are in the ready state")
         sys.exit(1)
@@ -321,8 +328,7 @@ def schedule_nodes(
         )
         name = f"{job_prefix}_{node.key}"
         try:
-            # TODO: keep_submission_script false
-            job_id = mgr.submit(output, name, runner_script, keep_submission_script=True)
+            job_id = mgr.submit(output, name, runner_script, keep_submission_script=False)
         except Exception:
             api.delete_workflows_workflow_scheduled_compute_nodes_key(workflow_key, node.key)
             raise
@@ -340,6 +346,7 @@ def schedule_nodes(
             "num_jobs": len(job_ids),
             "job_ids": job_ids,
             "scheduler_config_id": config.id,
+            "torc_version": torc.version.__version__,
             "message": f"Submitted {len(job_ids)} job requests to {hpc_type.value}",
         },
         workflow_key,
@@ -378,6 +385,7 @@ def run_jobs(ctx, api, output, poll_interval):
     my_logger = setup_cli_logging(ctx, __name__, filename=log_file)
     check_database_url(api)
     my_logger.info(get_cli_string())
+    my_logger.info("torc version %s", torc.version.__version__)
     my_logger.info("Run jobs on %s for workflow %s", hostname, api.api_client.configuration.host)
     scheduler = {
         "node_names": intf.list_active_nodes(slurm_job_id),
@@ -386,29 +394,40 @@ def run_jobs(ctx, api, output, poll_interval):
         "slurm_job_id": slurm_job_id,
         "hpc_type": HpcType.SLURM.value,
     }
-    buffer = timedelta(minutes=2)
+    config = api.get_workflows_key_config(workflow_key)
+    buffer = timedelta(seconds=config.compute_node_worker_buffer_seconds)
     end_time = intf.get_job_end_time() - buffer
-    time_limit = convert_end_time_to_duration_str(end_time)
     nodes = api.get_workflows_workflow_scheduled_compute_nodes(
         workflow_key, scheduler_id=slurm_job_id
     ).items
     num_nodes = len(nodes)
     if num_nodes == 0:
         node = None
-        scheduler_config_id = None
     elif num_nodes == 1:
         node = nodes[0]
-        scheduler_config_id = node.scheduler_config_id
     else:
         raise Exception(f"num_nodes with {slurm_job_id=} cannot be {num_nodes=}")
 
+    # Get resources from the Slurm environment because the job may only have a portion of overall
+    # system resources.
+    num_gpus = 0
+    if "SLURM_JOB_GPUS" in os.environ:
+        num_gpus = len(os.environ["SLURM_JOB_GPUS"].split(","))
+    resources = KeyPrepareJobsForSubmissionModel(
+        num_cpus=int(os.environ["SLURM_JOB_CPUS_PER_NODE"]),
+        num_gpus=num_gpus,
+        memory_gb=int(os.environ["SLURM_MEM_PER_NODE"]) / 1024,
+        num_nodes=int(os.environ["SLURM_JOB_NUM_NODES"]),
+        scheduler_config_id=node.scheduler_config_id,
+        time_limit=None,
+    )
     workflow = api.get_workflows_key(workflow_key)
     runner = JobRunner(
         api,
         workflow,
         output,
-        time_limit=time_limit,
-        scheduler_config_id=scheduler_config_id,
+        end_time=end_time,
+        resources=resources,
         job_completion_poll_interval=poll_interval,
         log_prefix=f"slurm_{slurm_job_id}",
     )
@@ -423,7 +442,6 @@ def run_jobs(ctx, api, output, poll_interval):
     if node is not None:
         node.status = "complete"
         api.put_workflows_workflow_scheduled_compute_nodes_key(node, workflow_key, node.key)
-    # TODO: schedule more nodes if needed
 
 
 slurm.add_command(add_config)

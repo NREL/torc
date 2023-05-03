@@ -5,7 +5,10 @@ import logging
 import os
 import multiprocessing
 import re
+import signal
+import shutil
 import socket
+import subprocess
 import sys
 import time
 from datetime import datetime, timedelta
@@ -15,6 +18,7 @@ import psutil
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 from pydantic.json import timedelta_isoformat  # pylint: disable=no-name-in-module
 from swagger_client import DefaultApi
+from swagger_client.rest import ApiException
 from swagger_client.models.workflow_compute_nodes_model import WorkflowComputeNodesModel
 from swagger_client.models.workflow_compute_node_stats_model import (
     WorkflowComputeNodeStatsModel,
@@ -31,6 +35,7 @@ from swagger_client.models.key_prepare_jobs_for_submission_model import (
 )
 from swagger_client.models.workflows_model import WorkflowsModel
 
+import torc.version
 from torc.api import send_api_command, iter_documents
 from torc.common import JOB_STDIO_DIR, STATS_DIR
 from torc.resource_monitor.models import (
@@ -42,6 +47,7 @@ from torc.resource_monitor.models import (
 )
 from torc.resource_monitor.resource_monitor import run_monitor_async
 from torc.utils.filesystem_factory import make_path
+from torc.utils.run_command import run_command
 from torc.utils.timing import timer_stats_collector, Timer
 from .async_cli_command import AsyncCliCommand
 from .common import KiB, MiB, GiB, TiB
@@ -49,6 +55,7 @@ from .common import KiB, MiB, GiB, TiB
 JOB_COMPLETION_POLL_INTERVAL = 60
 
 logger = logging.getLogger(__name__)
+_g_shutdown = False
 
 
 class JobRunner:
@@ -62,6 +69,7 @@ class JobRunner:
         job_completion_poll_interval=JOB_COMPLETION_POLL_INTERVAL,
         database_poll_interval=600,
         time_limit=None,
+        end_time=None,
         resources=None,
         scheduler_config_id=None,
         log_prefix=None,
@@ -77,8 +85,11 @@ class JobRunner:
             Interval in seconds in which to poll for job completions.
         database_poll_interval : int
             Max time in seconds in which the code should poll for job updates in the database.
+        end_time : None | datetime
+            If None then there is no time limit.
         time_limit : None | str
             ISO 8601 time duration string. If None then there is no time limit.
+            Mutually exclusive with end_time.
         resources : None | KeyPrepareJobsForSubmissionModel
             Resources of the compute node. If None, make system calls to check resources.
         scheduler_config_id : str
@@ -88,15 +99,31 @@ class JobRunner:
         log_prefix : str
             Prefix to use for job-specific log files.
         """
+        if time_limit is not None and end_time is not None:
+            raise Exception("time_limit and end_time are mutually exclusive")
+
+        # TODO: too many inputs and too complex. Needs refactoring.
         self._api = api
         self._workflow = workflow
         self._outstanding_jobs = {}
+        self._pids = {}
+        self._jobs_pending_process_stat_completion = []
+        self._hostname = socket.gethostname()
+        self._job_stdio_dir = output_dir / JOB_STDIO_DIR
         self._poll_interval = job_completion_poll_interval
         self._db_poll_interval = database_poll_interval
         self._output_dir = output_dir
-        self._scheduler_config_id = scheduler_config_id
         self._log_prefix = log_prefix
-        self._orig_resources = resources or _get_system_resources(time_limit)
+        self._parent_monitor_conn = None
+        self._monitor_proc = None
+        self._end_time = end_time
+        if time_limit is not None:
+            self._end_time = datetime.now() + timedelta(seconds=_get_timeout(time_limit))
+        if resources is None:
+            self._scheduler_config_id = scheduler_config_id
+        else:
+            self._scheduler_config_id = resources.scheduler_config_id
+        self._orig_resources = resources or _get_system_resources()
         self._orig_resources.scheduler_config_id = self._scheduler_config_id
         self._resources = KeyPrepareJobsForSubmissionModel(**self._orig_resources.to_dict())
         self._last_db_poll_time = 0
@@ -108,15 +135,9 @@ class JobRunner:
                 ).compute_node_resource_stats.to_dict()
             )
         )
-        self._parent_monitor_conn = None
-        self._monitor_proc = None
-        self._pids = {}
-        self._jobs_pending_process_stat_completion = []
-        self._job_stdio_dir = output_dir / JOB_STDIO_DIR
         self._stats_dir = output_dir / STATS_DIR
         self._job_stdio_dir.mkdir(exist_ok=True)
         self._stats_dir.mkdir(exist_ok=True)
-        self._hostname = socket.gethostname()
 
     def __del__(self):
         if self._outstanding_jobs:
@@ -136,6 +157,9 @@ class JobRunner:
             Scheduler configuration parameters. Used only for logs and events.
 
         """
+        signal.signal(signal.SIGTERM, _sigterm_handler)
+        self._log_worker_start_event()
+        logger.info("Run worker with resources %s", str(self._resources).replace("\n", " "))
         self._create_compute_node(scheduler)
         if self._stats.is_enabled():
             self._start_resource_monitor()
@@ -149,11 +173,21 @@ class JobRunner:
 
     def _run_until_complete(self):
         os.environ["TORC_WORKFLOW_KEY"] = self._workflow.key
-        timeout = _get_timeout(self._resources.time_limit)
-        start_time = time.time()
-
         result = send_api_command(self._api.get_workflows_key_is_complete, self._workflow.key)
-        while not result.is_complete and not time.time() - start_time > timeout:
+        short_poll_interval = 3
+        last_job_poll_time = 0
+        while (
+            not _g_shutdown
+            and not result.is_complete
+            and (self._end_time is None or datetime.now() < self._end_time)
+        ):
+            cur_time = time.time()
+            if cur_time - last_job_poll_time < self._poll_interval:
+                # This allows us to detect shutdown on a quicker interval.
+                time.sleep(short_poll_interval)
+                continue
+            last_job_poll_time = cur_time
+
             num_completed = self._process_completions()
             num_started = 0
             reason_none_started = None
@@ -184,6 +218,13 @@ class JobRunner:
             time.sleep(self._poll_interval)
             result = send_api_command(self._api.get_workflows_key_is_complete, self._workflow.key)
 
+        schedule_result = send_api_command(
+            self._api.post_workflows_key_prepare_jobs_for_scheduling,
+            self._workflow.key,
+        )
+        for scheduler_id in schedule_result.schedulers:
+            self._schedule_compute_nodes(scheduler_id)
+
         if result.is_canceled:
             logger.info("Detected a canceled workflow. Cancel all outstanding jobs and exit.")
             self._cancel_jobs(list(self._outstanding_jobs.values()))
@@ -192,6 +233,26 @@ class JobRunner:
 
         self._pids.clear()
         self._handle_completed_process_stats()
+
+    def _schedule_compute_nodes(self, scheduler_id):
+        if scheduler_id.startswith("slurm_schedulers"):
+            self._schedule_slurm_compute_nodes(scheduler_id)
+        else:
+            logger.error("Compute node scheduler %s is not supported", scheduler_id)
+
+    def _schedule_slurm_compute_nodes(self, scheduler_id):
+        key = scheduler_id.split("/")[1]
+        cmd = (
+            f"torc -k {self._workflow.key} -u {self._api.api_client.configuration.host} "
+            f"hpc slurm schedule-nodes -n 1 "
+            f"-o {self._output_dir} -p {self._poll_interval} -s {key}"
+        )
+        ret = run_command(cmd, num_retries=2)
+        if ret == 0:
+            logger.info("Scheduled compute nodes with cmd=%s", cmd)
+            self._log_worker_schedule_event(scheduler_id)
+        else:
+            logger.error("Failed to schedule compute nodes: %s", ret)
 
     def _create_compute_node(self, scheduler):
         compute_node = WorkflowComputeNodesModel(
@@ -213,12 +274,15 @@ class JobRunner:
             time.time()
             - datetime.strptime(self._compute_node.start_time, "%Y-%m-%d %H:%M:%S.%f").timestamp()
         )
-        send_api_command(
-            self._api.put_workflows_workflow_compute_nodes_key,
-            self._compute_node,
-            self._workflow.key,
-            self._compute_node.key,
-        )
+        try:
+            send_api_command(
+                self._api.put_workflows_workflow_compute_nodes_key,
+                self._compute_node,
+                self._workflow.key,
+                self._compute_node.key,
+            )
+        except ApiException:
+            logger.exception("Failed to put_workflows_workflow_compute_nodes_key")
 
     def _complete_job(self, job, result, status):
         job = send_api_command(
@@ -227,7 +291,7 @@ class JobRunner:
             self._workflow.key,
             job.id,
             status,
-            job._rev,  # pylint: disable=protected-access
+            job.rev,
         )
         return job
 
@@ -274,6 +338,32 @@ class JobRunner:
         # It would be better if the database or some middleware could publish events when
         # new jobs are ready to run.
         return self._resources.num_cpus > 0 and self._current_memory_allocation_percentage() > 10
+
+    def _log_worker_start_event(self):
+        send_api_command(
+            self._api.post_workflows_workflow_events,
+            {
+                "category": "worker",
+                "type": "start",
+                "node_name": self._hostname,
+                "torc_version": torc.version.__version__,
+                "message": f"Started worker {self._hostname}",
+            },
+            self._workflow.key,
+        )
+
+    def _log_worker_schedule_event(self, scheduler_id):
+        send_api_command(
+            self._api.post_workflows_workflow_events,
+            {
+                "category": "worker",
+                "type": "schedule",
+                "node_name": self._hostname,
+                "scheduler_id": scheduler_id,
+                "message": f"Scheduled compute node(s) for user with {scheduler_id=}",
+            },
+            self._workflow.key,
+        )
 
     def _log_job_start_event(self, job_key: str):
         send_api_command(
@@ -376,7 +466,7 @@ class JobRunner:
             self._workflow.key,
             job.key,
             "submitted",
-            job.db_job._rev,  # pylint: disable=protected-access
+            job.db_job.rev,
         )
         self._outstanding_jobs[job.key] = job
         if self._stats.process:
@@ -385,7 +475,7 @@ class JobRunner:
             self._api.post_workflows_workflow_edges_name,
             EdgesNameModel(
                 _from=self._compute_node.id,
-                to=job.db_job._id,  # pylint: disable=protected-access
+                to=job.db_job.id,
             ),
             self._workflow.key,
             "executed",
@@ -395,6 +485,8 @@ class JobRunner:
 
     def _run_ready_jobs(self):
         reason_none_started = None
+        if self._end_time is not None:
+            self._resources.time_limit = convert_end_time_to_duration_str(self._end_time)
         ready_jobs = send_api_command(
             self._api.post_workflows_key_prepare_jobs_for_submission,
             self._resources,
@@ -496,7 +588,7 @@ class JobRunner:
             self._api.post_workflows_workflow_edges_name,
             EdgesNameModel(
                 _from=self._compute_node.id,
-                to=res._id,  # pylint: disable=protected-access
+                to=res.id,
             ),
             self._workflow.key,
             "node_used",
@@ -529,7 +621,7 @@ class JobRunner:
             self._api.post_workflows_workflow_edges_name,
             EdgesNameModel(
                 _from=f"jobs__{self._workflow.key}/{result.job_key}",
-                to=res._id,  # pylint: disable=protected-access
+                to=res.id,
             ),
             self._workflow.key,
             "process_used",
@@ -559,13 +651,13 @@ class JobRunner:
             )
 
 
-def _get_system_resources(time_limit):
+def _get_system_resources():
     return KeyPrepareJobsForSubmissionModel(
         num_cpus=psutil.cpu_count(),
         memory_gb=psutil.virtual_memory().total / GiB,
         num_nodes=1,
-        time_limit=time_limit,
-        num_gpus=0,  # TODO
+        time_limit=None,
+        num_gpus=_get_num_gpus(),
     )
 
 
@@ -642,3 +734,30 @@ def _get_timeout(time_limit):
         if time_limit is None
         else _TimeLimitModel(time_limit=time_limit).time_limit.total_seconds()
     )
+
+
+def _get_num_gpus():
+    # Here is example output:
+    # nvidia-smi --list-gpus
+    # GPU 0: Tesla V100-PCIE-16GB (UUID: GPU-b96a6fce-c5a4-079e-d922-5e9d21b063ce)
+    # GPU 1: Tesla V100-PCIE-16GB (UUID: GPU-e57626ea-9c0c-3ceb-06e1-f926467b98ad)
+
+    # TODO: do we need to support other GPUs? Is there a standard way to find them?
+    if shutil.which("nvidia-smi") is None:
+        return 0
+
+    proc = subprocess.run(["nvidia-smi", "--list-gpus"], stdout=subprocess.PIPE, check=False)
+    if proc.returncode == 0:
+        gpus = [
+            x
+            for x in proc.stdout.decode("utf-8").strip().split("\n")
+            if x.strip().startswith("GPU")
+        ]
+        return len(gpus)
+    return 0
+
+
+def _sigterm_handler(signum, frame):  # pylint: disable=unused-argument
+    global _g_shutdown  # pylint: disable=global-statement
+    logger.info("Detected SIGTERM. Terminate jobs and shutdown.")
+    _g_shutdown = True

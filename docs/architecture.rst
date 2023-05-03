@@ -78,8 +78,9 @@ resource availability.
 
 Worker node scheduling
 ----------------------
-Currently, the user must schedule compute nodes with a torc CLI tool. In the near future we plan
-to add functionality to do this automatically - including scheduling new nodes as needed.
+Currently, the user must schedule initial compute nodes with a torc CLI tool. They can enable
+specific jobs in subsequent rounds to be scheduled automatically. In the near future torc could
+always schedule compute nodes automatically.
 
 The HPC case is straightforward. The user can provide the account and desired QoS. The worker nodes
 will be scheduled with their credentials because they will submit the start command in a session

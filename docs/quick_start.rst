@@ -51,8 +51,6 @@ run predefined workflows stored inside the torc repository.
 8. Schedule HPC nodes where X below is the number of nodes to acquire with the scheduler defined
    in step 6.
 
-.. note:: This step will not always be required. We plan to do this automatically.
-
 .. code-block:: console
 
    $ torc -k 94956990 hpc slurm schedule-nodes -n X

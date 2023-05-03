@@ -15,6 +15,13 @@ commands:
   for jobs.
 - **cancel_on_blocking_job_failure**: If this is set to true and a job upon which this job is
   dependent fails, torc will cancel this job.
+- **scheduler**: This optional parameter can be set for two conditions. First, if a job is
+  initially blocked, you can set this with the name of a scheduler that you want torc to
+  automatically schedule for you. You must set ``needs_compute_node_schedule`` as well. Secondly,
+  you may have one scheduler configuration for big-memory jobs and another for small-memory jobs.
+  This will prevent the big-memory nodes from taking small-memory jobs.
+- **needs_compute_node_schedule**: As mentioned above, setting this to true can enable automatic
+  compute node scheduling.
 - **supports_termination**: Should be set to true if the job handles the signal ``SIGTERM``. Refer
   to :ref:`job_graceful_shutdown`.
 

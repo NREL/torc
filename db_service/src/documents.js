@@ -81,6 +81,7 @@ function addJobSpecification(jobSpec, workflow) {
     command: jobSpec.command,
     invocation_script: jobSpec.invocation_script,
     cancel_on_blocking_job_failure: jobSpec.cancel_on_blocking_job_failure,
+    needs_compute_node_schedule: jobSpec.needs_compute_node_schedule,
     supports_termination: jobSpec.supports_termination,
     run_id: 0,
     internal: schemas.jobInternal.validate({}).value,

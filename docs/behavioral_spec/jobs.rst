@@ -29,13 +29,22 @@ here.
       "uninitialized" -> "disabled";
       "disabled" -> "uninitialized";
       "ready" -> "submitted_pending";
+      "ready" -> "scheduled";
       "submitted_pending" -> "submitted";
       "submitted_pending" -> "canceled";
+      "scheduled" -> "submitted";
       "submitted" -> "done";
       "submitted" -> "terminated";
       "blocked" -> "canceled";
       "blocked" -> "ready";
    }
+
+Scheduled jobs
+--------------
+If you set the ``scheduler`` and ``needs_compute_node_schedule`` fields of a job specification
+then torc will schedule a compute node allocation for that job when it reaches the ``ready`` state.
+At that time torc will set the job status to ``scheduled``. Any compute node with the required
+resources can still acquire that job.
 
 Job run ID
 ==========

@@ -19,6 +19,8 @@ const JobStatus = {
   Done: 'done',
   // The job can be submitted.
   Ready: 'ready',
+  // A compute node has been scheduled for the job, but any compute node can take it.
+  Scheduled: 'scheduled',
   // The job is running on a compute node.
   Submitted: 'submitted',
   // The job was given to a compute node but is not yet running.
