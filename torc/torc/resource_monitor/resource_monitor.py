@@ -60,7 +60,6 @@ def run_monitor_async(conn, config: ComputeNodeResourceStatConfig, pids, path=No
                 case IpcMonitorCommands.UPDATE_PIDS:
                     pids = cmd["pids"]
                 case IpcMonitorCommands.SHUTDOWN:
-                    logger.info("Received shutdown command")
                     results = agg.finalize()
                     if store is not None:
                         store.flush()

@@ -145,10 +145,10 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
         assert sqlite_files
         for file in sqlite_files:
             for table in ("cpu", "memory", "process"):
-                df = pl.read_sql(f"select * from {table}", f"sqlite://{file}")
+                df = pl.read_database(f"select * from {table}", f"sqlite://{file}")
                 assert len(df) > 0
             for table in ("disk", "network"):
-                df = pl.read_sql(f"select * from {table}", f"sqlite://{file}")
+                df = pl.read_database(f"select * from {table}", f"sqlite://{file}")
                 assert len(df) == 0
         assert len(html_files) == 3 * 2  # 2 JobRunner instances, cpu + memory + process
     else:
