@@ -41,10 +41,21 @@ here.
 
 Scheduled jobs
 --------------
-If you set the ``scheduler`` and ``needs_compute_node_schedule`` fields of a job specification
-then torc will schedule a compute node allocation for that job when it reaches the ``ready`` state.
-At that time torc will set the job status to ``scheduled``. Any compute node with the required
-resources can still acquire that job.
+If you enable compute node scheduling for a job that is initially blocked, as discussed in
+:ref:`automated_scheduling`, here is what torc will do:
+
+- When all blocking conditions are satisfied the torc database service will change the job status
+  to ``ready``. This is normal; however, in this case there should not be any compute node that has
+  sufficient resources to run the job.
+- When a torc worker application finishes its work it sends the API command
+  ``post_workflows_key_prepare_jobs_for_scheduling``. The database service searches for all jobs
+  that have a ``ready`` status and ``needs_compute_node_schedule`` set to ``true``. It returns a
+  list of all those jobs' scheduler IDs. It also changes the status of each job to ``scheduled``.
+- The torc worker application then runs the scheduler command with those IDs (e.g., ``torc hpc
+  slurm schedule-nodes``).
+- If there happens to be another compute node with available resources, that node could run the
+  ``scheduled`` jobs instead. In that case the newly-scheduled node will detect that there is no
+  work to do and exit.
 
 Job run ID
 ==========

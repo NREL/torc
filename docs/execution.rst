@@ -43,8 +43,10 @@ This command schedules one compute node.
 
    $ torc hpc slurm schedule-nodes -n1
 
-Scheduling jobs that are initially blocked
-==========================================
+.. _automated_scheduling:
+
+Automated scheduling
+====================
 By default, torc leaves scheduling of compute nodes to the user. If you know that an
 initially-blocked job will need a specific compute node (or nodes), you can tell torc to schedule
 it for you when all other conditions are met.
@@ -68,9 +70,6 @@ Monitor progress with torc or squeue.
 .. code-block:: console
 
    $ torc jobs list
-
-.. note:: torc will not yet automatically schedule new nodes to run jobs that become unblocked.
-   You will have to run the schedule-nodes command again.
 
 When all jobs complete this command will show the job status as ``done``.
 

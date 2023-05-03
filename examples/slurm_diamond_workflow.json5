@@ -122,18 +122,16 @@
     slurm_schedulers: [
       {
         name: "debug",
-        account: "dsgrid",
+        account: "my_account",
         nodes: 1,
         partition: "debug",
-        qos: "standby",
         walltime: "01:00:00",
       },
       {
         name: "debug_gpu",
-        account: "dsgrid",
+        account: "my_account",
         nodes: 1,
         partition: "debug",
-        qos: "standby",
         walltime: "01:00:00",
         gres: "gpu:2",
       }

@@ -92,7 +92,6 @@ Intelligent Restarts
 The orchestrator can rerun jobs as needed.
 
 - If the user finds a bug in the inputs file, all jobs must be rerun.
-- If the user finds a bug in the ``work1`` script, only ``work1`` and ``postprocess`` need to be
   rerun.
 - If ``work2`` used more memory than expected and failed, only ``work1`` and ``postprocess``
   need to be rerun.

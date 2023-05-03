@@ -44,7 +44,7 @@ you the latest code from the ``main`` branch.
    This tool is very useful when sending API requests with ``curl`` or dumping torc output to
    JSON.
 
-Refer to :ref:`generate_client_apis` to generate a new API after changing the API endpoint.
+Refer to :ref:`building_torc` for developer instructions on how to build the torc packages.
 
 .. toctree::
    :maxdepth: 2
@@ -52,4 +52,4 @@ Refer to :ref:`generate_client_apis` to generate a new API after changing the AP
 
    db_installation_local
    db_installation_eagle
-   generate_client_apis
+   build_torc_packages

@@ -4,7 +4,7 @@ HPC Quick Start
 This page assumes that you have a database and have completed the torc installation instructions.
 
 You will have to use your own workflow scripts to follow along here. Refer to :ref:`examples` to
-run predefined workflows stored inside the torc repository.
+run pre-defined workflows stored inside the torc repository.
 
 1. ssh to a login node on your HPC.
 2. Persist the database URL in your environment. Replace the hostname and database name.
@@ -39,7 +39,7 @@ run predefined workflows stored inside the torc repository.
 
 .. code-block:: console
 
-   $ torc hpc slurm add-config -a <account> -w 04:00:00 -N short
+   $ torc hpc slurm add-config -a account -w 04:00:00 -N short
 
 7. Start the workflow.
 
@@ -48,8 +48,8 @@ run predefined workflows stored inside the torc repository.
    $ torc -k 94956990 workflows start
    2023-03-28 16:37:58,708 - INFO [torc.workflow_manager workflow_manager.py:99] : Started workflow
 
-8. Schedule HPC nodes where X below is the number of nodes to acquire with the scheduler defined
-   in step 6.
+8. Schedule compute nodes where X below is the number of HPC jobs to start with the scheduler
+   defined in step 6. Note that there could be multiple compute nodes in each HPC job.
 
 .. code-block:: console
 

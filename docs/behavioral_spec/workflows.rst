@@ -194,9 +194,13 @@ running jobs.
 
 Events
 ======
-The torc applications and database services post events to the database for conditions like
-starting and completing workflows. User applications can post their own events. You can view the
-events with this command:
+The torc applications and database service post events to the database for conditions like
+starting and completing workflows. User applications can post their own events.
+
+.. note:: The torc database service will add a ``timestamp`` value to every event that does not
+   already have one. It is recommended that you not add your own.
+
+You can view the events with this command:
 
 .. code-block:: console
 

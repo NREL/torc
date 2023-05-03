@@ -89,8 +89,8 @@ a torc-provided shortcut to avoid having to type it in every command.
 Torc RC file
 ------------
 Torc allows you to store common configuration settings in a config file in your home directory.
-Here's how to create it with a database on the local computer (change it for your database as
-needed):
+Here's how to create it with a database on the local computer. Change the hostname (``localhost``)
+and database name (``workflows``) as needed.
 
 .. code-block:: console
 

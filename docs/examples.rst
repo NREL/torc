@@ -5,8 +5,7 @@ Examples
 ########
 The torc repository contains example workflows at
 https://github.nrel.gov/viz/wms/tree/main/examples. If you install the torc Python package and have
-access to a database, you can run the examples listed on this page on a local system to learn how
-torc works.
+access to a database, you can run the examples listed on this page to learn how torc works.
 
 1. Clone the torc repository.
 
@@ -34,6 +33,8 @@ Diamond Workflow
 The workflow specification file ``examples/diamond_workflow.json5`` creates a workflow with four
 jobs that have dependencies based on the files that the jobs produce and consume. This is the same
 workflow described at :ref:`overview`.
+
+You can run this workflow on a laptop.
 
 Ensure that you are in the ``torc`` directory. It has a ``tests`` subdirectory which is required by
 this workflow.
@@ -135,5 +136,15 @@ This example is similar to the previous example. It has these differences:
 - It uses a default compute node as well as one with GPUs.
 - It uses torc's delayed-compute-node-scheduling feature.
 
-Follow the same steps except use the workflow specification file
-``examples/slurm_diamond_workflow.json5`` and run it in an HPC environment.
+Follow the same steps except for these deviations:
+
+1. Use the workflow specification file ``examples/slurm_diamond_workflow.json5``.
+2. Change the Slurm account name.
+3. Configure and start the workflow from an HPC login node.
+4. Instead of ``torc local run-jobs``, schedule a compute node to run the jobs with
+
+.. code-block:: console
+
+    $ torc hpc slurm schedule-nodes -n 1
+
+Torc will schedule the second node with GPUs when the postprocess script is ready to run.

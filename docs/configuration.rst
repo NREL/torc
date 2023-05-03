@@ -74,7 +74,7 @@ be required if your workflow exceeds the size that can be transferred in one HTT
 
 API calls
 =========
-Make your own API calls directly to the database. Here is one
+Make your own API calls directly to the torc database service. Here is one
 `script example <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py>`_.
 
 Dependency graphs

@@ -7,7 +7,6 @@
       command: "python tests/scripts/preprocess.py -i output/inputs.json -o output/f1.json",
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
-      scheduler: "slurm_schedulers/debug",
       resource_requirements: "small",
       input_files: [
         "inputs"
@@ -23,7 +22,6 @@
       consumes_user_data: ["my_val"],
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
-      scheduler: "slurm_schedulers/debug",
       resource_requirements: "medium",
       input_files: [
         "file1"
@@ -40,7 +38,6 @@
       command: "python tests/scripts/work.py -i output/f1.json -o output/f3.json",
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
-      scheduler: "slurm_schedulers/debug",
       resource_requirements: "large",
       input_files: [
         "file1"
@@ -57,7 +54,6 @@
       command: "python tests/scripts/postprocess.py -i output/f2.json -i output/f3.json -o output/f4.json",
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
-      scheduler: "slurm_schedulers/debug",
       resource_requirements: "small",
       input_files: [
         "file3",
@@ -120,18 +116,6 @@
       runtime: "P0DT20M"
     }
   ],
-  schedulers: {
-    slurm_schedulers: [
-      {
-        name: "debug",
-        account: "my_account",
-        nodes: 1,
-        partition: "debug",
-        qos: "standby",
-        walltime: "01:00:00",
-      }
-    ],
-  },
   user_data: [
     {
       name: "my_val",
