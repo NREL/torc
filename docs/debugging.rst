@@ -25,13 +25,15 @@ There are three sets of log files for each compute node allocation:
 
 Here are example log files for a job runner in a Slurm compute environment::
 
-    ./output/job_output_12230487.e
-    ./output/job_output_12230487.o
+    ./output/job_output_12230487_0.e
+    ./output/job_output_12230487_0.o
     ./output/job_runner_slurm_12230487.log
     ./output/job-stdio/slurm_12230487_1208438.e
     ./output/job-stdio/slurm_12230487_1208438.o
 
 - ``12230487`` is the Slurm job ID
+- ``0`` is the Slurm node ID. This matters if there are multiple nodes in the Slurm allocation
+  running jobs concurrently.
 - ``1208438`` is the torc job key.
 
 .. note:: If you restart a workflow with the same output directory, these files will accumulate.

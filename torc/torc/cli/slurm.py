@@ -2,7 +2,6 @@
 
 import json
 import logging
-import os
 import socket
 import sys
 from datetime import timedelta
@@ -264,10 +263,29 @@ def list_configs(ctx, api):
     type=str,
     help="SlurmScheduler config key. Auto-selected if possible.",
 )
+@click.option(
+    "-S",
+    "--start-one-worker-per-node",
+    is_flag=True,
+    default=False,
+    help="Start a torc worker on each compute node. "
+    "The default behavior starts a worker on the first compute node but no others. That "
+    "defers control of the nodes to the user job. "
+    "Setting this flag means that every compute node in the allocation will run jobs "
+    "concurrently. This flag has no effect if each Slurm allocation has one compute node "
+    "(default).",
+)
 @click.pass_obj
 @click.pass_context
 def schedule_nodes(
-    ctx, api, job_prefix, num_hpc_jobs, output, poll_interval, scheduler_config_key
+    ctx,
+    api,
+    job_prefix,
+    num_hpc_jobs,
+    output,
+    poll_interval,
+    scheduler_config_key,
+    start_one_worker_per_node,
 ):
     """Schedule nodes with Slurm to run jobs."""
     setup_cli_logging(ctx, __name__)
@@ -328,7 +346,13 @@ def schedule_nodes(
         )
         name = f"{job_prefix}_{node.key}"
         try:
-            job_id = mgr.submit(output, name, runner_script, keep_submission_script=False)
+            job_id = mgr.submit(
+                output,
+                name,
+                runner_script,
+                keep_submission_script=False,
+                start_one_worker_per_node=start_one_worker_per_node,
+            )
         except Exception:
             api.delete_workflows_workflow_scheduled_compute_nodes_key(workflow_key, node.key)
             raise
@@ -381,7 +405,8 @@ def run_jobs(ctx, api, output, poll_interval):
     intf = SlurmInterface()
     slurm_job_id = intf.get_current_job_id()
     hostname = socket.gethostname()
-    log_file = output / f"job_runner_slurm_{slurm_job_id}.log"
+    slurm_node_id = intf.get_node_id()
+    log_file = output / f"job_runner_slurm_{slurm_job_id}_{slurm_node_id}.log"
     my_logger = setup_cli_logging(ctx, __name__, filename=log_file)
     check_database_url(api)
     my_logger.info(get_cli_string())
@@ -410,14 +435,11 @@ def run_jobs(ctx, api, output, poll_interval):
 
     # Get resources from the Slurm environment because the job may only have a portion of overall
     # system resources.
-    num_gpus = 0
-    if "SLURM_JOB_GPUS" in os.environ:
-        num_gpus = len(os.environ["SLURM_JOB_GPUS"].split(","))
     resources = KeyPrepareJobsForSubmissionModel(
-        num_cpus=int(os.environ["SLURM_JOB_CPUS_PER_NODE"]),
-        num_gpus=num_gpus,
-        memory_gb=int(os.environ["SLURM_MEM_PER_NODE"]) / 1024,
-        num_nodes=int(os.environ["SLURM_JOB_NUM_NODES"]),
+        num_cpus=intf.get_num_cpus(),
+        num_gpus=intf.get_num_gpus(),
+        memory_gb=intf.get_memory_gb(),
+        num_nodes=intf.get_num_nodes(),
         scheduler_config_id=node.scheduler_config_id,
         time_limit=None,
     )
@@ -429,7 +451,7 @@ def run_jobs(ctx, api, output, poll_interval):
         end_time=end_time,
         resources=resources,
         job_completion_poll_interval=poll_interval,
-        log_prefix=f"slurm_{slurm_job_id}",
+        log_prefix=f"slurm_{slurm_job_id}_{slurm_node_id}",
     )
 
     if node is not None:

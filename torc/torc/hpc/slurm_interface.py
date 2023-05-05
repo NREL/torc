@@ -104,11 +104,17 @@ class SlurmInterface(HpcInterface):
     def get_current_job_id(self):
         return os.environ["SLURM_JOB_ID"]
 
-    def create_submission_script(self, name, command, filename, path, config):
-        text = self._create_submission_script_text(name, command, path, config)
+    def create_submission_script(
+        self, name, command, filename, path, config, start_one_worker_per_node=False
+    ):
+        text = self._create_submission_script_text(
+            name, command, path, config, start_one_worker_per_node
+        )
         create_script(filename, text)
 
-    def _create_submission_script_text(self, name, command, path, config):
+    def _create_submission_script_text(
+        self, name, command, path, config, start_one_worker_per_node
+    ):
         text = f"""#!/bin/bash
 #SBATCH --account={config['account']}
 #SBATCH --job-name={name}
@@ -123,6 +129,8 @@ class SlurmInterface(HpcInterface):
             if value is not None:
                 text += f"#SBATCH --{param}={value}\n"
 
+        if start_one_worker_per_node:
+            text += "srun "
         text += f"{command}\n"
         return text
 
@@ -185,9 +193,20 @@ class SlurmInterface(HpcInterface):
     def get_node_id(self):
         return os.environ["SLURM_NODEID"]
 
-    @staticmethod
-    def get_num_cpus():
+    def get_memory_gb(self):
+        return int(os.environ["SLURM_MEM_PER_NODE"]) / 1024
+
+    def get_num_nodes(self):
+        return int(os.environ["SLURM_JOB_NUM_NODES"])
+
+    def get_num_cpus(self):
         return int(os.environ["SLURM_CPUS_ON_NODE"])
+
+    def get_num_gpus(self):
+        num_gpus = 0
+        if "SLURM_JOB_GPUS" in os.environ:
+            num_gpus = len(os.environ["SLURM_JOB_GPUS"].split(","))
+        return num_gpus
 
     def list_active_nodes(self, job_id):
         # It's possible that 500 characters won't be enough, even with the compact format.

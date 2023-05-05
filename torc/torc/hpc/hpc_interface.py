@@ -64,7 +64,9 @@ class HpcInterface(abc.ABC):
         """
 
     @abc.abstractmethod
-    def create_submission_script(self, name, command, filename, path, config):
+    def create_submission_script(
+        self, name, command, filename, path, config, start_one_worker_per_node=False
+    ):
         """Create the script to queue the jobs to the HPC.
 
         Parameters
@@ -79,6 +81,9 @@ class HpcInterface(abc.ABC):
             path for stdout and stderr files
         config : dict[str, str]
             Configuration parameters and values for the HPC scheduler
+        start_one_worker_per_node : bool
+            If True, start a torc worker on each compute node, defaults to False.
+            The default behavior defers control of a multi-node job to the user job.
 
         """
 
@@ -115,7 +120,11 @@ class HpcInterface(abc.ABC):
         """
 
     @abc.abstractmethod
-    def get_node_id(self):
+    def get_memory_gb(self) -> int:
+        """Return the memory available to a job in GiB."""
+
+    @abc.abstractmethod
+    def get_node_id(self) -> str:
         """Return the node ID of the current system.
 
         Returns
@@ -124,10 +133,17 @@ class HpcInterface(abc.ABC):
 
         """
 
-    @staticmethod
     @abc.abstractmethod
-    def get_num_cpus():
+    def get_num_cpus(self) -> int:
         """Return the number of CPUs on the current node."""
+
+    @abc.abstractmethod
+    def get_num_gpus(self) -> int:
+        """Return the number of GPUs on the current node."""
+
+    @abc.abstractmethod
+    def get_num_nodes(self) -> int:
+        """Return the number of compute nodes in the current job."""
 
     @abc.abstractmethod
     def list_active_nodes(self, job_id):

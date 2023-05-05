@@ -127,6 +127,7 @@ class HpcManager:
         name: str,
         command: str,
         keep_submission_script=False,
+        start_one_worker_per_node=False,
     ):
         """Submits scripts to the queue for execution.
 
@@ -140,6 +141,9 @@ class HpcManager:
             Command to execute.
         keep_submission_script : bool
             Whether to keep the submission script, defaults to False.
+        start_one_worker_per_node : bool
+            If True, start a torc worker on each compute node, defaults to False.
+            The default behavior defers control of a multi-node job to the user job.
 
         Returns
         -------
@@ -147,7 +151,14 @@ class HpcManager:
             job_id
         """
         filename = directory / (name + ".sh")
-        self._intf.create_submission_script(name, command, filename, self._output, self._config)
+        self._intf.create_submission_script(
+            name,
+            command,
+            filename,
+            self._output,
+            self._config,
+            start_one_worker_per_node=start_one_worker_per_node,
+        )
         logger.debug("Created submission script %s", filename)
 
         ret, job_id, err = self._intf.submit(filename)
