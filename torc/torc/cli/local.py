@@ -25,6 +25,18 @@ def local():
 
 @click.command()
 @click.option(
+    "-c",
+    "--cpu-affinity-cpus-per-job",
+    type=int,
+    help="Enable CPU affinity for this number of CPUs per job.",
+)
+@click.option(
+    "-m",
+    "--max-parallel-jobs",
+    type=int,
+    help="Maximum number of parallel jobs. Default is to use resource availability.",
+)
+@click.option(
     "-o",
     "--output",
     default="output",
@@ -45,7 +57,9 @@ def local():
 )
 @click.pass_obj
 @click.pass_context
-def run_jobs(ctx, api, output: Path, poll_interval, time_limit):
+def run_jobs(
+    ctx, api, cpu_affinity_cpus_per_job, max_parallel_jobs, output: Path, poll_interval, time_limit
+):
     """Run workflow jobs on a local system."""
     workflow_key = get_workflow_key_from_context(ctx, api)
     output.mkdir(exist_ok=True)
@@ -55,7 +69,13 @@ def run_jobs(ctx, api, output: Path, poll_interval, time_limit):
     check_database_url(api)
     workflow = api.get_workflows_key(workflow_key)
     runner = JobRunner(
-        api, workflow, output, job_completion_poll_interval=poll_interval, time_limit=time_limit
+        api,
+        workflow,
+        output,
+        cpu_affinity_cpus_per_job=cpu_affinity_cpus_per_job,
+        max_parallel_jobs=max_parallel_jobs,
+        job_completion_poll_interval=poll_interval,
+        time_limit=time_limit,
     )
     runner.run_worker()
 

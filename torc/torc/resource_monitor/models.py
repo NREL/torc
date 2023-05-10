@@ -112,6 +112,13 @@ class ComputeNodeResourceStatConfig(TorcBaseModel):
         """Return True if any stat is enabled."""
         return self.cpu or self.disk or self.memory or self.network or self.process
 
+    def disable_node_stats(self):
+        """Disable all stats for the overall node."""
+        self.cpu = False
+        self.disk = False
+        self.memory = False
+        self.network = False
+
 
 class ResourceStatResults(TorcBaseModel):
     """Results for one resource type"""

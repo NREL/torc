@@ -14,7 +14,6 @@
       output_files: [
         "file1"
       ],
-      blocked_by: []
     },
     {
       name: "work1",
@@ -29,9 +28,6 @@
       output_files: [
         "file2"
       ],
-      blocked_by: [
-        "preprocess"
-      ]
     },
     {
       name: "work2",
@@ -45,9 +41,6 @@
       output_files: [
         "file3"
       ],
-      blocked_by: [
-        "preprocess"
-      ]
     },
     {
       name: "postprocess",
@@ -61,10 +54,6 @@
       ],
       output_files: [
         "file4"
-      ],
-      blocked_by: [
-        "work2",
-        "work1"
       ],
       scheduler: "slurm_schedulers/debug_gpu",
       needs_compute_node_schedule: true,

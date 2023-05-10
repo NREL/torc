@@ -49,6 +49,12 @@ The torc API command is like this:
     job_id = intf.get_current_job_id(job_id)
     nodes = intf.list_active_nodes(job_id)
 
+Schedule compute nodes with default options.
+
+.. code-block:: console
+
+    $ torc hpc slurm schedule-nodes --num-hpc-jobs 1
+
 One torc worker application for each compute node
 =================================================
 This paradigm is very similar to the default torc configuration where the user schedules some
@@ -69,3 +75,9 @@ compute nodes will be allocated at the exact same time. This might be advantageo
 
 .. note:: The automatic-compute-node-rescheduling feature does not yet support this paradigm.
    Please contact the developers if you need that.
+
+Schedule compute nodes with this extra option.
+
+.. code-block:: console
+
+    $ torc hpc slurm schedule-nodes --num-hpc-jobs 1 --start-one-worker-per-node

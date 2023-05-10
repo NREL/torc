@@ -66,7 +66,9 @@ def sanitize_workflow(data: dict):
     """Sanitize a WorkflowSpecificationsModel dictionary in place so that it can be loaded into
     the database.
     """
-    for item in itertools.chain([data["config"]], data["files"], data["resource_requirements"]):
+    for item in itertools.chain(
+        [data.get("config")], data.get("files", []), data.get("resource_requirements", [])
+    ):
         if item is not None:
             for key in _DATABASE_KEYS:
                 item.pop(key, None)

@@ -81,7 +81,7 @@ def slurm():
     show_default=True,
     help="Number of nodes to use for each job",
 )
-@click.option("-p", "--partition", help="HPC partition. Default is determinted by the scheduler")
+@click.option("-p", "--partition", help="HPC partition. Default is determined by the scheduler")
 @click.option(
     "-q",
     "--qos",
@@ -96,7 +96,11 @@ def slurm():
     help="Request nodes that have at least this amount of storage scratch space.",
 )
 @click.option(
-    "-w", "--walltime", default="04:00:00", show_default=True, help="Slurm job walltime."
+    "-w",
+    "--walltime",
+    default="04:00:00",
+    show_default=True,
+    help="Slurm job walltime.",
 )
 @click.pass_obj
 @click.pass_context
@@ -157,7 +161,7 @@ def add_config(ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, w
     type=int,
     help="Number of nodes to use for each job",
 )
-@click.option("-p", "--partition", help="HPC partition. Default is determinted by the scheduler")
+@click.option("-p", "--partition", help="HPC partition. Default is determined by the scheduler")
 @click.option(
     "-q",
     "--qos",
@@ -228,12 +232,32 @@ def list_configs(ctx, api):
 
 @click.command()
 @click.option(
+    "-c",
+    "--cpu-affinity-cpus-per-job",
+    type=int,
+    help="Enable CPU affinity for this number of CPUs per job.",
+)
+@click.option(
     "-j",
     "--job-prefix",
-    default="node",
+    default="worker",
     type=str,
     show_default=True,
     help="Prefix for HPC job names",
+)
+@click.option(
+    "-k",
+    "--keep-submission-scripts",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Keep Slurm submission scripts on the filesystem.",
+)
+@click.option(
+    "-m",
+    "--max-parallel-jobs",
+    type=int,
+    help="Maximum number of parallel jobs. Default is to use resource availability.",
 )
 @click.option(
     "-n",
@@ -280,7 +304,10 @@ def list_configs(ctx, api):
 def schedule_nodes(
     ctx,
     api,
+    cpu_affinity_cpus_per_job,
     job_prefix,
+    keep_submission_scripts,
+    max_parallel_jobs,
     num_hpc_jobs,
     output,
     poll_interval,
@@ -293,40 +320,10 @@ def schedule_nodes(
     logger.info(get_cli_string())
     logger.info("torc version %s", torc.version.__version__)
     workflow_key = get_workflow_key_from_context(ctx, api)
-
-    ready_jobs = api.get_workflows_workflow_jobs(workflow_key, status="ready", limit=1)
-    if not ready_jobs.items:
-        ready_jobs = api.get_workflows_workflow_jobs(workflow_key, status="scheduled", limit=1)
-    if not ready_jobs.items:
-        logger.error("No jobs are in the ready state")
-        sys.exit(1)
-
     output_format = get_output_format_from_context(ctx)
-    if scheduler_config_key is None:
-        params = ctx.find_root().params
-        if params["no_prompts"]:
-            logger.error("--scheduler-config-key must be set")
-            sys.exit(1)
-        # TODO: there is a lot more we could do to auto-select the config
-        msg = (
-            "\nThis command requires a scheduler config key and one was not provided. "
-            "Please choose one from below.\n"
-        )
-        config = prompt_user_for_document(
-            "scheduler_config",
-            api.get_workflows_workflow_slurm_schedulers,
-            workflow_key,
-            auto_select_one_option=True,
-            exclude_columns=("id", "rev"),
-            msg=msg,
-        )
-        if config is None:
-            logger.error("No schedulers are stored")
-            sys.exit(1)
-    else:
-        config = api.get_workflows_workflow_slurm_schedulers_key(
-            workflow_key, scheduler_config_key
-        )
+
+    _check_schedule_params(api, workflow_key)
+    config = _get_scheduler_config(ctx, api, workflow_key, scheduler_config_key)
 
     output.mkdir(exist_ok=True)
     data = remove_db_keys(config.to_dict())
@@ -334,7 +331,14 @@ def schedule_nodes(
     hpc_type = HpcType("slurm")
     mgr = HpcManager(data, hpc_type, output)
     database_url = api.api_client.configuration.host
-    runner_script = f"torc -k {workflow_key} -u {database_url} hpc slurm run-jobs -o {output} -p {poll_interval}"
+    runner_script = (
+        f"torc -k {workflow_key} -u {database_url} hpc slurm run-jobs -o {output} -p "
+        f"{poll_interval}"
+    )
+    if max_parallel_jobs:
+        runner_script += f" --max-parallel-jobs {max_parallel_jobs}"
+    if cpu_affinity_cpus_per_job:
+        runner_script += f" --cpu-affinity-cpus-per-job {cpu_affinity_cpus_per_job}"
     job_ids = []
     node_keys = []
     for _ in range(num_hpc_jobs):
@@ -350,7 +354,7 @@ def schedule_nodes(
                 output,
                 name,
                 runner_script,
-                keep_submission_script=False,
+                keep_submission_script=keep_submission_scripts,
                 start_one_worker_per_node=start_one_worker_per_node,
             )
         except Exception:
@@ -382,7 +386,58 @@ def schedule_nodes(
         print(json.dumps({"job_ids": job_ids, "keys": node_keys}))
 
 
+def _check_schedule_params(api, workflow_key):
+    ready_jobs = api.get_workflows_workflow_jobs(workflow_key, status="ready", limit=1)
+    if not ready_jobs.items:
+        ready_jobs = api.get_workflows_workflow_jobs(workflow_key, status="scheduled", limit=1)
+    if not ready_jobs.items:
+        logger.error("No jobs are in the ready state")
+        sys.exit(1)
+
+
+def _get_scheduler_config(ctx, api, workflow_key, scheduler_config_key):
+    if scheduler_config_key is None:
+        params = ctx.find_root().params
+        if params["no_prompts"]:
+            logger.error("--scheduler-config-key must be set")
+            sys.exit(1)
+        # TODO: there is a lot more we could do to auto-select the config
+        msg = (
+            "\nThis command requires a scheduler config key and one was not provided. "
+            "Please choose one from below.\n"
+        )
+        config = prompt_user_for_document(
+            "scheduler_config",
+            api.get_workflows_workflow_slurm_schedulers,
+            workflow_key,
+            auto_select_one_option=True,
+            exclude_columns=("id", "rev"),
+            msg=msg,
+        )
+        if config is None:
+            logger.error("No schedulers are stored")
+            sys.exit(1)
+    else:
+        config = api.get_workflows_workflow_slurm_schedulers_key(
+            workflow_key, scheduler_config_key
+        )
+
+    return config
+
+
 @click.command()
+@click.option(
+    "-c",
+    "--cpu-affinity-cpus-per-job",
+    type=int,
+    help="Enable CPU affinity for this number of CPUs per job.",
+)
+@click.option(
+    "-m",
+    "--max-parallel-jobs",
+    type=int,
+    help="Maximum number of parallel jobs. Default is to use resource availability.",
+)
 @click.option(
     "-o",
     "--output",
@@ -397,18 +452,34 @@ def schedule_nodes(
     show_default=True,
     help="Poll interval for job completions",
 )
+@click.option(
+    "--is-subtask",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Set to True if this is a subtask and multiple workers are running on one node.",
+)
 @click.pass_obj
 @click.pass_context
-def run_jobs(ctx, api, output, poll_interval):
+def run_jobs(
+    ctx,
+    api,
+    cpu_affinity_cpus_per_job,
+    max_parallel_jobs,
+    output,
+    poll_interval,
+    is_subtask,
+):
     """Run workflow jobs on a Slurm compute node."""
     workflow_key = get_workflow_key_from_context(ctx, api)
+    check_database_url(api)
     intf = SlurmInterface()
     slurm_job_id = intf.get_current_job_id()
     hostname = socket.gethostname()
     slurm_node_id = intf.get_node_id()
-    log_file = output / f"job_runner_slurm_{slurm_job_id}_{slurm_node_id}.log"
+    slurm_task_pid = intf.get_task_pid()
+    log_file = output / f"job_runner_slurm_{slurm_job_id}_{slurm_node_id}_{slurm_task_pid}.log"
     my_logger = setup_cli_logging(ctx, __name__, filename=log_file)
-    check_database_url(api)
     my_logger.info(get_cli_string())
     my_logger.info("torc version %s", torc.version.__version__)
     my_logger.info("Run jobs on %s for workflow %s", hostname, api.api_client.configuration.host)
@@ -422,6 +493,38 @@ def run_jobs(ctx, api, output, poll_interval):
     config = api.get_workflows_key_config(workflow_key)
     buffer = timedelta(seconds=config.compute_node_worker_buffer_seconds)
     end_time = intf.get_job_end_time() - buffer
+    node = None if is_subtask else _get_scheduled_compute_node(api, workflow_key, slurm_job_id)
+
+    workflow = api.get_workflows_key(workflow_key)
+    log_prefix = f"slurm_{slurm_job_id}_{slurm_node_id}_{slurm_task_pid}"
+    my_logger.info("Start workflow on compute node %s", hostname)
+
+    scheduler_config_id = None
+    if node is not None:
+        node.status = "active"
+        node = api.put_workflows_workflow_scheduled_compute_nodes_key(node, workflow_key, node.key)
+        scheduler_config_id = node.scheduler_config_id
+
+    resources = _create_node_resources(intf, scheduler_config_id, is_subtask)
+
+    runner = JobRunner(
+        api,
+        workflow,
+        output,
+        cpu_affinity_cpus_per_job=cpu_affinity_cpus_per_job,
+        max_parallel_jobs=max_parallel_jobs,
+        end_time=end_time,
+        resources=resources,
+        job_completion_poll_interval=poll_interval,
+        log_prefix=log_prefix,
+    )
+    runner.run_worker(scheduler=scheduler)
+    if node is not None:
+        node.status = "complete"
+        api.put_workflows_workflow_scheduled_compute_nodes_key(node, workflow_key, node.key)
+
+
+def _get_scheduled_compute_node(api, workflow_key, slurm_job_id):
     nodes = api.get_workflows_workflow_scheduled_compute_nodes(
         workflow_key, scheduler_id=slurm_job_id
     ).items
@@ -431,39 +534,34 @@ def run_jobs(ctx, api, output, poll_interval):
     elif num_nodes == 1:
         node = nodes[0]
     else:
-        raise Exception(f"num_nodes with {slurm_job_id=} cannot be {num_nodes=}")
+        logger.error("num_nodes with %s cannot be %s", slurm_job_id, num_nodes)
+        sys.exit(1)
 
+    return node
+
+
+def _create_node_resources(intf, scheduler_config_id, is_subtask):
     # Get resources from the Slurm environment because the job may only have a portion of overall
     # system resources.
-    resources = KeyPrepareJobsForSubmissionModel(
-        num_cpus=intf.get_num_cpus(),
+    num_cpus_in_node = intf.get_num_cpus()
+    memory_gb_in_node = intf.get_memory_gb()
+    if is_subtask:
+        num_cpus = intf.get_num_cpus_per_task()
+        num_workers = num_cpus_in_node // num_cpus
+        memory_gb = memory_gb_in_node / num_workers
+        # TODO: should GPUs use SLURM_STEP_GPUS instead?
+    else:
+        num_cpus = num_cpus_in_node
+        memory_gb = memory_gb_in_node
+
+    return KeyPrepareJobsForSubmissionModel(
+        num_cpus=num_cpus,
         num_gpus=intf.get_num_gpus(),
-        memory_gb=intf.get_memory_gb(),
+        memory_gb=memory_gb,
         num_nodes=intf.get_num_nodes(),
-        scheduler_config_id=node.scheduler_config_id,
+        scheduler_config_id=scheduler_config_id,
         time_limit=None,
     )
-    workflow = api.get_workflows_key(workflow_key)
-    runner = JobRunner(
-        api,
-        workflow,
-        output,
-        end_time=end_time,
-        resources=resources,
-        job_completion_poll_interval=poll_interval,
-        log_prefix=f"slurm_{slurm_job_id}_{slurm_node_id}",
-    )
-
-    if node is not None:
-        node.status = "active"
-        node = api.put_workflows_workflow_scheduled_compute_nodes_key(node, workflow_key, node.key)
-
-    my_logger.info("Start workflow on compute node %s", hostname)
-    runner.run_worker(scheduler=scheduler)
-
-    if node is not None:
-        node.status = "complete"
-        api.put_workflows_workflow_scheduled_compute_nodes_key(node, workflow_key, node.key)
 
 
 slurm.add_command(add_config)

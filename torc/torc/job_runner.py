@@ -38,6 +38,7 @@ from swagger_client.models.workflows_model import WorkflowsModel
 import torc.version
 from torc.api import send_api_command, iter_documents
 from torc.common import JOB_STDIO_DIR, STATS_DIR
+from torc.exceptions import InvalidParameter
 from torc.resource_monitor.models import (
     ComputeNodeResourceStatConfig,
     ComputeNodeResourceStatResults,
@@ -46,6 +47,7 @@ from torc.resource_monitor.models import (
     ResourceType,
 )
 from torc.resource_monitor.resource_monitor import run_monitor_async
+from torc.utils.cpu_affinity_mask_tracker import CpuAffinityMaskTracker
 from torc.utils.filesystem_factory import make_path
 from torc.utils.run_command import run_command
 from torc.utils.timing import timer_stats_collector, Timer
@@ -67,12 +69,15 @@ class JobRunner:
         workflow: WorkflowsModel,
         output_dir: Path,
         job_completion_poll_interval=JOB_COMPLETION_POLL_INTERVAL,
+        max_parallel_jobs=None,
         database_poll_interval=600,
         time_limit=None,
         end_time=None,
         resources=None,
         scheduler_config_id=None,
         log_prefix=None,
+        cpu_affinity_cpus_per_job=None,
+        is_subtask=False,
     ):
         """Constructs a JobRunner.
 
@@ -83,6 +88,9 @@ class JobRunner:
             Directory for output files
         job_completion_poll_interval : int
             Interval in seconds in which to poll for job completions.
+        max_parallel_jobs : int | None
+            Maximum number of jobs that can run in parallel. If None (default), rely on resource
+            constraints.
         database_poll_interval : int
             Max time in seconds in which the code should poll for job updates in the database.
         end_time : None | datetime
@@ -98,6 +106,8 @@ class JobRunner:
             resource availability.
         log_prefix : str
             Prefix to use for job-specific log files.
+        is_subtask : bool
+            Set to True if this is a subtask and multiple instances are running on one node.
         """
         if time_limit is not None and end_time is not None:
             raise Exception("time_limit and end_time are mutually exclusive")
@@ -111,6 +121,7 @@ class JobRunner:
         self._hostname = socket.gethostname()
         self._job_stdio_dir = output_dir / JOB_STDIO_DIR
         self._poll_interval = job_completion_poll_interval
+        self._max_parallel_jobs = max_parallel_jobs
         self._db_poll_interval = database_poll_interval
         self._output_dir = output_dir
         self._log_prefix = log_prefix
@@ -123,7 +134,24 @@ class JobRunner:
             self._scheduler_config_id = scheduler_config_id
         else:
             self._scheduler_config_id = resources.scheduler_config_id
+
         self._orig_resources = resources or _get_system_resources()
+        if cpu_affinity_cpus_per_job is not None:
+            if not hasattr(os, "sched_setaffinity"):
+                raise InvalidParameter("This platform does not support sched_setaffinity")
+
+            num_cpus = self._orig_resources.num_cpus
+            if cpu_affinity_cpus_per_job > num_cpus:
+                raise InvalidParameter(
+                    f"{cpu_affinity_cpus_per_job=} cannot be greater than {num_cpus=}"
+                )
+            self._cpu_tracker = CpuAffinityMaskTracker(num_cpus, cpu_affinity_cpus_per_job)
+            num_masks = self._cpu_tracker.get_num_masks()
+            if self._max_parallel_jobs is not None and self._max_parallel_jobs < num_masks:
+                raise InvalidParameter(f"{max_parallel_jobs=} cannot be less than {num_masks=}")
+        else:
+            self._cpu_tracker = None
+
         self._orig_resources.scheduler_config_id = self._scheduler_config_id
         self._resources = KeyPrepareJobsForSubmissionModel(**self._orig_resources.to_dict())
         self._last_db_poll_time = 0
@@ -135,6 +163,9 @@ class JobRunner:
                 ).compute_node_resource_stats.to_dict()
             )
         )
+        if is_subtask:
+            logger.info("Disable overall compute node stats monitoring for a subtask.")
+            self._stats.disable_node_stats()
         self._stats_dir = output_dir / STATS_DIR
         self._job_stdio_dir.mkdir(exist_ok=True)
         self._stats_dir.mkdir(exist_ok=True)
@@ -191,7 +222,12 @@ class JobRunner:
             num_completed = self._process_completions()
             num_started = 0
             reason_none_started = None
-            if num_completed > 0 or self._is_time_to_poll_database() or not self._outstanding_jobs:
+            if (
+                num_completed > 0 or self._is_time_to_poll_database() or not self._outstanding_jobs
+            ) and (
+                self._max_parallel_jobs is None
+                or len(self._outstanding_jobs) < self._max_parallel_jobs
+            ):
                 num_started, reason_none_started = self._run_ready_jobs()
 
             if num_started == 0 and not self._outstanding_jobs:
@@ -257,6 +293,7 @@ class JobRunner:
     def _create_compute_node(self, scheduler):
         compute_node = WorkflowComputeNodesModel(
             hostname=self._hostname,
+            pid=os.getpid(),
             start_time=str(datetime.now()),
             resources=self._orig_resources,
             is_active=True,
@@ -487,17 +524,27 @@ class JobRunner:
         reason_none_started = None
         if self._end_time is not None:
             self._resources.time_limit = convert_end_time_to_duration_str(self._end_time)
+        kwargs = {}
+        if self._max_parallel_jobs is not None:
+            kwargs["limit"] = self._max_parallel_jobs
         ready_jobs = send_api_command(
             self._api.post_workflows_key_prepare_jobs_for_submission,
             self._resources,
             self._workflow.key,
+            **kwargs,
         )
         if ready_jobs.jobs:
             logger.info("%s jobs are ready for submission", len(ready_jobs.jobs))
         else:
             reason_none_started = ready_jobs.reason
         for job in ready_jobs.jobs:
-            self._run_job(AsyncCliCommand(job, log_prefix=self._log_prefix))
+            self._run_job(
+                AsyncCliCommand(
+                    job,
+                    log_prefix=self._log_prefix,
+                    cpu_affinity_tracker=self._cpu_tracker,
+                )
+            )
             self._decrement_resources(job)
 
         self._last_db_poll_time = time.time()

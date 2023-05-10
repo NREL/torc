@@ -68,7 +68,7 @@ class AsyncJobBase(abc.ABC):
 class AsyncCliCommand(AsyncJobBase):
     """Manages execution of an asynchronous CLI command."""
 
-    def __init__(self, job, log_prefix=None):
+    def __init__(self, job, log_prefix=None, cpu_affinity_tracker=None):
         self._db_job = job
         self._log_prefix = log_prefix
         self._pipe = None
@@ -81,6 +81,8 @@ class AsyncCliCommand(AsyncJobBase):
         self._status = None
         self._stdout_fp = None
         self._stderr_fp = None
+        self._cpu_affinity_tracker = cpu_affinity_tracker
+        self._cpu_affinity_index = None
 
     def __del__(self):
         if self._is_running:
@@ -159,6 +161,11 @@ class AsyncCliCommand(AsyncJobBase):
             self._pipe = self._run_invocation_script(env=env)
         else:
             self._pipe = self._run_command(self._db_job.command, env=env)
+        if self._cpu_affinity_tracker is not None:
+            self._cpu_affinity_index, mask = self._cpu_affinity_tracker.acquire_mask()
+            os.sched_setaffinity(self._pipe.pid, mask)  # pylint: disable=no-member
+            logger.info("Set CPU affinity for job={self._key} to {mask=}")
+
         # pylint: enable=consider-using-with
         self._is_running = True
 
@@ -180,6 +187,9 @@ class AsyncCliCommand(AsyncJobBase):
         self._is_running = False
         self._is_complete = True
         self._status = status
+        if self._cpu_affinity_index is not None:
+            self._cpu_affinity_tracker.release_mask(self._cpu_affinity_index)
+            self._cpu_affinity_index = None
 
         logger.info(
             "Job %s completed return_code=%s exec_time_s=%s status=%s",

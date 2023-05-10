@@ -7,3 +7,5 @@ Compute Node Environments
 
    hpc_compute_node_environment
    custom_invocation_environments
+   cpu_affinity
+   slurm_hardware_control

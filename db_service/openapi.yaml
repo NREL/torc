@@ -6346,12 +6346,15 @@ components:
     inline_response_200_2:
       required:
       - hostname
+      - pid
       - resources
       - start_time
       type: object
       properties:
         hostname:
           type: string
+        pid:
+          type: integer
         start_time:
           type: string
         duration_seconds:
@@ -6570,6 +6573,8 @@ components:
           type: string
         walltime:
           type: string
+        extra:
+          type: object
         _key:
           type: string
         _id:
@@ -6661,6 +6666,8 @@ components:
           type: string
         walltime:
           type: string
+        extra:
+          type: object
         _key:
           type: string
         _id:
@@ -6820,12 +6827,15 @@ components:
     compute_nodes_key_model:
       required:
       - hostname
+      - pid
       - resources
       - start_time
       type: object
       properties:
         hostname:
           type: string
+        pid:
+          type: integer
         start_time:
           type: string
         duration_seconds:
@@ -6942,12 +6952,15 @@ components:
     workflow_compute_nodes_model:
       required:
       - hostname
+      - pid
       - resources
       - start_time
       type: object
       properties:
         hostname:
           type: string
+        pid:
+          type: integer
         start_time:
           type: string
         duration_seconds:
@@ -6968,12 +6981,15 @@ components:
     inline_response_200_1_items:
       required:
       - hostname
+      - pid
       - resources
       - start_time
       type: object
       properties:
         hostname:
           type: string
+        pid:
+          type: integer
         start_time:
           type: string
         duration_seconds:

@@ -29,9 +29,6 @@
       output_files: [
         "file2"
       ],
-      blocked_by: [
-        "preprocess"
-      ]
     },
     {
       name: "work2",
@@ -45,9 +42,6 @@
       output_files: [
         "file3"
       ],
-      blocked_by: [
-        "preprocess"
-      ]
     },
     {
       name: "postprocess",
@@ -61,10 +55,6 @@
       ],
       output_files: [
         "file4"
-      ],
-      blocked_by: [
-        "work2",
-        "work1"
       ],
     },
   ],

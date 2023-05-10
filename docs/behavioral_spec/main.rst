@@ -19,3 +19,4 @@ software components:
 
    workflows
    jobs
+   hpc

@@ -122,13 +122,15 @@ class SlurmInterface(HpcInterface):
 #SBATCH --output={path}/job_output_%j.o
 #SBATCH --error={path}/job_output_%j.e
 """
-        for param in set(config).difference({"account", "walltime"}):
+        for param in set(config).difference({"account", "walltime", "extra"}):
             value = config[param]
             if isinstance(value, float):
                 value = int(value)
             if value is not None:
                 text += f"#SBATCH --{param}={value}\n"
 
+        if config.get("extra"):
+            text += config["extra"]
         if start_one_worker_per_node:
             text += "srun "
         text += f"{command}\n"
@@ -193,6 +195,10 @@ class SlurmInterface(HpcInterface):
     def get_node_id(self):
         return os.environ["SLURM_NODEID"]
 
+    def get_task_pid(self) -> str:
+        """Return the Slurm task PID."""
+        return os.environ["SLURM_TASK_PID"]
+
     def get_memory_gb(self):
         return int(os.environ["SLURM_MEM_PER_NODE"]) / 1024
 
@@ -201,6 +207,10 @@ class SlurmInterface(HpcInterface):
 
     def get_num_cpus(self):
         return int(os.environ["SLURM_CPUS_ON_NODE"])
+
+    def get_num_cpus_per_task(self):
+        """Return the number of CPUs allocated to one task."""
+        return int(os.environ["SLURM_CPUS_PER_TASK"])
 
     def get_num_gpus(self):
         num_gpus = 0

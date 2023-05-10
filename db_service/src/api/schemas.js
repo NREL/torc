@@ -12,6 +12,7 @@ const workerResources = joi.object().required().keys({
 
 const computeNode = joi.object().required().keys({
   hostname: joi.string().required(),
+  pid: joi.number().integer().required(),
   start_time: joi.string().required(),
   duration_seconds: joi.number().optional(),
   is_active: joi.boolean().optional(),
@@ -239,6 +240,7 @@ const slurmScheduler = joi.object().required().keys({
   qos: joi.string().default('normal'),
   tmp: joi.string(),
   walltime: joi.string(),
+  extra: joi.string().allow(null),
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),
