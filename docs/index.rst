@@ -25,7 +25,7 @@ How to use this guide
 - Refer to :ref:`usage` for instructions on how to build and run workflows.
 - Refer to :ref:`how_tos` for step-by-step instructions for specific tasks.
 - Refer to :ref:`reference` for CLI and API documentation.
-- Refer to :ref:`behavioral_spec` for descriptions of what a user will observe when using torc.
+- Refer to :ref:`behavioral_docs` for descriptions of what a user will observe when using torc.
 
 
 .. toctree::
@@ -37,7 +37,7 @@ How to use this guide
    usage
    how_tos
    reference
-   behavioral_spec/main
+   behavioral_docs/main
 
 
 Indices and tables

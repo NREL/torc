@@ -1,7 +1,7 @@
-.. _behavioral_spec:
+.. _behavioral_docs:
 
 ########################
-Behavioral Specification
+Behavioral Documentation
 ########################
 This section describes what a user will observe when using torc. It describes the following
 software components:
