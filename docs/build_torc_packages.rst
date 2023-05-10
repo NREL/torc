@@ -15,7 +15,7 @@ three output files:
 
 Python Package
 ==============
-Update the torc version in the file ``torc/torc/version.py``, following guidance from
+Update the torc version in the file ``torc_package/torc/version.py``, following guidance from
 http://semver.org
 
 Until torc is available on ``pypi.org`` we distribute the torc Python package as a wheel (.whl).

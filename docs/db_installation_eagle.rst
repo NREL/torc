@@ -103,7 +103,7 @@ page use ``workflows``.
         -username root \
         -password \
         /torc-service \
-        /scratch/dthom/torc/torc-service.zip
+        /scratch/dthom/torc-service.zip
     $ singularity run -B /scratch:/scratch \
         /scratch/dthom/containers/foxx.sif set-dev \
         --server http://127.0.0.1:8529 \

@@ -186,7 +186,7 @@ by setting the ``compute_node_worker_buffer_seconds`` field in the ``config`` se
 specification file.
 
 Refer to this script for a Python example of detecting this signal:
-https://github.nrel.gov/viz/wms/blob/main/torc/tests/scripts/sleep.py
+https://github.nrel.gov/viz/wms/blob/main/torc_package/tests/scripts/sleep.py
 
 .. note:: The torc worker application on compute nodes handles SIGTERM. If you configure Slurm to
    terminate jobs at earlier time than the torc two-minute buffer, torc will respect it.
