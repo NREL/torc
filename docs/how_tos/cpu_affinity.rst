@@ -28,5 +28,5 @@ Suppose a set of jobs needs 4 CPUs each and the compute node has 36 CPUs.
     $ torc jobs run --cpu-affinity-cpus-per-job 4
 
 The torc worker application on the compute node will create 9 CPU masks. Each time it starts a job
-it will pick an available mask as set the job's process affinity to an available mask with the
-system call ``sched_setaffinity``. Torc will keep 9 jobs running in parallel until all complete.
+it will assign the job's process affinity to an available mask with the system call
+``sched_setaffinity``. Torc will keep 9 jobs running in parallel until all complete.
