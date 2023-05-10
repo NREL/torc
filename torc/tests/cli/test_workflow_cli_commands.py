@@ -21,7 +21,7 @@ def test_workflow_commands(create_workflow_cli):
     result = runner.invoke(cli, ["-k", key, "-u", url, "workflows", "start"])
     assert result.exit_code == 0
 
-    result = runner.invoke(cli, ["-k", key, "-u", url, "local", "run-jobs", "-o", str(output_dir)])
+    result = runner.invoke(cli, ["-k", key, "-u", url, "jobs", "run", "-o", str(output_dir)])
     assert result.exit_code == 0
     output = _get_text_and_json_outputs(["-k", key, "-u", url, "jobs", "list-process-stats"])
     assert output["json"]["stats"]

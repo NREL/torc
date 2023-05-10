@@ -10,7 +10,7 @@ The base directory of output files is controlled by the directory specified in t
 .. code-block:: console
 
    $ torc hpc slurm schedule-nodes
-   $ torc local run-jobs
+   $ torc jobs run
 
 The default directory is ``./output`` but you can provide a custom directory with ``-o
 <your-directory``.

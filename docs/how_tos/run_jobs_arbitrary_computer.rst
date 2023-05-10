@@ -12,4 +12,4 @@ Here's how to do it:
 
 .. code-block:: console
 
-   $ torc local run-jobs -o output
+   $ torc jobs run -o output

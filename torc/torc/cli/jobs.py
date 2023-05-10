@@ -2,11 +2,14 @@
 
 import json
 import logging
+import socket
+from pathlib import Path
 
 import click
 from swagger_client.models.workflow_jobs_model import WorkflowJobsModel
 
 from torc.api import iter_documents
+from torc.job_runner import JobRunner, JOB_COMPLETION_POLL_INTERVAL
 from torc.resource_monitor.reports import iter_job_process_stats
 from .common import (
     check_database_url,
@@ -14,6 +17,7 @@ from .common import (
     get_workflow_key_from_context,
     setup_cli_logging,
     parse_filters,
+    path_callback,
     print_items,
 )
 
@@ -256,6 +260,63 @@ def assign_resource_requirements(ctx, api, resource_requirements_key, job_keys):
         print(json.dumps({"key": resource_requirements_key, "edges": edges}))
 
 
+@click.command()
+@click.option(
+    "-c",
+    "--cpu-affinity-cpus-per-job",
+    type=int,
+    help="Enable CPU affinity for this number of CPUs per job.",
+)
+@click.option(
+    "-m",
+    "--max-parallel-jobs",
+    type=int,
+    help="Maximum number of parallel jobs. Default is to use resource availability.",
+)
+@click.option(
+    "-o",
+    "--output",
+    default="output",
+    show_default=True,
+    callback=path_callback,
+)
+@click.option(
+    "-p",
+    "--poll-interval",
+    default=JOB_COMPLETION_POLL_INTERVAL,
+    show_default=True,
+    help="Poll interval for job completions",
+)
+@click.option(
+    "-t",
+    "--time-limit",
+    help="Time limit ISO 8601 time duration format (like 'P0DT24H'), defaults to no limit.",
+)
+@click.pass_obj
+@click.pass_context
+def run(
+    ctx, api, cpu_affinity_cpus_per_job, max_parallel_jobs, output: Path, poll_interval, time_limit
+):
+    """Run workflow jobs on the current system."""
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    output.mkdir(exist_ok=True)
+    hostname = socket.gethostname()
+    log_file = output / f"worker_{hostname}.log"
+    setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
+    check_database_url(api)
+    workflow = api.get_workflows_key(workflow_key)
+    runner = JobRunner(
+        api,
+        workflow,
+        output,
+        cpu_affinity_cpus_per_job=cpu_affinity_cpus_per_job,
+        max_parallel_jobs=max_parallel_jobs,
+        job_completion_poll_interval=poll_interval,
+        time_limit=time_limit,
+    )
+    runner.run_worker()
+
+
 jobs.add_command(add)
 jobs.add_command(list_user_data)
 # jobs.add_command(cancel)
@@ -264,3 +325,4 @@ jobs.add_command(delete_all)
 jobs.add_command(list_jobs)
 jobs.add_command(list_process_stats)
 jobs.add_command(assign_resource_requirements)
+jobs.add_command(run)
