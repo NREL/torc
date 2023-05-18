@@ -13,7 +13,10 @@ here.
 - **uninitialized**: Initial state. Not yet known if it is blocked or ready.
 - **ready**: The job can be submitted.
 - **blocked**: The job cannot start because of dependencies.
-- **submitted_pending**: The job was given to a compute node but is not yet running.
+- **scheduled**: The job is ready and a compute node was scheduled to run it (but any node with
+  sufficient resources could run it).
+- **submitted_pending**: The job was given to a compute node but is not yet running. Transient
+  state.
 - **submitted**: The job is running on a compute node.
 - **terminated**: Compute node timeout occurred and the job was notified to checkpoint and shut
   down.
@@ -28,11 +31,12 @@ here.
       "uninitialized" -> "blocked";
       "uninitialized" -> "disabled";
       "disabled" -> "uninitialized";
-      "ready" -> "submitted_pending";
+      "ready" -> "submitted_pending" [style = "dotted"];
       "ready" -> "scheduled";
       "submitted_pending" -> "submitted";
+      "submitted" -> "canceled";
       "submitted_pending" -> "canceled";
-      "scheduled" -> "submitted";
+      "scheduled" -> "submitted_pending" [style = "dotted"];
       "submitted" -> "done";
       "submitted" -> "terminated";
       "blocked" -> "canceled";

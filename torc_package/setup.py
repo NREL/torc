@@ -73,7 +73,6 @@ setup(
             "pylint",
             "pytest",
             "pytest-cov",
-            "sphinx-rtd-theme",
             "sphinx",
             "sphinx-click",
             "sphinxcontrib-openapi",
