@@ -57,7 +57,7 @@ if [ -z ${PYTHON_CLIENT} ]; then
 fi
 rm -rf ${PYTHON_CLIENT}
 mkdir ${PYTHON_CLIENT}
-java -jar ${SWAGGER_CODEGEN_CLI} generate --lang=python --input-spec=openapi.yaml -o ${PYTHON_CLIENT}
+java -jar ${SWAGGER_CODEGEN_CLI} generate --lang=python --input-spec=openapi.yaml -o ${PYTHON_CLIENT} -c config.json
 # Workaround for this issue: https://github.com/swagger-api/swagger-codegen/issues/9991
 # It is fixed in the openapi-generator, but that doesn't work with our openapi.yaml - and haven't
 # debugged it.

@@ -24,14 +24,17 @@ and port:
 
    $ cd db_service
 
-3. Set an environment variable for the swagger CLI tool and optionallly the database root password.
+3. Set the ``packageVersion`` in ``config.json to the same value as in
+   ``torc_package/torc/version.py``.
+
+4. Set an environment variable for the swagger CLI tool and optionallly the database root password.
 
 .. code-block:: console
 
    $ export SWAGGER_CODEGEN_CLI=~/tools/swagger-codegen-cli.jar
    $ export TORC_PASSWORD=my_password
 
-4. Generate the python client.
+5. Generate the python client.
 
 .. code-block:: console
 
@@ -49,7 +52,7 @@ Here is what the script performed:
 This procedure could be implemented to generate server stubs or additional client programming
 languages. Refer to the ``Swagger`` documentation for more information.
 
-5. Create the wheel.
+6. Create the wheel.
 
 .. code-block:: console
 
