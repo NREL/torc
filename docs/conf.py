@@ -24,7 +24,7 @@ import torc
 
 project = "torc"
 copyright = "2023, NREL"  # pylint: disable=redefined-builtin
-author = "Daniel Thom"
+author = "NREL"
 release = "0.1.0"
 
 # -- General configuration ---------------------------------------------------
