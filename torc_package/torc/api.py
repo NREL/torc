@@ -8,7 +8,7 @@ from swagger_client.configuration import Configuration
 from torc.utils.timing import timer_stats_collector, Timer
 
 
-DEFAULT_BATCH_SIZE = 1000
+DEFAULT_BATCH_SIZE = 100000
 
 
 def make_api(database_url) -> DefaultApi:

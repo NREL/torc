@@ -36,7 +36,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       - name: _key
         in: query
         required: false
@@ -293,7 +293,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       - name: _key
         in: query
         required: false
@@ -556,7 +556,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       - name: _key
         in: query
         required: false
@@ -813,7 +813,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       - name: _key
         in: query
         required: false
@@ -1067,7 +1067,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       - name: _key
         in: query
         required: false
@@ -1328,7 +1328,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       - name: _key
         in: query
         required: false
@@ -1618,7 +1618,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       - name: _key
         in: query
         required: false
@@ -1882,7 +1882,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       - name: _key
         in: query
         required: false
@@ -2148,7 +2148,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       - name: _key
         in: query
         required: false
@@ -2440,7 +2440,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       - name: _key
         in: query
         required: false
@@ -2716,7 +2716,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       - name: _key
         in: query
         required: false
@@ -2989,7 +2989,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       - name: _key
         in: query
         required: false
@@ -3304,7 +3304,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       - name: _key
         in: query
         required: false
@@ -3573,7 +3573,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       responses:
         "200":
           description: HTTP 200 OK.
@@ -3809,7 +3809,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       responses:
         "200":
           description: HTTP 200 OK.
@@ -3854,7 +3854,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       responses:
         "200":
           description: HTTP 200 OK.
@@ -4009,7 +4009,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       responses:
         "200":
           description: HTTP 200 OK.
@@ -4062,7 +4062,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       responses:
         "200":
           description: HTTP 200 OK.
@@ -4707,7 +4707,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       - name: name
         in: query
         required: false
@@ -5088,7 +5088,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       requestBody:
         description: Available worker resources.
         content:
@@ -5545,7 +5545,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       responses:
         "200":
           description: HTTP 200 OK.
@@ -5620,7 +5620,7 @@ paths:
         explode: true
         schema:
           type: number
-          default: 1000.0
+          default: 100000.0
       responses:
         "200":
           description: HTTP 200 OK.

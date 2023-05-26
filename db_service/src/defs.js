@@ -4,7 +4,7 @@ const KiB = 1024;
 const MiB = KiB * KiB;
 const GiB = MiB * KiB;
 const TiB = GiB * KiB;
-const MAX_TRANSFER_RECORDS = 1000;
+const MAX_TRANSFER_RECORDS = 100000;
 
 const JobStatus = {
   // Initial state. Not yet known if it is blocked or ready.
