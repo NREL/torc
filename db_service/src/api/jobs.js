@@ -37,7 +37,7 @@ router.get('/workflows/:workflow/jobs/find_by_status/:status', function(req, res
     for (const job of cursor.skip(qp.skip).limit(limit)) {
       items.push(job);
     }
-    res.send(utils.makeCursorResult(items, qp.skip, limit, cursor.count()));
+    res.send(utils.makeCursorResult(items, qp.skip, cursor.count()));
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Get jobs find_by_status status=${status}`);
   }
@@ -62,8 +62,8 @@ router.get('/workflows/:workflow/jobs/find_by_needs_file/:key', function(req, re
   const qp = req.queryParams;
   const limit = utils.getItemsLimit(qp.limit);
   try {
-    const cursor = query.getJobsThatNeedFile(file, workflow);
-    res.send(utils.makeCursorResultFromIteration(cursor, qp.skip, limit));
+    const cursor = query.getJobsThatNeedFile(file, workflow, qp.skip, limit);
+    res.send(utils.makeCursorResultFromIteration(cursor, qp.skip, cursor.count()));
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Get jobs find_by_needs_file key=${key}`);
   }
@@ -235,7 +235,7 @@ router.get('/workflows/:workflow/jobs/:key/user_data_stores', function(req, res)
     if (items.length > MAX_TRANSFER_RECORDS) {
       throw new Error(`Bug: unhandled case where length of items is too big: ${items.length}`);
     }
-    res.send(utils.makeCursorResult(items, 0, MAX_TRANSFER_RECORDS, items.length));
+    res.send(utils.makeCursorResult(items, 0, items.length));
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Get jobs user_data stored key=${key}`);
   }
@@ -257,7 +257,7 @@ router.get('/workflows/:workflow/jobs/:key/user_data_consumes', function(req, re
     if (items.length > MAX_TRANSFER_RECORDS) {
       throw new Error(`Bug: unhandled case where length of items is too big: ${items.length}`);
     }
-    res.send(utils.makeCursorResult(items, 0, MAX_TRANSFER_RECORDS, items.length));
+    res.send(utils.makeCursorResult(items, 0, items.length));
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Get jobs user_data consumed key=${key}`);
   }

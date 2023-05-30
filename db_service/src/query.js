@@ -389,9 +389,11 @@ function getJobScheduler(job, workflow) {
  * Return jobs that need the file.
  * @param {Object} file
  * @param {Object} workflow
+ * @param {skip} skip
+ * @param {number} limit
  * @return {ArangoQueryCursor}
  */
-function getJobsThatNeedFile(file, workflow) {
+function getJobsThatNeedFile(file, workflow, skip, limit) {
   const graphName = config.getWorkflowGraphName(workflow);
   const edgeName = config.getWorkflowCollectionName(workflow, 'needs');
   return query({count: true})`
@@ -400,6 +402,7 @@ function getJobsThatNeedFile(file, workflow) {
           INBOUND ${file._id}
           GRAPH ${graphName}
           OPTIONS { edgeCollections: ${edgeName} }
+          LIMIT ${skip}, ${limit}
           RETURN v
     `;
 }

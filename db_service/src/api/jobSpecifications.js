@@ -55,7 +55,7 @@ router.get('/workflows/:workflow/job_specifications', function(req, res) {
     for (const job of cursor) {
       jobSpecifications.push(query.getjobSpecification(job));
     }
-    res.send(makeCursorResult(jobSpecifications, qp.skip, limit, jobs.count()));
+    res.send(makeCursorResult(jobSpecifications, qp.skip, jobs.count()));
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Get job_specifications for workflow_key=${workflowKey}`);
   }

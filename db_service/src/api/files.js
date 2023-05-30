@@ -35,7 +35,7 @@ router.get('/workflows/:workflow/files/produced_by_job/:key', function(req, res)
         break;
       }
     }
-    res.send(utils.makeCursorResult(items, qp.skip, limit, cursor.count()));
+    res.send(utils.makeCursorResult(items, qp.skip, cursor.count()));
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Get files produced_by_job key=${key}`);
   }

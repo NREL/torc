@@ -59,7 +59,7 @@ router.get('/workflows/:workflow/edges/:name', function(req, res) {
   const limit = utils.getItemsLimit(qp.limit);
   try {
     const items = edgeCollection.all().skip(qp.skip).limit(limit).toArray();
-    res.send(utils.makeCursorResult(items, qp.skip, limit, edgeCollection.count()));
+    res.send(utils.makeCursorResult(items, qp.skip, edgeCollection.count()));
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Get all ${name} edges`);
   }

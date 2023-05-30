@@ -68,10 +68,12 @@ router.get('/workflows', function(req, res) {
         example[filterField] = qp[filterField];
       }
     }
+    const totalCount = Object.keys(example).length == 0 ? collection.count() :
+        collection.byExample(example).count();
     const items = Object.keys(example).length == 0 ?
       collection.all().skip(qp.skip).limit(limit) :
       collection.byExample(example).skip(qp.skip).limit(limit);
-    res.send(utils.makeCursorResult(items.toArray(), qp.skip, limit, collection.count()));
+    res.send(utils.makeCursorResult(items.toArray(), qp.skip, totalCount));
   } catch (e) {
     if (e.isArangoError) {
       res.throw(400, `${e}`, e);
@@ -436,7 +438,7 @@ router.get('/workflows/:key/join_by_inbound_edge/:collection/:edge', function(re
   try {
     const cursor = query.joinCollectionsByInboundEdge(
         workflow, collection, edge, filters, qp.skip, limit);
-    res.send(utils.makeCursorResult(convertItems(cursor), qp.skip, limit, cursor.count()));
+    res.send(utils.makeCursorResult(convertItems(cursor), qp.skip, cursor.count()));
   } catch (e) {
     utils.handleArangoApiErrors(e, res, 'Join by inbound edge');
   }
@@ -469,7 +471,7 @@ router.get('/workflows/:key/join_by_outbound_edge/:collection/:edge', function(r
   try {
     const cursor = query.joinCollectionsByOutboundEdge(
         workflow, collection, edge, filters, qp.skip, limit);
-    res.send(utils.makeCursorResult(convertItems(cursor), qp.skip, limit, cursor.count()));
+    res.send(utils.makeCursorResult(convertItems(cursor), qp.skip, cursor.count()));
   } catch (e) {
     utils.handleArangoApiErrors(e, res, 'Join by outbound edge');
   }

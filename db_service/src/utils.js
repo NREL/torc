@@ -124,20 +124,17 @@ function getItemsLimit(limit) {
  * Return the number of records to send.
  * @param {Object} items
  * @param {number} skip
- * @param {number} limit
  * @param {number} totalCount
  * @return {Object}
  */
-function makeCursorResult(items, skip, limit, totalCount) {
+function makeCursorResult(items, skip, totalCount) {
   return {
     items: items,
     skip: skip,
-    limit: limit,
     max_limit: MAX_TRANSFER_RECORDS,
     count: items.length,
     total_count: totalCount,
-    has_more: skip >= items.length || limit >= items.length ? false :
-      skip + items.length < totalCount,
+    has_more: skip + items.length < totalCount,
   };
 }
 
@@ -167,7 +164,7 @@ function makeCursorResultFromIteration(cursor, skip, limit, func) {
       break;
     }
   }
-  return makeCursorResult(items, skip, limit, cursor.count());
+  return makeCursorResult(items, skip, cursor.count());
 }
 
 /**

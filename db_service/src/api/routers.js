@@ -141,9 +141,15 @@ function addGetAllMethod(router, descriptor) {
           example[filterField.name] = qp[filterField.name];
         }
       }
-      const cursor = Object.keys(example).length == 0 ?
-      collection.all().skip(qp.skip).limit(limit) :
-      collection.byExample(example).skip(qp.skip).limit(limit);
+      const totalCount = Object.keys(example).length == 0 ? collection.count() :
+        collection.byExample(example).count();
+      let cursor = Object.keys(example).length == 0 ?
+        collection.all().skip(qp.skip) :
+        collection.byExample(example).skip(qp.skip);
+
+      if (limit != null) {
+        cursor = cursor.limit(limit);
+      }
 
       const items = [];
       for (const doc of cursor) {
@@ -153,7 +159,7 @@ function addGetAllMethod(router, descriptor) {
           items.push(doc);
         }
       }
-      res.send(utils.makeCursorResult(items, qp.skip, limit, collection.count()));
+      res.send(utils.makeCursorResult(items, qp.skip, totalCount));
     } catch (e) {
       utils.handleArangoApiErrors(e, res, `Get ${descriptor.collection} documents`);
     }
