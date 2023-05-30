@@ -84,7 +84,7 @@
       recurse_child_processes: false,
       monitor_type: "periodic",
       make_plots: true,
-      interval: 1
+      interval: 10
     }
   }
 }
