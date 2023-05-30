@@ -315,8 +315,10 @@ def schedule_nodes(
     start_one_worker_per_node,
 ):
     """Schedule nodes with Slurm to run jobs."""
-    setup_cli_logging(ctx, __name__)
     check_database_url(api)
+    output.mkdir(exist_ok=True)
+    log_file = output / "schedule_nodes.log"
+    setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
     logger.info(get_cli_string())
     logger.info("torc version %s", torc.version.__version__)
     workflow_key = get_workflow_key_from_context(ctx, api)
@@ -325,7 +327,6 @@ def schedule_nodes(
     _check_schedule_params(api, workflow_key)
     config = _get_scheduler_config(ctx, api, workflow_key, scheduler_config_key)
 
-    output.mkdir(exist_ok=True)
     data = remove_db_keys(config.to_dict())
     data.pop("name")
     hpc_type = HpcType("slurm")
@@ -491,6 +492,7 @@ def run_jobs(
         "hpc_type": HpcType.SLURM.value,
     }
     config = api.get_workflows_key_config(workflow_key)
+    # TODO: Add a buffer for the end
     buffer = timedelta(seconds=config.compute_node_worker_buffer_seconds)
     end_time = intf.get_job_end_time() - buffer
     node = None if is_subtask else _get_scheduled_compute_node(api, workflow_key, slurm_job_id)
@@ -500,10 +502,13 @@ def run_jobs(
     my_logger.info("Start workflow on compute node %s", hostname)
 
     scheduler_config_id = None
-    if node is not None:
+    # Note that there could be multiple compute nodes under this slurm_job_id.
+    activated_slurm_job = False
+    if node is not None and node.status != "active":
         node.status = "active"
         node = api.put_workflows_workflow_scheduled_compute_nodes_key(node, workflow_key, node.key)
         scheduler_config_id = node.scheduler_config_id
+        activated_slurm_job = True
 
     resources = _create_node_resources(intf, scheduler_config_id, is_subtask)
 
@@ -518,10 +523,14 @@ def run_jobs(
         job_completion_poll_interval=poll_interval,
         log_prefix=log_prefix,
     )
-    runner.run_worker(scheduler=scheduler)
-    if node is not None:
-        node.status = "complete"
-        api.put_workflows_workflow_scheduled_compute_nodes_key(node, workflow_key, node.key)
+    try:
+        runner.run_worker(scheduler=scheduler)
+    finally:
+        if activated_slurm_job:
+            # TODO: This is not very accurate. Other nodes in the allocation could still be
+            # active. It would be better to do this from the caller of this command.
+            node.status = "complete"
+            api.put_workflows_workflow_scheduled_compute_nodes_key(node, workflow_key, node.key)
 
 
 def _get_scheduled_compute_node(api, workflow_key, slurm_job_id):

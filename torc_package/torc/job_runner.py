@@ -251,7 +251,7 @@ class JobRunner:
                 self._handle_completed_process_stats()
                 self._update_pids_to_monitor()
 
-            time.sleep(self._poll_interval)
+            time.sleep(short_poll_interval)
             result = send_api_command(self._api.get_workflows_key_is_complete, self._workflow.key)
 
         schedule_result = send_api_command(
@@ -304,6 +304,7 @@ class JobRunner:
             compute_node,
             self._workflow.key,
         )
+        logger.info("Running on compute node hostname=%s key=%s", self._hostname, compute_node.key)
 
     def _complete_compute_node(self):
         self._compute_node.is_active = False

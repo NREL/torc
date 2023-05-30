@@ -115,7 +115,7 @@ class ResourceStatCollector:
             try:
                 process = psutil.Process(pid)
                 # Initialize CPU utilization tracking per psutil docs.
-                process.cpu_percent(interval=0.5)
+                process.cpu_percent(interval=0.25)
                 self._cached_processes[pid] = process
             except (psutil.NoSuchProcess, psutil.AccessDenied):
                 logger.debug("Tried to construct Process for invalid pid=%s", pid)
@@ -129,7 +129,7 @@ class ResourceStatCollector:
 
     def clear_stale_processes(self, cur_pids):
         """Remove cached process objects that are no longer running."""
-        for pid in [x for x in self._cached_processes if x not in cur_pids]:
+        for pid in set(self._cached_processes).difference(cur_pids):
             self._cached_processes.pop(pid)
 
     def get_processes_stats(self, pids, config: ComputeNodeResourceStatConfig):
@@ -141,8 +141,7 @@ class ResourceStatCollector:
             if _stats is not None:
                 stats[name] = _stats
                 cur_pids.add(pid)
-                for child in children:
-                    cur_pids.add(child)
+                cur_pids.update(children)
 
         self.clear_stale_processes(cur_pids)
         return stats

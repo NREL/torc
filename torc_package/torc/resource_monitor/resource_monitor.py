@@ -34,6 +34,7 @@ def run_monitor_async(conn, config: ComputeNodeResourceStatConfig, pids, path=No
     if config.process and pids is None:
         raise Exception("pids must be a dict if process monitoring is enabled")
 
+    logger.info("Monitor resource utilization with config=%s", config)
     collector = ResourceStatCollector()
     stats = collector.get_stats(ComputeNodeResourceStatConfig.all_enabled(), pids={})
     agg = ResourceStatAggregator(config, stats)
@@ -42,7 +43,14 @@ def run_monitor_async(conn, config: ComputeNodeResourceStatConfig, pids, path=No
     store = ResourceStatStore(config, path, stats) if config.monitor_type == "periodic" else None
 
     results = None
+    cmd_poll_interval = 1
+    last_job_poll_time = 0
     while True:
+        cur_time = time.time()
+        if cur_time - last_job_poll_time < config.interval:
+            time.sleep(cmd_poll_interval)
+            continue
+        last_job_poll_time = cur_time
         if conn.poll():
             cmd = conn.recv()
             logger.info("Received command %s", cmd["command"].value)
@@ -69,14 +77,12 @@ def run_monitor_async(conn, config: ComputeNodeResourceStatConfig, pids, path=No
                 case _:
                     raise Exception(f"Received unknown command: {cmd}")
 
-        if config.process:
-            collector.clear_stale_processes(pids)
         stats = collector.get_stats(config, pids=pids)
         agg.update_stats(stats)
         if store is not None:
             store.record_stats(stats)
 
-        time.sleep(config.interval)
+        time.sleep(cmd_poll_interval)
 
     conn.send(results)
     collector.clear_cache()
