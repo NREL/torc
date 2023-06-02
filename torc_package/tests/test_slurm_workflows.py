@@ -41,15 +41,17 @@ def setup_api():
         print(f"{script_output_dir=} already exists", file=sys.stderr)
         sys.exit(1)
 
+    if output_dir.exists():
+        shutil.rmtree(output_dir)
     output_dir.mkdir()
     script_output_dir.mkdir()
 
     yield api, output_dir, script_output_dir
 
+    api.api_client.close()
     for path in (output_dir, script_output_dir):
         if path.exists():
             shutil.rmtree(path)
-    api.api_client.close()
 
 
 def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-outer-name
@@ -72,9 +74,9 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
     try:
         result = runner.invoke(cli, ["-k", key, "workflows", "start"])
         assert result.exit_code == 0
-        result = runner.invoke(
-            cli,
+        subprocess.run(
             [
+                "torc",
                 "-F",
                 "json",
                 "-k",
@@ -89,6 +91,7 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
                 str(output_dir),
                 "-p1",
             ],
+            check=True,
         )
         assert result.exit_code == 0
         _wait_for_workflow_complete(api, key)
@@ -150,12 +153,13 @@ def test_cpu_affinity_workflow(setup_api, slurm_account):  # pylint: disable=red
     slurm_config = _get_scheduler_by_name(api, key)
 
     try:
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(cli, ["-k", key, "workflows", "start"])
-        assert result.exit_code == 0
-        result = runner.invoke(
-            cli,
+        subprocess.run(["torc", "-k", key, "workflows", "start"], check=True)
+        # For some reason using CliRunner here causes a weird log-flushing problem.
+        # While the fixture tries to delete the test directories, new files show up, causing
+        # exceptions.
+        subprocess.run(
             [
+                "torc",
                 "-F",
                 "json",
                 "-k",
@@ -171,8 +175,8 @@ def test_cpu_affinity_workflow(setup_api, slurm_account):  # pylint: disable=red
                 str(output_dir),
                 "-p1",
             ],
+            check=True,
         )
-        assert result.exit_code == 0
         _wait_for_workflow_complete(api, key)
         _check_cpu_affinity_results(api, key)
         _wait_for_compute_nodes(api, key)
@@ -201,9 +205,7 @@ srun -c9 -n4 --cpu-bind=mask_cpu:0x1ff,0x3fe00,0x7fc0000,0xff8000000 \\
     sbatch_script.write_text(text, encoding="utf-8")
 
     try:
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(cli, ["-k", key, "workflows", "start"])
-        assert result.exit_code == 0
+        subprocess.run(["torc", "-k", key, "workflows", "start"], check=True)
         subprocess.run(["sbatch", str(sbatch_script)], check=True)
         _wait_for_workflow_complete(api, key)
         _check_cpu_affinity_results(api, key)
@@ -250,6 +252,7 @@ def _fix_slurm_account(spec_file, output_dir, account):
     data = load_data(dst_file)
     for scheduler in data["schedulers"]["slurm_schedulers"]:
         scheduler["account"] = account
+        scheduler["qos"] = "standby"
     dump_data(data, dst_file, indent=2)
     return dst_file
 
