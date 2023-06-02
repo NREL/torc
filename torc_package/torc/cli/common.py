@@ -256,7 +256,10 @@ def parse_filters(filters):
         if len(fields) != 2:
             logger.error("Invalid filter format: %s. Required: name=value", flt)
             sys.exit(1)
-        final[fields[0]] = fields[1]
+        val = fields[1]
+        if val.isnumeric():
+            val = int(val)
+        final[fields[0]] = val
 
     return final
 
