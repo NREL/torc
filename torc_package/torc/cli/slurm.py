@@ -16,6 +16,7 @@ from swagger_client.models.workflow_scheduled_compute_nodes_model import (
 from swagger_client.models.key_prepare_jobs_for_submission_model import (
     KeyPrepareJobsForSubmissionModel,
 )
+from swagger_client.rest import ApiException
 
 import torc.version
 from torc.api import iter_documents, remove_db_keys
@@ -333,8 +334,8 @@ def schedule_nodes(
     mgr = HpcManager(data, hpc_type, output)
     database_url = api.api_client.configuration.host
     runner_script = (
-        f"torc -k {workflow_key} -u {database_url} hpc slurm run-jobs -o {output} -p "
-        f"{poll_interval}"
+        f"torc -k {workflow_key} -u {database_url} --console-level=error hpc slurm run-jobs "
+        f"-o {output} -p {poll_interval}"
     )
     if max_parallel_jobs:
         runner_script += f" --max-parallel-jobs {max_parallel_jobs}"
@@ -504,11 +505,18 @@ def run_jobs(
     scheduler_config_id = None
     # Note that there could be multiple compute nodes under this slurm_job_id.
     activated_slurm_job = False
-    if node is not None and node.status != "active":
-        node.status = "active"
-        node = api.put_workflows_workflow_scheduled_compute_nodes_key(node, workflow_key, node.key)
+    if node is not None:
         scheduler_config_id = node.scheduler_config_id
-        activated_slurm_job = True
+        if node.status != "active":
+            node.status = "active"
+            try:
+                node = api.put_workflows_workflow_scheduled_compute_nodes_key(
+                    node, workflow_key, node.key
+                )
+                activated_slurm_job = True
+            except ApiException:
+                # Another node sent the command first.
+                pass
 
     resources = _create_node_resources(intf, scheduler_config_id, is_subtask)
 
