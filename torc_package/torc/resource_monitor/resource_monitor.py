@@ -46,11 +46,6 @@ def run_monitor_async(conn, config: ComputeNodeResourceStatConfig, pids, path=No
     cmd_poll_interval = 1
     last_job_poll_time = 0
     while True:
-        cur_time = time.time()
-        if cur_time - last_job_poll_time < config.interval:
-            time.sleep(cmd_poll_interval)
-            continue
-        last_job_poll_time = cur_time
         if conn.poll():
             cmd = conn.recv()
             logger.info("Received command %s", cmd["command"].value)
@@ -76,11 +71,13 @@ def run_monitor_async(conn, config: ComputeNodeResourceStatConfig, pids, path=No
                     break
                 case _:
                     raise Exception(f"Received unknown command: {cmd}")
-
-        stats = collector.get_stats(config, pids=pids)
-        agg.update_stats(stats)
-        if store is not None:
-            store.record_stats(stats)
+        cur_time = time.time()
+        if cur_time - last_job_poll_time > config.interval:
+            stats = collector.get_stats(config, pids=pids)
+            agg.update_stats(stats)
+            if store is not None:
+                store.record_stats(stats)
+        last_job_poll_time = cur_time
 
         time.sleep(cmd_poll_interval)
 
