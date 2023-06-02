@@ -103,7 +103,6 @@ Example:
             "command": "python tests/scripts/resource_consumption.py -i 1 -c small",
             "cancel_on_blocking_job_failure": true,
             "supports_termination": false,
-            "run_id": 2,
             "status": "done"
           },
           "to": {

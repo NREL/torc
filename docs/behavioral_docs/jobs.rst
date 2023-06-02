@@ -60,8 +60,3 @@ If you enable compute node scheduling for a job that is initially blocked, as di
 - If there happens to be another compute node with available resources, that node could run the
   ``scheduled`` jobs instead. In that case the newly-scheduled node will detect that there is no
   work to do and exit.
-
-Job run ID
-==========
-Each job has a ``run_id`` attribute. The torc worker application increments its value every time it
-runs a job. This allows you to compare results and utilization stats across workflow restarts.

@@ -76,7 +76,7 @@ Join jobs with process stats
 ----------------------------
 .. code-block:: console
 
-    sqlite> SELECT jobs.name, jobs.run_id, s.max_cpu_percent, s.max_rss
+    sqlite> SELECT jobs.name, s.run_id, s.max_cpu_percent, s.max_rss
         FROM jobs
         JOIN job_process_stats AS s
         ON jobs.key == s.job_key

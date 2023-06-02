@@ -88,7 +88,6 @@ const job = joi.object().required().keys({
   needs_compute_node_schedule: joi.boolean().default(false),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   supports_termination: joi.boolean().default(false),
-  run_id: joi.number().integer().default(0),
   // This only exists to all prepareJobsForSubmission to take less time to find
   // jobs with exclusive access.
   internal: jobInternal.optional().default(jobInternal.validate({}).value),
@@ -269,6 +268,7 @@ const workflow = joi.object().required().keys({
   name: joi.string().optional(),
   user: joi.string().optional(),
   description: joi.string().optional(),
+  timestamp: joi.string().optional(),
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),

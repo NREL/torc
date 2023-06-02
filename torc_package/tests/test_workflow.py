@@ -295,7 +295,7 @@ def test_reinitialize_workflow_noop(completed_workflow):
     """Verify that a workflow can be reinitialized."""
     db, _, _ = completed_workflow
     mgr = WorkflowManager(db.api, db.workflow.key)
-    mgr.reinitialize_jobs()
+    mgr._reinitialize_jobs()  # pylint: disable=protected-access
     for name in ("preprocess", "work1", "work2", "postprocess"):
         job = db.get_document("jobs", name)
         assert job.status == "done"
@@ -303,7 +303,7 @@ def test_reinitialize_workflow_noop(completed_workflow):
 
 @pytest.mark.parametrize(
     "field",
-    ["name", "run_id", "supports_termination", "cancel_on_blocking_job_failure"],
+    ["name", "supports_termination", "cancel_on_blocking_job_failure"],
 )
 def test_reinitialize_workflow_changed_non_critical_fields(completed_workflow, field):
     """Verify restart behavior with a changed fields that do not affect results."""
@@ -316,13 +316,12 @@ def test_reinitialize_workflow_changed_non_critical_fields(completed_workflow, f
         assert job.status == "done"
     new_values = {
         "name": preprocess.name + " new name",
-        "run_id": 5,
         "supports_termination": not preprocess.supports_termination,
         "cancel_on_blocking_job_failure": not preprocess.cancel_on_blocking_job_failure,
     }
     setattr(preprocess, field, new_values[field])
     db.api.put_workflows_workflow_jobs_key(preprocess, db.workflow.key, preprocess.key)
-    mgr.reinitialize_jobs()
+    mgr._reinitialize_jobs()  # pylint: disable=protected-access
     for job in iter_documents(db.api.get_workflows_workflow_jobs, db.workflow.key):
         assert job.status == "done"
 
@@ -336,7 +335,7 @@ def test_reinitialize_workflow_changed_critical_fields(completed_workflow, field
     assert job.status == "done"
     setattr(job, field, "new value")
     db.api.put_workflows_workflow_jobs_key(job, db.workflow.key, job.key)
-    mgr.reinitialize_jobs()
+    mgr._reinitialize_jobs()  # pylint: disable=protected-access
     assert db.get_document("jobs", "preprocess").status == "ready"
     for name in ("work1", "work2", "postprocess"):
         job = db.get_document("jobs", name)
@@ -352,7 +351,7 @@ def test_reinitialize_workflow_input_file_updated(completed_workflow):
     path.touch()
 
     mgr = WorkflowManager(api, db.workflow.key)
-    mgr.reinitialize_jobs()
+    mgr._reinitialize_jobs()  # pylint: disable=protected-access
     assert db.get_document("jobs", "preprocess").status == "ready"
     for name in ("work1", "work2", "postprocess"):
         job = db.get_document("jobs", name)
@@ -364,7 +363,7 @@ def test_reinitialize_workflow_incomplete(incomplete_workflow):
     db, _, _ = incomplete_workflow
     api = db.api
     mgr = WorkflowManager(api, db.workflow.key)
-    mgr.reinitialize_jobs()
+    mgr._reinitialize_jobs()  # pylint: disable=protected-access
     for name in ("preprocess", "work1"):
         job = db.get_document("jobs", name)
         assert job.status == "done"
@@ -379,7 +378,7 @@ def test_reinitialize_workflow_incomplete_missing_files(
     db, _, _ = incomplete_workflow_missing_files
     api = db.api
     mgr = WorkflowManager(api, db.workflow.key)
-    mgr.reinitialize_jobs()
+    mgr._reinitialize_jobs()  # pylint: disable=protected-access
     assert db.get_document("jobs", "preprocess").status == "done"
     assert db.get_document("jobs", "work1").status == "ready"
     assert db.get_document("jobs", "work2").status == "ready"
@@ -400,8 +399,8 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
     assert status.run_id == 2
 
     stage1_events = db.list_documents("events")
-    assert len(stage1_events) == 1
-    assert stage1_events[0].get("type", "") == "restart"
+    assert len(stage1_events) == 2
+    assert stage1_events[1].get("type", "") == "restart"
 
     new_file = output_dir / missing_file
     new_file.write_text(json.dumps({"val": missing_file}))
@@ -436,11 +435,6 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
             assert False
     assert sorted(expected) == _get_job_keys_by_event(stage2_events, "start")
     assert sorted(expected) == _get_job_keys_by_event(stage2_events, "complete")
-
-    for job_key in {preprocess, work1, work2, postprocess}.difference(expected):
-        assert api.get_workflows_workflow_jobs_key(db.workflow.key, job_key).run_id == 1
-    for job_key in expected:
-        assert api.get_workflows_workflow_jobs_key(db.workflow.key, job_key).run_id == 2
 
     api.post_workflows_key_reset_status(db.workflow.key)
     for name in ("preprocess", "work1", "work2", "postprocess"):
@@ -529,12 +523,11 @@ def test_concurrent_submitters(independent_job_workflow, tmp_path):
 
 
 def _fake_complete_job(api, workflow_key, job):
-    job.run_id += 1
     job = api.put_workflows_workflow_jobs_key(job, workflow_key, job.key)
     status = "done"
     result = WorkflowResultsModel(
         job_key=job.key,
-        run_id=job.run_id,
+        run_id=1,
         return_code=0,
         exec_time_minutes=5,
         completion_time=str(datetime.now()),

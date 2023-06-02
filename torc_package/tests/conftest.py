@@ -311,31 +311,23 @@ def completed_workflow(diamond_workflow):
     """Fakes a completed diamond workflow."""
     db, scheduler_config_id, output_dir = diamond_workflow
     api = db.api
-    mgr = WorkflowManager(api, db.workflow.key)
-    mgr.initialize_files()
-    status = api.get_workflows_key_status(db.workflow.key)
-    status.run_id = 1
-    api.put_workflows_key_status(status, db.workflow.key)
-
     for file in api.get_workflows_workflow_files(db.workflow.key).items:
         path = Path(file.path)
         if not path.exists():
             path.touch()
-            file.st_mtime = path.stat().st_mtime
-            api.put_workflows_workflow_files_key(file, db.workflow.key, file.key)
+    mgr = WorkflowManager(api, db.workflow.key)
+    mgr.start()
+    workflow_status = api.get_workflows_key_status(db.workflow.key)
 
     job_keys = [job.key for job in api.get_workflows_workflow_jobs(db.workflow.key).items]
     for job_key in job_keys:
         # Completing a job this way will cause blocked jobs to change status and revision,
         # so we need to update each time.
         job = api.get_workflows_workflow_jobs_key(db.workflow.key, job_key)
-        # Fake out what normally happens at submission time.
-        job.run_id += 1
-        job = api.put_workflows_workflow_jobs_key(job, db.workflow.key, job_key)
         status = "done"
         result = WorkflowResultsModel(
             job_key=job.key,
-            run_id=job.run_id,
+            run_id=workflow_status.run_id,
             return_code=0,
             exec_time_minutes=5,
             completion_time=str(datetime.now()),
@@ -356,13 +348,13 @@ def incomplete_workflow(diamond_workflow):
     db, scheduler_config_id, output_dir = diamond_workflow
     api = db.api
     mgr = WorkflowManager(api, db.workflow.key)
-    mgr.initialize_files()
+    mgr._initialize_files()  # pylint: disable=protected-access
     for name in ("preprocess", "work1"):
         job = db.get_document("jobs", name)
         status = "done"
         result = WorkflowResultsModel(
             job_key=job.key,
-            run_id=job.run_id,
+            run_id=1,
             return_code=0,
             exec_time_minutes=5,
             completion_time=str(datetime.now()),

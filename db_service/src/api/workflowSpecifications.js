@@ -51,6 +51,9 @@ router.get('/workflow_specifications/:key', function(req, res) {
       jobs.push(query.getJobSpecification(job, workflow));
     }
     const data = {
+      name: workflow.name,
+      description: workflow.description,
+      user: workflow.user,
       config: query.getWorkflowConfig(workflow),
       files: filesCollection.all().toArray(),
       jobs: jobs,

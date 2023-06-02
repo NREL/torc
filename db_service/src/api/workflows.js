@@ -421,20 +421,16 @@ router.get('/workflows/:key/collection_names', function(req, res) {
     .summary('Retrieve all collection names for one workflow.')
     .description('Retrieve all collection names for one workflow.');
 
-router.get('/workflows/:key/join_by_inbound_edge/:collection/:edge', function(req, res) {
+// This is a post because the command needs to accept variable parameters and there
+// is no way to define all of those for Swagger. Use a request body for them instead.
+router.post('/workflows/:key/join_by_inbound_edge/:collection/:edge', function(req, res) {
   const key = req.pathParams.key;
   const collection = req.pathParams.collection;
   const edge = req.pathParams.edge;
   const qp = req.queryParams;
+  const filters = req.body;
   const limit = utils.getItemsLimit(qp.limit);
   const workflow = documents.getWorkflow(key);
-  const filters = {};
-  if (qp.collection_key != null) {
-    filters._key = qp.collection_key;
-  }
-  if (qp.collection_name != null) {
-    filters.name = qp.collection_name;
-  }
   try {
     const cursor = query.joinCollectionsByInboundEdge(
         workflow, collection, edge, filters, qp.skip, limit);
@@ -450,24 +446,19 @@ router.get('/workflows/:key/join_by_inbound_edge/:collection/:edge', function(re
     .queryParam('collection_name', joi.string().optional())
     .queryParam('skip', joi.number().default(0))
     .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .body(joi.object().required(), 'Filters for query')
     .response(schemas.batchObjects)
     .summary('Retrieve a joined table of two collections.')
     .description('Retrieve a table of the collections joined by an inbound edge.');
 
-router.get('/workflows/:key/join_by_outbound_edge/:collection/:edge', function(req, res) {
+router.post('/workflows/:key/join_by_outbound_edge/:collection/:edge', function(req, res) {
   const key = req.pathParams.key;
   const collection = req.pathParams.collection;
   const edge = req.pathParams.edge;
   const qp = req.queryParams;
+  const filters = req.body;
   const limit = utils.getItemsLimit(qp.limit);
   const workflow = documents.getWorkflow(key, res);
-  const filters = {};
-  if (qp.collection_key != null) {
-    filters._key = qp.collection_key;
-  }
-  if (qp.collection_name != null) {
-    filters.name = qp.collection_name;
-  }
   try {
     const cursor = query.joinCollectionsByOutboundEdge(
         workflow, collection, edge, filters, qp.skip, limit);
@@ -483,6 +474,7 @@ router.get('/workflows/:key/join_by_outbound_edge/:collection/:edge', function(r
     .queryParam('collection_name', joi.string().optional())
     .queryParam('skip', joi.number().default(0))
     .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .body(joi.object().required(), 'Filters for query')
     .response(schemas.batchObjects)
     .summary('Retrieve a joined table of two collections.')
     .description('Retrieve a table of the collections joined by an outbound edge.');

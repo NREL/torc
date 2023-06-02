@@ -118,10 +118,6 @@ const ROUTE_DESCRIPTORS = [
         type: joi.string(),
       },
       {
-        name: 'run_id',
-        type: joi.number().integer(),
-      },
-      {
         name: 'status',
         type: joi.string(),
       },

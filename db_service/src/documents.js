@@ -83,7 +83,6 @@ function addJobSpecification(jobSpec, workflow) {
     cancel_on_blocking_job_failure: jobSpec.cancel_on_blocking_job_failure,
     needs_compute_node_schedule: jobSpec.needs_compute_node_schedule,
     supports_termination: jobSpec.supports_termination,
-    run_id: 0,
     internal: schemas.jobInternal.validate({}).value,
   };
   if (jobSpec.key != null) {
@@ -200,6 +199,9 @@ function addWorkflowDocument(doc, collectionName, workflow, checkExisting, allow
  * @return {Object}
  */
 function addWorkflow(doc) {
+  if (doc.timestamp == null) {
+    doc.timestamp = (new Date()).toISOString();
+  }
   const meta = db.workflows.save(doc);
   Object.assign(doc, meta);
 
@@ -208,7 +210,7 @@ function addWorkflow(doc) {
   Object.assign(workflowConfig, configMeta);
 
   const status = {
-    run_id: 1,
+    run_id: 0,
     is_canceled: false,
     scheduled_compute_node_ids: [],
     auto_tune_status: schemas.autoTuneStatus.validate({}).value,

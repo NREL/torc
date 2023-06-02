@@ -19,39 +19,17 @@ class WorkflowManager:
         self._api = api
         self._key = key
 
-    def reinitialize_jobs(self):
-        """Reinitialize job status to prepare for restarting the workflow.
-        Users may optionally call this in order to inspect the job status before calling restart.
-        """
-        self._reset_job_status()
-        self._process_changed_files()
-        self._update_jobs_if_output_files_are_missing()
-        response = send_api_command(
-            self._api.post_workflows_key_process_changed_job_inputs, self._key
-        )
-        if response.reinitialized_jobs:
-            logger.info(
-                "Changed job status to uninitialized because inputs were changed: %s",
-                " ".join(response.reinitialized_jobs),
-            )
-        send_api_command(self._api.post_workflows_key_initialize_jobs, self._key)
-
-    def restart(self, reinitialize=True, ignore_missing_data=False):
+    def restart(self, ignore_missing_data=False):
         """Restart the workflow.
 
         Parameters
         ----------
-        reinitialize : bool
-            If True, call reinitialize_jobs. Set False if it was already called.
         ignore_missing_data : bool
             If True, ignore checks for missing files and user_data.
         """
         self._check_workflow(ignore_missing_data=ignore_missing_data)
-        status = send_api_command(self._api.get_workflows_key_status, self._key)
-        status.run_id += 1
-        send_api_command(self._api.put_workflows_key_status, status, self._key)
-        if reinitialize:
-            self.reinitialize_jobs()
+        self._bump_run_id()
+        self._reinitialize_jobs()
         send_api_command(
             self._api.post_workflows_workflow_events,
             {
@@ -64,19 +42,6 @@ class WorkflowManager:
             self._key,
         )
 
-    def initialize_files(self):
-        """Initialize the file stats in the database."""
-        for file in iter_documents(self._api.get_workflows_workflow_files, self._key):
-            path = Path(file.path)
-            if path.exists():
-                file.st_mtime = path.stat().st_mtime
-                send_api_command(
-                    self._api.put_workflows_workflow_files_key,
-                    file,
-                    self._key,
-                    file.key,
-                )
-
     def start(self, auto_tune_resource_requirements=False, ignore_missing_data=False):
         """Start a workflow.
 
@@ -88,9 +53,10 @@ class WorkflowManager:
             If True, ignore checks for missing files and user_data.
         """
         self._check_workflow(ignore_missing_data=ignore_missing_data)
-        self.initialize_files()
+        self._initialize_files()
         send_api_command(self._api.post_workflows_key_reset_status, self._key)
-        # Set every job status to unknown/uninitialized.
+        self._bump_run_id()
+        # Set every job status from uninitialized to ready or blocked.
         send_api_command(self._api.post_workflows_key_initialize_jobs, self._key)
 
         if auto_tune_resource_requirements:
@@ -111,6 +77,11 @@ class WorkflowManager:
             self._key,
         )
         logger.info("Started workflow")
+
+    def _bump_run_id(self):
+        status = send_api_command(self._api.get_workflows_key_status, self._key)
+        status.run_id += 1
+        send_api_command(self._api.put_workflows_key_status, status, self._key)
 
     def _check_workflow(self, ignore_missing_data=False):
         self._check_workflow_user_data(ignore_missing_data)
@@ -158,6 +129,33 @@ class WorkflowManager:
                     )
                     logger.info("File %s was removed. Cleared file stats", file.name)
                 self._update_jobs_on_file_change(file)
+
+    def _initialize_files(self):
+        """Initialize the file stats in the database."""
+        for file in iter_documents(self._api.get_workflows_workflow_files, self._key):
+            path = Path(file.path)
+            if path.exists():
+                file.st_mtime = path.stat().st_mtime
+                send_api_command(
+                    self._api.put_workflows_workflow_files_key,
+                    file,
+                    self._key,
+                    file.key,
+                )
+
+    def _reinitialize_jobs(self):
+        self._reset_job_status()
+        self._process_changed_files()
+        self._update_jobs_if_output_files_are_missing()
+        response = send_api_command(
+            self._api.post_workflows_key_process_changed_job_inputs, self._key
+        )
+        if response.reinitialized_jobs:
+            logger.info(
+                "Changed job status to uninitialized because inputs were changed: %s",
+                " ".join(response.reinitialized_jobs),
+            )
+        send_api_command(self._api.post_workflows_key_initialize_jobs, self._key)
 
     def _reset_job_status(self):
         for status in ("canceled", "submitted", "submitted_pending", "terminated"):

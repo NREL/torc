@@ -562,14 +562,10 @@ function getWorkflowStatus(workflow) {
  */
 function initializeJobStatus(workflow) {
   // TODO: Can this be more efficient with one traversal?
+  const workflowStatus = getWorkflowStatus(workflow);
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
   const schedulers = getSchedulers(workflow);
-  const cursor = query()`
-    FOR job IN ${jobs}
-      FILTER job.status != ${JobStatus.Disabled}
-      RETURN job
-  `;
-  for (const job of cursor) {
+  for (const job of jobs.all()) {
     const jobResources = getJobResourceRequirements(job, workflow);
     if (job.internal == null) {
       job.internal = schemas.jobInternal.validate({}).value;
@@ -585,7 +581,9 @@ function initializeJobStatus(workflow) {
     job.internal.num_cpus = jobResources.num_cpus;
     job.internal.num_gpus = jobResources.num_gpus;
     job.internal.num_nodes = jobResources.num_nodes;
-    if (isJobInitiallyBlocked(job, workflow)) {
+    if (job.status == JobStatus.Disabled) {
+      ;
+    } else if (isJobInitiallyBlocked(job, workflow)) {
       job.status = JobStatus.Blocked;
     } else if (job.status != JobStatus.Done) {
       job.status = JobStatus.Ready;
@@ -791,6 +789,8 @@ function joinCollectionsByInboundEdge(
       .limit(limit)
       .toArray();
   const edgeName = config.getWorkflowCollectionName(workflow, edgeBase);
+  // TODO: It would be better to allow dynamic filtering of fields on either
+  // side of the edge in this query.
   const cursor = query({count: true})`
     FOR x in ${fromCollection}
       FOR v, e, p

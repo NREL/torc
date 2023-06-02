@@ -48,12 +48,12 @@ def test_workflow_commands(create_workflow_cli):
         ["-k", key, "-u", url, "-F", "json", "events", "list"]
     )
     assert isinstance(events, list) and events
-    job_key = _run_and_convert_output_from_json(
-        ["-k", key, "-u", url, "-F", "json", "jobs", "list"]
-    )["jobs"][0]["key"]
+    _run_and_convert_output_from_json(["-k", key, "-u", url, "-F", "json", "jobs", "list"])
+
     # Test filtering on the collections join command.
-    assert (
-        _run_and_convert_output_from_json(
+    items = [
+        x["to"]["name"]
+        for x in _run_and_convert_output_from_json(
             [
                 "-k",
                 key,
@@ -65,11 +65,11 @@ def test_workflow_commands(create_workflow_cli):
                 "join",
                 "job-requirements",
                 "-f",
-                f"key={job_key}",
+                "name=small",
             ]
-        )["items"][0]["to"]["name"]
-        == "small"
-    )
+        )
+    ]
+    assert items and all(x == "small" for x in items)
 
     for name in JOIN_COLLECTIONS:
         _get_text_and_json_outputs(["-k", key, "-u", url, "collections", "join", name])
@@ -402,8 +402,6 @@ def test_job_commands(create_workflow_cli):
             "list",
             "-f",
             "name=medium",
-            "-f",
-            "run_id=0",
         ],
         1,
     )
@@ -421,8 +419,6 @@ def test_job_commands(create_workflow_cli):
             "list",
             "-f",
             "name=medium",
-            "-f",
-            "run_id=0",
         ],
         0,
     )

@@ -123,7 +123,6 @@ Get one job in one workflow
      "command": "python my_script.py",
      "cancel_on_blocking_job_failure": true,
      "supports_termination": false,
-     "run_id": 1,
      "status": "ready"
    }
 
@@ -160,7 +159,6 @@ Here are two examples:
      "command": "python my_script.py",
      "cancel_on_blocking_job_failure": true,
      "supports_termination": false,
-     "run_id": 1,
      "internal": {
        "memory_bytes": 0,
        "num_cpus": 0,

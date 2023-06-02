@@ -2,6 +2,7 @@
 
 import json
 import logging
+from pprint import pprint
 
 import click
 
@@ -32,8 +33,7 @@ def collections():
     "--filters",
     multiple=True,
     type=str,
-    help="Filter the 'from' values according to each key=value pair. Only key and "
-    "name for the primary collection are currently supported",
+    help="Filter the values according to each key=value pair on the primary collection.",
 )
 @click.option(
     "--outbound/--inbound",
@@ -85,22 +85,17 @@ def _join_by_edge(
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     filters = parse_filters(filters)
-    for field in ("key", "name"):
-        if field in filters:
-            # 'key' collides with the query params, and so the API requires collection_key.
-            # This allows the shorter 'key' and 'name' to also work.
-            filters[f"collection_{field}"] = filters.pop(field)
-    filters["skip"] = skip
+    kwargs = {"skip": skip}
     if limit is not None:
-        filters["limit"] = limit
+        kwargs["limit"] = limit
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
     func = (
-        api.get_workflows_key_join_by_outbound_edge_collection_edge
+        api.post_workflows_key_join_by_outbound_edge_collection_edge
         if outbound
-        else api.get_workflows_key_join_by_inbound_edge_collection_edge
+        else api.post_workflows_key_join_by_inbound_edge_collection_edge
     )
-    iterable = iter_documents(func, workflow_key, collection, edge, **filters)
+    iterable = iter_documents(func, filters, workflow_key, collection, edge, **kwargs)
     base_exclude = ["_id", "_rev", "_oldRev"]
     items = []
     if output_format == "text":
@@ -142,7 +137,6 @@ JOIN_COLLECTIONS = {
             "invocation_script",
             "internal",
             "cancel_on_blocking_job_failure",
-            "run_id",
             "status",
             "supports_termination",
         ],
@@ -163,7 +157,6 @@ JOIN_COLLECTIONS = {
             "invocation_script",
             "internal",
             "cancel_on_blocking_job_failure",
-            "run_id",
             "status",
             "supports_termination",
         ],
@@ -172,7 +165,6 @@ JOIN_COLLECTIONS = {
             "invocation_script",
             "internal",
             "cancel_on_blocking_job_failure",
-            "run_id",
             "status",
             "supports_termination",
         ],
@@ -186,7 +178,6 @@ JOIN_COLLECTIONS = {
             "invocation_script",
             "internal",
             "cancel_on_blocking_job_failure",
-            "run_id",
             "status",
             "supports_termination",
         ],
@@ -201,36 +192,33 @@ JOIN_COLLECTIONS = {
             "invocation_script",
             "internal",
             "cancel_on_blocking_job_failure",
-            "run_id",
             "status",
             "supports_termination",
         ],
         "exclude_to": [],
     },
     "job-requirements": {
-        "collection": "jobs",
+        "collection": "resource_requirements",
         "edge": "requires",
-        "outbound": True,
+        "outbound": False,
         "exclude_from": [
             "invocation_script",
             "internal",
             "cancel_on_blocking_job_failure",
-            "run_id",
             "status",
             "supports_termination",
         ],
         "exclude_to": [],
     },
     "job-results": {
-        "collection": "jobs",
+        "collection": "results",
         "edge": "returned",
-        "outbound": True,
+        "outbound": False,
         "exclude_from": [
             "command",
             "invocation_script",
             "internal",
             "cancel_on_blocking_job_failure",
-            "run_id",
             "status",
             "supports_termination",
         ],
@@ -245,22 +233,20 @@ JOIN_COLLECTIONS = {
             "invocation_script",
             "internal",
             "cancel_on_blocking_job_failure",
-            "run_id",
             "status",
             "supports_termination",
         ],
         "exclude_to": [],
     },
     "job-process-utilization": {
-        "collection": "jobs",
+        "collection": "job_process_stats",
         "edge": "process_used",
-        "outbound": True,
+        "outbound": False,
         "exclude_from": [
             "command",
             "invocation_script",
             "internal",
             "cancel_on_blocking_job_failure",
-            "run_id",
             "status",
             "supports_termination",
         ],
@@ -275,7 +261,6 @@ JOIN_COLLECTIONS = {
             "invocation_script",
             "internal",
             "cancel_on_blocking_job_failure",
-            "run_id",
             "status",
             "supports_termination",
         ],
@@ -290,7 +275,6 @@ JOIN_COLLECTIONS = {
             "invocation_script",
             "internal",
             "cancel_on_blocking_job_failure",
-            "run_id",
             "status",
             "supports_termination",
         ],
@@ -306,15 +290,15 @@ JOIN_COLLECTIONS = {
     "--filters",
     multiple=True,
     type=str,
-    help="Filter the 'from' values according to each key=value pair. Only key and "
-    "name for the primary collection are currently supported",
+    help="Filter the values according to each key=value pair on the primary collection.",
 )
 @click.option("-l", "--limit", type=int, help="Limit the output to this number of jobs.")
 @click.option("-s", "--skip", default=0, type=int, help="Skip this number of jobs.")
 @click.pass_obj
 @click.pass_context
 def join(ctx, api, name, filters, limit, skip):
-    """Perform a join of collections from a pre-set configuration.
+    """Perform a join of collections from a pre-defined configuration.
+    Refer to show-join-configurations command for details.
 
     \b
     Examples:
@@ -323,7 +307,7 @@ def join(ctx, api, name, filters, limit, skip):
     2. Show jobs and results in JSON format.
        $ torc -F json collections join job-results
     3. Show results for one job. This uses the job key.
-       $ torc -F json collections join job-results -f collection_key=97178713
+       $ torc -F json collections join job-results -f return_code=0
     """
     # TODO: consider doing this on the server side so that other apps can leverage the logic.
     join_def = JOIN_COLLECTIONS[name]
@@ -339,6 +323,12 @@ def join(ctx, api, name, filters, limit, skip):
         exclude_from=set(join_def["exclude_from"]),
         exclude_to=set(join_def["exclude_to"]),
     )
+
+
+@click.command()
+def show_join_configurations():
+    """Show the pre-defined configurations for use in the join command."""
+    pprint(JOIN_COLLECTIONS)
 
 
 @click.command(name="list")
@@ -362,5 +352,6 @@ def list_collections(ctx, api, raw):
 
 
 collections.add_command(join)
+collections.add_command(show_join_configurations)
 collections.add_command(join_by_edge)
 collections.add_command(list_collections)

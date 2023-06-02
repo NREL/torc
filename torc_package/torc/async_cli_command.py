@@ -43,8 +43,12 @@ class AsyncJobBase(abc.ABC):
         """Set the underlying job object that is stored in the database."""
 
     @abc.abstractmethod
-    def get_result(self):
+    def get_result(self, run_id):
         """Return a Result for the job after it is completed.
+
+        Parameters
+        ----------
+        run_id : int
 
         Returns
         -------
@@ -112,11 +116,11 @@ class AsyncCliCommand(AsyncJobBase):
     def db_job(self, job):
         self._db_job = job
 
-    def get_result(self):
+    def get_result(self, run_id):
         assert self._is_complete
         return WorkflowResultsModel(
             job_key=self.key,
-            run_id=self._db_job.run_id,
+            run_id=run_id,
             return_code=self._return_code,
             exec_time_minutes=self._exec_time_s / 60,
             completion_time=self._completion_time,

@@ -115,6 +115,7 @@ class JobRunner:
         # TODO: too many inputs and too complex. Needs refactoring.
         self._api = api
         self._workflow = workflow
+        self._run_id = send_api_command(api.get_workflows_key_status, workflow.key).run_id
         self._outstanding_jobs = {}
         self._pids = {}
         self._jobs_pending_process_stat_completion = []
@@ -481,7 +482,7 @@ class JobRunner:
     def _cleanup_job(self, job: AsyncCliCommand, status):
         self._outstanding_jobs.pop(job.key)
         self._increment_resources(job.db_job)
-        result = job.get_result()
+        result = job.get_result(self._run_id)
         self._log_job_complete_event(job.key, status)
         self._complete_job(job.db_job, result, status)
         if self._stats.process:
@@ -490,15 +491,8 @@ class JobRunner:
 
     def _run_job(self, job: AsyncCliCommand):
         job.run(self._output_dir)
-        job.db_job.run_id += 1
         # The database changes db_job._rev on every update.
         # This reassigns job.db_job in order to stay current.
-        job.db_job = send_api_command(
-            self._api.put_workflows_workflow_jobs_key,
-            job.db_job,
-            self._workflow.key,
-            job.key,
-        )
         job.db_job = send_api_command(
             self._api.put_workflows_workflow_jobs_key_manage_status_change_status_rev,
             self._workflow.key,
@@ -646,11 +640,6 @@ class JobRunner:
             assert result.resource_type != ResourceType.PROCESS, result
 
     def _post_job_process_stats(self, result: ProcessStatResults):
-        run_id = send_api_command(
-            self._api.get_workflows_workflow_jobs_key,
-            self._workflow.key,
-            result.job_key,
-        ).run_id
         res = send_api_command(
             self._api.post_workflows_workflow_job_process_stats,
             WorkflowJobProcessStatsModel(
@@ -660,7 +649,7 @@ class JobRunner:
                 max_rss=result.maximum["rss"],
                 num_samples=result.num_samples,
                 job_key=result.job_key,
-                run_id=run_id,
+                run_id=self._run_id,
                 timestamp=str(datetime.now()),
             ),
             self._workflow.key,

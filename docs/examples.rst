@@ -70,14 +70,14 @@ this workflow.
     $ torc jobs list
     +-----------------------------------------------------------------------------------------------------------------------------------------------+
     |                                                           Jobs in workflow 98178840                                                           |
-    +-------+-------------+-------------------------------------------------------------------------------------------+---------+--------+----------+
-    | index |     name    |                                          command                                          |  status | run_id |   key    |
-    +-------+-------------+-------------------------------------------------------------------------------------------+---------+--------+----------+
-    |   0   |  preprocess |         python tests/scripts/preprocess.py -i output/inputs.json -o output/f1.json        |  ready  |   0    | 98178995 |
-    |   1   |    work1    |              python tests/scripts/work.py -i output/f1.json -o output/f2.json             | blocked |   0    | 98179023 |
-    |   2   |    work2    |              python tests/scripts/work.py -i output/f1.json -o output/f3.json             | blocked |   0    | 98179057 |
-    |   3   | postprocess | python tests/scripts/postprocess.py -i output/f2.json -i output/f3.json -o output/f4.json | blocked |   0    | 98179091 |
-    +-------+-------------+-------------------------------------------------------------------------------------------+---------+--------+----------+
+    +-------+-------------+-------------------------------------------------------------------------------------------+---------+----------+
+    | index |     name    |                                          command                                          |  status |   key    |
+    +-------+-------------+-------------------------------------------------------------------------------------------+---------+----------+
+    |   0   |  preprocess |         python tests/scripts/preprocess.py -i output/inputs.json -o output/f1.json        |  ready  | 98178995 |
+    |   1   |    work1    |              python tests/scripts/work.py -i output/f1.json -o output/f2.json             | blocked | 98179023 |
+    |   2   |    work2    |              python tests/scripts/work.py -i output/f1.json -o output/f3.json             | blocked | 98179057 |
+    |   3   | postprocess | python tests/scripts/postprocess.py -i output/f2.json -i output/f3.json -o output/f4.json | blocked | 98179091 |
+    +-------+-------------+-------------------------------------------------------------------------------------------+---------+----------+
 
 5. Make a visualization of the job dependencies.
 

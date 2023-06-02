@@ -169,8 +169,8 @@ criteria:
 - The job input files were updated and have a new timestamp.
 - User data documents consumed by the job were updated and have a new revision.
 
-Each job contains a ``run_id`` field. The torc worker application increments the value each time it
-runs a job. This allows you to inspect results from each run.
+The workflow status contains a ``run_id`` field. The torc worker application increments the value
+each time it starts or restarts a workflow. This allows you to inspect results from each run.
 
 Cancel a workflow
 =================
