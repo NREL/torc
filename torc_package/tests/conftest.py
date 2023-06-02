@@ -348,7 +348,7 @@ def incomplete_workflow(diamond_workflow):
     db, scheduler_config_id, output_dir = diamond_workflow
     api = db.api
     mgr = WorkflowManager(api, db.workflow.key)
-    mgr._initialize_files()  # pylint: disable=protected-access
+    mgr.start()
     for name in ("preprocess", "work1"):
         job = db.get_document("jobs", name)
         status = "done"

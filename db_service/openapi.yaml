@@ -5353,8 +5353,8 @@ paths:
   /workflows/{key}/reset_status:
     post:
       tags: []
-      summary: Reset job status.
-      description: Reset status for all jobs to uninitialized.
+      summary: Reset worklow status.
+      description: Reset workflow status.
       operationId: post_workflows_key_reset_status
       parameters:
       - name: key
@@ -5365,6 +5365,49 @@ paths:
         explode: false
         schema:
           type: string
+      requestBody:
+        content:
+          '*/*': {}
+        required: false
+      responses:
+        "200":
+          description: message
+          content:
+            application/json:
+              schema:
+                type: object
+        "500":
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /workflows/{key}/reset_job_status:
+    post:
+      tags: []
+      summary: Reset job status.
+      description: Reset status for jobs to uninitialized.
+      operationId: post_workflows_key_reset_job_status
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: failed_only
+        in: query
+        description: Only reset failed jobs
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       requestBody:
         content:
           '*/*': {}

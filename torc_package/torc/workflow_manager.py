@@ -55,6 +55,7 @@ class WorkflowManager:
         self._check_workflow(ignore_missing_data=ignore_missing_data)
         self._initialize_files()
         send_api_command(self._api.post_workflows_key_reset_status, self._key)
+        send_api_command(self._api.post_workflows_key_reset_job_status, self._key)
         self._bump_run_id()
         # Set every job status from uninitialized to ready or blocked.
         send_api_command(self._api.post_workflows_key_initialize_jobs, self._key)

@@ -122,6 +122,8 @@ def test_api_workflow_status(completed_workflow):
     new_status = api.get_workflows_key_status(db.workflow.key)
     assert new_status.run_id == orig + 1
     api.post_workflows_key_reset_status(db.workflow.key)
+    api.post_workflows_key_reset_job_status(db.workflow.key)
+    api.post_workflows_key_reset_job_status(db.workflow.key, failed_only=True)
     new_status = api.get_workflows_key_status(db.workflow.key)
     assert new_status.run_id == orig + 1
 

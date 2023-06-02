@@ -11,8 +11,9 @@ router.get('/workflows/:workflow/results/find_by_job/:key', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(workflowKey, res);
+  const workflowStatus = query.getWorkflowStatus(workflow);
   const job = documents.getWorkflowDocument(workflow, 'jobs', key, res);
-  const result = query.getLatestJobResult(job, workflow);
+  const result = query.getJobResultByRunId(job, workflow, workflowStatus.run_id);
   if (result == null) {
     res.throw(404, `No result is stored for job ${key}`);
   }

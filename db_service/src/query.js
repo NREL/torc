@@ -466,6 +466,35 @@ function getLatestJobResult(job, workflow) {
 }
 
 /**
+ * Return job result for the given runId.
+ * Return null if the job does not have a result for that runId.
+ * @param {Object} job
+ * @param {Object} workflow
+ * @param {number} runId
+ * @return {Object}
+ */
+function getJobResultByRunId(job, workflow, runId) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'returned');
+  const cursor = query({count: true})`
+    FOR v, e, p
+      IN 1
+      OUTBOUND ${job._id}
+      GRAPH ${graphName}
+      OPTIONS { edgeCollections: ${edgeName} }
+      FILTER p.vertices[1].run_id == ${runId}
+      RETURN p.vertices[1]
+  `;
+  const count = cursor.count();
+  if (count == 0) {
+    return null;
+  } else if (count > 1) {
+    throw new Error(`Bug: cannot have more than one result with a run_id: ${JSON.stringify(job)}`);
+  }
+  return cursor.next();
+}
+
+/**
  * Return the user data consumed by the job.
  * @param {Object} job
  * @param {Object} workflow
@@ -832,6 +861,7 @@ function joinCollectionsByOutboundEdge(
       .limit(limit)
       .toArray();
   const edgeName = config.getWorkflowCollectionName(workflow, edgeBase);
+
   const cursor = query({count: true})`
     FOR x in ${fromCollection}
       FOR v, e, p
@@ -978,8 +1008,9 @@ function manageJobStatusChange(job, workflow) {
   const meta = jobs.update(job, job, {mergeObjects: false});
   Object.assign(job, meta);
 
+  const workflowStatus = getWorkflowStatus(workflow);
   if (!isJobStatusComplete(oldStatus) && isJobStatusComplete(job.status)) {
-    const result = getLatestJobResult(job, workflow);
+    const result = getJobResultByRunId(job, workflow, workflowStatus.run_id);
     if (result == null) {
       throw new Error(
           `A job must have a result before it is completed: ${job._key}.`,
@@ -1167,14 +1198,27 @@ function processConsumedUserData(workflow) {
 
 /** Reset job status to uninitialized.
  * @param {Object} workflow
+ * @param {boolean} failedOnly
  */
-function resetJobStatus(workflow) {
-  const jobs = config.getWorkflowCollection(workflow, 'jobs');
-  for (const job of iterWorkflowDocuments(workflow, 'jobs')) {
+function resetJobStatus(workflow, failedOnly) {
+  const jobsCollection = config.getWorkflowCollection(workflow, 'jobs');
+  const workflowStatus = getWorkflowStatus(workflow);
+
+  // PERF: this could be one query.
+  for (const job of jobsCollection.all()) {
+    if (failedOnly) {
+      const result = getJobResultByRunId(job, workflow, workflowStatus.run_id);
+      // This only includes jobs that completed and failed.
+      // Some jobs may not have run because they were already successful.
+      // Jobs that did not complete will get reset in the workflow restart command.
+      if (result == null || result.return_code == 0) {
+        continue;
+      }
+    }
     job.status = JobStatus.Uninitialized;
-    jobs.update(job, job, {mergeObjects: false});
+    jobsCollection.update(job, job, {mergeObjects: false});
   }
-  console.log(`Reset all job status to ${JobStatus.Uninitialized}`);
+  console.log(`Reset job status to ${JobStatus.Uninitialized}`);
 }
 
 /** Reset workflow config.
@@ -1203,16 +1247,9 @@ function resetWorkflowStatus(workflow) {
     scheduled_compute_node_ids: [],
     auto_tune_status: schemas.autoTuneStatus.validate({}).value,
   };
-  const jobs = config.getWorkflowCollection(workflow, 'jobs');
-
   const doc = getWorkflowStatus(workflow);
   Object.assign(doc, status);
   db.workflow_statuses.update(doc, doc, {mergeObjects: false});
-
-  for (const job of iterWorkflowDocuments(workflow, 'jobs')) {
-    job.status = JobStatus.Uninitialized;
-    jobs.update(job, job, {mergeObjects: false});
-  }
   console.log(`Reset workflow status`);
 }
 
@@ -1280,7 +1317,7 @@ function processAutoTuneResourceRequirementsResults(workflow) {
     const maxMemory = `${maxMemoryGb}g`;
     const maxCpusUsed = stats.max_cpu_percent == 0 ? 1 : Math.ceil(stats.max_cpu_percent / 100);
     const rr = getJobResourceRequirements(job, workflow);
-    const result = getLatestJobResult(job, workflow);
+    const result = getJobResultByRunId(job, workflow, workflowStatus.run_id);
     if (result == null) {
       throw new Error(`No job result for ${job._key} - ${job.status}. Cannot complete auto-tune.`);
     }
@@ -1338,7 +1375,8 @@ function updateBlockedJobsFromCompletion(job, workflow) {
       OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
       RETURN p.vertices[1]
   `;
-  const result = getLatestJobResult(job, workflow);
+  const workflowStatus = getWorkflowStatus(workflow);
+  const result = getJobResultByRunId(job, workflow, workflowStatus.run_id);
   // TODO: should other queries use bfs?
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
   for (const blockedJob of cursor) {
@@ -1401,6 +1439,7 @@ module.exports = {
   cancelWorkflowJobs,
   getBlockingJobs,
   getJobResourceRequirements,
+  getJobResultByRunId,
   getJobScheduler,
   getJobsThatNeedFile,
   getLatestJobResult,

@@ -261,6 +261,30 @@ def assign_resource_requirements(ctx, api, resource_requirements_key, job_keys):
 
 
 @click.command()
+@click.argument("job_keys", nargs=-1)
+@click.pass_obj
+@click.pass_context
+def reset_status(ctx, api, job_keys):
+    """Reset the status of one or more jobs."""
+    setup_cli_logging(ctx, __name__)
+    check_database_url(api)
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    count = 0
+    for key in job_keys:
+        job = api.get_workflows_workflow_jobs_key(workflow_key, key)
+        if job.status != "uninitialized":
+            job.status = "uninitialized"
+            api.put_workflows_workflow_jobs_key(job, workflow_key, key)
+            count += 1
+            logger.info("Reset job status of job key=%s name=%s", job.key, job.name)
+
+    if count == 0:
+        logger.info("No jobs were reset.")
+    else:
+        logger.info("Run the command 'torc workflows restart' to initialize job status.")
+
+
+@click.command()
 @click.option(
     "-c",
     "--cpu-affinity-cpus-per-job",
@@ -325,4 +349,5 @@ jobs.add_command(delete_all)
 jobs.add_command(list_jobs)
 jobs.add_command(list_process_stats)
 jobs.add_command(assign_resource_requirements)
+jobs.add_command(reset_status)
 jobs.add_command(run)

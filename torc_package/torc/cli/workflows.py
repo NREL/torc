@@ -427,6 +427,26 @@ def reset_status(ctx, api):
 
 @click.command()
 @click.option(
+    "-f",
+    "--failed-only",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Only reset the status of failed jobs.",
+)
+@click.pass_obj
+@click.pass_context
+def reset_job_status(ctx, api, failed_only):
+    """Reset the status of jobs. Resets all jobs unless failed_only is true."""
+    setup_cli_logging(ctx, __name__)
+    check_database_url(api)
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    api.post_workflows_key_reset_job_status(workflow_key, failed_only=failed_only)
+    logger.info("Reset job status, failed_only=%s", failed_only)
+
+
+@click.command()
+@click.option(
     "-i",
     "--ignore-missing-data",
     is_flag=True,
@@ -576,6 +596,7 @@ workflows.add_command(list_workflows)
 workflows.add_command(process_auto_tune_resource_requirements_results)
 workflows.add_command(recommend_nodes)
 workflows.add_command(reset_status)
+workflows.add_command(reset_job_status)
 workflows.add_command(restart)
 workflows.add_command(start)
 workflows.add_command(show)

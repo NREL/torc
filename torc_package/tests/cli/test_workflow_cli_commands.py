@@ -67,7 +67,7 @@ def test_workflow_commands(create_workflow_cli):
                 "-f",
                 "name=small",
             ]
-        )
+        )["items"]
     ]
     assert items and all(x == "small" for x in items)
 

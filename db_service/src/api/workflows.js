@@ -367,17 +367,33 @@ router.post('/workflows/:key/reset_status', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   try {
-    query.resetJobStatus(workflow);
     query.resetWorkflowStatus(workflow);
+    res.send({message: `Reset workflow status`});
+  } catch (e) {
+    utils.handleArangoApiErrors(e, res, `Reset workflow status workflow key=${key}`);
+  }
+})
+    .pathParam('key', joi.string().required(), 'Workflow key')
+    .response(joi.object(), 'message')
+    .summary('Reset worklow status.')
+    .description(`Reset workflow status.`);
+
+router.post('/workflows/:key/reset_job_status', function(req, res) {
+  const key = req.pathParams.key;
+  const failedOnly = req.queryParams.failed_only;
+  const workflow = documents.getWorkflow(key, res);
+  try {
+    query.resetJobStatus(workflow, failedOnly);
     res.send({message: `Reset job status to ${JobStatus.Uninitialized}`});
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Reset job status workflow key=${key}`);
   }
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
+    .queryParam('failed_only', joi.boolean().default(false), 'Only reset failed jobs')
     .response(joi.object(), 'message')
     .summary('Reset job status.')
-    .description(`Reset status for all jobs to ${JobStatus.Uninitialized}.`);
+    .description(`Reset status for jobs to ${JobStatus.Uninitialized}.`);
 
 router.get('/workflows/:key/status', function(req, res) {
   const key = req.pathParams.key;
