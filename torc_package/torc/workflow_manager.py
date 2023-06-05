@@ -29,6 +29,7 @@ class WorkflowManager:
         """
         self._check_workflow(ignore_missing_data=ignore_missing_data)
         self._bump_run_id()
+        send_api_command(self._api.post_workflows_key_reset_status, self._key)
         self._reinitialize_jobs()
         send_api_command(
             self._api.post_workflows_workflow_events,
