@@ -77,7 +77,7 @@ class ComputeNodeResourceStatConfig(TorcBaseModel):
     )
     monitor_type: str = Field(
         description="'aggregation' or 'periodic'. Keep aggregated stats in memory or record time-series data on an interval.",
-        default=False,
+        default="aggregation",
     )
     make_plots: bool = Field(
         description="Make time-series plots if monitor_type is periodic.", default=True
