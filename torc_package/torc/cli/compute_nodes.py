@@ -6,7 +6,7 @@ import logging
 import click
 
 from torc.api import iter_documents
-from torc.resource_monitor.reports import (
+from torc.resource_monitor_reports import (
     list_compute_node_stats,
     make_compute_node_stats_text_tables,
 )

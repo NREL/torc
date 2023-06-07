@@ -10,7 +10,7 @@ from swagger_client.models.workflow_jobs_model import WorkflowJobsModel
 
 from torc.api import iter_documents
 from torc.job_runner import JobRunner, JOB_COMPLETION_POLL_INTERVAL
-from torc.resource_monitor.reports import iter_job_process_stats
+from torc.resource_monitor_reports import iter_job_process_stats
 from .common import (
     check_database_url,
     get_output_format_from_context,

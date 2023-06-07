@@ -2,10 +2,11 @@
 
 import itertools
 
+from resource_monitor.timing.timer_stats import Timer
 from swagger_client import ApiClient, DefaultApi
 from swagger_client.configuration import Configuration
 
-from torc.utils.timing import timer_stats_collector, Timer
+from torc.common import timer_stats_collector
 
 
 def make_api(database_url) -> DefaultApi:

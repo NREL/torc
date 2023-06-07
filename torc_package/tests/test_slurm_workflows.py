@@ -253,6 +253,8 @@ def _fix_slurm_account(spec_file, output_dir, account):
     for scheduler in data["schedulers"]["slurm_schedulers"]:
         scheduler["account"] = account
         scheduler["qos"] = "standby"
+    data["config"]["compute_node_resource_stats"]["monitor_type"] = "periodic"
+    data["config"]["compute_node_resource_stats"]["interval"] = 1
     dump_data(data, dst_file, indent=2)
     return dst_file
 

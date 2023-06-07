@@ -17,6 +17,17 @@ from pathlib import Path
 import psutil
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 from pydantic.json import timedelta_isoformat  # pylint: disable=no-name-in-module
+from resource_monitor.models import (
+    ComputeNodeResourceStatConfig,
+    ComputeNodeResourceStatResults,
+    CompleteProcessesCommand,
+    UpdatePidsCommand,
+    ShutDownCommand,
+    ProcessStatResults,
+    ResourceType,
+)
+from resource_monitor.resource_monitor import run_monitor_async
+from resource_monitor.timing.timer_stats import Timer
 from swagger_client import DefaultApi
 from swagger_client.rest import ApiException
 from swagger_client.models.workflow_compute_nodes_model import WorkflowComputeNodesModel
@@ -37,20 +48,11 @@ from swagger_client.models.workflows_model import WorkflowsModel
 
 import torc.version
 from torc.api import send_api_command, iter_documents
-from torc.common import JOB_STDIO_DIR, STATS_DIR
+from torc.common import JOB_STDIO_DIR, STATS_DIR, timer_stats_collector
 from torc.exceptions import InvalidParameter
-from torc.resource_monitor.models import (
-    ComputeNodeResourceStatConfig,
-    ComputeNodeResourceStatResults,
-    IpcMonitorCommands,
-    ProcessStatResults,
-    ResourceType,
-)
-from torc.resource_monitor.resource_monitor import run_monitor_async
 from torc.utils.cpu_affinity_mask_tracker import CpuAffinityMaskTracker
 from torc.utils.filesystem_factory import make_path
 from torc.utils.run_command import run_command
-from torc.utils.timing import timer_stats_collector, Timer
 from .async_cli_command import AsyncCliCommand
 from .common import KiB, MiB, GiB, TiB
 
@@ -305,7 +307,11 @@ class JobRunner:
             compute_node,
             self._workflow.key,
         )
-        logger.info("Running on compute node hostname=%s key=%s", self._hostname, compute_node.key)
+        logger.info(
+            "Running on compute node hostname=%s key=%s",
+            self._hostname,
+            compute_node.key,
+        )
 
     def _complete_compute_node(self):
         self._compute_node.is_active = False
@@ -548,19 +554,20 @@ class JobRunner:
     def _start_resource_monitor(self):
         self._parent_monitor_conn, child_conn = multiprocessing.Pipe()
         pids = self._pids if self._stats.process else None
+        monitor_log_file = self._output_dir / f"monitor_{self._compute_node.key}.log"
         logger.info("Start resource monitor with %s", json.dumps(self._stats.dict()))
         if self._stats.monitor_type == "aggregation":
-            args = (child_conn, self._stats, pids, None)
+            args = (child_conn, self._stats, pids, monitor_log_file, None)
         elif self._stats.monitor_type == "periodic":
             db_file = self._stats_dir / f"compute_node_{self._compute_node.key}.sqlite"
-            args = (child_conn, self._stats, pids, db_file)
+            args = (child_conn, self._stats, pids, monitor_log_file, db_file)
         else:
             raise Exception(f"Unsupported monitor_type={self._stats.monitor_type}")
         self._monitor_proc = multiprocessing.Process(target=run_monitor_async, args=args)
         self._monitor_proc.start()
 
     def _stop_resource_monitor(self):
-        self._parent_monitor_conn.send({"command": IpcMonitorCommands.SHUTDOWN})
+        self._parent_monitor_conn.send(ShutDownCommand(pids=self._pids))
         has_results = False
         for _ in range(30):
             if self._parent_monitor_conn.poll():
@@ -568,38 +575,38 @@ class JobRunner:
                 break
             time.sleep(1)
         if has_results:
-            results = self._parent_monitor_conn.recv()
-            if results.results:
-                self._post_compute_node_stats(results)
-            self._monitor_proc.join()
+            system_results, _ = self._parent_monitor_conn.recv()
+            if system_results.results:
+                self._post_compute_node_stats(system_results)
         else:
             logger.error("Failed to receive results from resource monitor.")
+        self._monitor_proc.join()
         self._parent_monitor_conn = None
         self._monitor_proc = None
 
     def _handle_completed_process_stats(self):
         if self._stats.process:
             self._parent_monitor_conn.send(
-                {
-                    "command": IpcMonitorCommands.COMPLETE_JOBS,
-                    "pids": self._pids,
-                    "completed_job_keys": self._jobs_pending_process_stat_completion,
-                }
+                CompleteProcessesCommand(
+                    pids=self._pids,
+                    completed_process_keys=self._jobs_pending_process_stat_completion,
+                )
             )
             with Timer(timer_stats_collector, "receive_process_stats"):
                 results = self._parent_monitor_conn.recv()
+            stats = []
             for result in results.results:
                 self._post_job_process_stats(result)
-            if results.results:
+                # These json methods let Pydantic run its data type conversions.
+                x = json.loads(result.json())
+                x["job_key"] = x.pop("process_key")
+                stats.append(WorkflowsworkflowcomputeNodeStatsStats(**x))
+            if stats:
                 send_api_command(
                     self._api.post_workflows_workflow_compute_node_stats,
                     WorkflowComputeNodeStatsModel(
                         hostname=self._hostname,
-                        # These json methods let Pydantic run its data type conversions.
-                        stats=[
-                            WorkflowsworkflowcomputeNodeStatsStats(**json.loads(x.json()))
-                            for x in results.results
-                        ],
+                        stats=stats,
                         timestamp=str(datetime.now()),
                     ),
                     self._workflow.key,
@@ -608,9 +615,7 @@ class JobRunner:
 
     def _update_pids_to_monitor(self):
         if self._stats.process:
-            self._parent_monitor_conn.send(
-                {"command": IpcMonitorCommands.UPDATE_PIDS, "pids": self._pids}
-            )
+            self._parent_monitor_conn.send(UpdatePidsCommand(config=self._stats, pids=self._pids))
 
     def _post_compute_node_stats(self, results: ComputeNodeResourceStatResults):
         res = send_api_command(
@@ -648,7 +653,7 @@ class JobRunner:
                 avg_rss=result.average["rss"],
                 max_rss=result.maximum["rss"],
                 num_samples=result.num_samples,
-                job_key=result.job_key,
+                job_key=result.process_key,
                 run_id=self._run_id,
                 timestamp=str(datetime.now()),
             ),
@@ -657,7 +662,7 @@ class JobRunner:
         send_api_command(
             self._api.post_workflows_workflow_edges_name,
             EdgesNameModel(
-                _from=f"jobs__{self._workflow.key}/{result.job_key}",
+                _from=f"jobs__{self._workflow.key}/{result.process_key}",
                 to=res.id,
             ),
             self._workflow.key,

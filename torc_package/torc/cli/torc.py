@@ -22,8 +22,8 @@ from torc.cli.results import results
 from torc.cli.stats import stats
 from torc.cli.user_data import user_data
 from torc.cli.workflows import workflows
+from torc.common import timer_stats_collector
 from torc.torc_rc import TorcRuntimeConfig
-from torc.utils.timing import timer_stats_collector
 
 
 logger = logging.getLogger(__name__)

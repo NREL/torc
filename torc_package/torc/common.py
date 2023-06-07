@@ -2,12 +2,17 @@
 
 from pydantic import BaseModel  # pylint: disable=no-name-in-module
 
+from resource_monitor.timing.timer_stats import TimerStatsCollector
+
+
 KiB = 1024
 MiB = KiB * KiB
 GiB = MiB * KiB
 TiB = GiB * KiB
 JOB_STDIO_DIR = "job-stdio"
 STATS_DIR = "stats"
+
+timer_stats_collector = TimerStatsCollector()
 
 
 class TorcBaseModel(BaseModel):

@@ -13,7 +13,7 @@ from torc.api import iter_documents
 from torc.common import STATS_DIR
 from torc.job_runner import JobRunner
 from torc.loggers import setup_logging
-from torc.resource_monitor.reports import (
+from torc.resource_monitor_reports import (
     make_job_process_stats_dataframe,
     make_compute_node_stats_dataframes,
 )

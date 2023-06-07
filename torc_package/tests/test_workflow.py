@@ -22,7 +22,7 @@ from torc.cli.torc import cli
 from torc.common import GiB
 from torc.exceptions import InvalidWorkflow
 from torc.job_runner import JobRunner
-from torc.utils.timing import timer_stats_collector
+from torc.common import timer_stats_collector
 from torc.workflow_manager import WorkflowManager
 
 
