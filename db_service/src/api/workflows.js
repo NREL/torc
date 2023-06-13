@@ -446,7 +446,7 @@ router.post('/workflows/:key/join_by_inbound_edge/:collection/:edge', function(r
   const qp = req.queryParams;
   const filters = req.body;
   const limit = utils.getItemsLimit(qp.limit);
-  const workflow = documents.getWorkflow(key);
+  const workflow = documents.getWorkflow(key, res);
   try {
     const cursor = query.joinCollectionsByInboundEdge(
         workflow, collection, edge, filters, qp.skip, limit);
