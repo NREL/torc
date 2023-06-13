@@ -81,7 +81,7 @@ def sanitize_workflow(data: dict):
             data.pop(collection)
     for collection in ("jobs", "resource_requirements", "files"):
         for item in data.get(collection, []):
-            for field in [k for k, v in item.items() if not v]:
+            for field in [k for k, v in item.items() if v is None]:
                 item.pop(field)
     for field in ("aws_schedulers", "local_schedulers", "slurm_schedulers"):
         schedulers = data.get("schedulers", {})
