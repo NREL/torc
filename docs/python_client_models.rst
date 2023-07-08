@@ -4,35 +4,35 @@
 OpenAPI Client Models
 #####################
 
-.. autoclass:: swagger_client.models.workflow_specifications_model.WorkflowSpecificationsModel
+.. autoclass:: torc.swagger_client.models.workflow_specifications_model.WorkflowSpecificationsModel
    :members:
 
-.. autoclass:: swagger_client.models.workflow_job_specifications_model.WorkflowJobSpecificationsModel
+.. autoclass:: torc.swagger_client.models.workflow_job_specifications_model.WorkflowJobSpecificationsModel
    :members:
 
-.. autoclass:: swagger_client.models.workflows_model.WorkflowsModel
+.. autoclass:: torc.swagger_client.models.workflows_model.WorkflowsModel
    :members:
 
-.. autoclass:: swagger_client.models.workflow_config_key_model.WorkflowConfigKeyModel
+.. autoclass:: torc.swagger_client.models.workflow_config_key_model.WorkflowConfigKeyModel
    :members:
 
-.. autoclass:: swagger_client.models.compute_node_stats_key_model.ComputeNodeStatsKeyModel
+.. autoclass:: torc.swagger_client.models.compute_node_stats_key_model.ComputeNodeStatsKeyModel
    :members:
 
-.. autoclass:: swagger_client.models.compute_nodes_key_model.ComputeNodesKeyModel
+.. autoclass:: torc.swagger_client.models.compute_nodes_key_model.ComputeNodesKeyModel
    :members:
 
-.. autoclass:: swagger_client.models.edges_name_model.EdgesNameModel
+.. autoclass:: torc.swagger_client.models.edges_name_model.EdgesNameModel
    :members:
 
-.. autoclass:: swagger_client.models.files_key_model.FilesKeyModel
+.. autoclass:: torc.swagger_client.models.files_key_model.FilesKeyModel
    :members:
 
-.. autoclass:: swagger_client.models.jobs_key_model.JobsKeyModel
+.. autoclass:: torc.swagger_client.models.jobs_key_model.JobsKeyModel
    :members:
 
-.. autoclass:: swagger_client.models.job_process_stats_key_model.JobProcessStatsKeyModel
+.. autoclass:: torc.swagger_client.models.job_process_stats_key_model.JobProcessStatsKeyModel
    :members:
 
-.. autoclass:: swagger_client.models.results_key_model.ResultsKeyModel
+.. autoclass:: torc.swagger_client.models.results_key_model.ResultsKeyModel
    :members:

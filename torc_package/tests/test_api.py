@@ -2,7 +2,7 @@
 
 
 import pytest
-from swagger_client.rest import ApiException
+from torc.swagger_client.rest import ApiException
 
 from torc.api import make_api, remove_db_keys
 

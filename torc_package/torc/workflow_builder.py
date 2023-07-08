@@ -1,29 +1,29 @@
 """Helper code to build a workflow dynamically"""
 
 
-from swagger_client.models.workflow_files_model import WorkflowFilesModel
-from swagger_client.models.workflow_job_specifications_model import (
+from torc.swagger_client.models.workflow_files_model import WorkflowFilesModel
+from torc.swagger_client.models.workflow_job_specifications_model import (
     WorkflowJobSpecificationsModel,
 )
-from swagger_client.models.workflow_resource_requirements_model import (
+from torc.swagger_client.models.workflow_resource_requirements_model import (
     WorkflowResourceRequirementsModel,
 )
-from swagger_client.models.workflow_specifications_model import (
+from torc.swagger_client.models.workflow_specifications_model import (
     WorkflowSpecificationsModel,
 )
-from swagger_client.models.workflow_aws_schedulers_model import (
+from torc.swagger_client.models.workflow_aws_schedulers_model import (
     WorkflowAwsSchedulersModel,
 )
-from swagger_client.models.workflow_local_schedulers_model import (
+from torc.swagger_client.models.workflow_local_schedulers_model import (
     WorkflowLocalSchedulersModel,
 )
-from swagger_client.models.workflow_slurm_schedulers_model import (
+from torc.swagger_client.models.workflow_slurm_schedulers_model import (
     WorkflowSlurmSchedulersModel,
 )
-from swagger_client.models.workflow_specifications_schedulers import (
+from torc.swagger_client.models.workflow_specifications_schedulers import (
     WorkflowSpecificationsSchedulers,
 )
-from swagger_client.models.workflow_user_data_model import WorkflowUserDataModel
+from torc.swagger_client.models.workflow_user_data_model import WorkflowUserDataModel
 
 
 class WorkflowBuilder:

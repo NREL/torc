@@ -4,7 +4,7 @@ import json
 import logging
 
 import click
-from swagger_client.models.workflow_resource_requirements_model import (
+from torc.swagger_client.models.workflow_resource_requirements_model import (
     WorkflowResourceRequirementsModel,
 )
 

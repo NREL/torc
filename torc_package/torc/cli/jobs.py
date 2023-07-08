@@ -6,7 +6,7 @@ import socket
 from pathlib import Path
 
 import click
-from swagger_client.models.workflow_jobs_model import WorkflowJobsModel
+from torc.swagger_client.models.workflow_jobs_model import WorkflowJobsModel
 
 from torc.api import iter_documents
 from torc.job_runner import JobRunner, JOB_COMPLETION_POLL_INTERVAL

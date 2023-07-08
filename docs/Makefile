@@ -8,10 +8,6 @@ SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = .
 BUILDDIR      = _build
 
-export TORC_URL=http://localhost:8529
-export TORC_PASSWORD=openSesame
-export PYTHON_CLIENT=${BUILDDIR}/python_client
-
 # Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
@@ -23,11 +19,7 @@ help:
 %: Makefile
 	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
 
-${PYTHON_CLIENT}:
-	bash ../db_service/make_api.sh
-	python fix_docstring_errors.py ${PYTHON_CLIENT}/swagger_client/api/default_api.py
-
-html: ${PYTHON_CLIENT}
+html:
 	${SPHINXBUILD} -M html ${SOURCEDIR} ${BUILDDIR}
 
 github: html

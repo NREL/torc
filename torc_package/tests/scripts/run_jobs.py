@@ -3,8 +3,8 @@
 import sys
 from pathlib import Path
 
-from swagger_client import ApiClient, DefaultApi
-from swagger_client.configuration import Configuration
+from torc.swagger_client import ApiClient, DefaultApi
+from torc.swagger_client.configuration import Configuration
 
 from torc.job_runner import JobRunner
 from torc.loggers import setup_logging

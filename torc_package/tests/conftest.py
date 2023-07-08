@@ -9,26 +9,29 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-from swagger_client import ApiClient, DefaultApi
-from swagger_client.configuration import Configuration
-from swagger_client.models.workflow_specifications_schedulers import (
+from torc.swagger_client import ApiClient, DefaultApi
+from torc.swagger_client.configuration import Configuration
+from torc.swagger_client.models.workflow_specifications_schedulers import (
     WorkflowSpecificationsSchedulers,
 )
-from swagger_client.models.workflow_local_schedulers_model import WorkflowLocalSchedulersModel
-from swagger_client.models.workflow_job_specifications_model import WorkflowJobSpecificationsModel
-from swagger_client.models.workflow_resource_requirements_model import (
+from torc.swagger_client.models.workflow_local_schedulers_model import WorkflowLocalSchedulersModel
+from torc.swagger_client.models.workflow_job_specifications_model import (
+    WorkflowJobSpecificationsModel,
+)
+from torc.swagger_client.models.workflow_resource_requirements_model import (
     WorkflowResourceRequirementsModel,
 )
-from swagger_client.models.workflow_specifications_model import WorkflowSpecificationsModel
-from swagger_client.models.workflow_results_model import WorkflowResultsModel
-from swagger_client.models.workflow_config_compute_node_resource_stats import (
+from torc.swagger_client.models.workflow_specifications_model import WorkflowSpecificationsModel
+from torc.swagger_client.models.workflow_results_model import WorkflowResultsModel
+from torc.swagger_client.models.workflow_config_compute_node_resource_stats import (
     WorkflowConfigComputeNodeResourceStats,
 )
-from swagger_client.models.workflow_config_model import WorkflowConfigModel
+from torc.swagger_client.models.workflow_config_model import WorkflowConfigModel
 
 from torc.api import iter_documents
 from torc.cli.torc import cli
 from torc.torc_rc import TorcRuntimeConfig
+from torc.utils.files import load_data, dump_data
 from torc.workflow_builder import WorkflowBuilder
 from torc.workflow_manager import WorkflowManager
 from torc.tests.database_interface import DatabaseInterface
@@ -519,9 +522,13 @@ def create_workflow_cli(tmp_path_factory):
     url = api.api_client.configuration.host
     tmp_path = tmp_path_factory.mktemp("torc")
     file = Path(__file__).parent.parent.parent / "examples" / "independent_workflow.json5"
+    data = load_data(file)
+    data["config"]["compute_node_resource_stats"]["interval"] = 1
+    w_file = tmp_path / file.name
+    dump_data(data, w_file)
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
-        cli, ["-u", url, "-F", "json", "workflows", "create-from-json-file", str(file)]
+        cli, ["-u", url, "-F", "json", "workflows", "create-from-json-file", str(w_file)]
     )
     assert result.exit_code == 0
     key = json.loads(result.stdout)["key"]

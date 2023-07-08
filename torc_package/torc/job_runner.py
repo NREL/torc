@@ -15,8 +15,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import psutil
-from pydantic import BaseModel  # pylint: disable=no-name-in-module
-from pydantic.json import timedelta_isoformat  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, ConfigDict  # pylint: disable=no-name-in-module
 from resource_monitor.models import (
     ComputeNodeResourceStatConfig,
     ComputeNodeResourceStatResults,
@@ -28,23 +27,23 @@ from resource_monitor.models import (
 )
 from resource_monitor.resource_monitor import run_monitor_async
 from resource_monitor.timing.timer_stats import Timer
-from swagger_client import DefaultApi
-from swagger_client.rest import ApiException
-from swagger_client.models.workflow_compute_nodes_model import WorkflowComputeNodesModel
-from swagger_client.models.workflow_compute_node_stats_model import (
+from torc.swagger_client import DefaultApi
+from torc.swagger_client.rest import ApiException
+from torc.swagger_client.models.workflow_compute_nodes_model import WorkflowComputeNodesModel
+from torc.swagger_client.models.workflow_compute_node_stats_model import (
     WorkflowComputeNodeStatsModel,
 )
-from swagger_client.models.workflowsworkflowcompute_node_stats_stats import (
+from torc.swagger_client.models.workflowsworkflowcompute_node_stats_stats import (
     WorkflowsworkflowcomputeNodeStatsStats,
 )
-from swagger_client.models.edges_name_model import EdgesNameModel
-from swagger_client.models.workflow_job_process_stats_model import (
+from torc.swagger_client.models.edges_name_model import EdgesNameModel
+from torc.swagger_client.models.workflow_job_process_stats_model import (
     WorkflowJobProcessStatsModel,
 )
-from swagger_client.models.key_prepare_jobs_for_submission_model import (
+from torc.swagger_client.models.key_prepare_jobs_for_submission_model import (
     KeyPrepareJobsForSubmissionModel,
 )
-from swagger_client.models.workflows_model import WorkflowsModel
+from torc.swagger_client.models.workflows_model import WorkflowsModel
 
 import torc.version
 from torc.api import send_api_command, iter_documents
@@ -598,7 +597,7 @@ class JobRunner:
             for result in results.results:
                 self._post_job_process_stats(result)
                 # These json methods let Pydantic run its data type conversions.
-                x = json.loads(result.json())
+                x = json.loads(result.model_dump_json())
                 x["job_key"] = x.pop("process_key")
                 stats.append(WorkflowsworkflowcomputeNodeStatsStats(**x))
             if stats:
@@ -624,7 +623,7 @@ class JobRunner:
                 hostname=self._hostname,
                 # These json methods let Pydantic run its data type conversions.
                 stats=[
-                    WorkflowsworkflowcomputeNodeStatsStats(**json.loads(x.json()))
+                    WorkflowsworkflowcomputeNodeStatsStats(**json.loads(x.model_dump_json()))
                     for x in results.results
                 ],
                 timestamp=str(datetime.now()),
@@ -756,10 +755,7 @@ def get_memory_in_bytes(memory: str):
 
 # This pydantic code will convert ISO 8601 duration strings to timedelta.
 class _TimeLimitModel(BaseModel):
-    class Config:
-        """Custom config"""
-
-        json_encoders = {timedelta: timedelta_isoformat}
+    model_config = ConfigDict(ser_json_timedelta="iso8601")
 
     time_limit: timedelta
 
@@ -767,7 +763,7 @@ class _TimeLimitModel(BaseModel):
 def convert_end_time_to_duration_str(end_time: datetime):
     """Convert an end time timestamp to an ISO 8601 duration string, relative to current time."""
     duration = end_time - datetime.now()
-    return json.loads(_TimeLimitModel(time_limit=duration).json())["time_limit"]
+    return json.loads(_TimeLimitModel(time_limit=duration).model_dump_json())["time_limit"]
 
 
 def _get_timeout(time_limit):

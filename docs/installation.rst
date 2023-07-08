@@ -22,23 +22,12 @@ Installation
    $ conda create -y -n torc python=3.10
    $ conda activate torc
 
-4. Install the ``resource_monitor`` package used by torc to collect resource statistics. If a wheel
-   file exists at the Eagle path ``/scratch/dthom/torc/latest/resource_monitor*.whl``, install it
-   with pip. Otherwise, install from GitHub with this command:
+4. Install the Python package ``torc`` and its dependency ``resource_monitor``.
 
 .. code-block:: console
 
-   $ pip install git+https://github.nrel.gov/dthom/resource_monitor
-
-5. Install the Python package ``torc`` and the Swagger client that enables communication with the
-   database. The files will have names similar to ``torc-0.1.1-py3-none-any.whl`` and
-   ``swagger_client-1.0.0-py3-none-any.whl``.
-
-.. warning:: This path is on Eagle and is temporary. A persistent path is TBD.
-
-.. code-block:: console
-
-   $ pip install /scratch/dthom/torc/latest/*.whl
+    $ pip install git+ssh://git@github.nrel.gov/viz/wms.git@v0.1.8#subdirectory=torc_package \
+        git+https://github.nrel.gov/dthom/resource_monitor@v0.1.1
 
 Note that you can also install the ``torc`` package from a clone of the repository. This will give
 you the latest code from the ``main`` branch.
@@ -48,7 +37,7 @@ you the latest code from the ``main`` branch.
    $ git clone https://github.nrel.gov/viz/wms.git
    $ pip install -e wms/torc
 
-6. Optionally install ``jq`` from https://stedolan.github.io/jq/download/ for parsing JSON.
+5. Optionally install ``jq`` from https://stedolan.github.io/jq/download/ for parsing JSON.
    This tool is very useful when sending API requests with ``curl`` or dumping torc output to
    JSON.
 

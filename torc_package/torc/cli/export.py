@@ -6,7 +6,7 @@ from pathlib import Path
 from pydoc import locate
 
 import click
-from swagger_client import DefaultApi
+from torc.swagger_client import DefaultApi
 
 from torc.api import iter_documents
 from torc.utils.sql import make_table, insert_rows

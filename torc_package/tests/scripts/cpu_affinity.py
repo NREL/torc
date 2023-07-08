@@ -4,7 +4,7 @@ import multiprocessing
 import os
 import sys
 
-from swagger_client.models.workflow_user_data_model import (
+from torc.swagger_client.models.workflow_user_data_model import (
     WorkflowUserDataModel,
 )
 

@@ -7,16 +7,16 @@ import sys
 from datetime import timedelta
 
 import click
-from swagger_client.models.workflow_slurm_schedulers_model import (
+from torc.swagger_client.models.workflow_slurm_schedulers_model import (
     WorkflowSlurmSchedulersModel,
 )
-from swagger_client.models.workflow_scheduled_compute_nodes_model import (
+from torc.swagger_client.models.workflow_scheduled_compute_nodes_model import (
     WorkflowScheduledComputeNodesModel,
 )
-from swagger_client.models.key_prepare_jobs_for_submission_model import (
+from torc.swagger_client.models.key_prepare_jobs_for_submission_model import (
     KeyPrepareJobsForSubmissionModel,
 )
-from swagger_client.rest import ApiException
+from torc.swagger_client.rest import ApiException
 
 import torc.version
 from torc.api import iter_documents, remove_db_keys

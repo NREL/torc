@@ -9,13 +9,13 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-from swagger_client.models.key_prepare_jobs_for_submission_model import (
+from torc.swagger_client.models.key_prepare_jobs_for_submission_model import (
     KeyPrepareJobsForSubmissionModel,
 )
-from swagger_client.models.workflow_user_data_model import (
+from torc.swagger_client.models.workflow_user_data_model import (
     WorkflowUserDataModel,
 )
-from swagger_client.models.workflow_results_model import WorkflowResultsModel
+from torc.swagger_client.models.workflow_results_model import WorkflowResultsModel
 
 from torc.api import iter_documents
 from torc.cli.torc import cli

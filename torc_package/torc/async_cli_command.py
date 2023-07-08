@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from swagger_client.models.workflow_results_model import WorkflowResultsModel
+from torc.swagger_client.models.workflow_results_model import WorkflowResultsModel
 
 from torc.common import JOB_STDIO_DIR
 

@@ -61,7 +61,7 @@ setup(
         "psutil",
         "prettytable",
         "pyarrow",
-        "pydantic",
+        "pydantic~=2.0.2",
         "s3path",
     ],
     extras_require={
@@ -70,6 +70,7 @@ setup(
             "flake8",
             "furo",
             "ghp-import",
+            "pre-commit",
             "pylint",
             "pytest",
             "pytest-cov",

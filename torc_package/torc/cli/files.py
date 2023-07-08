@@ -4,7 +4,7 @@ import json
 import logging
 
 import click
-from swagger_client.models.workflow_files_model import WorkflowFilesModel
+from torc.swagger_client.models.workflow_files_model import WorkflowFilesModel
 
 from torc.api import iter_documents
 from .common import (

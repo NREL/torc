@@ -5,10 +5,10 @@ import logging
 
 import click
 import json5
-from swagger_client.models.workflow_user_data_model import (
+from torc.swagger_client.models.workflow_user_data_model import (
     WorkflowUserDataModel,
 )
-from swagger_client.models.edges_name_model import EdgesNameModel
+from torc.swagger_client.models.edges_name_model import EdgesNameModel
 
 from torc.api import iter_documents
 from .common import (

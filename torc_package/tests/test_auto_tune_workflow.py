@@ -5,7 +5,7 @@ import multiprocessing
 
 import polars as pl
 import pytest
-from swagger_client.models.key_prepare_jobs_for_submission_model import (
+from torc.swagger_client.models.key_prepare_jobs_for_submission_model import (
     KeyPrepareJobsForSubmissionModel,
 )
 

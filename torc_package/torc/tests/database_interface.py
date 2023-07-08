@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 
-from swagger_client.api.default_api import DefaultApi
+from torc.swagger_client.api.default_api import DefaultApi
 
 from torc.api import iter_documents
 

@@ -9,16 +9,8 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html#project-informatio
 """
 # pylint: skip-file
 # flake8: noqa
-import sys
-from pathlib import Path
 
-# Use the client built for docs rather than the one for db_service.
-python_client_path = str(Path(".").absolute().parent / "db_service" / "python_client")
-if python_client_path in sys.path:
-    sys.path.remove(python_client_path)
-sys.path.append(str(Path("_build") / "python_client"))
-
-from swagger_client.api import default_api
+from torc.swagger_client.api import default_api
 
 import torc
 

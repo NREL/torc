@@ -9,9 +9,9 @@ from pathlib import Path
 
 import click
 import json5
-from swagger_client.models.workflow_jobs_model import WorkflowJobsModel
-from swagger_client.models.workflows_model import WorkflowsModel
-from swagger_client.models.workflow_specifications_model import (
+from torc.swagger_client.models.workflow_jobs_model import WorkflowJobsModel
+from torc.swagger_client.models.workflows_model import WorkflowsModel
+from torc.swagger_client.models.workflow_specifications_model import (
     WorkflowSpecificationsModel,
 )
 
