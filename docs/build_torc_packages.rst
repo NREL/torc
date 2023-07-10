@@ -3,52 +3,10 @@
 ###################
 Build Torc Packages
 ###################
-This page describes how developers should build the torc packages after making changes. There are
-two output files:
+This page describes what developers should do to release new versions after making changes.
 
-- Torc Python package: ``torc-<version>-py3-none-any.whl``
-- Torc database service: ``torc-service.zip``
-
-.. note:: Remember to run the tests on the HPC. The tests in ``tests/test_slurm_workflows.py`` do
-   not run in environments where the Slurm CLI tools are not installed.
-
-Python Package
-==============
-Update the torc version in the file ``torc_package/torc/version.py``, following guidance from
-http://semver.org
-
-Until torc is available on ``pypi.org`` we distribute the torc Python package as a wheel (.whl).
-The steps here are from https://packaging.python.org/en/latest/tutorials/packaging-projects/
-
-From the ``torc`` subdirectory of the repository:
-
-.. code-block:: console
-
-    $ python3 -m pip install --upgrade build
-    $ python3 -m build
-
-That command will create two files in the ``dist`` directory like this:
-
-.. code-block:: console
-
-    $ ls dist/
-    torc-0.1.2-py3-none-any.whl torc-0.1.2.tar.gz
-
-The ``.whl`` file is a `built distribution
-<https://packaging.python.org/en/latest/glossary/#term-Built-Distribution>`_ and can be installed
-with pip, as in
-
-.. code-block:: console
-
-    $ pip install dist/torc-0.1.2-py3-none-any.whl
-
-This file needs to be distrbuted to users.
-
-Torc Database Service
-=====================
-Build a zip file containing the JavaScript package for the database service.
-
-From the ``db_service`` subdirectory of the repository:
+1. If you changed any JavaScript code for the database service, rebuild ``torc-service.zip``. From
+   the ``db_service`` subdirectory of the repository:
 
 .. code-block:: console
 
@@ -59,9 +17,14 @@ The ``torc-service.zip`` file can be installed in ArangoDB in its web applicatio
 instructions at https://www.arangodb.com/docs/stable/foxx-getting-started.html#try-it-out or by
 using the ``foxx`` CLI application. CLI instructions are at https://github.com/arangodb/foxx-cli.
 
-Python Client
-=============
-Refer to :ref:`generate_client_apis`
+2. If you changed the API, rebuild the Python client installed inside torc by following the
+   instructions at :ref:`generate_client_apis`.
+
+3. Run all tests on the HPC. The tests in ``tests/test_slurm_workflows.py`` do not run in
+   environments where the Slurm CLI tools are not installed.
+
+4. Update the torc version in the file ``torc_package/torc/version.py``, following guidance from
+   http://semver.org.
 
 .. toctree::
    :maxdepth: 2

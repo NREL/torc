@@ -1,10 +1,12 @@
 .. _generate_client_apis:
 
-####################
+********************
 Generate Client APIs
-####################
+********************
 The software package uses the ``Swagger`` tools to auto-generate client APIs from a Docker
-container. You must have Docker installed.
+container.
+
+.. note:: You must have Docker installed.
 
 This repository stores an OpenAPI specification at ``db_service/openapi.yaml``.
 If the API definitions are changed then this needs to be regenerated. Here's how to to that:
@@ -40,13 +42,7 @@ and port:
 5. Set the ``packageVersion`` in ``config.json to the same value as in
    ``torc_package/torc/version.py``.
 
-6. Generate the python client.
-
-.. code-block:: console
-
-   $ bash make_api.sh
-
-Here is what the script performed:
+6. Generate the python client by running the script below. It performs the following actions:
 
 - Download the API specification `swagger.json` from the API endpoint. This is created by ArangoDB.
 - Convert the spec from v2.0 (Swagger) to v3.0 (OpenAPI).
@@ -54,6 +50,10 @@ Here is what the script performed:
 - Create a Python client package.
 - Copy the package directory, ``swagger_client``, into the torc package at
   ``/torc_package/torc/swagger_client``, overwriting the existing code.
+
+.. code-block:: console
+
+   $ bash make_api.sh
 
 This procedure could be implemented to generate server stubs or additional client programming
 languages. Refer to the ``Swagger`` documentation for more information.
