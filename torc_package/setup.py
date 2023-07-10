@@ -63,6 +63,11 @@ setup(
         "pyarrow",
         "pydantic~=2.0.2",
         "s3path",
+        # These are required by the swagger_client. Keep in sync with its setup.py.
+        "urllib3>=1.15",
+        "six>=1.10",
+        "certifi",
+        "python-dateutil",
     ],
     extras_require={
         "dev": [
