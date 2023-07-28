@@ -178,9 +178,9 @@ const result = joi.object().required().keys({
 });
 
 const computeNodeResourceStatConfig = joi.object().keys({
-  cpu: joi.boolean().default(false),
+  cpu: joi.boolean().default(true),
   disk: joi.boolean().default(false),
-  memory: joi.boolean().default(false),
+  memory: joi.boolean().default(true),
   network: joi.boolean().default(false),
   process: joi.boolean().default(false),
   include_child_processes: joi.boolean().default(true),
@@ -261,7 +261,7 @@ const workflowSpecification = joi.object().required().keys({
   user_data: joi.array().items(userData).default([]),
   resource_requirements: joi.array().items(resourceRequirements).default([]),
   schedulers: schedulers.optional().default(schedulers.validate({}).value),
-  config: joi.object().default(workflowConfig.validate({}).value),
+  config: workflowConfig.default(workflowConfig.validate({}).value),
 });
 
 const workflow = joi.object().required().keys({
@@ -275,7 +275,7 @@ const workflow = joi.object().required().keys({
 });
 
 const autoTuneStatus = joi.object().required().keys({
-  enabled: joi.boolean().default(true),
+  enabled: joi.boolean().default(false),
   job_keys: joi.array().items(joi.string()).default([]),
 });
 

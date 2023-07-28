@@ -1,10 +1,11 @@
 """CLI commands to manage the torc runtime configuration"""
 
 import logging
+from pathlib import Path
 
 import click
 
-from torc.torc_rc import TorcRuntimeConfig
+from torc.torc_rc import TorcRuntimeConfig, RC_FILENAME
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,14 @@ def config():
     type=click.Choice(["text", "json"]),
     show_default=True,
     help="Output format for get/list commands. Not all commands support all formats.",
+)
+@click.option(
+    "-d",
+    "--directory",
+    default=Path.home(),
+    show_default=True,
+    help="Directory in which to store the config file.",
+    callback=lambda *x: Path(x[2]),
 )
 @click.option(
     "-f",
@@ -68,6 +77,7 @@ def config():
 )
 def create(
     output_format,
+    directory: Path,
     filter_workflows_by_user,
     workflow_key,
     timings,
@@ -85,7 +95,7 @@ def create(
         console_level=console_level,
         file_level=file_level,
     )
-    torc_config.dump()
+    torc_config.dump(path=directory / RC_FILENAME)
 
 
 config.add_command(create)

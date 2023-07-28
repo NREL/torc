@@ -17,6 +17,7 @@ from torc.swagger_client.models.workflow_specifications_model import (
 
 from torc.api import sanitize_workflow, iter_documents
 from torc.exceptions import InvalidWorkflow
+from torc.hpc.slurm_interface import SlurmInterface
 from torc.torc_rc import TorcRuntimeConfig
 from torc.workflow_manager import WorkflowManager
 from .common import (
@@ -44,11 +45,26 @@ def workflows():
 def cancel(ctx, api, workflow_keys):
     """Cancel one or more workflows."""
     setup_cli_logging(ctx, __name__)
+    if not workflow_keys:
+        logger.error("No workflow keys were passed")
+        sys.exit(1)
     check_database_url(api)
+
     for key in workflow_keys:
+        # TODO: Handling different scheduler types needs to be at a lower level.
+        for job in api.get_workflows_workflow_scheduled_compute_nodes(key).items:
+            if (
+                job.status != "complete"
+                and job.scheduler_config_id.split("/")[0].split("__")[0] == "slurm_schedulers"
+            ):
+                intf = SlurmInterface()
+                return_code = intf.cancel_job(job.scheduler_id)
+                if return_code == 0:
+                    job.status = "complete"
+                    api.put_workflows_workflow_scheduled_compute_nodes_key(job, key, job.key)
+                # else: Ignore all return codes and try to cancel all jobs.
         api.put_workflows_key_cancel(key)
         logger.info("Canceled workflow %s", key)
-        # TODO: lookup scheduled compute nodes and cancel them.
 
 
 @click.command()
@@ -268,7 +284,12 @@ def modify(ctx, api, description, name, user):
 def delete(ctx, api, workflow_keys):
     """Delete one or more workflows by key."""
     setup_cli_logging(ctx, __name__)
+    if not workflow_keys:
+        logger.error("No workflow keys were passed")
+        sys.exit(1)
     check_database_url(api)
+    # TODO: what if nothing was passed?
+    # Check all commands for this condition.
     for key in workflow_keys:
         api.delete_workflows_key(key)
         logger.info("Deleted workflow %s", key)
@@ -538,7 +559,7 @@ def show_config(ctx, api):
     print(json.dumps(config.to_dict(), indent=2))
 
 
-@click.command()
+@click.command(name="status")
 @click.pass_obj
 @click.pass_context
 def show_status(ctx, api):
@@ -581,7 +602,7 @@ def _update_torc_rc(api, workflow):
     if config.database_url != api.api_client.configuration.host:
         config.database_url = api.api_client.configuration.host
         logger.info("Updating %s with database_url=%s", path, config.database_url)
-    config.dump()
+    config.dump(path=path)
 
 
 workflows.add_command(cancel)

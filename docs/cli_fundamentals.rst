@@ -88,24 +88,43 @@ a torc-provided shortcut to avoid having to type it in every command.
 
 Torc RC file
 ------------
-Torc allows you to store common configuration settings in a config file in your home directory.
+Torc allows you to store common configuration settings in a config file. It can be stored in either
+your home directory or a working directory. The current directory takes precedence over your home
+directory.
+
 Here's how to create it with a database on the local computer. Change the hostname (``localhost``)
 and database name (``workflows``) as needed.
+
+Create in your home directory (default):
 
 .. code-block:: console
 
    $ torc config create -u http://localhost:8529/_db/workflows/torc-service
    Wrote torc config to /Users/dthom/.torc.json5
 
+
+Create in a working directory:
+
+.. code-block:: console
+
+   $ torc config create -u http://localhost:8529/_db/workflows/torc-service -d .
+   Wrote torc config to /Users/dthom/work-dir/.torc.json5
+
+
 Environment variable
 --------------------
-You can also set this environment variable.
+You can also set these environment variables.
 
 .. code-block:: console
 
    $ export TORC_DATABASE_URL=http://localhost:8529/_db/workflows/torc-service
 
-The final option is to pass the URL to every command.
+.. code-block:: console
+
+   $ export TORC_WORKFLOW_KEY=123456
+
+The final option is to pass the URL and other options to every command. Passing these options takes
+precedence over all other options.
 
 .. code-block:: console
 

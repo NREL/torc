@@ -29,7 +29,12 @@ class SlurmInterface(HpcInterface):
     _REGEX_SBATCH_OUTPUT = re.compile(r"Submitted batch job (\d+)")
 
     def cancel_job(self, job_id):
-        return subprocess.call(["scancel", job_id])
+        result = subprocess.run(["scancel", job_id], check=False)
+        if result.returncode != 0:
+            logger.error("Failed to cancel Slurm job %s", job_id)
+        else:
+            logger.info("Canceled Slurm job %s", job_id)
+        return result.returncode
 
     def get_status(self, job_id):
         field_names = ("jobid", "name", "state")

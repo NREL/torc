@@ -95,6 +95,11 @@ def get_log_level_from_str(level):
             raise Exception(f"Unsupported level={level}")
 
 
+def get_no_prompts_from_context(ctx) -> str:
+    """Get the workflow ID from a click context."""
+    return ctx.find_root().params["no_prompts"]
+
+
 def get_output_format_from_context(ctx) -> str:
     """Get the workflow ID from a click context."""
     return ctx.find_root().params["output_format"]

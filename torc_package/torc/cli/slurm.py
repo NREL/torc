@@ -393,7 +393,7 @@ def _check_schedule_params(api, workflow_key):
     if not ready_jobs.items:
         ready_jobs = api.get_workflows_workflow_jobs(workflow_key, status="scheduled", limit=1)
     if not ready_jobs.items:
-        logger.error("No jobs are in the ready state")
+        logger.error("No jobs are in the ready state. Did you run 'torc workflows start'?")
         sys.exit(1)
 
 
