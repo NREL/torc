@@ -15,7 +15,7 @@ from torc.swagger_client.models.workflow_specifications_model import (
     WorkflowSpecificationsModel,
 )
 
-from torc.api import sanitize_workflow, iter_documents
+from torc.api import remove_db_keys, sanitize_workflow, iter_documents
 from torc.exceptions import InvalidWorkflow
 from torc.hpc.slurm_interface import SlurmInterface
 from torc.torc_rc import TorcRuntimeConfig
@@ -45,10 +45,9 @@ def workflows():
 def cancel(ctx, api, workflow_keys):
     """Cancel one or more workflows."""
     setup_cli_logging(ctx, __name__)
-    if not workflow_keys:
-        logger.error("No workflow keys were passed")
-        sys.exit(1)
     check_database_url(api)
+    if not workflow_keys:
+        logger.warning("No workflow keys were passed")
 
     for key in workflow_keys:
         # TODO: Handling different scheduler types needs to be at a lower level.
@@ -284,12 +283,9 @@ def modify(ctx, api, description, name, user):
 def delete(ctx, api, workflow_keys):
     """Delete one or more workflows by key."""
     setup_cli_logging(ctx, __name__)
-    if not workflow_keys:
-        logger.error("No workflow keys were passed")
-        sys.exit(1)
     check_database_url(api)
-    # TODO: what if nothing was passed?
-    # Check all commands for this condition.
+    if not workflow_keys:
+        logger.warning("No workflow keys were passed")
     for key in workflow_keys:
         api.delete_workflows_key(key)
         logger.info("Deleted workflow %s", key)
@@ -591,7 +587,8 @@ def template(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     data = api.get_workflow_specifications_template().to_dict()
-    sanitize_workflow(data)
+    data = remove_db_keys(data)
+    data["config"] = remove_db_keys(data["config"])
     data.pop("key", None)
     print(json.dumps(data, indent=2))
 

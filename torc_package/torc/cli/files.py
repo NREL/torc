@@ -66,6 +66,8 @@ def delete(ctx, api, file_keys):
     """Delete one or more files by key."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
+    if not file_keys:
+        logger.warning("No file keys were passed")
     workflow_key = get_workflow_key_from_context(ctx, api)
     for key in file_keys:
         api.delete_workflows_workflow_files_key(workflow_key, key)

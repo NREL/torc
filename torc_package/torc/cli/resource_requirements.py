@@ -179,6 +179,8 @@ def delete(ctx, api, resource_requirement_keys):
     """Delete one or more resource requirements by key."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
+    if not resource_requirement_keys:
+        logger.warning("No resource requirement keys were passed")
     workflow_key = get_workflow_key_from_context(ctx, api)
     for key in resource_requirement_keys:
         api.delete_workflows_workflow_resource_requirements_key(workflow_key, key)

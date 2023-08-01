@@ -170,6 +170,8 @@ def delete(ctx, api, user_data_keys):
     """Delete one or more user_data objects by key."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
+    if not user_data_keys:
+        logger.warning("No user data keys were passed")
     workflow_key = get_workflow_key_from_context(ctx, api)
     for key in user_data_keys:
         api.delete_workflows_workflow_user_data_key(workflow_key, key)
