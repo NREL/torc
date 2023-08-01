@@ -44,6 +44,15 @@ def iter_documents(func, *args, skip=0, **kwargs):
         has_more = result.has_more
 
 
+def map_job_keys_to_names(api: DefaultApi, workflow_key, filters=None) -> dict[str, str]:
+    """Return a mapping of job key to name."""
+    filters = filters or {}
+    return {
+        x.key: x.name
+        for x in iter_documents(api.get_workflows_workflow_jobs, workflow_key, **filters)
+    }
+
+
 _DATABASE_KEYS = {"_id", "_key", "_rev", "_oldRev", "id", "key", "rev"}
 
 
@@ -71,7 +80,9 @@ def sanitize_workflow(data: dict):
     the database.
     """
     for item in itertools.chain(
-        [data.get("config")], data.get("files", []), data.get("resource_requirements", [])
+        [data.get("config")],
+        data.get("files", []),
+        data.get("resource_requirements", []),
     ):
         if item is not None:
             for key in _DATABASE_KEYS:

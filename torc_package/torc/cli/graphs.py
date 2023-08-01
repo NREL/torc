@@ -61,6 +61,8 @@ def plot(ctx, api, names, keep_dot_file, output):
     Example:
     $ torc graphs plot job_sequence
     """
+    if not names:
+        logger.warning("No graph names were passed")
     output.mkdir(exist_ok=True)
     workflow_key = get_workflow_key_from_context(ctx, api)
     for name in names:

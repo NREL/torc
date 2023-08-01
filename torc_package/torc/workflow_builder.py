@@ -5,6 +5,10 @@ from torc.swagger_client.models.workflow_files_model import WorkflowFilesModel
 from torc.swagger_client.models.workflow_job_specifications_model import (
     WorkflowJobSpecificationsModel,
 )
+from torc.swagger_client.models.workflow_config_compute_node_resource_stats import (
+    WorkflowConfigComputeNodeResourceStats,
+)
+from torc.swagger_client.models.workflow_config_model import WorkflowConfigModel
 from torc.swagger_client.models.workflow_resource_requirements_model import (
     WorkflowResourceRequirementsModel,
 )
@@ -32,6 +36,7 @@ class WorkflowBuilder:
     def __init__(self):
         self._files = []
         self._jobs = []
+        self._resource_monitor_config = None
         self._resource_requirements = []
         self._resources = []
         self._aws_schedulers = []
@@ -74,10 +79,17 @@ class WorkflowBuilder:
         self._user_data.append(WorkflowUserDataModel(*args, **kwargs))
         return self._user_data[-1]
 
+    def configure_resource_monitoring(self, *args, **kwargs):
+        """Configure resource monitoring for the workflow. Refer to
+        WorkflowConfigComputeNodeResourceStats for input parameters."""
+        self._resource_monitor_config = WorkflowConfigComputeNodeResourceStats(*args, **kwargs)
+
     def build(self, *args, **kwargs) -> WorkflowSpecificationsModel:
         """Build a workflow specification from the stored parameters."""
+        config = WorkflowConfigModel(compute_node_resource_stats=self._resource_monitor_config)
         return WorkflowSpecificationsModel(
             *args,
+            config=config,
             files=self._files or None,
             jobs=self._jobs or None,
             resource_requirements=self._resource_requirements or None,

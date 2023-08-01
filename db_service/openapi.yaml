@@ -6269,8 +6269,7 @@ components:
         schedulers:
           $ref: '#/components/schemas/workflow_specifications_schedulers'
         config:
-          type: object
-          properties: {}
+          $ref: '#/components/schemas/key_config_model'
     inline_response_200_8:
       required:
       - command
@@ -7214,8 +7213,7 @@ components:
         schedulers:
           $ref: '#/components/schemas/workflow_specifications_schedulers'
         config:
-          type: object
-          properties: {}
+          $ref: '#/components/schemas/workflow_config_key_model'
     workflow_job_specifications_model:
       required:
       - command

@@ -36,7 +36,7 @@ class InlineResponse20020(object):
         'user_data': 'list[KeyUserDataModel]',
         'resource_requirements': 'list[ResourceRequirementsKeyModel]',
         'schedulers': 'WorkflowSpecificationsSchedulers',
-        'config': 'object'
+        'config': 'KeyConfigModel'
     }
 
     attribute_map = {
@@ -281,7 +281,7 @@ class InlineResponse20020(object):
 
 
         :return: The config of this InlineResponse20020.  # noqa: E501
-        :rtype: object
+        :rtype: KeyConfigModel
         """
         return self._config
 
@@ -291,7 +291,7 @@ class InlineResponse20020(object):
 
 
         :param config: The config of this InlineResponse20020.  # noqa: E501
-        :type: object
+        :type: KeyConfigModel
         """
 
         self._config = config

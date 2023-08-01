@@ -127,6 +127,8 @@ def delete(ctx, api, job_keys):
     """Delete one or more jobs by key."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
+    if not job_keys:
+        logger.warning("No job keys were passed")
     workflow_key = get_workflow_key_from_context(ctx, api)
     for key in job_keys:
         api.delete_workflows_workflow_jobs_key(workflow_key, key)
@@ -243,6 +245,8 @@ def assign_resource_requirements(ctx, api, resource_requirements_key, job_keys):
     """Assign resource requirements to one or more jobs."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
+    if not job_keys:
+        logger.warning("No job keys were passed")
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
     edges = []
@@ -268,6 +272,8 @@ def reset_status(ctx, api, job_keys):
     """Reset the status of one or more jobs."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
+    if not job_keys:
+        logger.warning("No job keys were passed")
     workflow_key = get_workflow_key_from_context(ctx, api)
     count = 0
     for key in job_keys:

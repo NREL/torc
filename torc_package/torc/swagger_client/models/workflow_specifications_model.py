@@ -36,7 +36,7 @@ class WorkflowSpecificationsModel(object):
         'user_data': 'list[KeyUserDataModel]',
         'resource_requirements': 'list[ResourceRequirementsKeyModel]',
         'schedulers': 'WorkflowSpecificationsSchedulers',
-        'config': 'object'
+        'config': 'WorkflowConfigKeyModel'
     }
 
     attribute_map = {
@@ -281,7 +281,7 @@ class WorkflowSpecificationsModel(object):
 
 
         :return: The config of this WorkflowSpecificationsModel.  # noqa: E501
-        :rtype: object
+        :rtype: WorkflowConfigKeyModel
         """
         return self._config
 
@@ -291,7 +291,7 @@ class WorkflowSpecificationsModel(object):
 
 
         :param config: The config of this WorkflowSpecificationsModel.  # noqa: E501
-        :type: object
+        :type: WorkflowConfigKeyModel
         """
 
         self._config = config

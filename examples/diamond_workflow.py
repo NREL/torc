@@ -73,7 +73,13 @@ def create_workflow(api):
         is_ephemeral=False,
         data={"key1": "val1"},
     )
-
+    builder.configure_resource_monitoring(
+        cpu=True,
+        memory=True,
+        process=True,
+        interval=3,
+        make_plots=True,
+    )
     spec = builder.build(
         user=getpass.getuser(),
         name="diamond_workflow",
