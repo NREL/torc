@@ -578,8 +578,9 @@ def example(ctx, api):
     """Show the example workflow."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    text = api.get_workflow_specifications_example().to_dict()
-    print(json.dumps(text, indent=2))
+    data = api.get_workflow_specifications_example().to_dict()
+    sanitize_workflow(data)
+    print(json.dumps(data, indent=2))
 
 
 @click.command()
@@ -590,6 +591,7 @@ def template(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     data = api.get_workflow_specifications_template().to_dict()
+    sanitize_workflow(data)
     data.pop("key", None)
     print(json.dumps(data, indent=2))
 
