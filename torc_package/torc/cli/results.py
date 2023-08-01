@@ -4,7 +4,7 @@ import logging
 
 import click
 
-from torc.api import iter_documents
+from torc.api import iter_documents, map_job_keys_to_names
 from .common import (
     check_database_url,
     get_workflow_key_from_context,
@@ -32,9 +32,18 @@ def results():
 )
 @click.option("-l", "--limit", type=int, help="Limit the output to this number of jobs.")
 @click.option("-s", "--skip", default=0, type=int, help="Skip this number of jobs.")
+@click.option(
+    "-x",
+    "--exclude-job-names",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Exclude job names from the output. Set this flag if you need "
+    "to deserialize the objects into Result classes or to speed up the query.",
+)
 @click.pass_obj
 @click.pass_context
-def list_results(ctx, api, filters, limit, skip):
+def list_results(ctx, api, filters, limit, skip, exclude_job_names):
     """List all results in a workflow.
 
     \b
@@ -51,14 +60,21 @@ def list_results(ctx, api, filters, limit, skip):
     workflow_key = get_workflow_key_from_context(ctx, api)
     exclude = ("id", "rev")
     filters = parse_filters(filters)
+    if "job_name" in filters:
+        logger.warning("Cannot filter on job_name")
+        filters.pop("job_name")
     filters["skip"] = skip
     if limit is not None:
         filters["limit"] = limit
     table_title = f"Results in workflow {workflow_key}"
-    items = (
-        x.to_dict()
-        for x in iter_documents(api.get_workflows_workflow_results, workflow_key, **filters)
-    )
+    mapping = None if exclude_job_names else map_job_keys_to_names(api, workflow_key)
+    items = []
+    for item in iter_documents(api.get_workflows_workflow_results, workflow_key, **filters):
+        row = {}
+        if not exclude_job_names:
+            row["job_name"] = mapping[item.job_key]
+        row.update(item.to_dict())
+        items.append(row)
     print_items(
         ctx,
         items,
