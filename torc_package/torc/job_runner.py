@@ -201,7 +201,7 @@ class JobRunner:
             self._run_until_complete()
         finally:
             self._complete_compute_node()
-            if self._stats.process:
+            if self._stats.is_enabled():
                 self._stop_resource_monitor()
 
     def _run_until_complete(self):
