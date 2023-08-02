@@ -47,7 +47,7 @@ class TorcRuntimeConfig(TorcBaseModel):
 
         """
         filename = path or Path.home() / RC_FILENAME
-        dump_data(self.dict(), filename, indent=2)
+        dump_data(self.model_dump(), filename, indent=2)
         print(f"Wrote torc config to {filename.absolute()}", file=sys.stderr)
 
     @staticmethod
