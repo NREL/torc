@@ -176,7 +176,7 @@ There are four ways to set it:
 
 Output Format
 =============
-Many commands support output options of raw text as well as JSON. The JSON option is useful for
+Many commands support output options of raw text, CSV, and JSON. The JSON option is useful for
 scripting purposes. The following example will create a new workflow, detect the key, and then
 start it. (This requires that you install ``jq``, discussed on the :ref:`installation` page.)
 
@@ -193,4 +193,16 @@ be able to pipe the stdout of a command to ``jq`` for pretty-printing or further
 
 .. code-block:: console
 
-   $ torc -F json -k 94954625 jobs list | jq .
+   $ torc -F json jobs list | jq .
+
+Sorting Tables
+--------------
+You can sort the output tables of many commands by a column. Here are some examples:
+
+.. code-block:: console
+
+   $ torc results list --sort-by exec_time_s
+
+.. code-block:: console
+
+   $ torc results list --sort-by exec_time_s --reverse-sort

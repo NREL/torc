@@ -103,9 +103,14 @@ def slurm():
     show_default=True,
     help="Slurm job walltime.",
 )
+@click.option(
+    "-e",
+    "--extra",
+    help="Add extra Slurm parameters, for example --extra='--reservation=my-reservation'.",
+)
 @click.pass_obj
 @click.pass_context
-def add_config(ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, walltime):
+def add_config(ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, walltime, extra):
     """Add a Slurm config to the database."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -121,6 +126,8 @@ def add_config(ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, w
         "tmp": tmp,
         "walltime": walltime,
     }
+    if extra:
+        config["extra"] = extra
     scheduler = api.post_workflows_workflow_slurm_schedulers(
         WorkflowSlurmSchedulersModel(name=name, **config), workflow_key
     )

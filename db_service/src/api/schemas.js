@@ -261,7 +261,7 @@ const workflowSpecification = joi.object().required().keys({
   user_data: joi.array().items(userData).default([]),
   resource_requirements: joi.array().items(resourceRequirements).default([]),
   schedulers: schedulers.optional().default(schedulers.validate({}).value),
-  config: workflowConfig.default(workflowConfig.validate({}).value),
+  config: workflowConfig.optional().default(workflowConfig.validate({}).value),
 });
 
 const workflow = joi.object().required().keys({

@@ -125,9 +125,18 @@ function getItemsLimit(limit) {
  * @param {Object} items
  * @param {number} skip
  * @param {number} totalCount
+ * @param {string} sortBy
+ * @param {boolean} reverseSort
  * @return {Object}
  */
-function makeCursorResult(items, skip, totalCount) {
+function makeCursorResult(items, skip, totalCount, sortBy, reverseSort) {
+  if (sortBy != null) {
+    if (reverseSort) {
+      items.sort((x, y) => y[sortBy] - x[sortBy]);
+    } else {
+      items.sort((x, y) => x[sortBy] - y[sortBy]);
+    }
+  }
   return {
     items: items,
     skip: skip,

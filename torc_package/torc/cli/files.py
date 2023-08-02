@@ -95,9 +95,21 @@ def delete_all(ctx, api):
     type=str,
     help="Filter the values according to each key=value pair.",
 )
+@click.option(
+    "--sort-by",
+    type=str,
+    help="Sort results by this column.",
+)
+@click.option(
+    "--reverse-sort",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Reverse the sort order if --sort-by is set.",
+)
 @click.pass_obj
 @click.pass_context
-def list_files(ctx, api, filters):
+def list_files(ctx, api, filters, sort_by, reverse_sort):
     """List all files in a workflow.
 
     \b
@@ -114,6 +126,9 @@ def list_files(ctx, api, filters):
     workflow_key = get_workflow_key_from_context(ctx, api)
     exclude = ("id", "rev")
     filters = parse_filters(filters)
+    if sort_by is not None:
+        filters["sort_by"] = sort_by
+        filters["reverse_sort"] = reverse_sort
     table_title = f"Files in workflow {workflow_key}"
     items = (
         x.to_dict()

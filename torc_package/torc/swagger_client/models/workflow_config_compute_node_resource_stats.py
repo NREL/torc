@@ -52,7 +52,7 @@ class WorkflowConfigComputeNodeResourceStats(object):
         'interval': 'interval'
     }
 
-    def __init__(self, cpu=False, disk=False, memory=False, network=False, process=False, include_child_processes=True, recurse_child_processes=False, monitor_type='aggregation', make_plots=True, interval=None):  # noqa: E501
+    def __init__(self, cpu=True, disk=False, memory=True, network=False, process=False, include_child_processes=True, recurse_child_processes=False, monitor_type='aggregation', make_plots=True, interval=None):  # noqa: E501
         """WorkflowConfigComputeNodeResourceStats - a model defined in Swagger"""  # noqa: E501
         self._cpu = None
         self._disk = None

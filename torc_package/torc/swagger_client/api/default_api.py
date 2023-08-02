@@ -4576,6 +4576,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str name:
         :return: InlineResponse200
@@ -4603,6 +4605,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str name:
         :return: InlineResponse200
@@ -4610,7 +4614,7 @@ class DefaultApi(object):
                  returns the request thread.
         """
 
-        all_params = ['workflow', 'skip', 'limit', 'key', 'name']  # noqa: E501
+        all_params = ['workflow', 'skip', 'limit', 'sort_by', 'reverse_sort', 'key', 'name']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -4641,6 +4645,10 @@ class DefaultApi(object):
             query_params.append(('skip', params['skip']))  # noqa: E501
         if 'limit' in params:
             query_params.append(('limit', params['limit']))  # noqa: E501
+        if 'sort_by' in params:
+            query_params.append(('sort_by', params['sort_by']))  # noqa: E501
+        if 'reverse_sort' in params:
+            query_params.append(('reverse_sort', params['reverse_sort']))  # noqa: E501
         if 'key' in params:
             query_params.append(('_key', params['key']))  # noqa: E501
         if 'name' in params:
@@ -4794,6 +4802,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str hostname:
         :return: InlineResponse2003
@@ -4821,6 +4831,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str hostname:
         :return: InlineResponse2003
@@ -4828,7 +4840,7 @@ class DefaultApi(object):
                  returns the request thread.
         """
 
-        all_params = ['workflow', 'skip', 'limit', 'key', 'hostname']  # noqa: E501
+        all_params = ['workflow', 'skip', 'limit', 'sort_by', 'reverse_sort', 'key', 'hostname']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -4859,6 +4871,10 @@ class DefaultApi(object):
             query_params.append(('skip', params['skip']))  # noqa: E501
         if 'limit' in params:
             query_params.append(('limit', params['limit']))  # noqa: E501
+        if 'sort_by' in params:
+            query_params.append(('sort_by', params['sort_by']))  # noqa: E501
+        if 'reverse_sort' in params:
+            query_params.append(('reverse_sort', params['reverse_sort']))  # noqa: E501
         if 'key' in params:
             query_params.append(('_key', params['key']))  # noqa: E501
         if 'hostname' in params:
@@ -5012,6 +5028,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str hostname:
         :param bool is_active:
@@ -5040,6 +5058,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str hostname:
         :param bool is_active:
@@ -5048,7 +5068,7 @@ class DefaultApi(object):
                  returns the request thread.
         """
 
-        all_params = ['workflow', 'skip', 'limit', 'key', 'hostname', 'is_active']  # noqa: E501
+        all_params = ['workflow', 'skip', 'limit', 'sort_by', 'reverse_sort', 'key', 'hostname', 'is_active']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -5079,6 +5099,10 @@ class DefaultApi(object):
             query_params.append(('skip', params['skip']))  # noqa: E501
         if 'limit' in params:
             query_params.append(('limit', params['limit']))  # noqa: E501
+        if 'sort_by' in params:
+            query_params.append(('sort_by', params['sort_by']))  # noqa: E501
+        if 'reverse_sort' in params:
+            query_params.append(('reverse_sort', params['reverse_sort']))  # noqa: E501
         if 'key' in params:
             query_params.append(('_key', params['key']))  # noqa: E501
         if 'hostname' in params:
@@ -5460,6 +5484,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str category:
         :return: InlineResponse2005
@@ -5487,6 +5513,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str category:
         :return: InlineResponse2005
@@ -5494,7 +5522,7 @@ class DefaultApi(object):
                  returns the request thread.
         """
 
-        all_params = ['workflow', 'skip', 'limit', 'key', 'category']  # noqa: E501
+        all_params = ['workflow', 'skip', 'limit', 'sort_by', 'reverse_sort', 'key', 'category']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -5525,6 +5553,10 @@ class DefaultApi(object):
             query_params.append(('skip', params['skip']))  # noqa: E501
         if 'limit' in params:
             query_params.append(('limit', params['limit']))  # noqa: E501
+        if 'sort_by' in params:
+            query_params.append(('sort_by', params['sort_by']))  # noqa: E501
+        if 'reverse_sort' in params:
+            query_params.append(('reverse_sort', params['reverse_sort']))  # noqa: E501
         if 'key' in params:
             query_params.append(('_key', params['key']))  # noqa: E501
         if 'category' in params:
@@ -5678,6 +5710,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str name:
         :param str path:
@@ -5706,6 +5740,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str name:
         :param str path:
@@ -5714,7 +5750,7 @@ class DefaultApi(object):
                  returns the request thread.
         """
 
-        all_params = ['workflow', 'skip', 'limit', 'key', 'name', 'path']  # noqa: E501
+        all_params = ['workflow', 'skip', 'limit', 'sort_by', 'reverse_sort', 'key', 'name', 'path']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -5745,6 +5781,10 @@ class DefaultApi(object):
             query_params.append(('skip', params['skip']))  # noqa: E501
         if 'limit' in params:
             query_params.append(('limit', params['limit']))  # noqa: E501
+        if 'sort_by' in params:
+            query_params.append(('sort_by', params['sort_by']))  # noqa: E501
+        if 'reverse_sort' in params:
+            query_params.append(('reverse_sort', params['reverse_sort']))  # noqa: E501
         if 'key' in params:
             query_params.append(('_key', params['key']))  # noqa: E501
         if 'name' in params:
@@ -6110,6 +6150,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str job_key:
         :param int run_id:
@@ -6138,6 +6180,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str job_key:
         :param int run_id:
@@ -6146,7 +6190,7 @@ class DefaultApi(object):
                  returns the request thread.
         """
 
-        all_params = ['workflow', 'skip', 'limit', 'key', 'job_key', 'run_id']  # noqa: E501
+        all_params = ['workflow', 'skip', 'limit', 'sort_by', 'reverse_sort', 'key', 'job_key', 'run_id']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -6177,6 +6221,10 @@ class DefaultApi(object):
             query_params.append(('skip', params['skip']))  # noqa: E501
         if 'limit' in params:
             query_params.append(('limit', params['limit']))  # noqa: E501
+        if 'sort_by' in params:
+            query_params.append(('sort_by', params['sort_by']))  # noqa: E501
+        if 'reverse_sort' in params:
+            query_params.append(('reverse_sort', params['reverse_sort']))  # noqa: E501
         if 'key' in params:
             query_params.append(('_key', params['key']))  # noqa: E501
         if 'job_key' in params:
@@ -6542,6 +6590,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str name:
         :param str command:
@@ -6573,6 +6623,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str name:
         :param str command:
@@ -6584,7 +6636,7 @@ class DefaultApi(object):
                  returns the request thread.
         """
 
-        all_params = ['workflow', 'skip', 'limit', 'key', 'name', 'command', 'status', 'cancel_on_blocking_job_failure', 'supports_termination']  # noqa: E501
+        all_params = ['workflow', 'skip', 'limit', 'sort_by', 'reverse_sort', 'key', 'name', 'command', 'status', 'cancel_on_blocking_job_failure', 'supports_termination']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -6615,6 +6667,10 @@ class DefaultApi(object):
             query_params.append(('skip', params['skip']))  # noqa: E501
         if 'limit' in params:
             query_params.append(('limit', params['limit']))  # noqa: E501
+        if 'sort_by' in params:
+            query_params.append(('sort_by', params['sort_by']))  # noqa: E501
+        if 'reverse_sort' in params:
+            query_params.append(('reverse_sort', params['reverse_sort']))  # noqa: E501
         if 'key' in params:
             query_params.append(('_key', params['key']))  # noqa: E501
         if 'name' in params:
@@ -7422,6 +7478,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str memory:
         :param int num_cpus:
@@ -7450,6 +7508,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str memory:
         :param int num_cpus:
@@ -7458,7 +7518,7 @@ class DefaultApi(object):
                  returns the request thread.
         """
 
-        all_params = ['workflow', 'skip', 'limit', 'key', 'memory', 'num_cpus']  # noqa: E501
+        all_params = ['workflow', 'skip', 'limit', 'sort_by', 'reverse_sort', 'key', 'memory', 'num_cpus']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -7489,6 +7549,10 @@ class DefaultApi(object):
             query_params.append(('skip', params['skip']))  # noqa: E501
         if 'limit' in params:
             query_params.append(('limit', params['limit']))  # noqa: E501
+        if 'sort_by' in params:
+            query_params.append(('sort_by', params['sort_by']))  # noqa: E501
+        if 'reverse_sort' in params:
+            query_params.append(('reverse_sort', params['reverse_sort']))  # noqa: E501
         if 'key' in params:
             query_params.append(('_key', params['key']))  # noqa: E501
         if 'memory' in params:
@@ -7644,6 +7708,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str name:
         :param str memory:
@@ -7676,6 +7742,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str name:
         :param str memory:
@@ -7688,7 +7756,7 @@ class DefaultApi(object):
                  returns the request thread.
         """
 
-        all_params = ['workflow', 'skip', 'limit', 'key', 'name', 'memory', 'num_cpus', 'num_gpus', 'num_nodes', 'runtime']  # noqa: E501
+        all_params = ['workflow', 'skip', 'limit', 'sort_by', 'reverse_sort', 'key', 'name', 'memory', 'num_cpus', 'num_gpus', 'num_nodes', 'runtime']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -7719,6 +7787,10 @@ class DefaultApi(object):
             query_params.append(('skip', params['skip']))  # noqa: E501
         if 'limit' in params:
             query_params.append(('limit', params['limit']))  # noqa: E501
+        if 'sort_by' in params:
+            query_params.append(('sort_by', params['sort_by']))  # noqa: E501
+        if 'reverse_sort' in params:
+            query_params.append(('reverse_sort', params['reverse_sort']))  # noqa: E501
         if 'key' in params:
             query_params.append(('_key', params['key']))  # noqa: E501
         if 'name' in params:
@@ -7882,6 +7954,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str job_key:
         :param int run_id:
@@ -7912,6 +7986,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str job_key:
         :param int run_id:
@@ -7922,7 +7998,7 @@ class DefaultApi(object):
                  returns the request thread.
         """
 
-        all_params = ['workflow', 'skip', 'limit', 'key', 'job_key', 'run_id', 'return_code', 'status']  # noqa: E501
+        all_params = ['workflow', 'skip', 'limit', 'sort_by', 'reverse_sort', 'key', 'job_key', 'run_id', 'return_code', 'status']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -7953,6 +8029,10 @@ class DefaultApi(object):
             query_params.append(('skip', params['skip']))  # noqa: E501
         if 'limit' in params:
             query_params.append(('limit', params['limit']))  # noqa: E501
+        if 'sort_by' in params:
+            query_params.append(('sort_by', params['sort_by']))  # noqa: E501
+        if 'reverse_sort' in params:
+            query_params.append(('reverse_sort', params['reverse_sort']))  # noqa: E501
         if 'key' in params:
             query_params.append(('_key', params['key']))  # noqa: E501
         if 'job_key' in params:
@@ -8217,6 +8297,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str scheduler_id:
         :param str scheduler_config_id:
@@ -8246,6 +8328,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str scheduler_id:
         :param str scheduler_config_id:
@@ -8255,7 +8339,7 @@ class DefaultApi(object):
                  returns the request thread.
         """
 
-        all_params = ['workflow', 'skip', 'limit', 'key', 'scheduler_id', 'scheduler_config_id', 'status']  # noqa: E501
+        all_params = ['workflow', 'skip', 'limit', 'sort_by', 'reverse_sort', 'key', 'scheduler_id', 'scheduler_config_id', 'status']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -8286,6 +8370,10 @@ class DefaultApi(object):
             query_params.append(('skip', params['skip']))  # noqa: E501
         if 'limit' in params:
             query_params.append(('limit', params['limit']))  # noqa: E501
+        if 'sort_by' in params:
+            query_params.append(('sort_by', params['sort_by']))  # noqa: E501
+        if 'reverse_sort' in params:
+            query_params.append(('reverse_sort', params['reverse_sort']))  # noqa: E501
         if 'key' in params:
             query_params.append(('_key', params['key']))  # noqa: E501
         if 'scheduler_id' in params:
@@ -8443,6 +8531,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str name:
         :param str account:
@@ -8478,6 +8568,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str name:
         :param str account:
@@ -8493,7 +8585,7 @@ class DefaultApi(object):
                  returns the request thread.
         """
 
-        all_params = ['workflow', 'skip', 'limit', 'key', 'name', 'account', 'gres', 'mem', 'nodes', 'partition', 'qos', 'tmp', 'walltime']  # noqa: E501
+        all_params = ['workflow', 'skip', 'limit', 'sort_by', 'reverse_sort', 'key', 'name', 'account', 'gres', 'mem', 'nodes', 'partition', 'qos', 'tmp', 'walltime']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -8524,6 +8616,10 @@ class DefaultApi(object):
             query_params.append(('skip', params['skip']))  # noqa: E501
         if 'limit' in params:
             query_params.append(('limit', params['limit']))  # noqa: E501
+        if 'sort_by' in params:
+            query_params.append(('sort_by', params['sort_by']))  # noqa: E501
+        if 'reverse_sort' in params:
+            query_params.append(('reverse_sort', params['reverse_sort']))  # noqa: E501
         if 'key' in params:
             query_params.append(('_key', params['key']))  # noqa: E501
         if 'name' in params:
@@ -8693,6 +8789,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str name:
         :param bool is_ephemeral:
@@ -8721,6 +8819,8 @@ class DefaultApi(object):
         :param str workflow: Workflow key (required)
         :param float skip:
         :param float limit:
+        :param str sort_by:
+        :param bool reverse_sort:
         :param str key:
         :param str name:
         :param bool is_ephemeral:
@@ -8729,7 +8829,7 @@ class DefaultApi(object):
                  returns the request thread.
         """
 
-        all_params = ['workflow', 'skip', 'limit', 'key', 'name', 'is_ephemeral']  # noqa: E501
+        all_params = ['workflow', 'skip', 'limit', 'sort_by', 'reverse_sort', 'key', 'name', 'is_ephemeral']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -8760,6 +8860,10 @@ class DefaultApi(object):
             query_params.append(('skip', params['skip']))  # noqa: E501
         if 'limit' in params:
             query_params.append(('limit', params['limit']))  # noqa: E501
+        if 'sort_by' in params:
+            query_params.append(('sort_by', params['sort_by']))  # noqa: E501
+        if 'reverse_sort' in params:
+            query_params.append(('reverse_sort', params['reverse_sort']))  # noqa: E501
         if 'key' in params:
             query_params.append(('_key', params['key']))  # noqa: E501
         if 'name' in params:

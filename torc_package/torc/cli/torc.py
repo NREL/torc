@@ -66,7 +66,7 @@ logger = logging.getLogger(__name__)
 @click.option(
     "-F",
     "--output-format",
-    type=click.Choice(["text", "json"]),
+    type=click.Choice(["text", "csv", "json"]),
     help="Output format for get/list commands. Not all commands support all formats.",
 )
 @click.option(

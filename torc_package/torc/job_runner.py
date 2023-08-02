@@ -201,7 +201,7 @@ class JobRunner:
             self._run_until_complete()
         finally:
             self._complete_compute_node()
-            if self._stats.process:
+            if self._stats.is_enabled():
                 self._stop_resource_monitor()
 
     def _run_until_complete(self):
@@ -554,7 +554,7 @@ class JobRunner:
         self._parent_monitor_conn, child_conn = multiprocessing.Pipe()
         pids = self._pids if self._stats.process else None
         monitor_log_file = self._output_dir / f"monitor_{self._compute_node.key}.log"
-        logger.info("Start resource monitor with %s", json.dumps(self._stats.dict()))
+        logger.info("Start resource monitor with %s", json.dumps(self._stats.model_dump()))
         if self._stats.monitor_type == "aggregation":
             args = (child_conn, self._stats, pids, monitor_log_file, None)
         elif self._stats.monitor_type == "periodic":

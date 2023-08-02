@@ -527,7 +527,9 @@ def test_concurrent_submitters(independent_job_workflow, tmp_path):
         subprocess.Popen(cmd) for _ in range(num_submitters)  # pylint: disable=consider-using-with
     ]
     ret = 0
-    while True:
+    timeout = time.time() + 120
+    is_successful = False
+    while time.time() < timeout:
         done = True
         for pipe in pipes:
             if pipe.poll() is None:
@@ -536,9 +538,11 @@ def test_concurrent_submitters(independent_job_workflow, tmp_path):
             if pipe.returncode != 0:
                 ret = pipe.returncode
         if done:
+            is_successful = True
             break
         time.sleep(1)
 
+    assert is_successful, str([x.returncode for x in pipes])
     assert ret == 0
     assert db.api.get_workflows_key_is_complete(db.workflow.key).is_complete
     for name in (str(i) for i in range(num_jobs)):
