@@ -159,7 +159,7 @@ function addGetAllMethod(router, descriptor) {
           items.push(doc);
         }
       }
-      res.send(utils.makeCursorResult(items, qp.skip, totalCount));
+      res.send(utils.makeCursorResult(items, qp.skip, totalCount, qp.sort_by, qp.reverse_sort));
     } catch (e) {
       utils.handleArangoApiErrors(e, res, `Get ${descriptor.collection} documents`);
     }
@@ -167,6 +167,8 @@ function addGetAllMethod(router, descriptor) {
       .pathParam('workflow', joi.string().required(), 'Workflow key')
       .queryParam('skip', joi.number().default(0))
       .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+      .queryParam('sort_by', joi.string().default(null))
+      .queryParam('reverse_sort', joi.boolean().default(false))
       .response(descriptor.batchSchema)
       .summary(`Retrieve all ${descriptor.name} documents`)
       .description(`Retrieve all documents from the "${descriptor.collection}" collection for ` +

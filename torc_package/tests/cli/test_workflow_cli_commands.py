@@ -48,7 +48,21 @@ def test_workflow_commands(create_workflow_cli):
         ["-k", key, "-u", url, "-F", "json", "events", "list"]
     )
     assert isinstance(events, list) and events
-    _run_and_convert_output_from_json(["-k", key, "-u", url, "-F", "json", "jobs", "list"])
+    _run_and_convert_output_from_json(
+        [
+            "-k",
+            key,
+            "-u",
+            url,
+            "-F",
+            "json",
+            "jobs",
+            "list",
+            "--sort-by",
+            "name",
+            "--reverse-sort",
+        ]
+    )
 
     # Test filtering on the collections join command.
     items = [

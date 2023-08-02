@@ -334,9 +334,21 @@ def list_scheduler_configs(ctx, api):
     type=str,
     help="Filter the values according to each key=value pair.",
 )
+@click.option(
+    "--sort-by",
+    type=str,
+    help="Sort results by this column.",
+)
+@click.option(
+    "--reverse-sort",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Reverse the sort order if --sort-by is set.",
+)
 @click.pass_obj
 @click.pass_context
-def list_workflows(ctx, api, filters):
+def list_workflows(ctx, api, filters, sort_by, reverse_sort):
     """List all workflows.
 
     \b
@@ -352,6 +364,9 @@ def list_workflows(ctx, api, filters):
     exclude = ("id", "rev")
     table_title = "Workflows"
     filters = parse_filters(filters)
+    if sort_by is not None:
+        filters["sort_by"] = sort_by
+        filters["reverse_sort"] = reverse_sort
     items = (x.to_dict() for x in iter_documents(api.get_workflows, **filters))
     print_items(
         ctx,

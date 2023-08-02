@@ -134,15 +134,16 @@ def print_items(
 ):
     """Print items in either a table or JSON format, based on what is set in ctx."""
     output_format = get_output_format_from_context(ctx)
-    if output_format == "text":
+    if output_format in ("text", "csv"):
         table = make_text_table(
             items, table_title, exclude_columns=exclude_columns, start_index=start_index
         )
         if table.rows:
-            print(table)
+            print(table.get_formatted_string(output_format))
         else:
             logger.info("No %s are stored", json_key)
     else:
+        # PrettyTable also supports JSON but we are using a custom key here.
         assert output_format == "json", output_format
         rows = []
         for item in items:

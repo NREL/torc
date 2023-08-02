@@ -166,9 +166,21 @@ def delete_all(ctx, api):
 )
 @click.option("-l", "--limit", type=int, help="Limit the output to this number of jobs.")
 @click.option("-s", "--skip", default=0, type=int, help="Skip this number of jobs.")
+@click.option(
+    "--sort-by",
+    type=str,
+    help="Sort results by this column.",
+)
+@click.option(
+    "--reverse-sort",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Reverse the sort order if --sort-by is set.",
+)
 @click.pass_obj
 @click.pass_context
-def list_jobs(ctx, api, filters, exclude, limit, skip):
+def list_jobs(ctx, api, filters, exclude, limit, skip, sort_by, reverse_sort):
     """List all jobs in a workflow.
 
     \b
@@ -187,6 +199,9 @@ def list_jobs(ctx, api, filters, exclude, limit, skip):
     filters["skip"] = skip
     if limit is not None:
         filters["limit"] = limit
+    if sort_by is not None:
+        filters["sort_by"] = sort_by
+        filters["reverse_sort"] = reverse_sort
     items = (
         x.to_dict()
         for x in iter_documents(api.get_workflows_workflow_jobs, workflow_key, **filters)

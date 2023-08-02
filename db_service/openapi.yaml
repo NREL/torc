@@ -37,6 +37,22 @@ paths:
         schema:
           type: number
           default: 100000.0
+      - name: sort_by
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "null"
+      - name: reverse_sort
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       - name: _key
         in: query
         required: false
@@ -294,6 +310,22 @@ paths:
         schema:
           type: number
           default: 100000.0
+      - name: sort_by
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "null"
+      - name: reverse_sort
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       - name: _key
         in: query
         required: false
@@ -557,6 +589,22 @@ paths:
         schema:
           type: number
           default: 100000.0
+      - name: sort_by
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "null"
+      - name: reverse_sort
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       - name: _key
         in: query
         required: false
@@ -814,6 +862,22 @@ paths:
         schema:
           type: number
           default: 100000.0
+      - name: sort_by
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "null"
+      - name: reverse_sort
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       - name: _key
         in: query
         required: false
@@ -1068,6 +1132,22 @@ paths:
         schema:
           type: number
           default: 100000.0
+      - name: sort_by
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "null"
+      - name: reverse_sort
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       - name: _key
         in: query
         required: false
@@ -1329,6 +1409,22 @@ paths:
         schema:
           type: number
           default: 100000.0
+      - name: sort_by
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "null"
+      - name: reverse_sort
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       - name: _key
         in: query
         required: false
@@ -1612,6 +1708,22 @@ paths:
         schema:
           type: number
           default: 100000.0
+      - name: sort_by
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "null"
+      - name: reverse_sort
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       - name: _key
         in: query
         required: false
@@ -1876,6 +1988,22 @@ paths:
         schema:
           type: number
           default: 100000.0
+      - name: sort_by
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "null"
+      - name: reverse_sort
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       - name: _key
         in: query
         required: false
@@ -2142,6 +2270,22 @@ paths:
         schema:
           type: number
           default: 100000.0
+      - name: sort_by
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "null"
+      - name: reverse_sort
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       - name: _key
         in: query
         required: false
@@ -2434,6 +2578,22 @@ paths:
         schema:
           type: number
           default: 100000.0
+      - name: sort_by
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "null"
+      - name: reverse_sort
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       - name: _key
         in: query
         required: false
@@ -2710,6 +2870,22 @@ paths:
         schema:
           type: number
           default: 100000.0
+      - name: sort_by
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "null"
+      - name: reverse_sort
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       - name: _key
         in: query
         required: false
@@ -2983,6 +3159,22 @@ paths:
         schema:
           type: number
           default: 100000.0
+      - name: sort_by
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "null"
+      - name: reverse_sort
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       - name: _key
         in: query
         required: false
@@ -3298,6 +3490,22 @@ paths:
         schema:
           type: number
           default: 100000.0
+      - name: sort_by
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: "null"
+      - name: reverse_sort
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       - name: _key
         in: query
         required: false
@@ -6007,13 +6215,13 @@ components:
       properties:
         cpu:
           type: boolean
-          default: false
+          default: true
         disk:
           type: boolean
           default: false
         memory:
           type: boolean
-          default: false
+          default: true
         network:
           type: boolean
           default: false
@@ -6824,7 +7032,7 @@ components:
       properties:
         enabled:
           type: boolean
-          default: true
+          default: false
         job_keys:
           type: array
           items:

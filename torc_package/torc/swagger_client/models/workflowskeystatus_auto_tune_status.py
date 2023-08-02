@@ -36,7 +36,7 @@ class WorkflowskeystatusAutoTuneStatus(object):
         'job_keys': 'job_keys'
     }
 
-    def __init__(self, enabled=True, job_keys=None):  # noqa: E501
+    def __init__(self, enabled=False, job_keys=None):  # noqa: E501
         """WorkflowskeystatusAutoTuneStatus - a model defined in Swagger"""  # noqa: E501
         self._enabled = None
         self._job_keys = None

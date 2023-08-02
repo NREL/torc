@@ -41,9 +41,21 @@ def results():
     help="Exclude job names from the output. Set this flag if you need "
     "to deserialize the objects into Result classes or to speed up the query.",
 )
+@click.option(
+    "--sort-by",
+    type=str,
+    help="Sort results by this column.",
+)
+@click.option(
+    "--reverse-sort",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Reverse the sort order if --sort-by is set.",
+)
 @click.pass_obj
 @click.pass_context
-def list_results(ctx, api, filters, limit, skip, exclude_job_names):
+def list_results(ctx, api, filters, limit, skip, exclude_job_names, sort_by, reverse_sort):
     """List all results in a workflow.
 
     \b
@@ -66,6 +78,9 @@ def list_results(ctx, api, filters, limit, skip, exclude_job_names):
     filters["skip"] = skip
     if limit is not None:
         filters["limit"] = limit
+    if sort_by is not None:
+        filters["sort_by"] = sort_by
+        filters["reverse_sort"] = reverse_sort
     table_title = f"Results in workflow {workflow_key}"
     mapping = None if exclude_job_names else map_job_keys_to_names(api, workflow_key)
     items = []
