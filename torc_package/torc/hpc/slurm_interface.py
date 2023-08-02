@@ -135,7 +135,7 @@ class SlurmInterface(HpcInterface):
                 text += f"#SBATCH --{param}={value}\n"
 
         if config.get("extra"):
-            text += config["extra"]
+            text += f"#SBATCH {config['extra']}\n"
         if start_one_worker_per_node:
             text += "srun "
         text += f"{command}\n"
