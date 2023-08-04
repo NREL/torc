@@ -9421,6 +9421,7 @@ class DefaultApi(object):
 
         :param async_req bool: Set True to make the request asynchronous.
         :param str key: Workflow key (required)
+        :param bool only_uninitialized: Only initialize jobs with a status of uninitialized.
         :return: object
                  If the method is called asynchronously,
                  returns the request thread.
@@ -9444,12 +9445,13 @@ class DefaultApi(object):
 
         :param async_req bool: Set True to make the request asynchronous.
         :param str key: Workflow key (required)
+        :param bool only_uninitialized: Only initialize jobs with a status of uninitialized.
         :return: object
                  If the method is called asynchronously,
                  returns the request thread.
         """
 
-        all_params = ['key']  # noqa: E501
+        all_params = ['key', 'only_uninitialized']  # noqa: E501
         all_params.append('async_req')
         all_params.append('_return_http_data_only')
         all_params.append('_preload_content')
@@ -9476,6 +9478,8 @@ class DefaultApi(object):
             path_params['key'] = params['key']  # noqa: E501
 
         query_params = []
+        if 'only_uninitialized' in params:
+            query_params.append(('only_uninitialized', params['only_uninitialized']))  # noqa: E501
 
         header_params = {}
 

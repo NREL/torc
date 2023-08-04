@@ -174,6 +174,15 @@ There are four ways to set it:
    +-------+--------------+-------+-----------------+----------+
    workflow key is required. Select an index from above: >>> 2
 
+User Confirmation
+=================
+Commands that make significant changes to the database prompt the user for confirmation. You can
+bypass these prompts by passing ``-n`` or ``--no-prompts`` to the base command, like this:
+
+.. code-block:: console
+
+    $ torc -n workflows reset-status
+
 Output Format
 =============
 Many commands support output options of raw text, CSV, and JSON. The JSON option is useful for

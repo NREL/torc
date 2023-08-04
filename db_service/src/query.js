@@ -586,12 +586,14 @@ function getWorkflowStatus(workflow) {
   return cursor.next();
 }
 
-/** Set initial job status.
+/** Set initial job statuses to blocked or ready. The default behavior changes all existing
+ * statuses except JobStatus.Disabled. Set onlyUninitialized=true if the user is managing
+ * existing statuses on a workflow restart.
  * @param {Object} workflow
+ * @param {Boolean} onlyUninitialized
  */
-function initializeJobStatus(workflow) {
+function initializeJobStatus(workflow, onlyUninitialized) {
   // TODO: Can this be more efficient with one traversal?
-  const workflowStatus = getWorkflowStatus(workflow);
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
   const schedulers = getSchedulers(workflow);
   for (const job of jobs.all()) {
@@ -610,12 +612,15 @@ function initializeJobStatus(workflow) {
     job.internal.num_cpus = jobResources.num_cpus;
     job.internal.num_gpus = jobResources.num_gpus;
     job.internal.num_nodes = jobResources.num_nodes;
-    if (job.status == JobStatus.Disabled) {
-      ;
-    } else if (isJobInitiallyBlocked(job, workflow)) {
-      job.status = JobStatus.Blocked;
-    } else if (job.status != JobStatus.Done) {
-      job.status = JobStatus.Ready;
+    if (
+      job.status != JobStatus.Disabled &&
+        (!onlyUninitialized || job.status == JobStatus.Uninitialized)
+    ) {
+      if (isJobInitiallyBlocked(job, workflow)) {
+        job.status = JobStatus.Blocked;
+      } else if (job.status != JobStatus.Done) {
+        job.status = JobStatus.Ready;
+      }
     }
     jobs.update(job, job, {mergeObjects: false});
   }

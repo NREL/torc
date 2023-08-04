@@ -75,3 +75,13 @@ extract only job keys, and then pass those keys to the ``jobs reset-status`` com
 
 Next, just as described above, run ``torc workflows restart`` and ``torc hpc slurm schedule-nodes``
 to rerun the jobs.
+
+Restarting jobs with --only-uninitialized
+=========================================
+By default the ``torc workflows restart`` command will reset the statuses of jobs are not ``done``.
+This is because of cases where jobs and/or compute nodes timeout or fail. This may not be what you
+want if you manually reset specific job statuses with ``torc jobs reset-status``.
+
+You can run ``torc workflows restart --only-uninitialized`` instead. Only jobs with a status of
+``uninitialized`` will get set to ``ready``. This is particularly useful if some jobs are still
+running.

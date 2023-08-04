@@ -13,6 +13,7 @@ from torc.job_runner import JobRunner, JOB_COMPLETION_POLL_INTERVAL
 from torc.resource_monitor_reports import iter_job_process_stats
 from .common import (
     check_database_url,
+    confirm_change,
     get_output_format_from_context,
     get_workflow_key_from_context,
     setup_cli_logging,
@@ -129,7 +130,11 @@ def delete(ctx, api, job_keys):
     check_database_url(api)
     if not job_keys:
         logger.warning("No job keys were passed")
+        return
+
     workflow_key = get_workflow_key_from_context(ctx, api)
+    msg = f"This command will delete {len(job_keys)} jobs in workflow {workflow_key}."
+    confirm_change(ctx, msg)
     for key in job_keys:
         api.delete_workflows_workflow_jobs_key(workflow_key, key)
         logger.info("Deleted workflow=%s job=%s", workflow_key, key)
@@ -143,9 +148,40 @@ def delete_all(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    for job in iter_documents(api.get_workflows_workflow_jobs, workflow_key):
-        api.delete_workflows_workflow_jobs_key(workflow_key, job.key)
-        logger.info("Deleted job %s", job.key)
+    job_keys = [x.key for x in iter_documents(api.get_workflows_workflow_jobs, workflow_key)]
+    msg = f"This command will delete the {len(job_keys)} jobs in workflow {workflow_key}."
+    confirm_change(ctx, msg)
+    for key in job_keys:
+        api.delete_workflows_workflow_jobs_key(workflow_key, key)
+        logger.info("Deleted job %s", key)
+
+
+@click.command()
+@click.argument("job_keys", nargs=-1)
+@click.pass_obj
+@click.pass_context
+def disable(ctx, api, job_keys):
+    """Set the status of one or more jobs to disabled."""
+    setup_cli_logging(ctx, __name__)
+    check_database_url(api)
+    if not job_keys:
+        logger.warning("No job keys were passed")
+        return
+
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    msg = (
+        f"This command will set the status of {len(job_keys)} jobs to 'disabled' "
+        f"in workflow {workflow_key}."
+    )
+    confirm_change(ctx, msg)
+    count = 0
+    for key in job_keys:
+        job = api.get_workflows_workflow_jobs_key(workflow_key, key)
+        if job.status != "disabled":
+            job.status = "disabled"
+            api.put_workflows_workflow_jobs_key(job, workflow_key, key)
+            count += 1
+            logger.info("Set job status of job key=%s name=%s to 'disabled.'", job.key, job.name)
 
 
 @click.command(name="list")
@@ -289,7 +325,14 @@ def reset_status(ctx, api, job_keys):
     check_database_url(api)
     if not job_keys:
         logger.warning("No job keys were passed")
+        return
+
     workflow_key = get_workflow_key_from_context(ctx, api)
+    msg = (
+        f"This command will reset the status of {len(job_keys)} jobs to 'uninitialized' "
+        f"in workflow {workflow_key}."
+    )
+    confirm_change(ctx, msg)
     count = 0
     for key in job_keys:
         job = api.get_workflows_workflow_jobs_key(workflow_key, key)
@@ -367,6 +410,7 @@ jobs.add_command(list_user_data)
 # jobs.add_command(cancel)
 jobs.add_command(delete)
 jobs.add_command(delete_all)
+jobs.add_command(disable)
 jobs.add_command(list_jobs)
 jobs.add_command(list_process_stats)
 jobs.add_command(assign_resource_requirements)

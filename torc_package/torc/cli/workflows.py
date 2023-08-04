@@ -22,6 +22,7 @@ from torc.torc_rc import TorcRuntimeConfig
 from torc.workflow_manager import WorkflowManager
 from .common import (
     check_database_url,
+    confirm_change,
     get_workflow_key_from_context,
     get_output_format_from_context,
     setup_cli_logging,
@@ -48,6 +49,10 @@ def cancel(ctx, api, workflow_keys):
     check_database_url(api)
     if not workflow_keys:
         logger.warning("No workflow keys were passed")
+        return
+
+    msg = "This command will cancel all specified workflows."
+    confirm_change(ctx, msg)
 
     for key in workflow_keys:
         # TODO: Handling different scheduler types needs to be at a lower level.
@@ -286,6 +291,10 @@ def delete(ctx, api, workflow_keys):
     check_database_url(api)
     if not workflow_keys:
         logger.warning("No workflow keys were passed")
+        return
+
+    msg = "This command will delete all specified workflows."
+    confirm_change(ctx, msg)
     for key in workflow_keys:
         api.delete_workflows_key(key)
         logger.info("Deleted workflow %s", key)
@@ -298,7 +307,11 @@ def delete_all(ctx, api):
     """Delete all workflows."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    for workflow in iter_documents(api.get_workflows):
+    keys = [x.workflow_key for x in iter_documents(api.get_workflows)]
+    keys_str = " ".join(keys)
+    msg = f"This command will delete the workflows with these keys: {keys_str}"
+    confirm_change(ctx, msg)
+    for workflow in keys:
         api.delete_workflows_key(workflow.key)
         logger.info("Deleted workflow %s", workflow.key)
 
@@ -453,6 +466,14 @@ def reset_status(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
+    workflow = api.get_workflows_key(workflow_key)
+    msg = f"""This command will reset the status of this workflow and all its jobs:
+    key: {workflow_key}
+    user: {workflow.user}
+    name: {workflow.name}
+    description: {workflow.description}
+"""
+    confirm_change(ctx, msg)
     api.post_workflows_key_reset_status(workflow_key)
     logger.info("Reset workflow status")
 
@@ -473,6 +494,14 @@ def reset_job_status(ctx, api, failed_only):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
+    workflow = api.get_workflows_key(workflow_key)
+    msg = f"""This command will reset the status of all jobs in this workflow:
+    key: {workflow_key}
+    user: {workflow.user}
+    name: {workflow.name}
+    description: {workflow.description}
+"""
+    confirm_change(ctx, msg)
     api.post_workflows_key_reset_job_status(workflow_key, failed_only=failed_only)
     logger.info("Reset job status, failed_only=%s", failed_only)
 
@@ -486,15 +515,33 @@ def reset_job_status(ctx, api, failed_only):
     show_default=True,
     help="Ignore checks for missing files and user data documents.",
 )
+@click.option(
+    "--only-uninitialized",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Only initialize jobs with a status of uninitialized.",
+)
 @click.pass_obj
 @click.pass_context
-def restart(ctx, api, ignore_missing_data):
-    """Restart the workflow defined in the database specified by the URL."""
+def restart(ctx, api, ignore_missing_data, only_uninitialized):
+    """Restart the workflow defined in the database specified by the URL. Resets all jobs with
+    a status of canceled, submitted, submitted_pending, and terminated. Does not affect jobs with
+    a status of done.
+    """
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
+    workflow = api.get_workflows_key(workflow_key)
+    msg = f"""This command will restart this workflow and reset failed/incomplete job statuses.
+    key: {workflow_key}
+    user: {workflow.user}
+    name: {workflow.name}
+    description: {workflow.description}
+"""
+    confirm_change(ctx, msg)
     mgr = WorkflowManager(api, workflow_key)
-    mgr.restart(ignore_missing_data=ignore_missing_data)
+    mgr.restart(ignore_missing_data=ignore_missing_data, only_uninitialized=only_uninitialized)
     # TODO: This could schedule nodes.
 
 
@@ -525,6 +572,19 @@ def start(ctx, api, auto_tune_resource_requirements, ignore_missing_data):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
+
+    done_jobs = api.get_workflows_workflow_jobs(workflow_key, status="done", limit=1).items
+    if done_jobs:
+        workflow = api.get_workflows_key(workflow_key)
+        msg = f"""This workflow has one or more jobs with a status of 'done.' This command will
+reset all job statuses to 'uninitialized' and then 'ready' or 'blocked.'
+    key: {workflow_key}
+    user: {workflow.user}
+    name: {workflow.name}
+    description: {workflow.description}
+"""
+        confirm_change(ctx, msg)
+
     mgr = WorkflowManager(api, workflow_key)
     try:
         mgr.start(

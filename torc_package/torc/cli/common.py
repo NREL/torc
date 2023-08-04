@@ -80,6 +80,18 @@ def check_output_path(path: Path, force: bool):
             sys.exit(1)
 
 
+def confirm_change(ctx, msg):
+    """If prompts are enabled (default), prompt the user to confirm the change."""
+    if get_no_prompts_from_context(ctx):
+        return
+
+    print(msg, file=sys.stderr)
+    response = input("Continue? (y/n) [n]: >>> ").strip().lower() or "n"
+    if response == "n":
+        print("Exiting", file=sys.stderr)
+        sys.exit(0)
+
+
 def get_log_level_from_str(level):
     """Convert a log level string to logging type."""
     match level:
@@ -95,7 +107,7 @@ def get_log_level_from_str(level):
             raise Exception(f"Unsupported level={level}")
 
 
-def get_no_prompts_from_context(ctx) -> str:
+def get_no_prompts_from_context(ctx) -> bool:
     """Get the workflow ID from a click context."""
     return ctx.find_root().params["no_prompts"]
 

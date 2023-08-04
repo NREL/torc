@@ -533,7 +533,7 @@ def create_workflow_cli(tmp_path_factory):
     assert result.exit_code == 0
     key = json.loads(result.stdout)["key"]
     yield key, url, tmp_path
-    result = runner.invoke(cli, ["-k", key, "-u", url, "workflows", "delete", key])
+    result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "workflows", "delete", key])
     assert result.exit_code == 0
     api.api_client.close()
 

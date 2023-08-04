@@ -30,7 +30,15 @@ def test_cancel_workflow(cancelable_workflow, tmp_path):
         time.sleep(2)
         assert pipe.poll() is None
         subprocess.run(
-            ["torc", "-u", api.api_client.configuration.host, "workflows", "cancel", workflow_key],
+            [
+                "torc",
+                "-n",
+                "-u",
+                api.api_client.configuration.host,
+                "workflows",
+                "cancel",
+                workflow_key,
+            ],
             check=True,
         )
         status = api.get_workflows_key_status(workflow_key)
