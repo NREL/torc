@@ -5155,6 +5155,15 @@ paths:
         explode: false
         schema:
           type: string
+      - name: only_uninitialized
+        in: query
+        description: Only initialize jobs with a status of uninitialized.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       requestBody:
         content:
           '*/*': {}

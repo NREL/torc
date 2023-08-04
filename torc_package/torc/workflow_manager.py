@@ -19,18 +19,20 @@ class WorkflowManager:
         self._api = api
         self._key = key
 
-    def restart(self, ignore_missing_data=False):
+    def restart(self, ignore_missing_data=False, only_uninitialized=False):
         """Restart the workflow.
 
         Parameters
         ----------
         ignore_missing_data : bool
             If True, ignore checks for missing files and user_data.
+        only_uninitialized : bool
+            If True, only initialize jobs with a status of uninitialized.
         """
         self._check_workflow(ignore_missing_data=ignore_missing_data)
         self._bump_run_id()
         send_api_command(self._api.post_workflows_key_reset_status, self._key)
-        self._reinitialize_jobs()
+        self._reinitialize_jobs(only_uninitialized=only_uninitialized)
         send_api_command(
             self._api.post_workflows_workflow_events,
             {
@@ -58,8 +60,7 @@ class WorkflowManager:
         send_api_command(self._api.post_workflows_key_reset_status, self._key)
         send_api_command(self._api.post_workflows_key_reset_job_status, self._key)
         self._bump_run_id()
-        # Set every job status from uninitialized to ready or blocked.
-        send_api_command(self._api.post_workflows_key_initialize_jobs, self._key)
+        self._initialize_jobs()
 
         if auto_tune_resource_requirements:
             send_api_command(
@@ -145,8 +146,16 @@ class WorkflowManager:
                     file.key,
                 )
 
-    def _reinitialize_jobs(self):
-        self._reset_job_status()
+    def _initialize_jobs(self, only_uninitialized=False):
+        """Change all uninitialized jobs to ready or blocked."""
+        send_api_command(
+            self._api.post_workflows_key_initialize_jobs,
+            self._key,
+            only_uninitialized=only_uninitialized,
+        )
+        logger.info("Changed all uninitialized jobs to ready or blocked.")
+
+    def _reinitialize_jobs(self, only_uninitialized=False):
         self._process_changed_files()
         self._update_jobs_if_output_files_are_missing()
         response = send_api_command(
@@ -157,20 +166,7 @@ class WorkflowManager:
                 "Changed job status to uninitialized because inputs were changed: %s",
                 " ".join(response.reinitialized_jobs),
             )
-        send_api_command(self._api.post_workflows_key_initialize_jobs, self._key)
-
-    def _reset_job_status(self):
-        for status in ("canceled", "submitted", "submitted_pending", "terminated"):
-            for job in iter_documents(
-                self._api.get_workflows_workflow_jobs_find_by_status_status,
-                self._key,
-                status,
-            ):
-                job.status = "uninitialized"
-                send_api_command(
-                    self._api.put_workflows_workflow_jobs_key, job, self._key, job.key
-                )
-                logger.info("Changed job %s from %s to uninitialized", job.key, status)
+        self._initialize_jobs(only_uninitialized=only_uninitialized)
 
     def _update_jobs_if_output_files_are_missing(self):
         for job in send_api_command(

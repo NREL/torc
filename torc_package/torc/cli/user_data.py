@@ -13,6 +13,7 @@ from torc.swagger_client.models.edges_name_model import EdgesNameModel
 from torc.api import iter_documents
 from .common import (
     check_database_url,
+    confirm_change,
     get_output_format_from_context,
     get_workflow_key_from_context,
     parse_filters,
@@ -172,6 +173,10 @@ def delete(ctx, api, user_data_keys):
     check_database_url(api)
     if not user_data_keys:
         logger.warning("No user data keys were passed")
+        return
+
+    msg = f"This command will delete {len(user_data_keys)} user data objects."
+    confirm_change(ctx, msg)
     workflow_key = get_workflow_key_from_context(ctx, api)
     for key in user_data_keys:
         api.delete_workflows_workflow_user_data_key(workflow_key, key)
@@ -186,9 +191,12 @@ def delete_all(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    for data in iter_documents(api.get_workflows_workflow_user_data, workflow_key):
-        api.delete_workflows_workflow_user_data_key(workflow_key, data["_key"])
-        logger.info("Deleted user_data %s", data["_key"])
+    keys = [x["_key"] for x in iter_documents(api.get_workflows_workflow_user_data, workflow_key)]
+    msg = f"This command will delete {len(keys)} user data objects."
+    confirm_change(ctx, msg)
+    for key in keys:
+        api.delete_workflows_workflow_user_data_key(workflow_key, key)
+        logger.info("Deleted user_data %s", key)
 
 
 @click.command()

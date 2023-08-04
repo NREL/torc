@@ -18,7 +18,7 @@ def test_workflow_commands(create_workflow_cli):
     key, url, output_dir = create_workflow_cli
     hostname = socket.gethostname()
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(cli, ["-k", key, "-u", url, "workflows", "start"])
+    result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "workflows", "start"])
     assert result.exit_code == 0
 
     result = runner.invoke(cli, ["-k", key, "-u", url, "jobs", "run", "-o", str(output_dir)])
@@ -100,7 +100,7 @@ def test_workflow_commands(create_workflow_cli):
     result = runner.invoke(cli, ["stats", "concatenate-process", str(stats_dir)])
     assert result.exit_code == 0
 
-    result = runner.invoke(cli, ["-k", key, "-u", url, "workflows", "reset-status"])
+    result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "workflows", "reset-status"])
     assert result.exit_code == 0
 
 
@@ -398,10 +398,10 @@ def test_job_commands(create_workflow_cli):
     _run_and_check_output(["-k", key, "-u", url, "user-data", "get", ud_key], ("key1", "val1"))
     _run_and_check_output(["-k", key, "-u", url, "user-data", "list"], ("key1", "val1"))
     runner = CliRunner(mix_stderr=False)
-    result = runner.invoke(cli, ["-k", key, "-u", url, "user-data", "delete", ud_key])
+    result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "user-data", "delete", ud_key])
     assert result.exit_code == 0
 
-    result = runner.invoke(cli, ["-k", key, "-u", url, "jobs", "delete", job_key])
+    result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "jobs", "delete", job_key])
     assert result.exit_code == 0
     _run_and_check_jobs_list_output(["-k", key, "-u", url, "-F", "json", "jobs", "list"], 3)
     _run_and_check_jobs_list_output(
@@ -419,7 +419,7 @@ def test_job_commands(create_workflow_cli):
         ],
         1,
     )
-    result = runner.invoke(cli, ["-k", key, "-u", url, "jobs", "delete-all"])
+    result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "jobs", "delete-all"])
     assert result.exit_code == 0
     _run_and_check_jobs_list_output(
         [

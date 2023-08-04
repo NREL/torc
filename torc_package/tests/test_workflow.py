@@ -396,6 +396,27 @@ def test_reinitialize_workflow_incomplete(incomplete_workflow):
     assert db.get_document("jobs", "postprocess").status == "blocked"
 
 
+def test_reinitialize_workflow_disabled_job(incomplete_workflow):
+    """Test workflow reinitialization on an incomplete workflow."""
+    db, _, _ = incomplete_workflow
+    api = db.api
+    runner = CliRunner(mix_stderr=False)
+    job_key = db.get_document("jobs", "postprocess").key
+    url = api.api_client.configuration.host
+    result = runner.invoke(
+        cli, ["-n", "-u", url, "-k", db.workflow.key, "jobs", "disable", job_key]
+    )
+    assert result.exit_code == 0
+    assert db.get_document("jobs", "postprocess").status == "disabled"
+    mgr = WorkflowManager(api, db.workflow.key)
+    mgr.restart()
+    for name in ("preprocess", "work1"):
+        job = db.get_document("jobs", name)
+        assert job.status == "done"
+    assert db.get_document("jobs", "work2").status == "ready"
+    assert db.get_document("jobs", "postprocess").status == "disabled"
+
+
 def test_reinitialize_workflow_incomplete_missing_files(
     incomplete_workflow_missing_files,
 ):
@@ -466,6 +487,56 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
     for name in ("preprocess", "work1", "work2", "postprocess"):
         job = db.get_document("jobs", name)
         assert job.status == "uninitialized"
+
+
+def test_restart_uninitialized(diamond_workflow):
+    """Tests the restart workflow command with only_uninitialized."""
+    db = diamond_workflow[0]
+    api = db.api
+    mgr = WorkflowManager(api, db.workflow.key)
+    mgr.start()
+    for name in ("preprocess", "work1", "work2"):
+        job = db.get_document("jobs", name)
+        status = "done"
+        result = WorkflowResultsModel(
+            job_key=job.key,
+            run_id=1,
+            return_code=0,
+            exec_time_minutes=5,
+            completion_time=str(datetime.now()),
+            status=status,
+        )
+        job = api.post_workflows_workflow_jobs_key_complete_job_status_rev(
+            result, db.workflow.key, job.id, status, job.rev
+        )
+
+        for file in api.get_workflows_workflow_files_produced_by_job_key(
+            db.workflow.key, job.key
+        ).items:
+            path = Path(file.path)
+            if not path.exists():
+                path.touch()
+                file.st_mtime = path.stat().st_mtime
+                api.put_workflows_workflow_files_key(file, db.workflow.key, file.key)
+
+    runner = CliRunner(mix_stderr=False)
+    job_key = db.get_document("jobs", "work2").key
+    url = api.api_client.configuration.host
+    result = runner.invoke(
+        cli, ["-n", "-u", url, "-k", db.workflow.key, "jobs", "reset-status", job_key]
+    )
+    assert result.exit_code == 0
+    assert db.get_document("jobs", "work2").status == "uninitialized"
+    assert db.get_document("jobs", "postprocess").status == "ready"
+    result = runner.invoke(
+        cli,
+        ["-n", "-u", url, "-k", db.workflow.key, "workflows", "restart", "--only-uninitialized"],
+    )
+    assert result.exit_code == 0
+    assert db.get_document("jobs", "preprocess").status == "done"
+    assert db.get_document("jobs", "work1").status == "done"
+    assert db.get_document("jobs", "work2").status == "ready"
+    assert db.get_document("jobs", "postprocess").status == "ready"
 
 
 @pytest.mark.parametrize("num_jobs", [5])

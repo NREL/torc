@@ -146,13 +146,15 @@ router.post('/workflows/:key/initialize_jobs', function(req, res) {
     documents.clearEphemeralUserData(workflow);
     query.addBlocksEdgesFromFiles(workflow);
     query.addBlocksEdgesFromUserData(workflow);
-    query.initializeJobStatus(workflow);
+    query.initializeJobStatus(workflow, req.queryParams.only_uninitialized);
     res.send({message: 'Initialized job status'});
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Initialize jobs for workflow key=${key}`);
   }
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
+    .queryParam('only_uninitialized', joi.boolean().optional().default(false),
+        'Only initialize jobs with a status of uninitialized.')
     .response(joi.object(), 'message')
     .summary('Initialize job relationships.')
     .description('Initialize job relationships based on file and user_data relationships.');
