@@ -35,3 +35,4 @@ below.
    diamond_workflow
    slurm_diamond_workflow
    cpu_affinity_workflow
+   map_function

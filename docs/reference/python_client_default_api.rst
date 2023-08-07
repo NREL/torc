@@ -1,3 +1,5 @@
+.. _default-api:
+
 #########################
 OpenAPI Client DefaultApi
 #########################

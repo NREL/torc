@@ -21,6 +21,7 @@ from .common import (
     path_callback,
     print_items,
 )
+from .run_function import run_function
 
 
 logger = logging.getLogger(__name__)
@@ -416,3 +417,4 @@ jobs.add_command(list_process_stats)
 jobs.add_command(assign_resource_requirements)
 jobs.add_command(reset_status)
 jobs.add_command(run)
+jobs.add_command(run_function)
