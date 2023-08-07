@@ -28,6 +28,7 @@ from torc.swagger_client.models.workflow_specifications_schedulers import (
     WorkflowSpecificationsSchedulers,
 )
 from torc.swagger_client.models.workflow_user_data_model import WorkflowUserDataModel
+from torc.cli.run_function import check_function
 
 
 class WorkflowBuilder:
@@ -53,6 +54,70 @@ class WorkflowBuilder:
         """Add a job and return it."""
         self._jobs.append(WorkflowJobSpecificationsModel(*args, **kwargs))
         return self._jobs[-1]
+
+    def map_function_to_jobs(
+        self,
+        module: str,
+        func: str,
+        params: list[dict],
+        module_directory=None,
+        resource_requirements=None,
+        scheduler=None,
+        start_index=0,
+        name_prefix="",
+    ) -> list[WorkflowJobSpecificationsModel]:
+        """Add a job that will call func for each item in params.
+
+        Parameters
+        ----------
+        module : str
+            Name of module that contains func. If it is not available in the Python path, specify
+            the parent directory in module_directory.
+        func : str
+            Name of the function in module to be called.
+        params : list[dict]
+            Each item in this list will be passed to func. The contents must be serializable to
+            JSON.
+        module_directory : str | None
+            Required if module is not importable.
+        resource_requirements : str | None
+            Optional name of resource_requirements that should be used by each job.
+        scheduler : str | None
+            Optional name of scheduler that should be used by each job.
+        start_index : int
+            Starting index to use for job names.
+        name_prefix : str
+            Prepend job names with this prefix; defaults to an empty string. Names will be the
+            index converted to a string.
+
+        Returns
+        -------
+        list[WorkflowJobSpecificationsModel]
+        """
+        jobs = []
+        for i, job_params in enumerate(params, start=start_index):
+            check_function(module, func, module_directory)
+            data = {
+                "module": module,
+                "func": func,
+                "params": job_params,
+            }
+            if module_directory is not None:
+                data["module_directory"] = module_directory
+            job_name = f"{name_prefix}{i}"
+            input_ud = self.add_user_data(name=f"input_{job_name}", data=data)
+            output_ud = self.add_user_data(name=f"output_{job_name}", data=data)
+            job = self.add_job(
+                name=job_name,
+                command="torc jobs run-function",
+                consumes_user_data=[input_ud.name],
+                stores_user_data=[output_ud.name],
+                resource_requirements=resource_requirements,
+                scheduler=scheduler,
+            )
+            jobs.append(job)
+
+        return jobs
 
     def add_resource_requirements(self, *args, **kwargs) -> WorkflowResourceRequirementsModel:
         """Add a resource_requirement and return it."""
@@ -99,5 +164,5 @@ class WorkflowBuilder:
                 slurm_schedulers=self._slurm_schedulers or None,
             ),
             user_data=self._user_data or None,
-            **kwargs
+            **kwargs,
         )

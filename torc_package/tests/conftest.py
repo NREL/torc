@@ -14,14 +14,18 @@ from torc.swagger_client.configuration import Configuration
 from torc.swagger_client.models.workflow_specifications_schedulers import (
     WorkflowSpecificationsSchedulers,
 )
-from torc.swagger_client.models.workflow_local_schedulers_model import WorkflowLocalSchedulersModel
+from torc.swagger_client.models.workflow_local_schedulers_model import (
+    WorkflowLocalSchedulersModel,
+)
 from torc.swagger_client.models.workflow_job_specifications_model import (
     WorkflowJobSpecificationsModel,
 )
 from torc.swagger_client.models.workflow_resource_requirements_model import (
     WorkflowResourceRequirementsModel,
 )
-from torc.swagger_client.models.workflow_specifications_model import WorkflowSpecificationsModel
+from torc.swagger_client.models.workflow_specifications_model import (
+    WorkflowSpecificationsModel,
+)
 from torc.swagger_client.models.workflow_results_model import WorkflowResultsModel
 from torc.swagger_client.models.workflow_config_compute_node_resource_stats import (
     WorkflowConfigComputeNodeResourceStats,
@@ -528,13 +532,33 @@ def create_workflow_cli(tmp_path_factory):
     dump_data(data, w_file)
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
-        cli, ["-u", url, "-F", "json", "workflows", "create-from-json-file", str(w_file)]
+        cli,
+        ["-u", url, "-F", "json", "workflows", "create-from-json-file", str(w_file)],
     )
     assert result.exit_code == 0
     key = json.loads(result.stdout)["key"]
     yield key, url, tmp_path
     result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "workflows", "delete", key])
     assert result.exit_code == 0
+    api.api_client.close()
+
+
+@pytest.fixture
+def mapped_function_workflow(tmp_path):
+    """Creates a workflow out of a function mapped to jobs."""
+    api = _initialize_api()
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    builder = WorkflowBuilder()
+    params = [{"val": i} for i in range(5)]
+    builder.map_function_to_jobs(
+        "mapped_function", "run", params, module_directory="tests/scripts"
+    )
+    spec = builder.build()
+    workflow = api.post_workflow_specifications(spec)
+    db = DatabaseInterface(api, workflow)
+    yield db, output_dir
+    api.delete_workflows_key(workflow.key)
     api.api_client.close()
 
 

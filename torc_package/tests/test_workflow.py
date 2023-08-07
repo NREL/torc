@@ -623,6 +623,32 @@ def test_concurrent_submitters(independent_job_workflow, tmp_path):
         assert result.return_code == 0
 
 
+def test_map_functions(mapped_function_workflow):
+    """Test a workflow that maps a function across workers."""
+    db, output_dir = mapped_function_workflow
+    api = db.api
+    mgr = WorkflowManager(api, db.workflow.key)
+    mgr.start()
+    runner = JobRunner(
+        api,
+        db.workflow,
+        output_dir,
+        time_limit="P0DT24H",
+        job_completion_poll_interval=0.1,
+    )
+    runner.run_worker()
+
+    assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
+    for i in range(5):
+        job_key = db.get_document_key("jobs", str(i))
+        result = api.get_workflows_workflow_results_find_by_job_key(db.workflow.key, job_key)
+        assert result.return_code == 0
+        output_ud = api.get_workflows_workflow_jobs_key_user_data_stores(db.workflow.key, job_key)
+        assert len(output_ud.items) == 1
+        assert "result" in output_ud.items[0].data
+        assert "output_data_path" in output_ud.items[0].data
+
+
 def _fake_complete_job(api, workflow_key, job):
     job = api.put_workflows_workflow_jobs_key(job, workflow_key, job.key)
     status = "done"

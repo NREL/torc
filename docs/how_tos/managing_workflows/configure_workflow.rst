@@ -40,3 +40,7 @@ Configure with the Python API
 The :ref:`workflow-builder` class provides a mechanism to build a workflow with a simple Python
 script. Refer to that API documentation and this `example script
 <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py>`_.
+
+Note that if you don't have a CLI executable for your jobs and instead want torc to map a list of
+input parameters across workers, you can call ``WorkflowBuilder.map_function_to_jobs()``. Refer to
+the tutorial :ref:`map-function-tutorial` for more information.

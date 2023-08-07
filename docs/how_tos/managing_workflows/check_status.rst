@@ -1,3 +1,5 @@
+.. _check-status:
+
 #####################
 Check workflow status
 #####################
