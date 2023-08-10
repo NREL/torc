@@ -533,7 +533,8 @@ def restart(ctx, api, ignore_missing_data, only_uninitialized):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     workflow = api.get_workflows_key(workflow_key)
-    msg = f"""This command will restart this workflow and reset failed/incomplete job statuses.
+    types = "uninitialized" if only_uninitialized else "failed/incomplete"
+    msg = f"""This command will restart this workflow and reset {types} job statuses.
     key: {workflow_key}
     user: {workflow.user}
     name: {workflow.name}
