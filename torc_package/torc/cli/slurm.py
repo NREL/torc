@@ -530,7 +530,9 @@ def run_jobs(
 
     workflow = api.get_workflows_key(workflow_key)
     log_prefix = f"slurm_{slurm_job_id}_{slurm_node_id}_{slurm_task_pid}"
-    my_logger.info("Start workflow on compute node %s", hostname)
+    my_logger.info(
+        "Start workflow on compute node %s end_time=%s buffer=%s", hostname, end_time, buffer
+    )
 
     scheduler_config_id = None
     # Note that there could be multiple compute nodes under this slurm_job_id.

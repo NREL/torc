@@ -200,10 +200,11 @@ class JobRunner:
         self._log_worker_start_event()
         self._create_compute_node(scheduler)
         logger.info(
-            "Run worker torc version=%s db=%s hostname=%s compute_node_key=%s resources=%s config=%s",
+            "Run worker torc version=%s db=%s hostname=%s end_time=%s compute_node_key=%s resources=%s config=%s",
             self._api.api_client.configuration.host,
             torc.version.__version__,
             self._hostname,
+            self._end_time,
             self._compute_node.key,
             str(self._resources).replace("\n", " "),
             self._config,
