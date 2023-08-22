@@ -3,7 +3,7 @@
 ********************
 Generate Client APIs
 ********************
-The software package uses the ``Swagger`` tools to auto-generate client APIs from a Docker
+The software package uses the ``OpenAPI`` tools to auto-generate client APIs from a Docker
 container.
 
 .. note:: You must have Docker installed.
@@ -42,20 +42,24 @@ and port:
 5. Set the ``packageVersion`` in ``config.json to the same value as in
    ``torc_package/torc/version.py``.
 
-6. Generate the python client by running the script below. It performs the following actions:
+6. Generate the Python and Julia client by running the script below. It performs the following
+   actions:
 
 - Download the API specification `swagger.json` from the API endpoint. This is created by ArangoDB.
 - Convert the spec from v2.0 (Swagger) to v3.0 (OpenAPI).
 - Rename input schemas to names that make more sense for the application.
 - Create a Python client package.
-- Copy the package directory, ``swagger_client``, into the torc package at
-  ``/torc_package/torc/swagger_client``, overwriting the existing code.
+- Create a Julia client package.
+- Copy the Python package directory, ``python_client/openapi_client``, into the ``torc`` package at
+  ``/torc_package/torc/openapi_client``, overwriting the existing code.
+- Copy the Julia package directory, ``julia_client/openapi_client``, into the ``Torc`` package at
+  ``/julia/Torc/src/api``, overwriting the existing code.
 
 .. code-block:: console
 
    $ bash make_api.sh
 
 This procedure could be implemented to generate server stubs or additional client programming
-languages. Refer to the ``Swagger`` documentation for more information.
+languages. Refer to the ``OpenAPI`` documentation for more information.
 
 7. Commit changes to the repository.

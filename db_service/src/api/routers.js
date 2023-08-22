@@ -51,8 +51,8 @@ function addPostMethod(router, descriptor) {
     }
   })
       .pathParam('workflow', joi.string().required(), 'Workflow key')
-      .body(descriptor.schema, `Result of a ${descriptor.name}.`)
-      .response(descriptor.schema, `Result of a ${descriptor.name}.`)
+      .body(descriptor.schema, `${descriptor.name}.`)
+      .response(descriptor.schema, `Response from posting an instance of ${descriptor.name}.`)
       .summary(`Store a ${descriptor.name}.`)
       .description(`Store a ${descriptor.name} in the "${descriptor.collection}" collection.`);
 }
@@ -205,7 +205,7 @@ function addDeleteOneMethod(router, descriptor) {
     }
   })
       .pathParam('workflow', joi.string().required(), 'Workflow key')
-      .pathParam('key', joi.string().required(), `key of the {{name}} document.`)
+      .pathParam('key', joi.string().required(), `key of the ${descriptor.name} document.`)
       .body(joi.object().optional())
       .response(descriptor.schema, `${descriptor.name} stored in the collection.`)
       .summary(`Delete a document of type ${descriptor.name}`)

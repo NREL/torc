@@ -218,6 +218,7 @@ def _create_cpu_affinity_workflow(output_dir, slurm_account):
     assert slurm_account, f"{slurm_account=} must be set"
     file = Path(__file__).parent.parent.parent / "examples" / "slurm_cpu_affinity_workflow.json5"
     dst_file = _fix_slurm_account(file, output_dir, slurm_account)
+    _fix_mem_requirement(dst_file, 0, "70G")
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
         cli, ["-F", "json", "workflows", "create-from-json-file", str(dst_file)]
@@ -257,6 +258,14 @@ def _fix_slurm_account(spec_file, output_dir, account):
     data["config"]["compute_node_resource_stats"]["interval"] = 1
     dump_data(data, dst_file, indent=2)
     return dst_file
+
+
+def _fix_mem_requirement(spec_file, index, mem):
+    data = load_data(spec_file)
+    scheduler = data["schedulers"]["slurm_schedulers"][index]
+    scheduler["mem"] = mem
+    dump_data(data, spec_file, indent=2)
+    return spec_file
 
 
 def _get_scheduler_by_name(api, workflow_key):

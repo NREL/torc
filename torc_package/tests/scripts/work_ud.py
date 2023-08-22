@@ -25,4 +25,4 @@ result = api.get_workflows_workflow_jobs_key_user_data_stores(workflow_key, job_
 assert len(result.items) == 1, result
 output_data = result.items[0]
 output_data.data = {"val": input_data.data["val"] + 1}
-api.put_workflows_workflow_user_data_key(output_data, workflow_key, output_data.key)
+api.put_workflows_workflow_user_data_key(workflow_key, output_data.key, output_data)

@@ -3,10 +3,9 @@
 import json
 import logging
 from pathlib import Path
-from pydoc import locate
 
 import click
-from torc.swagger_client import DefaultApi
+from torc.openapi_client import DefaultApi
 
 from torc.api import iter_documents
 from torc.utils.sql import make_table, insert_rows
@@ -58,18 +57,18 @@ def sqlite(api, workflow_keys, filename, force):
         selected_workflows = iter_documents(api.get_workflows)
     for workflow in selected_workflows:
         config = api.get_workflows_key_config(workflow.key)
-        config_as_dict = config.to_dict()
+        config_as_dict = config.model_dump()
         config_as_dict["compute_node_resource_stats"] = json.dumps(
             config_as_dict["compute_node_resource_stats"]
         )
         status = api.get_workflows_key_status(workflow.key)
-        status_as_dict = status.to_dict()
+        status_as_dict = status.model_dump()
         status_as_dict["auto_tune_status"] = json.dumps(status_as_dict["auto_tune_status"])
         if not workflows:
-            _make_sql_table(workflow, workflow.to_dict(), filename, "workflows")
+            _make_sql_table(workflow, workflow.model_dump(), filename, "workflows")
             _make_sql_table(config, config_as_dict, filename, "workflow_configs")
             _make_sql_table(status, status_as_dict, filename, "workflow_statuses")
-        workflows.append(tuple(workflow.to_dict().values()))
+        workflows.append(tuple(workflow.model_dump().values()))
         workflow_configs.append(tuple(config_as_dict.values()))
         workflow_statuses.append(tuple(status_as_dict.values()))
 
@@ -80,7 +79,10 @@ def sqlite(api, workflow_keys, filename, force):
             rows = []
             args = (workflow.key, basename) if basename in _EDGES else (workflow.key,)
             for item in iter_documents(func, *args):
-                row = item if isinstance(item, dict) else item.to_dict()
+                # to_dict is problematic because it drops fields with None values.
+                # Not sure that we should be using pydantic directly.
+                # row = item if isinstance(item, dict) else item.to_dict()
+                row = item if isinstance(item, dict) else item.model_dump()
                 if "to" in row:
                     # Swagger converts Arango's '_to' to 'to', but leaves '_from'.
                     # Persist Arango names.
@@ -123,15 +125,41 @@ def _make_sql_table(item, row, filename, basename):
         types = None
     else:
         types = {}
-        for key, val in type(item).swagger_types.items():
-            if val == "object":
-                types[key] = str
+        for key, val in row.items():
+            if val is None:
+                types[key] = _get_type_from_schema(item.model_json_schema()["properties"][key])
             else:
-                types[key] = locate(val) or str
+                types[key] = type(val)
         types["workflow_key"] = str
         if "to" in types:
             types["_to"] = types.pop("to")
     make_table(filename, basename, row, primary_key="key", types=types)
+
+
+def _get_type_from_schema(properties: dict):
+    schema_type_to_python = {
+        "str": str,
+        "integer": int,
+        "number": float,
+    }
+    data_type = None
+    if "type" in properties:
+        data_type = schema_type_to_python.get(properties["type"], str)
+    elif "anyOf" in properties:
+        for item in properties["anyOf"]:
+            if "type" in item:
+                if item["type"] == "null":
+                    continue
+                data_type = schema_type_to_python.get(item["type"], str)
+            elif "$ref" in item:
+                raise NotImplementedError(f"Bug: $ref not supported: {item=}")
+            else:
+                raise NotImplementedError(f"Bug: {item=}")
+    elif "$ref" in properties:
+        raise NotImplementedError(f"Bug: $ref not supported: {properties=}")
+    else:
+        raise NotImplementedError(f"Bug: {properties=}")
+    return data_type
 
 
 _DB_ACCESSOR_FUNCS = {

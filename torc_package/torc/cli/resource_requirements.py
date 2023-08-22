@@ -4,11 +4,11 @@ import json
 import logging
 
 import click
-from torc.swagger_client.models.workflow_resource_requirements_model import (
+from torc.openapi_client.models.workflow_resource_requirements_model import (
     WorkflowResourceRequirementsModel,
 )
 
-from torc.api import iter_documents
+from torc.api import iter_documents, list_model_fields
 from .common import (
     check_database_url,
     get_output_format_from_context,
@@ -89,7 +89,7 @@ def add(ctx, api, name, num_cpus, memory, runtime, num_nodes, apply_to_all_jobs)
         runtime=runtime,
         num_nodes=num_nodes,
     )
-    rr = api.post_workflows_workflow_resource_requirements(rr, workflow_key)
+    rr = api.post_workflows_workflow_resource_requirements(workflow_key, rr)
     edges = []
     if apply_to_all_jobs:
         for job in iter_documents(api.get_workflows_workflow_jobs, workflow_key):
@@ -158,7 +158,7 @@ def modify(ctx, api, resource_requirements_key, **kwargs):
 
     if changed:
         rr = api.put_workflows_workflow_resource_requirements_key(
-            rr, workflow_key, resource_requirements_key
+            workflow_key, resource_requirements_key, rr
         )
         if output_format == "text":
             logger.info(
@@ -267,14 +267,17 @@ def list_resource_requirements(ctx, api, filters, limit, skip, sort_by, reverse_
             api.get_workflows_workflow_resource_requirements, workflow_key, **filters
         )
     )
-    exclude = ("id", "rev")
+
+    columns = list_model_fields(WorkflowResourceRequirementsModel)
+    columns.remove("_id")
+    columns.remove("_rev")
     table_title = f"Resource requirements in workflow {workflow_key}"
     print_items(
         ctx,
         items,
-        table_title=table_title,
-        json_key="resource_requirements",
-        exclude_columns=exclude,
+        table_title,
+        columns,
+        "resource_requirements",
         start_index=skip,
     )
 

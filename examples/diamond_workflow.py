@@ -38,6 +38,12 @@ def create_workflow(api):
     large = builder.add_resource_requirements(
         name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
     )
+    # builder.add_slurm_scheduler!(
+    #    name="short",
+    #    account="my_account",
+    #    nodes=1,
+    #    walltime="04:00:00",
+    # )
 
     builder.add_job(
         name="preprocess",
@@ -45,7 +51,6 @@ def create_workflow(api):
         input_files=[inputs.name],
         output_files=[f1.name],
         resource_requirements=small.name,
-        consumes_user_data=["my_val"],
     )
     builder.add_job(
         name="work1",
@@ -68,17 +73,12 @@ def create_workflow(api):
         output_files=[f4.name],
         resource_requirements=small.name,
     )
-    builder.add_user_data(
-        name="my_val",
-        is_ephemeral=False,
-        data={"key1": "val1"},
-    )
     builder.configure_resource_monitoring(
         cpu=True,
         memory=True,
         process=True,
-        interval=3,
-        make_plots=True,
+        interval=5,
+        monitor_type="aggregation",
     )
     spec = builder.build(
         user=getpass.getuser(),

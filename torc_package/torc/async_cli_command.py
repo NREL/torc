@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from torc.swagger_client.models.workflow_results_model import WorkflowResultsModel
+from torc.openapi_client.models.workflow_results_model import WorkflowResultsModel
 
 from torc.common import JOB_STDIO_DIR
 
@@ -27,6 +27,12 @@ class AsyncJobBase(abc.ABC):
     @abc.abstractmethod
     def cancel(self):
         """Cancel the job. Does not wait to confirm. Call wait_for_completion afterwards."""
+
+    @abc.abstractmethod
+    def force_complete(self, return_code, status):
+        """Force the job to completion with a return code and status. Does not send anything
+        to the process.
+        """
 
     @abc.abstractmethod
     def wait_for_completion(self, status, timeout_seconds=30):
@@ -95,6 +101,9 @@ class AsyncCliCommand(AsyncJobBase):
     def cancel(self):
         self._pipe.kill()
 
+    def force_complete(self, return_code, status):
+        self._complete(status, return_code=return_code)
+
     def wait_for_completion(self, status, timeout_seconds=30):
         complete = False
         for _ in range(timeout_seconds):
@@ -123,7 +132,7 @@ class AsyncCliCommand(AsyncJobBase):
             run_id=run_id,
             return_code=self._return_code,
             exec_time_minutes=self._exec_time_s / 60,
-            completion_time=self._completion_time,
+            completion_time=str(self._completion_time),
             status=self._status,
         )
 
@@ -182,8 +191,8 @@ class AsyncCliCommand(AsyncJobBase):
         cmd = f"{self._db_job.invocation_script} {self._db_job.command}"
         return self._run_command(cmd, env)
 
-    def _complete(self, status):
-        self._return_code = self._pipe.returncode
+    def _complete(self, status, return_code=None):
+        self._return_code = self._pipe.returncode if return_code is None else return_code
         self._stdout_fp.close()
         self._stderr_fp.close()
         self._completion_time = datetime.now()

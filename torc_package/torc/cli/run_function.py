@@ -73,7 +73,7 @@ def run_function(ctx, api):
             sys.exit(1)
         output = resp.items[0]
         output.data = result
-        api.put_workflows_workflow_user_data_key(output, workflow_key, output.key)
+        api.put_workflows_workflow_user_data_key(workflow_key, output.key, output)
         logger.info("Stored result for %s", tag)
 
     sys.exit(ret)

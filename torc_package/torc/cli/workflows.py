@@ -9,13 +9,13 @@ from pathlib import Path
 
 import click
 import json5
-from torc.swagger_client.models.workflow_jobs_model import WorkflowJobsModel
-from torc.swagger_client.models.workflows_model import WorkflowsModel
-from torc.swagger_client.models.workflow_specifications_model import (
+from torc.openapi_client.models.workflow_jobs_model import WorkflowJobsModel
+from torc.openapi_client.models.workflows_model import WorkflowsModel
+from torc.openapi_client.models.workflow_specifications_model import (
     WorkflowSpecificationsModel,
 )
 
-from torc.api import remove_db_keys, sanitize_workflow, iter_documents
+from torc.api import remove_db_keys, sanitize_workflow, iter_documents, list_model_fields
 from torc.exceptions import InvalidWorkflow
 from torc.hpc.slurm_interface import SlurmInterface
 from torc.torc_rc import TorcRuntimeConfig
@@ -65,10 +65,19 @@ def cancel(ctx, api, workflow_keys):
                 return_code = intf.cancel_job(job.scheduler_id)
                 if return_code == 0:
                     job.status = "complete"
-                    api.put_workflows_workflow_scheduled_compute_nodes_key(job, key, job.key)
+                    api.put_workflows_workflow_scheduled_compute_nodes_key(key, job.key, job)
                 # else: Ignore all return codes and try to cancel all jobs.
         api.put_workflows_key_cancel(key)
         logger.info("Canceled workflow %s", key)
+        api.post_workflows_workflow_events(
+            key,
+            {
+                "category": "workflow",
+                "type": "cancel",
+                "key": key,
+                "message": f"Canceled workflow {key}",
+            },
+        )
 
 
 @click.command()
@@ -193,7 +202,7 @@ def create_from_commands_file(
     for i, command in enumerate(commands, start=1):
         name = str(i)
         api.post_workflows_workflow_jobs(
-            WorkflowJobsModel(name=name, command=command), workflow.key
+            workflow.key, WorkflowJobsModel(name=name, command=command)
         )
     if update_rc_with_key:
         _update_torc_rc(api, workflow)
@@ -277,7 +286,7 @@ def modify(ctx, api, description, name, user):
         workflow.name = name
     if user is not None:
         workflow.user = user
-    workflow = api.put_workflows_key(workflow, workflow_key)
+    workflow = api.put_workflows_key(workflow_key, workflow)
     logger.info("Updated workflow %s", workflow.key)
 
 
@@ -307,13 +316,13 @@ def delete_all(ctx, api):
     """Delete all workflows."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    keys = [x.workflow_key for x in iter_documents(api.get_workflows)]
+    keys = [x.key for x in iter_documents(api.get_workflows)]
     keys_str = " ".join(keys)
     msg = f"This command will delete the workflows with these keys: {keys_str}"
     confirm_change(ctx, msg)
-    for workflow in keys:
-        api.delete_workflows_key(workflow.key)
-        logger.info("Deleted workflow %s", workflow.key)
+    for key in keys:
+        api.delete_workflows_key(key)
+        logger.info("Deleted workflow %s", key)
 
 
 @click.command()
@@ -374,19 +383,21 @@ def list_workflows(ctx, api, filters, sort_by, reverse_sort):
     """
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    exclude = ("id", "rev")
     table_title = "Workflows"
     filters = parse_filters(filters)
     if sort_by is not None:
         filters["sort_by"] = sort_by
         filters["reverse_sort"] = reverse_sort
     items = (x.to_dict() for x in iter_documents(api.get_workflows, **filters))
+    columns = list_model_fields(WorkflowsModel)
+    columns.remove("_id")
+    columns.remove("_rev")
     print_items(
         ctx,
         items,
-        table_title=table_title,
-        json_key="workflows",
-        exclude_columns=exclude,
+        table_title,
+        columns,
+        "workflows",
     )
 
 
@@ -476,6 +487,15 @@ def reset_status(ctx, api):
     confirm_change(ctx, msg)
     api.post_workflows_key_reset_status(workflow_key)
     logger.info("Reset workflow status")
+    api.post_workflows_workflow_events(
+        workflow_key,
+        {
+            "category": "workflow",
+            "type": "reset",
+            "key": workflow_key,
+            "message": f"Reset workflow {workflow_key}",
+        },
+    )
 
 
 @click.command()
@@ -532,6 +552,7 @@ def restart(ctx, api, ignore_missing_data, only_uninitialized):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
+    _exit_if_jobs_are_running(api, workflow_key)
     workflow = api.get_workflows_key(workflow_key)
     types = "uninitialized" if only_uninitialized else "failed/incomplete"
     msg = f"""This command will restart this workflow and reset {types} job statuses.
@@ -543,6 +564,15 @@ def restart(ctx, api, ignore_missing_data, only_uninitialized):
     confirm_change(ctx, msg)
     mgr = WorkflowManager(api, workflow_key)
     mgr.restart(ignore_missing_data=ignore_missing_data, only_uninitialized=only_uninitialized)
+    api.post_workflows_workflow_events(
+        workflow_key,
+        {
+            "category": "workflow",
+            "type": "restart",
+            "key": workflow_key,
+            "message": f"Restarted workflow {workflow_key}",
+        },
+    )
     # TODO: This could schedule nodes.
 
 
@@ -573,7 +603,7 @@ def start(ctx, api, auto_tune_resource_requirements, ignore_missing_data):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-
+    _exit_if_jobs_are_running(api, workflow_key)
     done_jobs = api.get_workflows_workflow_jobs(workflow_key, status="done", limit=1).items
     if done_jobs:
         workflow = api.get_workflows_key(workflow_key)
@@ -595,7 +625,28 @@ reset all job statuses to 'uninitialized' and then 'ready' or 'blocked.'
     except InvalidWorkflow as exc:
         logger.error("Invalid workflow: %s", exc)
         sys.exit(1)
+
+    api.post_workflows_workflow_events(
+        workflow_key,
+        {
+            "category": "workflow",
+            "type": "start",
+            "key": workflow_key,
+            "message": f"Started workflow {workflow_key}",
+        },
+    )
     # TODO: This could schedule nodes.
+
+
+def _exit_if_jobs_are_running(api, workflow_key):
+    submitted = api.get_workflows_workflow_jobs(workflow_key, status="submitted", limit=1)
+    sub_pend = api.get_workflows_workflow_jobs(workflow_key, status="submitted_pending", limit=1)
+    if len(submitted.items) > 0 or len(sub_pend.items) > 0:
+        logger.error(
+            "This operation is not allowed on a workflow with 'submitted' jobs. Please allow "
+            "the jobs to finish or cancel them."
+        )
+        sys.exit(1)
 
 
 @click.command()
@@ -617,6 +668,83 @@ def show(ctx, api, sanitize):
     if sanitize:
         sanitize_workflow(data)
     print(json.dumps(data, indent=2))
+
+
+@click.command()
+@click.option(
+    "-e",
+    "--expiration-buffer",
+    type=int,
+    help="Set the number of seconds before the expiration time at which torc will terminate jobs.",
+)
+@click.option(
+    "-h",
+    "--wait-for-healthy-db",
+    type=int,
+    help="Set the number of minutes that torc will tolerate an offline database.",
+)
+@click.option(
+    "-i",
+    "--ignore-workflow-completion",
+    type=str,
+    help="Set to 'true' to cause torc to ignore workflow completions and hold onto compute node "
+    "allocations indefinitely. Useful for debugging failed jobs. Set to 'false' to revert to "
+    "the default behavior.",
+)
+@click.option(
+    "-w",
+    "--wait-for-new-jobs",
+    type=int,
+    help="Set the number of seconds that torc will wait for new jobs before exiting. Does not "
+    "apply if the workflow is complete.",
+)
+@click.pass_obj
+@click.pass_context
+def set_compute_node_parameters(
+    ctx, api, expiration_buffer, wait_for_healthy_db, ignore_workflow_completion, wait_for_new_jobs
+):
+    """Set parameters that control how the torc worker app behaves on compute nodes.
+    Run 'torc workflows show-config' to see the current values."""
+    setup_cli_logging(ctx, __name__)
+    check_database_url(api)
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    config = api.get_workflows_key_config(workflow_key)
+    changed = False
+    if (
+        expiration_buffer is not None
+        and expiration_buffer != config.compute_node_expiration_buffer_seconds
+    ):
+        config.compute_node_expiration_buffer_seconds = expiration_buffer
+        changed = True
+    if (
+        wait_for_healthy_db is not None
+        and wait_for_healthy_db != config.compute_node_wait_for_healthy_database_minutes
+    ):
+        config.compute_node_wait_for_healthy_database_minutes = wait_for_healthy_db
+        changed = True
+    if ignore_workflow_completion is not None:
+        lowered = ignore_workflow_completion.lower()
+        if lowered not in ("true", "false"):
+            logger.error(
+                "Invalid value for ignore_workflow_completion: %s", ignore_workflow_completion
+            )
+            sys.exit(1)
+        val = lowered == "true"
+        if val != config.compute_node_ignore_workflow_completion:
+            config.compute_node_ignore_workflow_completion = val
+            changed = True
+    if (
+        wait_for_new_jobs is not None
+        and wait_for_new_jobs != config.compute_node_wait_for_new_jobs_seconds
+    ):
+        config.compute_node_wait_for_new_jobs_seconds = wait_for_new_jobs
+        changed = True
+
+    if changed:
+        config = api.put_workflows_key_config(workflow_key, config)
+        print(json.dumps(config.to_dict(), indent=2))
+    else:
+        logger.warning("No parameters were changed")
 
 
 @click.command()
@@ -694,6 +822,7 @@ workflows.add_command(recommend_nodes)
 workflows.add_command(reset_status)
 workflows.add_command(reset_job_status)
 workflows.add_command(restart)
+workflows.add_command(set_compute_node_parameters)
 workflows.add_command(start)
 workflows.add_command(show)
 workflows.add_command(show_config)

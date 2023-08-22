@@ -2,7 +2,7 @@
 
 
 import pytest
-from torc.swagger_client.rest import ApiException
+from torc.openapi_client.rest import ApiException
 
 from torc.api import make_api, remove_db_keys
 
@@ -40,7 +40,7 @@ def test_api_nodes_by_key(create_workflow_cli):
             with pytest.raises(ApiException):
                 getattr(api, f"get_workflows_workflow_{name}_key")(workflow_key, key)
             val = _fix_fields(name, remove_db_keys(val))
-            val2 = getattr(api, f"post_workflows_workflow_{name}")(val, workflow_key)
+            val2 = getattr(api, f"post_workflows_workflow_{name}")(workflow_key, val)
             if not isinstance(val2, dict):
                 val2 = val2.to_dict()
             key = _get_key(val2)
@@ -51,7 +51,7 @@ def test_api_nodes_by_key(create_workflow_cli):
                 val2[field_to_change] = "abc"
 
             getattr(api, f"put_workflows_workflow_{name}_key")(
-                _fix_fields(name, val2), workflow_key, key
+                workflow_key, key, _fix_fields(name, val2)
             )
 
         getattr(api, f"delete_workflows_workflow_{name}")(workflow_key)
@@ -118,7 +118,7 @@ def test_api_workflow_status(completed_workflow):
     status = api.get_workflows_key_status(db.workflow.key)
     orig = status.run_id
     status.run_id += 1
-    api.put_workflows_key_status(status, db.workflow.key)
+    api.put_workflows_key_status(db.workflow.key, status)
     new_status = api.get_workflows_key_status(db.workflow.key)
     assert new_status.run_id == orig + 1
     api.post_workflows_key_reset_status(db.workflow.key)

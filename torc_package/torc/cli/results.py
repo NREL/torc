@@ -4,7 +4,8 @@ import logging
 
 import click
 
-from torc.api import iter_documents, map_job_keys_to_names
+from torc.openapi_client.models.workflow_results_model import WorkflowResultsModel
+from torc.api import iter_documents, map_job_keys_to_names, list_model_fields
 from .common import (
     check_database_url,
     get_workflow_key_from_context,
@@ -70,7 +71,6 @@ def list_results(ctx, api, filters, limit, skip, exclude_job_names, sort_by, rev
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    exclude = ("id", "rev")
     filters = parse_filters(filters)
     if "job_name" in filters:
         logger.warning("Cannot filter on job_name")
@@ -90,12 +90,16 @@ def list_results(ctx, api, filters, limit, skip, exclude_job_names, sort_by, rev
             row["job_name"] = mapping[item.job_key]
         row.update(item.to_dict())
         items.append(row)
+
+    columns = list_model_fields(WorkflowResultsModel)
+    columns.remove("_id")
+    columns.remove("_rev")
     print_items(
         ctx,
         items,
-        table_title=table_title,
-        json_key="results",
-        exclude_columns=exclude,
+        table_title,
+        columns,
+        "results",
         start_index=skip,
     )
 

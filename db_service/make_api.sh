@@ -1,5 +1,3 @@
-# Tried version 3.0.46; it broke a bunch of things.
-# TODO: debug the problems and support the latest version.
 SWAGGER_VERSION=v3:3.0.36
 
 if [ -z ${TORC_DATABASE_NAME} ]; then
@@ -56,31 +54,66 @@ if [ $ret -ne 0 ]; then
     echo "Failed to convert swagger.json to openapi.yaml"
     exit 1
 fi
-swap_text "s/DELETE/delete/g"
-swap_text "s/GET/get/g"
-swap_text "s/POST/post/g"
-swap_text "s/PUT/put/g"
-# Arango uses 'body' for request/response boy.
-# 'model' makes more sense for items stored in the db.
-swap_text "s/_body/_model/g"
 rm swagger.json
+python fix_openapi_spec.py openapi.yaml
+if [ $? -ne 0 ]; then
+    echo "Failed to fix the openapi specification"
+    exit 1
+fi
 
 if [ -z ${PYTHON_CLIENT} ]; then
     PYTHON_CLIENT=$(pwd)/python_client
 fi
 rm -rf ${PYTHON_CLIENT}
 mkdir ${PYTHON_CLIENT}
+
+if [ -z ${JULIA_CLIENT} ]; then
+    JULIA_CLIENT=$(pwd)/julia_client
+fi
+rm -rf ${JULIA_CLIENT}
+mkdir ${JULIA_CLIENT}
+
+# TODO: 7.0.0 version is not finalized, but seems to be required for what we're doing. 6.6.0 failed
+# Python client. It seems to add lots of good stuff, like using Pydantic for the backing data models.
+# Use the 'latest' tag. The release should be in Aug 2023.
 docker run \
     -v $(pwd):/src \
     -v ${PYTHON_CLIENT}:/python_client \
-    swaggerapi/swagger-codegen-cli-${SWAGGER_VERSION} \
-    generate --lang=python --input-spec=/src/openapi.yaml -o /python_client -c /src/config.json
+    openapitools/openapi-generator-cli \
+    generate -g python --input-spec=/src/openapi.yaml -o /python_client -c /src/config.json
+if [ $? -ne 0 ]; then
+    echo "Failed to build the python client ***"
+    exit 1
+fi
 
-# Workaround for this issue: https://github.com/swagger-api/swagger-codegen/issues/9991
-# It is fixed in the openapi-generator, but that doesn't work with our openapi.yaml - and haven't
-# debugged it.
-sed -i .bk "s/def __del__/def close/" ${PYTHON_CLIENT}/torc/swagger_client/api_client.py
-python fix_docstring_errors.py ${PYTHON_CLIENT}/torc/swagger_client/api/default_api.py
-rm -f ${PYTHON_CLIENT}/torc/swagger_client/api_client.py.bk
-rm -rf ../torc_package/torc/swagger_client
-mv ${PYTHON_CLIENT}/torc/swagger_client ../torc_package/torc/swagger_client
+cd ${PYTHON_CLIENT}
+bump-pydantic torc
+if [ $? -ne 0 ]; then
+    echo "Failed to convert OpenAPI pydantic models."
+    exit 1
+fi
+cd -
+# Fix pydantic methods that are deprecated in v2.
+find ${PYTHON_CLIENT}/torc -name "*.py" -exec sed -i .bk "s/parse_obj/model_validate/g" {} \;
+find ${PYTHON_CLIENT}/torc -name "*.py" -exec sed -i .bk "s/validate_arguments/validate_call/g" {} \;
+find ${PYTHON_CLIENT}/torc -name "*.py" -exec sed -i .bk "s/self.dict(/self.model_dump(/g" {} \;
+find ${PYTHON_CLIENT}/torc -name "*.bk" -exec rm {} \;
+
+docker run \
+    -v $(pwd):/src \
+    -v ${JULIA_CLIENT}:/julia_client \
+    openapitools/openapi-generator-cli \
+    generate -g julia-client --input-spec=/src/openapi.yaml -o /julia_client
+if [ $? -ne 0 ]; then
+    echo "Failed to build the julia client"
+    exit 1
+fi
+
+rm -rf ../torc_package/torc/openapi_client
+rm -rf ../julia/Torc/src/api
+rm -rf ../julia/julia_client/docs
+rm ../julia/julia_client/README.md
+mv ${PYTHON_CLIENT}/torc/openapi_client ../torc_package/torc/openapi_client
+mv ${JULIA_CLIENT}/src ../julia/Torc/src/api
+mv ${JULIA_CLIENT}/docs ../julia/julia_client/
+mv ${JULIA_CLIENT}/README.md ../julia/julia_client/

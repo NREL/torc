@@ -95,7 +95,7 @@ def _join_by_edge(
         if outbound
         else api.post_workflows_key_join_by_inbound_edge_collection_edge
     )
-    iterable = iter_documents(func, filters, workflow_key, collection, edge, **kwargs)
+    iterable = iter_documents(func, workflow_key, collection, edge, filters, **kwargs)
     base_exclude = ["_id", "_rev", "_oldRev"]
     items = []
     if output_format == "text":
@@ -104,7 +104,7 @@ def _join_by_edge(
             row = {f"from_{k}": v for k, v in item["from"].items() if k not in exclude_from}
             row.update({f"to_{k}": v for k, v in item["to"].items() if k not in exclude_to})
             items.append(row)
-        exclude = [f"{x}_{y}" for x in ("from", "to") for y in base_exclude]
+        exclude = {f"{x}_{y}" for x in ("from", "to") for y in base_exclude}
     else:
         for item in iterable:
             for exc in exclude_from.union(base_exclude):
@@ -112,16 +112,17 @@ def _join_by_edge(
             for exc in exclude_to.union(base_exclude):
                 item["to"].pop(exc, None)
             items.append(item)
-        exclude = []
+        exclude = set()
 
     direction = "outbound" if outbound else "inbound"
     table_title = f"{collection} with {edge=} {direction=} in workflow {workflow_key}"
+    columns = [x for x in items[0].keys() if x not in exclude] if items else []
     print_items(
         ctx,
         items,
-        table_title=table_title,
-        json_key="items",
-        exclude_columns=exclude,
+        table_title,
+        columns,
+        "items",
         start_index=skip,
     )
 

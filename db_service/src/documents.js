@@ -63,7 +63,7 @@ function addJobSpecification(jobSpec, workflow) {
   for (const jobName of jobSpec.blocked_by) {
     getDocumentByUniqueFilter(jobsCollection, {name: jobName});
   }
-  if (jobSpec.scheduler != '') {
+  if (jobSpec.scheduler != '' && jobSpec.scheduler != null) {
     schedulerConfigId = getSchedulerConfig(jobSpec.scheduler, workflow)._id;
   }
   for (const name of jobSpec.consumes_user_data) {

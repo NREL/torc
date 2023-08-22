@@ -5,14 +5,22 @@ Diamond Workflow
 ################
 In this tutorial you will learn how to create a workflow with job dependencies.
 
-The workflow specification file ``examples/diamond_workflow.json5`` creates a workflow with four
-jobs that have dependencies based on the files that the jobs produce and consume (the dependency
-graph looks like a diamond). This is the same workflow described at :ref:`overview`.
+The workflow specification file `examples/diamond_workflow.json5
+<https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.json5>`_ creates a workflow
+with four jobs that have dependencies based on the files that the jobs produce and consume (the
+dependency graph looks like a diamond). This is the same workflow described at :ref:`overview`.
 
 You can run this workflow on a laptop.
 
 Ensure that you are in the ``torc_package`` directory. It has a ``tests`` subdirectory which is
 required by this workflow.
+
+.. note:: There are Python and Julia scripts to create an identical workflow in the same
+   ``examples`` directory. They use torc's ``WorkflowBuilder`` with the OpenAPI client interfaces.
+
+    - `Python <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py>`_
+    - `Julia <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.jl>`_
+
 
 1. Create the directory and file needed by the first job.
 

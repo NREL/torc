@@ -69,6 +69,7 @@ def setup_logging(
 
     packages = set(packages or [])
     packages.add("torc")
+    packages.add("resource_monitor")
     for package in packages:
         log_config["loggers"][package] = {
             "handlers": ["console"],

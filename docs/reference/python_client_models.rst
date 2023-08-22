@@ -4,38 +4,38 @@
 OpenAPI Client Models
 #####################
 
-.. autoclass:: torc.swagger_client.models.workflow_specifications_model.WorkflowSpecificationsModel
+.. autoclass:: torc.openapi_client.models.workflow_specifications_model.WorkflowSpecificationsModel
    :members:
 
-.. autoclass:: torc.swagger_client.models.workflow_job_specifications_model.WorkflowJobSpecificationsModel
+.. autoclass:: torc.openapi_client.models.workflow_job_specifications_model.WorkflowJobSpecificationsModel
    :members:
 
-.. autoclass:: torc.swagger_client.models.workflows_model.WorkflowsModel
+.. autoclass:: torc.openapi_client.models.workflows_model.WorkflowsModel
    :members:
 
-.. autoclass:: torc.swagger_client.models.workflow_config_key_model.WorkflowConfigKeyModel
+.. autoclass:: torc.openapi_client.models.workflow_config_model.WorkflowConfigModel
    :members:
 
-.. autoclass:: torc.swagger_client.models.workflow_config_compute_node_resource_stats.WorkflowConfigComputeNodeResourceStats
+.. autoclass:: torc.openapi_client.models.compute_node_resource_stats_model.ComputeNodeResourceStatsModel
    :members:
 
-.. autoclass:: torc.swagger_client.models.compute_node_stats_key_model.ComputeNodeStatsKeyModel
+.. autoclass:: torc.openapi_client.models.workflow_compute_node_stats_model.WorkflowComputeNodeStatsModel
    :members:
 
-.. autoclass:: torc.swagger_client.models.compute_nodes_key_model.ComputeNodesKeyModel
+.. autoclass:: torc.openapi_client.models.workflow_compute_nodes_model.WorkflowComputeNodesModel
    :members:
 
-.. autoclass:: torc.swagger_client.models.edges_name_model.EdgesNameModel
+.. autoclass:: torc.openapi_client.models.edges_name_model.EdgesNameModel
    :members:
 
-.. autoclass:: torc.swagger_client.models.files_key_model.FilesKeyModel
+.. autoclass:: torc.openapi_client.models.workflow_files_model.WorkflowFilesModel
    :members:
 
-.. autoclass:: torc.swagger_client.models.jobs_key_model.JobsKeyModel
+.. autoclass:: torc.openapi_client.models.workflow_jobs_model.WorkflowJobsModel
    :members:
 
-.. autoclass:: torc.swagger_client.models.job_process_stats_key_model.JobProcessStatsKeyModel
+.. autoclass:: torc.openapi_client.models.workflow_job_process_stats_model.WorkflowJobProcessStatsModel
    :members:
 
-.. autoclass:: torc.swagger_client.models.results_key_model.ResultsKeyModel
+.. autoclass:: torc.openapi_client.models.workflow_results_model.WorkflowResultsModel
    :members:

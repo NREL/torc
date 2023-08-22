@@ -1,7 +1,10 @@
 openapi: 3.0.1
 info:
-  description: ""
-  license: {}
+  description: ''
+  license:
+    name: BSD 3-Clause
+  title: torc
+  version: v0.1.13
 servers:
 - url: /_db/test-workflows/torc-service
 paths:
@@ -44,7 +47,7 @@ paths:
         explode: true
         schema:
           type: string
-          default: "null"
+          default: 'null'
       - name: reverse_sort
         in: query
         required: false
@@ -68,13 +71,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_aws_schedulers_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -97,20 +100,20 @@ paths:
         schema:
           type: string
       requestBody:
-        description: Result of a AWS compute node configuration.
+        description: AWS compute node configuration.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/workflow_aws_schedulers_model'
         required: true
       responses:
-        "200":
-          description: Result of a AWS compute node configuration.
+        '200':
+          description: Response from posting an instance of AWS compute node configuration.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_aws_schedulers_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -140,13 +143,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -178,13 +181,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_aws_schedulers_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -218,16 +221,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/aws_schedulers_key_model'
+              $ref: '#/components/schemas/workflow_aws_schedulers_model'
         required: true
       responses:
-        "200":
+        '200':
           description: AWS compute node configuration updated in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/aws_schedulers_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_aws_schedulers_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -251,7 +254,7 @@ paths:
           type: string
       - name: key
         in: path
-        description: "key of the {{name}} document."
+        description: key of the AWS compute node configuration document.
         required: true
         style: simple
         explode: false
@@ -264,13 +267,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: AWS compute node configuration stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/aws_schedulers_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_aws_schedulers_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -317,7 +320,7 @@ paths:
         explode: true
         schema:
           type: string
-          default: "null"
+          default: 'null'
       - name: reverse_sort
         in: query
         required: false
@@ -348,13 +351,13 @@ paths:
         schema:
           type: boolean
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_1'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_compute_nodes_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -376,20 +379,20 @@ paths:
         schema:
           type: string
       requestBody:
-        description: Result of a compute node.
+        description: compute node.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/workflow_compute_nodes_model'
         required: true
       responses:
-        "200":
-          description: Result of a compute node.
+        '200':
+          description: Response from posting an instance of compute node.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_2'
-        "500":
+                $ref: '#/components/schemas/workflow_compute_nodes_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -419,13 +422,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -457,13 +460,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_2'
-        "500":
+                $ref: '#/components/schemas/workflow_compute_nodes_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -497,16 +500,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/compute_nodes_key_model'
+              $ref: '#/components/schemas/workflow_compute_nodes_model'
         required: true
       responses:
-        "200":
+        '200':
           description: compute node updated in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_2'
-        "500":
+                $ref: '#/components/schemas/workflow_compute_nodes_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -530,7 +533,7 @@ paths:
           type: string
       - name: key
         in: path
-        description: "key of the {{name}} document."
+        description: key of the compute node document.
         required: true
         style: simple
         explode: false
@@ -543,13 +546,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: compute node stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_2'
-        "500":
+                $ref: '#/components/schemas/workflow_compute_nodes_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -596,7 +599,7 @@ paths:
         explode: true
         schema:
           type: string
-          default: "null"
+          default: 'null'
       - name: reverse_sort
         in: query
         required: false
@@ -620,13 +623,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_3'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_compute_node_stats_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -648,20 +651,20 @@ paths:
         schema:
           type: string
       requestBody:
-        description: Result of a compute node statistics.
+        description: compute node statistics.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/workflow_compute_node_stats_model'
         required: true
       responses:
-        "200":
-          description: Result of a compute node statistics.
+        '200':
+          description: Response from posting an instance of compute node statistics.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_4'
-        "500":
+                $ref: '#/components/schemas/workflow_compute_node_stats_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -691,13 +694,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -730,13 +733,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_4'
-        "500":
+                $ref: '#/components/schemas/workflow_compute_node_stats_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -770,16 +773,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/compute_node_stats_key_model'
+              $ref: '#/components/schemas/workflow_compute_node_stats_model'
         required: true
       responses:
-        "200":
+        '200':
           description: compute node statistics updated in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_4'
-        "500":
+                $ref: '#/components/schemas/workflow_compute_node_stats_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -804,7 +807,7 @@ paths:
           type: string
       - name: key
         in: path
-        description: "key of the {{name}} document."
+        description: key of the compute node statistics document.
         required: true
         style: simple
         explode: false
@@ -817,13 +820,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: compute node statistics stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_4'
-        "500":
+                $ref: '#/components/schemas/workflow_compute_node_stats_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -869,7 +872,7 @@ paths:
         explode: true
         schema:
           type: string
-          default: "null"
+          default: 'null'
       - name: reverse_sort
         in: query
         required: false
@@ -893,13 +896,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_5'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_events_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -921,20 +924,20 @@ paths:
         schema:
           type: string
       requestBody:
-        description: Result of a event.
+        description: event.
         content:
           application/json:
             schema:
               type: object
         required: true
       responses:
-        "200":
-          description: Result of a event.
+        '200':
+          description: Response from posting an instance of event.
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -963,13 +966,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1001,13 +1004,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1044,13 +1047,13 @@ paths:
               type: object
         required: true
       responses:
-        "200":
+        '200':
           description: event updated in the collection.
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1074,7 +1077,7 @@ paths:
           type: string
       - name: key
         in: path
-        description: "key of the {{name}} document."
+        description: key of the event document.
         required: true
         style: simple
         explode: false
@@ -1087,13 +1090,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: event stored in the collection.
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1139,7 +1142,7 @@ paths:
         explode: true
         schema:
           type: string
-          default: "null"
+          default: 'null'
       - name: reverse_sort
         in: query
         required: false
@@ -1170,13 +1173,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_6'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_files_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1198,20 +1201,20 @@ paths:
         schema:
           type: string
       requestBody:
-        description: Result of a file.
+        description: file.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/workflow_files_model'
         required: true
       responses:
-        "200":
-          description: Result of a file.
+        '200':
+          description: Response from posting an instance of file.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_files_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1240,13 +1243,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1278,13 +1281,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_files_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1318,16 +1321,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/files_key_model'
+              $ref: '#/components/schemas/workflow_files_model'
         required: true
       responses:
-        "200":
+        '200':
           description: file updated in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/files_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_files_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1351,7 +1354,7 @@ paths:
           type: string
       - name: key
         in: path
-        description: "key of the {{name}} document."
+        description: key of the file document.
         required: true
         style: simple
         explode: false
@@ -1364,13 +1367,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: file stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/files_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_files_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1416,7 +1419,7 @@ paths:
         explode: true
         schema:
           type: string
-          default: "null"
+          default: 'null'
       - name: reverse_sort
         in: query
         required: false
@@ -1468,13 +1471,13 @@ paths:
         schema:
           type: boolean
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_7'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_jobs_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1496,20 +1499,20 @@ paths:
         schema:
           type: string
       requestBody:
-        description: Result of a job.
+        description: job.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/workflow_jobs_model'
         required: true
       responses:
-        "200":
-          description: Result of a job.
+        '200':
+          description: Response from posting an instance of job.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_8'
-        "500":
+                $ref: '#/components/schemas/workflow_jobs_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1538,13 +1541,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1576,13 +1579,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_8'
-        "500":
+                $ref: '#/components/schemas/workflow_jobs_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1616,16 +1619,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/jobs_key_model'
+              $ref: '#/components/schemas/workflow_jobs_model'
         required: true
       responses:
-        "200":
+        '200':
           description: job updated in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_8'
-        "500":
+                $ref: '#/components/schemas/workflow_jobs_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1649,7 +1652,7 @@ paths:
           type: string
       - name: key
         in: path
-        description: "key of the {{name}} document."
+        description: key of the job document.
         required: true
         style: simple
         explode: false
@@ -1662,13 +1665,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: job stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_8'
-        "500":
+                $ref: '#/components/schemas/workflow_jobs_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1715,7 +1718,7 @@ paths:
         explode: true
         schema:
           type: string
-          default: "null"
+          default: 'null'
       - name: reverse_sort
         in: query
         required: false
@@ -1746,13 +1749,13 @@ paths:
         schema:
           type: integer
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_9'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_job_process_stats_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1774,20 +1777,20 @@ paths:
         schema:
           type: string
       requestBody:
-        description: Result of a job process statistics.
+        description: job process statistics.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/workflow_job_process_stats_model'
         required: true
       responses:
-        "200":
-          description: Result of a job process statistics.
+        '200':
+          description: Response from posting an instance of job process statistics.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_job_process_stats_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1817,13 +1820,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1856,13 +1859,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_job_process_stats_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1896,16 +1899,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/job_process_stats_key_model'
+              $ref: '#/components/schemas/workflow_job_process_stats_model'
         required: true
       responses:
-        "200":
+        '200':
           description: job process statistics updated in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/job_process_stats_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_job_process_stats_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1929,7 +1932,7 @@ paths:
           type: string
       - name: key
         in: path
-        description: "key of the {{name}} document."
+        description: key of the job process statistics document.
         required: true
         style: simple
         explode: false
@@ -1942,13 +1945,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: job process statistics stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/job_process_stats_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_job_process_stats_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -1995,7 +1998,7 @@ paths:
         explode: true
         schema:
           type: string
-          default: "null"
+          default: 'null'
       - name: reverse_sort
         in: query
         required: false
@@ -2026,13 +2029,13 @@ paths:
         schema:
           type: integer
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_10'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_local_schedulers_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2055,20 +2058,20 @@ paths:
         schema:
           type: string
       requestBody:
-        description: Result of a local compute node configuration.
+        description: local compute node configuration.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/workflow_local_schedulers_model'
         required: true
       responses:
-        "200":
-          description: Result of a local compute node configuration.
+        '200':
+          description: Response from posting an instance of local compute node configuration.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_local_schedulers_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2099,13 +2102,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2138,13 +2141,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_local_schedulers_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2178,16 +2181,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/local_schedulers_key_model'
+              $ref: '#/components/schemas/workflow_local_schedulers_model'
         required: true
       responses:
-        "200":
+        '200':
           description: local compute node configuration updated in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/local_schedulers_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_local_schedulers_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2211,7 +2214,7 @@ paths:
           type: string
       - name: key
         in: path
-        description: "key of the {{name}} document."
+        description: key of the local compute node configuration document.
         required: true
         style: simple
         explode: false
@@ -2224,13 +2227,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: local compute node configuration stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/local_schedulers_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_local_schedulers_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2277,7 +2280,7 @@ paths:
         explode: true
         schema:
           type: string
-          default: "null"
+          default: 'null'
       - name: reverse_sort
         in: query
         required: false
@@ -2336,13 +2339,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_11'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_resource_requirements_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2364,20 +2367,20 @@ paths:
         schema:
           type: string
       requestBody:
-        description: Result of a resource requirements.
+        description: resource requirements.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/workflow_resource_requirements_model'
         required: true
       responses:
-        "200":
-          description: Result of a resource requirements.
+        '200':
+          description: Response from posting an instance of resource requirements.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_resource_requirements_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2407,13 +2410,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2446,13 +2449,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_resource_requirements_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2486,16 +2489,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/resource_requirements_key_model'
+              $ref: '#/components/schemas/workflow_resource_requirements_model'
         required: true
       responses:
-        "200":
+        '200':
           description: resource requirements updated in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/resource_requirements_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_resource_requirements_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2520,7 +2523,7 @@ paths:
           type: string
       - name: key
         in: path
-        description: "key of the {{name}} document."
+        description: key of the resource requirements document.
         required: true
         style: simple
         explode: false
@@ -2533,13 +2536,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: resource requirements stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/resource_requirements_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_resource_requirements_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2585,7 +2588,7 @@ paths:
         explode: true
         schema:
           type: string
-          default: "null"
+          default: 'null'
       - name: reverse_sort
         in: query
         required: false
@@ -2630,13 +2633,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_12'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_results_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2658,20 +2661,20 @@ paths:
         schema:
           type: string
       requestBody:
-        description: Result of a result.
+        description: result.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/workflow_results_model'
         required: true
       responses:
-        "200":
-          description: Result of a result.
+        '200':
+          description: Response from posting an instance of result.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_results_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2700,13 +2703,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2738,13 +2741,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_results_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2778,16 +2781,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/results_key_model'
+              $ref: '#/components/schemas/workflow_results_model'
         required: true
       responses:
-        "200":
+        '200':
           description: result updated in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/results_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_results_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2811,7 +2814,7 @@ paths:
           type: string
       - name: key
         in: path
-        description: "key of the {{name}} document."
+        description: key of the result document.
         required: true
         style: simple
         explode: false
@@ -2824,13 +2827,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: result stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/results_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_results_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2877,7 +2880,7 @@ paths:
         explode: true
         schema:
           type: string
-          default: "null"
+          default: 'null'
       - name: reverse_sort
         in: query
         required: false
@@ -2915,13 +2918,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_13'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_scheduled_compute_nodes_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2944,20 +2947,20 @@ paths:
         schema:
           type: string
       requestBody:
-        description: Result of a scheduled compute node.
+        description: scheduled compute node.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/workflow_scheduled_compute_nodes_model'
         required: true
       responses:
-        "200":
-          description: Result of a scheduled compute node.
+        '200':
+          description: Response from posting an instance of scheduled compute node.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_scheduled_compute_nodes_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -2987,13 +2990,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3026,13 +3029,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_scheduled_compute_nodes_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3066,16 +3069,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/scheduled_compute_nodes_key_model'
+              $ref: '#/components/schemas/workflow_scheduled_compute_nodes_model'
         required: true
       responses:
-        "200":
+        '200':
           description: scheduled compute node updated in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/scheduled_compute_nodes_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_scheduled_compute_nodes_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3100,7 +3103,7 @@ paths:
           type: string
       - name: key
         in: path
-        description: "key of the {{name}} document."
+        description: key of the scheduled compute node document.
         required: true
         style: simple
         explode: false
@@ -3113,13 +3116,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: scheduled compute node stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/scheduled_compute_nodes_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_scheduled_compute_nodes_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3166,7 +3169,7 @@ paths:
         explode: true
         schema:
           type: string
-          default: "null"
+          default: 'null'
       - name: reverse_sort
         in: query
         required: false
@@ -3246,13 +3249,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_14'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_slurm_schedulers_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3275,20 +3278,20 @@ paths:
         schema:
           type: string
       requestBody:
-        description: Result of a Slurm compute node configuration.
+        description: Slurm compute node configuration.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/workflow_slurm_schedulers_model'
         required: true
       responses:
-        "200":
-          description: Result of a Slurm compute node configuration.
+        '200':
+          description: Response from posting an instance of Slurm compute node configuration.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_slurm_schedulers_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3319,13 +3322,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3358,13 +3361,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_slurm_schedulers_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3398,16 +3401,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/slurm_schedulers_key_model'
+              $ref: '#/components/schemas/workflow_slurm_schedulers_model'
         required: true
       responses:
-        "200":
+        '200':
           description: Slurm compute node configuration updated in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/slurm_schedulers_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_slurm_schedulers_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3431,7 +3434,7 @@ paths:
           type: string
       - name: key
         in: path
-        description: "key of the {{name}} document."
+        description: key of the Slurm compute node configuration document.
         required: true
         style: simple
         explode: false
@@ -3444,13 +3447,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: Slurm compute node configuration stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/slurm_schedulers_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_slurm_schedulers_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3497,7 +3500,7 @@ paths:
         explode: true
         schema:
           type: string
-          default: "null"
+          default: 'null'
       - name: reverse_sort
         in: query
         required: false
@@ -3528,13 +3531,13 @@ paths:
         schema:
           type: boolean
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_15'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_user_data_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3556,20 +3559,20 @@ paths:
         schema:
           type: string
       requestBody:
-        description: Result of a user data.
+        description: user data.
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/workflow_user_data_model'
         required: true
       responses:
-        "200":
-          description: Result of a user data.
+        '200':
+          description: Response from posting an instance of user data.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_user_data_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3598,13 +3601,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3636,13 +3639,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflow_user_data_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3676,16 +3679,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/user_data_key_model'
+              $ref: '#/components/schemas/workflow_user_data_model'
         required: true
       responses:
-        "200":
+        '200':
           description: user data updated in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/user_data_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_user_data_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3709,7 +3712,7 @@ paths:
           type: string
       - name: key
         in: path
-        description: "key of the {{name}} document."
+        description: key of the user data document.
         required: true
         style: simple
         explode: false
@@ -3722,13 +3725,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: user data stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/user_data_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_user_data_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3776,13 +3779,13 @@ paths:
           type: number
           default: 100000.0
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_16'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_edges_name_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3819,13 +3822,13 @@ paths:
               $ref: '#/components/schemas/edges_name_model'
         required: true
       responses:
-        "200":
+        '200':
           description: Edge
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/edges_name_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3862,13 +3865,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3908,13 +3911,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: Edge stored in the collection.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/edges_name_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -3958,13 +3961,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: Edge stored in the collection.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/edges_name_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4012,13 +4015,13 @@ paths:
           type: number
           default: 100000.0
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_6'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_files_produced_by_job_key_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4057,13 +4060,13 @@ paths:
           type: number
           default: 100000.0
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_17'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_job_specifications_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4092,13 +4095,13 @@ paths:
               $ref: '#/components/schemas/workflow_job_specifications_model'
         required: true
       responses:
-        "200":
+        '200':
           description: job stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_8'
-        "500":
+                $ref: '#/components/schemas/workflow_job_specifications_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4130,13 +4133,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: Job stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_8'
-        "500":
+                $ref: '#/components/schemas/workflow_job_specifications_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4159,13 +4162,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4212,13 +4215,13 @@ paths:
           type: number
           default: 100000.0
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_7'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_jobs_find_by_status_status_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4265,13 +4268,13 @@ paths:
           type: number
           default: 100000.0
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_7'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_jobs_find_by_needs_file_key_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4302,13 +4305,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: Resource requirements for the job.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/resource_requirements_key_model'
-        "500":
+                $ref: '#/components/schemas/workflow_resource_requirements_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4319,8 +4322,8 @@ paths:
     put:
       tags: []
       summary: Set the resource requirements for a job.
-      description: "Set the resource requirements for a job, replacing any current\
-        \ value."
+      description: Set the resource requirements for a job, replacing any current
+        value.
       operationId: put_workflows_workflow_jobs_key_resource_requirements_rr_key
       parameters:
       - name: workflow
@@ -4348,16 +4351,18 @@ paths:
           type: string
       requestBody:
         content:
-          '*/*': {}
+          application/json:
+            schema:
+              type: object
         required: false
       responses:
-        "200":
+        '200':
           description: Requires edge that connects the job and resource requirements.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/edges_name_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4389,27 +4394,27 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: Process stats for the job.
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/job_process_stats_key_model'
-        "500":
+                  $ref: '#/components/schemas/workflow_job_process_stats_model'
+        '500':
           description: Default error response.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-  /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}:
+  /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}:
     post:
       tags: []
       summary: Complete a job and add a result.
-      description: "Complete a job, connect it to a result, and manage side effects."
-      operationId: post_workflows_workflow_jobs_key_complete_job_status_rev
+      description: Complete a job, connect it to a result, and manage side effects.
+      operationId: post_workflows_workflow_jobs_key_complete_job_status_rev_run_id
       parameters:
       - name: workflow
         in: path
@@ -4443,21 +4448,29 @@ paths:
         explode: false
         schema:
           type: string
+      - name: run_id
+        in: path
+        description: Current job run ID
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
       requestBody:
         description: Result of the job.
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/status_rev_model'
+              $ref: '#/components/schemas/workflow_results_model'
         required: true
       responses:
-        "200":
+        '200':
           description: job completed in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_8'
-        "500":
+                $ref: '#/components/schemas/workflow_jobs_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4465,12 +4478,12 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /workflows/{workflow}/jobs/{key}/manage_status_change/{status}/{rev}:
+  /workflows/{workflow}/jobs/{key}/manage_status_change/{status}/{rev}/{run_id}:
     put:
       tags: []
       summary: Change the status of a job and manage side effects.
       description: Change the status of a job and manage side effects.
-      operationId: put_workflows_workflow_jobs_key_manage_status_change_status_rev
+      operationId: put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id
       parameters:
       - name: workflow
         in: path
@@ -4504,18 +4517,28 @@ paths:
         explode: false
         schema:
           type: string
+      - name: run_id
+        in: path
+        description: Current job run ID
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
       requestBody:
         content:
-          '*/*': {}
+          application/json:
+            schema:
+              type: object
         required: false
       responses:
-        "200":
+        '200':
           description: Updated job.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_8'
-        "500":
+                $ref: '#/components/schemas/workflow_jobs_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4551,16 +4574,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/key_user_data_model'
+              $ref: '#/components/schemas/workflow_user_data_model'
         required: true
       responses:
-        "200":
+        '200':
           description: Database information for the user data.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/key_user_data_model'
-        "500":
+                $ref: '#/components/schemas/workflow_user_data_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4592,13 +4615,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: All user data stored for the job.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_15'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_jobs_key_user_data_stores_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4629,13 +4652,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: All user data consumed by the job.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_15'
-        "500":
+                $ref: '#/components/schemas/get_workflows_workflow_jobs_key_user_data_consumes_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4667,128 +4690,19 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/status_rev_model'
-        "500":
+                $ref: '#/components/schemas/workflow_results_model'
+        '500':
           description: Default error response.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-  /workflow_config:
-    get:
-      tags: []
-      summary: Retrieve the current workflow config.
-      description: Retrieve the current workflow config.
-      operationId: get_workflow_config
-      responses:
-        "200":
-          description: HTTP 200 OK.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_18'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-    post:
-      tags: []
-      summary: Set workflow config
-      description: Set workflow config in the "workflow_config" collection.
-      operationId: post_workflow_config
-      requestBody:
-        description: Workflow config
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/workflow_config_model'
-        required: true
-      responses:
-        "200":
-          description: Workflow config
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_18'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /workflow_config/{key}:
-    put:
-      tags: []
-      summary: Update workflow config
-      description: Update workflow config in the "workflow_config" collection.
-      operationId: put_workflow_config_key
-      parameters:
-      - name: key
-        in: path
-        description: Key of the config.
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        description: Updated workflow config
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/workflow_config_key_model'
-        required: true
-      responses:
-        "200":
-          description: Updated workflow config
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_18'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
-  /workflow_config/reset:
-    put:
-      tags: []
-      summary: Reset workflow config
-      description: Rest workflow config in the "workflow_config" collection.
-      operationId: put_workflow_config_reset
-      requestBody:
-        content:
-          '*/*': {}
-        required: false
-      responses:
-        "200":
-          description: Updated workflow config
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_200_18'
-        "500":
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/inline_response_500'
-      security: []
-      x-codegen-request-body-name: body
   /workflow_specifications:
     post:
       tags: []
@@ -4803,13 +4717,13 @@ paths:
               $ref: '#/components/schemas/workflow_specifications_model'
         required: true
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_19'
-        "500":
+                $ref: '#/components/schemas/workflows_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4833,13 +4747,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: Stored workflow
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_20'
-        "500":
+                $ref: '#/components/schemas/workflow_specifications_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4853,13 +4767,13 @@ paths:
       description: Retrieves an example workflow specification in JSON format.
       operationId: get_workflow_specifications_example
       responses:
-        "200":
+        '200':
           description: Example workflow
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_20'
-        "500":
+                $ref: '#/components/schemas/workflow_specifications_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4873,13 +4787,33 @@ paths:
       description: Retrieve the workflow specification template in JSON format.
       operationId: get_workflow_specifications_template
       responses:
-        "200":
+        '200':
           description: Workflow template
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_20'
-        "500":
+                $ref: '#/components/schemas/workflow_specifications_model'
+        '500':
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /ping:
+    get:
+      tags: []
+      summary: Check if the service is running.
+      description: Check if the service is running.
+      operationId: get_ping
+      responses:
+        '200':
+          description: Message
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4931,13 +4865,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_21'
-        "500":
+                $ref: '#/components/schemas/get_workflows_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4957,13 +4891,13 @@ paths:
               $ref: '#/components/schemas/workflows_model'
         required: true
       responses:
-        "200":
+        '200':
           description: Collection of jobs and dependent resources
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflows_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -4987,13 +4921,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/workflows_model'
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5019,16 +4953,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflows_key_model'
+              $ref: '#/components/schemas/workflows_model'
         required: true
       responses:
-        "200":
+        '200':
           description: workflow updated in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflows_key_model'
-        "500":
+                $ref: '#/components/schemas/workflows_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5057,13 +4991,13 @@ paths:
               type: object
         required: false
       responses:
-        "200":
+        '200':
           description: workflow stored in the collection.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflows_key_model'
-        "500":
+                $ref: '#/components/schemas/workflows_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5087,13 +5021,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_22'
-        "500":
+                $ref: '#/components/schemas/get_workflows_key_is_complete_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5124,16 +5058,16 @@ paths:
         schema:
           type: string
           enum:
-          - "null"
-          - ""
+          - 'null'
+          - ''
       responses:
-        "200":
+        '200':
           description: result
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_23'
-        "500":
+                $ref: '#/components/schemas/get_workflows_key_ready_job_requirements_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5166,16 +5100,18 @@ paths:
           default: false
       requestBody:
         content:
-          '*/*': {}
+          application/json:
+            schema:
+              type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5200,16 +5136,18 @@ paths:
           type: string
       requestBody:
         content:
-          '*/*': {}
+          application/json:
+            schema:
+              type: object
         required: false
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_24'
-        "500":
+                $ref: '#/components/schemas/post_workflows_key_process_changed_job_inputs_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5233,13 +5171,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_25'
-        "500":
+                $ref: '#/components/schemas/get_workflows_key_missing_user_data_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5262,13 +5200,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_26'
-        "500":
+                $ref: '#/components/schemas/get_workflows_key_required_existing_files_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5278,7 +5216,7 @@ paths:
   /workflows/{key}/prepare_jobs_for_submission:
     post:
       tags: []
-      summary: "Return ready jobs, accounting for resource requirements."
+      summary: Return ready jobs, accounting for resource requirements.
       description: Return jobs that are ready for submission and meet worker resource
         Sets status to submitted_pending.
       operationId: post_workflows_key_prepare_jobs_for_submission
@@ -5304,16 +5242,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/key_prepare_jobs_for_submission_model'
+              $ref: '#/components/schemas/compute_nodes_resources'
         required: true
       responses:
-        "200":
+        '200':
           description: Jobs that are ready for submission.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_27'
-        "500":
+                $ref: '#/components/schemas/post_workflows_key_prepare_jobs_for_submission_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5347,16 +5285,18 @@ paths:
           default: 1.0
       requestBody:
         content:
-          '*/*': {}
+          application/json:
+            schema:
+              type: object
         required: false
       responses:
-        "200":
+        '200':
           description: Jobs that are ready for submission.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_28'
-        "500":
+                $ref: '#/components/schemas/post_workflows_key_prepare_next_jobs_for_submission_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5382,16 +5322,18 @@ paths:
           type: string
       requestBody:
         content:
-          '*/*': {}
+          application/json:
+            schema:
+              type: object
         required: false
       responses:
-        "200":
+        '200':
           description: Schedulers that need to be activated.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_29'
-        "500":
+                $ref: '#/components/schemas/post_workflows_key_prepare_jobs_for_scheduling_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5416,16 +5358,18 @@ paths:
           type: string
       requestBody:
         content:
-          '*/*': {}
+          application/json:
+            schema:
+              type: object
         required: false
       responses:
-        "200":
+        '200':
           description: Message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5450,16 +5394,18 @@ paths:
           type: string
       requestBody:
         content:
-          '*/*': {}
+          application/json:
+            schema:
+              type: object
         required: false
       responses:
-        "200":
+        '200':
           description: Message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5470,8 +5416,8 @@ paths:
   /workflows/{key}/config:
     get:
       tags: []
-      summary: Reports the workflow config.
-      description: Reports the workflow config.
+      summary: Returns the workflow config.
+      description: Returns the workflow config.
       operationId: get_workflows_key_config
       parameters:
       - name: key
@@ -5483,13 +5429,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_18'
-        "500":
+                $ref: '#/components/schemas/workflow_config_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5498,8 +5444,8 @@ paths:
       security: []
     put:
       tags: []
-      summary: Reports the workflow config.
-      description: Reports the workflow config.
+      summary: Updates the workflow config.
+      description: Updates the workflow config.
       operationId: put_workflows_key_config
       parameters:
       - name: key
@@ -5515,16 +5461,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/key_config_model'
+              $ref: '#/components/schemas/workflow_config_model'
         required: true
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_18'
-        "500":
+                $ref: '#/components/schemas/workflow_config_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5550,16 +5496,18 @@ paths:
           type: string
       requestBody:
         content:
-          '*/*': {}
+          application/json:
+            schema:
+              type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5584,16 +5532,18 @@ paths:
           type: string
       requestBody:
         content:
-          '*/*': {}
+          application/json:
+            schema:
+              type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5627,16 +5577,18 @@ paths:
           default: false
       requestBody:
         content:
-          '*/*': {}
+          application/json:
+            schema:
+              type: object
         required: false
       responses:
-        "200":
+        '200':
           description: message
           content:
             application/json:
               schema:
                 type: object
-        "500":
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5660,13 +5612,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_30'
-        "500":
+                $ref: '#/components/schemas/workflow_status_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5692,16 +5644,16 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/key_status_model'
+              $ref: '#/components/schemas/workflow_status_model'
         required: true
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_30'
-        "500":
+                $ref: '#/components/schemas/workflow_status_model'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5725,13 +5677,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_31'
-        "500":
+                $ref: '#/components/schemas/get_workflows_key_collection_names_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5807,13 +5759,13 @@ paths:
               type: object
         required: true
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_5'
-        "500":
+                $ref: '#/components/schemas/post_workflows_key_join_by_inbound_edge_collection_edge_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5890,13 +5842,13 @@ paths:
               type: object
         required: true
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_5'
-        "500":
+                $ref: '#/components/schemas/post_workflows_key_join_by_outbound_edge_collection_edge_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5928,13 +5880,13 @@ paths:
         schema:
           type: string
       responses:
-        "200":
+        '200':
           description: HTTP 200 OK.
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_200_32'
-        "500":
+                $ref: '#/components/schemas/get_workflows_key_dot_graph_name_response'
+        '500':
           description: Default error response.
           content:
             application/json:
@@ -5943,52 +5895,7 @@ paths:
       security: []
 components:
   schemas:
-    inline_response_200_32:
-      required:
-      - graph
-      type: object
-      properties:
-        graph:
-          type: string
-    compute_node_stats_key_model:
-      required:
-      - hostname
-      - timestamp
-      type: object
-      properties:
-        hostname:
-          type: string
-        stats:
-          type: array
-          items:
-            $ref: '#/components/schemas/workflowsworkflowcompute_node_stats_stats'
-        timestamp:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    key_prepare_jobs_for_submission_model:
-      required:
-      - memory_gb
-      - num_cpus
-      type: object
-      properties:
-        num_cpus:
-          type: integer
-        memory_gb:
-          type: number
-        num_gpus:
-          type: integer
-        num_nodes:
-          type: integer
-        time_limit:
-          type: object
-        scheduler_config_id:
-          type: string
-    key_status_model:
+    workflow_status_model:
       required:
       - auto_tune_status
       - is_canceled
@@ -6000,54 +5907,28 @@ components:
         run_id:
           type: integer
         auto_tune_status:
-          $ref: '#/components/schemas/workflowskeystatus_auto_tune_status'
+          $ref: '#/components/schemas/auto_tune_status'
         _key:
           type: string
         _id:
           type: string
         _rev:
           type: string
-    inline_response_200_31:
-      type: object
-      properties:
-        names:
-          type: array
-          items:
-            type: string
     workflow_specifications_schedulers:
       type: object
       properties:
         aws_schedulers:
           type: array
           items:
-            $ref: '#/components/schemas/aws_schedulers_key_model'
+            $ref: '#/components/schemas/workflow_aws_schedulers_model'
         local_schedulers:
           type: array
           items:
-            $ref: '#/components/schemas/local_schedulers_key_model'
+            $ref: '#/components/schemas/workflow_local_schedulers_model'
         slurm_schedulers:
           type: array
           items:
-            $ref: '#/components/schemas/slurm_schedulers_key_model'
-    inline_response_200_30:
-      required:
-      - auto_tune_status
-      - is_canceled
-      - run_id
-      type: object
-      properties:
-        is_canceled:
-          type: boolean
-        run_id:
-          type: integer
-        auto_tune_status:
-          $ref: '#/components/schemas/workflowskeystatus_auto_tune_status'
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
+            $ref: '#/components/schemas/workflow_slurm_schedulers_model'
     workflow_job_process_stats_model:
       required:
       - avg_cpu_percent
@@ -6082,12 +5963,19 @@ components:
           type: string
         _rev:
           type: string
-    key_config_model:
+    workflow_config_model:
       type: object
       properties:
         compute_node_resource_stats:
-          $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
-        compute_node_worker_buffer_seconds:
+          $ref: '#/components/schemas/compute_node_resource_stats_model'
+        compute_node_expiration_buffer_seconds:
+          type: number
+        compute_node_wait_for_new_jobs_seconds:
+          type: number
+        compute_node_ignore_workflow_completion:
+          type: boolean
+          default: false
+        compute_node_wait_for_healthy_database_minutes:
           type: number
         _key:
           type: string
@@ -6123,23 +6011,6 @@ components:
           type: string
         _rev:
           type: string
-    key_user_data_model:
-      type: object
-      properties:
-        is_ephemeral:
-          type: boolean
-          default: false
-        name:
-          type: string
-        data:
-          type: object
-          properties: {}
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
     workflow_aws_schedulers_model:
       type: object
       properties:
@@ -6151,106 +6022,6 @@ components:
           type: string
         _rev:
           type: string
-    resource_requirements_key_model:
-      type: object
-      properties:
-        name:
-          type: string
-        num_cpus:
-          type: integer
-        num_gpus:
-          type: integer
-        num_nodes:
-          type: integer
-        memory:
-          type: string
-          default: 1m
-        runtime:
-          type: string
-          default: P0DT1M
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    status_rev_model:
-      required:
-      - completion_time
-      - exec_time_minutes
-      - job_key
-      - return_code
-      - run_id
-      - status
-      type: object
-      properties:
-        job_key:
-          type: string
-        run_id:
-          type: integer
-        return_code:
-          type: integer
-        exec_time_minutes:
-          type: number
-        completion_time:
-          type: string
-        status:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    workflows_key_model:
-      type: object
-      properties:
-        name:
-          type: string
-        user:
-          type: string
-        description:
-          type: string
-        timestamp:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    workflow_config_compute_node_resource_stats:
-      type: object
-      properties:
-        cpu:
-          type: boolean
-          default: true
-        disk:
-          type: boolean
-          default: false
-        memory:
-          type: boolean
-          default: true
-        network:
-          type: boolean
-          default: false
-        process:
-          type: boolean
-          default: false
-        include_child_processes:
-          type: boolean
-          default: true
-        recurse_child_processes:
-          type: boolean
-          default: false
-        monitor_type:
-          type: string
-          default: aggregation
-        make_plots:
-          type: boolean
-          default: true
-        interval:
-          type: number
     inline_response_500:
       required:
       - error
@@ -6264,287 +6035,6 @@ components:
           type: string
         code:
           type: integer
-    inline_response_200_9:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/job_process_stats_key_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    inline_response_200_22:
-      required:
-      - is_canceled
-      - is_complete
-      type: object
-      properties:
-        is_canceled:
-          type: boolean
-        is_complete:
-          type: boolean
-    inline_response_200_21:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/workflows_key_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    inline_response_200_24:
-      type: object
-      properties:
-        reinitialized_jobs:
-          type: array
-          items:
-            type: string
-    job_process_stats_key_model:
-      required:
-      - avg_cpu_percent
-      - avg_rss
-      - job_key
-      - max_cpu_percent
-      - max_rss
-      - num_samples
-      - run_id
-      - timestamp
-      type: object
-      properties:
-        job_key:
-          type: string
-        run_id:
-          type: integer
-        avg_cpu_percent:
-          type: number
-        max_cpu_percent:
-          type: number
-        avg_rss:
-          type: number
-        max_rss:
-          type: number
-        num_samples:
-          type: integer
-        timestamp:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_23:
-      required:
-      - max_memory_gb
-      - max_num_nodes
-      - max_runtime
-      - memory_gb
-      - num_cpus
-      - num_gpus
-      - num_jobs
-      type: object
-      properties:
-        num_jobs:
-          type: integer
-        num_cpus:
-          type: integer
-        num_gpus:
-          type: integer
-        memory_gb:
-          type: number
-        max_memory_gb:
-          type: number
-        max_num_nodes:
-          type: integer
-        max_runtime:
-          type: string
-    inline_response_200_5:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            type: object
-            properties: {}
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    inline_response_200_6:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/files_key_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    inline_response_200_7:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/jobs_key_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    inline_response_200_20:
-      type: object
-      properties:
-        name:
-          type: object
-        key:
-          type: string
-        user:
-          type: object
-        description:
-          type: object
-        jobs:
-          type: array
-          items:
-            $ref: '#/components/schemas/workflow_job_specifications_model'
-        files:
-          type: array
-          items:
-            $ref: '#/components/schemas/files_key_model'
-        user_data:
-          type: array
-          items:
-            $ref: '#/components/schemas/key_user_data_model'
-        resource_requirements:
-          type: array
-          items:
-            $ref: '#/components/schemas/resource_requirements_key_model'
-        schedulers:
-          $ref: '#/components/schemas/workflow_specifications_schedulers'
-        config:
-          $ref: '#/components/schemas/key_config_model'
-    inline_response_200_8:
-      required:
-      - command
-      type: object
-      properties:
-        name:
-          type: string
-        command:
-          type: string
-        invocation_script:
-          type: object
-        status:
-          type: string
-        needs_compute_node_schedule:
-          type: boolean
-          default: false
-        cancel_on_blocking_job_failure:
-          type: boolean
-          default: true
-        supports_termination:
-          type: boolean
-          default: false
-        internal:
-          $ref: '#/components/schemas/workflowsworkflowjobs_internal'
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_29:
-      type: object
-      properties:
-        schedulers:
-          type: array
-          items:
-            type: string
-    inline_response_200_26:
-      type: object
-      properties:
-        files:
-          type: array
-          items:
-            type: string
-    inline_response_200_25:
-      type: object
-      properties:
-        user_data:
-          type: array
-          items:
-            type: string
-    inline_response_200_28:
-      type: object
-      properties:
-        jobs:
-          type: array
-          items:
-            $ref: '#/components/schemas/jobs_key_model'
     edges_name_model:
       required:
       - _from
@@ -6561,15 +6051,6 @@ components:
           type: string
         _rev:
           type: string
-    inline_response_200_27:
-      type: object
-      properties:
-        jobs:
-          type: array
-          items:
-            $ref: '#/components/schemas/jobs_key_model'
-        reason:
-          type: string
     workflow_scheduled_compute_nodes_model:
       required:
       - scheduler_config_id
@@ -6581,327 +6062,6 @@ components:
         scheduler_config_id:
           type: string
         status:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_1:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/inline_response_200_1_items'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    inline_response_200_2:
-      required:
-      - hostname
-      - pid
-      - resources
-      - start_time
-      type: object
-      properties:
-        hostname:
-          type: string
-        pid:
-          type: integer
-        start_time:
-          type: string
-        duration_seconds:
-          type: number
-        is_active:
-          type: boolean
-        resources:
-          $ref: '#/components/schemas/key_prepare_jobs_for_submission_model'
-        scheduler:
-          type: object
-          properties: {}
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    aws_schedulers_key_model:
-      type: object
-      properties:
-        name:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_3:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/compute_node_stats_key_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    user_data_key_model:
-      type: object
-      properties:
-        is_ephemeral:
-          type: boolean
-          default: false
-        name:
-          type: string
-        data:
-          type: object
-          properties: {}
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_4:
-      required:
-      - hostname
-      - timestamp
-      type: object
-      properties:
-        hostname:
-          type: string
-        stats:
-          type: array
-          items:
-            $ref: '#/components/schemas/workflowsworkflowcompute_node_stats_stats'
-        timestamp:
-          type: string
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    workflow_config_model:
-      type: object
-      properties:
-        compute_node_resource_stats:
-          $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
-        compute_node_worker_buffer_seconds:
-          type: number
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_11:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/resource_requirements_key_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    inline_response_200_10:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/local_schedulers_key_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    inline_response_200_13:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/scheduled_compute_nodes_key_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    inline_response_200_12:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/status_rev_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    slurm_schedulers_key_model:
-      required:
-      - account
-      - nodes
-      type: object
-      properties:
-        name:
-          type: string
-        account:
-          type: string
-        gres:
-          type: string
-        mem:
-          type: string
-        nodes:
-          type: integer
-        partition:
-          type: string
-        qos:
-          type: string
-          default: normal
-        tmp:
-          type: string
-        walltime:
-          type: string
-        extra:
-          type: object
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    workflow_config_key_model:
-      type: object
-      properties:
-        compute_node_resource_stats:
-          $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
-        compute_node_worker_buffer_seconds:
-          type: number
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    jobs_key_model:
-      required:
-      - command
-      type: object
-      properties:
-        name:
-          type: string
-        command:
-          type: string
-        invocation_script:
-          type: object
-        status:
-          type: string
-        needs_compute_node_schedule:
-          type: boolean
-          default: false
-        cancel_on_blocking_job_failure:
-          type: boolean
-          default: true
-        supports_termination:
-          type: boolean
-          default: false
-        internal:
-          $ref: '#/components/schemas/workflowsworkflowjobs_internal'
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_19:
-      type: object
-      properties:
-        name:
-          type: string
-        user:
-          type: string
-        description:
-          type: string
-        timestamp:
           type: string
         _key:
           type: string
@@ -6935,54 +6095,6 @@ components:
         walltime:
           type: string
         extra:
-          type: object
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_18:
-      type: object
-      properties:
-        compute_node_resource_stats:
-          $ref: '#/components/schemas/workflow_config_compute_node_resource_stats'
-        compute_node_worker_buffer_seconds:
-          type: number
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    files_key_model:
-      required:
-      - path
-      type: object
-      properties:
-        name:
-          type: string
-        path:
-          type: string
-        st_mtime:
-          type: number
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    scheduled_compute_nodes_key_model:
-      required:
-      - scheduler_config_id
-      - status
-      type: object
-      properties:
-        scheduler_id:
-          type: string
-        scheduler_config_id:
-          type: string
-        status:
           type: string
         _key:
           type: string
@@ -6990,53 +6102,7 @@ components:
           type: string
         _rev:
           type: string
-    inline_response_200_15:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/key_user_data_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    inline_response_200_14:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/slurm_schedulers_key_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    workflowskeystatus_auto_tune_status:
+    auto_tune_status:
       type: object
       properties:
         enabled:
@@ -7046,105 +6112,7 @@ components:
           type: array
           items:
             type: string
-    inline_response_200_17:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/workflow_job_specifications_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    inline_response_200_16:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/edges_name_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    compute_nodes_key_model:
-      required:
-      - hostname
-      - pid
-      - resources
-      - start_time
-      type: object
-      properties:
-        hostname:
-          type: string
-        pid:
-          type: integer
-        start_time:
-          type: string
-        duration_seconds:
-          type: number
-        is_active:
-          type: boolean
-        resources:
-          $ref: '#/components/schemas/workflowsworkflowcompute_nodes_resources'
-        scheduler:
-          type: object
-          properties: {}
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200:
-      required:
-      - count
-      - has_more
-      - max_limit
-      - skip
-      - total_count
-      type: object
-      properties:
-        items:
-          type: array
-          items:
-            $ref: '#/components/schemas/aws_schedulers_key_model'
-        skip:
-          type: integer
-        max_limit:
-          type: integer
-        count:
-          type: integer
-        total_count:
-          type: integer
-        has_more:
-          type: boolean
-    workflowsworkflowcompute_nodes_resources:
+    compute_nodes_resources:
       required:
       - memory_gb
       - num_cpus
@@ -7159,10 +6127,10 @@ components:
         num_nodes:
           type: integer
         time_limit:
-          type: object
+          type: string
         scheduler_config_id:
           type: string
-    workflowsworkflowcompute_node_stats_stats:
+    compute_node_stats:
       required:
       - average
       - maximum
@@ -7238,36 +6206,7 @@ components:
         is_active:
           type: boolean
         resources:
-          $ref: '#/components/schemas/workflowsworkflowcompute_nodes_resources'
-        scheduler:
-          type: object
-          properties: {}
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-    inline_response_200_1_items:
-      required:
-      - hostname
-      - pid
-      - resources
-      - start_time
-      type: object
-      properties:
-        hostname:
-          type: string
-        pid:
-          type: integer
-        start_time:
-          type: string
-        duration_seconds:
-          type: number
-        is_active:
-          type: boolean
-        resources:
-          $ref: '#/components/schemas/key_prepare_jobs_for_submission_model'
+          $ref: '#/components/schemas/compute_nodes_resources'
         scheduler:
           type: object
           properties: {}
@@ -7288,7 +6227,7 @@ components:
         stats:
           type: array
           items:
-            $ref: '#/components/schemas/workflowsworkflowcompute_node_stats_stats'
+            $ref: '#/components/schemas/compute_node_stats'
         timestamp:
           type: string
         _key:
@@ -7337,22 +6276,6 @@ components:
           type: string
         _rev:
           type: string
-    local_schedulers_key_model:
-      type: object
-      properties:
-        name:
-          type: string
-          default: default
-        memory:
-          type: string
-        num_cpus:
-          type: integer
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
     workflow_files_model:
       required:
       - path
@@ -7380,7 +6303,7 @@ components:
         command:
           type: string
         invocation_script:
-          type: object
+          type: string
         status:
           type: string
         needs_compute_node_schedule:
@@ -7393,7 +6316,7 @@ components:
           type: boolean
           default: false
         internal:
-          $ref: '#/components/schemas/workflowsworkflowjobs_internal'
+          $ref: '#/components/schemas/jobs_internal'
         _key:
           type: string
         _id:
@@ -7404,13 +6327,13 @@ components:
       type: object
       properties:
         name:
-          type: object
+          type: string
         key:
           type: string
         user:
-          type: object
+          type: string
         description:
-          type: object
+          type: string
         jobs:
           type: array
           items:
@@ -7418,19 +6341,19 @@ components:
         files:
           type: array
           items:
-            $ref: '#/components/schemas/files_key_model'
+            $ref: '#/components/schemas/workflow_files_model'
         user_data:
           type: array
           items:
-            $ref: '#/components/schemas/key_user_data_model'
+            $ref: '#/components/schemas/workflow_user_data_model'
         resource_requirements:
           type: array
           items:
-            $ref: '#/components/schemas/resource_requirements_key_model'
+            $ref: '#/components/schemas/workflow_resource_requirements_model'
         schedulers:
           $ref: '#/components/schemas/workflow_specifications_schedulers'
         config:
-          $ref: '#/components/schemas/workflow_config_key_model'
+          $ref: '#/components/schemas/workflow_config_model'
     workflow_job_specifications_model:
       required:
       - command
@@ -7443,7 +6366,7 @@ components:
         command:
           type: string
         invocation_script:
-          type: object
+          type: string
         cancel_on_blocking_job_failure:
           type: boolean
           default: true
@@ -7451,7 +6374,7 @@ components:
           type: boolean
           default: false
         scheduler:
-          type: object
+          type: string
         needs_compute_node_schedule:
           type: boolean
           default: false
@@ -7477,7 +6400,7 @@ components:
           type: array
           items:
             type: string
-    workflowsworkflowjobs_internal:
+    jobs_internal:
       type: object
       properties:
         memory_bytes:
@@ -7489,35 +6412,508 @@ components:
         runtime_seconds:
           type: number
         scheduler_config_id:
-          type: object
+          type: string
         hash:
           type: integer
-    results_key_model:
-      required:
-      - completion_time
-      - exec_time_minutes
-      - job_key
-      - return_code
-      - run_id
-      - status
+    compute_node_resource_stats_model:
       type: object
       properties:
-        job_key:
+        cpu:
+          type: boolean
+          default: true
+        disk:
+          type: boolean
+          default: false
+        memory:
+          type: boolean
+          default: true
+        network:
+          type: boolean
+          default: false
+        process:
+          type: boolean
+          default: false
+        include_child_processes:
+          type: boolean
+          default: true
+        recurse_child_processes:
+          type: boolean
+          default: false
+        monitor_type:
           type: string
-        run_id:
-          type: integer
-        return_code:
-          type: integer
-        exec_time_minutes:
+          default: aggregation
+        make_plots:
+          type: boolean
+          default: true
+        interval:
           type: number
-        completion_time:
+    get_workflows_workflow_aws_schedulers_response:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_aws_schedulers_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_workflow_compute_nodes_response:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_compute_nodes_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_workflow_compute_node_stats_response:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_compute_node_stats_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_workflow_events_response: &id004
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            type: object
+            properties: {}
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_workflow_files_response: &id001
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_files_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_workflow_jobs_response: &id002
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_jobs_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_workflow_job_process_stats_response:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_job_process_stats_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_workflow_local_schedulers_response:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_local_schedulers_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_workflow_resource_requirements_response:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_resource_requirements_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_workflow_results_response:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_results_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_workflow_scheduled_compute_nodes_response:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_scheduled_compute_nodes_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_workflow_slurm_schedulers_response:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_slurm_schedulers_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_workflow_user_data_response: &id003
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_user_data_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_workflow_edges_name_response:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/edges_name_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_workflow_files_produced_by_job_key_response: *id001
+    get_workflows_workflow_job_specifications_response:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_job_specifications_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_workflow_jobs_find_by_status_status_response: *id002
+    get_workflows_workflow_jobs_find_by_needs_file_key_response: *id002
+    get_workflows_workflow_jobs_key_user_data_stores_response: *id003
+    get_workflows_workflow_jobs_key_user_data_consumes_response: *id003
+    get_workflows_response:
+      required:
+      - count
+      - has_more
+      - max_limit
+      - skip
+      - total_count
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflows_model'
+        skip:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+    get_workflows_key_is_complete_response:
+      required:
+      - is_canceled
+      - is_complete
+      type: object
+      properties:
+        is_canceled:
+          type: boolean
+        is_complete:
+          type: boolean
+    get_workflows_key_ready_job_requirements_response:
+      required:
+      - max_memory_gb
+      - max_num_nodes
+      - max_runtime
+      - memory_gb
+      - num_cpus
+      - num_gpus
+      - num_jobs
+      type: object
+      properties:
+        num_jobs:
+          type: integer
+        num_cpus:
+          type: integer
+        num_gpus:
+          type: integer
+        memory_gb:
+          type: number
+        max_memory_gb:
+          type: number
+        max_num_nodes:
+          type: integer
+        max_runtime:
           type: string
-        status:
+    post_workflows_key_process_changed_job_inputs_response:
+      type: object
+      properties:
+        reinitialized_jobs:
+          type: array
+          items:
+            type: string
+    get_workflows_key_missing_user_data_response:
+      type: object
+      properties:
+        user_data:
+          type: array
+          items:
+            type: string
+    get_workflows_key_required_existing_files_response:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            type: string
+    post_workflows_key_prepare_jobs_for_submission_response:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_jobs_model'
+        reason:
           type: string
-        _key:
+    post_workflows_key_prepare_next_jobs_for_submission_response:
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/workflow_jobs_model'
+    post_workflows_key_prepare_jobs_for_scheduling_response:
+      type: object
+      properties:
+        schedulers:
+          type: array
+          items:
+            type: string
+    get_workflows_key_collection_names_response:
+      type: object
+      properties:
+        names:
+          type: array
+          items:
+            type: string
+    post_workflows_key_join_by_inbound_edge_collection_edge_response: *id004
+    post_workflows_key_join_by_outbound_edge_collection_edge_response: *id004
+    get_workflows_key_dot_graph_name_response:
+      required:
+      - graph
+      type: object
+      properties:
+        graph:
           type: string
-        _id:
-          type: string
-        _rev:
-          type: string
-x-original-swagger-version: "2.0"
+x-original-swagger-version: '2.0'

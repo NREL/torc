@@ -110,6 +110,7 @@ router.put('/workflows/:workflow/jobs/:key/resource_requirements/:rr_key', funct
 })
     .pathParam('workflow', joi.string().required(), 'Workflow key')
     .pathParam('key', joi.string().required(), 'Job key')
+    .body(joi.object().optional(), '')
     .response(schemas.edge, 'Requires edge that connects the job and resource requirements.')
     .summary('Set the resource requirements for a job.')
     .description('Set the resource requirements for a job, replacing any current value.');
@@ -132,11 +133,12 @@ router.get('/workflows/:workflow/jobs/:key/process_stats', function(req, res) {
     .summary('Retrieve the job process stats for a job.')
     .description('Retrieve the job process stats for a job by its key.');
 
-router.post('/workflows/:workflow/jobs/:key/complete_job/:status/:rev', function(req, res) {
+router.post('/workflows/:workflow/jobs/:key/complete_job/:status/:rev/:run_id', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
   const status = req.pathParams.status;
   const rev = req.pathParams.rev;
+  const runId = req.pathParams.run_id;
   const result = req.body;
   const workflow = documents.getWorkflow(workflowKey, res);
   if (!query.isJobStatusComplete(status)) {
@@ -154,7 +156,7 @@ router.post('/workflows/:workflow/jobs/:key/complete_job/:status/:rev', function
 
     const returned = config.getWorkflowCollection(workflow, 'returned');
     returned.save({_from: job._id, _to: result._id});
-    const updatedJob = query.manageJobStatusChange(job, workflow);
+    const updatedJob = query.manageJobStatusChange(job, workflow, runId);
     updatedJob.internal.hash = documents.computeJobInputHash(updatedJob, workflow);
     documents.updateWorkflowDocument(workflow, 'jobs', updatedJob);
     res.send(updatedJob);
@@ -166,16 +168,18 @@ router.post('/workflows/:workflow/jobs/:key/complete_job/:status/:rev', function
     .pathParam('key', joi.string().required(), 'Job key')
     .pathParam('status', joi.string().required(), 'New job status.')
     .pathParam('rev', joi.string().required(), 'Current job revision.')
+    .pathParam('run_id', joi.number().integer().required(), 'Current job run ID')
     .body(schemas.result, 'Result of the job.')
     .response(schemas.job, 'job completed in the collection.')
     .summary('Complete a job and add a result.')
     .description('Complete a job, connect it to a result, and manage side effects.');
 
-router.put('/workflows/:workflow/jobs/:key/manage_status_change/:status/:rev', function(req, res) {
+router.put('/workflows/:workflow/jobs/:key/manage_status_change/:status/:rev/:run_id', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;
   const status = req.pathParams.status;
   const rev = req.pathParams.rev;
+  const runId = req.pathParams.run_id;
   const workflow = documents.getWorkflow(workflowKey, res);
   if (query.isJobStatusComplete(status)) {
     res.throw(400, `status=${status} indicates completion. Post complete_job status instead.`);
@@ -188,7 +192,7 @@ router.put('/workflows/:workflow/jobs/:key/manage_status_change/:status/:rev', f
   }
   job.status = status;
   try {
-    const updatedJob = query.manageJobStatusChange(job, workflow);
+    const updatedJob = query.manageJobStatusChange(job, workflow, runId);
     res.send(updatedJob);
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Put jobs manage_status_change key=${key}`);
@@ -198,6 +202,8 @@ router.put('/workflows/:workflow/jobs/:key/manage_status_change/:status/:rev', f
     .pathParam('key', joi.string().required(), 'Job key')
     .pathParam('status', joi.string().required(), 'New job status')
     .pathParam('rev', joi.string().required(), 'Current job revision')
+    .pathParam('run_id', joi.number().integer().required(), 'Current job run ID')
+    .body(joi.object().optional(), '')
     .response(schemas.job, 'Updated job.')
     .summary('Change the status of a job and manage side effects.')
     .description('Change the status of a job and manage side effects.');

@@ -5,10 +5,10 @@ import logging
 
 import click
 import json5
-from torc.swagger_client.models.workflow_user_data_model import (
+from torc.openapi_client.models.workflow_user_data_model import (
     WorkflowUserDataModel,
 )
-from torc.swagger_client.models.edges_name_model import EdgesNameModel
+from torc.openapi_client.models.edges_name_model import EdgesNameModel
 
 from torc.api import iter_documents
 from .common import (
@@ -76,31 +76,32 @@ def add(ctx, api, data, ephemeral, name, stores, consumes):
     if data is None:
         ud = WorkflowUserDataModel(name=name, is_ephemeral=ephemeral)
     else:
-        ud = WorkflowUserDataModel(name=name, is_ephemeral=ephemeral, data=json5.loads(data))
+        obj = json5.loads(data)
+        ud = WorkflowUserDataModel(name=name, is_ephemeral=ephemeral, data=obj)
 
-    ud = api.post_workflows_workflow_user_data(ud, workflow_key)
+    ud = api.post_workflows_workflow_user_data(workflow_key, ud)
     stores_edge = None
     consumes_edges = []
     if stores is not None:
         stored_by_job = api.get_workflows_workflow_jobs_key(workflow_key, stores)
         stores_edge = api.post_workflows_workflow_edges_name(
+            workflow_key,
+            "stores",
             EdgesNameModel(
                 _from=stored_by_job.id,
                 to=ud.id,
             ),
-            workflow_key,
-            "stores",
         )
     if consumes:
         for job_key in consumes:
             consumed_by_job = api.get_workflows_workflow_jobs_key(workflow_key, job_key)
             consumes_edge = api.post_workflows_workflow_edges_name(
+                workflow_key,
+                "consumes",
                 EdgesNameModel(
                     _from=consumed_by_job.id,
                     to=ud.id,
                 ),
-                workflow_key,
-                "consumes",
             )
             consumes_edges.append(consumes_edge.to_dict())
     if output_format == "text":
@@ -154,7 +155,7 @@ def modify(ctx, api, user_data_key, name, data, ephemeral):
         changed = True
 
     if changed:
-        ud = api.put_workflows_workflow_user_data_key(ud, workflow_key, user_data_key)
+        ud = api.put_workflows_workflow_user_data_key(workflow_key, user_data_key, ud)
         if output_format == "text":
             logger.info("Modified user_data key = %s", user_data_key)
         else:
@@ -209,7 +210,7 @@ def get(ctx, api, key):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     item = api.get_workflows_workflow_user_data_key(workflow_key, key).to_dict()
-    item.pop("id")
+    item.pop("_id")
     print(json.dumps(item, indent=2))
 
 
@@ -238,7 +239,7 @@ def list_user_data(ctx, api, filters, limit, skip):
     data = []
     for item in iter_documents(api.get_workflows_workflow_user_data, workflow_key, **filters):
         item = item.to_dict()
-        item.pop("id")
+        item.pop("_id")
         data.append(item)
     print(json.dumps(data, indent=2))
 

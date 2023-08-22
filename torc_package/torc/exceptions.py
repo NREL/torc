@@ -15,3 +15,7 @@ class InvalidParameter(TorcBaseException):
 
 class InvalidWorkflow(TorcBaseException):
     """Raised if the workflow is invalid."""
+
+
+class DatabaseOffline(TorcBaseException):
+    """Raised if the database is inaccessible."""

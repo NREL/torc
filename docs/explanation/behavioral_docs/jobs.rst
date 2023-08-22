@@ -42,6 +42,8 @@ here.
       "blocked" -> "ready";
    }
 
+.. note:: All statuses can be reset back to ``uninitialized``.
+
 Scheduled jobs
 --------------
 If you enable compute node scheduling for a job that is initially blocked, as discussed in

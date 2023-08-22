@@ -63,11 +63,12 @@ setup(
         "pyarrow",
         "pydantic~=2.0.2",
         "s3path",
-        # These are required by the swagger_client. Keep in sync with its setup.py.
-        "urllib3>=1.15",
-        "six>=1.10",
-        "certifi",
-        "python-dateutil",
+        # These are required by the openapi_client. Keep in sync with its setup.py.
+        "python_dateutil>=2.5.3",
+        "urllib3>=1.25.3,<2.1.0",
+        # The generated code currently uses v1; we are using bump-pydantic to upgrade.
+        # pydantic >= 1.10.5, < 2
+        "aenum>=3.1.11",
     ],
     extras_require={
         "dev": [

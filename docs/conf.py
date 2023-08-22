@@ -10,7 +10,7 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html#project-informatio
 # pylint: skip-file
 # flake8: noqa
 
-from torc.swagger_client.api import default_api
+from torc.openapi_client.api import default_api
 
 import torc
 

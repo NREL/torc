@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 
-from torc.swagger_client.api.default_api import DefaultApi
+from torc.openapi_client.api.default_api import DefaultApi
 
 from torc.api import iter_documents
 
@@ -18,7 +18,6 @@ class DatabaseInterface:
     @staticmethod
     def _map_names_to_keys(api: DefaultApi, workflow_key):
         doc_types = (
-            "events",
             "files",
             "jobs",
             "local_schedulers",

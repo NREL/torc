@@ -6,11 +6,13 @@ import socket
 from pathlib import Path
 
 import click
-from torc.swagger_client.models.workflow_jobs_model import WorkflowJobsModel
 
-from torc.api import iter_documents
+from torc.openapi_client.models.workflow_jobs_model import WorkflowJobsModel
+from torc.api import iter_documents, list_model_fields, wait_for_healthy_database
+from torc.exceptions import DatabaseOffline
 from torc.job_runner import JobRunner, JOB_COMPLETION_POLL_INTERVAL
 from torc.resource_monitor_reports import iter_job_process_stats
+from torc.utils.run_command import get_cli_string
 from .common import (
     check_database_url,
     confirm_change,
@@ -75,6 +77,7 @@ def jobs():
 @click.pass_context
 def add(ctx, api, cancel_on_blocking_job_failure, command, key, name):
     """Add a job to the workflow."""
+    # TODO: This doesn't support lots of things like files and blocked_by.
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
@@ -85,7 +88,7 @@ def add(ctx, api, cancel_on_blocking_job_failure, command, key, name):
         key=key,
         name=name,
     )
-    job = api.post_workflows_workflow_jobs(job, workflow_key)
+    job = api.post_workflows_workflow_jobs(workflow_key, job)
     if output_format == "text":
         logger.info("Added job with key=%s", job.key)
     else:
@@ -116,7 +119,7 @@ def list_user_data(ctx, api, job_key, stores):
     items = []
     for item in resp.items:
         item = item.to_dict()
-        item.pop("id")
+        item.pop("_id")
         items.append(item)
     print(json.dumps(items, indent=2))
 
@@ -180,7 +183,7 @@ def disable(ctx, api, job_keys):
         job = api.get_workflows_workflow_jobs_key(workflow_key, key)
         if job.status != "disabled":
             job.status = "disabled"
-            api.put_workflows_workflow_jobs_key(job, workflow_key, key)
+            api.put_workflows_workflow_jobs_key(workflow_key, key, job)
             count += 1
             logger.info("Set job status of job key=%s name=%s to 'disabled.'", job.key, job.name)
 
@@ -243,21 +246,24 @@ def list_jobs(ctx, api, filters, exclude, limit, skip, sort_by, reverse_sort):
         x.to_dict()
         for x in iter_documents(api.get_workflows_workflow_jobs, workflow_key, **filters)
     )
-    exclude = [
-        "id",
-        "rev",
-        "cancel_on_blocking_job_failure",
-        "internal",
-        "invocation_script",
-        "supports_termination",
-    ] + list(exclude)
+    exclude.update(
+        {
+            "_id",
+            "_rev",
+            "cancel_on_blocking_job_failure",
+            "internal",
+            "invocation_script",
+            "supports_termination",
+        }
+    )
+    columns = [x for x in list_model_fields(WorkflowJobsModel) if x not in exclude]
     table_title = f"Jobs in workflow {workflow_key}"
     print_items(
         ctx,
         items,
-        table_title=table_title,
-        json_key="jobs",
-        exclude_columns=exclude,
+        table_title,
+        columns,
+        "jobs",
         start_index=skip,
     )
 
@@ -283,9 +289,10 @@ def list_process_stats(ctx, api, limit, skip):
     kwargs = {"skip": skip}
     if limit is not None:
         kwargs["limit"] = limit
-    items = iter_job_process_stats(api, workflow_key, **kwargs)
+    items = list(iter_job_process_stats(api, workflow_key, **kwargs))
     table_title = f"Job Process Resource Utilization Statistics for workflow {workflow_key}"
-    print_items(ctx, items, table_title=table_title, json_key="stats", start_index=skip)
+    columns = items[0].keys()
+    print_items(ctx, items, table_title, columns, "stats", start_index=skip)
 
 
 @click.command()
@@ -339,7 +346,7 @@ def reset_status(ctx, api, job_keys):
         job = api.get_workflows_workflow_jobs_key(workflow_key, key)
         if job.status != "uninitialized":
             job.status = "uninitialized"
-            api.put_workflows_workflow_jobs_key(job, workflow_key, key)
+            api.put_workflows_workflow_jobs_key(workflow_key, key, job)
             count += 1
             logger.info("Reset job status of job key=%s name=%s", job.key, job.name)
 
@@ -381,18 +388,41 @@ def reset_status(ctx, api, job_keys):
     "--time-limit",
     help="Time limit ISO 8601 time duration format (like 'P0DT24H'), defaults to no limit.",
 )
+@click.option(
+    "-w",
+    "--wait-for-healthy-database-minutes",
+    type=int,
+    default=0,
+    show_default=True,
+    help="Wait this number of minutes if the database is offline. Applies only to the initial "
+    "connection.",
+)
 @click.pass_obj
 @click.pass_context
 def run(
-    ctx, api, cpu_affinity_cpus_per_job, max_parallel_jobs, output: Path, poll_interval, time_limit
+    ctx,
+    api,
+    cpu_affinity_cpus_per_job,
+    max_parallel_jobs,
+    output: Path,
+    poll_interval,
+    time_limit,
+    wait_for_healthy_database_minutes,
 ):
     """Run workflow jobs on the current system."""
+    try:
+        # NOTE: Ensure that this is the first API command that gets sent.
+        api.get_ping()
+    except DatabaseOffline:
+        wait_for_healthy_database(api, wait_for_healthy_database_minutes)
+
     workflow_key = get_workflow_key_from_context(ctx, api)
     output.mkdir(exist_ok=True)
     hostname = socket.gethostname()
-    log_file = output / f"worker_{hostname}.log"
-    setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
     check_database_url(api)
+    log_file = output / f"worker_{hostname}.log"
+    my_logger = setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
+    my_logger.info(get_cli_string())
     workflow = api.get_workflows_key(workflow_key)
     runner = JobRunner(
         api,
@@ -403,7 +433,11 @@ def run(
         job_completion_poll_interval=poll_interval,
         time_limit=time_limit,
     )
-    runner.run_worker()
+    try:
+        runner.run_worker()
+    except Exception:
+        logger.exception("Torc worker failed")
+        raise
 
 
 jobs.add_command(add)

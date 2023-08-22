@@ -28,4 +28,4 @@ for item in result.items:
         item.data = {"val": inputs.data["val"] + 1}
     elif item.name == "data2":
         item.data = {"val": inputs.data["val"] + 2}
-    api.put_workflows_workflow_user_data_key(item, workflow_key, item.key)
+    api.put_workflows_workflow_user_data_key(workflow_key, item.key, item)

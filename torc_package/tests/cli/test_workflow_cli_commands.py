@@ -252,9 +252,9 @@ def test_slurm_config_commands(create_workflow_cli):
     )
 
     assert output["configs"]
-    assert output["configs"][0]["id"] == scheduler_id
+    assert output["configs"][0]["_id"] == scheduler_id
     assert output["configs"][0]["walltime"] == "04:00:00"
-    config_key = output["configs"][0]["key"]
+    config_key = output["configs"][0]["_key"]
 
     new_walltime = "02:00:00"
     result = runner.invoke(
@@ -388,7 +388,7 @@ def test_job_commands(create_workflow_cli):
         "-s",
         job_key,
         "-d",
-        f"'{json.dumps(user_data)}'",
+        f"{json.dumps(user_data)}",
     ]
     result = _run_and_convert_output_from_json(cmd)
     ud_key = result["key"]

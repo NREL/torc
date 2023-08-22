@@ -1,0 +1,17 @@
+# WorkflowFilesModel
+
+
+## Properties
+Name | Type | Description | Notes
+------------ | ------------- | ------------- | -------------
+**name** | **String** |  | [optional] [default to nothing]
+**path** | **String** |  | [default to nothing]
+**st_mtime** | **Float64** |  | [optional] [default to nothing]
+**_key** | **String** |  | [optional] [default to nothing]
+**_id** | **String** |  | [optional] [default to nothing]
+**_rev** | **String** |  | [optional] [default to nothing]
+
+
+[[Back to Model list]](../README.md#models) [[Back to API list]](../README.md#api-endpoints) [[Back to README]](../README.md)
+
+

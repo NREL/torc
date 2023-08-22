@@ -4,7 +4,7 @@ import multiprocessing
 import os
 import sys
 
-from torc.swagger_client.models.workflow_user_data_model import (
+from torc.openapi_client.models.workflow_user_data_model import (
     WorkflowUserDataModel,
 )
 
@@ -30,4 +30,4 @@ result = WorkflowUserDataModel(
     name="result",
     data={"affinity": list(affinity), "num_cpus": multiprocessing.cpu_count()},
 )
-api.post_workflows_workflow_user_data(result, workflow_key)
+api.post_workflows_workflow_user_data(workflow_key, result)

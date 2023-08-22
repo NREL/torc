@@ -26,7 +26,7 @@ def main():
 
     assert resource_ud is not None
     resource_ud.data = {"url": "http://localhost:8000"}
-    res = api.put_workflows_workflow_user_data_key(resource_ud, workflow_key, resource_ud.key)
+    res = api.put_workflows_workflow_user_data_key(workflow_key, resource_ud.key, resource_ud)
     print(f"Added {res=} to the database")
 
 

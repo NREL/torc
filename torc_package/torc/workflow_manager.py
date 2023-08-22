@@ -35,6 +35,7 @@ class WorkflowManager:
         self._reinitialize_jobs(only_uninitialized=only_uninitialized)
         send_api_command(
             self._api.post_workflows_workflow_events,
+            self._key,
             {
                 "category": "workflow",
                 "type": "restart",
@@ -42,7 +43,6 @@ class WorkflowManager:
                 "node_name": socket.gethostname(),
                 "message": "Restarted workflow",
             },
-            self._key,
         )
 
     def start(self, auto_tune_resource_requirements=False, ignore_missing_data=False):
@@ -70,6 +70,7 @@ class WorkflowManager:
 
         send_api_command(
             self._api.post_workflows_workflow_events,
+            self._key,
             {
                 "category": "workflow",
                 "type": "start",
@@ -77,14 +78,13 @@ class WorkflowManager:
                 "node_name": socket.gethostname(),
                 "message": "Started workflow",
             },
-            self._key,
         )
         logger.info("Started workflow")
 
     def _bump_run_id(self):
         status = send_api_command(self._api.get_workflows_key_status, self._key)
         status.run_id += 1
-        send_api_command(self._api.put_workflows_key_status, status, self._key)
+        send_api_command(self._api.put_workflows_key_status, self._key, status)
 
     def _check_workflow(self, ignore_missing_data=False):
         self._check_workflow_user_data(ignore_missing_data)
@@ -126,9 +126,9 @@ class WorkflowManager:
                     file.st_mtime = None
                     send_api_command(
                         self._api.put_workflows_workflow_files_key,
-                        file,
                         self._key,
                         file.key,
+                        file,
                     )
                     logger.info("File %s was removed. Cleared file stats", file.name)
                 self._update_jobs_on_file_change(file)
@@ -141,9 +141,9 @@ class WorkflowManager:
                 file.st_mtime = path.stat().st_mtime
                 send_api_command(
                     self._api.put_workflows_workflow_files_key,
-                    file,
                     self._key,
                     file.key,
+                    file,
                 )
 
     def _initialize_jobs(self, only_uninitialized=False):
@@ -184,9 +184,9 @@ class WorkflowManager:
                     job.status = "uninitialized"
                     send_api_command(
                         self._api.put_workflows_workflow_jobs_key,
-                        job,
                         self._key,
                         job.key,
+                        job,
                     )
                     logger.info(
                         "Changed job %s from done to %s because output file is missing",
@@ -196,6 +196,7 @@ class WorkflowManager:
                     break
 
     def _update_jobs_on_file_change(self, file):
+        run_id = send_api_command(self._api.get_workflows_key_status, self._key).run_id
         for job in iter_documents(
             self._api.get_workflows_workflow_jobs_find_by_needs_file_key,
             self._key,
@@ -204,11 +205,12 @@ class WorkflowManager:
             if job.status in ("done", "canceled"):
                 status = "uninitialized"
                 send_api_command(
-                    self._api.put_workflows_workflow_jobs_key_manage_status_change_status_rev,
+                    self._api.put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id,
                     self._key,
                     job.key,
                     status,
-                    job._rev,  # pylint: disable=protected-access
+                    job.rev,
+                    run_id,
                 )
                 logger.info(
                     "Changed job %s from %s to %s after input file change",

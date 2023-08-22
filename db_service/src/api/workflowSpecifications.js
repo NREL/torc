@@ -243,7 +243,7 @@ function checkDependencies(workflow) {
         throw new Error(`Invalid blocked_by=${jobName} in job ${JSON.stringify(job)}`);
       }
     }
-    if (job.scheduler != '') {
+    if (job.scheduler != '' && job.scheduler != null) {
       if (!schedulerConfigs.has(job.scheduler)) {
         throw new Error(`Invalid scheduler=${job.scheduler} in job=${JSON.stringify(job)}`);
       }

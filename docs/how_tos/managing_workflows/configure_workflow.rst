@@ -1,17 +1,19 @@
 ####################
 Configure a workflow
 ####################
-There are two recommended procedures to configure a workflow:
+Here are the recommended procedures to configure a workflow:
 
 - Workflow specification (JSON)
 
 - Python API
 
+- Julia API
+
 Configure a workflow specification
 ==================================
 1. Dump the workflow template to a JSON file. Alternatively, dump the example specification to a
    file. You might prefer it because it includes object definitions, like jobs and files. Finally,
-   you can copy/paste/modify this `example workflow
+   you can copy/paste/modify this `example workflow file
    <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.json5>`_
 
 .. code-block:: console
@@ -38,9 +40,15 @@ Configure a workflow specification
 Configure with the Python API
 =============================
 The :ref:`workflow-builder` class provides a mechanism to build a workflow with a simple Python
-script. Refer to that API documentation and this `example script
+script. Refer to that API documentation and this `example Python script
 <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py>`_.
 
 Note that if you don't have a CLI executable for your jobs and instead want torc to map a list of
 input parameters across workers, you can call ``WorkflowBuilder.map_function_to_jobs()``. Refer to
 the tutorial :ref:`map-function-tutorial` for more information.
+
+Configure with the Julia API
+=============================
+The :ref:`workflow-builder` class provides a mechanism to build a workflow with a simple Julia
+script. Refer to that API documentation and this `example Julia script
+<https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.jl>`_.

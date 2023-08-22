@@ -63,6 +63,6 @@ router.get('/workflows/:workflow/job_specifications', function(req, res) {
     .pathParam('workflow', joi.string().required(), 'Workflow key')
     .queryParam('skip', joi.number().default(0))
     .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
-    .response(schemas.batchjobSpecifications)
+    .response(schemas.batchJobSpecifications)
     .summary('Retrieve all job definitions')
     .description('Retrieves all job definitions. Limit output with skip and limit.');

@@ -65,7 +65,7 @@ it to the database.
     result = api.get_workflows_workflow_jobs_key_user_data_stores(workflow_key, job_key)
     output_data1 = result.items[0]
     output_data1.data = {"result": 1.2}
-    api.put_workflows_workflow_user_data_key(spark_ud, workflow_key, output_data1.key)
+    api.put_workflows_workflow_user_data_key(workflow_key, output_data1.key, spark_ud)
 
 Here is code in ``work2.py`` to read the data from the database.
 

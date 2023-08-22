@@ -7,7 +7,7 @@ const workerResources = joi.object().required().keys({
   num_gpus: joi.number().integer().default(0),
   num_nodes: joi.number().integer().default(1),
   time_limit: joi.string().optional().allow(null), // ISO 8601 encoding for timedeltas
-  scheduler_config_id: joi.string().optional(),
+  scheduler_config_id: joi.string().optional().default('').allow(null, ''),
 });
 
 const computeNode = joi.object().required().keys({
@@ -16,7 +16,7 @@ const computeNode = joi.object().required().keys({
   start_time: joi.string().required(),
   duration_seconds: joi.number().optional(),
   is_active: joi.boolean().optional(),
-  resources: workerResources,
+  resources: workerResources.required(),
   scheduler: joi.object().default({}),
   _key: joi.string(),
   _id: joi.string(),
@@ -105,7 +105,7 @@ const jobSpecification = joi.object().required().keys({
   invocation_script: joi.string().optional().allow(null),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   supports_termination: joi.boolean().default(false),
-  scheduler: joi.string().default('').allow(''),
+  scheduler: joi.string().optional().allow(null, ''),
   // If this is true, scheduler must be set.
   needs_compute_node_schedule: joi.boolean().default(false),
   consumes_user_data: joi.array().items(joi.string()).optional().default([]),
@@ -205,8 +205,10 @@ const requiredExistingFilesResponse = joi.object().required().keys({
 const workflowConfig = joi.object().required().keys({
   compute_node_resource_stats: computeNodeResourceStatConfig.default(
       computeNodeResourceStatConfig.validate({}).value),
-  // This buffer is the value used by the worker app to cleanup and exit before the timeout.
-  compute_node_worker_buffer_seconds: joi.number().default(120),
+  compute_node_expiration_buffer_seconds: joi.number().default(30),
+  compute_node_wait_for_new_jobs_seconds: joi.number().default(0),
+  compute_node_ignore_workflow_completion: joi.boolean().default(false),
+  compute_node_wait_for_healthy_database_minutes: joi.number().default(20),
   _key: joi.string().optional(),
   _id: joi.string().optional(),
   _rev: joi.string().optional(),
@@ -232,14 +234,14 @@ const localScheduler = joi.object().required().keys({
 const slurmScheduler = joi.object().required().keys({
   name: joi.string().optional(),
   account: joi.string().required(),
-  gres: joi.string().optional(),
-  mem: joi.string().optional(),
+  gres: joi.string().optional().allow(null),
+  mem: joi.string().optional().allow(null),
   nodes: joi.number().integer().required(),
   partition: joi.string(),
   qos: joi.string().default('normal'),
-  tmp: joi.string(),
+  tmp: joi.string().optional().allow(null),
   walltime: joi.string(),
-  extra: joi.string().allow(null),
+  extra: joi.string().optional().allow(null),
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),
@@ -252,10 +254,10 @@ const schedulers = joi.object().required().keys({
 });
 
 const workflowSpecification = joi.object().required().keys({
-  name: joi.string().optional().allow(null, ''),
+  name: joi.string().optional().default('').allow(null, ''),
   key: joi.string().optional(),
-  user: joi.string().optional().allow(null, ''),
-  description: joi.string().optional().allow(null, ''),
+  user: joi.string().optional().default('').allow(null, ''),
+  description: joi.string().optional().default('').allow(null, ''),
   jobs: joi.array().items(jobSpecification).default([]),
   files: joi.array().items(file).default([]),
   user_data: joi.array().items(userData).default([]),
@@ -265,10 +267,10 @@ const workflowSpecification = joi.object().required().keys({
 });
 
 const workflow = joi.object().required().keys({
-  name: joi.string().optional(),
-  user: joi.string().optional(),
-  description: joi.string().optional(),
-  timestamp: joi.string().optional(),
+  name: joi.string().optional().default('').allow(null, ''),
+  user: joi.string().optional().default('').allow(null, ''),
+  description: joi.string().optional().default('').allow(null, ''),
+  timestamp: joi.string().optional().default('').allow(null, ''),
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),
@@ -333,7 +335,7 @@ const batchComputeNodes = joi.object().required().keys({
   has_more: joi.boolean().required(),
 });
 
-const batchjobSpecifications = joi.object().required().keys({
+const batchJobSpecifications = joi.object().required().keys({
   items: joi.array().items(jobSpecification),
   skip: joi.number().integer().required(),
   max_limit: joi.number().integer().required(),
@@ -459,7 +461,7 @@ module.exports = {
   batchSlurmSchedulers,
   batchUserData,
   batchWorkflows,
-  batchjobSpecifications,
+  batchJobSpecifications,
   computeNode,
   computeNodeResourceStatConfig,
   computeNodeStats,

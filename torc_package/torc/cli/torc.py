@@ -70,8 +70,8 @@ logger = logging.getLogger(__name__)
     help="Output format for get/list commands. Not all commands support all formats.",
 )
 @click.option(
-    "--timings/--no-timings",
-    is_flag=True,
+    "--timings",
+    type=click.Choice(["true", "false"]),
     help="Enable tracking of function timings.",
 )
 @click.option(
@@ -101,13 +101,17 @@ def cli(
     for param in (
         "console_level",
         "file_level",
-        "timings",
         "database_url",
         "output_format",
         "workflow_key",
     ):
         if ctx.params[param] is None:
             ctx.params[param] = getattr(torc_config, param)
+
+    if timings is None:
+        ctx.params["timings"] = torc_config.timings
+    else:
+        ctx.params["timings"] = timings == "true"
 
     if ctx.params["timings"]:
         timer_stats_collector.enable()
@@ -124,6 +128,8 @@ def cli(
 def callback(api, *args, **kwargs):  # pylint: disable=unused-argument
     """Log timer stats at exit."""
     timer_stats_collector.log_stats()
+    # TODO: how to get output directory and unique log file name?
+    # timer_stats_collector.log_json_stats()
     if api is not None:
         api.api_client.close()
 

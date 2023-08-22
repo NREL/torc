@@ -31,4 +31,4 @@ repos:
             "-sn", # Don't display the score
             "--disable=duplicate-code",
           ]
-exclude: 'torc_package/torc/swagger_client'
+exclude: "(torc_package/torc/openapi_client/.*)|(julia/julia_client/.*)"

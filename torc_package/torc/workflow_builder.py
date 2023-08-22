@@ -1,33 +1,33 @@
 """Helper code to build a workflow dynamically"""
 
 
-from torc.swagger_client.models.workflow_files_model import WorkflowFilesModel
-from torc.swagger_client.models.workflow_job_specifications_model import (
+from torc.openapi_client.models.workflow_files_model import WorkflowFilesModel
+from torc.openapi_client.models.workflow_job_specifications_model import (
     WorkflowJobSpecificationsModel,
 )
-from torc.swagger_client.models.workflow_config_compute_node_resource_stats import (
-    WorkflowConfigComputeNodeResourceStats,
+from torc.openapi_client.models.compute_node_resource_stats_model import (
+    ComputeNodeResourceStatsModel,
 )
-from torc.swagger_client.models.workflow_config_model import WorkflowConfigModel
-from torc.swagger_client.models.workflow_resource_requirements_model import (
+from torc.openapi_client.models.workflow_config_model import WorkflowConfigModel
+from torc.openapi_client.models.workflow_resource_requirements_model import (
     WorkflowResourceRequirementsModel,
 )
-from torc.swagger_client.models.workflow_specifications_model import (
+from torc.openapi_client.models.workflow_specifications_model import (
     WorkflowSpecificationsModel,
 )
-from torc.swagger_client.models.workflow_aws_schedulers_model import (
+from torc.openapi_client.models.workflow_aws_schedulers_model import (
     WorkflowAwsSchedulersModel,
 )
-from torc.swagger_client.models.workflow_local_schedulers_model import (
+from torc.openapi_client.models.workflow_local_schedulers_model import (
     WorkflowLocalSchedulersModel,
 )
-from torc.swagger_client.models.workflow_slurm_schedulers_model import (
+from torc.openapi_client.models.workflow_slurm_schedulers_model import (
     WorkflowSlurmSchedulersModel,
 )
-from torc.swagger_client.models.workflow_specifications_schedulers import (
+from torc.openapi_client.models.workflow_specifications_schedulers import (
     WorkflowSpecificationsSchedulers,
 )
-from torc.swagger_client.models.workflow_user_data_model import WorkflowUserDataModel
+from torc.openapi_client.models.workflow_user_data_model import WorkflowUserDataModel
 from torc.cli.run_function import check_function
 
 
@@ -44,6 +44,10 @@ class WorkflowBuilder:
         self._local_schedulers = []
         self._slurm_schedulers = []
         self._user_data = []
+        self._compute_node_wait_for_new_jobs_seconds = 0
+        self._compute_node_ignore_workflow_completion = False
+        self._compute_node_expiration_buffer_seconds = None
+        self._compute_node_wait_for_healthy_database = None
 
     def add_file(self, *args, **kwargs) -> WorkflowFilesModel:
         """Add a file and return it."""
@@ -146,12 +150,110 @@ class WorkflowBuilder:
 
     def configure_resource_monitoring(self, *args, **kwargs):
         """Configure resource monitoring for the workflow. Refer to
-        WorkflowConfigComputeNodeResourceStats for input parameters."""
-        self._resource_monitor_config = WorkflowConfigComputeNodeResourceStats(*args, **kwargs)
+        ComputeNodeResourceStatsModel for input parameters."""
+        self._resource_monitor_config = ComputeNodeResourceStatsModel(*args, **kwargs)
+
+    @property
+    def compute_node_wait_for_new_jobs_seconds(self) -> int:
+        """Return the value for compute_node_wait_for_new_jobs_seconds."""
+        return self._compute_node_wait_for_new_jobs_seconds
+
+    @compute_node_wait_for_new_jobs_seconds.setter
+    def compute_node_wait_for_new_jobs_seconds(self, val):
+        """Inform all compute nodes to wait for new jobs for this time period before exiting.
+        Does not apply if the workflow is complete.
+
+        Parameters
+        ----------
+        val : int
+            Number of seconds to wait for new jobs before exiting.
+        """
+        self._compute_node_wait_for_new_jobs_seconds = val
+
+    @property
+    def compute_node_ignore_workflow_completion(self) -> bool:
+        """Return the value for compute_node_ignore_workflow_completion."""
+        return self._compute_node_ignore_workflow_completion
+
+    @compute_node_ignore_workflow_completion.setter
+    def compute_node_ignore_workflow_completion(self, val):
+        """Inform all compute nodes to ignore workflow completions and hold onto allocations
+        indefinitely. Useful for debugging failed jobs and possibly dynamic workflows where jobs
+        get added after starting.
+
+        Parameters
+        ----------
+        val : bool
+            Enable or disable; default is disabled.
+        """
+        self._compute_node_ignore_workflow_completion = val
+
+    @property
+    def compute_node_expiration_buffer_seconds(self) -> int | None:
+        """Return the value for compute_node_expiration_buffer_seconds."""
+        return self._compute_node_expiration_buffer_seconds
+
+    @compute_node_expiration_buffer_seconds.setter
+    def compute_node_expiration_buffer_seconds(self, val):
+        """Inform all compute nodes to shut down this number of seconds before the
+        expiration time. This allows torc to send SIGTERM to all job processes and set all
+        statuses to terminated. Increase the time in cases where the job processes handle SIGTERM
+        and need more time to gracefully shut down. Set the value to 0 to maximize the time given
+        to jobs. If not set, take the database's default value of 30 seconds.
+
+        Parameters
+        ----------
+        val : int
+            Number of seconds before expiration time to terminate jobs.
+        """
+        self._compute_node_expiration_buffer_seconds = val
+
+    @property
+    def compute_node_wait_for_healthy_database_minutes(self) -> int | None:
+        """Return the value for compute_node_wait_for_healthy_database_minutes."""
+        return self._compute_node_wait_for_healthy_database
+
+    @compute_node_wait_for_healthy_database_minutes.setter
+    def compute_node_wait_for_healthy_database_minutes(self, val):
+        """Inform all compute nodes to wait this number of minutes if the database becomes
+        unresponsive.
+
+        Parameters
+        ----------
+        val : int
+            Number of minutes to wait for an unresponsive database before exiting.
+        """
+        self._compute_node_wait_for_healthy_database = val
+
+    @property
+    def files(self) -> list[WorkflowFilesModel]:
+        """Return a reference to the files list."""
+        return self._files
+
+    @property
+    def jobs(self) -> list[WorkflowJobSpecificationsModel]:
+        """Return a reference to the jobs list."""
+        return self._jobs
+
+    @property
+    def resource_monitor_config(self) -> list[WorkflowResourceRequirementsModel]:
+        """Return a reference to the resource requirements list."""
+        return self._resource_requirements
+
+    @property
+    def resource_requirements(self) -> ComputeNodeResourceStatsModel | None:
+        """Return a reference to the resource requirements list."""
+        return self._resource_monitor_config
 
     def build(self, *args, **kwargs) -> WorkflowSpecificationsModel:
         """Build a workflow specification from the stored parameters."""
-        config = WorkflowConfigModel(compute_node_resource_stats=self._resource_monitor_config)
+        config = WorkflowConfigModel(
+            compute_node_resource_stats=self._resource_monitor_config,
+            compute_node_wait_for_new_jobs_seconds=self._compute_node_wait_for_new_jobs_seconds,
+            compute_node_ignore_workflow_completion=self._compute_node_ignore_workflow_completion,
+            compute_node_expiration_buffer_seconds=self._compute_node_expiration_buffer_seconds,
+            compute_node_wait_for_healthy_database=self._compute_node_wait_for_healthy_database,
+        )
         return WorkflowSpecificationsModel(
             *args,
             config=config,

@@ -1002,9 +1002,10 @@ function listRequiredExistingFiles(workflow) {
  * Update a job status and manage all downstream consequences.
  * @param {Object} job
  * @param {Object} workflow
+ * @param {number} runId
  * @return {Object}
  */
-function manageJobStatusChange(job, workflow) {
+function manageJobStatusChange(job, workflow, runId) {
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
   const oldStatus = jobs.document(job._key).status;
   if (job.status == oldStatus) {
@@ -1014,12 +1015,17 @@ function manageJobStatusChange(job, workflow) {
   Object.assign(job, meta);
 
   const workflowStatus = getWorkflowStatus(workflow);
+  const workflowRunId = workflowStatus.run_id;
+
+  if (runId != workflowRunId) {
+    throw new Error(
+        `Invalid job status change request. run_id=${runId}. Workflow run_id=${workflowRunId}`,
+    );
+  }
   if (!isJobStatusComplete(oldStatus) && isJobStatusComplete(job.status)) {
     const result = getJobResultByRunId(job, workflow, workflowStatus.run_id);
     if (result == null) {
-      throw new Error(
-          `A job must have a result before it is completed: ${job._key}.`,
-      );
+      throw new Error(`Job ${job._key} does not have a result for run_id=${workflowRunId}.`);
     }
     updateBlockedJobsFromCompletion(job, workflow);
   } else if (isJobStatusComplete(oldStatus) && job.status == JobStatus.Uninitialized) {

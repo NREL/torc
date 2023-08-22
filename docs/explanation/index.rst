@@ -11,4 +11,4 @@ This section explains torc concepts and behaviors in detail.
    configuration
    jobs
    environments
-   behavioral_docs/main
+   behavioral_docs/index

@@ -5,8 +5,8 @@ import multiprocessing
 
 import polars as pl
 import pytest
-from torc.swagger_client.models.key_prepare_jobs_for_submission_model import (
-    KeyPrepareJobsForSubmissionModel,
+from torc.openapi_client.models.compute_nodes_resources import (
+    ComputeNodesResources,
 )
 
 from torc.api import iter_documents
@@ -60,7 +60,7 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
             assert job.status == "disabled"
     assert num_enabled == 3
 
-    resources = KeyPrepareJobsForSubmissionModel(
+    resources = ComputeNodesResources(
         num_cpus=32,
         num_gpus=0,
         memory_gb=32,

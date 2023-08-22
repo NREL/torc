@@ -9,29 +9,30 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-from torc.swagger_client import ApiClient, DefaultApi
-from torc.swagger_client.configuration import Configuration
-from torc.swagger_client.models.workflow_specifications_schedulers import (
+from torc.openapi_client import ApiClient, DefaultApi
+from torc.openapi_client.configuration import Configuration
+from torc.openapi_client.models.workflow_specifications_schedulers import (
     WorkflowSpecificationsSchedulers,
 )
-from torc.swagger_client.models.workflow_local_schedulers_model import (
+from torc.openapi_client.models.workflow_local_schedulers_model import (
     WorkflowLocalSchedulersModel,
 )
-from torc.swagger_client.models.workflow_job_specifications_model import (
+from torc.openapi_client.models.workflow_job_specifications_model import (
     WorkflowJobSpecificationsModel,
 )
-from torc.swagger_client.models.workflow_resource_requirements_model import (
+from torc.openapi_client.models.workflow_resource_requirements_model import (
     WorkflowResourceRequirementsModel,
 )
-from torc.swagger_client.models.workflow_specifications_model import (
+from torc.openapi_client.models.workflow_specifications_model import (
     WorkflowSpecificationsModel,
 )
-from torc.swagger_client.models.workflow_results_model import WorkflowResultsModel
-from torc.swagger_client.models.workflow_config_compute_node_resource_stats import (
-    WorkflowConfigComputeNodeResourceStats,
+from torc.openapi_client.models.workflow_config_model import (
+    WorkflowConfigModel,
 )
-from torc.swagger_client.models.workflow_config_model import WorkflowConfigModel
-
+from torc.openapi_client.models.workflow_results_model import WorkflowResultsModel
+from torc.openapi_client.models.compute_node_resource_stats_model import (
+    ComputeNodeResourceStatsModel,
+)
 from torc.api import iter_documents
 from torc.cli.torc import cli
 from torc.torc_rc import TorcRuntimeConfig
@@ -340,8 +341,8 @@ def completed_workflow(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.post_workflows_workflow_jobs_key_complete_job_status_rev(
-            result, db.workflow.key, job_key, status, job.rev
+        job = api.post_workflows_workflow_jobs_key_complete_job_status_rev_run_id(
+            db.workflow.key, job_key, status, job.rev, workflow_status.run_id, result
         )
 
     yield db, scheduler_config_id, output_dir
@@ -367,8 +368,8 @@ def incomplete_workflow(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.post_workflows_workflow_jobs_key_complete_job_status_rev(
-            result, db.workflow.key, job.id, status, job.rev
+        job = api.post_workflows_workflow_jobs_key_complete_job_status_rev_run_id(
+            db.workflow.key, job.id, status, job.rev, 1, result
         )
 
         for file in api.get_workflows_workflow_files_produced_by_job_key(
@@ -379,7 +380,7 @@ def incomplete_workflow(diamond_workflow):
                 path.touch()
                 # file.file_hash = compute_file_hash(path)
                 file.st_mtime = path.stat().st_mtime
-                api.put_workflows_workflow_files_key(file, db.workflow.key, file.key)
+                api.put_workflows_workflow_files_key(db.workflow.key, file.key, file)
 
     assert db.get_document("jobs", "preprocess").status == "done"
     assert db.get_document("jobs", "work1").status == "done"
@@ -458,7 +459,7 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
         resource_requirements=[small, medium, large],
         schedulers=WorkflowSpecificationsSchedulers(local_schedulers=[scheduler]),
         config=WorkflowConfigModel(
-            compute_node_resource_stats=WorkflowConfigComputeNodeResourceStats(
+            compute_node_resource_stats=ComputeNodeResourceStatsModel(
                 cpu=True,
                 memory=True,
                 process=True,
@@ -514,6 +515,8 @@ def cancelable_workflow(tmp_path):
     db = DatabaseInterface(api, workflow)
     scheduler = db.get_document("local_schedulers", "test")
     api.post_workflows_key_initialize_jobs(workflow.key)
+    mgr = WorkflowManager(api, db.workflow.key)
+    mgr.start()
     yield db, scheduler.id, output_dir
     api.delete_workflows_key(workflow.key)
     api.api_client.close()

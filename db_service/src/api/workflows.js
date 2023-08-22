@@ -1,5 +1,4 @@
 'use strict';
-'use strict';
 const joi = require('joi');
 const db = require('@arangodb').db;
 const {MAX_TRANSFER_RECORDS} = require('../defs');
@@ -13,6 +12,13 @@ const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
 const collection = db._collection('workflows');
 module.exports = router;
+
+router.get('/ping', function(req, res) {
+  res.send({message: 'torc-service is running'});
+})
+    .response(joi.object(), 'Message')
+    .summary('Check if the service is running.')
+    .description('Check if the service is running.');
 
 router.post('/workflows', function(req, res) {
   try {
@@ -155,6 +161,7 @@ router.post('/workflows/:key/initialize_jobs', function(req, res) {
     .pathParam('key', joi.string().required(), 'Workflow key')
     .queryParam('only_uninitialized', joi.boolean().optional().default(false),
         'Only initialize jobs with a status of uninitialized.')
+    .body(joi.object().optional(), '')
     .response(joi.object(), 'message')
     .summary('Initialize job relationships.')
     .description('Initialize job relationships based on file and user_data relationships.');
@@ -171,6 +178,7 @@ router.post('/workflows/:key/process_changed_job_inputs', function(req, res) {
   }
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
+    .body(joi.object().optional(), '')
     .response(schemas.processChangedJobInputsResponse)
     .summary('Check for changed job inputs and update status accordingly.')
     .description('Check for changed job inputs and update status accordingly.');
@@ -256,6 +264,7 @@ router.post('/workflows/:key/prepare_next_jobs_for_submission', function(req, re
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
     .queryParam('limit', joi.number().default(1))
+    .body(joi.object().optional(), '')
     .response(joi.object().required().keys({jobs: joi.array().items(schemas.job)}),
         'Jobs that are ready for submission.',
     )
@@ -278,6 +287,7 @@ router.post('/workflows/:key/prepare_jobs_for_scheduling', function(req, res) {
   }
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
+    .body(joi.object().optional(), '')
     .response(joi.object().required().keys({
       schedulers: joi.array().items(joi.string()),
     }),
@@ -297,6 +307,7 @@ router.post('/workflows/:key/auto_tune_resource_requirements', function(req, res
   }
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
+    .body(joi.object().optional(), '')
     .response(joi.object(), 'Message')
     .summary('Enable workflow for auto-tuning resource requirements.')
     .description('Enable workflow for auto-tuning resource requirements.');
@@ -313,6 +324,7 @@ router.post('/workflows/:key/process_auto_tune_resource_requirements_results', f
   }
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
+    .body(joi.object().optional(), '')
     .response(joi.object(), 'Message')
     .summary('Process the results of auto-tuning resource requirements.')
     .description('Process the results of auto-tuning resource requirements.');
@@ -329,8 +341,8 @@ router.get('/workflows/:key/config', function(req, res) {
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
     .response(schemas.workflowConfig)
-    .summary('Reports the workflow config.')
-    .description('Reports the workflow config.');
+    .summary('Returns the workflow config.')
+    .description('Returns the workflow config.');
 
 router.put('/workflows/:key/config', function(req, res) {
   const key = req.pathParams.key;
@@ -347,8 +359,8 @@ router.put('/workflows/:key/config', function(req, res) {
     .pathParam('key', joi.string().required(), 'Workflow key')
     .body(schemas.workflowConfig, 'Updated workflow config')
     .response(schemas.workflowConfig)
-    .summary('Reports the workflow config.')
-    .description('Reports the workflow config.');
+    .summary('Updates the workflow config.')
+    .description('Updates the workflow config.');
 
 router.put('/workflows/:key/cancel', function(req, res) {
   const key = req.pathParams.key;
@@ -361,6 +373,7 @@ router.put('/workflows/:key/cancel', function(req, res) {
   }
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
+    .body(joi.object().optional(), '')
     .response(joi.object(), 'message')
     .summary('Cancel workflow.')
     .description(`Cancel workflow. Workers will detect the status change and cancel jobs.`);
@@ -376,6 +389,7 @@ router.post('/workflows/:key/reset_status', function(req, res) {
   }
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
+    .body(joi.object().optional(), '')
     .response(joi.object(), 'message')
     .summary('Reset worklow status.')
     .description(`Reset workflow status.`);
@@ -393,6 +407,7 @@ router.post('/workflows/:key/reset_job_status', function(req, res) {
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
     .queryParam('failed_only', joi.boolean().default(false), 'Only reset failed jobs')
+    .body(joi.object().optional(), '')
     .response(joi.object(), 'message')
     .summary('Reset job status.')
     .description(`Reset status for jobs to ${JobStatus.Uninitialized}.`);

@@ -18,8 +18,8 @@ Overview
 
 - The API conforms to the OpenAPI specification.
 
-  - The software package auto-generates client APIs in common programming languages with ``Swagger``
-    tools.
+  - The software package auto-generates client APIs in common programming languages with
+    ``OpenAPI`` tools.
   - Users can use a client API or send commands through ``curl`` (or any client API tool) with
     JSON documents.
 
@@ -97,8 +97,8 @@ Torc provides these mechanisms for users to define workflows:
 
 1. torc CLI tools. The toolkit provides most functionality required for users.
 
-2. API calls using Swagger-auto-generated client libraries. The torc CLI tools use a Python client.
-   We can generate others that users want.
+2. API calls using OpenAPI-auto-generated client libraries. The torc CLI tools use a Python client.
+   The build process also makes a Julia client. We can generate others that users want.
 
 3. API calls using client API tools: ``curl``, `Postman <https://www.postman.com/>`_,
    `Insomnia <https://insomnia.rest/>`_, etc.

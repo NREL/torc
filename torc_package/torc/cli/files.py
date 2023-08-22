@@ -4,9 +4,9 @@ import json
 import logging
 
 import click
-from torc.swagger_client.models.workflow_files_model import WorkflowFilesModel
+from torc.openapi_client.models.workflow_files_model import WorkflowFilesModel
 
-from torc.api import iter_documents
+from torc.api import iter_documents, list_model_fields
 from .common import (
     check_database_url,
     get_output_format_from_context,
@@ -124,7 +124,6 @@ def list_files(ctx, api, filters, sort_by, reverse_sort):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    exclude = ("id", "rev")
     filters = parse_filters(filters)
     if sort_by is not None:
         filters["sort_by"] = sort_by
@@ -134,7 +133,10 @@ def list_files(ctx, api, filters, sort_by, reverse_sort):
         x.to_dict()
         for x in iter_documents(api.get_workflows_workflow_files, workflow_key, **filters)
     )
-    print_items(ctx, items, table_title=table_title, json_key="files", exclude_columns=exclude)
+    columns = list_model_fields(WorkflowFilesModel)
+    columns.remove("_id")
+    columns.remove("_rev")
+    print_items(ctx, items, table_title, columns, "files")
 
 
 files.add_command(add)

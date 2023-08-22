@@ -9,13 +9,13 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-from torc.swagger_client.models.key_prepare_jobs_for_submission_model import (
-    KeyPrepareJobsForSubmissionModel,
+from torc.openapi_client.models.compute_nodes_resources import (
+    ComputeNodesResources,
 )
-from torc.swagger_client.models.workflow_user_data_model import (
+from torc.openapi_client.models.workflow_user_data_model import (
     WorkflowUserDataModel,
 )
-from torc.swagger_client.models.workflow_results_model import WorkflowResultsModel
+from torc.openapi_client.models.workflow_results_model import WorkflowResultsModel
 
 from torc.api import iter_documents
 from torc.cli.torc import cli
@@ -45,7 +45,7 @@ def test_run_workflow(diamond_workflow):
     config.compute_node_resource_stats.memory = True
     config.compute_node_resource_stats.process = True
     config.compute_node_resource_stats.interval = 1
-    api.put_workflows_key_config(config, db.workflow.key)
+    api.put_workflows_key_config(db.workflow.key, config)
     mgr.start()
     runner = JobRunner(
         api,
@@ -73,7 +73,7 @@ def test_run_workflow(diamond_workflow):
     result_data_work1 = WorkflowUserDataModel(name="result1", data={"result": 1})
     result_data_overall = WorkflowUserDataModel(name="overall_result", data={"overall_result": 2})
     result_data_work1 = api.post_workflows_workflow_jobs_key_user_data(
-        result_data_work1, db.workflow.key, db.get_document_key("jobs", "work1")
+        db.workflow.key, db.get_document_key("jobs", "work1"), result_data_work1
     )
     ud_work1_consumes = api.get_workflows_workflow_jobs_key_user_data_consumes(
         db.workflow.key, db.get_document_key("jobs", "work1")
@@ -84,7 +84,7 @@ def test_run_workflow(diamond_workflow):
     )
     assert len(ud_work1_produces.items) == 1
     result_data_overall = api.post_workflows_workflow_user_data(
-        result_data_overall, db.workflow.key
+        db.workflow.key, result_data_overall
     )
     assert (
         api.get_workflows_workflow_user_data_key(db.workflow.key, result_data_overall.key).name
@@ -168,7 +168,7 @@ def test_run_workflow_user_data_dependencies(diamond_workflow_user_data):
     ud = db.get_document("user_data", "inputs")
     new_value = 42
     ud.data["val"] = new_value
-    api.put_workflows_workflow_user_data_key(ud, db.workflow.key, ud.key)
+    api.put_workflows_workflow_user_data_key(db.workflow.key, ud.key, ud)
     mgr.restart()
     assert not api.get_workflows_key_is_complete(db.workflow.key).is_complete
     for name in ["preprocess", "work1", "work2", "postprocess"]:
@@ -205,7 +205,7 @@ def test_run_workflow_user_data_ephemeral(workflow_with_ephemeral_resource, tmp_
     # Change the command so that the job gets rerun.
     job = db.get_document("jobs", "use_resource")
     job.command += " dummy_arg"
-    api.put_workflows_workflow_jobs_key(job, db.workflow.key, job.key)
+    api.put_workflows_workflow_jobs_key(db.workflow.key, job.key, job)
     mgr.restart()
     assert not db.get_document("user_data", "resource").data
     runner = JobRunner(
@@ -242,7 +242,7 @@ def test_run_workflow_missing_user_data(diamond_workflow_user_data):
     mgr = WorkflowManager(api, db.workflow.key)
     ud = db.get_document("user_data", "inputs")
     ud.data.clear()
-    api.put_workflows_workflow_user_data_key(ud, db.workflow.key, ud.key)
+    api.put_workflows_workflow_user_data_key(db.workflow.key, ud.key, ud)
     with pytest.raises(InvalidWorkflow):
         mgr.start()
 
@@ -300,7 +300,7 @@ def test_reset_job_status_failed_only(completed_workflow):
     job = db.get_document("jobs", "work2")
     result = db.api.get_workflows_workflow_results_find_by_job_key(db.workflow.key, job.key)
     result.return_code = 1
-    db.api.put_workflows_workflow_results_key(result, db.workflow.key, result.key)
+    db.api.put_workflows_workflow_results_key(db.workflow.key, result.key, result)
     db.api.post_workflows_key_reset_job_status(db.workflow.key, failed_only=True)
     assert db.get_document("jobs", "work2").status == "uninitialized"
     for name in ("preprocess", "work1", "postprocess"):
@@ -345,7 +345,7 @@ def test_reinitialize_workflow_changed_non_critical_fields(completed_workflow, f
         "cancel_on_blocking_job_failure": not preprocess.cancel_on_blocking_job_failure,
     }
     setattr(preprocess, field, new_values[field])
-    db.api.put_workflows_workflow_jobs_key(preprocess, db.workflow.key, preprocess.key)
+    db.api.put_workflows_workflow_jobs_key(db.workflow.key, preprocess.key, preprocess)
     mgr.restart()
     for job in iter_documents(db.api.get_workflows_workflow_jobs, db.workflow.key):
         assert job.status == "done"
@@ -359,7 +359,7 @@ def test_reinitialize_workflow_changed_critical_fields(completed_workflow, field
     job = db.get_document("jobs", "preprocess")
     assert job.status == "done"
     setattr(job, field, "new value")
-    db.api.put_workflows_workflow_jobs_key(job, db.workflow.key, job.key)
+    db.api.put_workflows_workflow_jobs_key(db.workflow.key, job.key, job)
     mgr.restart()
     assert db.get_document("jobs", "preprocess").status == "ready"
     for name in ("work1", "work2", "postprocess"):
@@ -506,8 +506,8 @@ def test_restart_uninitialized(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.post_workflows_workflow_jobs_key_complete_job_status_rev(
-            result, db.workflow.key, job.id, status, job.rev
+        job = api.post_workflows_workflow_jobs_key_complete_job_status_rev_run_id(
+            db.workflow.key, job.id, status, job.rev, 1, result
         )
 
         for file in api.get_workflows_workflow_files_produced_by_job_key(
@@ -517,7 +517,7 @@ def test_restart_uninitialized(diamond_workflow):
             if not path.exists():
                 path.touch()
                 file.st_mtime = path.stat().st_mtime
-                api.put_workflows_workflow_files_key(file, db.workflow.key, file.key)
+                api.put_workflows_workflow_files_key(db.workflow.key, file.key, file)
 
     runner = CliRunner(mix_stderr=False)
     job_key = db.get_document("jobs", "work2").key
@@ -553,7 +553,7 @@ def test_run_independent_job_workflow(independent_job_workflow, tmp_path):
     db, num_jobs = independent_job_workflow
     mgr = WorkflowManager(db.api, db.workflow.key)
     mgr.start()
-    resources = KeyPrepareJobsForSubmissionModel(
+    resources = ComputeNodesResources(
         num_cpus=2,
         num_gpus=0,
         memory_gb=16 * GiB,
@@ -650,7 +650,7 @@ def test_map_functions(mapped_function_workflow):
 
 
 def _fake_complete_job(api, workflow_key, job):
-    job = api.put_workflows_workflow_jobs_key(job, workflow_key, job.key)
+    job = api.put_workflows_workflow_jobs_key(workflow_key, job.key, job)
     status = "done"
     result = WorkflowResultsModel(
         job_key=job.key,
@@ -660,12 +660,13 @@ def _fake_complete_job(api, workflow_key, job):
         completion_time=str(datetime.now()),
         status=status,
     )
-    job = api.post_workflows_workflow_jobs_key_complete_job_status_rev(
-        result,
+    job = api.post_workflows_workflow_jobs_key_complete_job_status_rev_run_id(
         workflow_key,
         job.key,
         status,
-        job._rev,  # pylint: disable=protected-access
+        job.rev,
+        1,
+        result,
     )
 
 

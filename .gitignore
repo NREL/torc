@@ -133,4 +133,7 @@ db_service/.swagger-codegen/
 db_service/.swagger-codegen-ignore
 db_service/node_modules/*
 db_service/python_client
+db_service/julia_client
 docs/openapi.yaml
+julia/Torc/Manifest.toml
+julia/Torc/test/Manifest.toml

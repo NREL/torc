@@ -7,20 +7,27 @@ import sys
 from datetime import timedelta
 
 import click
-from torc.swagger_client.models.workflow_slurm_schedulers_model import (
+from torc.openapi_client.models.workflow_slurm_schedulers_model import (
     WorkflowSlurmSchedulersModel,
 )
-from torc.swagger_client.models.workflow_scheduled_compute_nodes_model import (
+from torc.openapi_client.models.workflow_scheduled_compute_nodes_model import (
     WorkflowScheduledComputeNodesModel,
 )
-from torc.swagger_client.models.key_prepare_jobs_for_submission_model import (
-    KeyPrepareJobsForSubmissionModel,
+from torc.openapi_client.models.compute_nodes_resources import (
+    ComputeNodesResources,
 )
-from torc.swagger_client.rest import ApiException
+from torc.openapi_client.rest import ApiException
 
 import torc.version
-from torc.api import iter_documents, remove_db_keys
+from torc.api import (
+    iter_documents,
+    remove_db_keys,
+    list_model_fields,
+    wait_for_healthy_database,
+    send_api_command,
+)
 from torc.hpc.common import HpcType
+from torc.exceptions import DatabaseOffline
 from torc.hpc.hpc_manager import HpcManager
 from torc.hpc.slurm_interface import SlurmInterface
 from torc.job_runner import (
@@ -129,7 +136,7 @@ def add_config(ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, w
     if extra:
         config["extra"] = extra
     scheduler = api.post_workflows_workflow_slurm_schedulers(
-        WorkflowSlurmSchedulersModel(name=name, **config), workflow_key
+        workflow_key, WorkflowSlurmSchedulersModel(name=name, **config)
     )
     if output_format == "text":
         logger.info("Added Slurm configuration %s to the database", name)
@@ -211,7 +218,7 @@ def modify_config(ctx, api, slurm_config_key, **kwargs):
 
     if changed:
         scheduler = api.put_workflows_workflow_slurm_schedulers_key(
-            scheduler, workflow_key, slurm_config_key
+            workflow_key, slurm_config_key, scheduler
         )
         if output_format == "text":
             logger.info("Modified Slurm configuration %s to the database", slurm_config_key)
@@ -234,8 +241,9 @@ def list_configs(ctx, api):
         x.to_dict()
         for x in iter_documents(api.get_workflows_workflow_slurm_schedulers, workflow_key)
     )
-    exclude = ("rev",)
-    print_items(ctx, items, table_title=table_title, json_key="configs", exclude_columns=exclude)
+    columns = list_model_fields(WorkflowSlurmSchedulersModel)
+    columns.remove("_rev")
+    print_items(ctx, items, table_title, columns, "configs")
 
 
 @click.command()
@@ -340,9 +348,12 @@ def schedule_nodes(
     hpc_type = HpcType("slurm")
     mgr = HpcManager(data, hpc_type, output)
     database_url = api.api_client.configuration.host
+    workflow_config = api.get_workflows_key_config(workflow_key)
+
     runner_script = (
         f"torc -k {workflow_key} -u {database_url} --console-level=error hpc slurm run-jobs "
-        f"-o {output} -p {poll_interval}"
+        f"-o {output} -p {poll_interval} "
+        f"-w {workflow_config.compute_node_wait_for_healthy_database_minutes}"
     )
     if max_parallel_jobs:
         runner_script += f" --max-parallel-jobs {max_parallel_jobs}"
@@ -352,10 +363,10 @@ def schedule_nodes(
     node_keys = []
     for _ in range(num_hpc_jobs):
         node = api.post_workflows_workflow_scheduled_compute_nodes(
+            workflow_key,
             WorkflowScheduledComputeNodesModel(
                 scheduler_config_id=config.id, status="uninitialized"
             ),
-            workflow_key,
         )
         name = f"{job_prefix}_{node.key}"
         try:
@@ -372,11 +383,12 @@ def schedule_nodes(
 
         node.scheduler_id = job_id
         node.status = "pending"
-        api.put_workflows_workflow_scheduled_compute_nodes_key(node, workflow_key, node.key)
+        api.put_workflows_workflow_scheduled_compute_nodes_key(workflow_key, node.key, node)
         job_ids.append(job_id)
         node_keys.append(node.key)
 
     api.post_workflows_workflow_events(
+        workflow_key,
         {
             "category": "scheduler",
             "type": "submit",
@@ -386,7 +398,6 @@ def schedule_nodes(
             "torc_version": torc.version.__version__,
             "message": f"Submitted {len(job_ids)} job requests to {hpc_type.value}",
         },
-        workflow_key,
     )
 
     if output_format == "text":
@@ -420,7 +431,7 @@ def _get_scheduler_config(ctx, api, workflow_key, scheduler_config_key):
             api.get_workflows_workflow_slurm_schedulers,
             workflow_key,
             auto_select_one_option=True,
-            exclude_columns=("id", "rev"),
+            exclude_columns=("_id", "_rev"),
             msg=msg,
         )
         if config is None:
@@ -468,6 +479,14 @@ def _get_scheduler_config(ctx, api, workflow_key, scheduler_config_key):
     show_default=True,
     help="Set to True if this is a subtask and multiple workers are running on one node.",
 )
+@click.option(
+    "-w",
+    "--wait-for-healthy-database-minutes",
+    type=int,
+    default=0,
+    show_default=True,
+    help="Wait this number of minutes if the database is offline.",
+)
 @click.pass_obj
 @click.pass_context
 def run_jobs(
@@ -478,8 +497,15 @@ def run_jobs(
     output,
     poll_interval,
     is_subtask,
+    wait_for_healthy_database_minutes,
 ):
     """Run workflow jobs on a Slurm compute node."""
+    try:
+        # NOTE: Ensure that this is the first API command that gets sent.
+        send_api_command(api.get_ping)
+    except DatabaseOffline:
+        wait_for_healthy_database(api, wait_for_healthy_database_minutes)
+
     workflow_key = get_workflow_key_from_context(ctx, api)
     check_database_url(api)
     intf = SlurmInterface()
@@ -490,8 +516,6 @@ def run_jobs(
     log_file = output / f"job_runner_slurm_{slurm_job_id}_{slurm_node_id}_{slurm_task_pid}.log"
     my_logger = setup_cli_logging(ctx, __name__, filename=log_file)
     my_logger.info(get_cli_string())
-    my_logger.info("torc version %s", torc.version.__version__)
-    my_logger.info("Run jobs on %s for workflow %s", hostname, api.api_client.configuration.host)
     scheduler = {
         "node_names": intf.list_active_nodes(slurm_job_id),
         "environment_variables": intf.get_environment_variables(),
@@ -499,9 +523,8 @@ def run_jobs(
         "slurm_job_id": slurm_job_id,
         "hpc_type": HpcType.SLURM.value,
     }
-    config = api.get_workflows_key_config(workflow_key)
-    # TODO: Add a buffer for the end
-    buffer = timedelta(seconds=config.compute_node_worker_buffer_seconds)
+    config = send_api_command(api.get_workflows_key_config, workflow_key)
+    buffer = timedelta(seconds=config.compute_node_expiration_buffer_seconds)
     end_time = intf.get_job_end_time() - buffer
     node = None if is_subtask else _get_scheduled_compute_node(api, workflow_key, slurm_job_id)
 
@@ -518,7 +541,7 @@ def run_jobs(
             node.status = "active"
             try:
                 node = api.put_workflows_workflow_scheduled_compute_nodes_key(
-                    node, workflow_key, node.key
+                    workflow_key, node.key, node
                 )
                 activated_slurm_job = True
             except ApiException:
@@ -540,12 +563,15 @@ def run_jobs(
     )
     try:
         runner.run_worker(scheduler=scheduler)
+    except Exception:
+        logger.exception("Slurm worker failed")
+        raise
     finally:
         if activated_slurm_job:
             # TODO: This is not very accurate. Other nodes in the allocation could still be
             # active. It would be better to do this from the caller of this command.
             node.status = "complete"
-            api.put_workflows_workflow_scheduled_compute_nodes_key(node, workflow_key, node.key)
+            api.put_workflows_workflow_scheduled_compute_nodes_key(workflow_key, node.key, node)
 
 
 def _get_scheduled_compute_node(api, workflow_key, slurm_job_id):
@@ -578,7 +604,7 @@ def _create_node_resources(intf, scheduler_config_id, is_subtask):
         num_cpus = num_cpus_in_node
         memory_gb = memory_gb_in_node
 
-    return KeyPrepareJobsForSubmissionModel(
+    return ComputeNodesResources(
         num_cpus=num_cpus,
         num_gpus=intf.get_num_gpus(),
         memory_gb=memory_gb,

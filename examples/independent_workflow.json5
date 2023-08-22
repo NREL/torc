@@ -40,25 +40,25 @@
   resource_requirements: [
     {
       name: "small",
-      num_cpus: 1.0,
-      num_gpus: 0.0,
-      num_nodes: 1.0,
+      num_cpus: 1,
+      num_gpus: 0,
+      num_nodes: 1,
       memory: "1g",
       runtime: "P0DT1H"
     },
     {
       name: "medium",
-      num_cpus: 4.0,
-      num_gpus: 0.0,
-      num_nodes: 1.0,
+      num_cpus: 4,
+      num_gpus: 0,
+      num_nodes: 1,
       memory: "8g",
       runtime: "P0DT8H"
     },
     {
       name: "large",
-      num_cpus: 8.0,
-      num_gpus: 0.0,
-      num_nodes: 1.0,
+      num_cpus: 8,
+      num_gpus: 0,
+      num_nodes: 1,
       memory: "16g",
       runtime: "P0DT12H"
     }

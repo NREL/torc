@@ -189,10 +189,11 @@ function handleArangoApiErrors(e, res, tag) {
     } else if (e.errorNum === CONFLICTING_REV) {
       res.throw(409, `Error: Conflicting revision. Operation: ${tag}`);
     } else {
-      res.throw(400, `Database error occurred: ${e}`, e);
+      res.throw(400, `Unhandled Arango error occurred: ${e}`, e);
     }
+  } else {
+    res.throw(400, `Database error occurred: ${e}`, e);
   }
-  throw e;
 }
 
 /**

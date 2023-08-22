@@ -1,19 +1,59 @@
 """Functions to access the Torc Database API"""
 
 import itertools
+import logging
+import time
 
 from resource_monitor.timing.timer_stats import Timer
-from torc.swagger_client import ApiClient, DefaultApi
-from torc.swagger_client.configuration import Configuration
-
+from torc.openapi_client import ApiClient, DefaultApi
+from torc.openapi_client.configuration import Configuration
+from torc.openapi_client.rest import ApiException
 from torc.common import timer_stats_collector
+from torc.exceptions import DatabaseOffline
+
+
+logger = logging.getLogger(__name__)
 
 
 def make_api(database_url) -> DefaultApi:
-    """Instantiate a Swagger API object from a database URL."""
+    """Instantiate an OpenAPI client object from a database URL."""
     configuration = Configuration()
     configuration.host = database_url
     return DefaultApi(ApiClient(configuration))
+
+
+def wait_for_healthy_database(api: DefaultApi, timeout_minutes=20, poll_seconds=60):
+    """Ping the database until it's responding or timeout_minutes is exceeded.
+
+    Parameters
+    ----------
+    api : DefaultApi
+    timeout_minutes : float
+        Number of minutes to wait for the database to become healthy.
+    poll_seconds : float
+        Number of seconds to wait in between each poll.
+
+    Raises
+    ------
+    DatabaseOffline
+        Raised if the timeout is exceeded.
+    """
+    logger.info(
+        "Wait for the database to become healthy: timeout_minutes=%s, poll_seconds=%s",
+        timeout_minutes,
+        poll_seconds,
+    )
+    end = time.time() + timeout_minutes * 60
+    while time.time() < end:
+        try:
+            send_api_command(api.get_ping)
+            logger.info("The database is healthy again.")
+            return
+        except DatabaseOffline:
+            logger.exception("Database is still offline")
+        time.sleep(poll_seconds)
+
+    raise DatabaseOffline("Timed out waiting for database to become healthy")
 
 
 def iter_documents(func, *args, skip=0, **kwargs):
@@ -28,7 +68,7 @@ def iter_documents(func, *args, skip=0, **kwargs):
 
     Yields
     ------
-    Swagger model or dict, depending on what the API function returns
+    OpenAPI [pydantic] model or dict, depending on what the API function returns
     """
     if "limit" in kwargs and kwargs["limit"] is None:
         kwargs.pop("limit")
@@ -61,7 +101,7 @@ def remove_db_keys(data: dict):
     return {x: data[x] for x in set(data) - _DATABASE_KEYS}
 
 
-def send_api_command(func, *args, **kwargs):
+def send_api_command(func, *args, raise_on_error=True, **kwargs):
     """Send an API command while tracking time, if timer_stats_collector is enabled.
 
     Parameters
@@ -69,10 +109,35 @@ def send_api_command(func, *args, **kwargs):
     func : function
         API function
     args : arguments to forward to func
+    raise_on_error : bool
+        Raise an exception if there is an error, defaults to True.
     kwargs : keyword arguments to forward to func
+
+    Raises
+    ------
+    ApiException
+        Raised for errors detected by the server.
+    DatabaseOffline
+        Raised for all connection errors.
     """
     with Timer(timer_stats_collector, func.__name__):
-        return func(*args, **kwargs)
+        try:
+            return func(*args, **kwargs)
+        except ApiException:
+            # This covers all errors reported by the server.
+            logger.exception("Failed to send API command %s", func.__name__)
+            if raise_on_error:
+                raise
+            logger.info("Exception is ignored.")
+            return None
+        except Exception as exc:  # pylint: disable=broad-exception-caught
+            # This covers all connection errors. It is likely too risky to try to catch
+            # all possible errors from the underlying libraries (OS, urllib3, etc).
+            logger.exception("Failed to send API command %s", func.__name__)
+            if raise_on_error:
+                raise DatabaseOffline(f"Received exception from API client: {exc=}") from exc
+            logger.info("Exception is ignored.")
+            return None
 
 
 def sanitize_workflow(data: dict):
@@ -99,3 +164,8 @@ def sanitize_workflow(data: dict):
         if schedulers and field in schedulers and not schedulers[field]:
             data["schedulers"].pop(field)
     return data
+
+
+def list_model_fields(cls):
+    """Return a list of the model's fields."""
+    return list(cls.model_json_schema()["properties"].keys())
