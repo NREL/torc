@@ -127,9 +127,15 @@ def cli(
 @click.pass_obj
 def callback(api, *args, **kwargs):  # pylint: disable=unused-argument
     """Log timer stats at exit."""
-    timer_stats_collector.log_stats()
-    # TODO: how to get output directory and unique log file name?
-    # timer_stats_collector.log_json_stats()
+    if timer_stats_collector.is_enabled:
+        timer_stats_collector.log_stats()
+        for handler in logging.getLogger("torc").handlers:
+            if isinstance(handler, logging.FileHandler):
+                path = Path(handler.baseFilename)
+                timer_file = path.parent / f"{path.stem}_timer_stats.json"
+                timer_stats_collector.log_json_stats(timer_file)
+                break
+
     if api is not None:
         api.api_client.close()
 
