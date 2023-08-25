@@ -53,7 +53,7 @@ setup(
     test_suite="tests",
     install_requires=[
         "click",
-        "connectorx==0.3.2a7",
+        "connectorx==0.3.2a2",
         "graphviz",
         "json5",
         "plotly",
