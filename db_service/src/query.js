@@ -603,7 +603,7 @@ function initializeJobStatus(workflow, onlyUninitialized) {
     }
     const scheduler = getJobScheduler(job, workflow);
     if (scheduler == null) {
-      job.internal.scheduler_config_id = selectBestSchedulerForJob(job, schedulers)._id;
+      job.internal.scheduler_config_id = selectBestSchedulerForJob(job, schedulers);
     } else {
       job.internal.scheduler_config_id = scheduler._id;
     }
@@ -645,10 +645,10 @@ function selectBestSchedulerForJob(job, schedulers) {
     if (schedulers.slurmSchedulers.length == 1) {
       if (job.internal.runtime_seconds <= schedulers.durationToSeconds.get(scheduler.walltime)) {
         // TODO: this really needs to convert all Slurm strings into common units and then compare.
-        return scheduler;
+        return scheduler._id;
       }
     } else {
-      return scheduler;
+      return scheduler._id;
     }
   }
   // TODO: Figure out the best when there are multiple matches.
