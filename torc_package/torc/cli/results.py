@@ -92,6 +92,9 @@ def list_results(ctx, api, filters, limit, skip, exclude_job_names, sort_by, rev
         items.append(row)
 
     columns = list_model_fields(WorkflowResultsModel)
+    if not exclude_job_names:
+        assert columns[0] == "job_key", columns
+        columns.insert(1, "job_name")
     columns.remove("_id")
     columns.remove("_rev")
     print_items(
