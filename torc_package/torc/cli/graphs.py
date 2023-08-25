@@ -59,7 +59,7 @@ def plot(ctx, api, names, keep_dot_file, output):
 
     \b
     Example:
-    $ torc graphs plot job_sequence
+    $ torc graphs plot job_job_dependencies
     """
     if not names:
         logger.warning("No graph names were passed")
