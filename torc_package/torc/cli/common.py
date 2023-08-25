@@ -276,11 +276,20 @@ def parse_filters(filters):
             logger.error("Invalid filter format: %s. Required: name=value", flt)
             sys.exit(1)
         val = fields[1]
-        if val.isnumeric():
-            val = int(val)
+        val_as_int = _try_parse_int(val)
+        if val_as_int is not None:
+            val = val_as_int
         final[fields[0]] = val
 
     return final
+
+
+def _try_parse_int(val: str) -> int | None:
+    try:
+        val = int(val)
+        return val
+    except ValueError:
+        return None
 
 
 def setup_cli_logging(ctx, name, filename=None, mode="w"):
