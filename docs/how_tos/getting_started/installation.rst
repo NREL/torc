@@ -26,8 +26,8 @@ Installation
 
 .. code-block:: console
 
-    $ pip install git+ssh://git@github.nrel.gov/viz/wms.git@v0.2.1#subdirectory=torc_package \
-        git+https://github.nrel.gov/dthom/resource_monitor@v0.1.3
+    $ pip install git+ssh://git@github.nrel.gov/viz/wms.git@v0.2.2#subdirectory=torc_package \
+        git+https://github.nrel.gov/dthom/resource_monitor@v0.1.4
 
 5. Optionally install the Julia client package.
 
@@ -35,7 +35,7 @@ Installation
 
     $ julia  # optionally specify an environment with --project
     $ using Pkg
-    $ Pkg.add(PackageSpec(url="git@github.nrel.gov:viz/wms.git", rev="v0.2.1", subdir="julia/Torc"))
+    $ Pkg.add(PackageSpec(url="git@github.nrel.gov:viz/wms.git", rev="v0.2.2", subdir="julia/Torc"))
 
 Note that you can also install the ``torc`` package from a clone of the repository. This will give
 you the latest code from the ``main`` branch.
