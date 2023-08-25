@@ -9,7 +9,7 @@ key to the local torc rc file. You will need to change this if you change workfl
 
 .. code-block:: console
 
-   $ torc workflows create-from-json-file -U examples/independent_workflow.json5
+   $ torc workflows create-from-json-file examples/independent_workflow.json5
    2023-03-28 16:36:35,149 - INFO [torc.cli.workflows workflows.py:156] : Created a workflow from examples/independent_workflow.json5 with key=92238688
 
 This command will identify relationships between workflow objects and initialize the job status.

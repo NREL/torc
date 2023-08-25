@@ -29,24 +29,29 @@ required by this workflow.
     $ mkdir output
     $ echo "{\"val\": 5}" > output/inputs.json
 
-2. Create the workflow. The ``-U`` option will update the ``rc`` file with the newly-created
-   workflow key.
+2. Create the workflow.
 
 .. code-block:: console
 
-    $ torc workflows create-from-json-file ../examples/diamond_workflow.json5 -U
+    $ torc workflows create-from-json-file ../examples/diamond_workflow.json5
     2023-04-28 11:49:07,932 - INFO [torc.cli.workflows workflows.py:218] : Created a workflow from ../examples/diamond_workflow.json5 with key=98178840
-    2023-04-28 11:49:07,934 - INFO [torc.cli.workflows workflows.py:560] : Updating /Users/dthom/.torc.json5 with workflow_key=98178840
-    Wrote torc config to /Users/dthom/.torc.json5
 
-3. Start the workflow. This will check required inputs and initialize the job statuses.
+3. Optional: Save the workflow key in an environment variable to avoid typing in future commands.
+   If you skip this step, you will be prompted to choose a workflow in future commands (or you can
+   set ``torc -k <workflow_key>``.
+
+.. code-block:: console
+
+    $ export TORC_WORKFLOW_KEY=98178840
+
+4. Start the workflow. This will check required inputs and initialize the job statuses.
 
 .. code-block:: console
 
     $ torc workflows start
     2023-04-28 11:50:09,206 - INFO [torc.workflow_manager workflow_manager.py:114] : Started workflow
 
-4. Check the configuration and statuses.
+5. Check the configuration and statuses.
 
 .. code-block:: console
 
@@ -62,7 +67,7 @@ required by this workflow.
     |   3   | postprocess | python tests/scripts/postprocess.py -i output/f2.json -i output/f3.json -o output/f4.json | blocked | 98179091 |
     +-------+-------------+-------------------------------------------------------------------------------------------+---------+----------+
 
-5. Make a visualization of the job dependencies.
+6. Make a visualization of the job dependencies.
 
 .. code-block:: console
 
@@ -72,14 +77,14 @@ required by this workflow.
 
 Open the resulting files in an image viewer.
 
-6. Run the workflow locally. The ``-p1`` option tells torc to poll for completions every second.
+7. Run the workflow locally. The ``-p1`` option tells torc to poll for completions every second.
    These jobs are quick and so there is no reason to wait for the default polling interval.
 
 .. code-block:: console
 
     $ torc jobs run -p 1
 
-7. View the results.
+8. View the results.
 
 .. code-block:: console
 
@@ -95,7 +100,7 @@ Open the resulting files in an image viewer.
     |   3   | 98179091 |   1    |      0      | 0.04541379610697428  | 2023-04-29T11:53:27.917966 |  done  | 98179916 |
     +-------+----------+--------+-------------+----------------------+----------------------------+--------+----------+
 
-8. View the jobs joined with the results.
+9. View the jobs joined with the results.
 
 .. code-block:: console
 

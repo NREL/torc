@@ -11,10 +11,9 @@ The steps to restart a workflow are slightly different depending on whether the 
 completed from torc's perspective and whether you defined job dependencies.
 
 If a job completes with a return code, torc stores a result in the database. However, if the job
-consumed all of the compute node's memory, the out-of-memory handler (or perhaps Slurm) will
-terminate the process and possibly the torc worker application. If an HPC node exhausts its time,
-the scheduler will terminate all of your processes. In these cases torc will not record a result.
-The job status will still be ``submitted``.
+consumed all of the compute node's memory, the out-of-memory handler will terminate the process and
+possibly the torc worker application. In these cases torc will not record a result. The job status
+will still be ``submitted``.
 
 Restarting jobs that did not finish
 ===================================
