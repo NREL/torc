@@ -53,15 +53,15 @@ setup(
     test_suite="tests",
     install_requires=[
         "click",
-        "connectorx>=0.3.1",
+        "connectorx==0.3.2a7",
         "graphviz",
         "json5",
         "plotly",
-        "polars~=0.17.9",
+        "polars~=0.18.15",
         "psutil",
         "prettytable",
         "pyarrow",
-        "pydantic~=2.0.2",
+        "pydantic~=2.3.0",
         "s3path",
         # These are required by the openapi_client. Keep in sync with its setup.py.
         "python_dateutil>=2.5.3",
@@ -73,6 +73,7 @@ setup(
     extras_require={
         "dev": [
             "black",
+            "bump-pydantic",
             "flake8",
             "furo",
             "ghp-import",
