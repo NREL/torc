@@ -92,8 +92,8 @@ def test_run_workflow(diamond_workflow):
     )
 
     events = db.list_documents("events")
-    # start for workflow, start for node, start and stop for worker, start and stop for each job
-    assert len(events) == 1 + 1 + 2 * 4
+    # start for workflow, start and stop for worker, start and stop for each job
+    assert len(events) == 1 + 2 + 2 * 4
 
     timer_stats_collector.log_stats()
     stats_file = output_dir / "stats.json"
@@ -671,7 +671,7 @@ def _fake_complete_job(api, workflow_key, job):
 
 
 def _get_job_keys_by_event(events, type_):
-    return sorted([x["key"] for x in events if x["category"] == "job" and x["type"] == type_])
+    return sorted([x["job_key"] for x in events if x["category"] == "job" and x["type"] == type_])
 
 
 # def _disable_resource_stats(api):

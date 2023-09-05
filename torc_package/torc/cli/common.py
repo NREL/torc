@@ -15,6 +15,10 @@ from torc.torc_rc import TorcRuntimeConfig
 
 logger = logging.getLogger(__name__)
 
+# TODO DT: give more information about the workflows to be deleted in the warn message.
+#   Make one common message to use for workflow warns.
+# Add delete --user=X
+
 
 def check_database_url(api):
     """Raises an exception if a database URL is not set."""
@@ -103,6 +107,10 @@ def get_log_level_from_str(level):
             return logging.WARNING
         case "error":
             return logging.ERROR
+        case "critical":
+            return logging.CRITICAL
+        case "fatal":
+            return logging.FATAL
         case _:
             raise Exception(f"Unsupported level={level}")
 
@@ -212,23 +220,32 @@ def prompt_user_for_document(
         return docs[0]
 
     if msg:
-        print(msg)
+        print(msg, file=sys.stderr)
 
     columns = dicts[0].keys()
     table = make_text_table(dicts, doc_type, columns)
     if table.rows:
-        print(table)
+        print(table, file=sys.stderr)
 
-    doc = None
-    while not doc:
-        choice = input("Select an index: >>> ").strip()
-        try:
-            selected_index = int(choice)
-            doc = index_to_doc.get(selected_index)
-        except ValueError:
-            logger.error("Could not convert %s to an integer.", choice)
-        if not doc:
-            print(f"index={choice} is an invalid choice")
+    # The input prompt goes to stdout. We don't want that because a user may be piping the output
+    # to jq as in the following example.
+    # $ torc -F json jobs list | jq .
+    # Redirect the input prompt to stderr so that jq can parse only the output.
+    orig_stdout = sys.stdout
+    try:
+        sys.stdout = sys.stderr
+        doc = None
+        while not doc:
+            choice = input("Select an index: >>> ").strip()
+            try:
+                selected_index = int(choice)
+                doc = index_to_doc.get(selected_index)
+            except ValueError:
+                logger.error("Could not convert %s to an integer.", choice)
+            if not doc:
+                print(f"index={choice} is an invalid choice", file=sys.stderr)
+    finally:
+        sys.stdout = orig_stdout
 
     return doc
 
@@ -267,14 +284,15 @@ def path_callback(*args) -> Path:
     return Path(args[2])
 
 
-def parse_filters(filters):
+def parse_filters(filters) -> dict:
     """Parse filter options given on the command line."""
     final = {}
     for flt in filters:
         fields = flt.split("=")
         if len(fields) != 2:
-            logger.error("Invalid filter format: %s. Required: name=value", flt)
-            sys.exit(1)
+            msg = "Invalid filter format: {flt}. Required: name=value"
+            logger.error(msg)
+            raise Exception(msg)
         val = fields[1]
         val_as_int = _try_parse_int(val)
         if val_as_int is not None:

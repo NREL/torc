@@ -100,7 +100,7 @@ def test_workflow_commands(create_workflow_cli):
     result = runner.invoke(cli, ["stats", "concatenate-process", str(stats_dir)])
     assert result.exit_code == 0
 
-    result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "workflows", "reset-status"])
+    result = runner.invoke(cli, ["-n", "-u", url, "workflows", "reset-status", key])
     assert result.exit_code == 0
 
 
