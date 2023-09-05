@@ -112,7 +112,7 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
             if event.get("category") == "job" and event.get("type") in ("start", "complete"):
                 timestamp = datetime.strptime(event["timestamp"], "%Y-%m-%dT%H:%M:%S.%fZ")
                 item = {
-                    "key": int(event["key"]),
+                    "key": int(event["job_key"]),
                     "timestamp": timestamp,
                 }
                 events = start_events if event["type"] == "start" else complete_events
