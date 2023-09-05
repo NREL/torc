@@ -4720,6 +4720,318 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
+    def get_events_after_key(self, key : Annotated[StrictStr, Field(..., description="Workflow key")], event_key : Annotated[StrictStr, Field(..., description="Event key")], category : Optional[StrictStr] = None, skip : Annotated[Optional[Union[StrictFloat, StrictInt]], Field(description="Ignored")] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> GetWorkflowsWorkflowEventsResponse:  # noqa: E501
+        """Return all events newer than the event with event_key.  # noqa: E501
+
+        Return all events newer than the event with event_key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_events_after_key(key, event_key, category, skip, limit, async_req=True)
+        >>> result = thread.get()
+
+        :param key: Workflow key (required)
+        :type key: str
+        :param event_key: Event key (required)
+        :type event_key: str
+        :param category:
+        :type category: str
+        :param skip: Ignored
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetWorkflowsWorkflowEventsResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_events_after_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_events_after_key_with_http_info(key, event_key, category, skip, limit, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_events_after_key_with_http_info(self, key : Annotated[StrictStr, Field(..., description="Workflow key")], event_key : Annotated[StrictStr, Field(..., description="Event key")], category : Optional[StrictStr] = None, skip : Annotated[Optional[Union[StrictFloat, StrictInt]], Field(description="Ignored")] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Return all events newer than the event with event_key.  # noqa: E501
+
+        Return all events newer than the event with event_key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_events_after_key_with_http_info(key, event_key, category, skip, limit, async_req=True)
+        >>> result = thread.get()
+
+        :param key: Workflow key (required)
+        :type key: str
+        :param event_key: Event key (required)
+        :type event_key: str
+        :param category:
+        :type category: str
+        :param skip: Ignored
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetWorkflowsWorkflowEventsResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'key',
+            'event_key',
+            'category',
+            'skip',
+            'limit'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_events_after_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+        if _params['event_key']:
+            _path_params['event_key'] = _params['event_key']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('category') is not None:  # noqa: E501
+            _query_params.append(('category', _params['category']))
+
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetWorkflowsWorkflowEventsResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{key}/events_after_key/{event_key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_latest_event_key(self, key : Annotated[StrictStr, Field(..., description="Workflow key")], **kwargs) -> object:  # noqa: E501
+        """Return the key of the latest event.  # noqa: E501
+
+        Return the key of the latest event.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_latest_event_key(key, async_req=True)
+        >>> result = thread.get()
+
+        :param key: Workflow key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: object
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_latest_event_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_latest_event_key_with_http_info(key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_latest_event_key_with_http_info(self, key : Annotated[StrictStr, Field(..., description="Workflow key")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Return the key of the latest event.  # noqa: E501
+
+        Return the key of the latest event.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_latest_event_key_with_http_info(key, async_req=True)
+        >>> result = thread.get()
+
+        :param key: Workflow key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(object, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_latest_event_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "object",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{key}/latest_event_key', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
     def get_ping(self, **kwargs) -> object:  # noqa: E501
         """Check if the service is running.  # noqa: E501
 
@@ -5256,18 +5568,22 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_workflows(self, skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, name : Optional[StrictStr] = None, user : Optional[StrictStr] = None, description : Optional[StrictStr] = None, **kwargs) -> GetWorkflowsResponse:  # noqa: E501
+    def get_workflows(self, skip : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, name : Optional[StrictStr] = None, user : Optional[StrictStr] = None, description : Optional[StrictStr] = None, **kwargs) -> GetWorkflowsResponse:  # noqa: E501
         """Retrieve all workflows  # noqa: E501
 
         Retrieves all documents from the \"workflows\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows(skip, limit, name, user, description, async_req=True)
+        >>> thread = api.get_workflows(skip, sort_by, reverse_sort, limit, name, user, description, async_req=True)
         >>> result = thread.get()
 
         :param skip:
         :type skip: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
         :param limit:
         :type limit: float
         :param name:
@@ -5290,21 +5606,25 @@ class DefaultApi(object):
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
             raise ValueError("Error! Please call the get_workflows_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_with_http_info(skip, limit, name, user, description, **kwargs)  # noqa: E501
+        return self.get_workflows_with_http_info(skip, sort_by, reverse_sort, limit, name, user, description, **kwargs)  # noqa: E501
 
     @validate_call
-    def get_workflows_with_http_info(self, skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, name : Optional[StrictStr] = None, user : Optional[StrictStr] = None, description : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
+    def get_workflows_with_http_info(self, skip : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, name : Optional[StrictStr] = None, user : Optional[StrictStr] = None, description : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
         """Retrieve all workflows  # noqa: E501
 
         Retrieves all documents from the \"workflows\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_with_http_info(skip, limit, name, user, description, async_req=True)
+        >>> thread = api.get_workflows_with_http_info(skip, sort_by, reverse_sort, limit, name, user, description, async_req=True)
         >>> result = thread.get()
 
         :param skip:
         :type skip: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
         :param limit:
         :type limit: float
         :param name:
@@ -5342,6 +5662,8 @@ class DefaultApi(object):
 
         _all_params = [
             'skip',
+            'sort_by',
+            'reverse_sort',
             'limit',
             'name',
             'user',
@@ -5378,6 +5700,12 @@ class DefaultApi(object):
         _query_params = []
         if _params.get('skip') is not None:  # noqa: E501
             _query_params.append(('skip', _params['skip']))
+
+        if _params.get('sort_by') is not None:  # noqa: E501
+            _query_params.append(('sort_by', _params['sort_by']))
+
+        if _params.get('reverse_sort') is not None:  # noqa: E501
+            _query_params.append(('reverse_sort', _params['reverse_sort']))
 
         if _params.get('limit') is not None:  # noqa: E501
             _query_params.append(('limit', _params['limit']))

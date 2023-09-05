@@ -408,6 +408,55 @@ function getJobsThatNeedFile(file, workflow, skip, limit) {
 }
 
 /**
+ * Return the key of the latest event.
+ * Only works in single-sharded collections.
+ * @param {string} workflow
+ * @returns {string}
+ */
+function getLatestEventKey(workflow) {
+  const collection = config.getWorkflowCollection(workflow, 'events');
+  const cursor = query({count: true})`
+    FOR event in ${collection}
+      COLLECT AGGREGATE max = MAX(TO_NUMBER(event._key))
+      RETURN TO_STRING(max)
+  `;
+  if (cursor.count() == 0) {
+    return null;
+  }
+  return cursor.toArray()[0];
+}
+
+/**
+ * Return all events newer than the event with key.
+ * Only works in single-sharded collections.
+ * @param {string} workflow
+ * @param {string} key
+ * @param {string} category
+ * @param {number} limit
+ * @returns {Array}
+ */
+function getEventsAfterKey(workflow, key, category, limit) {
+  const collection = config.getWorkflowCollection(workflow, 'events');
+  const keyId = parseInt(key);
+
+  if (category == null) {
+    return query({count: true})`
+      FOR event in ${collection}
+        FILTER TO_NUMBER(event._key) > ${keyId}
+        LIMIT ${limit}
+        RETURN event
+    `;
+  } else {
+    return query({count: true})`
+      FOR event in ${collection}
+        FILTER TO_NUMBER(event._key) > ${keyId} && event.category == ${category}
+        LIMIT ${limit}
+        RETURN event
+    `;
+  }
+}
+
+/**
  * Return all result documents connected to the job, sorted by completion time.
  * Return null if the job does not have a result.
  * @param {Object} job
@@ -1458,6 +1507,8 @@ module.exports = {
   getWorkflowConfig,
   getWorkflowStatus,
   getJobSpecification,
+  getLatestEventKey,
+  getEventsAfterKey,
   initializeJobStatus,
   isJobBlocked,
   isJobInitiallyBlocked,

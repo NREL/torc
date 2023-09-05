@@ -382,6 +382,13 @@ def main():
                 component="#/components/schemas/workflowsworkflowcompute_nodes_resources",
             ),
         ),
+        ApiCommand(
+            path="/workflows/{key}/events_after_key/{event_key}",
+            responses=OpsComponent(
+                ops=["get"],
+                component="#/components/schemas/get_workflows_workflow_events_response",
+            ),
+        ),
     ]
 
     for command in commands:
@@ -519,6 +526,8 @@ def main():
                 "workflow_specifications_config_compute_node_resource_stats",
                 "compute_node_resource_stats_model",
             ),
+            ("get_workflows_key_events_after_key_event_key", "get_events_after_key"),
+            ("get_workflows_key_latest_event_key", "get_latest_event_key"),
         ],
     )
     print(f"Wrote fixed spec to {spec_file}")

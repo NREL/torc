@@ -4835,6 +4835,22 @@ paths:
         schema:
           type: number
           default: 0.0
+      - name: sort_by
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: 'null'
+      - name: reverse_sort
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: false
       - name: limit
         in: query
         required: false
@@ -5856,6 +5872,97 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
+  /workflows/{key}/latest_event_key:
+    get:
+      tags: []
+      summary: Return the key of the latest event.
+      description: Return the key of the latest event.
+      operationId: get_latest_event_key
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      responses:
+        '200':
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+  /workflows/{key}/events_after_key/{event_key}:
+    get:
+      tags: []
+      summary: Return all events newer than the event with event_key.
+      description: Return all events newer than the event with event_key.
+      operationId: get_events_after_key
+      parameters:
+      - name: key
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: event_key
+        in: path
+        description: Event key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: category
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          default: 'null'
+      - name: skip
+        in: query
+        description: Ignored
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 0.0
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 100000.0
+      responses:
+        '200':
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/get_workflows_workflow_events_response'
+        '500':
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
   /workflows/{key}/dot_graph/{name}:
     get:
       tags: []

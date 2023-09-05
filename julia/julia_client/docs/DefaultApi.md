@@ -33,6 +33,8 @@ Method | HTTP request | Description
 [**delete_workflows_workflow_slurm_schedulers_key**](DefaultApi.md#delete_workflows_workflow_slurm_schedulers_key) | **DELETE** /workflows/{workflow}/slurm_schedulers/{key} | Delete a document of type Slurm compute node configuration
 [**delete_workflows_workflow_user_data**](DefaultApi.md#delete_workflows_workflow_user_data) | **DELETE** /workflows/{workflow}/user_data | Delete all documents of type user data for a workflow
 [**delete_workflows_workflow_user_data_key**](DefaultApi.md#delete_workflows_workflow_user_data_key) | **DELETE** /workflows/{workflow}/user_data/{key} | Delete a document of type user data
+[**get_events_after_key**](DefaultApi.md#get_events_after_key) | **GET** /workflows/{key}/events_after_key/{event_key} | Return all events newer than the event with event_key.
+[**get_latest_event_key**](DefaultApi.md#get_latest_event_key) | **GET** /workflows/{key}/latest_event_key | Return the key of the latest event.
 [**get_ping**](DefaultApi.md#get_ping) | **GET** /ping | Check if the service is running.
 [**get_workflow_specifications_example**](DefaultApi.md#get_workflow_specifications_example) | **GET** /workflow_specifications/example | Retrieve an example workflow specification
 [**get_workflow_specifications_key**](DefaultApi.md#get_workflow_specifications_key) | **GET** /workflow_specifications/{key} | Retrieve the current workflow
@@ -1197,6 +1199,75 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
+# **get_events_after_key**
+> get_events_after_key(_api::DefaultApi, key::String, event_key::String; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> GetWorkflowsWorkflowEventsResponse, OpenAPI.Clients.ApiResponse <br/>
+> get_events_after_key(_api::DefaultApi, response_stream::Channel, key::String, event_key::String; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ GetWorkflowsWorkflowEventsResponse }, OpenAPI.Clients.ApiResponse
+
+Return all events newer than the event with event_key.
+
+Return all events newer than the event with event_key.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**key** | **String**| Workflow key | [default to nothing]
+**event_key** | **String**| Event key | [default to nothing]
+
+### Optional Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **category** | **String**|  | [default to &quot;null&quot;]
+ **skip** | **Float64**| Ignored | [default to 0.0]
+ **limit** | **Float64**|  | [default to 100000.0]
+
+### Return type
+
+[**GetWorkflowsWorkflowEventsResponse**](GetWorkflowsWorkflowEventsResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **get_latest_event_key**
+> get_latest_event_key(_api::DefaultApi, key::String; _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> get_latest_event_key(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+
+Return the key of the latest event.
+
+Return the key of the latest event.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**key** | **String**| Workflow key | [default to nothing]
+
+### Return type
+
+**Any**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 # **get_ping**
 > get_ping(_api::DefaultApi; _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
 > get_ping(_api::DefaultApi, response_stream::Channel; _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
@@ -1306,8 +1377,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_workflows**
-> get_workflows(_api::DefaultApi; skip=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing) -> GetWorkflowsResponse, OpenAPI.Clients.ApiResponse <br/>
-> get_workflows(_api::DefaultApi, response_stream::Channel; skip=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing) -> Channel{ GetWorkflowsResponse }, OpenAPI.Clients.ApiResponse
+> get_workflows(_api::DefaultApi; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing) -> GetWorkflowsResponse, OpenAPI.Clients.ApiResponse <br/>
+> get_workflows(_api::DefaultApi, response_stream::Channel; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing) -> Channel{ GetWorkflowsResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all workflows
 
@@ -1324,6 +1395,8 @@ Name | Type | Description  | Notes
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **skip** | **Float64**|  | [default to 0.0]
+ **sort_by** | **String**|  | [default to &quot;null&quot;]
+ **reverse_sort** | **Bool**|  | [default to false]
  **limit** | **Float64**|  | [default to 100000.0]
  **name** | **String**|  | [default to nothing]
  **user** | **String**|  | [default to nothing]
