@@ -40,6 +40,11 @@ setup(
         ],
     },
     include_package_data=True,
+    package_data={
+        "torc": [
+            "apps/*.tcss",
+        ],
+    },
     license="BSD license",
     zip_safe=False,
     keywords=["hpc", "workflow"],
@@ -63,6 +68,7 @@ setup(
         "pyarrow",
         "pydantic~=2.3.0",
         "s3path",
+        "textual",
         # These are required by the openapi_client. Keep in sync with its setup.py.
         "python_dateutil>=2.5.3",
         "urllib3>=1.25.3,<2.1.0",
