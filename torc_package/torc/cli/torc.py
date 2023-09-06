@@ -20,6 +20,7 @@ from torc.cli.jobs import jobs
 from torc.cli.resource_requirements import resource_requirements
 from torc.cli.results import results
 from torc.cli.stats import stats
+from torc.cli.tui import tui
 from torc.cli.user_data import user_data
 from torc.cli.workflows import workflows
 from torc.common import timer_stats_collector
@@ -152,5 +153,6 @@ cli.add_command(jobs)
 cli.add_command(resource_requirements)
 cli.add_command(results)
 cli.add_command(stats)
+cli.add_command(tui)
 cli.add_command(user_data)
 cli.add_command(workflows)

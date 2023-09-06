@@ -1000,6 +1000,78 @@ function delete_workflows_workflow_user_data_key(_api::DefaultApi, response_stre
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
+const _returntypes_get_events_after_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => GetWorkflowsWorkflowEventsResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+)
+
+function _oacinternal_get_events_after_key(_api::DefaultApi, key::String, event_key::String; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_get_events_after_key_DefaultApi, "/workflows/{key}/events_after_key/{event_key}", [])
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "event_key", event_key)  # type String
+    OpenAPI.Clients.set_param(_ctx.query, "category", category)  # type String
+    OpenAPI.Clients.set_param(_ctx.query, "skip", skip)  # type Float64
+    OpenAPI.Clients.set_param(_ctx.query, "limit", limit)  # type Float64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Return all events newer than the event with event_key.
+
+Return all events newer than the event with event_key.
+
+Params:
+- key::String (required)
+- event_key::String (required)
+- category::String
+- skip::Float64
+- limit::Float64
+
+Return: GetWorkflowsWorkflowEventsResponse, OpenAPI.Clients.ApiResponse
+"""
+function get_events_after_key(_api::DefaultApi, key::String, event_key::String; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_get_events_after_key(_api, key, event_key; category=category, skip=skip, limit=limit, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function get_events_after_key(_api::DefaultApi, response_stream::Channel, key::String, event_key::String; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_get_events_after_key(_api, key, event_key; category=category, skip=skip, limit=limit, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_get_latest_event_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+)
+
+function _oacinternal_get_latest_event_key(_api::DefaultApi, key::String; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_get_latest_event_key_DefaultApi, "/workflows/{key}/latest_event_key", [])
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Return the key of the latest event.
+
+Return the key of the latest event.
+
+Params:
+- key::String (required)
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function get_latest_event_key(_api::DefaultApi, key::String; _mediaType=nothing)
+    _ctx = _oacinternal_get_latest_event_key(_api, key; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function get_latest_event_key(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing)
+    _ctx = _oacinternal_get_latest_event_key(_api, key; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
 const _returntypes_get_ping_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
     Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
@@ -1127,9 +1199,11 @@ const _returntypes_get_workflows_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
 )
 
-function _oacinternal_get_workflows(_api::DefaultApi; skip=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing)
+function _oacinternal_get_workflows(_api::DefaultApi; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing)
     _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_get_workflows_DefaultApi, "/workflows", [])
     OpenAPI.Clients.set_param(_ctx.query, "skip", skip)  # type Float64
+    OpenAPI.Clients.set_param(_ctx.query, "sort_by", sort_by)  # type String
+    OpenAPI.Clients.set_param(_ctx.query, "reverse_sort", reverse_sort)  # type Bool
     OpenAPI.Clients.set_param(_ctx.query, "limit", limit)  # type Float64
     OpenAPI.Clients.set_param(_ctx.query, "name", name)  # type String
     OpenAPI.Clients.set_param(_ctx.query, "user", user)  # type String
@@ -1145,6 +1219,8 @@ Retrieves all documents from the \"workflows\" collection.
 
 Params:
 - skip::Float64
+- sort_by::String
+- reverse_sort::Bool
 - limit::Float64
 - name::String
 - user::String
@@ -1152,13 +1228,13 @@ Params:
 
 Return: GetWorkflowsResponse, OpenAPI.Clients.ApiResponse
 """
-function get_workflows(_api::DefaultApi; skip=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_get_workflows(_api; skip=skip, limit=limit, name=name, user=user, description=description, _mediaType=_mediaType)
+function get_workflows(_api::DefaultApi; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_get_workflows(_api; skip=skip, sort_by=sort_by, reverse_sort=reverse_sort, limit=limit, name=name, user=user, description=description, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx)
 end
 
-function get_workflows(_api::DefaultApi, response_stream::Channel; skip=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_get_workflows(_api; skip=skip, limit=limit, name=name, user=user, description=description, _mediaType=_mediaType)
+function get_workflows(_api::DefaultApi, response_stream::Channel; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_get_workflows(_api; skip=skip, sort_by=sort_by, reverse_sort=reverse_sort, limit=limit, name=name, user=user, description=description, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -4706,6 +4782,8 @@ export delete_workflows_workflow_slurm_schedulers
 export delete_workflows_workflow_slurm_schedulers_key
 export delete_workflows_workflow_user_data
 export delete_workflows_workflow_user_data_key
+export get_events_after_key
+export get_latest_event_key
 export get_ping
 export get_workflow_specifications_example
 export get_workflow_specifications_key

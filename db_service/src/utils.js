@@ -121,8 +121,9 @@ function getItemsLimit(limit) {
 }
 
 /**
- * Return the number of records to send.
- * @param {Object} items
+ * Creates a cursor result from an array.
+ * Assumes that the caller has applied skip and limit.
+ * @param {Array} items
  * @param {number} skip
  * @param {number} totalCount
  * @param {string} sortBy
@@ -132,9 +133,9 @@ function getItemsLimit(limit) {
 function makeCursorResult(items, skip, totalCount, sortBy, reverseSort) {
   if (sortBy != null) {
     if (reverseSort) {
-      items.sort((x, y) => y[sortBy] - x[sortBy]);
+      items.sort((x, y) => (x.name > y.name) ? -1 : ((y.name > x.name) ? 1 : 0))
     } else {
-      items.sort((x, y) => x[sortBy] - y[sortBy]);
+      items.sort((x, y) => (x.name > y.name) ? 1 : ((y.name > x.name) ? -1 : 0))
     }
   }
   return {

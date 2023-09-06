@@ -223,6 +223,7 @@ class JobRunner:
             if self._parent_monitor_conn is not None:
                 self._stop_resource_monitor()
             self._complete_compute_node()
+            self._log_worker_stop_event()
 
     def _is_workflow_complete(self):
         if self._ignore_completion:
@@ -437,6 +438,19 @@ class JobRunner:
             raise_on_error=False,
         )
 
+    def _log_worker_stop_event(self):
+        send_api_command(
+            self._api.post_workflows_workflow_events,
+            self._workflow.key,
+            {
+                "category": "worker",
+                "type": "stop",
+                "node_name": self._hostname,
+                "message": f"Stopped worker {self._hostname}",
+            },
+            raise_on_error=False,
+        )
+
     def _log_worker_schedule_event(self, scheduler_id):
         send_api_command(
             self._api.post_workflows_workflow_events,
@@ -451,28 +465,31 @@ class JobRunner:
             raise_on_error=False,
         )
 
-    def _log_job_start_event(self, job_key: str):
+    def _log_job_start_event(self, job_key: str, job_name: str):
         send_api_command(
             self._api.post_workflows_workflow_events,
             self._workflow.key,
             {
                 "category": "job",
                 "type": "start",
-                "key": job_key,
+                "job_key": job_key,
+                "job_name": job_name,
                 "node_name": self._hostname,
                 "message": f"Started job {job_key}",
             },
             raise_on_error=False,
         )
 
-    def _log_job_complete_event(self, job_key: str, status: str):
+    def _log_job_complete_event(self, job_key: str, job_name: str, status: str, return_code: int):
         send_api_command(
             self._api.post_workflows_workflow_events,
             self._workflow.key,
             {
                 "category": "job",
                 "type": "complete",
-                "key": job_key,
+                "job_key": job_key,
+                "job_name": job_name,
+                "return_code": return_code,
                 "status": status,
                 "node_name": self._hostname,
                 "message": f"Completed job {job_key}",
@@ -537,7 +554,7 @@ class JobRunner:
 
     def _cleanup_job(self, job: AsyncCliCommand, status):
         result = job.get_result(self._run_id)
-        self._log_job_complete_event(job.key, status)
+        self._log_job_complete_event(job.key, job.db_job.name, status, result.return_code)
         self._complete_job(job.db_job, result, status)
         self._outstanding_jobs.pop(job.key)
         self._increment_resources(job.db_job)
@@ -569,7 +586,7 @@ class JobRunner:
                 to=job.db_job.id,
             ),
         )
-        self._log_job_start_event(job.key)
+        self._log_job_start_event(job.key, job.db_job.name)
 
     def _run_ready_jobs(self):
         reason_none_started = None

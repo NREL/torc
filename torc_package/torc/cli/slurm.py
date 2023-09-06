@@ -5,6 +5,7 @@ import logging
 import socket
 import sys
 from datetime import timedelta
+from pathlib import Path
 
 import click
 from torc.openapi_client.models.workflow_slurm_schedulers_model import (
@@ -45,6 +46,9 @@ from .common import (
     path_callback,
 )
 
+
+DEFAULT_JOB_PREFIX = "worker"
+DEFAULT_OUTPUT_DIR = "output"
 
 logger = logging.getLogger(__name__)
 
@@ -256,7 +260,7 @@ def list_configs(ctx, api):
 @click.option(
     "-j",
     "--job-prefix",
-    default="worker",
+    default=DEFAULT_JOB_PREFIX,
     type=str,
     show_default=True,
     help="Prefix for HPC job names",
@@ -285,7 +289,7 @@ def list_configs(ctx, api):
 @click.option(
     "-o",
     "--output",
-    default="output",
+    default=DEFAULT_OUTPUT_DIR,
     show_default=True,
     help="Output directory for compute nodes",
     callback=path_callback,
@@ -342,9 +346,40 @@ def schedule_nodes(
 
     _check_schedule_params(api, workflow_key)
     config = _get_scheduler_config(ctx, api, workflow_key, scheduler_config_key)
+    schedule_slurm_nodes(
+        api,
+        workflow_key,
+        config,
+        output,
+        cpu_affinity_cpus_per_job=cpu_affinity_cpus_per_job,
+        job_prefix=job_prefix,
+        keep_submission_scripts=keep_submission_scripts,
+        max_parallel_jobs=max_parallel_jobs,
+        num_hpc_jobs=num_hpc_jobs,
+        poll_interval=poll_interval,
+        start_one_worker_per_node=start_one_worker_per_node,
+        output_format=output_format,
+    )
 
+
+def schedule_slurm_nodes(
+    api,
+    workflow_key,
+    config,
+    output: Path,
+    job_prefix=DEFAULT_JOB_PREFIX,
+    max_parallel_jobs=None,
+    cpu_affinity_cpus_per_job=None,
+    num_hpc_jobs=1,
+    start_one_worker_per_node=False,
+    keep_submission_scripts=False,
+    poll_interval=JOB_COMPLETION_POLL_INTERVAL,
+    output_format="text",
+):
+    """Schedule Slurm jobs"""
+    output.mkdir(exist_ok=True)
     data = remove_db_keys(config.to_dict())
-    data.pop("name")
+    data.pop("name", None)
     hpc_type = HpcType("slurm")
     mgr = HpcManager(data, hpc_type, output)
     database_url = api.api_client.configuration.host

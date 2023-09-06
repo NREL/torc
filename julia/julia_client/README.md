@@ -49,6 +49,8 @@ Class | Method
 *DefaultApi* | [**delete_workflows_workflow_slurm_schedulers_key**](docs/DefaultApi.md#delete_workflows_workflow_slurm_schedulers_key)<br/>**DELETE** /workflows/{workflow}/slurm_schedulers/{key}<br/>Delete a document of type Slurm compute node configuration
 *DefaultApi* | [**delete_workflows_workflow_user_data**](docs/DefaultApi.md#delete_workflows_workflow_user_data)<br/>**DELETE** /workflows/{workflow}/user_data<br/>Delete all documents of type user data for a workflow
 *DefaultApi* | [**delete_workflows_workflow_user_data_key**](docs/DefaultApi.md#delete_workflows_workflow_user_data_key)<br/>**DELETE** /workflows/{workflow}/user_data/{key}<br/>Delete a document of type user data
+*DefaultApi* | [**get_events_after_key**](docs/DefaultApi.md#get_events_after_key)<br/>**GET** /workflows/{key}/events_after_key/{event_key}<br/>Return all events newer than the event with event_key.
+*DefaultApi* | [**get_latest_event_key**](docs/DefaultApi.md#get_latest_event_key)<br/>**GET** /workflows/{key}/latest_event_key<br/>Return the key of the latest event.
 *DefaultApi* | [**get_ping**](docs/DefaultApi.md#get_ping)<br/>**GET** /ping<br/>Check if the service is running.
 *DefaultApi* | [**get_workflow_specifications_example**](docs/DefaultApi.md#get_workflow_specifications_example)<br/>**GET** /workflow_specifications/example<br/>Retrieve an example workflow specification
 *DefaultApi* | [**get_workflow_specifications_key**](docs/DefaultApi.md#get_workflow_specifications_key)<br/>**GET** /workflow_specifications/{key}<br/>Retrieve the current workflow

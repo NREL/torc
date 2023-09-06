@@ -3,6 +3,26 @@
 #####################
 Check workflow status
 #####################
+
+TUI
+===
+The torc terminal-based management console provides views of job status and results.
+
+.. code-block:: console
+
+   $ torc tui
+
+Monitor events
+==============
+The torc worker app posts events to the database whenever compute nodes start and stop and jobs
+start and complete. Monitor these events dynamically with this command:
+
+.. code-block:: console
+
+   $ torc events monitor
+
+Job status
+==========
 Monitor progress with torc or squeue.
 
 .. code-block:: console
@@ -28,6 +48,8 @@ are ready, in progress, and done
 
    $ torc jobs list -f status=done
 
+Return codes
+============
 This commmand will show the job results. A ``return_code`` of 0 is successful. Non-zero is a
 failure.
 

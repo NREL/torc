@@ -107,7 +107,26 @@ function createWorkflowCollections(workflow) {
   );
 
   for (const name of DOCUMENT_COLLECTION_NAMES) {
-    db._createDocumentCollection(getWorkflowCollectionName(workflow, name));
+    const collectionName = getWorkflowCollectionName(workflow, name);
+    if (name == "events") {
+      // This makes it easier for an application to track events.
+      // Notes from ArangoDB docs:
+      //   "autoincrement is only supported for non-sharded or single-sharded collections).
+      //    The sequence of generated keys is not guaranteed to be gap-free,
+      //    because a new key is generated on every document insert attempt, not just for
+      //    successful inserts.
+      properties = {
+        keyOptions: {
+          type: "autoincrement",
+          allowUserKeys: false,
+          increment: 1,
+          offset: 1,
+        },
+      };
+      db._createDocumentCollection(collectionName, properties);
+    } else {
+      db._createDocumentCollection(collectionName);
+    }
   }
 }
 

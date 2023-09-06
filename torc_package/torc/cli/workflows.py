@@ -55,29 +55,7 @@ def cancel(ctx, api, workflow_keys):
     confirm_change(ctx, msg)
 
     for key in workflow_keys:
-        # TODO: Handling different scheduler types needs to be at a lower level.
-        for job in api.get_workflows_workflow_scheduled_compute_nodes(key).items:
-            if (
-                job.status != "complete"
-                and job.scheduler_config_id.split("/")[0].split("__")[0] == "slurm_schedulers"
-            ):
-                intf = SlurmInterface()
-                return_code = intf.cancel_job(job.scheduler_id)
-                if return_code == 0:
-                    job.status = "complete"
-                    api.put_workflows_workflow_scheduled_compute_nodes_key(key, job.key, job)
-                # else: Ignore all return codes and try to cancel all jobs.
-        api.put_workflows_key_cancel(key)
-        logger.info("Canceled workflow %s", key)
-        api.post_workflows_workflow_events(
-            key,
-            {
-                "category": "workflow",
-                "type": "cancel",
-                "key": key,
-                "message": f"Canceled workflow {key}",
-            },
-        )
+        cancel_workflow(api, key)
 
 
 @click.command()
@@ -470,32 +448,22 @@ def recommend_nodes(ctx, api, num_cpus, scheduler_config_id):
 
 
 @click.command()
+@click.argument("workflow_key")
 @click.pass_obj
 @click.pass_context
-def reset_status(ctx, api):
+def reset_status(ctx, api, workflow_key):
     """Reset the status of the workflow and all jobs."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    workflow_key = get_workflow_key_from_context(ctx, api)
     workflow = api.get_workflows_key(workflow_key)
-    msg = f"""This command will reset the status of this workflow and all its jobs:
+    msg = f"""This command will reset the status of this workflow:
     key: {workflow_key}
     user: {workflow.user}
     name: {workflow.name}
     description: {workflow.description}
 """
     confirm_change(ctx, msg)
-    api.post_workflows_key_reset_status(workflow_key)
-    logger.info("Reset workflow status")
-    api.post_workflows_workflow_events(
-        workflow_key,
-        {
-            "category": "workflow",
-            "type": "reset",
-            "key": workflow_key,
-            "message": f"Reset workflow {workflow_key}",
-        },
-    )
+    reset_workflow_status(api, workflow_key)
 
 
 @click.command()
@@ -507,13 +475,13 @@ def reset_status(ctx, api):
     show_default=True,
     help="Only reset the status of failed jobs.",
 )
+@click.argument("workflow_key")
 @click.pass_obj
 @click.pass_context
-def reset_job_status(ctx, api, failed_only):
+def reset_job_status(ctx, api, workflow_key, failed_only):
     """Reset the status of jobs. Resets all jobs unless failed_only is true."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    workflow_key = get_workflow_key_from_context(ctx, api)
     workflow = api.get_workflows_key(workflow_key)
     msg = f"""This command will reset the status of all jobs in this workflow:
     key: {workflow_key}
@@ -522,8 +490,7 @@ def reset_job_status(ctx, api, failed_only):
     description: {workflow.description}
 """
     confirm_change(ctx, msg)
-    api.post_workflows_key_reset_job_status(workflow_key, failed_only=failed_only)
-    logger.info("Reset job status, failed_only=%s", failed_only)
+    reset_workflow_job_status(api, workflow_key, failed_only=failed_only)
 
 
 @click.command()
@@ -562,18 +529,12 @@ def restart(ctx, api, ignore_missing_data, only_uninitialized):
     description: {workflow.description}
 """
     confirm_change(ctx, msg)
-    mgr = WorkflowManager(api, workflow_key)
-    mgr.restart(ignore_missing_data=ignore_missing_data, only_uninitialized=only_uninitialized)
-    api.post_workflows_workflow_events(
+    restart_workflow(
+        api,
         workflow_key,
-        {
-            "category": "workflow",
-            "type": "restart",
-            "key": workflow_key,
-            "message": f"Restarted workflow {workflow_key}",
-        },
+        ignore_missing_data=ignore_missing_data,
+        only_uninitialized=only_uninitialized,
     )
-    # TODO: This could schedule nodes.
 
 
 @click.command()
@@ -616,9 +577,10 @@ reset all job statuses to 'uninitialized' and then 'ready' or 'blocked.'
 """
         confirm_change(ctx, msg)
 
-    mgr = WorkflowManager(api, workflow_key)
     try:
-        mgr.start(
+        start_workflow(
+            api,
+            workflow_key,
             auto_tune_resource_requirements=auto_tune_resource_requirements,
             ignore_missing_data=ignore_missing_data,
         )
@@ -626,6 +588,16 @@ reset all job statuses to 'uninitialized' and then 'ready' or 'blocked.'
         logger.error("Invalid workflow: %s", exc)
         sys.exit(1)
 
+
+def start_workflow(
+    api, workflow_key, auto_tune_resource_requirements=False, ignore_missing_data=False
+):
+    """Starts the workflow."""
+    mgr = WorkflowManager(api, workflow_key)
+    mgr.start(
+        auto_tune_resource_requirements=auto_tune_resource_requirements,
+        ignore_missing_data=ignore_missing_data,
+    )
     api.post_workflows_workflow_events(
         workflow_key,
         {
@@ -638,10 +610,88 @@ reset all job statuses to 'uninitialized' and then 'ready' or 'blocked.'
     # TODO: This could schedule nodes.
 
 
-def _exit_if_jobs_are_running(api, workflow_key):
+def restart_workflow(api, workflow_key, only_uninitialized=False, ignore_missing_data=False):
+    """Restarts the workflow."""
+    mgr = WorkflowManager(api, workflow_key)
+    mgr.restart(ignore_missing_data=ignore_missing_data, only_uninitialized=only_uninitialized)
+    api.post_workflows_workflow_events(
+        workflow_key,
+        {
+            "category": "workflow",
+            "type": "restart",
+            "key": workflow_key,
+            "message": f"Restarted workflow {workflow_key}",
+        },
+    )
+    # TODO: This could schedule nodes.
+
+
+def reset_workflow_status(api, workflow_key):
+    """Resets the status of the workflow."""
+    api.post_workflows_key_reset_status(workflow_key)
+    logger.info("Reset workflow status")
+    api.post_workflows_workflow_events(
+        workflow_key,
+        {
+            "category": "workflow",
+            "type": "reset_status",
+            "key": workflow_key,
+            "message": f"Reset workflow {workflow_key}",
+        },
+    )
+
+
+def reset_workflow_job_status(api, workflow_key, failed_only=False):
+    """Resets the status of the workflow jobs."""
+    api.post_workflows_key_reset_job_status(workflow_key, failed_only=failed_only)
+    logger.info("Reset job status, failed_only=%s", failed_only)
+    api.post_workflows_workflow_events(
+        workflow_key,
+        {
+            "category": "workflow",
+            "type": "reset_job_status",
+            "key": workflow_key,
+            "message": f"Reset workflow {workflow_key} job status",
+        },
+    )
+
+
+def cancel_workflow(api, workflow_key):
+    """Cancels the workflow."""
+    # TODO: Handling different scheduler types needs to be at a lower level.
+    for job in api.get_workflows_workflow_scheduled_compute_nodes(workflow_key).items:
+        if (
+            job.status != "complete"
+            and job.scheduler_config_id.split("/")[0].split("__")[0] == "slurm_schedulers"
+        ):
+            intf = SlurmInterface()
+            return_code = intf.cancel_job(job.scheduler_id)
+            if return_code == 0:
+                job.status = "complete"
+                api.put_workflows_workflow_scheduled_compute_nodes_key(workflow_key, job.key, job)
+            # else: Ignore all return codes and try to cancel all jobs.
+    api.put_workflows_key_cancel(workflow_key)
+    logger.info("Canceled workflow %s", workflow_key)
+    api.post_workflows_workflow_events(
+        workflow_key,
+        {
+            "category": "workflow",
+            "type": "cancel",
+            "key": workflow_key,
+            "message": f"Canceled workflow {workflow_key}",
+        },
+    )
+
+
+def has_running_jobs(api, workflow_key) -> bool:
+    """Returns True if jobs are running."""
     submitted = api.get_workflows_workflow_jobs(workflow_key, status="submitted", limit=1)
     sub_pend = api.get_workflows_workflow_jobs(workflow_key, status="submitted_pending", limit=1)
-    if len(submitted.items) > 0 or len(sub_pend.items) > 0:
+    return len(submitted.items) > 0 or len(sub_pend.items) > 0
+
+
+def _exit_if_jobs_are_running(api, workflow_key):
+    if has_running_jobs(api, workflow_key):
         logger.error(
             "This operation is not allowed on a workflow with 'submitted' jobs. Please allow "
             "the jobs to finish or cancel them."
