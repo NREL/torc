@@ -46,7 +46,7 @@ def main():
         data = yaml.safe_load(f)
 
     data["info"]["title"] = "torc"
-    data["info"]["version"] = "v0.2.2"
+    data["info"]["version"] = "v0.2.3"
     data["info"]["license"] = {"name": "BSD 3-Clause"}
 
     _replace_paths_and_components(
