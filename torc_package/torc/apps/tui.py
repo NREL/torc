@@ -53,7 +53,6 @@ logger = logging.getLogger(__name__)
 # - Need to implement async versions of API calls. Displays of large datatables are slow.
 #   textualize supports a run_worker method to help once we have async calls.
 #   OpenAPI client does have async support.
-# - Add table for scheduled compute nodes.
 # - Add create-from-json-file
 # - Ctrl-c while event monitoring timer thread is active doesn't work.
 
@@ -598,6 +597,28 @@ def init_table(table, columns):
         table.add_column(column, key=column)
 
 
+def build_compute_node_table(table, table_id, api, workflow_key, **filters):
+    """Build a table of compute nodes"""
+    columns = DATA_TABLES[table_id]["columns"]
+    init_table(table, columns)
+    for i, item in enumerate(
+        iter_documents(api.get_workflows_workflow_compute_nodes, workflow_key, **filters), start=1
+    ):
+        data = item.dict()
+        values = []
+        for column in columns:
+            if column == "scheduler_id":
+                if data["scheduler"].get("hpc_type") == "slurm":
+                    values.append(data["scheduler"]["slurm_job_id"])
+                else:
+                    values.append("Unknown")
+            elif column == "duration (s)":
+                values.append(data.get("duration_seconds", ""))
+            else:
+                values.append(data[column])
+        table.add_row(*values, key=item.key, label=str(i))
+
+
 def build_document_table(table, table_id, api, workflow_key, **filters):
     """Build a table of any document type"""
     columns = DATA_TABLES[table_id]["columns"]
@@ -608,14 +629,14 @@ def build_document_table(table, table_id, api, workflow_key, **filters):
         table.add_row(*values, key=getattr(item, "key"), label=str(i))
 
 
-def build_event_table(table, _, api, workflow_key, **filters):
+def build_event_table(table, table_id, api, workflow_key, **filters):
     """Build a table of events"""
-    columns = DATA_TABLES["events"]["columns"]
+    columns = DATA_TABLES[table_id]["columns"]
     init_table(table, columns)
     for i, item in enumerate(
         iter_documents(api.get_workflows_workflow_events, workflow_key, **filters), start=1
     ):
-        table.add_row(*make_event(item), key=getattr(item, "key"), label=str(i))
+        table.add_row(*make_event(item), key=item["_key"], label=str(i))
 
 
 def make_event(data: dict):
@@ -646,6 +667,11 @@ def build_results_table(table, table_id, api, workflow_key, **filters):
 
 
 DATA_TABLES = {
+    "compute_nodes": {
+        "name": "Compute Nodes",
+        "columns": ("hostname", "is_active", "scheduler_id", "start_time", "duration (s)"),
+        "table_builder": build_compute_node_table,
+    },
     "events": {
         "name": "Events",
         "columns": ("timestamp", "category", "type", "message"),
@@ -674,6 +700,12 @@ DATA_TABLES = {
             "completion_time",
         ),
         "table_builder": build_results_table,
+    },
+    "scheduled_compute_nodes": {
+        "name": "Scheduled Compute Nodes",
+        "columns": ("scheduler_id", "status"),
+        "method": "get_workflows_workflow_scheduled_compute_nodes",
+        "table_builder": build_document_table,
     },
     "slurm_schedulers": {
         "name": "Slurm Schedulers",

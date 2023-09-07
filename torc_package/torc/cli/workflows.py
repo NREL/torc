@@ -663,6 +663,7 @@ def cancel_workflow(api, workflow_key):
         if (
             job.status != "complete"
             and job.scheduler_config_id.split("/")[0].split("__")[0] == "slurm_schedulers"
+            and job.scheduler_id is not None
         ):
             intf = SlurmInterface()
             return_code = intf.cancel_job(job.scheduler_id)

@@ -431,7 +431,7 @@ def schedule_slurm_nodes(
             "job_ids": job_ids,
             "scheduler_config_id": config.id,
             "torc_version": torc.version.__version__,
-            "message": f"Submitted {len(job_ids)} job requests to {hpc_type.value}",
+            "message": f"Submitted {len(job_ids)} job request(s) to {hpc_type.value}",
         },
     )
 
