@@ -91,6 +91,7 @@ setup(
             "sphinx-click",
             "sphinxcontrib-openapi",
             "sphinx-copybutton",
+            "textual-dev",
         ],
         "plots": [
             "networkx",
