@@ -264,7 +264,7 @@ def list_jobs(ctx, api, filters, exclude, limit, skip, sort_by, reverse_sort):
         table_title,
         columns,
         "jobs",
-        start_index=skip,
+        start_index=skip + 1,
     )
 
 
@@ -292,7 +292,7 @@ def list_process_stats(ctx, api, limit, skip):
     items = list(iter_job_process_stats(api, workflow_key, **kwargs))
     table_title = f"Job Process Resource Utilization Statistics for workflow {workflow_key}"
     columns = items[0].keys()
-    print_items(ctx, items, table_title, columns, "stats", start_index=skip)
+    print_items(ctx, items, table_title, columns, "stats", start_index=skip + 1)
 
 
 @click.command()

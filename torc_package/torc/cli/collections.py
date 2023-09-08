@@ -123,7 +123,7 @@ def _join_by_edge(
         table_title,
         columns,
         "items",
-        start_index=skip,
+        start_index=skip + 1,
     )
 
 

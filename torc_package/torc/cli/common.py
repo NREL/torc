@@ -153,7 +153,7 @@ def get_workflow_key_from_context(ctx, api):
     return key
 
 
-def print_items(ctx, items, table_title, columns, json_key, indent=None, start_index=0):
+def print_items(ctx, items, table_title, columns, json_key, indent=None, start_index=1):
     """Print items in either a table or JSON format, based on what is set in ctx."""
     output_format = get_output_format_from_context(ctx)
     if output_format in ("text", "csv"):
@@ -250,7 +250,7 @@ def prompt_user_for_document(
     return doc
 
 
-def make_text_table(iterable, title, columns, start_index=0):
+def make_text_table(iterable, title, columns, start_index=1):
     """Return a PrettyTable from an iterable.
 
     Parameters

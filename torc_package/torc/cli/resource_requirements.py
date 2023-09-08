@@ -278,7 +278,7 @@ def list_resource_requirements(ctx, api, filters, limit, skip, sort_by, reverse_
         table_title,
         columns,
         "resource_requirements",
-        start_index=skip,
+        start_index=skip + 1,
     )
 
 

@@ -103,7 +103,7 @@ def list_results(ctx, api, filters, limit, skip, exclude_job_names, sort_by, rev
         table_title,
         columns,
         "results",
-        start_index=skip,
+        start_index=skip + 1,
     )
 
 
