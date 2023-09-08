@@ -43,7 +43,7 @@ you the latest code from the ``main`` branch.
 .. code-block:: console
 
    $ git clone https://github.nrel.gov/viz/wms.git
-   $ pip install -e wms/torc
+   $ pip install -e wms/torc_package
 
 6. Optionally install ``jq`` from https://stedolan.github.io/jq/download/ for parsing JSON.
    This tool is very useful when sending API requests with ``curl`` or dumping torc output to
