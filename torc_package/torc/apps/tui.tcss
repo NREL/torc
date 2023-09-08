@@ -20,19 +20,8 @@
 
 #main_grid {
     layout: grid;
-    grid-size: 1 3;
-    grid-rows: 45% 45% 10%;
-}
-
-#database_controls_grid {
-    layout: grid;
-    grid-size: 2 3;
-}
-
-#database_info_grid {
-    layout: grid;
-    grid-size: 3 1;
-    grid-columns: 1fr 2fr 2fr;
+    grid-size: 1 2;
+    grid-rows: 40% 60%;
 }
 
 #database_grid {
@@ -41,17 +30,18 @@
     grid-columns: 1fr 2fr;
 }
 
-#controls_grid {
+#document_table_controls_grid {
     layout: grid;
-    grid-size: 2 4;
-    grid-columns: 1fr 1fr;
-    grid-rows: 1fr 1fr 1fr 1fr;
+    grid-size: 2 3;
+    grid-columns: 2fr 1fr;
+    grid-rows: 2fr 1fr 1fr;
 }
 
 #document_table_grid {
     layout: grid;
     grid-size: 2 1;
     grid-columns: 1fr 2fr;
+    grid-rows: 100%;
 }
 
 #slurm_grid {

@@ -104,44 +104,43 @@ class TorcManagementConsole(App):
                         value=self._db_name, placeholder="Enter a database name", id="db_name"
                     )
                     with Horizontal():
+                        yield Button("Connect", id="connect", variant="success")
                         yield Checkbox("Filter by user", True, id="filter_by_user")
-                        yield Checkbox("Connected", False, id="db_connected", disabled=True)
-                    yield Button("Connect", id="connect", variant="success")
-                    yield Label("Selected workflow key:")
+                    yield Static("Selected workflow key:")
                     yield Input(
                         placeholder="Enter a workflow key or select a row", id="workflow_key"
                     )
-                yield VerticalScroll(DataTable(id="workflow_table"))
+                with Vertical():
+                    yield VerticalScroll(DataTable(id="workflow_table"))
+                    yield Input(
+                        value="", placeholder="connected URL", id="connected_url", disabled=True
+                    )
+                    yield Markdown("", id="output_box")
             with TabbedContent():
                 with TabPane("View Status"):
                     with Grid(id="document_table_grid"):
-                        with Vertical():
-                            with Horizontal():
-                                with RadioSet(id="table_options", disabled=True):
-                                    yield RadioButton("", id="empty_table", value=True)
-                                    for table_id, table in DATA_TABLES.items():
-                                        yield RadioButton(table["name"], id=table_id)
-                                with RadioSet(id="sort_options", disabled=True):
-                                    yield RadioButton("None", id="no_sorting", value=True)
-                                    yield RadioButton("Ascending", id="ascending")
-                                    yield RadioButton("Descending", id="descending")
+                        with Grid(id="document_table_controls_grid"):
+                            with RadioSet(id="table_options", disabled=True):
+                                for table_id, table in DATA_TABLES.items():
+                                    yield RadioButton(table["name"], id=table_id)
+                            with RadioSet(id="sort_options", disabled=True):
+                                yield RadioButton("None", id="no_sorting", value=True)
+                                yield RadioButton("Ascending", id="ascending")
+                                yield RadioButton("Descending", id="descending")
                             yield Input(
-                                placeholder="Enter filter string. Ex: column1=val1 column2=val2",
+                                placeholder="Filter, ex: column1=val1 column2=val2",
                                 id="filter_value",
                             )
-                            yield Static("")
                             yield Input(
-                                placeholder="Enter sort column or click on table header",
+                                placeholder="Sort column",
                                 id="sort_column",
                             )
-                            yield Static("")
                             yield Button(
                                 "Refresh",
                                 id="refresh_table",
                                 disabled=True,
                                 variant="primary",
                             )
-                            yield Static("")
                         yield VerticalScroll(DataTable(id="document_table"))
                 with TabPane("Manage Workflow"):
                     with Horizontal(classes="buttons"):
@@ -184,7 +183,6 @@ class TorcManagementConsole(App):
                             validators=[Number(minimum=10)],
                         )
                     yield RichLog(max_lines=1000, id="event_log")
-            yield Markdown("", id="output_box")
 
     def action_toggle_dark(self) -> None:
         """An action to toggle dark mode."""
@@ -212,6 +210,11 @@ class TorcManagementConsole(App):
         self.query_one(
             "#refresh_table", Button
         ).tooltip = "Refresh the table with sorting and filtering applied."
+        self.query_one("#filter_value", Input).tooltip = "Filter by one or more values."
+        self.query_one("#sort_options", RadioSet).tooltip = "Sort order"
+        self.query_one(
+            "#sort_column", Input
+        ).tooltip = "Enter sort column or click on table header."
         for table in self.query(DataTable):  # pylint: disable=not-an-iterable
             table.zebra_stripes = True
             table.cursor_type = "row"
@@ -268,6 +271,14 @@ class TorcManagementConsole(App):
             case _:
                 raise NotImplementedError(f"{event.button.id=}")
 
+    def on_checkbox_changed(self, event: Checkbox.Changed):
+        """Event handler called when a checkbox is changed."""
+        match event.checkbox.id:
+            case "filter_by_user":
+                self._connect()
+            case _:
+                raise NotImplementedError(f"{event.checkbox.id=}")
+
     def on_radio_set_changed(self, event: RadioSet.Changed) -> None:
         """Event handler called when a RadioSet changes"""
         if event.radio_set.id == "table_options":
@@ -322,7 +333,7 @@ class TorcManagementConsole(App):
         return key
 
     def _check_url_and_workflow_key(self):
-        url = self._check_full_url()
+        url = self.query_one("#connected_url", Input).value
         key = self._check_workflow_key()
         if not url or not key:
             self._post_error_msg("Both the database URL and workflow key must be set.")
@@ -336,7 +347,6 @@ class TorcManagementConsole(App):
         return True
 
     def _connect(self):
-        self.query_one("#db_connected", Checkbox).value = False
         full_url = self._check_full_url()
         if full_url is None:
             return
@@ -348,7 +358,7 @@ class TorcManagementConsole(App):
         self.query_one("#workflow_key", Input).value = ""
         self.query_one("#table_options", RadioSet).disabled = True
         self.query_one("#sort_options", RadioSet).disabled = True
-        self.query_one("#db_connected", Checkbox).value = True
+        self.query_one("#connected_url", Input).value = full_url
 
     def _populate_slurm_schedulers(self):
         key = self.query_one("#workflow_key", Input).value
@@ -387,9 +397,6 @@ class TorcManagementConsole(App):
         assert self._api
         radio_set = self.query_one("#table_options", RadioSet)
         table_id = radio_set.pressed_button.id
-        if table_id == "empty_table":
-            logger.info("empty_table, return")
-            return
         table = self.query_one("#document_table", DataTable)
         filter_value = self.query_one("#filter_value", Input).value.strip()
         if filter_value != "":
@@ -702,7 +709,7 @@ DATA_TABLES = {
         "table_builder": build_results_table,
     },
     "scheduled_compute_nodes": {
-        "name": "Scheduled Compute Nodes",
+        "name": "Scheduled Nodes",
         "columns": ("scheduler_id", "status"),
         "method": "get_workflows_workflow_scheduled_compute_nodes",
         "table_builder": build_document_table,
