@@ -24,5 +24,25 @@ The ``torc-service.zip`` file can be installed in ArangoDB in its web applicatio
 instructions at https://www.arangodb.com/docs/stable/foxx-getting-started.html#try-it-out or by
 using the ``foxx`` CLI application. CLI instructions are at https://github.com/arangodb/foxx-cli.
 
+Here is an example ``fox`` command to replace a torc service in database with these
+pre-conditions. Replace as appropriate for your environment.
+
+- ArangoDB is running in a Docker container with the name ``arangodb``.
+- The local directory ``~/docker-share`` is bind-mounted in the container.
+- ``~/docker-share`` contains ``torc-service.zip`` and ``password`` which contains the password
+  for the user.
+- The database name is ``test-workflows``.
+- The user is ``root``.
+
+.. code-block:: console
+
+    $ docker run arangodb foxx replace \
+        --server http://localhost:8529 \
+        --username root \
+        -p /share/password \
+        -D test-workflows \
+        /torc-service \
+        /share/torc-service.zip
+
 4. Run all tests on the HPC. The tests in ``tests/test_slurm_workflows.py`` do not run in
    environments where the Slurm CLI tools are not installed.
