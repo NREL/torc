@@ -1,4 +1,5 @@
-SWAGGER_VERSION=v3:3.0.36
+OPENAPI_CLI_VERSION=v7.0.0
+SWAGGER_CLI_VERSION=v3:3.0.36
 
 if [ -z ${TORC_DATABASE_NAME} ]; then
     echo "Please define the database name in the environment variable TORC_DATABASE_NAME."
@@ -44,10 +45,21 @@ function swap_text()
 
 echo "$swagger" | jq . > swagger.json
 
-docker run \
-    -v $(pwd):/src \
-    swaggerapi/swagger-codegen-cli-${SWAGGER_VERSION} \
-    generate --lang=openapi-yaml --input-spec=/src/swagger.json -o /src
+
+if [ ! -z ${LOCAL_SWAGGER_CODEGEN_CLI} ]; then
+    # This docker container below doesn't work on Macs with M1 or M2 processors.
+    # Those users need to download
+    # https://mvnrepository.com/artifact/io.swagger.codegen.v3/swagger-codegen-cli/3.0.36
+    # and set this environment variable.
+    # TODO: find a better solution.
+    java -jar ${LOCAL_SWAGGER_CODEGEN_CLI} \
+        generate --lang=openapi-yaml --input-spec=swagger.json -o .
+else
+    docker run \
+        -v $(pwd):/src \
+        swaggerapi/swagger-codegen-cli-${SWAGGER_CLI_VERSION} \
+        generate --lang=openapi-yaml --input-spec=/src/swagger.json -o /src
+fi
 
 ret=$?
 if [ $ret -ne 0 ]; then
@@ -73,13 +85,10 @@ fi
 rm -rf ${JULIA_CLIENT}
 mkdir ${JULIA_CLIENT}
 
-# TODO: 7.0.0 version is not finalized, but seems to be required for what we're doing. 6.6.0 failed
-# Python client. It seems to add lots of good stuff, like using Pydantic for the backing data models.
-# Use the 'latest' tag. The release should be in Aug 2023.
 docker run \
     -v $(pwd):/src \
     -v ${PYTHON_CLIENT}:/python_client \
-    openapitools/openapi-generator-cli \
+    openapitools/openapi-generator-cli:${OPENAPI_CLI_VERSION} \
     generate -g python --input-spec=/src/openapi.yaml -o /python_client -c /src/config.json
 if [ $? -ne 0 ]; then
     echo "Failed to build the python client ***"

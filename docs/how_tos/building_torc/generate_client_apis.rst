@@ -3,10 +3,19 @@
 ********************
 Generate Client APIs
 ********************
-The software package uses the ``OpenAPI`` tools to auto-generate client APIs from a Docker
-container.
+The software package uses the ``OpenAPI`` and ``Swagger`` tools to auto-generate client APIs from
+Docker containers.
 
 .. note:: You must have Docker installed.
+
+The Swagger container does not support Macs with M1 or M2 processors. If you have one of those then
+you'll need to download the Swagger jar file from this `Maven repository
+<https://mvnrepository.com/artifact/io.swagger.codegen.v3/swagger-codegen-cli/3.0.36>`_ and then
+set the environment variable ``LOCAL_SWAGGER_CODEGEN_CLI`` with the path to the file. For example,
+
+.. code-block:: console
+
+    $ export LOCAL_SWAGGER_CODEGEN_CLI=~/Downloads/swagger-codegen-cli-3.0.36.jar
 
 This repository stores an OpenAPI specification at ``db_service/openapi.yaml``.
 If the API definitions are changed then this needs to be regenerated. Here's how to to that:
@@ -39,7 +48,7 @@ and port:
 
    $ cd db_service
 
-5. Set the ``packageVersion`` in ``config.json to the same value as in
+5. Set the ``packageVersion`` in config.json to the same value as in
    ``torc_package/torc/version.py``.
 
 6. Generate the Python and Julia client by running the script below. It performs the following
@@ -59,7 +68,7 @@ and port:
 
    $ bash make_api.sh
 
-This procedure could be implemented to generate server stubs or additional client programming
-languages. Refer to the ``OpenAPI`` documentation for more information.
+This procedure could be implemented to generate additional client programming languages. Refer to
+the ``OpenAPI`` documentation for more information.
 
 7. Commit changes to the repository.
