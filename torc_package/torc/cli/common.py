@@ -204,7 +204,7 @@ def prompt_user_for_document(
     docs = []
     dicts = []
     index_to_doc = {}
-    for i, doc in enumerate(iter_documents(getter_func, *args, **kwargs)):
+    for i, doc in enumerate(iter_documents(getter_func, *args, **kwargs), start=1):
         index_to_doc[i] = doc
         data = doc.to_dict()
         for col in exclude_columns:
@@ -223,7 +223,7 @@ def prompt_user_for_document(
         print(msg, file=sys.stderr)
 
     columns = dicts[0].keys()
-    table = make_text_table(dicts, doc_type, columns)
+    table = make_text_table(dicts, doc_type, columns, start_index=1)
     if table.rows:
         print(table, file=sys.stderr)
 
