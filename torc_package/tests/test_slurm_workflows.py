@@ -1,5 +1,6 @@
 """Tests SLURM workflows"""
 
+import itertools
 import json
 import shutil
 import subprocess
@@ -105,6 +106,19 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
         assert len(results) == 4
         for result in results:
             assert result.return_code == 0
+
+        result = runner.invoke(cli, ["-k", key, "reports", "results", "-o", str(output_dir)])
+        assert result.exit_code == 0
+        assert result.exit_code == 0
+        report = json.loads(result.stdout)
+        assert len(report["jobs"]) == 4
+        for job_report in report["jobs"]:
+            assert len(job_report["runs"]) == 1
+            run = job_report["runs"][0]
+            assert run["return_code"] == 0
+            assert Path(run["job_runner_log_file"]).exists()
+            for file in itertools.chain(run["slurm_stdio_files"], run["job_stdio_files"]):
+                assert Path(file).exists()
 
         start_events = []
         complete_events = []

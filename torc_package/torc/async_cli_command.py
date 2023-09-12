@@ -21,7 +21,7 @@ class AsyncJobBase(abc.ABC):
     """Base class for async jobs"""
 
     @abc.abstractmethod
-    def run(self, output_dir: Path):
+    def run(self, output_dir: Path, run_id: int):
         """Run a job."""
 
     @abc.abstractmethod
@@ -78,9 +78,8 @@ class AsyncJobBase(abc.ABC):
 class AsyncCliCommand(AsyncJobBase):
     """Manages execution of an asynchronous CLI command."""
 
-    def __init__(self, job, log_prefix=None, cpu_affinity_tracker=None):
+    def __init__(self, job, cpu_affinity_tracker=None):
         self._db_job = job
-        self._log_prefix = log_prefix
         self._pipe = None
         self._is_running = False
         self._start_time = 0.0
@@ -157,11 +156,12 @@ class AsyncCliCommand(AsyncJobBase):
         """Return the process ID for the job."""
         return self._pipe.pid
 
-    def run(self, output_dir: Path):
+    def run(self, output_dir: Path, run_id: int, log_prefix=None):
         assert self._pipe is None
         self._start_time = time.time()
 
-        basename = self.key if self._log_prefix is None else f"{self._log_prefix}_{self.key}"
+        log_prefix = log_prefix or ""
+        basename = f"{log_prefix}_{self.key}_{run_id}"
         stdout_filename = output_dir / JOB_STDIO_DIR / f"{basename}.o"
         stderr_filename = output_dir / JOB_STDIO_DIR / f"{basename}.e"
         # pylint: disable=consider-using-with

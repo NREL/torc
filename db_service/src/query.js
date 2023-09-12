@@ -644,7 +644,6 @@ function getWorkflowStatus(workflow) {
 function initializeJobStatus(workflow, onlyUninitialized) {
   // TODO: Can this be more efficient with one traversal?
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
-  const schedulers = getSchedulers(workflow);
   for (const job of jobs.all()) {
     const jobResources = getJobResourceRequirements(job, workflow);
     if (job.internal == null) {
@@ -652,7 +651,7 @@ function initializeJobStatus(workflow, onlyUninitialized) {
     }
     const scheduler = getJobScheduler(job, workflow);
     if (scheduler == null) {
-      job.internal.scheduler_config_id = selectBestSchedulerForJob(job, schedulers);
+      job.internal.scheduler_config_id = '';
     } else {
       job.internal.scheduler_config_id = scheduler._id;
     }
@@ -673,56 +672,9 @@ function initializeJobStatus(workflow, onlyUninitialized) {
     }
     jobs.update(job, job, {mergeObjects: false});
   }
-  console.log(
+  console.debug(
       `Initialized all incomplete job status to ${JobStatus.Ready} or ${JobStatus.Blocked}`,
   );
-}
-
-/**
- * Return the ID of the best scheduler for job. Barely functional.
- * @param {Object} job
- * @param {Array} schedulers
- * @return {string}
- */
-function selectBestSchedulerForJob(job, schedulers) {
-  const allSchedulers = schedulers.slurmSchedulers.concat(
-      schedulers.awsSchedulers,
-      schedulers.localSchedulers,
-  );
-  if (allSchedulers.length == 1) {
-    const scheduler = allSchedulers[0];
-    if (schedulers.slurmSchedulers.length == 1) {
-      if (job.internal.runtime_seconds <= schedulers.durationToSeconds.get(scheduler.walltime)) {
-        // TODO: this really needs to convert all Slurm strings into common units and then compare.
-        return scheduler._id;
-      }
-    } else {
-      return scheduler._id;
-    }
-  }
-  // TODO: Figure out the best when there are multiple matches.
-  return '';
-}
-
-/**
- * Return all stored schedulers.
- * @param {Object} workflow
- * @return {Object}
- */
-function getSchedulers(workflow) {
-  const schedulers = {
-    awsSchedulers: config.getWorkflowCollection(workflow, 'aws_schedulers').toArray(),
-    localSchedulers: config.getWorkflowCollection(workflow, 'local_schedulers').toArray(),
-    slurmSchedulers: config.getWorkflowCollection(workflow, 'slurm_schedulers').toArray(),
-    durationToSeconds: new Map(),
-  };
-  for (const scheduler of schedulers.slurmSchedulers) {
-    if (!schedulers.durationToSeconds.has(scheduler.walltime)) {
-      const durationSeconds = utils.getWalltimeInSeconds(scheduler.walltime);
-      schedulers.durationToSeconds.set(scheduler.walltime, durationSeconds);
-    }
-  }
-  return schedulers;
 }
 
 /**
@@ -874,14 +826,16 @@ function joinCollectionsByInboundEdge(
   const edgeName = config.getWorkflowCollectionName(workflow, edgeBase);
   // TODO: It would be better to allow dynamic filtering of fields on either
   // side of the edge in this query.
+  // Note that there can be multiple edges between two vertexes because the same
+  // compute node can run the same job multiple times on workflow restarts.
   const cursor = query({count: true})`
     FOR x in ${fromCollection}
       FOR v, e, p
           IN 1
           INBOUND x._id
           GRAPH ${graphName}
-          OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
-          RETURN {from: p.vertices[1], to: x}
+          OPTIONS { edgeCollections: ${edgeName} }
+          RETURN {from: p.vertices[1], to: x, edge: e}
   `;
   return cursor;
 }
@@ -916,14 +870,16 @@ function joinCollectionsByOutboundEdge(
       .toArray();
   const edgeName = config.getWorkflowCollectionName(workflow, edgeBase);
 
+  // Note that there can be multiple edges between two vertexes because the same
+  // compute node can run the same job multiple times on workflow restarts.
   const cursor = query({count: true})`
     FOR x in ${fromCollection}
       FOR v, e, p
           IN 1
           OUTBOUND x._id
           GRAPH ${graphName}
-          OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
-          RETURN {from: x, to: p.vertices[1]}
+          OPTIONS { edgeCollections: ${edgeName} }
+          RETURN {from: x, to: p.vertices[1], edge: e}
   `;
   return cursor;
 }
@@ -1119,8 +1075,10 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
             && job.internal.num_gpus <= ${availableGpus}
             && job.internal.runtime_seconds <= ${workerTimeLimit}
             && job.internal.num_nodes == ${workerResources.num_nodes}
-            && (${schedulerConfigId} == '' || job.internal.scheduler_config_id == ''
-            || job.internal.scheduler_config_id == ${schedulerConfigId})
+            && (job.internal.scheduler_config_id == ''
+                || job.internal.scheduler_config_id == ${schedulerConfigId})
+          SORT job.internal.num_gpus DESC, job.internal.memory_bytes DESC,
+               job.internal.runtime_seconds DESC
           LIMIT ${queryLimit}
           RETURN job
       `;
@@ -1154,7 +1112,7 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
       `runtime_seconds <= ${workerTimeLimit}, ` +
       `num_nodes == ${workerResources.num_nodes}, scheduler_config_id == ${schedulerConfigId}`;
   }
-  // console.log(`Prepared ${jobs.length} jobs for submission.`);
+  console.debug(`Prepared ${jobs.length} jobs for submission.`);
   return jobs;
 }
 
@@ -1278,7 +1236,7 @@ function resetJobStatus(workflow, failedOnly) {
     job.status = JobStatus.Uninitialized;
     jobsCollection.update(job, job, {mergeObjects: false});
   }
-  console.log(`Reset job status to ${JobStatus.Uninitialized}`);
+  console.debug(`Reset job status to ${JobStatus.Uninitialized}`);
 }
 
 /** Reset workflow config.
@@ -1310,7 +1268,7 @@ function resetWorkflowStatus(workflow) {
   const doc = getWorkflowStatus(workflow);
   Object.assign(doc, status);
   db.workflow_statuses.update(doc, doc, {mergeObjects: false});
-  console.log(`Reset workflow status`);
+  console.debug(`Reset workflow status`);
 }
 
 /**
@@ -1473,7 +1431,7 @@ function updateJobsFromCompletionReversal(job, workflow) {
     if (downstreamJob.status != JobStatus.Uninitialized) {
       downstreamJob.status = JobStatus.Uninitialized;
       jobs.update(downstreamJob, downstreamJob, {mergeObjects: false});
-      console.log(`Reset job=${downstreamJob._key} status to ${JobStatus.Uninitialized}`);
+      console.debug(`Reset job=${downstreamJob._key} status to ${JobStatus.Uninitialized}`);
     }
   }
 }

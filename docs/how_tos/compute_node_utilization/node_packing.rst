@@ -45,18 +45,12 @@ that you are defining your workflow in a workflow specification file as describe
 
 3. Specify a ``resource_requirements`` name for each job.
 
-4. If you will schedule different types of compute nodes then specify a ``scheduler`` for each job.
-   This field uses the format ``<scheduler_config_type>/<scheduler_config_name>`` (e.g.,
-   `slurm_schedulers/standard`). If you only have one scheduler type, torc will use it for all
-   jobs.
-
 .. code-block:: JavaScript
 
     jobs: [
       {
         name: "work1",
         command: "python work.py",
-        scheduler: "slurm_schedulers/standard",
         resource_requirements: "small",
       }
     ]

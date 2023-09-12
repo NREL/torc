@@ -22,6 +22,7 @@ class DatabaseInterface:
             "jobs",
             "local_schedulers",
             "resource_requirements",
+            "slurm_schedulers",
             "user_data",
         )
         lookup = defaultdict(dict)

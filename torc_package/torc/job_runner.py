@@ -380,9 +380,6 @@ class JobRunner:
         )
         return job
 
-    def _current_memory_allocation_percentage(self):
-        return self._resources.memory_gb / self._orig_resources.memory_gb * 100
-
     def _decrement_resources(self, job):
         job_resources = send_api_command(
             self._api.get_workflows_workflow_jobs_key_resource_requirements,
@@ -422,7 +419,7 @@ class JobRunner:
         # asking the database for jobs when it's highly unlikely to get any.
         # It would be better if the database or some middleware could publish events when
         # new jobs are ready to run.
-        return self._resources.num_cpus > 0 and self._current_memory_allocation_percentage() > 10
+        return self._resources.num_cpus > 0 and self._resources.memory_gb > 0
 
     def _log_worker_start_event(self):
         send_api_command(
@@ -563,7 +560,7 @@ class JobRunner:
             self._pids.pop(job.key)
 
     def _run_job(self, job: AsyncCliCommand):
-        job.run(self._output_dir)
+        job.run(self._output_dir, self._run_id, log_prefix=self._log_prefix)
         # The database changes db_job._rev on every update.
         # This reassigns job.db_job in order to stay current.
         job.db_job = send_api_command(
@@ -584,11 +581,23 @@ class JobRunner:
             EdgesNameModel(
                 _from=self._compute_node.id,
                 to=job.db_job.id,
+                data={"run_id": self._run_id},
             ),
         )
         self._log_job_start_event(job.key, job.db_job.name)
 
     def _run_ready_jobs(self):
+        run_id = send_api_command(self._api.get_workflows_key_status, self._workflow.key).run_id
+        if run_id != self._run_id:
+            if self._outstanding_jobs:
+                num = len(self._outstanding_jobs)
+                raise Exception(
+                    f"Detected a change in run_id while {num} jobs are outstanding: "
+                    "current={self._run_id} new={run_id}"
+                )
+            logger.info("Detected a change in run_id. current=%s new=%s", self._run_id, run_id)
+            self._run_id = run_id
+
         reason_none_started = None
         if self._end_time is not None:
             self._resources.time_limit = convert_end_time_to_duration_str(self._end_time)
@@ -609,7 +618,6 @@ class JobRunner:
             self._run_job(
                 AsyncCliCommand(
                     job,
-                    log_prefix=self._log_prefix,
                     cpu_affinity_tracker=self._cpu_tracker,
                 )
             )

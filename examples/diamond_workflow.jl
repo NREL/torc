@@ -46,7 +46,6 @@ function main()
         input_files=[inputs.name],
         output_files=[f1.name],
         resource_requirements=small.name,
-        scheduler="slurm_schedulers/debug",
     )
     add_job!(
         builder,
@@ -55,7 +54,6 @@ function main()
         input_files=[f1.name],
         output_files=[f2.name],
         resource_requirements=medium.name,
-        scheduler="slurm_schedulers/debug",
     )
     add_job!(
         builder,
@@ -64,7 +62,6 @@ function main()
         input_files=[f1.name],
         output_files=[f3.name],
         resource_requirements=large.name,
-        scheduler="slurm_schedulers/debug",
     )
     add_job!(
         builder,
@@ -73,7 +70,6 @@ function main()
         input_files=[f2.name, f3.name],
         output_files=[f4.name],
         resource_requirements=small.name,
-        scheduler="slurm_schedulers/debug",
     )
     configure_resource_monitoring!(
         builder,

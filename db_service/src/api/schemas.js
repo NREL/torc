@@ -51,6 +51,7 @@ const dotGraphResponse = joi.object().required().keys({
 const edge = joi.object().required().keys({
   _from: joi.string().required(),
   _to: joi.string().required(),
+  data: joi.object().optional(),
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),

@@ -232,22 +232,6 @@ def test_slurm_config_commands(create_workflow_cli):
     assert output["ids"]
     scheduler_id = output["ids"][0]
     output = _run_and_convert_output_from_json(
-        [
-            "-F",
-            "json",
-            "-k",
-            key,
-            "-u",
-            url,
-            "workflows",
-            "recommend-nodes",
-            "-s",
-            scheduler_id,
-        ]
-    )
-    assert output["num_nodes_by_cpus"] == 1
-
-    output = _run_and_convert_output_from_json(
         ["-F", "json", "-k", key, "-u", url, "hpc", "slurm", "list-configs"]
     )
 
@@ -279,6 +263,20 @@ def test_slurm_config_commands(create_workflow_cli):
     )
     assert output["configs"]
     assert output["configs"][0]["walltime"] == new_walltime
+
+    output = _run_and_convert_output_from_json(
+        [
+            "-F",
+            "json",
+            "-k",
+            key,
+            "-u",
+            url,
+            "workflows",
+            "recommend-nodes",
+        ]
+    )
+    assert output["num_nodes_by_cpus"] == 1
 
 
 def test_create_workflow_from_commands_file(db_api, tmp_path):

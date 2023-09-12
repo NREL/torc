@@ -4,10 +4,9 @@
 Installation
 ############
 
-1. If running on NREL's HPC, contact Daniel Thom to procure a database. We are currently
-   beta-testing and so only a limited number are available. You will be able to reach the database
-   from any login or compute node. You can also install a database on a compute node, but obviously,
-   it will only survive one compute node allocation. That can be sufficient for testing purposes.
+1. If running on NREL's HPC, contact Daniel Thom to procure a database for a trial period.
+   Long-term options are available by requesting a virtual machine from the HPC Operations team.
+   We can help you setup and manage the database. Other options are also under consideration.
 
 2. If running on a local computer or cloud environment, install a database with ArangoDB. Refer to
    the links below.

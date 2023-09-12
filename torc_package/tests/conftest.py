@@ -2,6 +2,7 @@
 
 # pylint: disable=redefined-outer-name,duplicate-code
 
+import getpass
 import json
 import sys
 from datetime import datetime
@@ -424,14 +425,12 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
         name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
     )
 
-    scheduler = WorkflowLocalSchedulersModel(name="test")
     num_jobs_per_category = 3
     small_jobs = [
         WorkflowJobSpecificationsModel(
             name=f"job_small{i}",
             command=f"python {RC_JOB} -i {i} -c small",
             resource_requirements=small.name,
-            scheduler="local_schedulers/test",
         )
         for i in range(1, num_jobs_per_category + 1)
     ]
@@ -440,7 +439,6 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
             name=f"job_medium{i}",
             command=f"python {RC_JOB} -i {i} -c medium",
             resource_requirements=medium.name,
-            scheduler="local_schedulers/test",
         )
         for i in range(1, num_jobs_per_category + 1)
     ]
@@ -449,7 +447,6 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
             name=f"job_large{i}",
             command=f"python {RC_JOB} -i {i} -c large",
             resource_requirements=large.name,
-            scheduler="local_schedulers/test",
         )
         for i in range(1, num_jobs_per_category + 1)
     ]
@@ -457,7 +454,6 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
     spec = WorkflowSpecificationsModel(
         jobs=small_jobs + medium_jobs + large_jobs,
         resource_requirements=[small, medium, large],
-        schedulers=WorkflowSpecificationsSchedulers(local_schedulers=[scheduler]),
         config=WorkflowConfigModel(
             compute_node_resource_stats=ComputeNodeResourceStatsModel(
                 cpu=True,
@@ -472,9 +468,8 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
 
     workflow = api.post_workflow_specifications(spec)
     db = DatabaseInterface(api, workflow)
-    scheduler = db.get_document("local_schedulers", "test")
     api.post_workflows_key_initialize_jobs(workflow.key)
-    yield db, scheduler.id, output_dir, monitor_type
+    yield db, output_dir, monitor_type
     api.delete_workflows_key(workflow.key)
     api.api_client.close()
 
@@ -561,6 +556,65 @@ def mapped_function_workflow(tmp_path):
     workflow = api.post_workflow_specifications(spec)
     db = DatabaseInterface(api, workflow)
     yield db, output_dir
+    api.delete_workflows_key(workflow.key)
+    api.api_client.close()
+
+
+@pytest.fixture
+def job_requirement_variations():
+    """Creates a workflow with varying resource requirements."""
+    api = _initialize_api()
+    builder = WorkflowBuilder()
+    medium = builder.add_resource_requirements(
+        name="medium", num_cpus=12, memory="8g", runtime="P0DT1H"
+    )
+    large = builder.add_resource_requirements(
+        name="large", num_cpus=18, memory="16g", runtime="P0DT1H"
+    )
+    gpu = builder.add_resource_requirements(
+        name="gpu", num_cpus=1, num_gpus=1, memory="32g", runtime="P0DT1H"
+    )
+    short = builder.add_resource_requirements(
+        name="short", num_cpus=4, memory="4g", runtime="P0DT30M"
+    )
+    long = builder.add_resource_requirements(
+        name="long", num_cpus=4, memory="8g", runtime="P0DT24H"
+    )
+    builder.add_slurm_scheduler(
+        name="standard",
+        account="my_account",
+        nodes=1,
+        walltime="04:00:00",
+    )
+    builder.add_slurm_scheduler(
+        name="bigmem",
+        account="my_account",
+        nodes=1,
+        partition="bigmem",
+        walltime="04:00:00",
+    )
+
+    # Order is important so that the tests can check that GPUs and memory are prioritized -
+    # GPU and bigmem nodes should not pick up small jobs.
+    builder.add_job(name="short_job", command="noop", resource_requirements=short.name)
+    for i in range(1, 11):
+        builder.add_job(name=f"medium_job{i}", command="noop", resource_requirements=medium.name)
+    for i in range(1, 11):
+        builder.add_job(
+            name=f"large_job{i}",
+            command="noop",
+            resource_requirements=large.name,
+            scheduler="slurm_schedulers/bigmem",
+        )
+    builder.add_job(name="gpu_job", command="noop", resource_requirements=gpu.name)
+    builder.add_job(name="long_job", command="noop", resource_requirements=long.name)
+
+    spec = builder.build(user=getpass.getuser(), name="test")
+    workflow = api.post_workflow_specifications(spec)
+    db = DatabaseInterface(api, workflow)
+    mgr = WorkflowManager(api, db.workflow.key)
+    mgr.start()
+    yield db
     api.delete_workflows_key(workflow.key)
     api.api_client.close()
 

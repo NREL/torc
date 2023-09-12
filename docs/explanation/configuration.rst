@@ -4,8 +4,14 @@
 Configuration
 #############
 
-Torc provides these mechanisms to configure a workflow of jobs. Refer to :ref:`jobs` for
-complete information about how to define jobs.
+Torc provides these mechanisms to configure a workflow of jobs:
+
+- Workflow specification
+- Commands file
+- CLI commands
+- API calls
+
+Refer to :ref:`jobs` for complete information about how to define jobs.
 
 .. _workflow-specification:
 
@@ -30,6 +36,31 @@ and customize as you wish.
 
    $ torc workflows template
 
+.. _advanced_config_options:
+
+Advanced Configuration Options
+------------------------------
+You can specify these options in the ``config`` section of the workflow specification. They are
+also available in the ``WorkflowBuilder`` Python and Julia client libraries.
+
+``compute_node_wait_for_new_jobs_seconds`` (int): Inform all compute nodes to wait for new jobs for
+this time period before exiting. Does not apply if the workflow is complete. Defaults to 0.
+
+``compute_node_ignore_workflow_completion`` (bool): Inform all compute nodes to ignore workflow
+completions and hold onto allocations indefinitely. Useful for debugging failed jobs and possibly
+dynamic workflows where jobs get added after starting. Defaults to false.
+
+``compute_node_expiration_buffer_seconds`` (int): Inform all compute nodes to shut down this number
+of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and
+set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM
+and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs.
+Defaults to 30 seconds.
+
+``compute_node_wait_for_healthy_database_minutes`` (int): Inform all compute nodes to wait this
+number of minutes if the database becomes unresponsive. Defaults to 20 minutes.
+
+Upload
+------
 Here's how to upload the workflow to the database:
 
 .. code-block:: console

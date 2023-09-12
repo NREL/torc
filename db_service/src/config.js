@@ -67,6 +67,8 @@ function createWorkflowCollections(workflow) {
     processUsed: getWorkflowCollectionName(workflow, 'process_used'),
   };
   const blocks = graphModule._relation(names.blocks, names.jobs, names.jobs);
+  // Note that there could be multiple edges between the same compute node and job vertexes.
+  // It would only happen if a user restarted a workflow while holding on to the same nodes.
   const executed = graphModule._relation(names.executed, names.computeNodes, names.jobs);
   const needs = graphModule._relation(names.needs, names.jobs, names.files);
   const produces = graphModule._relation(names.produces, names.jobs, names.files);

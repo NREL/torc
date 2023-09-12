@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional
+from typing import Any, Dict, Optional
 from pydantic import ConfigDict, BaseModel, Field, StrictStr
 
 class EdgesNameModel(BaseModel):
@@ -27,10 +27,11 @@ class EdgesNameModel(BaseModel):
     """
     var_from: StrictStr = Field(..., alias="_from")
     to: StrictStr = Field(..., alias="_to")
+    data: Optional[Dict[str, Any]] = None
     key: Optional[StrictStr] = Field(None, alias="_key")
     id: Optional[StrictStr] = Field(None, alias="_id")
     rev: Optional[StrictStr] = Field(None, alias="_rev")
-    __properties = ["_from", "_to", "_key", "_id", "_rev"]
+    __properties = ["_from", "_to", "data", "_key", "_id", "_rev"]
     model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
 
     def to_str(self) -> str:
@@ -66,6 +67,7 @@ class EdgesNameModel(BaseModel):
         _obj = EdgesNameModel.model_validate({
             "var_from": obj.get("_from"),
             "to": obj.get("_to"),
+            "data": obj.get("data"),
             "key": obj.get("_key"),
             "id": obj.get("_id"),
             "rev": obj.get("_rev")

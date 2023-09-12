@@ -15,11 +15,17 @@ commands:
   for jobs.
 - **cancel_on_blocking_job_failure**: If this is set to true and a job upon which this job is
   dependent fails, torc will cancel this job.
-- **scheduler**: This optional parameter can be set for two conditions. First, if a job is
-  initially blocked, you can set this with the name of a scheduler that you want torc to
-  automatically schedule for you. You must set ``needs_compute_node_schedule`` as well. Secondly,
-  you may have one scheduler configuration for big-memory jobs and another for small-memory jobs.
-  This will prevent the big-memory nodes from taking small-memory jobs.
+- **scheduler**: This optional parameter can be set for two conditions.
+
+  - If a job is initially blocked, you can set this with the name of a scheduler that you want torc
+    to automatically schedule for you. You must set ``needs_compute_node_schedule`` as well.
+  - You can use it to ensure that your desired compute node / job assignments are achieved. The
+    torc worker app pulls ready jobs after first sorting them in descending order by these
+    attributes: GPUs, memory, wall-time. This will prevent big-memory nodes from picking up
+    small-memory jobs. However, you may prefer a different priority. For example, you may prefer
+    sorting by wall-time before memory. This setting ensures that a compute node will only pull
+    jobs that you want it to get. Future versions of torc may allow additional customization.
+
 - **needs_compute_node_schedule**: As mentioned above with ``scheduler``, setting this to ``true``
   can enable automatic compute node scheduling.
 - **supports_termination**: Should be set to true if the job handles the signal ``SIGTERM``. Refer

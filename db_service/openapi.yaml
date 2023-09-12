@@ -6152,6 +6152,9 @@ components:
           type: string
         _to:
           type: string
+        data:
+          type: object
+          properties: {}
         _key:
           type: string
         _id:

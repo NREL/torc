@@ -38,7 +38,7 @@ def create_workflow(api):
     large = builder.add_resource_requirements(
         name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
     )
-    # builder.add_slurm_scheduler!(
+    # builder.add_slurm_scheduler(
     #    name="short",
     #    account="my_account",
     #    nodes=1,

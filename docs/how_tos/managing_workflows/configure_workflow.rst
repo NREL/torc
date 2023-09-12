@@ -29,6 +29,8 @@ Configure a workflow specification
 
 2. Customize the parameters in the file in an editor.
 
+   Refer to :ref:`workflow-specification` for more configuration options.
+
 3. Create a workflow in the database.
 
 .. code-block:: console

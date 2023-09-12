@@ -29,7 +29,6 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     setup_logging("torc")
     (
         db,
-        scheduler_config_id,
         output_dir,
         monitor_type,
     ) = multi_resource_requirement_workflow
@@ -72,7 +71,6 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
         output_dir,
         resources=resources,
         job_completion_poll_interval=0.1,
-        scheduler_config_id=scheduler_config_id,
     )
     runner.run_worker()
     assert api.get_workflows_key_is_complete(db.workflow.key)

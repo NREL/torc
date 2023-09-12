@@ -7,6 +7,7 @@
     EdgesNameModel(;
         _from=nothing,
         _to=nothing,
+        data=nothing,
         _key=nothing,
         _id=nothing,
         _rev=nothing,
@@ -14,6 +15,7 @@
 
     - _from::String
     - _to::String
+    - data::Any
     - _key::String
     - _id::String
     - _rev::String
@@ -21,21 +23,23 @@
 Base.@kwdef mutable struct EdgesNameModel <: OpenAPI.APIModel
     _from::Union{Nothing, String} = nothing
     _to::Union{Nothing, String} = nothing
+    data::Union{Nothing, Any} = nothing
     _key::Union{Nothing, String} = nothing
     _id::Union{Nothing, String} = nothing
     _rev::Union{Nothing, String} = nothing
 
-    function EdgesNameModel(_from, _to, _key, _id, _rev, )
+    function EdgesNameModel(_from, _to, data, _key, _id, _rev, )
         OpenAPI.validate_property(EdgesNameModel, Symbol("_from"), _from)
         OpenAPI.validate_property(EdgesNameModel, Symbol("_to"), _to)
+        OpenAPI.validate_property(EdgesNameModel, Symbol("data"), data)
         OpenAPI.validate_property(EdgesNameModel, Symbol("_key"), _key)
         OpenAPI.validate_property(EdgesNameModel, Symbol("_id"), _id)
         OpenAPI.validate_property(EdgesNameModel, Symbol("_rev"), _rev)
-        return new(_from, _to, _key, _id, _rev, )
+        return new(_from, _to, data, _key, _id, _rev, )
     end
 end # type EdgesNameModel
 
-const _property_types_EdgesNameModel = Dict{Symbol,String}(Symbol("_from")=>"String", Symbol("_to")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
+const _property_types_EdgesNameModel = Dict{Symbol,String}(Symbol("_from")=>"String", Symbol("_to")=>"String", Symbol("data")=>"Any", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ EdgesNameModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_EdgesNameModel[name]))}
 
 function check_required(o::EdgesNameModel)

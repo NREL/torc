@@ -436,7 +436,7 @@ def test_reinitialize_workflow_incomplete_missing_files(
 )
 def test_restart_workflow_missing_files(complete_workflow_missing_files, missing_file):
     """Test workflow restart on a complete workflow with missing files."""
-    db, _, output_dir = complete_workflow_missing_files
+    db, scheduler_id, output_dir = complete_workflow_missing_files
     api = db.api
     (output_dir / missing_file).unlink()
     mgr = WorkflowManager(api, db.workflow.key)
@@ -456,7 +456,7 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
         output_dir,
         time_limit="P0DT24H",
         job_completion_poll_interval=0.1,
-        scheduler_config_id=None,  # This tests the case where the node doesn't want this restriction.
+        scheduler_config_id=scheduler_id,
     )
     runner.run_worker()
 
