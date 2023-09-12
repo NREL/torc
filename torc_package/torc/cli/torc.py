@@ -17,6 +17,7 @@ from torc.cli.files import files
 from torc.cli.graphs import graphs
 from torc.cli.hpc import hpc
 from torc.cli.jobs import jobs
+from torc.cli.reports import reports
 from torc.cli.resource_requirements import resource_requirements
 from torc.cli.results import results
 from torc.cli.stats import stats
@@ -150,6 +151,7 @@ cli.add_command(files)
 cli.add_command(graphs)
 cli.add_command(hpc)
 cli.add_command(jobs)
+cli.add_command(reports)
 cli.add_command(resource_requirements)
 cli.add_command(results)
 cli.add_command(stats)

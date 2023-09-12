@@ -13,7 +13,7 @@ The base directory of output files is controlled by the directory specified in t
    $ torc jobs run
 
 The default directory is ``./output`` but you can provide a custom directory with ``-o
-<your-directory``.
+<your-directory>``.
 
 Compute node log files
 ----------------------
@@ -28,16 +28,61 @@ Here are example log files for a job runner in a Slurm compute environment::
     ./output/job_output_12230487_0.e
     ./output/job_output_12230487_0.o
     ./output/job_runner_slurm_12230487.log
-    ./output/job-stdio/slurm_12230487_1208438.e
-    ./output/job-stdio/slurm_12230487_1208438.o
+    ./output/job-stdio/slurm_12230487_1208438_1.e
+    ./output/job-stdio/slurm_12230487_1208438_1.o
 
 - ``12230487`` is the Slurm job ID
 - ``0`` is the Slurm node ID. This matters if there are multiple nodes in the Slurm allocation
   running jobs concurrently.
 - ``1208438`` is the torc job key.
+- ``1`` is the workflow run ID. This increases every time you restart the workflow.
 
 .. note:: If you restart a workflow with the same output directory, these files will accumulate.
    Torc does not delete or overwrite them.
+
+Results report
+--------------
+Run this command to see the log files above associated with each job. Refer to ``--help`` to see
+how to limit the output to specific run IDs or job keys.
+
+.. code-block:: console
+
+    $ torc reports results
+
+    {
+      "workflow": {
+        "name": "demo",
+        "user": "dthom",
+        "description": "Demo workflow.",
+        "timestamp": "2023-09-11T17:46:09.404Z",
+        "key": "27816293",
+        "id": "workflows/27816293",
+        "rev": "_gmTXxFu---"
+      },
+      "jobs": [
+        {
+          "name": "job1",
+          "key": "27816420",
+          "runs": [
+            {
+              "run_id": 1,
+              "return_code": 0,
+              "status": "done",
+              "completion_time": "2023-09-11 11:49:54.542138",
+              "exec_time_minutes": 3.056766168276469,
+              "job_runner_log_file": "output/job_runner_slurm_13259924_0_97525.log",
+              "slurm_stdio_files": [
+                "output/job_output_13259924.e",
+                "output/job_output_13259924.o"
+              ],
+              "job_stdio_files": [
+                "output/job-stdio/slurm_13259924_0_97525_27816420_1.e",
+                "output/job-stdio/slurm_13259924_0_97525_27816420_1.o"
+              ]
+            },
+        }
+      ]
+    }
 
 Slurm error messages
 ====================
