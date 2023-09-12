@@ -44,6 +44,11 @@
     grid-rows: 100%;
 }
 
+#manage_workflow_grid {
+    layout: grid;
+    grid-size: 1 2;
+}
+
 #slurm_grid {
     layout: grid;
     grid-size: 2 1;

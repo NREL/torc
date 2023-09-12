@@ -210,17 +210,9 @@ def create_from_json_file(ctx, api, filename, update_rc_with_key, user):
     """Create a workflow from a JSON/JSON5 file."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    method = json5.load if filename.suffix == ".json5" else json.load
-    with open(filename, "r", encoding="utf-8") as f:
-        data = sanitize_workflow(method(f))
-    if data.get("user") != user:
-        if "user" in data:
-            logger.info("Overriding user=%s with %s", data["user"], user)
-        data["user"] = user
-    output_format = get_output_format_from_context(ctx)
-    spec = WorkflowSpecificationsModel(**data)
-    workflow = api.post_workflow_specifications(spec)
+    workflow = create_workflow_from_json_file(api, filename, user=user)
 
+    output_format = get_output_format_from_context(ctx)
     if output_format == "text":
         logger.info("Created a workflow from %s with key=%s", filename, workflow.key)
     else:
@@ -429,8 +421,8 @@ def recommend_nodes(ctx, api, num_cpus, scheduler_config_id):
             workflow_key, scheduler_config_id=scheduler_config_id
         )
     if reqs.num_jobs == 0:
-        logger.error("No jobs are in the ready state. You many need to run 'torc workflows start'")
-        sys.exit(0)
+        logger.error("No jobs are in the ready state. You may need to run 'torc workflows start'")
+        sys.exit(1)
 
     num_nodes_by_cpus = math.ceil(reqs.num_cpus / num_cpus)
     if output_format == "text":
@@ -587,6 +579,22 @@ reset all job statuses to 'uninitialized' and then 'ready' or 'blocked.'
     except InvalidWorkflow as exc:
         logger.error("Invalid workflow: %s", exc)
         sys.exit(1)
+
+
+def create_workflow_from_json_file(api, filename: Path, user=None):
+    """Create a workflow from a JSON/JSON5 file."""
+    if user is None:
+        user = getpass.getuser()
+
+    method = json5.load if filename.suffix == ".json5" else json.load
+    with open(filename, "r", encoding="utf-8") as f:
+        data = sanitize_workflow(method(f))
+    if data.get("user") != user:
+        if "user" in data:
+            logger.info("Overriding user=%s with %s", data["user"], user)
+        data["user"] = user
+    spec = WorkflowSpecificationsModel(**data)
+    return api.post_workflow_specifications(spec)
 
 
 def start_workflow(

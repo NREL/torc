@@ -27,6 +27,7 @@ from torc.api import (
     wait_for_healthy_database,
     send_api_command,
 )
+from torc.common import JOB_STDIO_DIR
 from torc.hpc.common import HpcType
 from torc.exceptions import DatabaseOffline
 from torc.hpc.hpc_manager import HpcManager
@@ -548,7 +549,7 @@ def run_jobs(
     hostname = socket.gethostname()
     slurm_node_id = intf.get_node_id()
     slurm_task_pid = intf.get_task_pid()
-    log_file = output / f"job_runner_slurm_{slurm_job_id}_{slurm_node_id}_{slurm_task_pid}.log"
+    log_file = get_slurm_job_runner_log_file(output, slurm_job_id, slurm_node_id, slurm_task_pid)
     my_logger = setup_cli_logging(ctx, __name__, filename=log_file)
     my_logger.info(get_cli_string())
     scheduler = {
@@ -564,9 +565,12 @@ def run_jobs(
     node = None if is_subtask else _get_scheduled_compute_node(api, workflow_key, slurm_job_id)
 
     workflow = api.get_workflows_key(workflow_key)
-    log_prefix = f"slurm_{slurm_job_id}_{slurm_node_id}_{slurm_task_pid}"
+    log_prefix = _get_torc_job_log_prefix(slurm_job_id, slurm_node_id, slurm_task_pid)
     my_logger.info(
-        "Start workflow on compute node %s end_time=%s buffer=%s", hostname, end_time, buffer
+        "Start workflow on compute node %s end_time=%s buffer=%s",
+        hostname,
+        end_time,
+        buffer,
     )
 
     scheduler_config_id = None
@@ -649,6 +653,32 @@ def _create_node_resources(intf, scheduler_config_id, is_subtask):
         scheduler_config_id=scheduler_config_id,
         time_limit=None,
     )
+
+
+def get_slurm_job_runner_log_file(output_dir, job_id, node_id, task_pid) -> str:
+    """Return the name of the job runner file for Slurm schedulers."""
+    return f"{output_dir}/job_runner_slurm_{job_id}_{node_id}_{task_pid}.log"
+
+
+def get_slurm_stdio_files(output_dir, job_id) -> list[str]:
+    """Return the names of the stdout/stderr log files written by Slurm."""
+    return [f"{output_dir}/job_output_{job_id}{x}" for x in (".e", ".o")]
+
+
+def _get_torc_job_log_prefix(slurm_job_id, slurm_node_id, slurm_task_pid):
+    """Return the names of the stdout/stderr log files written by Slurm."""
+    return f"slurm_{slurm_job_id}_{slurm_node_id}_{slurm_task_pid}"
+
+
+def get_torc_job_stdio_files(
+    output_dir, slurm_job_id, slurm_node_id, slurm_task_pid, job_key, run_id
+):
+    """Return the names of the stdout/stderr log files for a torc job."""
+    files = []
+    for ext in (".e", ".o"):
+        prefix = _get_torc_job_log_prefix(slurm_job_id, slurm_node_id, slurm_task_pid)
+        files.append(f"{output_dir}/{JOB_STDIO_DIR}/{prefix}_{job_key}_{run_id}{ext}")
+    return files
 
 
 slurm.add_command(add_config)

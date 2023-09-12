@@ -36,6 +36,7 @@ from torc.cli.workflows import (
     start_workflow,
     restart_workflow,
     cancel_workflow,
+    create_workflow_from_json_file,
     reset_workflow_status,
     reset_workflow_job_status,
 )
@@ -53,7 +54,6 @@ logger = logging.getLogger(__name__)
 # - Need to implement async versions of API calls. Displays of large datatables are slow.
 #   textualize supports a run_worker method to help once we have async calls.
 #   OpenAPI client does have async support.
-# - Add create-from-json-file
 # - Ctrl-c while event monitoring timer thread is active doesn't work.
 
 
@@ -64,7 +64,12 @@ class TorcManagementConsole(App):
     CSS_PATH = "tui.tcss"
 
     def __init__(
-        self, *args, database_url=None, log_file=LOG_FILE, log_level=logging.INFO, **kwargs
+        self,
+        *args,
+        database_url=None,
+        log_file=LOG_FILE,
+        log_level=logging.INFO,
+        **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
         setup_logging(
@@ -98,22 +103,30 @@ class TorcManagementConsole(App):
             with Grid(id="database_grid"):
                 with Vertical(id="controls_containers"):
                     yield Input(
-                        value=self._db_url, placeholder="Enter a database URL", id="db_url"
+                        value=self._db_url,
+                        placeholder="Enter a database URL",
+                        id="db_url",
                     )
                     yield Input(
-                        value=self._db_name, placeholder="Enter a database name", id="db_name"
+                        value=self._db_name,
+                        placeholder="Enter a database name",
+                        id="db_name",
                     )
                     with Horizontal():
                         yield Button("Connect", id="connect", variant="success")
                         yield Checkbox("Filter by user", True, id="filter_by_user")
                     yield Static("Selected workflow key:")
                     yield Input(
-                        placeholder="Enter a workflow key or select a row", id="workflow_key"
+                        placeholder="Enter a workflow key or select a row",
+                        id="workflow_key",
                     )
                 with Vertical():
                     yield VerticalScroll(DataTable(id="workflow_table"))
                     yield Input(
-                        value="", placeholder="connected URL", id="connected_url", disabled=True
+                        value="",
+                        placeholder="connected URL",
+                        id="connected_url",
+                        disabled=True,
                     )
                     yield Markdown("", id="output_box")
             with TabbedContent():
@@ -143,19 +156,42 @@ class TorcManagementConsole(App):
                             )
                         yield VerticalScroll(DataTable(id="document_table"))
                 with TabPane("Manage Workflow"):
-                    with Horizontal(classes="buttons"):
-                        yield Button("Start", id="start_workflow", variant="primary")
-                        yield Button("Restart", id="restart_workflow", variant="warning")
-                        yield Button("Cancel", id="cancel_workflow", variant="error")
-                        yield Button("Reset", id="reset_workflow", variant="warning")
-                        yield Button("Delete", id="delete_workflow", variant="error")
+                    with Grid(id="manage_workflow_grid"):
+                        with Container():
+                            yield Static("Path to workflow file:")
+                            yield Input(placeholder="workflow.json5", id="workflow_spec_file")
+                            yield Checkbox(
+                                "Select workflow on creation",
+                                True,
+                                id="select_created_workflow",
+                            )
+                            yield Button(
+                                "Create", id="create_workflow", variant="primary", disabled=True
+                            )
+                        with Horizontal(classes="buttons"):
+                            yield Button(
+                                "Start", id="start_workflow", variant="primary", disabled=True
+                            )
+                            yield Button(
+                                "Restart", id="restart_workflow", variant="warning", disabled=True
+                            )
+                            yield Button(
+                                "Cancel", id="cancel_workflow", variant="error", disabled=True
+                            )
+                            yield Button(
+                                "Reset", id="reset_workflow", variant="warning", disabled=True
+                            )
+                            yield Button(
+                                "Delete", id="delete_workflow", variant="error", disabled=True
+                            )
                 with TabPane("Slurm Scheduler"):
                     with Grid(id="slurm_grid"):
                         with Container(id="controls_containers"):
                             with Grid(id="slurm_schedule_grid"):
                                 yield Label("Selected Slurm scheduler:")
                                 yield Input(
-                                    placeholder="Slurm scheduler key", id="slurm_scheduler_key"
+                                    placeholder="Slurm scheduler key",
+                                    id="slurm_scheduler_key",
                                 )
                                 yield Label("Num Slurm jobs:")
                                 yield Input(
@@ -164,9 +200,16 @@ class TorcManagementConsole(App):
                                     id="num_slurm_jobs",
                                     validators=[Number(minimum=1)],
                                 )
-                                yield Button("Schedule jobs", id="schedule_slurm_nodes")
+                                yield Button(
+                                    "Schedule",
+                                    id="schedule_slurm_nodes",
+                                    disabled=True,
+                                    variant="primary",
+                                )
                                 yield Checkbox(
-                                    "1 worker per node", False, id="one_worker_per_compute_node"
+                                    "1 worker per node",
+                                    False,
+                                    id="one_worker_per_compute_node",
                                 )
                         yield VerticalScroll(DataTable(id="slurm_schedulers_table"))
                 with TabPane("Event Monitor"):
@@ -236,9 +279,9 @@ class TorcManagementConsole(App):
             self.query_one("#workflow_key", Input).value = event.row_key.value
             self.query_one("#table_options", RadioSet).disabled = False
             self.query_one("#sort_options", RadioSet).disabled = False
-            self.query_one("#refresh_table", Button).disabled = False
             self.query_one("#document_table", DataTable).clear(columns=True)
             self._populate_slurm_schedulers()
+            self._set_workflow_widgets(True)
         elif event.data_table.id == "slurm_schedulers_table":
             self.query_one("#slurm_scheduler_key", Input).value = event.row_key.value
 
@@ -250,6 +293,8 @@ class TorcManagementConsole(App):
                 self._connect()
             case "refresh_table":
                 self._show_document_table()
+            case "create_workflow":
+                self._create_workflow()
             case "start_workflow":
                 self._start_workflow()
             case "restart_workflow":
@@ -276,6 +321,8 @@ class TorcManagementConsole(App):
         match event.checkbox.id:
             case "filter_by_user":
                 self._connect()
+            case "select_created_workflow":
+                pass
             case _:
                 raise NotImplementedError(f"{event.checkbox.id=}")
 
@@ -332,13 +379,18 @@ class TorcManagementConsole(App):
             self._post_error_msg("No workflow key is selected")
         return key
 
-    def _check_url_and_workflow_key(self):
+    def _check_workflow_spec_file(self):
+        path = self.query_one("#workflow_spec_file", Input).value
+        if not path:
+            self._post_error_msg("Please enter the path to a workflow file.")
+            return None
+        return Path(path)
+
+    def _check_url(self):
         url = self.query_one("#connected_url", Input).value
-        key = self._check_workflow_key()
-        if not url or not key:
-            self._post_error_msg("Both the database URL and workflow key must be set.")
-            return None, None
-        return url, key
+        if not url:
+            self._post_error_msg("The database URL must be set.")
+        return url
 
     def _check_running_jobs(self, key, op):
         if has_running_jobs(self._api, key):
@@ -356,9 +408,8 @@ class TorcManagementConsole(App):
         self.query_one("#slurm_schedulers_table", DataTable).clear(columns=True)
         self.query_one("#connect", Button).variant = "primary"
         self.query_one("#workflow_key", Input).value = ""
-        self.query_one("#table_options", RadioSet).disabled = True
-        self.query_one("#sort_options", RadioSet).disabled = True
         self.query_one("#connected_url", Input).value = full_url
+        self.query_one("#create_workflow", Button).disabled = False
 
     def _populate_slurm_schedulers(self):
         key = self.query_one("#workflow_key", Input).value
@@ -368,6 +419,21 @@ class TorcManagementConsole(App):
         table = self.query_one("#slurm_schedulers_table", DataTable)
         build_document_table(table, "slurm_schedulers", self._api, key)
 
+    def _set_workflow_widgets(self, value: bool):
+        for name in ("table_options", "sort_options"):
+            self.query_one(f"#{name}", RadioSet).disabled = not value
+
+        for name in (
+            "refresh_table",
+            "start_workflow",
+            "restart_workflow",
+            "cancel_workflow",
+            "reset_workflow",
+            "delete_workflow",
+            "schedule_slurm_nodes",
+        ):
+            self.query_one(f"#{name}", Button).disabled = not value
+
     def _show_workflow_table(self):
         filters = (
             {"user": getpass.getuser()}
@@ -376,11 +442,14 @@ class TorcManagementConsole(App):
         )
         table = self.query_one("#workflow_table", DataTable)
         table.clear(columns=True)
-        for col in ("key", "user", "name", "timestamp", "description"):
+        # TODO: A long description causes the last row to be hidden.
+        # for col in ("key", "user", "name", "timestamp", "description"):
+        for col in ("key", "user", "name", "timestamp"):
             table.add_column(col, key=col)
         workflows = list(iter_documents(self._api.get_workflows, **filters))
         workflows.sort(
-            key=lambda x: datetime.fromisoformat(x.timestamp.replace("Z", "")), reverse=True
+            key=lambda x: datetime.fromisoformat(x.timestamp.replace("Z", "")),
+            reverse=True,
         )
         for i, workflow in enumerate(workflows, start=1):
             table.add_row(
@@ -388,7 +457,7 @@ class TorcManagementConsole(App):
                 workflow.user,
                 workflow.name,
                 workflow.timestamp,
-                workflow.description,
+                # workflow.description,
                 key=workflow.key,
                 label=str(i),
             )
@@ -416,9 +485,37 @@ class TorcManagementConsole(App):
         except Exception as exc:  # pylint: disable=broad-exception-caught
             self._post_error_msg(str(exc))
 
+    def _create_workflow(self):
+        url = self._check_url()
+        if not url:
+            return
+
+        filename = self._check_workflow_spec_file()
+        if not filename:
+            return
+
+        if filename.is_dir():
+            self._post_error_msg(f"{filename} is a directory")
+
+        if not filename.exists():
+            self._post_error_msg(f"{filename} does not exist")
+            return
+
+        workflow = create_workflow_from_json_file(self._api, filename, user=getpass.getuser())
+        self._post_info_msg(f"Created workflow key {workflow.key}")
+        self._show_workflow_table()
+
+        if self.query_one("#select_created_workflow").value:
+            self.query_one("#workflow_key", Input).value = workflow.key
+            self._set_workflow_widgets(True)
+
     def _start_workflow(self):
-        url, key = self._check_url_and_workflow_key()
-        if not url or not key:
+        url = self._check_url()
+        if not url:
+            return
+
+        key = self._check_workflow_key()
+        if not key:
             return
 
         if has_running_jobs(self._api, key):
@@ -441,8 +538,12 @@ class TorcManagementConsole(App):
             self._post_error_msg(f"Failed to start workflow: {exc}")
 
     def _restart_workflow(self):
-        url, key = self._check_url_and_workflow_key()
-        if not url or not key:
+        url = self._check_url()
+        if not url:
+            return
+
+        key = self._check_workflow_key()
+        if not key:
             return
 
         if not self._check_running_jobs(key, "restart"):
@@ -457,8 +558,12 @@ class TorcManagementConsole(App):
             self._post_error_msg(f"Failed to restart workflow: {exc}")
 
     def _reset_workflow(self):
-        url, key = self._check_url_and_workflow_key()
-        if not url or not key:
+        url = self._check_url()
+        if not url:
+            return
+
+        key = self._check_workflow_key()
+        if not key:
             return
 
         try:
@@ -469,8 +574,12 @@ class TorcManagementConsole(App):
             self._post_error_msg(f"Failed to reset workflow: {exc}")
 
     def _cancel_workflow(self):
-        url, key = self._check_url_and_workflow_key()
-        if not url or not key:
+        url = self._check_url()
+        if not url:
+            return
+
+        key = self._check_workflow_key()
+        if not key:
             return
 
         try:
@@ -480,8 +589,12 @@ class TorcManagementConsole(App):
             self._post_error_msg(f"Failed to cancel workflow: {exc}")
 
     def _delete_workflow(self):
-        url, key = self._check_url_and_workflow_key()
-        if not url or not key:
+        url = self._check_url()
+        if not url:
+            return
+
+        key = self._check_workflow_key()
+        if not key:
             return
 
         try:
@@ -609,7 +722,8 @@ def build_compute_node_table(table, table_id, api, workflow_key, **filters):
     columns = DATA_TABLES[table_id]["columns"]
     init_table(table, columns)
     for i, item in enumerate(
-        iter_documents(api.get_workflows_workflow_compute_nodes, workflow_key, **filters), start=1
+        iter_documents(api.get_workflows_workflow_compute_nodes, workflow_key, **filters),
+        start=1,
     ):
         data = item.dict()
         values = []
@@ -641,7 +755,8 @@ def build_event_table(table, table_id, api, workflow_key, **filters):
     columns = DATA_TABLES[table_id]["columns"]
     init_table(table, columns)
     for i, item in enumerate(
-        iter_documents(api.get_workflows_workflow_events, workflow_key, **filters), start=1
+        iter_documents(api.get_workflows_workflow_events, workflow_key, **filters),
+        start=1,
     ):
         table.add_row(*make_event(item), key=item["_key"], label=str(i))
 
@@ -662,7 +777,8 @@ def build_results_table(table, table_id, api, workflow_key, **filters):
         x.key: x.name for x in iter_documents(api.get_workflows_workflow_jobs, workflow_key)
     }
     for i, item in enumerate(
-        iter_documents(api.get_workflows_workflow_results, workflow_key, **filters), start=1
+        iter_documents(api.get_workflows_workflow_results, workflow_key, **filters),
+        start=1,
     ):
         values = []
         for col in columns:
@@ -670,13 +786,19 @@ def build_results_table(table, table_id, api, workflow_key, **filters):
                 values.append(key_to_job_name[item.job_key])
             else:
                 values.append(getattr(item, col))
-        table.add_row(*values, key=getattr(item, "key"), label=str(i))
+        table.add_row(*values, key=item.key, label=str(i))
 
 
 DATA_TABLES = {
     "compute_nodes": {
         "name": "Compute Nodes",
-        "columns": ("hostname", "is_active", "scheduler_id", "start_time", "duration (s)"),
+        "columns": (
+            "hostname",
+            "is_active",
+            "scheduler_id",
+            "start_time",
+            "duration (s)",
+        ),
         "table_builder": build_compute_node_table,
     },
     "events": {
@@ -692,7 +814,15 @@ DATA_TABLES = {
     },
     "resource_requirements": {
         "name": "Resource Requirements",
-        "columns": ("name", "num_cpus", "num_gpus", "num_nodes", "memory", "runtime", "key"),
+        "columns": (
+            "name",
+            "num_cpus",
+            "num_gpus",
+            "num_nodes",
+            "memory",
+            "runtime",
+            "key",
+        ),
         "method": "get_workflows_workflow_resource_requirements",
         "table_builder": build_document_table,
     },
