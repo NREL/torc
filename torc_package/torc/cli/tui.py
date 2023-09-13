@@ -2,7 +2,7 @@
 
 import click
 
-from torc.apps.tui import TorcManagementConsole
+from torc.apps.management_console import TorcManagementConsole
 
 
 @click.command()

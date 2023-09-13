@@ -61,7 +61,7 @@ class TorcManagementConsole(App):
     """A Textual app to manage torc results."""
 
     BINDINGS = [("d", "toggle_dark", "Toggle dark mode")]
-    CSS_PATH = "tui.tcss"
+    CSS_PATH = "management_console.tcss"
 
     def __init__(
         self,

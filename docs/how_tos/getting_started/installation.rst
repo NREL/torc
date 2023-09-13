@@ -8,6 +8,10 @@ Installation
    Long-term options are available by requesting a virtual machine from the HPC Operations team.
    We can help you setup and manage the database. Other options are also under consideration.
 
+.. note:: The test database does not enable authentication for the torc service API. The database
+   itself enables authentication but all torc CLI and API commands are not authenticated. This can
+   be customized for other databases.
+
 2. If running on a local computer or cloud environment, install a database with ArangoDB. Refer to
    the links below.
 
