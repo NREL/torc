@@ -133,9 +133,9 @@ function getItemsLimit(limit) {
 function makeCursorResult(items, skip, totalCount, sortBy, reverseSort) {
   if (sortBy != null) {
     if (reverseSort) {
-      items.sort((x, y) => (x.name > y.name) ? -1 : ((y.name > x.name) ? 1 : 0))
+      items.sort((x, y) => (x.name > y.name) ? -1 : ((y.name > x.name) ? 1 : 0));
     } else {
-      items.sort((x, y) => (x.name > y.name) ? 1 : ((y.name > x.name) ? -1 : 0))
+      items.sort((x, y) => (x.name > y.name) ? 1 : ((y.name > x.name) ? -1 : 0));
     }
   }
   return {

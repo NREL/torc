@@ -133,37 +133,38 @@ router.get('/workflows/:workflow/jobs/:key/process_stats', function(req, res) {
     .summary('Retrieve the job process stats for a job.')
     .description('Retrieve the job process stats for a job by its key.');
 
-router.post('/workflows/:workflow/jobs/:key/complete_job/:status/:rev/:run_id', function(req, res) {
-  const workflowKey = req.pathParams.workflow;
-  const key = req.pathParams.key;
-  const status = req.pathParams.status;
-  const rev = req.pathParams.rev;
-  const runId = req.pathParams.run_id;
-  const result = req.body;
-  const workflow = documents.getWorkflow(workflowKey, res);
-  if (!query.isJobStatusComplete(status)) {
-    res.throw(400, `status=${status} does not indicate completion`);
-  }
-  const job = documents.getWorkflowDocument(workflow, 'jobs', key, res);
-  if (job._rev != rev) {
-    res.throw(409, `Revision conflict for ${job._id}: _rev=${job._rev}`);
-  }
+router.post('/workflows/:workflow/jobs/:key/complete_job/:status/:rev/:run_id',
+    function(req, res) {
+      const workflowKey = req.pathParams.workflow;
+      const key = req.pathParams.key;
+      const status = req.pathParams.status;
+      const rev = req.pathParams.rev;
+      const runId = req.pathParams.run_id;
+      const result = req.body;
+      const workflow = documents.getWorkflow(workflowKey, res);
+      if (!query.isJobStatusComplete(status)) {
+        res.throw(400, `status=${status} does not indicate completion`);
+      }
+      const job = documents.getWorkflowDocument(workflow, 'jobs', key, res);
+      if (job._rev != rev) {
+        res.throw(409, `Revision conflict for ${job._id}: _rev=${job._rev}`);
+      }
 
-  job.status = status;
-  try {
-    const meta = documents.addResult(result, workflow);
-    Object.assign(result, meta);
+      job.status = status;
+      try {
+        const meta = documents.addResult(result, workflow);
+        Object.assign(result, meta);
 
-    const returned = config.getWorkflowCollection(workflow, 'returned');
-    returned.save({_from: job._id, _to: result._id});
-    const updatedJob = query.manageJobStatusChange(job, workflow, runId);
-    updatedJob.internal.hash = documents.computeJobInputHash(updatedJob, workflow);
-    documents.updateWorkflowDocument(workflow, 'jobs', updatedJob);
-    res.send(updatedJob);
-  } catch (e) {
-    utils.handleArangoApiErrors(e, res, `Complete job key=${key}`);
-  }
-})
+        const returned = config.getWorkflowCollection(workflow, 'returned');
+        returned.save({_from: job._id, _to: result._id});
+        const updatedJob = query.manageJobStatusChange(job, workflow, runId);
+        updatedJob.internal.hash = documents.computeJobInputHash(updatedJob, workflow);
+        documents.updateWorkflowDocument(workflow, 'jobs', updatedJob);
+        res.send(updatedJob);
+      } catch (e) {
+        utils.handleArangoApiErrors(e, res, `Complete job key=${key}`);
+      }
+    })
     .pathParam('workflow', joi.string().required(), 'Workflow key')
     .pathParam('key', joi.string().required(), 'Job key')
     .pathParam('status', joi.string().required(), 'New job status.')
@@ -174,30 +175,31 @@ router.post('/workflows/:workflow/jobs/:key/complete_job/:status/:rev/:run_id', 
     .summary('Complete a job and add a result.')
     .description('Complete a job, connect it to a result, and manage side effects.');
 
-router.put('/workflows/:workflow/jobs/:key/manage_status_change/:status/:rev/:run_id', function(req, res) {
-  const workflowKey = req.pathParams.workflow;
-  const key = req.pathParams.key;
-  const status = req.pathParams.status;
-  const rev = req.pathParams.rev;
-  const runId = req.pathParams.run_id;
-  const workflow = documents.getWorkflow(workflowKey, res);
-  if (query.isJobStatusComplete(status)) {
-    res.throw(400, `status=${status} indicates completion. Post complete_job status instead.`);
-    return;
-  }
-  const job = documents.getWorkflowDocument(workflow, 'jobs', key, res);
-  if (job._rev != rev) {
-    res.throw(400, `Revision conflict for ${job._id}: _rev=${job._rev}`);
-    return;
-  }
-  job.status = status;
-  try {
-    const updatedJob = query.manageJobStatusChange(job, workflow, runId);
-    res.send(updatedJob);
-  } catch (e) {
-    utils.handleArangoApiErrors(e, res, `Put jobs manage_status_change key=${key}`);
-  }
-})
+router.put('/workflows/:workflow/jobs/:key/manage_status_change/:status/:rev/:run_id',
+    function(req, res) {
+      const workflowKey = req.pathParams.workflow;
+      const key = req.pathParams.key;
+      const status = req.pathParams.status;
+      const rev = req.pathParams.rev;
+      const runId = req.pathParams.run_id;
+      const workflow = documents.getWorkflow(workflowKey, res);
+      if (query.isJobStatusComplete(status)) {
+        res.throw(400, `status=${status} indicates completion. Post complete_job status instead.`);
+        return;
+      }
+      const job = documents.getWorkflowDocument(workflow, 'jobs', key, res);
+      if (job._rev != rev) {
+        res.throw(400, `Revision conflict for ${job._id}: _rev=${job._rev}`);
+        return;
+      }
+      job.status = status;
+      try {
+        const updatedJob = query.manageJobStatusChange(job, workflow, runId);
+        res.send(updatedJob);
+      } catch (e) {
+        utils.handleArangoApiErrors(e, res, `Put jobs manage_status_change key=${key}`);
+      }
+    })
     .pathParam('workflow', joi.string().required(), 'Workflow key')
     .pathParam('key', joi.string().required(), 'Job key')
     .pathParam('status', joi.string().required(), 'New job status')

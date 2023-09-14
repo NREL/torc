@@ -411,7 +411,7 @@ function getJobsThatNeedFile(file, workflow, skip, limit) {
  * Return the key of the latest event.
  * Only works in single-sharded collections.
  * @param {string} workflow
- * @returns {string}
+ * @return {string}
  */
 function getLatestEventKey(workflow) {
   const collection = config.getWorkflowCollection(workflow, 'events');
@@ -433,7 +433,7 @@ function getLatestEventKey(workflow) {
  * @param {string} key
  * @param {string} category
  * @param {number} limit
- * @returns {Array}
+ * @return {Array}
  */
 function getEventsAfterKey(workflow, key, category, limit) {
   const collection = config.getWorkflowCollection(workflow, 'events');

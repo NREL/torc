@@ -79,7 +79,15 @@ router.get('/workflows', function(req, res) {
     const items = Object.keys(example).length == 0 ?
       collection.all().skip(qp.skip).limit(limit) :
       collection.byExample(example).skip(qp.skip).limit(limit);
-    res.send(utils.makeCursorResult(items.toArray(), qp.skip, totalCount, qp.sort_by, qp.reverse_sort));
+    res.send(
+        utils.makeCursorResult(
+            items.toArray(),
+            qp.skip,
+            totalCount,
+            qp.sort_by,
+            qp.reverse_sort,
+        ),
+    );
   } catch (e) {
     if (e.isArangoError) {
       res.throw(400, `${e}`, e);
@@ -535,7 +543,9 @@ router.get('/workflows/:key/events_after_key/:event_key', function(req, res) {
   const workflow = documents.getWorkflow(workflowKey, res);
   const qp = req.queryParams;
   try {
-    const cursor = query.getEventsAfterKey(workflow, req.pathParams.event_key, qp.category, qp.limit);
+    const cursor = query.getEventsAfterKey(
+        workflow, req.pathParams.event_key, qp.category, qp.limit,
+    );
     const items = cursor.toArray();
     res.send(utils.makeCursorResult(items, 0, cursor.count()));
   } catch (e) {
@@ -545,7 +555,7 @@ router.get('/workflows/:key/events_after_key/:event_key', function(req, res) {
     .pathParam('key', joi.string().required(), 'Workflow key')
     .pathParam('event_key', joi.string().required(), 'Event key')
     .queryParam('category', joi.string().default(null))
-    .queryParam('skip', joi.number().default(0), "Ignored")
+    .queryParam('skip', joi.number().default(0), 'Ignored')
     .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
     .response(schemas.batchObjects)
     .summary('Return all events newer than the event with event_key.')
