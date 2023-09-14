@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "src": "^1.0.0",
     "tinyduration": "^3.2.4"
   },
   "devDependencies": {
