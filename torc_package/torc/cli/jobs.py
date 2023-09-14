@@ -24,6 +24,7 @@ from .common import (
     print_items,
 )
 from .run_function import run_function
+from .run_postprocess import run_postprocess
 
 
 logger = logging.getLogger(__name__)
@@ -452,3 +453,4 @@ jobs.add_command(assign_resource_requirements)
 jobs.add_command(reset_status)
 jobs.add_command(run)
 jobs.add_command(run_function)
+jobs.add_command(run_postprocess)

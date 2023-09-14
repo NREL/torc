@@ -3,6 +3,7 @@
 import getpass
 import json
 import logging
+import os
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -30,7 +31,7 @@ from textual.widgets import (
 from torc.openapi_client.api.default_api import DefaultApi
 from torc.api import make_api, iter_documents
 from torc.cli.common import parse_filters
-from torc.cli.slurm import schedule_slurm_nodes, DEFAULT_OUTPUT_DIR
+from torc.cli.slurm import schedule_slurm_nodes, DEFAULT_OUTPUT_DIR, JOB_COMPLETION_POLL_INTERVAL
 from torc.cli.workflows import (
     has_running_jobs,
     start_workflow,
@@ -44,7 +45,7 @@ from torc.torc_rc import TorcRuntimeConfig
 from torc.loggers import setup_logging
 
 
-LOG_FILE = "torc-tui.log"
+LOG_FILE = "torc-management-console.log"
 
 
 logger = logging.getLogger(__name__)
@@ -239,7 +240,7 @@ class TorcManagementConsole(App):
         ).tooltip = "Move job statuses from uninitialized to ready or blocked."
         self.query_one(
             "#restart_workflow", Button
-        ).tooltip = "Move incomplete/failed job statuses to ready or blocked."
+        ).tooltip = "Move incomplete/canceled/terminated job statuses to ready or blocked."
         self.query_one(
             "#cancel_workflow", Button
         ).tooltip = "Cancel the workflow and all running jobs."
@@ -629,6 +630,9 @@ class TorcManagementConsole(App):
 
         start_one_worker_per_node = self.query_one("#one_worker_per_compute_node", Checkbox).value
         config = self._api.get_workflows_workflow_slurm_schedulers_key(workflow_key, scheduler_key)
+        poll_interval = int(
+            os.environ.get("TORC_JOB_COMPLETION_POLL_INTERVAL", JOB_COMPLETION_POLL_INTERVAL)
+        )
         try:
             schedule_slurm_nodes(
                 self._api,
@@ -637,6 +641,7 @@ class TorcManagementConsole(App):
                 Path(DEFAULT_OUTPUT_DIR),
                 num_hpc_jobs=num_slurm_jobs,
                 start_one_worker_per_node=start_one_worker_per_node,
+                poll_interval=poll_interval,
             )
             self._post_info_msg(
                 f"Scheduled {num_slurm_jobs} Slurm job(s) for workflow {workflow_key}"
