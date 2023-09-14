@@ -1,6 +1,7 @@
 """CLI commands to manage results"""
 
 import logging
+from collections import defaultdict
 
 import click
 
@@ -31,6 +32,14 @@ def results():
     type=str,
     help="Filter the values according to each key=value pair.",
 )
+@click.option(
+    "-L",
+    "--latest-only",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Limit output to the latest result for each job.",
+)
 @click.option("-l", "--limit", type=int, help="Limit the output to this number of jobs.")
 @click.option("-s", "--skip", default=0, type=int, help="Skip this number of jobs.")
 @click.option(
@@ -56,16 +65,20 @@ def results():
 )
 @click.pass_obj
 @click.pass_context
-def list_results(ctx, api, filters, limit, skip, exclude_job_names, sort_by, reverse_sort):
+def list_results(
+    ctx, api, filters, latest_only, limit, skip, exclude_job_names, sort_by, reverse_sort
+):
     """List all results in a workflow.
 
     \b
     Examples:
     1. List all results in a table.
        $ torc results list
-    2. List only results with name=result1
+    2. List only results with a return_code of 1.
        $ torc results list -f return_code=1
-    3. List all results in JSON format.
+    3. List the latest result for each job.
+       $ torc results list --latest-only
+    4. List all results in JSON format.
        $ torc -F json results 91388876 list results
     """
     setup_cli_logging(ctx, __name__)
@@ -84,12 +97,21 @@ def list_results(ctx, api, filters, limit, skip, exclude_job_names, sort_by, rev
     table_title = f"Results in workflow {workflow_key}"
     mapping = None if exclude_job_names else map_job_keys_to_names(api, workflow_key)
     items = []
+    results_by_job_key = defaultdict(list)
     for item in iter_documents(api.get_workflows_workflow_results, workflow_key, **filters):
         row = {}
         if not exclude_job_names:
             row["job_name"] = mapping[item.job_key]
         row.update(item.to_dict())
-        items.append(row)
+        if latest_only:
+            results_by_job_key[item.job_key].append(row)
+        else:
+            items.append(row)
+
+    if latest_only:
+        for job_results in results_by_job_key.values():
+            job_results.sort(key=lambda x: x["run_id"])
+            items.append(job_results[-1])
 
     columns = list_model_fields(WorkflowResultsModel)
     if not exclude_job_names:
