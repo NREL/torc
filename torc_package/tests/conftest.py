@@ -550,7 +550,11 @@ def mapped_function_workflow(tmp_path):
     builder = WorkflowBuilder()
     params = [{"val": i} for i in range(5)]
     builder.map_function_to_jobs(
-        "mapped_function", "run", params, module_directory="tests/scripts"
+        "mapped_function",
+        "run",
+        params,
+        module_directory="tests/scripts",
+        postprocess_func="postprocess",
     )
     spec = builder.build()
     workflow = api.post_workflow_specifications(spec)

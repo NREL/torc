@@ -1,5 +1,7 @@
 """Helper code to build a workflow dynamically"""
 
+import getpass
+
 
 from torc.openapi_client.models.workflow_files_model import WorkflowFilesModel
 from torc.openapi_client.models.workflow_job_specifications_model import (
@@ -64,6 +66,7 @@ class WorkflowBuilder:
         module: str,
         func: str,
         params: list[dict],
+        postprocess_func: str | None = None,
         module_directory=None,
         resource_requirements=None,
         scheduler=None,
@@ -82,6 +85,8 @@ class WorkflowBuilder:
         params : list[dict]
             Each item in this list will be passed to func. The contents must be serializable to
             JSON.
+        postprocess_func : str
+            Optional name of the function in module to be called to postprocess all results.
         module_directory : str | None
             Required if module is not importable.
         resource_requirements : str | None
@@ -99,6 +104,7 @@ class WorkflowBuilder:
         list[WorkflowJobSpecificationsModel]
         """
         jobs = []
+        output_data_names = []
         for i, job_params in enumerate(params, start=start_index):
             check_function(module, func, module_directory)
             data = {
@@ -111,6 +117,7 @@ class WorkflowBuilder:
             job_name = f"{name_prefix}{i}"
             input_ud = self.add_user_data(name=f"input_{job_name}", data=data)
             output_ud = self.add_user_data(name=f"output_{job_name}", data=data)
+            output_data_names.append(output_ud.name)
             job = self.add_job(
                 name=job_name,
                 command="torc jobs run-function",
@@ -120,6 +127,25 @@ class WorkflowBuilder:
                 scheduler=scheduler,
             )
             jobs.append(job)
+
+        if postprocess_func is not None:
+            check_function(module, postprocess_func, module_directory)
+            data = {
+                "module": module,
+                "func": postprocess_func,
+            }
+            if module_directory is not None:
+                data["module_directory"] = module_directory
+            input_ud = self.add_user_data(name="input_postprocess", data=data)
+            output_ud = self.add_user_data(name="postprocess_result", data=data)
+            self.add_job(
+                name="postprocess",
+                command="torc jobs run-postprocess",
+                consumes_user_data=[input_ud.name] + output_data_names,
+                stores_user_data=[output_ud.name],
+                resource_requirements=resource_requirements,
+                scheduler=scheduler,
+            )
 
         return jobs
 
@@ -254,6 +280,8 @@ class WorkflowBuilder:
             compute_node_expiration_buffer_seconds=self._compute_node_expiration_buffer_seconds,
             compute_node_wait_for_healthy_database=self._compute_node_wait_for_healthy_database,
         )
+        if not kwargs.get("user"):
+            kwargs["user"] = getpass.getuser()
         return WorkflowSpecificationsModel(
             *args,
             config=config,

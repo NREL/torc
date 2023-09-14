@@ -444,7 +444,7 @@ def recommend_nodes(ctx, api, num_cpus, scheduler_config_id):
 @click.pass_obj
 @click.pass_context
 def reset_status(ctx, api, workflow_key):
-    """Reset the status of the workflow and all jobs."""
+    """Reset the status of the workflow."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow = api.get_workflows_key(workflow_key)

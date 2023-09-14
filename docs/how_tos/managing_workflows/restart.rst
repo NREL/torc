@@ -55,7 +55,7 @@ If you want to rerun all jobs with a non-zero return code, run this command:
 
 .. code-block:: console
 
-   $ torc workflows reset-job-status --failed-only
+   $ torc workflows reset-job-status --failed-only <workflow_key>
 
 If you only want to rerun a subset of failed jobs, you will need to pass those job keys to this
 command:

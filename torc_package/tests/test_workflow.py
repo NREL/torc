@@ -647,6 +647,12 @@ def test_map_functions(mapped_function_workflow):
         assert len(output_ud.items) == 1
         assert "result" in output_ud.items[0].data
         assert "output_data_path" in output_ud.items[0].data
+    pp_key = db.get_document_key("jobs", "postprocess")
+    output_ud = api.get_workflows_workflow_jobs_key_user_data_stores(db.workflow.key, pp_key)
+    assert len(output_ud.items) == 1
+    assert "total" in output_ud.items[0].data
+    assert output_ud.items[0].data["total"] == 25
+    assert "output_data_paths" in output_ud.items[0].data
 
 
 def _fake_complete_job(api, workflow_key, job):

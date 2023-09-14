@@ -12,10 +12,40 @@ Let's suppose that your code is in a module called ``simulation.py`` and looks s
 
 .. code-block:: python
 
-    def run(input_params: dict):
-        print(f"hello world: {input_params}")
+    def run(input_params: dict) -> dict:
+        """Runs one simulation on a set of input parameters.
+
+        Returns
+        -------
+        dict
+            Result of the simulation.
+        """
         job_name = data["job_name"]
         return {"inputs": data, "result": 5, "output_data_path": f"/projects/my-project/{job_name}"}
+
+
+    def postprocess(results: list[dict]) -> dict:
+        """Collects the results of the workers and performs postprocessing.
+
+        Parameters
+        ----------
+        results : list[dict]
+            Results from each simulation
+
+        Returns
+        -------
+        dict
+            Final result
+        """
+        total = 0
+        paths = []
+        for result in results:
+            assert "result" in result
+            assert "output_data_path" in result
+            total += result["result"]
+            paths.append(result["output_data_path"])
+        return {"total": total, "output_data_paths": paths}
+
 
 You need to run this function on hundreds of sets of input parameters and want torc to help you
 scale this work on an HPC.
@@ -51,6 +81,9 @@ Here is what torc does to solve this problem:
 - When torc runs each job it reads the correct input parameters from the database, imports the
   user's function, and then calls it with the input parameters.
 - When the function completes, torc stores any returned data in the database.
+- When all workers complete torc collectgs all result data from the database into a list and passes
+  that to the postprocess function. It also stores any returned data from that function into the
+  database.
 
 Build the workflow
 ==================
@@ -80,6 +113,8 @@ Build the workflow
         "run",
         params,
         resource_requirements="medium",
+        # Note that this is optional.
+        postprocess_func="postprocess",
     )
     builder.add_slurm_scheduler(
         name="short",
@@ -109,6 +144,8 @@ Build the workflow
 - If you want torc to store result data in the database, return it from your run function.
   **Note**: this result data must not be large - the database is not designed for that. If you have
   large result data, return a pointer (i.e., file path) to its location here.
+- If you choose to define a postprocess function and want torc to store the final data in the
+  database, return it from that function.
 - The ``params`` must be serializable in JSON format because they will be stored in the database.
   Basic types like numbers and strings and lists and dictionaries of those will work fine. If you
   need to store complex, custom types, consider these options:
@@ -161,15 +198,16 @@ Build the workflow
 .. code-block:: console
 
     $ torc jobs list
-    +----------------------------------------------------------------------------------------+
-    |                                Jobs in workflow 3141686                                |
-    +-------+------+------------------------+--------+-----------------------------+---------+
-    | index | name |        command         | status | needs_compute_node_schedule |   key   |
-    +-------+------+------------------------+--------+-----------------------------+---------+
-    |   0   |  0   | torc jobs run-function | ready  |            False            | 3141817 |
-    |   1   |  1   | torc jobs run-function | ready  |            False            | 3141825 |
-    |   2   |  2   | torc jobs run-function | ready  |            False            | 3141833 |
-    +-------+------+------------------------+--------+-----------------------------+---------+
+    +--------------------------------------------------------------------------------------------------+
+    |                                     Jobs in workflow 3141686                                     |
+    +-------+-------------+---------------------------+---------+-----------------------------+--------+
+    | index |     name    |          command          |  status | needs_compute_node_schedule |  _key  |
+    +-------+-------------+---------------------------+---------+-----------------------------+--------+
+    |   1   |      0      |   torc jobs run-function  |  ready  |            False            | 788309 |
+    |   2   |      1      |   torc jobs run-function  |  ready  |            False            | 788323 |
+    |   3   |      2      |   torc jobs run-function  |  ready  |            False            | 788337 |
+    |   4   | postprocess | torc jobs run-postprocess | blocked |            False            | 788389 |
+    +-------+-------------+---------------------------+---------+-----------------------------+--------+
 
 6. Schedule compute nodes with ``Slurm``. This example only needs one compute node. You will need
    to make some estimation for your jobs.
@@ -184,8 +222,8 @@ Build the workflow
 7. The jobs will run whenever Slurm allocates compute nodes. Monitor status as discussed in
    :ref:`check-status`.
 
-8. View the result data overall or by job (if your run function returns something). Note that
-   listing all user-data will return input parameters.
+8. View the result data overall or by job (if your run and postprocess functions return something).
+   Note that listing all user-data will return input parameters.
 
 .. code-block:: console
 
@@ -193,9 +231,10 @@ Build the workflow
 
 .. code-block:: console
 
-    $ torc jobs list-user-data --stores 3141817
-    $ torc jobs list-user-data --stores 3141825
-    $ torc jobs list-user-data --stores 3141833
+    $ torc jobs list-user-data --stores 788309
+    $ torc jobs list-user-data --stores 788323
+    $ torc jobs list-user-data --stores 788337
+    $ torc jobs list-user-data --stores 788389
 
 Workflow Restarts
 =================
