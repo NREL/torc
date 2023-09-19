@@ -3158,10 +3158,11 @@ const _returntypes_post_workflows_key_initialize_jobs_DefaultApi = Dict{Regex,Ty
     Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
 )
 
-function _oacinternal_post_workflows_key_initialize_jobs(_api::DefaultApi, key::String; only_uninitialized=nothing, body=nothing, _mediaType=nothing)
+function _oacinternal_post_workflows_key_initialize_jobs(_api::DefaultApi, key::String; only_uninitialized=nothing, clear_ephemeral_user_data=nothing, body=nothing, _mediaType=nothing)
     _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_post_workflows_key_initialize_jobs_DefaultApi, "/workflows/{key}/initialize_jobs", [], body)
     OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
     OpenAPI.Clients.set_param(_ctx.query, "only_uninitialized", only_uninitialized)  # type Bool
+    OpenAPI.Clients.set_param(_ctx.query, "clear_ephemeral_user_data", clear_ephemeral_user_data)  # type Bool
     OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
     OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
     return _ctx
@@ -3174,17 +3175,18 @@ Initialize job relationships based on file and user_data relationships.
 Params:
 - key::String (required)
 - only_uninitialized::Bool
+- clear_ephemeral_user_data::Bool
 - body::Any
 
 Return: Any, OpenAPI.Clients.ApiResponse
 """
-function post_workflows_key_initialize_jobs(_api::DefaultApi, key::String; only_uninitialized=nothing, body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_post_workflows_key_initialize_jobs(_api, key; only_uninitialized=only_uninitialized, body=body, _mediaType=_mediaType)
+function post_workflows_key_initialize_jobs(_api::DefaultApi, key::String; only_uninitialized=nothing, clear_ephemeral_user_data=nothing, body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_post_workflows_key_initialize_jobs(_api, key; only_uninitialized=only_uninitialized, clear_ephemeral_user_data=clear_ephemeral_user_data, body=body, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx)
 end
 
-function post_workflows_key_initialize_jobs(_api::DefaultApi, response_stream::Channel, key::String; only_uninitialized=nothing, body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_post_workflows_key_initialize_jobs(_api, key; only_uninitialized=only_uninitialized, body=body, _mediaType=_mediaType)
+function post_workflows_key_initialize_jobs(_api::DefaultApi, response_stream::Channel, key::String; only_uninitialized=nothing, clear_ephemeral_user_data=nothing, body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_post_workflows_key_initialize_jobs(_api, key; only_uninitialized=only_uninitialized, clear_ephemeral_user_data=clear_ephemeral_user_data, body=body, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -3545,6 +3547,39 @@ end
 
 function post_workflows_workflow_aws_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String, body::WorkflowAwsSchedulersModel; _mediaType=nothing)
     _ctx = _oacinternal_post_workflows_workflow_aws_schedulers(_api, workflow, body; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_post_workflows_workflow_bulk_jobs_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+)
+
+function _oacinternal_post_workflows_workflow_bulk_jobs(_api::DefaultApi, workflow::String, body::WorkflowBulkJobsModel; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_post_workflows_workflow_bulk_jobs_DefaultApi, "/workflows/{workflow}/bulk_jobs", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Add jobs in bulk with edge definitions.
+
+Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
+
+Params:
+- workflow::String (required)
+- body::WorkflowBulkJobsModel (required)
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function post_workflows_workflow_bulk_jobs(_api::DefaultApi, workflow::String, body::WorkflowBulkJobsModel; _mediaType=nothing)
+    _ctx = _oacinternal_post_workflows_workflow_bulk_jobs(_api, workflow, body; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function post_workflows_workflow_bulk_jobs(_api::DefaultApi, response_stream::Channel, workflow::String, body::WorkflowBulkJobsModel; _mediaType=nothing)
+    _ctx = _oacinternal_post_workflows_workflow_bulk_jobs(_api, workflow, body; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -4851,6 +4886,7 @@ export post_workflows_key_process_changed_job_inputs
 export post_workflows_key_reset_job_status
 export post_workflows_key_reset_status
 export post_workflows_workflow_aws_schedulers
+export post_workflows_workflow_bulk_jobs
 export post_workflows_workflow_compute_node_stats
 export post_workflows_workflow_compute_nodes
 export post_workflows_workflow_edges_name

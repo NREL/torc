@@ -31,7 +31,7 @@ ArangoDB parameters as needed. ArangoDB will store its data in ``arangodb3`` and
         --env "ARANGO_ROOT_PASSWORD=openSesame" \
         -B arangodb3:/var/lib/arangodb3 \
         -B arangodb3-apps:/var/lib/arangodb3-apps \
-        /scratch/dthom/containers/arangodb.sif
+        /datasets/images/arangodb/arangodb.sif
 
 Copy that text into ``batch_arangod.sh`` and submit it to Slurm. ``tail`` will print text
 from ``arangod`` when it starts.
@@ -97,7 +97,7 @@ page use ``workflows``.
 
     $ module load singularity-container
     $ singularity run -B /scratch:/scratch \
-        /scratch/dthom/containers/foxx.sif install \
+        /datasets/images/arangodb/arangodb.sif foxx install \
         --server http://127.0.0.1:8529 \
         --database workflows \
         -username root \
@@ -105,7 +105,7 @@ page use ``workflows``.
         /torc-service \
         /scratch/dthom/torc-service.zip
     $ singularity run -B /scratch:/scratch \
-        /scratch/dthom/containers/foxx.sif set-dev \
+        /datasets/images/arangodb/arangodb.sif foxx set-dev \
         --server http://127.0.0.1:8529 \
         --database workflows \
         -username root \

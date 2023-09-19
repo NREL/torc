@@ -14,4 +14,4 @@ singularity run \
     --env "ARANGO_ROOT_PASSWORD=openSesame" \
     -B arangodb3:/var/lib/arangodb3 \
     -B arangodb3-apps:/var/lib/arangodb3-apps \
-    /scratch/dthom/containers/arangodb.sif
+    /datasets/images/arangodb/arangodb.sif

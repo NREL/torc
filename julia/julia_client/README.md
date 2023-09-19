@@ -118,6 +118,7 @@ Class | Method
 *DefaultApi* | [**post_workflows_key_reset_job_status**](docs/DefaultApi.md#post_workflows_key_reset_job_status)<br/>**POST** /workflows/{key}/reset_job_status<br/>Reset job status.
 *DefaultApi* | [**post_workflows_key_reset_status**](docs/DefaultApi.md#post_workflows_key_reset_status)<br/>**POST** /workflows/{key}/reset_status<br/>Reset worklow status.
 *DefaultApi* | [**post_workflows_workflow_aws_schedulers**](docs/DefaultApi.md#post_workflows_workflow_aws_schedulers)<br/>**POST** /workflows/{workflow}/aws_schedulers<br/>Store a AWS compute node configuration.
+*DefaultApi* | [**post_workflows_workflow_bulk_jobs**](docs/DefaultApi.md#post_workflows_workflow_bulk_jobs)<br/>**POST** /workflows/{workflow}/bulk_jobs<br/>Add jobs in bulk with edge definitions.
 *DefaultApi* | [**post_workflows_workflow_compute_node_stats**](docs/DefaultApi.md#post_workflows_workflow_compute_node_stats)<br/>**POST** /workflows/{workflow}/compute_node_stats<br/>Store a compute node statistics.
 *DefaultApi* | [**post_workflows_workflow_compute_nodes**](docs/DefaultApi.md#post_workflows_workflow_compute_nodes)<br/>**POST** /workflows/{workflow}/compute_nodes<br/>Store a compute node.
 *DefaultApi* | [**post_workflows_workflow_edges_name**](docs/DefaultApi.md#post_workflows_workflow_edges_name)<br/>**POST** /workflows/{workflow}/edges/{name}<br/>Store an edge between two vertexes.
@@ -190,6 +191,7 @@ Class | Method
  - [GetWorkflowsWorkflowSlurmSchedulersResponse](docs/GetWorkflowsWorkflowSlurmSchedulersResponse.md)
  - [GetWorkflowsWorkflowUserDataResponse](docs/GetWorkflowsWorkflowUserDataResponse.md)
  - [InlineResponse500](docs/InlineResponse500.md)
+ - [JobWithEdgesModel](docs/JobWithEdgesModel.md)
  - [JobsInternal](docs/JobsInternal.md)
  - [PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse](docs/PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse.md)
  - [PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse](docs/PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse.md)
@@ -198,6 +200,7 @@ Class | Method
  - [PostWorkflowsKeyPrepareNextJobsForSubmissionResponse](docs/PostWorkflowsKeyPrepareNextJobsForSubmissionResponse.md)
  - [PostWorkflowsKeyProcessChangedJobInputsResponse](docs/PostWorkflowsKeyProcessChangedJobInputsResponse.md)
  - [WorkflowAwsSchedulersModel](docs/WorkflowAwsSchedulersModel.md)
+ - [WorkflowBulkJobsModel](docs/WorkflowBulkJobsModel.md)
  - [WorkflowComputeNodeStatsModel](docs/WorkflowComputeNodeStatsModel.md)
  - [WorkflowComputeNodesModel](docs/WorkflowComputeNodesModel.md)
  - [WorkflowConfigModel](docs/WorkflowConfigModel.md)

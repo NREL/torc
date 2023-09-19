@@ -6,6 +6,7 @@ const GiB = MiB * KiB;
 const TiB = GiB * KiB;
 const MAX_TRANSFER_RECORDS = 100000;
 
+// Propagate any changes to the same enum in the Python package.
 const JobStatus = {
   // Initial state. Not yet known if it is blocked or ready.
   Uninitialized: 'uninitialized',

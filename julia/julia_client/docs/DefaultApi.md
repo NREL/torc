@@ -102,6 +102,7 @@ Method | HTTP request | Description
 [**post_workflows_key_reset_job_status**](DefaultApi.md#post_workflows_key_reset_job_status) | **POST** /workflows/{key}/reset_job_status | Reset job status.
 [**post_workflows_key_reset_status**](DefaultApi.md#post_workflows_key_reset_status) | **POST** /workflows/{key}/reset_status | Reset worklow status.
 [**post_workflows_workflow_aws_schedulers**](DefaultApi.md#post_workflows_workflow_aws_schedulers) | **POST** /workflows/{workflow}/aws_schedulers | Store a AWS compute node configuration.
+[**post_workflows_workflow_bulk_jobs**](DefaultApi.md#post_workflows_workflow_bulk_jobs) | **POST** /workflows/{workflow}/bulk_jobs | Add jobs in bulk with edge definitions.
 [**post_workflows_workflow_compute_node_stats**](DefaultApi.md#post_workflows_workflow_compute_node_stats) | **POST** /workflows/{workflow}/compute_node_stats | Store a compute node statistics.
 [**post_workflows_workflow_compute_nodes**](DefaultApi.md#post_workflows_workflow_compute_nodes) | **POST** /workflows/{workflow}/compute_nodes | Store a compute node.
 [**post_workflows_workflow_edges_name**](DefaultApi.md#post_workflows_workflow_edges_name) | **POST** /workflows/{workflow}/edges/{name} | Store an edge between two vertexes.
@@ -3191,8 +3192,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **post_workflows_key_initialize_jobs**
-> post_workflows_key_initialize_jobs(_api::DefaultApi, key::String; only_uninitialized=nothing, body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> post_workflows_key_initialize_jobs(_api::DefaultApi, response_stream::Channel, key::String; only_uninitialized=nothing, body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+> post_workflows_key_initialize_jobs(_api::DefaultApi, key::String; only_uninitialized=nothing, clear_ephemeral_user_data=nothing, body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> post_workflows_key_initialize_jobs(_api::DefaultApi, response_stream::Channel, key::String; only_uninitialized=nothing, clear_ephemeral_user_data=nothing, body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Initialize job relationships.
 
@@ -3210,6 +3211,7 @@ Name | Type | Description  | Notes
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **only_uninitialized** | **Bool**| Only initialize jobs with a status of uninitialized. | [default to false]
+ **clear_ephemeral_user_data** | **Bool**| Clear all ephemeral user data. | [default to true]
  **body** | **Any**|  | 
 
 ### Return type
@@ -3585,6 +3587,37 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**WorkflowAwsSchedulersModel**](WorkflowAwsSchedulersModel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **post_workflows_workflow_bulk_jobs**
+> post_workflows_workflow_bulk_jobs(_api::DefaultApi, workflow::String, body::WorkflowBulkJobsModel; _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> post_workflows_workflow_bulk_jobs(_api::DefaultApi, response_stream::Channel, workflow::String, body::WorkflowBulkJobsModel; _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+
+Add jobs in bulk with edge definitions.
+
+Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**workflow** | **String**| Workflow key | [default to nothing]
+**body** | [**WorkflowBulkJobsModel**](WorkflowBulkJobsModel.md)|  | 
+
+### Return type
+
+**Any**
 
 ### Authorization
 

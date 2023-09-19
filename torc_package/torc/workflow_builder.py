@@ -121,8 +121,8 @@ class WorkflowBuilder:
             job = self.add_job(
                 name=job_name,
                 command="torc jobs run-function",
-                consumes_user_data=[input_ud.name],
-                stores_user_data=[output_ud.name],
+                input_user_data=[input_ud.name],
+                output_user_data=[output_ud.name],
                 resource_requirements=resource_requirements,
                 scheduler=scheduler,
             )
@@ -141,8 +141,8 @@ class WorkflowBuilder:
             self.add_job(
                 name="postprocess",
                 command="torc jobs run-postprocess",
-                consumes_user_data=[input_ud.name] + output_data_names,
-                stores_user_data=[output_ud.name],
+                input_user_data=[input_ud.name] + output_data_names,
+                output_user_data=[output_ud.name],
                 resource_requirements=resource_requirements,
                 scheduler=scheduler,
             )

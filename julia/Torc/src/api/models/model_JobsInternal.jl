@@ -8,6 +8,7 @@
         memory_bytes=nothing,
         num_cpus=nothing,
         num_gpus=nothing,
+        num_nodes=nothing,
         runtime_seconds=nothing,
         scheduler_config_id=nothing,
         hash=nothing,
@@ -16,6 +17,7 @@
     - memory_bytes::Int64
     - num_cpus::Int64
     - num_gpus::Int64
+    - num_nodes::Int64
     - runtime_seconds::Float64
     - scheduler_config_id::String
     - hash::Int64
@@ -24,22 +26,24 @@ Base.@kwdef mutable struct JobsInternal <: OpenAPI.APIModel
     memory_bytes::Union{Nothing, Int64} = nothing
     num_cpus::Union{Nothing, Int64} = nothing
     num_gpus::Union{Nothing, Int64} = nothing
+    num_nodes::Union{Nothing, Int64} = nothing
     runtime_seconds::Union{Nothing, Float64} = nothing
     scheduler_config_id::Union{Nothing, String} = nothing
     hash::Union{Nothing, Int64} = nothing
 
-    function JobsInternal(memory_bytes, num_cpus, num_gpus, runtime_seconds, scheduler_config_id, hash, )
+    function JobsInternal(memory_bytes, num_cpus, num_gpus, num_nodes, runtime_seconds, scheduler_config_id, hash, )
         OpenAPI.validate_property(JobsInternal, Symbol("memory_bytes"), memory_bytes)
         OpenAPI.validate_property(JobsInternal, Symbol("num_cpus"), num_cpus)
         OpenAPI.validate_property(JobsInternal, Symbol("num_gpus"), num_gpus)
+        OpenAPI.validate_property(JobsInternal, Symbol("num_nodes"), num_nodes)
         OpenAPI.validate_property(JobsInternal, Symbol("runtime_seconds"), runtime_seconds)
         OpenAPI.validate_property(JobsInternal, Symbol("scheduler_config_id"), scheduler_config_id)
         OpenAPI.validate_property(JobsInternal, Symbol("hash"), hash)
-        return new(memory_bytes, num_cpus, num_gpus, runtime_seconds, scheduler_config_id, hash, )
+        return new(memory_bytes, num_cpus, num_gpus, num_nodes, runtime_seconds, scheduler_config_id, hash, )
     end
 end # type JobsInternal
 
-const _property_types_JobsInternal = Dict{Symbol,String}(Symbol("memory_bytes")=>"Int64", Symbol("num_cpus")=>"Int64", Symbol("num_gpus")=>"Int64", Symbol("runtime_seconds")=>"Float64", Symbol("scheduler_config_id")=>"String", Symbol("hash")=>"Int64", )
+const _property_types_JobsInternal = Dict{Symbol,String}(Symbol("memory_bytes")=>"Int64", Symbol("num_cpus")=>"Int64", Symbol("num_gpus")=>"Int64", Symbol("num_nodes")=>"Int64", Symbol("runtime_seconds")=>"Float64", Symbol("scheduler_config_id")=>"String", Symbol("hash")=>"Int64", )
 OpenAPI.property_type(::Type{ JobsInternal }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_JobsInternal[name]))}
 
 function check_required(o::JobsInternal)

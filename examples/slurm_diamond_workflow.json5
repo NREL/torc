@@ -18,7 +18,7 @@
     {
       name: "work1",
       command: "python tests/scripts/work.py -i output/f1.json -o output/f2.json",
-      consumes_user_data: ["my_val"],
+      input_user_data: ["my_val"],
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
       resource_requirements: "medium",

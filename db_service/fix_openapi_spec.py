@@ -38,6 +38,20 @@ def main():
             # Arango uses 'body' for request/response body.
             # 'model' makes more sense for items stored in the db.
             ("_body", "_model"),
+            # These names look odd. Change for clarity.
+            ("workflowsworkflowcompute_nodes_resources", "compute_nodes_resources"),
+            ("workflowsworkflowjobs_internal", "jobs_internal"),
+            ("workflowsworkflowcompute_node_stats_stats", "compute_node_stats"),
+            ("workflowskeystatus_auto_tune_status", "auto_tune_status"),
+            ("key_config_model", "workflow_config_model"),
+            ("key_status_model", "workflow_status_model"),
+            (
+                "workflow_specifications_config_compute_node_resource_stats",
+                "compute_node_resource_stats_model",
+            ),
+            ("get_workflows_key_events_after_key_event_key", "get_events_after_key"),
+            ("get_workflows_key_latest_event_key", "get_latest_event_key"),
+            ("workflowsworkflowbulk_jobs_jobs", "job_with_edges_model"),
         ],
     )
     os.rename(spec_file_tmp, spec_file)
@@ -132,14 +146,14 @@ def main():
             path="/workflows/{key}/config",
             responses=OpsComponent(
                 ops=["get", "put"],
-                component="#/components/schemas/key_config_model",
+                component="#/components/schemas/workflow_config_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{key}/status",
             responses=OpsComponent(
                 ops=["get", "put"],
-                component="#/components/schemas/key_status_model",
+                component="#/components/schemas/workflow_status_model",
             ),
         ),
         ApiCommand(
@@ -379,7 +393,7 @@ def main():
             path="/workflows/{key}/prepare_jobs_for_submission",
             requests=OpsComponent(
                 ops=["post"],
-                component="#/components/schemas/workflowsworkflowcompute_nodes_resources",
+                component="#/components/schemas/compute_nodes_resources",
             ),
         ),
         ApiCommand(
@@ -452,6 +466,9 @@ def main():
     schemas["workflow_specifications_model"]["properties"]["config"][
         "$ref"
     ] = "#/components/schemas/workflow_config_model"
+    schemas["job_with_edges_model"]["properties"]["job"][
+        "$ref"
+    ] = "#/components/schemas/workflow_jobs_model"
     w_spec_props = schemas["workflow_specifications_model"]["properties"]
     w_spec_props["files"]["items"]["$ref"] = "#/components/schemas/workflow_files_model"
     w_spec_props["user_data"]["items"]["$ref"] = "#/components/schemas/workflow_user_data_model"
@@ -463,8 +480,8 @@ def main():
     # For some reason that produces type=object in the schema. Change to string.
     for component, field in [
         ("key_prepare_jobs_for_submission_model", "scheduler_config_id"),
-        ("workflowsworkflowcompute_nodes_resources", "scheduler_config_id"),
-        ("workflowsworkflowjobs_internal", "scheduler_config_id"),
+        ("compute_nodes_resources", "scheduler_config_id"),
+        ("jobs_internal", "scheduler_config_id"),
         ("workflow_job_specifications_model", "scheduler"),
         ("workflow_job_specifications_model", "invocation_script"),
         ("workflow_jobs_model", "invocation_script"),
@@ -479,7 +496,7 @@ def main():
         ("workflow_slurm_schedulers_model", "gres"),
         ("workflow_slurm_schedulers_model", "mem"),
         ("workflow_slurm_schedulers_model", "tmp"),
-        ("workflowsworkflowcompute_nodes_resources", "time_limit"),
+        ("compute_nodes_resources", "time_limit"),
     ]:
         data["components"]["schemas"][component]["properties"][field]["type"] = "string"
 
@@ -507,29 +524,9 @@ def main():
         data["components"]["schemas"].pop(name)
     data["components"]["schemas"].pop("workflow_specifications_config")
 
-    tmp_file = spec_file.with_suffix(".tmp")
-    with open(tmp_file, "w", encoding="utf-8") as f:
+    with open(spec_file, "w", encoding="utf-8") as f:
         yaml.dump(data, f, sort_keys=False)
 
-    # These names look odd. Change for clarity.
-    _replace_strings(
-        spec_file,
-        tmp_file,
-        [
-            ("workflowsworkflowcompute_nodes_resources", "compute_nodes_resources"),
-            ("workflowsworkflowjobs_internal", "jobs_internal"),
-            ("workflowsworkflowcompute_node_stats_stats", "compute_node_stats"),
-            ("workflowskeystatus_auto_tune_status", "auto_tune_status"),
-            ("key_config_model", "workflow_config_model"),
-            ("key_status_model", "workflow_status_model"),
-            (
-                "workflow_specifications_config_compute_node_resource_stats",
-                "compute_node_resource_stats_model",
-            ),
-            ("get_workflows_key_events_after_key_event_key", "get_events_after_key"),
-            ("get_workflows_key_latest_event_key", "get_latest_event_key"),
-        ],
-    )
     print(f"Wrote fixed spec to {spec_file}")
 
 

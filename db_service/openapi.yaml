@@ -4146,6 +4146,43 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
+  /workflows/{workflow}/bulk_jobs:
+    post:
+      tags: []
+      summary: Add jobs in bulk with edge definitions.
+      description: Add jobs in bulk with edge definitions. Recommended max job count
+        of 10,000.
+      operationId: post_workflows_workflow_bulk_jobs
+      parameters:
+      - name: workflow
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/workflow_bulk_jobs_model'
+        required: true
+      responses:
+        '200':
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                type: object
+        '500':
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
   /workflows/{workflow}/job_keys:
     get:
       tags: []
@@ -5114,6 +5151,15 @@ paths:
         schema:
           type: boolean
           default: false
+      - name: clear_ephemeral_user_data
+        in: query
+        description: Clear all ephemeral user data.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
+          default: true
       requestBody:
         content:
           application/json:
@@ -6118,6 +6164,15 @@ components:
           type: string
         _rev:
           type: string
+    workflow_bulk_jobs_model:
+      required:
+      - jobs
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/job_with_edges_model'
     workflow_aws_schedulers_model:
       type: object
       properties:
@@ -6219,6 +6274,37 @@ components:
           type: boolean
           default: false
         job_keys:
+          type: array
+          items:
+            type: string
+    job_with_edges_model:
+      required:
+      - job
+      type: object
+      properties:
+        job:
+          $ref: '#/components/schemas/workflow_jobs_model'
+        resource_requirements:
+          type: string
+        scheduler:
+          type: string
+        input_files:
+          type: array
+          items:
+            type: string
+        output_files:
+          type: array
+          items:
+            type: string
+        input_user_data:
+          type: array
+          items:
+            type: string
+        output_user_data:
+          type: array
+          items:
+            type: string
+        blocked_by:
           type: array
           items:
             type: string
@@ -6488,11 +6574,11 @@ components:
         needs_compute_node_schedule:
           type: boolean
           default: false
-        consumes_user_data:
+        input_user_data:
           type: array
           items:
             type: string
-        stores_user_data:
+        output_user_data:
           type: array
           items:
             type: string
@@ -6518,6 +6604,8 @@ components:
         num_cpus:
           type: integer
         num_gpus:
+          type: integer
+        num_nodes:
           type: integer
         runtime_seconds:
           type: number

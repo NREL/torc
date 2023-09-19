@@ -32,11 +32,11 @@ result with the torc CLI, but the API is likely more convenient.
     jobs: [
       {
         command: "python work1.py",
-        stores_user_data: ["output_data1"],
+        output_user_data: ["output_data1"],
       },
       {
         command: "python work2.py",
-        consumes_user_data: ["output_data1"],
+        input_user_data: ["output_data1"],
       }
     ]
 

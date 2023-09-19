@@ -28,10 +28,11 @@ class JobsInternal(BaseModel):
     memory_bytes: Optional[StrictInt] = None
     num_cpus: Optional[StrictInt] = None
     num_gpus: Optional[StrictInt] = None
+    num_nodes: Optional[StrictInt] = None
     runtime_seconds: Optional[Union[StrictFloat, StrictInt]] = None
     scheduler_config_id: Optional[StrictStr] = None
     hash: Optional[StrictInt] = None
-    __properties = ["memory_bytes", "num_cpus", "num_gpus", "runtime_seconds", "scheduler_config_id", "hash"]
+    __properties = ["memory_bytes", "num_cpus", "num_gpus", "num_nodes", "runtime_seconds", "scheduler_config_id", "hash"]
     model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
 
     def to_str(self) -> str:
@@ -68,6 +69,7 @@ class JobsInternal(BaseModel):
             "memory_bytes": obj.get("memory_bytes"),
             "num_cpus": obj.get("num_cpus"),
             "num_gpus": obj.get("num_gpus"),
+            "num_nodes": obj.get("num_nodes"),
             "runtime_seconds": obj.get("runtime_seconds"),
             "scheduler_config_id": obj.get("scheduler_config_id"),
             "hash": obj.get("hash")

@@ -40,7 +40,7 @@ const SLEEP = joinpath(BASE_DIR, "..", "..", "torc_package", "tests", "scripts",
         builder;
         name = "sleep2",
         command = "python $SLEEP 1",
-        consumes_user_data = ["my_val1"],
+        input_user_data = ["my_val1"],
         resource_requirements = medium.name,
         scheduler = "local_schedulers/test",
     )
@@ -48,7 +48,7 @@ const SLEEP = joinpath(BASE_DIR, "..", "..", "torc_package", "tests", "scripts",
         builder;
         name = "sleep3",
         command = "python $SLEEP 1",
-        consumes_user_data = ["my_val2"],
+        input_user_data = ["my_val2"],
         resource_requirements = large.name,
         scheduler = "local_schedulers/test",
     )

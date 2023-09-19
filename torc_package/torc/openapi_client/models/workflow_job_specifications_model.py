@@ -34,13 +34,13 @@ class WorkflowJobSpecificationsModel(BaseModel):
     supports_termination: Optional[StrictBool] = False
     scheduler: Optional[StrictStr] = None
     needs_compute_node_schedule: Optional[StrictBool] = False
-    consumes_user_data: Optional[Annotated[List[StrictStr], Field()]] = None
-    stores_user_data: Optional[Annotated[List[StrictStr], Field()]] = None
+    input_user_data: Optional[Annotated[List[StrictStr], Field()]] = None
+    output_user_data: Optional[Annotated[List[StrictStr], Field()]] = None
     resource_requirements: Optional[StrictStr] = None
     input_files: Optional[Annotated[List[StrictStr], Field()]] = None
     output_files: Optional[Annotated[List[StrictStr], Field()]] = None
     blocked_by: Optional[Annotated[List[StrictStr], Field()]] = None
-    __properties = ["name", "key", "command", "invocation_script", "cancel_on_blocking_job_failure", "supports_termination", "scheduler", "needs_compute_node_schedule", "consumes_user_data", "stores_user_data", "resource_requirements", "input_files", "output_files", "blocked_by"]
+    __properties = ["name", "key", "command", "invocation_script", "cancel_on_blocking_job_failure", "supports_termination", "scheduler", "needs_compute_node_schedule", "input_user_data", "output_user_data", "resource_requirements", "input_files", "output_files", "blocked_by"]
     model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
 
     def to_str(self) -> str:
@@ -82,8 +82,8 @@ class WorkflowJobSpecificationsModel(BaseModel):
             "supports_termination": obj.get("supports_termination") if obj.get("supports_termination") is not None else False,
             "scheduler": obj.get("scheduler"),
             "needs_compute_node_schedule": obj.get("needs_compute_node_schedule") if obj.get("needs_compute_node_schedule") is not None else False,
-            "consumes_user_data": obj.get("consumes_user_data"),
-            "stores_user_data": obj.get("stores_user_data"),
+            "input_user_data": obj.get("input_user_data"),
+            "output_user_data": obj.get("output_user_data"),
             "resource_requirements": obj.get("resource_requirements"),
             "input_files": obj.get("input_files"),
             "output_files": obj.get("output_files"),

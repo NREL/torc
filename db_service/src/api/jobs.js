@@ -10,6 +10,19 @@ const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
 module.exports = router;
 
+router.post('workflows/:workflow/bulk_jobs', function(req, res) {
+  const workflowKey = req.pathParams.workflow;
+  const workflow = documents.getWorkflow(workflowKey, res);
+  const jobs = req.body.jobs;
+  const keys = documents.bulkAddJobsWithEdges(jobs, workflow);
+  res.send({items: keys});
+})
+    .pathParam('workflow', joi.string().required(), 'Workflow key')
+    .body(schemas.jobsWithEdgeIds)
+    .response(joi.object())
+    .summary('Add jobs in bulk with edge definitions.')
+    .description('Add jobs in bulk with edge definitions. Recommended max job count of 10,000.');
+
 router.get('workflows/:workflow/job_keys', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const workflow = documents.getWorkflow(workflowKey, res);

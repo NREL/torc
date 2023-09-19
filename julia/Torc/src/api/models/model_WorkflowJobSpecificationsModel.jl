@@ -13,8 +13,8 @@
         supports_termination=false,
         scheduler=nothing,
         needs_compute_node_schedule=false,
-        consumes_user_data=nothing,
-        stores_user_data=nothing,
+        input_user_data=nothing,
+        output_user_data=nothing,
         resource_requirements=nothing,
         input_files=nothing,
         output_files=nothing,
@@ -29,8 +29,8 @@
     - supports_termination::Bool
     - scheduler::String
     - needs_compute_node_schedule::Bool
-    - consumes_user_data::Vector{String}
-    - stores_user_data::Vector{String}
+    - input_user_data::Vector{String}
+    - output_user_data::Vector{String}
     - resource_requirements::String
     - input_files::Vector{String}
     - output_files::Vector{String}
@@ -45,14 +45,14 @@ Base.@kwdef mutable struct WorkflowJobSpecificationsModel <: OpenAPI.APIModel
     supports_termination::Union{Nothing, Bool} = false
     scheduler::Union{Nothing, String} = nothing
     needs_compute_node_schedule::Union{Nothing, Bool} = false
-    consumes_user_data::Union{Nothing, Vector{String}} = nothing
-    stores_user_data::Union{Nothing, Vector{String}} = nothing
+    input_user_data::Union{Nothing, Vector{String}} = nothing
+    output_user_data::Union{Nothing, Vector{String}} = nothing
     resource_requirements::Union{Nothing, String} = nothing
     input_files::Union{Nothing, Vector{String}} = nothing
     output_files::Union{Nothing, Vector{String}} = nothing
     blocked_by::Union{Nothing, Vector{String}} = nothing
 
-    function WorkflowJobSpecificationsModel(name, key, command, invocation_script, cancel_on_blocking_job_failure, supports_termination, scheduler, needs_compute_node_schedule, consumes_user_data, stores_user_data, resource_requirements, input_files, output_files, blocked_by, )
+    function WorkflowJobSpecificationsModel(name, key, command, invocation_script, cancel_on_blocking_job_failure, supports_termination, scheduler, needs_compute_node_schedule, input_user_data, output_user_data, resource_requirements, input_files, output_files, blocked_by, )
         OpenAPI.validate_property(WorkflowJobSpecificationsModel, Symbol("name"), name)
         OpenAPI.validate_property(WorkflowJobSpecificationsModel, Symbol("key"), key)
         OpenAPI.validate_property(WorkflowJobSpecificationsModel, Symbol("command"), command)
@@ -61,17 +61,17 @@ Base.@kwdef mutable struct WorkflowJobSpecificationsModel <: OpenAPI.APIModel
         OpenAPI.validate_property(WorkflowJobSpecificationsModel, Symbol("supports_termination"), supports_termination)
         OpenAPI.validate_property(WorkflowJobSpecificationsModel, Symbol("scheduler"), scheduler)
         OpenAPI.validate_property(WorkflowJobSpecificationsModel, Symbol("needs_compute_node_schedule"), needs_compute_node_schedule)
-        OpenAPI.validate_property(WorkflowJobSpecificationsModel, Symbol("consumes_user_data"), consumes_user_data)
-        OpenAPI.validate_property(WorkflowJobSpecificationsModel, Symbol("stores_user_data"), stores_user_data)
+        OpenAPI.validate_property(WorkflowJobSpecificationsModel, Symbol("input_user_data"), input_user_data)
+        OpenAPI.validate_property(WorkflowJobSpecificationsModel, Symbol("output_user_data"), output_user_data)
         OpenAPI.validate_property(WorkflowJobSpecificationsModel, Symbol("resource_requirements"), resource_requirements)
         OpenAPI.validate_property(WorkflowJobSpecificationsModel, Symbol("input_files"), input_files)
         OpenAPI.validate_property(WorkflowJobSpecificationsModel, Symbol("output_files"), output_files)
         OpenAPI.validate_property(WorkflowJobSpecificationsModel, Symbol("blocked_by"), blocked_by)
-        return new(name, key, command, invocation_script, cancel_on_blocking_job_failure, supports_termination, scheduler, needs_compute_node_schedule, consumes_user_data, stores_user_data, resource_requirements, input_files, output_files, blocked_by, )
+        return new(name, key, command, invocation_script, cancel_on_blocking_job_failure, supports_termination, scheduler, needs_compute_node_schedule, input_user_data, output_user_data, resource_requirements, input_files, output_files, blocked_by, )
     end
 end # type WorkflowJobSpecificationsModel
 
-const _property_types_WorkflowJobSpecificationsModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("key")=>"String", Symbol("command")=>"String", Symbol("invocation_script")=>"String", Symbol("cancel_on_blocking_job_failure")=>"Bool", Symbol("supports_termination")=>"Bool", Symbol("scheduler")=>"String", Symbol("needs_compute_node_schedule")=>"Bool", Symbol("consumes_user_data")=>"Vector{String}", Symbol("stores_user_data")=>"Vector{String}", Symbol("resource_requirements")=>"String", Symbol("input_files")=>"Vector{String}", Symbol("output_files")=>"Vector{String}", Symbol("blocked_by")=>"Vector{String}", )
+const _property_types_WorkflowJobSpecificationsModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("key")=>"String", Symbol("command")=>"String", Symbol("invocation_script")=>"String", Symbol("cancel_on_blocking_job_failure")=>"Bool", Symbol("supports_termination")=>"Bool", Symbol("scheduler")=>"String", Symbol("needs_compute_node_schedule")=>"Bool", Symbol("input_user_data")=>"Vector{String}", Symbol("output_user_data")=>"Vector{String}", Symbol("resource_requirements")=>"String", Symbol("input_files")=>"Vector{String}", Symbol("output_files")=>"Vector{String}", Symbol("blocked_by")=>"Vector{String}", )
 OpenAPI.property_type(::Type{ WorkflowJobSpecificationsModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_WorkflowJobSpecificationsModel[name]))}
 
 function check_required(o::WorkflowJobSpecificationsModel)

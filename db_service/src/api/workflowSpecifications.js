@@ -248,14 +248,14 @@ function checkDependencies(workflow) {
         throw new Error(`Invalid scheduler=${job.scheduler} in job=${JSON.stringify(job)}`);
       }
     }
-    for (const name of job.consumes_user_data) {
+    for (const name of job.input_user_data) {
       if (!userDataNames.has(name)) {
-        throw new Error(`Invalid consumes_user_data=${name} in job ${JSON.stringify(job)}`);
+        throw new Error(`Invalid input_user_data=${name} in job ${JSON.stringify(job)}`);
       }
     }
-    for (const name of job.stores_user_data) {
+    for (const name of job.output_user_data) {
       if (!userDataNames.has(name)) {
-        throw new Error(`Invalid stores_user_data=${name} in job ${JSON.stringify(job)}`);
+        throw new Error(`Invalid output_user_data=${name} in job ${JSON.stringify(job)}`);
       }
     }
     const rr = job.resource_requirements;
