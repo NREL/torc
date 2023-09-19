@@ -66,7 +66,7 @@ const SLEEP = joinpath(BASE_DIR, "..", "..", "torc_package", "tests", "scripts",
         @test result.exitcode == 0
         result = run(`torc -u $url -k $(workflow._key) jobs run -p 1 -o $output_dir`)
         @test result.exitcode == 0
-        results, response = APIClient.get_workflows_workflow_results(api, workflow._key)
+        results, response = APIClient.get_results(api, workflow._key)
         @test response.status == 200
         for result in results.items
             @test result.return_code == 0

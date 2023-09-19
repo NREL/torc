@@ -130,7 +130,7 @@ Complete a job
 ==============
 The torc worker application manages job completions. When a user job finishes the application
 creates a results object with the return code and execution time, and passes that to the database
-service through the call ``post_workflows_workflow_jobs_key_complete_job_status_rev``. The service
+service through the call ``post_jobs_key_complete_job_status_rev``. The service
 does the following:
 
 - Stores the result in the database and connects the job to that result with a ``returned`` edge.

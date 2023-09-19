@@ -9,7 +9,6 @@ from resource_monitor.timing.timer_stats import Timer
 from torc.openapi_client import ApiClient, DefaultApi
 from torc.openapi_client.configuration import Configuration
 from torc.openapi_client.rest import ApiException
-from torc.openapi_client.models.workflow_bulk_jobs_model import WorkflowBulkJobsModel
 from torc.common import timer_stats_collector
 from torc.exceptions import DatabaseOffline
 
@@ -89,10 +88,7 @@ def iter_documents(func, *args, skip=0, **kwargs):
 def map_job_keys_to_names(api: DefaultApi, workflow_key, filters=None) -> dict[str, str]:
     """Return a mapping of job key to name."""
     filters = filters or {}
-    return {
-        x.key: x.name
-        for x in iter_documents(api.get_workflows_workflow_jobs, workflow_key, **filters)
-    }
+    return {x.key: x.name for x in iter_documents(api.get_jobs, workflow_key, **filters)}
 
 
 _DATABASE_KEYS = {"_id", "_key", "_rev", "_oldRev", "id", "key", "rev"}
@@ -171,96 +167,3 @@ def sanitize_workflow(data: dict):
 def list_model_fields(cls):
     """Return a list of the model's fields."""
     return list(cls.model_json_schema()["properties"].keys())
-
-
-def add_jobs(
-    api: DefaultApi,
-    workflow_key: str,
-    jobs: list[WorkflowBulkJobsModel],
-) -> dict:
-    """Add jobs in bulk to the workflow.
-    Recommended maximum size is 10,000 jobs for ideal performance. The hard limit is tied to the
-    memory size of the client handler in the torc-service (512 MiB).
-
-    Returns
-    -------
-    dict
-        Dictionary containing the created job keys.
-    """
-    api.post_workflows_workflow_bulk_jobs(workflow_key, jobs)
-
-
-# def add_job(
-#    api: DefaultApi,
-#    workflow_key: str,
-#    job: WorkflowJobsModel,
-#    resource_requirements: str | None = None,
-#    scheduler: str | None = None,
-#    input_files: list[str] | None = None,
-#    output_files: list[str] | None = None,
-#    input_user_data: list[str] | None = None,
-#    output_user_data: list[str] | None = None,
-#    blocked_by: list[str] | None = None,
-# ) -> WorkflowJobsModel:
-#    """Add a job to the workflow.
-#
-#    Returns
-#    -------
-#    WorkflowJobsModel
-#        The job document that is now stored in the database.
-#    """
-#    job = send_api_command(
-#        api.post_workflows_workflow_jobs,
-#        workflow_key,
-#        job,
-#    )
-#    if resource_requirements is not None:
-#        send_api_command(
-#            api.post_workflows_workflow_edges_name,
-#            workflow_key,
-#            "requires",
-#            EdgesNameModel(_from=job.id, to=resource_requirements),
-#        )
-#    if scheduler is not None:
-#        send_api_command(
-#            api.post_workflows_workflow_edges_name,
-#            workflow_key,
-#            "scheduled_bys",
-#            EdgesNameModel(_from=job.id, to=scheduler),
-#        )
-#    for key in input_files or []:
-#        send_api_command(
-#            api.post_workflows_workflow_edges_name,
-#            workflow_key,
-#            "needs",
-#            EdgesNameModel(_from=job.id, to=key),
-#        )
-#    for key in output_files or []:
-#        send_api_command(
-#            api.post_workflows_workflow_edges_name,
-#            workflow_key,
-#            "produces",
-#            EdgesNameModel(_from=job.id, to=key),
-#        )
-#    for key in input_user_data or []:
-#        send_api_command(
-#            api.post_workflows_workflow_edges_name,
-#            workflow_key,
-#            "consumes",
-#            EdgesNameModel(_from=job.id, to=key),
-#        )
-#    for key in output_user_data or []:
-#        send_api_command(
-#            api.post_workflows_workflow_edges_name,
-#            workflow_key,
-#            "stores",
-#            EdgesNameModel(_from=job.id, to=key),
-#        )
-#    for key in blocked_by or []:
-#        send_api_command(
-#            api.post_workflows_workflow_edges_name,
-#            workflow_key,
-#            "blocks",
-#            EdgesNameModel(_from=key, to=job.id),
-#        )
-#    return job

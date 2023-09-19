@@ -23,8 +23,33 @@ from pydantic import Field, StrictBool, StrictFloat, StrictInt, StrictStr
 
 from typing import Any, Dict, List, Optional, Union
 
+from torc.openapi_client.models.aws_schedulers_model import AwsSchedulersModel
+from torc.openapi_client.models.bulk_jobs_model import BulkJobsModel
+from torc.openapi_client.models.compute_node_stats_model import ComputeNodeStatsModel
+from torc.openapi_client.models.compute_nodes_model import ComputeNodesModel
 from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
 from torc.openapi_client.models.edges_name_model import EdgesNameModel
+from torc.openapi_client.models.files_model import FilesModel
+from torc.openapi_client.models.get_aws_schedulers_response import GetAwsSchedulersResponse
+from torc.openapi_client.models.get_compute_node_stats_response import GetComputeNodeStatsResponse
+from torc.openapi_client.models.get_compute_nodes_response import GetComputeNodesResponse
+from torc.openapi_client.models.get_edges_name_response import GetEdgesNameResponse
+from torc.openapi_client.models.get_events_response import GetEventsResponse
+from torc.openapi_client.models.get_files_produced_by_job_key_response import GetFilesProducedByJobKeyResponse
+from torc.openapi_client.models.get_files_response import GetFilesResponse
+from torc.openapi_client.models.get_job_process_stats_response import GetJobProcessStatsResponse
+from torc.openapi_client.models.get_job_specifications_response import GetJobSpecificationsResponse
+from torc.openapi_client.models.get_jobs_find_by_needs_file_key_response import GetJobsFindByNeedsFileKeyResponse
+from torc.openapi_client.models.get_jobs_find_by_status_status_response import GetJobsFindByStatusStatusResponse
+from torc.openapi_client.models.get_jobs_key_user_data_consumes_response import GetJobsKeyUserDataConsumesResponse
+from torc.openapi_client.models.get_jobs_key_user_data_stores_response import GetJobsKeyUserDataStoresResponse
+from torc.openapi_client.models.get_jobs_response import GetJobsResponse
+from torc.openapi_client.models.get_local_schedulers_response import GetLocalSchedulersResponse
+from torc.openapi_client.models.get_resource_requirements_response import GetResourceRequirementsResponse
+from torc.openapi_client.models.get_results_response import GetResultsResponse
+from torc.openapi_client.models.get_scheduled_compute_nodes_response import GetScheduledComputeNodesResponse
+from torc.openapi_client.models.get_slurm_schedulers_response import GetSlurmSchedulersResponse
+from torc.openapi_client.models.get_user_data_response import GetUserDataResponse
 from torc.openapi_client.models.get_workflows_key_collection_names_response import GetWorkflowsKeyCollectionNamesResponse
 from torc.openapi_client.models.get_workflows_key_dot_graph_name_response import GetWorkflowsKeyDotGraphNameResponse
 from torc.openapi_client.models.get_workflows_key_is_complete_response import GetWorkflowsKeyIsCompleteResponse
@@ -32,49 +57,24 @@ from torc.openapi_client.models.get_workflows_key_missing_user_data_response imp
 from torc.openapi_client.models.get_workflows_key_ready_job_requirements_response import GetWorkflowsKeyReadyJobRequirementsResponse
 from torc.openapi_client.models.get_workflows_key_required_existing_files_response import GetWorkflowsKeyRequiredExistingFilesResponse
 from torc.openapi_client.models.get_workflows_response import GetWorkflowsResponse
-from torc.openapi_client.models.get_workflows_workflow_aws_schedulers_response import GetWorkflowsWorkflowAwsSchedulersResponse
-from torc.openapi_client.models.get_workflows_workflow_compute_node_stats_response import GetWorkflowsWorkflowComputeNodeStatsResponse
-from torc.openapi_client.models.get_workflows_workflow_compute_nodes_response import GetWorkflowsWorkflowComputeNodesResponse
-from torc.openapi_client.models.get_workflows_workflow_edges_name_response import GetWorkflowsWorkflowEdgesNameResponse
-from torc.openapi_client.models.get_workflows_workflow_events_response import GetWorkflowsWorkflowEventsResponse
-from torc.openapi_client.models.get_workflows_workflow_files_produced_by_job_key_response import GetWorkflowsWorkflowFilesProducedByJobKeyResponse
-from torc.openapi_client.models.get_workflows_workflow_files_response import GetWorkflowsWorkflowFilesResponse
-from torc.openapi_client.models.get_workflows_workflow_job_process_stats_response import GetWorkflowsWorkflowJobProcessStatsResponse
-from torc.openapi_client.models.get_workflows_workflow_job_specifications_response import GetWorkflowsWorkflowJobSpecificationsResponse
-from torc.openapi_client.models.get_workflows_workflow_jobs_find_by_needs_file_key_response import GetWorkflowsWorkflowJobsFindByNeedsFileKeyResponse
-from torc.openapi_client.models.get_workflows_workflow_jobs_find_by_status_status_response import GetWorkflowsWorkflowJobsFindByStatusStatusResponse
-from torc.openapi_client.models.get_workflows_workflow_jobs_key_user_data_consumes_response import GetWorkflowsWorkflowJobsKeyUserDataConsumesResponse
-from torc.openapi_client.models.get_workflows_workflow_jobs_key_user_data_stores_response import GetWorkflowsWorkflowJobsKeyUserDataStoresResponse
-from torc.openapi_client.models.get_workflows_workflow_jobs_response import GetWorkflowsWorkflowJobsResponse
-from torc.openapi_client.models.get_workflows_workflow_local_schedulers_response import GetWorkflowsWorkflowLocalSchedulersResponse
-from torc.openapi_client.models.get_workflows_workflow_resource_requirements_response import GetWorkflowsWorkflowResourceRequirementsResponse
-from torc.openapi_client.models.get_workflows_workflow_results_response import GetWorkflowsWorkflowResultsResponse
-from torc.openapi_client.models.get_workflows_workflow_scheduled_compute_nodes_response import GetWorkflowsWorkflowScheduledComputeNodesResponse
-from torc.openapi_client.models.get_workflows_workflow_slurm_schedulers_response import GetWorkflowsWorkflowSlurmSchedulersResponse
-from torc.openapi_client.models.get_workflows_workflow_user_data_response import GetWorkflowsWorkflowUserDataResponse
+from torc.openapi_client.models.job_process_stats_model import JobProcessStatsModel
+from torc.openapi_client.models.job_specifications_model import JobSpecificationsModel
+from torc.openapi_client.models.jobs_model import JobsModel
+from torc.openapi_client.models.local_schedulers_model import LocalSchedulersModel
 from torc.openapi_client.models.post_workflows_key_join_by_inbound_edge_collection_edge_response import PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse
 from torc.openapi_client.models.post_workflows_key_join_by_outbound_edge_collection_edge_response import PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse
 from torc.openapi_client.models.post_workflows_key_prepare_jobs_for_scheduling_response import PostWorkflowsKeyPrepareJobsForSchedulingResponse
 from torc.openapi_client.models.post_workflows_key_prepare_jobs_for_submission_response import PostWorkflowsKeyPrepareJobsForSubmissionResponse
 from torc.openapi_client.models.post_workflows_key_prepare_next_jobs_for_submission_response import PostWorkflowsKeyPrepareNextJobsForSubmissionResponse
 from torc.openapi_client.models.post_workflows_key_process_changed_job_inputs_response import PostWorkflowsKeyProcessChangedJobInputsResponse
-from torc.openapi_client.models.workflow_aws_schedulers_model import WorkflowAwsSchedulersModel
-from torc.openapi_client.models.workflow_bulk_jobs_model import WorkflowBulkJobsModel
-from torc.openapi_client.models.workflow_compute_node_stats_model import WorkflowComputeNodeStatsModel
-from torc.openapi_client.models.workflow_compute_nodes_model import WorkflowComputeNodesModel
+from torc.openapi_client.models.resource_requirements_model import ResourceRequirementsModel
+from torc.openapi_client.models.results_model import ResultsModel
+from torc.openapi_client.models.scheduled_compute_nodes_model import ScheduledComputeNodesModel
+from torc.openapi_client.models.slurm_schedulers_model import SlurmSchedulersModel
+from torc.openapi_client.models.user_data_model import UserDataModel
 from torc.openapi_client.models.workflow_config_model import WorkflowConfigModel
-from torc.openapi_client.models.workflow_files_model import WorkflowFilesModel
-from torc.openapi_client.models.workflow_job_process_stats_model import WorkflowJobProcessStatsModel
-from torc.openapi_client.models.workflow_job_specifications_model import WorkflowJobSpecificationsModel
-from torc.openapi_client.models.workflow_jobs_model import WorkflowJobsModel
-from torc.openapi_client.models.workflow_local_schedulers_model import WorkflowLocalSchedulersModel
-from torc.openapi_client.models.workflow_resource_requirements_model import WorkflowResourceRequirementsModel
-from torc.openapi_client.models.workflow_results_model import WorkflowResultsModel
-from torc.openapi_client.models.workflow_scheduled_compute_nodes_model import WorkflowScheduledComputeNodesModel
-from torc.openapi_client.models.workflow_slurm_schedulers_model import WorkflowSlurmSchedulersModel
 from torc.openapi_client.models.workflow_specifications_model import WorkflowSpecificationsModel
 from torc.openapi_client.models.workflow_status_model import WorkflowStatusModel
-from torc.openapi_client.models.workflow_user_data_model import WorkflowUserDataModel
 from torc.openapi_client.models.workflows_model import WorkflowsModel
 
 from torc.openapi_client.api_client import ApiClient
@@ -408,7 +408,7 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def delete_workflows_workflow_aws_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the AWS compute node configuration document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> WorkflowAwsSchedulersModel:  # noqa: E501
+    def delete_workflows_workflow_aws_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the AWS compute node configuration document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> AwsSchedulersModel:  # noqa: E501
         """Delete a document of type AWS compute node configuration  # noqa: E501
 
         Deletes a document from the \"aws_schedulers\" collection by key.  # noqa: E501
@@ -433,7 +433,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowAwsSchedulersModel
+        :rtype: AwsSchedulersModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
@@ -479,7 +479,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowAwsSchedulersModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(AwsSchedulersModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -549,7 +549,7 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowAwsSchedulersModel",
+            '200': "AwsSchedulersModel",
             '500': "InlineResponse500",
         }
 
@@ -726,7 +726,7 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def delete_workflows_workflow_compute_node_stats_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the compute node statistics document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> WorkflowComputeNodeStatsModel:  # noqa: E501
+    def delete_workflows_workflow_compute_node_stats_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the compute node statistics document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> ComputeNodeStatsModel:  # noqa: E501
         """Delete a document of type compute node statistics  # noqa: E501
 
         Deletes a document from the \"compute_node_stats\" collection by key.  # noqa: E501
@@ -751,7 +751,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowComputeNodeStatsModel
+        :rtype: ComputeNodeStatsModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
@@ -797,7 +797,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowComputeNodeStatsModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(ComputeNodeStatsModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -867,7 +867,7 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowComputeNodeStatsModel",
+            '200': "ComputeNodeStatsModel",
             '500': "InlineResponse500",
         }
 
@@ -1044,7 +1044,7 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def delete_workflows_workflow_compute_nodes_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the compute node document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> WorkflowComputeNodesModel:  # noqa: E501
+    def delete_workflows_workflow_compute_nodes_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the compute node document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> ComputeNodesModel:  # noqa: E501
         """Delete a document of type compute node  # noqa: E501
 
         Deletes a document from the \"compute_nodes\" collection by key.  # noqa: E501
@@ -1069,7 +1069,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowComputeNodesModel
+        :rtype: ComputeNodesModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
@@ -1115,7 +1115,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(ComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -1185,7 +1185,7 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowComputeNodesModel",
+            '200': "ComputeNodesModel",
             '500': "InlineResponse500",
         }
 
@@ -2014,7 +2014,7 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def delete_workflows_workflow_files_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the file document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> WorkflowFilesModel:  # noqa: E501
+    def delete_workflows_workflow_files_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the file document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> FilesModel:  # noqa: E501
         """Delete a document of type file  # noqa: E501
 
         Deletes a document from the \"files\" collection by key.  # noqa: E501
@@ -2039,7 +2039,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowFilesModel
+        :rtype: FilesModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
@@ -2085,7 +2085,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowFilesModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(FilesModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -2155,7 +2155,7 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowFilesModel",
+            '200': "FilesModel",
             '500': "InlineResponse500",
         }
 
@@ -2332,7 +2332,7 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def delete_workflows_workflow_job_process_stats_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the job process statistics document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> WorkflowJobProcessStatsModel:  # noqa: E501
+    def delete_workflows_workflow_job_process_stats_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the job process statistics document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> JobProcessStatsModel:  # noqa: E501
         """Delete a document of type job process statistics  # noqa: E501
 
         Deletes a document from the \"job_process_stats\" collection by key.  # noqa: E501
@@ -2357,7 +2357,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowJobProcessStatsModel
+        :rtype: JobProcessStatsModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
@@ -2403,7 +2403,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowJobProcessStatsModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(JobProcessStatsModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -2473,7 +2473,7 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowJobProcessStatsModel",
+            '200': "JobProcessStatsModel",
             '500': "InlineResponse500",
         }
 
@@ -2650,7 +2650,7 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def delete_workflows_workflow_jobs_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the job document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> WorkflowJobsModel:  # noqa: E501
+    def delete_workflows_workflow_jobs_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the job document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> JobsModel:  # noqa: E501
         """Delete a document of type job  # noqa: E501
 
         Deletes a document from the \"jobs\" collection by key.  # noqa: E501
@@ -2675,7 +2675,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowJobsModel
+        :rtype: JobsModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
@@ -2721,7 +2721,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowJobsModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(JobsModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -2791,7 +2791,7 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowJobsModel",
+            '200': "JobsModel",
             '500': "InlineResponse500",
         }
 
@@ -2968,7 +2968,7 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def delete_workflows_workflow_local_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the local compute node configuration document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> WorkflowLocalSchedulersModel:  # noqa: E501
+    def delete_workflows_workflow_local_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the local compute node configuration document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> LocalSchedulersModel:  # noqa: E501
         """Delete a document of type local compute node configuration  # noqa: E501
 
         Deletes a document from the \"local_schedulers\" collection by key.  # noqa: E501
@@ -2993,7 +2993,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowLocalSchedulersModel
+        :rtype: LocalSchedulersModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
@@ -3039,7 +3039,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowLocalSchedulersModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(LocalSchedulersModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -3109,7 +3109,7 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowLocalSchedulersModel",
+            '200': "LocalSchedulersModel",
             '500': "InlineResponse500",
         }
 
@@ -3286,7 +3286,7 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def delete_workflows_workflow_resource_requirements_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the resource requirements document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> WorkflowResourceRequirementsModel:  # noqa: E501
+    def delete_workflows_workflow_resource_requirements_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the resource requirements document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> ResourceRequirementsModel:  # noqa: E501
         """Delete a document of type resource requirements  # noqa: E501
 
         Deletes a document from the \"resource_requirements\" collection by key.  # noqa: E501
@@ -3311,7 +3311,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowResourceRequirementsModel
+        :rtype: ResourceRequirementsModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
@@ -3357,7 +3357,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowResourceRequirementsModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(ResourceRequirementsModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -3427,7 +3427,7 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowResourceRequirementsModel",
+            '200': "ResourceRequirementsModel",
             '500': "InlineResponse500",
         }
 
@@ -3604,7 +3604,7 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def delete_workflows_workflow_results_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the result document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> WorkflowResultsModel:  # noqa: E501
+    def delete_workflows_workflow_results_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the result document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> ResultsModel:  # noqa: E501
         """Delete a document of type result  # noqa: E501
 
         Deletes a document from the \"results\" collection by key.  # noqa: E501
@@ -3629,7 +3629,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowResultsModel
+        :rtype: ResultsModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
@@ -3675,7 +3675,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowResultsModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(ResultsModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -3745,7 +3745,7 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowResultsModel",
+            '200': "ResultsModel",
             '500': "InlineResponse500",
         }
 
@@ -3922,7 +3922,7 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def delete_workflows_workflow_scheduled_compute_nodes_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the scheduled compute node document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> WorkflowScheduledComputeNodesModel:  # noqa: E501
+    def delete_workflows_workflow_scheduled_compute_nodes_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the scheduled compute node document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> ScheduledComputeNodesModel:  # noqa: E501
         """Delete a document of type scheduled compute node  # noqa: E501
 
         Deletes a document from the \"scheduled_compute_nodes\" collection by key.  # noqa: E501
@@ -3947,7 +3947,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowScheduledComputeNodesModel
+        :rtype: ScheduledComputeNodesModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
@@ -3993,7 +3993,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowScheduledComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(ScheduledComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -4063,7 +4063,7 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowScheduledComputeNodesModel",
+            '200': "ScheduledComputeNodesModel",
             '500': "InlineResponse500",
         }
 
@@ -4240,7 +4240,7 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def delete_workflows_workflow_slurm_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the Slurm compute node configuration document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> WorkflowSlurmSchedulersModel:  # noqa: E501
+    def delete_workflows_workflow_slurm_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the Slurm compute node configuration document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> SlurmSchedulersModel:  # noqa: E501
         """Delete a document of type Slurm compute node configuration  # noqa: E501
 
         Deletes a document from the \"slurm_schedulers\" collection by key.  # noqa: E501
@@ -4265,7 +4265,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowSlurmSchedulersModel
+        :rtype: SlurmSchedulersModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
@@ -4311,7 +4311,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowSlurmSchedulersModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(SlurmSchedulersModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -4381,7 +4381,7 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowSlurmSchedulersModel",
+            '200': "SlurmSchedulersModel",
             '500': "InlineResponse500",
         }
 
@@ -4558,7 +4558,7 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def delete_workflows_workflow_user_data_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the user data document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> WorkflowUserDataModel:  # noqa: E501
+    def delete_workflows_workflow_user_data_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the user data document.")], body : Optional[Dict[str, Any]] = None, **kwargs) -> UserDataModel:  # noqa: E501
         """Delete a document of type user data  # noqa: E501
 
         Deletes a document from the \"user_data\" collection by key.  # noqa: E501
@@ -4583,7 +4583,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowUserDataModel
+        :rtype: UserDataModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
@@ -4629,7 +4629,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowUserDataModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(UserDataModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -4699,7 +4699,7 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowUserDataModel",
+            '200': "UserDataModel",
             '500': "InlineResponse500",
         }
 
@@ -4721,7 +4721,1531 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_events_after_key(self, key : Annotated[StrictStr, Field(..., description="Workflow key")], event_key : Annotated[StrictStr, Field(..., description="Event key")], category : Optional[StrictStr] = None, skip : Annotated[Optional[Union[StrictFloat, StrictInt]], Field(description="Ignored")] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> GetWorkflowsWorkflowEventsResponse:  # noqa: E501
+    def get_aws_schedulers(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, **kwargs) -> GetAwsSchedulersResponse:  # noqa: E501
+        """Retrieve all AWS compute node configuration documents  # noqa: E501
+
+        Retrieve all documents from the \"aws_schedulers\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_aws_schedulers(workflow, skip, limit, sort_by, reverse_sort, key, name, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param name:
+        :type name: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetAwsSchedulersResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_aws_schedulers_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_aws_schedulers_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_aws_schedulers_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all AWS compute node configuration documents  # noqa: E501
+
+        Retrieve all documents from the \"aws_schedulers\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_aws_schedulers_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param name:
+        :type name: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetAwsSchedulersResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'skip',
+            'limit',
+            'sort_by',
+            'reverse_sort',
+            'key',
+            'name'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_aws_schedulers" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        if _params.get('sort_by') is not None:  # noqa: E501
+            _query_params.append(('sort_by', _params['sort_by']))
+
+        if _params.get('reverse_sort') is not None:  # noqa: E501
+            _query_params.append(('reverse_sort', _params['reverse_sort']))
+
+        if _params.get('key') is not None:  # noqa: E501
+            _query_params.append(('_key', _params['key']))
+
+        if _params.get('name') is not None:  # noqa: E501
+            _query_params.append(('name', _params['name']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetAwsSchedulersResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/aws_schedulers', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_aws_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the aws_schedulers document")], **kwargs) -> AwsSchedulersModel:  # noqa: E501
+        """Retrieve the AWS compute node configuration for a key.  # noqa: E501
+
+        Retrieve the document from the \"aws_schedulers\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_aws_schedulers_key(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the aws_schedulers document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: AwsSchedulersModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_aws_schedulers_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_aws_schedulers_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_aws_schedulers_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the aws_schedulers document")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the AWS compute node configuration for a key.  # noqa: E501
+
+        Retrieve the document from the \"aws_schedulers\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_aws_schedulers_key_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the aws_schedulers document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(AwsSchedulersModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_aws_schedulers_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "AwsSchedulersModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/aws_schedulers/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_compute_node_stats(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, hostname : Optional[StrictStr] = None, **kwargs) -> GetComputeNodeStatsResponse:  # noqa: E501
+        """Retrieve all compute node statistics documents  # noqa: E501
+
+        Retrieve all documents from the \"compute_node_stats\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_compute_node_stats(workflow, skip, limit, sort_by, reverse_sort, key, hostname, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param hostname:
+        :type hostname: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetComputeNodeStatsResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_compute_node_stats_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_compute_node_stats_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, hostname, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_compute_node_stats_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, hostname : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all compute node statistics documents  # noqa: E501
+
+        Retrieve all documents from the \"compute_node_stats\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_compute_node_stats_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, hostname, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param hostname:
+        :type hostname: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetComputeNodeStatsResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'skip',
+            'limit',
+            'sort_by',
+            'reverse_sort',
+            'key',
+            'hostname'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_compute_node_stats" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        if _params.get('sort_by') is not None:  # noqa: E501
+            _query_params.append(('sort_by', _params['sort_by']))
+
+        if _params.get('reverse_sort') is not None:  # noqa: E501
+            _query_params.append(('reverse_sort', _params['reverse_sort']))
+
+        if _params.get('key') is not None:  # noqa: E501
+            _query_params.append(('_key', _params['key']))
+
+        if _params.get('hostname') is not None:  # noqa: E501
+            _query_params.append(('hostname', _params['hostname']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetComputeNodeStatsResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/compute_node_stats', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_compute_node_stats_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the compute_node_stats document")], **kwargs) -> ComputeNodeStatsModel:  # noqa: E501
+        """Retrieve the compute node statistics for a key.  # noqa: E501
+
+        Retrieve the document from the \"compute_node_stats\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_compute_node_stats_key(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the compute_node_stats document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: ComputeNodeStatsModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_compute_node_stats_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_compute_node_stats_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_compute_node_stats_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the compute_node_stats document")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the compute node statistics for a key.  # noqa: E501
+
+        Retrieve the document from the \"compute_node_stats\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_compute_node_stats_key_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the compute_node_stats document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(ComputeNodeStatsModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_compute_node_stats_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "ComputeNodeStatsModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/compute_node_stats/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_compute_nodes(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, hostname : Optional[StrictStr] = None, is_active : Optional[StrictBool] = None, **kwargs) -> GetComputeNodesResponse:  # noqa: E501
+        """Retrieve all compute node documents  # noqa: E501
+
+        Retrieve all documents from the \"compute_nodes\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_compute_nodes(workflow, skip, limit, sort_by, reverse_sort, key, hostname, is_active, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param hostname:
+        :type hostname: str
+        :param is_active:
+        :type is_active: bool
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetComputeNodesResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_compute_nodes_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_compute_nodes_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, hostname, is_active, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_compute_nodes_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, hostname : Optional[StrictStr] = None, is_active : Optional[StrictBool] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all compute node documents  # noqa: E501
+
+        Retrieve all documents from the \"compute_nodes\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_compute_nodes_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, hostname, is_active, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param hostname:
+        :type hostname: str
+        :param is_active:
+        :type is_active: bool
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetComputeNodesResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'skip',
+            'limit',
+            'sort_by',
+            'reverse_sort',
+            'key',
+            'hostname',
+            'is_active'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_compute_nodes" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        if _params.get('sort_by') is not None:  # noqa: E501
+            _query_params.append(('sort_by', _params['sort_by']))
+
+        if _params.get('reverse_sort') is not None:  # noqa: E501
+            _query_params.append(('reverse_sort', _params['reverse_sort']))
+
+        if _params.get('key') is not None:  # noqa: E501
+            _query_params.append(('_key', _params['key']))
+
+        if _params.get('hostname') is not None:  # noqa: E501
+            _query_params.append(('hostname', _params['hostname']))
+
+        if _params.get('is_active') is not None:  # noqa: E501
+            _query_params.append(('is_active', _params['is_active']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetComputeNodesResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/compute_nodes', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_compute_nodes_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the compute_nodes document")], **kwargs) -> ComputeNodesModel:  # noqa: E501
+        """Retrieve the compute node for a key.  # noqa: E501
+
+        Retrieve the document from the \"compute_nodes\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_compute_nodes_key(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the compute_nodes document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: ComputeNodesModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_compute_nodes_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_compute_nodes_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_compute_nodes_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the compute_nodes document")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the compute node for a key.  # noqa: E501
+
+        Retrieve the document from the \"compute_nodes\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_compute_nodes_key_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the compute_nodes document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(ComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_compute_nodes_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "ComputeNodesModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/compute_nodes/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_edges_name(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], name : Annotated[StrictStr, Field(..., description="Edge collection name")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> GetEdgesNameResponse:  # noqa: E501
+        """Retrieve all edges from the designated collection.  # noqa: E501
+
+        Retrieve all edges from the designated collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_edges_name(workflow, name, skip, limit, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param name: Edge collection name (required)
+        :type name: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetEdgesNameResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_edges_name_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_edges_name_with_http_info(workflow, name, skip, limit, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_edges_name_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], name : Annotated[StrictStr, Field(..., description="Edge collection name")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all edges from the designated collection.  # noqa: E501
+
+        Retrieve all edges from the designated collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_edges_name_with_http_info(workflow, name, skip, limit, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param name: Edge collection name (required)
+        :type name: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetEdgesNameResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'name',
+            'skip',
+            'limit'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_edges_name" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['name']:
+            _path_params['name'] = _params['name']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetEdgesNameResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/edges/{name}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_edges_name_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], name : Annotated[StrictStr, Field(..., description="Edge collection name")], key : Annotated[StrictStr, Field(..., description="Edge key")], **kwargs) -> EdgesNameModel:  # noqa: E501
+        """Retrieve an edge  # noqa: E501
+
+        Retrieves an edge from the designated collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_edges_name_key(workflow, name, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param name: Edge collection name (required)
+        :type name: str
+        :param key: Edge key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: EdgesNameModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_edges_name_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_edges_name_key_with_http_info(workflow, name, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_edges_name_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], name : Annotated[StrictStr, Field(..., description="Edge collection name")], key : Annotated[StrictStr, Field(..., description="Edge key")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve an edge  # noqa: E501
+
+        Retrieves an edge from the designated collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_edges_name_key_with_http_info(workflow, name, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param name: Edge collection name (required)
+        :type name: str
+        :param key: Edge key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(EdgesNameModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'name',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_edges_name_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['name']:
+            _path_params['name'] = _params['name']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "EdgesNameModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/edges/{name}/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_events(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, category : Optional[StrictStr] = None, **kwargs) -> GetEventsResponse:  # noqa: E501
+        """Retrieve all event documents  # noqa: E501
+
+        Retrieve all documents from the \"events\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_events(workflow, skip, limit, sort_by, reverse_sort, key, category, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param category:
+        :type category: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetEventsResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_events_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_events_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, category, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_events_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, category : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all event documents  # noqa: E501
+
+        Retrieve all documents from the \"events\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_events_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, category, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param category:
+        :type category: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetEventsResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'skip',
+            'limit',
+            'sort_by',
+            'reverse_sort',
+            'key',
+            'category'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_events" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        if _params.get('sort_by') is not None:  # noqa: E501
+            _query_params.append(('sort_by', _params['sort_by']))
+
+        if _params.get('reverse_sort') is not None:  # noqa: E501
+            _query_params.append(('reverse_sort', _params['reverse_sort']))
+
+        if _params.get('key') is not None:  # noqa: E501
+            _query_params.append(('_key', _params['key']))
+
+        if _params.get('category') is not None:  # noqa: E501
+            _query_params.append(('category', _params['category']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetEventsResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/events', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_events_after_key(self, key : Annotated[StrictStr, Field(..., description="Workflow key")], event_key : Annotated[StrictStr, Field(..., description="Event key")], category : Optional[StrictStr] = None, skip : Annotated[Optional[Union[StrictFloat, StrictInt]], Field(description="Ignored")] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> GetEventsResponse:  # noqa: E501
         """Return all events newer than the event with event_key.  # noqa: E501
 
         Return all events newer than the event with event_key.  # noqa: E501
@@ -4750,7 +6274,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: GetWorkflowsWorkflowEventsResponse
+        :rtype: GetEventsResponse
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
@@ -4800,7 +6324,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowEventsResponse, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(GetEventsResponse, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -4871,12 +6395,2744 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "GetWorkflowsWorkflowEventsResponse",
+            '200': "GetEventsResponse",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
             '/workflows/{key}/events_after_key/{event_key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_events_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the events document")], **kwargs) -> object:  # noqa: E501
+        """Retrieve the event for a key.  # noqa: E501
+
+        Retrieve the document from the \"events\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_events_key(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the events document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: object
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_events_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_events_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_events_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the events document")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the event for a key.  # noqa: E501
+
+        Retrieve the document from the \"events\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_events_key_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the events document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(object, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_events_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "object",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/events/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_files(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, path : Optional[StrictStr] = None, **kwargs) -> GetFilesResponse:  # noqa: E501
+        """Retrieve all file documents  # noqa: E501
+
+        Retrieve all documents from the \"files\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_files(workflow, skip, limit, sort_by, reverse_sort, key, name, path, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param name:
+        :type name: str
+        :param path:
+        :type path: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetFilesResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_files_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_files_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, path, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_files_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, path : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all file documents  # noqa: E501
+
+        Retrieve all documents from the \"files\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_files_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, path, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param name:
+        :type name: str
+        :param path:
+        :type path: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetFilesResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'skip',
+            'limit',
+            'sort_by',
+            'reverse_sort',
+            'key',
+            'name',
+            'path'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_files" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        if _params.get('sort_by') is not None:  # noqa: E501
+            _query_params.append(('sort_by', _params['sort_by']))
+
+        if _params.get('reverse_sort') is not None:  # noqa: E501
+            _query_params.append(('reverse_sort', _params['reverse_sort']))
+
+        if _params.get('key') is not None:  # noqa: E501
+            _query_params.append(('_key', _params['key']))
+
+        if _params.get('name') is not None:  # noqa: E501
+            _query_params.append(('name', _params['name']))
+
+        if _params.get('path') is not None:  # noqa: E501
+            _query_params.append(('path', _params['path']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetFilesResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/files', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_files_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the files document")], **kwargs) -> FilesModel:  # noqa: E501
+        """Retrieve the file for a key.  # noqa: E501
+
+        Retrieve the document from the \"files\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_files_key(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the files document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: FilesModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_files_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_files_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_files_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the files document")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the file for a key.  # noqa: E501
+
+        Retrieve the document from the \"files\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_files_key_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the files document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(FilesModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_files_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "FilesModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/files/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_files_produced_by_job_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> GetFilesProducedByJobKeyResponse:  # noqa: E501
+        """Retrieve files produced by a job  # noqa: E501
+
+        Retrieves files from the \"files\" collection produced by a job.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_files_produced_by_job_key(workflow, key, skip, limit, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: Job key (required)
+        :type key: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetFilesProducedByJobKeyResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_files_produced_by_job_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_files_produced_by_job_key_with_http_info(workflow, key, skip, limit, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_files_produced_by_job_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve files produced by a job  # noqa: E501
+
+        Retrieves files from the \"files\" collection produced by a job.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_files_produced_by_job_key_with_http_info(workflow, key, skip, limit, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: Job key (required)
+        :type key: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetFilesProducedByJobKeyResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key',
+            'skip',
+            'limit'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_files_produced_by_job_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetFilesProducedByJobKeyResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/files/produced_by_job/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_job_keys(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], **kwargs) -> object:  # noqa: E501
+        """Retrieve all job keys for a workflow.  # noqa: E501
+
+        Retrieves all job keys from the \"jobs\" collection for a workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_job_keys(workflow, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: object
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_job_keys_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_job_keys_with_http_info(workflow, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_job_keys_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all job keys for a workflow.  # noqa: E501
+
+        Retrieves all job keys from the \"jobs\" collection for a workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_job_keys_with_http_info(workflow, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(object, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_job_keys" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "object",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/job_keys', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_job_process_stats(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, job_key : Optional[StrictStr] = None, run_id : Optional[StrictInt] = None, **kwargs) -> GetJobProcessStatsResponse:  # noqa: E501
+        """Retrieve all job process statistics documents  # noqa: E501
+
+        Retrieve all documents from the \"job_process_stats\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_job_process_stats(workflow, skip, limit, sort_by, reverse_sort, key, job_key, run_id, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param job_key:
+        :type job_key: str
+        :param run_id:
+        :type run_id: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetJobProcessStatsResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_job_process_stats_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_job_process_stats_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, job_key, run_id, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_job_process_stats_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, job_key : Optional[StrictStr] = None, run_id : Optional[StrictInt] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all job process statistics documents  # noqa: E501
+
+        Retrieve all documents from the \"job_process_stats\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_job_process_stats_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, job_key, run_id, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param job_key:
+        :type job_key: str
+        :param run_id:
+        :type run_id: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetJobProcessStatsResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'skip',
+            'limit',
+            'sort_by',
+            'reverse_sort',
+            'key',
+            'job_key',
+            'run_id'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_job_process_stats" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        if _params.get('sort_by') is not None:  # noqa: E501
+            _query_params.append(('sort_by', _params['sort_by']))
+
+        if _params.get('reverse_sort') is not None:  # noqa: E501
+            _query_params.append(('reverse_sort', _params['reverse_sort']))
+
+        if _params.get('key') is not None:  # noqa: E501
+            _query_params.append(('_key', _params['key']))
+
+        if _params.get('job_key') is not None:  # noqa: E501
+            _query_params.append(('job_key', _params['job_key']))
+
+        if _params.get('run_id') is not None:  # noqa: E501
+            _query_params.append(('run_id', _params['run_id']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetJobProcessStatsResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/job_process_stats', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_job_process_stats_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the job_process_stats document")], **kwargs) -> JobProcessStatsModel:  # noqa: E501
+        """Retrieve the job process statistics for a key.  # noqa: E501
+
+        Retrieve the document from the \"job_process_stats\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_job_process_stats_key(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the job_process_stats document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: JobProcessStatsModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_job_process_stats_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_job_process_stats_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_job_process_stats_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the job_process_stats document")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the job process statistics for a key.  # noqa: E501
+
+        Retrieve the document from the \"job_process_stats\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_job_process_stats_key_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the job_process_stats document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(JobProcessStatsModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_job_process_stats_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "JobProcessStatsModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/job_process_stats/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_job_specifications(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> GetJobSpecificationsResponse:  # noqa: E501
+        """Retrieve all job definitions  # noqa: E501
+
+        Retrieves all job definitions. Limit output with skip and limit.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_job_specifications(workflow, skip, limit, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetJobSpecificationsResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_job_specifications_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_job_specifications_with_http_info(workflow, skip, limit, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_job_specifications_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all job definitions  # noqa: E501
+
+        Retrieves all job definitions. Limit output with skip and limit.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_job_specifications_with_http_info(workflow, skip, limit, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetJobSpecificationsResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'skip',
+            'limit'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_job_specifications" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetJobSpecificationsResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/job_specifications', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_job_specifications_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> JobSpecificationsModel:  # noqa: E501
+        """Retrieve a job  # noqa: E501
+
+        Retrieves a job from the \"jobs\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_job_specifications_key(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: Job key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: JobSpecificationsModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_job_specifications_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_job_specifications_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_job_specifications_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve a job  # noqa: E501
+
+        Retrieves a job from the \"jobs\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_job_specifications_key_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: Job key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(JobSpecificationsModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_job_specifications_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "JobSpecificationsModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/job_specifications/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_jobs(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, command : Optional[StrictStr] = None, status : Optional[StrictStr] = None, cancel_on_blocking_job_failure : Optional[StrictBool] = None, supports_termination : Optional[StrictBool] = None, **kwargs) -> GetJobsResponse:  # noqa: E501
+        """Retrieve all job documents  # noqa: E501
+
+        Retrieve all documents from the \"jobs\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs(workflow, skip, limit, sort_by, reverse_sort, key, name, command, status, cancel_on_blocking_job_failure, supports_termination, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param name:
+        :type name: str
+        :param command:
+        :type command: str
+        :param status:
+        :type status: str
+        :param cancel_on_blocking_job_failure:
+        :type cancel_on_blocking_job_failure: bool
+        :param supports_termination:
+        :type supports_termination: bool
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetJobsResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_jobs_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_jobs_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, command, status, cancel_on_blocking_job_failure, supports_termination, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_jobs_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, command : Optional[StrictStr] = None, status : Optional[StrictStr] = None, cancel_on_blocking_job_failure : Optional[StrictBool] = None, supports_termination : Optional[StrictBool] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all job documents  # noqa: E501
+
+        Retrieve all documents from the \"jobs\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, command, status, cancel_on_blocking_job_failure, supports_termination, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param name:
+        :type name: str
+        :param command:
+        :type command: str
+        :param status:
+        :type status: str
+        :param cancel_on_blocking_job_failure:
+        :type cancel_on_blocking_job_failure: bool
+        :param supports_termination:
+        :type supports_termination: bool
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetJobsResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'skip',
+            'limit',
+            'sort_by',
+            'reverse_sort',
+            'key',
+            'name',
+            'command',
+            'status',
+            'cancel_on_blocking_job_failure',
+            'supports_termination'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_jobs" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        if _params.get('sort_by') is not None:  # noqa: E501
+            _query_params.append(('sort_by', _params['sort_by']))
+
+        if _params.get('reverse_sort') is not None:  # noqa: E501
+            _query_params.append(('reverse_sort', _params['reverse_sort']))
+
+        if _params.get('key') is not None:  # noqa: E501
+            _query_params.append(('_key', _params['key']))
+
+        if _params.get('name') is not None:  # noqa: E501
+            _query_params.append(('name', _params['name']))
+
+        if _params.get('command') is not None:  # noqa: E501
+            _query_params.append(('command', _params['command']))
+
+        if _params.get('status') is not None:  # noqa: E501
+            _query_params.append(('status', _params['status']))
+
+        if _params.get('cancel_on_blocking_job_failure') is not None:  # noqa: E501
+            _query_params.append(('cancel_on_blocking_job_failure', _params['cancel_on_blocking_job_failure']))
+
+        if _params.get('supports_termination') is not None:  # noqa: E501
+            _query_params.append(('supports_termination', _params['supports_termination']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetJobsResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/jobs', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_jobs_find_by_needs_file_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="File key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> GetJobsFindByNeedsFileKeyResponse:  # noqa: E501
+        """Retrieve all jobs that need a file  # noqa: E501
+
+        Retrieves all jobs connected to a file by the needs edge.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs_find_by_needs_file_key(workflow, key, skip, limit, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: File key (required)
+        :type key: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetJobsFindByNeedsFileKeyResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_jobs_find_by_needs_file_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_jobs_find_by_needs_file_key_with_http_info(workflow, key, skip, limit, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_jobs_find_by_needs_file_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="File key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all jobs that need a file  # noqa: E501
+
+        Retrieves all jobs connected to a file by the needs edge.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs_find_by_needs_file_key_with_http_info(workflow, key, skip, limit, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: File key (required)
+        :type key: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetJobsFindByNeedsFileKeyResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key',
+            'skip',
+            'limit'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_jobs_find_by_needs_file_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetJobsFindByNeedsFileKeyResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/jobs/find_by_needs_file/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_jobs_find_by_status_status(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], status : Annotated[StrictStr, Field(..., description="Job status.")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> GetJobsFindByStatusStatusResponse:  # noqa: E501
+        """Retrieve all jobs with a specific status  # noqa: E501
+
+        Retrieves all jobs from the \"jobs\" collection with a specific status.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs_find_by_status_status(workflow, status, skip, limit, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param status: Job status. (required)
+        :type status: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetJobsFindByStatusStatusResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_jobs_find_by_status_status_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_jobs_find_by_status_status_with_http_info(workflow, status, skip, limit, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_jobs_find_by_status_status_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], status : Annotated[StrictStr, Field(..., description="Job status.")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all jobs with a specific status  # noqa: E501
+
+        Retrieves all jobs from the \"jobs\" collection with a specific status.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs_find_by_status_status_with_http_info(workflow, status, skip, limit, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param status: Job status. (required)
+        :type status: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetJobsFindByStatusStatusResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'status',
+            'skip',
+            'limit'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_jobs_find_by_status_status" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['status']:
+            _path_params['status'] = _params['status']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetJobsFindByStatusStatusResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/jobs/find_by_status/{status}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_jobs_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the jobs document")], **kwargs) -> JobsModel:  # noqa: E501
+        """Retrieve the job for a key.  # noqa: E501
+
+        Retrieve the document from the \"jobs\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs_key(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the jobs document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: JobsModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_jobs_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_jobs_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_jobs_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the jobs document")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the job for a key.  # noqa: E501
+
+        Retrieve the document from the \"jobs\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs_key_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the jobs document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(JobsModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_jobs_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "JobsModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/jobs/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_jobs_key_process_stats(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> List[JobProcessStatsModel]:  # noqa: E501
+        """Retrieve the job process stats for a job.  # noqa: E501
+
+        Retrieve the job process stats for a job by its key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs_key_process_stats(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: Job key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: List[JobProcessStatsModel]
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_jobs_key_process_stats_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_jobs_key_process_stats_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_jobs_key_process_stats_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the job process stats for a job.  # noqa: E501
+
+        Retrieve the job process stats for a job by its key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs_key_process_stats_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: Job key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(List[JobProcessStatsModel], status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_jobs_key_process_stats" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "List[JobProcessStatsModel]",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/jobs/{key}/process_stats', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_jobs_key_resource_requirements(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> ResourceRequirementsModel:  # noqa: E501
+        """Retrieve the resource requirements for a job.  # noqa: E501
+
+        Retrieve the resource requirements for a job by its key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs_key_resource_requirements(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: Job key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: ResourceRequirementsModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_jobs_key_resource_requirements_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_jobs_key_resource_requirements_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_jobs_key_resource_requirements_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the resource requirements for a job.  # noqa: E501
+
+        Retrieve the resource requirements for a job by its key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs_key_resource_requirements_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: Job key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(ResourceRequirementsModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_jobs_key_resource_requirements" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "ResourceRequirementsModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/jobs/{key}/resource_requirements', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_jobs_key_user_data_consumes(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> GetJobsKeyUserDataConsumesResponse:  # noqa: E501
+        """Retrieve all user data consumed by a job.  # noqa: E501
+
+        Retrieve all user data consumed by a job.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs_key_user_data_consumes(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: Job key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetJobsKeyUserDataConsumesResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_jobs_key_user_data_consumes_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_jobs_key_user_data_consumes_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_jobs_key_user_data_consumes_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all user data consumed by a job.  # noqa: E501
+
+        Retrieve all user data consumed by a job.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs_key_user_data_consumes_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: Job key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetJobsKeyUserDataConsumesResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_jobs_key_user_data_consumes" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetJobsKeyUserDataConsumesResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/jobs/{key}/user_data_consumes', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_jobs_key_user_data_stores(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> GetJobsKeyUserDataStoresResponse:  # noqa: E501
+        """Retrieve all user data for a job.  # noqa: E501
+
+        Retrieve all user data for a job.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs_key_user_data_stores(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: Job key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetJobsKeyUserDataStoresResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_jobs_key_user_data_stores_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_jobs_key_user_data_stores_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_jobs_key_user_data_stores_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all user data for a job.  # noqa: E501
+
+        Retrieve all user data for a job.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_jobs_key_user_data_stores_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: Job key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetJobsKeyUserDataStoresResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_jobs_key_user_data_stores" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetJobsKeyUserDataStoresResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/jobs/{key}/user_data_stores', 'GET',
             _path_params,
             _query_params,
             _header_params,
@@ -5033,6 +9289,350 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
+    def get_local_schedulers(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, memory : Optional[StrictStr] = None, num_cpus : Optional[StrictInt] = None, **kwargs) -> GetLocalSchedulersResponse:  # noqa: E501
+        """Retrieve all local compute node configuration documents  # noqa: E501
+
+        Retrieve all documents from the \"local_schedulers\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_local_schedulers(workflow, skip, limit, sort_by, reverse_sort, key, memory, num_cpus, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param memory:
+        :type memory: str
+        :param num_cpus:
+        :type num_cpus: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetLocalSchedulersResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_local_schedulers_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_local_schedulers_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, memory, num_cpus, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_local_schedulers_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, memory : Optional[StrictStr] = None, num_cpus : Optional[StrictInt] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all local compute node configuration documents  # noqa: E501
+
+        Retrieve all documents from the \"local_schedulers\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_local_schedulers_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, memory, num_cpus, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param memory:
+        :type memory: str
+        :param num_cpus:
+        :type num_cpus: int
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetLocalSchedulersResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'skip',
+            'limit',
+            'sort_by',
+            'reverse_sort',
+            'key',
+            'memory',
+            'num_cpus'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_local_schedulers" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        if _params.get('sort_by') is not None:  # noqa: E501
+            _query_params.append(('sort_by', _params['sort_by']))
+
+        if _params.get('reverse_sort') is not None:  # noqa: E501
+            _query_params.append(('reverse_sort', _params['reverse_sort']))
+
+        if _params.get('key') is not None:  # noqa: E501
+            _query_params.append(('_key', _params['key']))
+
+        if _params.get('memory') is not None:  # noqa: E501
+            _query_params.append(('memory', _params['memory']))
+
+        if _params.get('num_cpus') is not None:  # noqa: E501
+            _query_params.append(('num_cpus', _params['num_cpus']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetLocalSchedulersResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/local_schedulers', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_local_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the local_schedulers document")], **kwargs) -> LocalSchedulersModel:  # noqa: E501
+        """Retrieve the local compute node configuration for a key.  # noqa: E501
+
+        Retrieve the document from the \"local_schedulers\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_local_schedulers_key(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the local_schedulers document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: LocalSchedulersModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_local_schedulers_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_local_schedulers_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_local_schedulers_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the local_schedulers document")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the local compute node configuration for a key.  # noqa: E501
+
+        Retrieve the document from the \"local_schedulers\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_local_schedulers_key_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the local_schedulers document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(LocalSchedulersModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_local_schedulers_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "LocalSchedulersModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/local_schedulers/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
     def get_ping(self, **kwargs) -> object:  # noqa: E501
         """Check if the service is running.  # noqa: E501
 
@@ -5149,6 +9749,1986 @@ class DefaultApi(object):
 
         return self.api_client.call_api(
             '/ping', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_resource_requirements(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, memory : Optional[StrictStr] = None, num_cpus : Optional[StrictInt] = None, num_gpus : Optional[StrictInt] = None, num_nodes : Optional[StrictInt] = None, runtime : Optional[StrictStr] = None, **kwargs) -> GetResourceRequirementsResponse:  # noqa: E501
+        """Retrieve all resource requirements documents  # noqa: E501
+
+        Retrieve all documents from the \"resource_requirements\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_resource_requirements(workflow, skip, limit, sort_by, reverse_sort, key, name, memory, num_cpus, num_gpus, num_nodes, runtime, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param name:
+        :type name: str
+        :param memory:
+        :type memory: str
+        :param num_cpus:
+        :type num_cpus: int
+        :param num_gpus:
+        :type num_gpus: int
+        :param num_nodes:
+        :type num_nodes: int
+        :param runtime:
+        :type runtime: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetResourceRequirementsResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_resource_requirements_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_resource_requirements_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, memory, num_cpus, num_gpus, num_nodes, runtime, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_resource_requirements_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, memory : Optional[StrictStr] = None, num_cpus : Optional[StrictInt] = None, num_gpus : Optional[StrictInt] = None, num_nodes : Optional[StrictInt] = None, runtime : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all resource requirements documents  # noqa: E501
+
+        Retrieve all documents from the \"resource_requirements\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_resource_requirements_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, memory, num_cpus, num_gpus, num_nodes, runtime, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param name:
+        :type name: str
+        :param memory:
+        :type memory: str
+        :param num_cpus:
+        :type num_cpus: int
+        :param num_gpus:
+        :type num_gpus: int
+        :param num_nodes:
+        :type num_nodes: int
+        :param runtime:
+        :type runtime: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetResourceRequirementsResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'skip',
+            'limit',
+            'sort_by',
+            'reverse_sort',
+            'key',
+            'name',
+            'memory',
+            'num_cpus',
+            'num_gpus',
+            'num_nodes',
+            'runtime'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_resource_requirements" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        if _params.get('sort_by') is not None:  # noqa: E501
+            _query_params.append(('sort_by', _params['sort_by']))
+
+        if _params.get('reverse_sort') is not None:  # noqa: E501
+            _query_params.append(('reverse_sort', _params['reverse_sort']))
+
+        if _params.get('key') is not None:  # noqa: E501
+            _query_params.append(('_key', _params['key']))
+
+        if _params.get('name') is not None:  # noqa: E501
+            _query_params.append(('name', _params['name']))
+
+        if _params.get('memory') is not None:  # noqa: E501
+            _query_params.append(('memory', _params['memory']))
+
+        if _params.get('num_cpus') is not None:  # noqa: E501
+            _query_params.append(('num_cpus', _params['num_cpus']))
+
+        if _params.get('num_gpus') is not None:  # noqa: E501
+            _query_params.append(('num_gpus', _params['num_gpus']))
+
+        if _params.get('num_nodes') is not None:  # noqa: E501
+            _query_params.append(('num_nodes', _params['num_nodes']))
+
+        if _params.get('runtime') is not None:  # noqa: E501
+            _query_params.append(('runtime', _params['runtime']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetResourceRequirementsResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/resource_requirements', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_resource_requirements_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the resource_requirements document")], **kwargs) -> ResourceRequirementsModel:  # noqa: E501
+        """Retrieve the resource requirements for a key.  # noqa: E501
+
+        Retrieve the document from the \"resource_requirements\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_resource_requirements_key(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the resource_requirements document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: ResourceRequirementsModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_resource_requirements_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_resource_requirements_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_resource_requirements_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the resource_requirements document")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the resource requirements for a key.  # noqa: E501
+
+        Retrieve the document from the \"resource_requirements\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_resource_requirements_key_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the resource_requirements document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(ResourceRequirementsModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_resource_requirements_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "ResourceRequirementsModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/resource_requirements/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_results(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, job_key : Optional[StrictStr] = None, run_id : Optional[StrictInt] = None, return_code : Optional[StrictInt] = None, status : Optional[StrictStr] = None, **kwargs) -> GetResultsResponse:  # noqa: E501
+        """Retrieve all result documents  # noqa: E501
+
+        Retrieve all documents from the \"results\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_results(workflow, skip, limit, sort_by, reverse_sort, key, job_key, run_id, return_code, status, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param job_key:
+        :type job_key: str
+        :param run_id:
+        :type run_id: int
+        :param return_code:
+        :type return_code: int
+        :param status:
+        :type status: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetResultsResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_results_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_results_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, job_key, run_id, return_code, status, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_results_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, job_key : Optional[StrictStr] = None, run_id : Optional[StrictInt] = None, return_code : Optional[StrictInt] = None, status : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all result documents  # noqa: E501
+
+        Retrieve all documents from the \"results\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_results_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, job_key, run_id, return_code, status, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param job_key:
+        :type job_key: str
+        :param run_id:
+        :type run_id: int
+        :param return_code:
+        :type return_code: int
+        :param status:
+        :type status: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetResultsResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'skip',
+            'limit',
+            'sort_by',
+            'reverse_sort',
+            'key',
+            'job_key',
+            'run_id',
+            'return_code',
+            'status'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_results" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        if _params.get('sort_by') is not None:  # noqa: E501
+            _query_params.append(('sort_by', _params['sort_by']))
+
+        if _params.get('reverse_sort') is not None:  # noqa: E501
+            _query_params.append(('reverse_sort', _params['reverse_sort']))
+
+        if _params.get('key') is not None:  # noqa: E501
+            _query_params.append(('_key', _params['key']))
+
+        if _params.get('job_key') is not None:  # noqa: E501
+            _query_params.append(('job_key', _params['job_key']))
+
+        if _params.get('run_id') is not None:  # noqa: E501
+            _query_params.append(('run_id', _params['run_id']))
+
+        if _params.get('return_code') is not None:  # noqa: E501
+            _query_params.append(('return_code', _params['return_code']))
+
+        if _params.get('status') is not None:  # noqa: E501
+            _query_params.append(('status', _params['status']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetResultsResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/results', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_results_find_by_job_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> ResultsModel:  # noqa: E501
+        """Retrieve the latest result for a job  # noqa: E501
+
+        Retrieve the latest result for a job. Throws an error if no result is stored.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_results_find_by_job_key(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: Job key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: ResultsModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_results_find_by_job_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_results_find_by_job_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_results_find_by_job_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the latest result for a job  # noqa: E501
+
+        Retrieve the latest result for a job. Throws an error if no result is stored.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_results_find_by_job_key_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: Job key (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(ResultsModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_results_find_by_job_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "ResultsModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/results/find_by_job/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_results_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the results document")], **kwargs) -> ResultsModel:  # noqa: E501
+        """Retrieve the result for a key.  # noqa: E501
+
+        Retrieve the document from the \"results\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_results_key(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the results document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: ResultsModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_results_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_results_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_results_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the results document")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the result for a key.  # noqa: E501
+
+        Retrieve the document from the \"results\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_results_key_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the results document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(ResultsModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_results_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "ResultsModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/results/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_scheduled_compute_nodes(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, scheduler_id : Optional[StrictStr] = None, scheduler_config_id : Optional[StrictStr] = None, status : Optional[StrictStr] = None, **kwargs) -> GetScheduledComputeNodesResponse:  # noqa: E501
+        """Retrieve all scheduled compute node documents  # noqa: E501
+
+        Retrieve all documents from the \"scheduled_compute_nodes\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_scheduled_compute_nodes(workflow, skip, limit, sort_by, reverse_sort, key, scheduler_id, scheduler_config_id, status, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param scheduler_id:
+        :type scheduler_id: str
+        :param scheduler_config_id:
+        :type scheduler_config_id: str
+        :param status:
+        :type status: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetScheduledComputeNodesResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_scheduled_compute_nodes_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_scheduled_compute_nodes_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, scheduler_id, scheduler_config_id, status, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_scheduled_compute_nodes_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, scheduler_id : Optional[StrictStr] = None, scheduler_config_id : Optional[StrictStr] = None, status : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all scheduled compute node documents  # noqa: E501
+
+        Retrieve all documents from the \"scheduled_compute_nodes\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_scheduled_compute_nodes_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, scheduler_id, scheduler_config_id, status, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param scheduler_id:
+        :type scheduler_id: str
+        :param scheduler_config_id:
+        :type scheduler_config_id: str
+        :param status:
+        :type status: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetScheduledComputeNodesResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'skip',
+            'limit',
+            'sort_by',
+            'reverse_sort',
+            'key',
+            'scheduler_id',
+            'scheduler_config_id',
+            'status'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_scheduled_compute_nodes" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        if _params.get('sort_by') is not None:  # noqa: E501
+            _query_params.append(('sort_by', _params['sort_by']))
+
+        if _params.get('reverse_sort') is not None:  # noqa: E501
+            _query_params.append(('reverse_sort', _params['reverse_sort']))
+
+        if _params.get('key') is not None:  # noqa: E501
+            _query_params.append(('_key', _params['key']))
+
+        if _params.get('scheduler_id') is not None:  # noqa: E501
+            _query_params.append(('scheduler_id', _params['scheduler_id']))
+
+        if _params.get('scheduler_config_id') is not None:  # noqa: E501
+            _query_params.append(('scheduler_config_id', _params['scheduler_config_id']))
+
+        if _params.get('status') is not None:  # noqa: E501
+            _query_params.append(('status', _params['status']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetScheduledComputeNodesResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/scheduled_compute_nodes', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_scheduled_compute_nodes_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the scheduled_compute_nodes document")], **kwargs) -> ScheduledComputeNodesModel:  # noqa: E501
+        """Retrieve the scheduled compute node for a key.  # noqa: E501
+
+        Retrieve the document from the \"scheduled_compute_nodes\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_scheduled_compute_nodes_key(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the scheduled_compute_nodes document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: ScheduledComputeNodesModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_scheduled_compute_nodes_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_scheduled_compute_nodes_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_scheduled_compute_nodes_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the scheduled_compute_nodes document")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the scheduled compute node for a key.  # noqa: E501
+
+        Retrieve the document from the \"scheduled_compute_nodes\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_scheduled_compute_nodes_key_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the scheduled_compute_nodes document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(ScheduledComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_scheduled_compute_nodes_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "ScheduledComputeNodesModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/scheduled_compute_nodes/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_slurm_schedulers(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, account : Optional[StrictStr] = None, gres : Optional[StrictStr] = None, mem : Optional[StrictStr] = None, nodes : Optional[StrictInt] = None, partition : Optional[StrictStr] = None, qos : Optional[StrictStr] = None, tmp : Optional[StrictStr] = None, walltime : Optional[StrictStr] = None, **kwargs) -> GetSlurmSchedulersResponse:  # noqa: E501
+        """Retrieve all Slurm compute node configuration documents  # noqa: E501
+
+        Retrieve all documents from the \"slurm_schedulers\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_slurm_schedulers(workflow, skip, limit, sort_by, reverse_sort, key, name, account, gres, mem, nodes, partition, qos, tmp, walltime, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param name:
+        :type name: str
+        :param account:
+        :type account: str
+        :param gres:
+        :type gres: str
+        :param mem:
+        :type mem: str
+        :param nodes:
+        :type nodes: int
+        :param partition:
+        :type partition: str
+        :param qos:
+        :type qos: str
+        :param tmp:
+        :type tmp: str
+        :param walltime:
+        :type walltime: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetSlurmSchedulersResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_slurm_schedulers_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_slurm_schedulers_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, account, gres, mem, nodes, partition, qos, tmp, walltime, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_slurm_schedulers_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, account : Optional[StrictStr] = None, gres : Optional[StrictStr] = None, mem : Optional[StrictStr] = None, nodes : Optional[StrictInt] = None, partition : Optional[StrictStr] = None, qos : Optional[StrictStr] = None, tmp : Optional[StrictStr] = None, walltime : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all Slurm compute node configuration documents  # noqa: E501
+
+        Retrieve all documents from the \"slurm_schedulers\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_slurm_schedulers_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, account, gres, mem, nodes, partition, qos, tmp, walltime, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param name:
+        :type name: str
+        :param account:
+        :type account: str
+        :param gres:
+        :type gres: str
+        :param mem:
+        :type mem: str
+        :param nodes:
+        :type nodes: int
+        :param partition:
+        :type partition: str
+        :param qos:
+        :type qos: str
+        :param tmp:
+        :type tmp: str
+        :param walltime:
+        :type walltime: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetSlurmSchedulersResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'skip',
+            'limit',
+            'sort_by',
+            'reverse_sort',
+            'key',
+            'name',
+            'account',
+            'gres',
+            'mem',
+            'nodes',
+            'partition',
+            'qos',
+            'tmp',
+            'walltime'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_slurm_schedulers" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        if _params.get('sort_by') is not None:  # noqa: E501
+            _query_params.append(('sort_by', _params['sort_by']))
+
+        if _params.get('reverse_sort') is not None:  # noqa: E501
+            _query_params.append(('reverse_sort', _params['reverse_sort']))
+
+        if _params.get('key') is not None:  # noqa: E501
+            _query_params.append(('_key', _params['key']))
+
+        if _params.get('name') is not None:  # noqa: E501
+            _query_params.append(('name', _params['name']))
+
+        if _params.get('account') is not None:  # noqa: E501
+            _query_params.append(('account', _params['account']))
+
+        if _params.get('gres') is not None:  # noqa: E501
+            _query_params.append(('gres', _params['gres']))
+
+        if _params.get('mem') is not None:  # noqa: E501
+            _query_params.append(('mem', _params['mem']))
+
+        if _params.get('nodes') is not None:  # noqa: E501
+            _query_params.append(('nodes', _params['nodes']))
+
+        if _params.get('partition') is not None:  # noqa: E501
+            _query_params.append(('partition', _params['partition']))
+
+        if _params.get('qos') is not None:  # noqa: E501
+            _query_params.append(('qos', _params['qos']))
+
+        if _params.get('tmp') is not None:  # noqa: E501
+            _query_params.append(('tmp', _params['tmp']))
+
+        if _params.get('walltime') is not None:  # noqa: E501
+            _query_params.append(('walltime', _params['walltime']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetSlurmSchedulersResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/slurm_schedulers', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_slurm_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the slurm_schedulers document")], **kwargs) -> SlurmSchedulersModel:  # noqa: E501
+        """Retrieve the Slurm compute node configuration for a key.  # noqa: E501
+
+        Retrieve the document from the \"slurm_schedulers\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_slurm_schedulers_key(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the slurm_schedulers document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: SlurmSchedulersModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_slurm_schedulers_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_slurm_schedulers_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_slurm_schedulers_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the slurm_schedulers document")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the Slurm compute node configuration for a key.  # noqa: E501
+
+        Retrieve the document from the \"slurm_schedulers\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_slurm_schedulers_key_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the slurm_schedulers document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(SlurmSchedulersModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_slurm_schedulers_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "SlurmSchedulersModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/slurm_schedulers/{key}', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_user_data(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, is_ephemeral : Optional[StrictBool] = None, **kwargs) -> GetUserDataResponse:  # noqa: E501
+        """Retrieve all user data documents  # noqa: E501
+
+        Retrieve all documents from the \"user_data\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_user_data(workflow, skip, limit, sort_by, reverse_sort, key, name, is_ephemeral, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param name:
+        :type name: str
+        :param is_ephemeral:
+        :type is_ephemeral: bool
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: GetUserDataResponse
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_user_data_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_user_data_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, is_ephemeral, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_user_data_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, is_ephemeral : Optional[StrictBool] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve all user data documents  # noqa: E501
+
+        Retrieve all documents from the \"user_data\" collection for one workflow.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_user_data_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, is_ephemeral, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param skip:
+        :type skip: float
+        :param limit:
+        :type limit: float
+        :param sort_by:
+        :type sort_by: str
+        :param reverse_sort:
+        :type reverse_sort: bool
+        :param key:
+        :type key: str
+        :param name:
+        :type name: str
+        :param is_ephemeral:
+        :type is_ephemeral: bool
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(GetUserDataResponse, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'skip',
+            'limit',
+            'sort_by',
+            'reverse_sort',
+            'key',
+            'name',
+            'is_ephemeral'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_user_data" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        if _params.get('skip') is not None:  # noqa: E501
+            _query_params.append(('skip', _params['skip']))
+
+        if _params.get('limit') is not None:  # noqa: E501
+            _query_params.append(('limit', _params['limit']))
+
+        if _params.get('sort_by') is not None:  # noqa: E501
+            _query_params.append(('sort_by', _params['sort_by']))
+
+        if _params.get('reverse_sort') is not None:  # noqa: E501
+            _query_params.append(('reverse_sort', _params['reverse_sort']))
+
+        if _params.get('key') is not None:  # noqa: E501
+            _query_params.append(('_key', _params['key']))
+
+        if _params.get('name') is not None:  # noqa: E501
+            _query_params.append(('name', _params['name']))
+
+        if _params.get('is_ephemeral') is not None:  # noqa: E501
+            _query_params.append(('is_ephemeral', _params['is_ephemeral']))
+
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "GetUserDataResponse",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/user_data', 'GET',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def get_user_data_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the user_data document")], **kwargs) -> UserDataModel:  # noqa: E501
+        """Retrieve the user data for a key.  # noqa: E501
+
+        Retrieve the document from the \"user_data\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_user_data_key(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the user_data document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: UserDataModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the get_user_data_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.get_user_data_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+
+    @validate_call
+    def get_user_data_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the user_data document")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Retrieve the user data for a key.  # noqa: E501
+
+        Retrieve the document from the \"user_data\" collection by key.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.get_user_data_key_with_http_info(workflow, key, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param key: key of the user_data document (required)
+        :type key: str
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(UserDataModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method get_user_data_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "UserDataModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/user_data/{key}', 'GET',
             _path_params,
             _query_params,
             _header_params,
@@ -7033,1202 +13613,642 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_workflows_workflow_aws_schedulers(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, **kwargs) -> GetWorkflowsWorkflowAwsSchedulersResponse:  # noqa: E501
-        """Retrieve all AWS compute node configuration documents  # noqa: E501
+    def post_aws_schedulers(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[AwsSchedulersModel, Field(..., description="AWS compute node configuration.")], **kwargs) -> AwsSchedulersModel:  # noqa: E501
+        """Store a AWS compute node configuration.  # noqa: E501
 
-        Retrieve all documents from the \"aws_schedulers\" collection for one workflow.  # noqa: E501
+        Store a AWS compute node configuration in the \"aws_schedulers\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_aws_schedulers(workflow, skip, limit, sort_by, reverse_sort, key, name, async_req=True)
+        >>> thread = api.post_aws_schedulers(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param name:
+        :param body: AWS compute node configuration. (required)
+        :type body: AwsSchedulersModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: AwsSchedulersModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the post_aws_schedulers_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_aws_schedulers_with_http_info(workflow, body, **kwargs)  # noqa: E501
+
+    @validate_call
+    def post_aws_schedulers_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[AwsSchedulersModel, Field(..., description="AWS compute node configuration.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store a AWS compute node configuration.  # noqa: E501
+
+        Store a AWS compute node configuration in the \"aws_schedulers\" collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.post_aws_schedulers_with_http_info(workflow, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param body: AWS compute node configuration. (required)
+        :type body: AwsSchedulersModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(AwsSchedulersModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'body'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method post_aws_schedulers" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "AwsSchedulersModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/aws_schedulers', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def post_bulk_jobs(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : BulkJobsModel, **kwargs) -> object:  # noqa: E501
+        """Add jobs in bulk with edge definitions.  # noqa: E501
+
+        Add jobs in bulk with edge definitions. Recommended max job count of 10,000.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.post_bulk_jobs(workflow, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param body: (required)
+        :type body: BulkJobsModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: object
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the post_bulk_jobs_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_bulk_jobs_with_http_info(workflow, body, **kwargs)  # noqa: E501
+
+    @validate_call
+    def post_bulk_jobs_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : BulkJobsModel, **kwargs) -> ApiResponse:  # noqa: E501
+        """Add jobs in bulk with edge definitions.  # noqa: E501
+
+        Add jobs in bulk with edge definitions. Recommended max job count of 10,000.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.post_bulk_jobs_with_http_info(workflow, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param body: (required)
+        :type body: BulkJobsModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(object, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'body'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method post_bulk_jobs" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "object",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/bulk_jobs', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def post_compute_node_stats(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[ComputeNodeStatsModel, Field(..., description="compute node statistics.")], **kwargs) -> ComputeNodeStatsModel:  # noqa: E501
+        """Store a compute node statistics.  # noqa: E501
+
+        Store a compute node statistics in the \"compute_node_stats\" collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.post_compute_node_stats(workflow, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param body: compute node statistics. (required)
+        :type body: ComputeNodeStatsModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: ComputeNodeStatsModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the post_compute_node_stats_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_compute_node_stats_with_http_info(workflow, body, **kwargs)  # noqa: E501
+
+    @validate_call
+    def post_compute_node_stats_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[ComputeNodeStatsModel, Field(..., description="compute node statistics.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store a compute node statistics.  # noqa: E501
+
+        Store a compute node statistics in the \"compute_node_stats\" collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.post_compute_node_stats_with_http_info(workflow, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param body: compute node statistics. (required)
+        :type body: ComputeNodeStatsModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(ComputeNodeStatsModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'body'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method post_compute_node_stats" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "ComputeNodeStatsModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/compute_node_stats', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def post_compute_nodes(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[ComputeNodesModel, Field(..., description="compute node.")], **kwargs) -> ComputeNodesModel:  # noqa: E501
+        """Store a compute node.  # noqa: E501
+
+        Store a compute node in the \"compute_nodes\" collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.post_compute_nodes(workflow, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param body: compute node. (required)
+        :type body: ComputeNodesModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: ComputeNodesModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the post_compute_nodes_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_compute_nodes_with_http_info(workflow, body, **kwargs)  # noqa: E501
+
+    @validate_call
+    def post_compute_nodes_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[ComputeNodesModel, Field(..., description="compute node.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store a compute node.  # noqa: E501
+
+        Store a compute node in the \"compute_nodes\" collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.post_compute_nodes_with_http_info(workflow, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param body: compute node. (required)
+        :type body: ComputeNodesModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(ComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'body'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method post_compute_nodes" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "ComputeNodesModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/compute_nodes', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def post_edges_name(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], name : Annotated[StrictStr, Field(..., description="Edge name")], body : Annotated[EdgesNameModel, Field(..., description="Relationship between two vertexes")], **kwargs) -> EdgesNameModel:  # noqa: E501
+        """Store an edge between two vertexes.  # noqa: E501
+
+        Store an edge between two vertexes in the designated collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.post_edges_name(workflow, name, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param name: Edge name (required)
         :type name: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: GetWorkflowsWorkflowAwsSchedulersResponse
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_aws_schedulers_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_aws_schedulers_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_aws_schedulers_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all AWS compute node configuration documents  # noqa: E501
-
-        Retrieve all documents from the \"aws_schedulers\" collection for one workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_aws_schedulers_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param name:
-        :type name: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowAwsSchedulersResponse, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'skip',
-            'limit',
-            'sort_by',
-            'reverse_sort',
-            'key',
-            'name'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_aws_schedulers" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('sort_by') is not None:  # noqa: E501
-            _query_params.append(('sort_by', _params['sort_by']))
-
-        if _params.get('reverse_sort') is not None:  # noqa: E501
-            _query_params.append(('reverse_sort', _params['reverse_sort']))
-
-        if _params.get('key') is not None:  # noqa: E501
-            _query_params.append(('_key', _params['key']))
-
-        if _params.get('name') is not None:  # noqa: E501
-            _query_params.append(('name', _params['name']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "GetWorkflowsWorkflowAwsSchedulersResponse",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/aws_schedulers', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_aws_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the aws_schedulers document")], **kwargs) -> WorkflowAwsSchedulersModel:  # noqa: E501
-        """Retrieve the AWS compute node configuration for a key.  # noqa: E501
-
-        Retrieve the document from the \"aws_schedulers\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_aws_schedulers_key(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the aws_schedulers document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowAwsSchedulersModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_aws_schedulers_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_aws_schedulers_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_aws_schedulers_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the aws_schedulers document")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the AWS compute node configuration for a key.  # noqa: E501
-
-        Retrieve the document from the \"aws_schedulers\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_aws_schedulers_key_with_http_info(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the aws_schedulers document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowAwsSchedulersModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_aws_schedulers_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowAwsSchedulersModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/aws_schedulers/{key}', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_compute_node_stats(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, hostname : Optional[StrictStr] = None, **kwargs) -> GetWorkflowsWorkflowComputeNodeStatsResponse:  # noqa: E501
-        """Retrieve all compute node statistics documents  # noqa: E501
-
-        Retrieve all documents from the \"compute_node_stats\" collection for one workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_compute_node_stats(workflow, skip, limit, sort_by, reverse_sort, key, hostname, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param hostname:
-        :type hostname: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: GetWorkflowsWorkflowComputeNodeStatsResponse
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_compute_node_stats_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_compute_node_stats_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, hostname, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_compute_node_stats_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, hostname : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all compute node statistics documents  # noqa: E501
-
-        Retrieve all documents from the \"compute_node_stats\" collection for one workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_compute_node_stats_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, hostname, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param hostname:
-        :type hostname: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowComputeNodeStatsResponse, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'skip',
-            'limit',
-            'sort_by',
-            'reverse_sort',
-            'key',
-            'hostname'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_compute_node_stats" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('sort_by') is not None:  # noqa: E501
-            _query_params.append(('sort_by', _params['sort_by']))
-
-        if _params.get('reverse_sort') is not None:  # noqa: E501
-            _query_params.append(('reverse_sort', _params['reverse_sort']))
-
-        if _params.get('key') is not None:  # noqa: E501
-            _query_params.append(('_key', _params['key']))
-
-        if _params.get('hostname') is not None:  # noqa: E501
-            _query_params.append(('hostname', _params['hostname']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "GetWorkflowsWorkflowComputeNodeStatsResponse",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/compute_node_stats', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_compute_node_stats_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the compute_node_stats document")], **kwargs) -> WorkflowComputeNodeStatsModel:  # noqa: E501
-        """Retrieve the compute node statistics for a key.  # noqa: E501
-
-        Retrieve the document from the \"compute_node_stats\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_compute_node_stats_key(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the compute_node_stats document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowComputeNodeStatsModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_compute_node_stats_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_compute_node_stats_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_compute_node_stats_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the compute_node_stats document")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the compute node statistics for a key.  # noqa: E501
-
-        Retrieve the document from the \"compute_node_stats\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_compute_node_stats_key_with_http_info(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the compute_node_stats document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowComputeNodeStatsModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_compute_node_stats_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowComputeNodeStatsModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/compute_node_stats/{key}', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_compute_nodes(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, hostname : Optional[StrictStr] = None, is_active : Optional[StrictBool] = None, **kwargs) -> GetWorkflowsWorkflowComputeNodesResponse:  # noqa: E501
-        """Retrieve all compute node documents  # noqa: E501
-
-        Retrieve all documents from the \"compute_nodes\" collection for one workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_compute_nodes(workflow, skip, limit, sort_by, reverse_sort, key, hostname, is_active, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param hostname:
-        :type hostname: str
-        :param is_active:
-        :type is_active: bool
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: GetWorkflowsWorkflowComputeNodesResponse
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_compute_nodes_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_compute_nodes_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, hostname, is_active, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_compute_nodes_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, hostname : Optional[StrictStr] = None, is_active : Optional[StrictBool] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all compute node documents  # noqa: E501
-
-        Retrieve all documents from the \"compute_nodes\" collection for one workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_compute_nodes_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, hostname, is_active, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param hostname:
-        :type hostname: str
-        :param is_active:
-        :type is_active: bool
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowComputeNodesResponse, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'skip',
-            'limit',
-            'sort_by',
-            'reverse_sort',
-            'key',
-            'hostname',
-            'is_active'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_compute_nodes" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('sort_by') is not None:  # noqa: E501
-            _query_params.append(('sort_by', _params['sort_by']))
-
-        if _params.get('reverse_sort') is not None:  # noqa: E501
-            _query_params.append(('reverse_sort', _params['reverse_sort']))
-
-        if _params.get('key') is not None:  # noqa: E501
-            _query_params.append(('_key', _params['key']))
-
-        if _params.get('hostname') is not None:  # noqa: E501
-            _query_params.append(('hostname', _params['hostname']))
-
-        if _params.get('is_active') is not None:  # noqa: E501
-            _query_params.append(('is_active', _params['is_active']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "GetWorkflowsWorkflowComputeNodesResponse",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/compute_nodes', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_compute_nodes_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the compute_nodes document")], **kwargs) -> WorkflowComputeNodesModel:  # noqa: E501
-        """Retrieve the compute node for a key.  # noqa: E501
-
-        Retrieve the document from the \"compute_nodes\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_compute_nodes_key(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the compute_nodes document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowComputeNodesModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_compute_nodes_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_compute_nodes_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_compute_nodes_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the compute_nodes document")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the compute node for a key.  # noqa: E501
-
-        Retrieve the document from the \"compute_nodes\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_compute_nodes_key_with_http_info(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the compute_nodes document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_compute_nodes_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowComputeNodesModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/compute_nodes/{key}', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_edges_name(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], name : Annotated[StrictStr, Field(..., description="Edge collection name")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> GetWorkflowsWorkflowEdgesNameResponse:  # noqa: E501
-        """Retrieve all edges from the designated collection.  # noqa: E501
-
-        Retrieve all edges from the designated collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_edges_name(workflow, name, skip, limit, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param name: Edge collection name (required)
-        :type name: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: GetWorkflowsWorkflowEdgesNameResponse
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_edges_name_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_edges_name_with_http_info(workflow, name, skip, limit, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_edges_name_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], name : Annotated[StrictStr, Field(..., description="Edge collection name")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all edges from the designated collection.  # noqa: E501
-
-        Retrieve all edges from the designated collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_edges_name_with_http_info(workflow, name, skip, limit, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param name: Edge collection name (required)
-        :type name: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowEdgesNameResponse, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'name',
-            'skip',
-            'limit'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_edges_name" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['name']:
-            _path_params['name'] = _params['name']
-
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "GetWorkflowsWorkflowEdgesNameResponse",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/edges/{name}', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_edges_name_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], name : Annotated[StrictStr, Field(..., description="Edge collection name")], key : Annotated[StrictStr, Field(..., description="Edge key")], **kwargs) -> EdgesNameModel:  # noqa: E501
-        """Retrieve an edge  # noqa: E501
-
-        Retrieves an edge from the designated collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_edges_name_key(workflow, name, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param name: Edge collection name (required)
-        :type name: str
-        :param key: Edge key (required)
-        :type key: str
+        :param body: Relationship between two vertexes (required)
+        :type body: EdgesNameModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -8242,26 +14262,26 @@ class DefaultApi(object):
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_edges_name_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_edges_name_key_with_http_info(workflow, name, key, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the post_edges_name_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_edges_name_with_http_info(workflow, name, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def get_workflows_workflow_edges_name_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], name : Annotated[StrictStr, Field(..., description="Edge collection name")], key : Annotated[StrictStr, Field(..., description="Edge key")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve an edge  # noqa: E501
+    def post_edges_name_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], name : Annotated[StrictStr, Field(..., description="Edge name")], body : Annotated[EdgesNameModel, Field(..., description="Relationship between two vertexes")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store an edge between two vertexes.  # noqa: E501
 
-        Retrieves an edge from the designated collection by key.  # noqa: E501
+        Store an edge between two vertexes in the designated collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_edges_name_key_with_http_info(workflow, name, key, async_req=True)
+        >>> thread = api.post_edges_name_with_http_info(workflow, name, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param name: Edge collection name (required)
+        :param name: Edge name (required)
         :type name: str
-        :param key: Edge key (required)
-        :type key: str
+        :param body: Relationship between two vertexes (required)
+        :type body: EdgesNameModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -8292,7 +14312,7 @@ class DefaultApi(object):
         _all_params = [
             'workflow',
             'name',
-            'key'
+            'body'
         ]
         _all_params.extend(
             [
@@ -8311,7 +14331,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_edges_name_key" % _key
+                    " to method post_edges_name" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -8326,9 +14346,6 @@ class DefaultApi(object):
         if _params['name']:
             _path_params['name'] = _params['name']
 
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
 
         # process the query parameters
         _query_params = []
@@ -8339,9 +14356,19 @@ class DefaultApi(object):
         _files = {}
         # process the body parameter
         _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
         # set the HTTP header `Accept`
         _header_params['Accept'] = self.api_client.select_header_accept(
             ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
 
         # authentication setting
         _auth_settings = []  # noqa: E501
@@ -8352,7 +14379,7 @@ class DefaultApi(object):
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/edges/{name}/{key}', 'GET',
+            '/workflows/{workflow}/edges/{name}', 'POST',
             _path_params,
             _query_params,
             _header_params,
@@ -8369,208 +14396,20 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_workflows_workflow_events(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, category : Optional[StrictStr] = None, **kwargs) -> GetWorkflowsWorkflowEventsResponse:  # noqa: E501
-        """Retrieve all event documents  # noqa: E501
+    def post_events(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[Dict[str, Any], Field(..., description="event.")], **kwargs) -> object:  # noqa: E501
+        """Store a event.  # noqa: E501
 
-        Retrieve all documents from the \"events\" collection for one workflow.  # noqa: E501
+        Store a event in the \"events\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_events(workflow, skip, limit, sort_by, reverse_sort, key, category, async_req=True)
+        >>> thread = api.post_events(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param category:
-        :type category: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: GetWorkflowsWorkflowEventsResponse
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_events_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_events_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, category, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_events_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, category : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all event documents  # noqa: E501
-
-        Retrieve all documents from the \"events\" collection for one workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_events_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, category, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param category:
-        :type category: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowEventsResponse, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'skip',
-            'limit',
-            'sort_by',
-            'reverse_sort',
-            'key',
-            'category'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_events" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('sort_by') is not None:  # noqa: E501
-            _query_params.append(('sort_by', _params['sort_by']))
-
-        if _params.get('reverse_sort') is not None:  # noqa: E501
-            _query_params.append(('reverse_sort', _params['reverse_sort']))
-
-        if _params.get('key') is not None:  # noqa: E501
-            _query_params.append(('_key', _params['key']))
-
-        if _params.get('category') is not None:  # noqa: E501
-            _query_params.append(('category', _params['category']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "GetWorkflowsWorkflowEventsResponse",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/events', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_events_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the events document")], **kwargs) -> object:  # noqa: E501
-        """Retrieve the event for a key.  # noqa: E501
-
-        Retrieve the document from the \"events\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_events_key(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the events document (required)
-        :type key: str
+        :param body: event. (required)
+        :type body: object
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -8584,24 +14423,24 @@ class DefaultApi(object):
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_events_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_events_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the post_events_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_events_with_http_info(workflow, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def get_workflows_workflow_events_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the events document")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the event for a key.  # noqa: E501
+    def post_events_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[Dict[str, Any], Field(..., description="event.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store a event.  # noqa: E501
 
-        Retrieve the document from the \"events\" collection by key.  # noqa: E501
+        Store a event in the \"events\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_events_key_with_http_info(workflow, key, async_req=True)
+        >>> thread = api.post_events_with_http_info(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param key: key of the events document (required)
-        :type key: str
+        :param body: event. (required)
+        :type body: object
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -8631,7 +14470,7 @@ class DefaultApi(object):
 
         _all_params = [
             'workflow',
-            'key'
+            'body'
         ]
         _all_params.extend(
             [
@@ -8650,7 +14489,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_events_key" % _key
+                    " to method post_events" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -8662,9 +14501,6 @@ class DefaultApi(object):
         if _params['workflow']:
             _path_params['workflow'] = _params['workflow']
 
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
 
         # process the query parameters
         _query_params = []
@@ -8675,9 +14511,19 @@ class DefaultApi(object):
         _files = {}
         # process the body parameter
         _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
         # set the HTTP header `Accept`
         _header_params['Accept'] = self.api_client.select_header_accept(
             ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
 
         # authentication setting
         _auth_settings = []  # noqa: E501
@@ -8688,7 +14534,7 @@ class DefaultApi(object):
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/events/{key}', 'GET',
+            '/workflows/{workflow}/events', 'POST',
             _path_params,
             _query_params,
             _header_params,
@@ -8705,32 +14551,20 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_workflows_workflow_files(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, path : Optional[StrictStr] = None, **kwargs) -> GetWorkflowsWorkflowFilesResponse:  # noqa: E501
-        """Retrieve all file documents  # noqa: E501
+    def post_files(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[FilesModel, Field(..., description="file.")], **kwargs) -> FilesModel:  # noqa: E501
+        """Store a file.  # noqa: E501
 
-        Retrieve all documents from the \"files\" collection for one workflow.  # noqa: E501
+        Store a file in the \"files\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_files(workflow, skip, limit, sort_by, reverse_sort, key, name, path, async_req=True)
+        >>> thread = api.post_files(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param name:
-        :type name: str
-        :param path:
-        :type path: str
+        :param body: file. (required)
+        :type body: FilesModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -8740,40 +14574,28 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: GetWorkflowsWorkflowFilesResponse
+        :rtype: FilesModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_files_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_files_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, path, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the post_files_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_files_with_http_info(workflow, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def get_workflows_workflow_files_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, path : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all file documents  # noqa: E501
+    def post_files_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[FilesModel, Field(..., description="file.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store a file.  # noqa: E501
 
-        Retrieve all documents from the \"files\" collection for one workflow.  # noqa: E501
+        Store a file in the \"files\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_files_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, path, async_req=True)
+        >>> thread = api.post_files_with_http_info(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param name:
-        :type name: str
-        :param path:
-        :type path: str
+        :param body: file. (required)
+        :type body: FilesModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -8796,20 +14618,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowFilesResponse, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(FilesModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
-            'skip',
-            'limit',
-            'sort_by',
-            'reverse_sort',
-            'key',
-            'name',
-            'path'
+            'body'
         ]
         _all_params.extend(
             [
@@ -8828,7 +14644,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_files" % _key
+                    " to method post_files" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -8843,27 +14659,6 @@ class DefaultApi(object):
 
         # process the query parameters
         _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('sort_by') is not None:  # noqa: E501
-            _query_params.append(('sort_by', _params['sort_by']))
-
-        if _params.get('reverse_sort') is not None:  # noqa: E501
-            _query_params.append(('reverse_sort', _params['reverse_sort']))
-
-        if _params.get('key') is not None:  # noqa: E501
-            _query_params.append(('_key', _params['key']))
-
-        if _params.get('name') is not None:  # noqa: E501
-            _query_params.append(('name', _params['name']))
-
-        if _params.get('path') is not None:  # noqa: E501
-            _query_params.append(('path', _params['path']))
-
         # process the header parameters
         _header_params = dict(_params.get('_headers', {}))
         # process the form parameters
@@ -8871,20 +14666,30 @@ class DefaultApi(object):
         _files = {}
         # process the body parameter
         _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
         # set the HTTP header `Accept`
         _header_params['Accept'] = self.api_client.select_header_accept(
             ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
 
         # authentication setting
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "GetWorkflowsWorkflowFilesResponse",
+            '200': "FilesModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/files', 'GET',
+            '/workflows/{workflow}/files', 'POST',
             _path_params,
             _query_params,
             _header_params,
@@ -8901,20 +14706,20 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_workflows_workflow_files_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the files document")], **kwargs) -> WorkflowFilesModel:  # noqa: E501
-        """Retrieve the file for a key.  # noqa: E501
+    def post_job_process_stats(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[JobProcessStatsModel, Field(..., description="job process statistics.")], **kwargs) -> JobProcessStatsModel:  # noqa: E501
+        """Store a job process statistics.  # noqa: E501
 
-        Retrieve the document from the \"files\" collection by key.  # noqa: E501
+        Store a job process statistics in the \"job_process_stats\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_files_key(workflow, key, async_req=True)
+        >>> thread = api.post_job_process_stats(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param key: key of the files document (required)
-        :type key: str
+        :param body: job process statistics. (required)
+        :type body: JobProcessStatsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -8924,28 +14729,28 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowFilesModel
+        :rtype: JobProcessStatsModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_files_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_files_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the post_job_process_stats_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_job_process_stats_with_http_info(workflow, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def get_workflows_workflow_files_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the files document")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the file for a key.  # noqa: E501
+    def post_job_process_stats_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[JobProcessStatsModel, Field(..., description="job process statistics.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store a job process statistics.  # noqa: E501
 
-        Retrieve the document from the \"files\" collection by key.  # noqa: E501
+        Store a job process statistics in the \"job_process_stats\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_files_key_with_http_info(workflow, key, async_req=True)
+        >>> thread = api.post_job_process_stats_with_http_info(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param key: key of the files document (required)
-        :type key: str
+        :param body: job process statistics. (required)
+        :type body: JobProcessStatsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -8968,14 +14773,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowFilesModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(JobProcessStatsModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
-            'key'
+            'body'
         ]
         _all_params.extend(
             [
@@ -8994,7 +14799,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_files_key" % _key
+                    " to method post_job_process_stats" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -9006,9 +14811,6 @@ class DefaultApi(object):
         if _params['workflow']:
             _path_params['workflow'] = _params['workflow']
 
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
 
         # process the query parameters
         _query_params = []
@@ -9019,20 +14821,30 @@ class DefaultApi(object):
         _files = {}
         # process the body parameter
         _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
         # set the HTTP header `Accept`
         _header_params['Accept'] = self.api_client.select_header_accept(
             ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
 
         # authentication setting
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowFilesModel",
+            '200': "JobProcessStatsModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/files/{key}', 'GET',
+            '/workflows/{workflow}/job_process_stats', 'POST',
             _path_params,
             _query_params,
             _header_params,
@@ -9049,336 +14861,338 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_workflows_workflow_files_produced_by_job_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> GetWorkflowsWorkflowFilesProducedByJobKeyResponse:  # noqa: E501
-        """Retrieve files produced by a job  # noqa: E501
+    def post_job_specifications(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[JobSpecificationsModel, Field(..., description="job definition to store in the collection.")], **kwargs) -> JobSpecificationsModel:  # noqa: E501
+        """Store a job and create edges.  # noqa: E501
 
-        Retrieves files from the \"files\" collection produced by a job.  # noqa: E501
+        Store a job in the \"jobs\" collection and create edges.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_files_produced_by_job_key(workflow, key, skip, limit, async_req=True)
+        >>> thread = api.post_job_specifications(workflow, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param body: job definition to store in the collection. (required)
+        :type body: JobSpecificationsModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: JobSpecificationsModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the post_job_specifications_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_job_specifications_with_http_info(workflow, body, **kwargs)  # noqa: E501
+
+    @validate_call
+    def post_job_specifications_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[JobSpecificationsModel, Field(..., description="job definition to store in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store a job and create edges.  # noqa: E501
+
+        Store a job in the \"jobs\" collection and create edges.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.post_job_specifications_with_http_info(workflow, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param body: job definition to store in the collection. (required)
+        :type body: JobSpecificationsModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(JobSpecificationsModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'body'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method post_job_specifications" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "JobSpecificationsModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/job_specifications', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def post_jobs(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[JobsModel, Field(..., description="job.")], **kwargs) -> JobsModel:  # noqa: E501
+        """Store a job.  # noqa: E501
+
+        Store a job in the \"jobs\" collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.post_jobs(workflow, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param body: job. (required)
+        :type body: JobsModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: JobsModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the post_jobs_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_jobs_with_http_info(workflow, body, **kwargs)  # noqa: E501
+
+    @validate_call
+    def post_jobs_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[JobsModel, Field(..., description="job.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store a job.  # noqa: E501
+
+        Store a job in the \"jobs\" collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.post_jobs_with_http_info(workflow, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param body: job. (required)
+        :type body: JobsModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(JobsModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'body'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method post_jobs" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "JobsModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/jobs', 'POST',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def post_jobs_key_complete_job_status_rev_run_id(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], status : Annotated[StrictStr, Field(..., description="New job status.")], rev : Annotated[StrictStr, Field(..., description="Current job revision.")], run_id : Annotated[StrictInt, Field(..., description="Current job run ID")], body : Annotated[ResultsModel, Field(..., description="Result of the job.")], **kwargs) -> JobsModel:  # noqa: E501
+        """Complete a job and add a result.  # noqa: E501
+
+        Complete a job, connect it to a result, and manage side effects.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.post_jobs_key_complete_job_status_rev_run_id(workflow, key, status, rev, run_id, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
         :param key: Job key (required)
         :type key: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: GetWorkflowsWorkflowFilesProducedByJobKeyResponse
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_files_produced_by_job_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_files_produced_by_job_key_with_http_info(workflow, key, skip, limit, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_files_produced_by_job_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve files produced by a job  # noqa: E501
-
-        Retrieves files from the \"files\" collection produced by a job.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_files_produced_by_job_key_with_http_info(workflow, key, skip, limit, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowFilesProducedByJobKeyResponse, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'skip',
-            'limit'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_files_produced_by_job_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "GetWorkflowsWorkflowFilesProducedByJobKeyResponse",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/files/produced_by_job/{key}', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_job_keys(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], **kwargs) -> object:  # noqa: E501
-        """Retrieve all job keys for a workflow.  # noqa: E501
-
-        Retrieves all job keys from the \"jobs\" collection for a workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_job_keys(workflow, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: object
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_job_keys_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_job_keys_with_http_info(workflow, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_job_keys_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all job keys for a workflow.  # noqa: E501
-
-        Retrieves all job keys from the \"jobs\" collection for a workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_job_keys_with_http_info(workflow, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(object, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_job_keys" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "object",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/job_keys', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_job_process_stats(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, job_key : Optional[StrictStr] = None, run_id : Optional[StrictInt] = None, **kwargs) -> GetWorkflowsWorkflowJobProcessStatsResponse:  # noqa: E501
-        """Retrieve all job process statistics documents  # noqa: E501
-
-        Retrieve all documents from the \"job_process_stats\" collection for one workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_job_process_stats(workflow, skip, limit, sort_by, reverse_sort, key, job_key, run_id, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param job_key:
-        :type job_key: str
-        :param run_id:
+        :param status: New job status. (required)
+        :type status: str
+        :param rev: Current job revision. (required)
+        :type rev: str
+        :param run_id: Current job run ID (required)
         :type run_id: int
+        :param body: Result of the job. (required)
+        :type body: ResultsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -9388,40 +15202,36 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: GetWorkflowsWorkflowJobProcessStatsResponse
+        :rtype: JobsModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_job_process_stats_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_job_process_stats_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, job_key, run_id, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the post_jobs_key_complete_job_status_rev_run_id_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_jobs_key_complete_job_status_rev_run_id_with_http_info(workflow, key, status, rev, run_id, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def get_workflows_workflow_job_process_stats_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, job_key : Optional[StrictStr] = None, run_id : Optional[StrictInt] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all job process statistics documents  # noqa: E501
+    def post_jobs_key_complete_job_status_rev_run_id_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], status : Annotated[StrictStr, Field(..., description="New job status.")], rev : Annotated[StrictStr, Field(..., description="Current job revision.")], run_id : Annotated[StrictInt, Field(..., description="Current job run ID")], body : Annotated[ResultsModel, Field(..., description="Result of the job.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Complete a job and add a result.  # noqa: E501
 
-        Retrieve all documents from the \"job_process_stats\" collection for one workflow.  # noqa: E501
+        Complete a job, connect it to a result, and manage side effects.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_job_process_stats_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, job_key, run_id, async_req=True)
+        >>> thread = api.post_jobs_key_complete_job_status_rev_run_id_with_http_info(workflow, key, status, rev, run_id, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
+        :param key: Job key (required)
         :type key: str
-        :param job_key:
-        :type job_key: str
-        :param run_id:
+        :param status: New job status. (required)
+        :type status: str
+        :param rev: Current job revision. (required)
+        :type rev: str
+        :param run_id: Current job run ID (required)
         :type run_id: int
+        :param body: Result of the job. (required)
+        :type body: ResultsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -9444,683 +15254,18 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowJobProcessStatsResponse, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(JobsModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
-            'skip',
-            'limit',
-            'sort_by',
-            'reverse_sort',
             'key',
-            'job_key',
-            'run_id'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_job_process_stats" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('sort_by') is not None:  # noqa: E501
-            _query_params.append(('sort_by', _params['sort_by']))
-
-        if _params.get('reverse_sort') is not None:  # noqa: E501
-            _query_params.append(('reverse_sort', _params['reverse_sort']))
-
-        if _params.get('key') is not None:  # noqa: E501
-            _query_params.append(('_key', _params['key']))
-
-        if _params.get('job_key') is not None:  # noqa: E501
-            _query_params.append(('job_key', _params['job_key']))
-
-        if _params.get('run_id') is not None:  # noqa: E501
-            _query_params.append(('run_id', _params['run_id']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "GetWorkflowsWorkflowJobProcessStatsResponse",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/job_process_stats', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_job_process_stats_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the job_process_stats document")], **kwargs) -> WorkflowJobProcessStatsModel:  # noqa: E501
-        """Retrieve the job process statistics for a key.  # noqa: E501
-
-        Retrieve the document from the \"job_process_stats\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_job_process_stats_key(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the job_process_stats document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowJobProcessStatsModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_job_process_stats_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_job_process_stats_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_job_process_stats_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the job_process_stats document")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the job process statistics for a key.  # noqa: E501
-
-        Retrieve the document from the \"job_process_stats\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_job_process_stats_key_with_http_info(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the job_process_stats document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowJobProcessStatsModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_job_process_stats_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowJobProcessStatsModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/job_process_stats/{key}', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_job_specifications(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> GetWorkflowsWorkflowJobSpecificationsResponse:  # noqa: E501
-        """Retrieve all job definitions  # noqa: E501
-
-        Retrieves all job definitions. Limit output with skip and limit.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_job_specifications(workflow, skip, limit, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: GetWorkflowsWorkflowJobSpecificationsResponse
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_job_specifications_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_job_specifications_with_http_info(workflow, skip, limit, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_job_specifications_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all job definitions  # noqa: E501
-
-        Retrieves all job definitions. Limit output with skip and limit.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_job_specifications_with_http_info(workflow, skip, limit, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowJobSpecificationsResponse, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'skip',
-            'limit'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_job_specifications" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "GetWorkflowsWorkflowJobSpecificationsResponse",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/job_specifications', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_job_specifications_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> WorkflowJobSpecificationsModel:  # noqa: E501
-        """Retrieve a job  # noqa: E501
-
-        Retrieves a job from the \"jobs\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_job_specifications_key(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowJobSpecificationsModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_job_specifications_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_job_specifications_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_job_specifications_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve a job  # noqa: E501
-
-        Retrieves a job from the \"jobs\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_job_specifications_key_with_http_info(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowJobSpecificationsModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_job_specifications_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowJobSpecificationsModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/job_specifications/{key}', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_jobs(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, command : Optional[StrictStr] = None, status : Optional[StrictStr] = None, cancel_on_blocking_job_failure : Optional[StrictBool] = None, supports_termination : Optional[StrictBool] = None, **kwargs) -> GetWorkflowsWorkflowJobsResponse:  # noqa: E501
-        """Retrieve all job documents  # noqa: E501
-
-        Retrieve all documents from the \"jobs\" collection for one workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_jobs(workflow, skip, limit, sort_by, reverse_sort, key, name, command, status, cancel_on_blocking_job_failure, supports_termination, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param name:
-        :type name: str
-        :param command:
-        :type command: str
-        :param status:
-        :type status: str
-        :param cancel_on_blocking_job_failure:
-        :type cancel_on_blocking_job_failure: bool
-        :param supports_termination:
-        :type supports_termination: bool
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: GetWorkflowsWorkflowJobsResponse
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_jobs_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_jobs_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, command, status, cancel_on_blocking_job_failure, supports_termination, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_jobs_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, command : Optional[StrictStr] = None, status : Optional[StrictStr] = None, cancel_on_blocking_job_failure : Optional[StrictBool] = None, supports_termination : Optional[StrictBool] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all job documents  # noqa: E501
-
-        Retrieve all documents from the \"jobs\" collection for one workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_jobs_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, command, status, cancel_on_blocking_job_failure, supports_termination, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param name:
-        :type name: str
-        :param command:
-        :type command: str
-        :param status:
-        :type status: str
-        :param cancel_on_blocking_job_failure:
-        :type cancel_on_blocking_job_failure: bool
-        :param supports_termination:
-        :type supports_termination: bool
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowJobsResponse, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'skip',
-            'limit',
-            'sort_by',
-            'reverse_sort',
-            'key',
-            'name',
-            'command',
             'status',
-            'cancel_on_blocking_job_failure',
-            'supports_termination'
+            'rev',
+            'run_id',
+            'body'
         ]
         _all_params.extend(
             [
@@ -10139,192 +15284,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_jobs" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('sort_by') is not None:  # noqa: E501
-            _query_params.append(('sort_by', _params['sort_by']))
-
-        if _params.get('reverse_sort') is not None:  # noqa: E501
-            _query_params.append(('reverse_sort', _params['reverse_sort']))
-
-        if _params.get('key') is not None:  # noqa: E501
-            _query_params.append(('_key', _params['key']))
-
-        if _params.get('name') is not None:  # noqa: E501
-            _query_params.append(('name', _params['name']))
-
-        if _params.get('command') is not None:  # noqa: E501
-            _query_params.append(('command', _params['command']))
-
-        if _params.get('status') is not None:  # noqa: E501
-            _query_params.append(('status', _params['status']))
-
-        if _params.get('cancel_on_blocking_job_failure') is not None:  # noqa: E501
-            _query_params.append(('cancel_on_blocking_job_failure', _params['cancel_on_blocking_job_failure']))
-
-        if _params.get('supports_termination') is not None:  # noqa: E501
-            _query_params.append(('supports_termination', _params['supports_termination']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "GetWorkflowsWorkflowJobsResponse",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/jobs', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_jobs_find_by_needs_file_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="File key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> GetWorkflowsWorkflowJobsFindByNeedsFileKeyResponse:  # noqa: E501
-        """Retrieve all jobs that need a file  # noqa: E501
-
-        Retrieves all jobs connected to a file by the needs edge.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_jobs_find_by_needs_file_key(workflow, key, skip, limit, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: File key (required)
-        :type key: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: GetWorkflowsWorkflowJobsFindByNeedsFileKeyResponse
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_jobs_find_by_needs_file_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_jobs_find_by_needs_file_key_with_http_info(workflow, key, skip, limit, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_jobs_find_by_needs_file_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="File key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all jobs that need a file  # noqa: E501
-
-        Retrieves all jobs connected to a file by the needs edge.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_jobs_find_by_needs_file_key_with_http_info(workflow, key, skip, limit, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: File key (required)
-        :type key: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowJobsFindByNeedsFileKeyResponse, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'skip',
-            'limit'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_jobs_find_by_needs_file_key" % _key
+                    " to method post_jobs_key_complete_job_status_rev_run_id" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -10338,180 +15298,19 @@ class DefaultApi(object):
 
         if _params['key']:
             _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "GetWorkflowsWorkflowJobsFindByNeedsFileKeyResponse",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/jobs/find_by_needs_file/{key}', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_jobs_find_by_status_status(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], status : Annotated[StrictStr, Field(..., description="Job status.")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> GetWorkflowsWorkflowJobsFindByStatusStatusResponse:  # noqa: E501
-        """Retrieve all jobs with a specific status  # noqa: E501
-
-        Retrieves all jobs from the \"jobs\" collection with a specific status.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_jobs_find_by_status_status(workflow, status, skip, limit, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param status: Job status. (required)
-        :type status: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: GetWorkflowsWorkflowJobsFindByStatusStatusResponse
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_jobs_find_by_status_status_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_jobs_find_by_status_status_with_http_info(workflow, status, skip, limit, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_jobs_find_by_status_status_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], status : Annotated[StrictStr, Field(..., description="Job status.")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all jobs with a specific status  # noqa: E501
-
-        Retrieves all jobs from the \"jobs\" collection with a specific status.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_jobs_find_by_status_status_with_http_info(workflow, status, skip, limit, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param status: Job status. (required)
-        :type status: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowJobsFindByStatusStatusResponse, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'status',
-            'skip',
-            'limit'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_jobs_find_by_status_status" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
 
         if _params['status']:
             _path_params['status'] = _params['status']
 
+        if _params['rev']:
+            _path_params['rev'] = _params['rev']
+
+        if _params['run_id']:
+            _path_params['run_id'] = _params['run_id']
+
 
         # process the query parameters
         _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
         # process the header parameters
         _header_params = dict(_params.get('_headers', {}))
         # process the form parameters
@@ -10519,20 +15318,30 @@ class DefaultApi(object):
         _files = {}
         # process the body parameter
         _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
         # set the HTTP header `Accept`
         _header_params['Accept'] = self.api_client.select_header_accept(
             ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
 
         # authentication setting
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "GetWorkflowsWorkflowJobsFindByStatusStatusResponse",
+            '200': "JobsModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/jobs/find_by_status/{status}', 'GET',
+            '/workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}', 'POST',
             _path_params,
             _query_params,
             _header_params,
@@ -10549,20 +15358,22 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_workflows_workflow_jobs_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the jobs document")], **kwargs) -> WorkflowJobsModel:  # noqa: E501
-        """Retrieve the job for a key.  # noqa: E501
+    def post_jobs_key_user_data(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], body : Annotated[UserDataModel, Field(..., description="User data for the job.")], **kwargs) -> UserDataModel:  # noqa: E501
+        """Store user data for a job.  # noqa: E501
 
-        Retrieve the document from the \"jobs\" collection by key.  # noqa: E501
+        Store user data for a job and connect the two vertexes.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_jobs_key(workflow, key, async_req=True)
+        >>> thread = api.post_jobs_key_user_data(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param key: key of the jobs document (required)
+        :param key: Job key (required)
         :type key: str
+        :param body: User data for the job. (required)
+        :type body: UserDataModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -10572,28 +15383,30 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowJobsModel
+        :rtype: UserDataModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_jobs_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_jobs_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the post_jobs_key_user_data_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_jobs_key_user_data_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def get_workflows_workflow_jobs_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the jobs document")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the job for a key.  # noqa: E501
+    def post_jobs_key_user_data_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], body : Annotated[UserDataModel, Field(..., description="User data for the job.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store user data for a job.  # noqa: E501
 
-        Retrieve the document from the \"jobs\" collection by key.  # noqa: E501
+        Store user data for a job and connect the two vertexes.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_jobs_key_with_http_info(workflow, key, async_req=True)
+        >>> thread = api.post_jobs_key_user_data_with_http_info(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param key: key of the jobs document (required)
+        :param key: Job key (required)
         :type key: str
+        :param body: User data for the job. (required)
+        :type body: UserDataModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -10616,784 +15429,15 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowJobsModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(UserDataModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
-            'key'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_jobs_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowJobsModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/jobs/{key}', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_jobs_key_process_stats(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> List[WorkflowJobProcessStatsModel]:  # noqa: E501
-        """Retrieve the job process stats for a job.  # noqa: E501
-
-        Retrieve the job process stats for a job by its key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_jobs_key_process_stats(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: List[WorkflowJobProcessStatsModel]
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_jobs_key_process_stats_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_jobs_key_process_stats_with_http_info(workflow, key, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_jobs_key_process_stats_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the job process stats for a job.  # noqa: E501
-
-        Retrieve the job process stats for a job by its key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_jobs_key_process_stats_with_http_info(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(List[WorkflowJobProcessStatsModel], status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_jobs_key_process_stats" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "List[WorkflowJobProcessStatsModel]",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/jobs/{key}/process_stats', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_jobs_key_resource_requirements(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> WorkflowResourceRequirementsModel:  # noqa: E501
-        """Retrieve the resource requirements for a job.  # noqa: E501
-
-        Retrieve the resource requirements for a job by its key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_jobs_key_resource_requirements(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowResourceRequirementsModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_jobs_key_resource_requirements_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_jobs_key_resource_requirements_with_http_info(workflow, key, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_jobs_key_resource_requirements_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the resource requirements for a job.  # noqa: E501
-
-        Retrieve the resource requirements for a job by its key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_jobs_key_resource_requirements_with_http_info(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowResourceRequirementsModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_jobs_key_resource_requirements" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowResourceRequirementsModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/jobs/{key}/resource_requirements', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_jobs_key_user_data_consumes(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> GetWorkflowsWorkflowJobsKeyUserDataConsumesResponse:  # noqa: E501
-        """Retrieve all user data consumed by a job.  # noqa: E501
-
-        Retrieve all user data consumed by a job.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_jobs_key_user_data_consumes(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: GetWorkflowsWorkflowJobsKeyUserDataConsumesResponse
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_jobs_key_user_data_consumes_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_jobs_key_user_data_consumes_with_http_info(workflow, key, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_jobs_key_user_data_consumes_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all user data consumed by a job.  # noqa: E501
-
-        Retrieve all user data consumed by a job.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_jobs_key_user_data_consumes_with_http_info(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowJobsKeyUserDataConsumesResponse, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_jobs_key_user_data_consumes" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "GetWorkflowsWorkflowJobsKeyUserDataConsumesResponse",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/jobs/{key}/user_data_consumes', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_jobs_key_user_data_stores(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> GetWorkflowsWorkflowJobsKeyUserDataStoresResponse:  # noqa: E501
-        """Retrieve all user data for a job.  # noqa: E501
-
-        Retrieve all user data for a job.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_jobs_key_user_data_stores(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: GetWorkflowsWorkflowJobsKeyUserDataStoresResponse
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_jobs_key_user_data_stores_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_jobs_key_user_data_stores_with_http_info(workflow, key, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_jobs_key_user_data_stores_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all user data for a job.  # noqa: E501
-
-        Retrieve all user data for a job.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_jobs_key_user_data_stores_with_http_info(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowJobsKeyUserDataStoresResponse, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_jobs_key_user_data_stores" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "GetWorkflowsWorkflowJobsKeyUserDataStoresResponse",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/jobs/{key}/user_data_stores', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_local_schedulers(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, memory : Optional[StrictStr] = None, num_cpus : Optional[StrictInt] = None, **kwargs) -> GetWorkflowsWorkflowLocalSchedulersResponse:  # noqa: E501
-        """Retrieve all local compute node configuration documents  # noqa: E501
-
-        Retrieve all documents from the \"local_schedulers\" collection for one workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_local_schedulers(workflow, skip, limit, sort_by, reverse_sort, key, memory, num_cpus, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param memory:
-        :type memory: str
-        :param num_cpus:
-        :type num_cpus: int
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: GetWorkflowsWorkflowLocalSchedulersResponse
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_local_schedulers_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_local_schedulers_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, memory, num_cpus, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_local_schedulers_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, memory : Optional[StrictStr] = None, num_cpus : Optional[StrictInt] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all local compute node configuration documents  # noqa: E501
-
-        Retrieve all documents from the \"local_schedulers\" collection for one workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_local_schedulers_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, memory, num_cpus, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param memory:
-        :type memory: str
-        :param num_cpus:
-        :type num_cpus: int
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowLocalSchedulersResponse, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'skip',
-            'limit',
-            'sort_by',
-            'reverse_sort',
             'key',
-            'memory',
-            'num_cpus'
+            'body'
         ]
         _all_params.extend(
             [
@@ -11412,173 +15456,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_local_schedulers" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('sort_by') is not None:  # noqa: E501
-            _query_params.append(('sort_by', _params['sort_by']))
-
-        if _params.get('reverse_sort') is not None:  # noqa: E501
-            _query_params.append(('reverse_sort', _params['reverse_sort']))
-
-        if _params.get('key') is not None:  # noqa: E501
-            _query_params.append(('_key', _params['key']))
-
-        if _params.get('memory') is not None:  # noqa: E501
-            _query_params.append(('memory', _params['memory']))
-
-        if _params.get('num_cpus') is not None:  # noqa: E501
-            _query_params.append(('num_cpus', _params['num_cpus']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "GetWorkflowsWorkflowLocalSchedulersResponse",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/local_schedulers', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_local_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the local_schedulers document")], **kwargs) -> WorkflowLocalSchedulersModel:  # noqa: E501
-        """Retrieve the local compute node configuration for a key.  # noqa: E501
-
-        Retrieve the document from the \"local_schedulers\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_local_schedulers_key(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the local_schedulers document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowLocalSchedulersModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_local_schedulers_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_local_schedulers_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_local_schedulers_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the local_schedulers document")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the local compute node configuration for a key.  # noqa: E501
-
-        Retrieve the document from the \"local_schedulers\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_local_schedulers_key_with_http_info(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the local_schedulers document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowLocalSchedulersModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_local_schedulers_key" % _key
+                    " to method post_jobs_key_user_data" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -11603,20 +15481,30 @@ class DefaultApi(object):
         _files = {}
         # process the body parameter
         _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
         # set the HTTP header `Accept`
         _header_params['Accept'] = self.api_client.select_header_accept(
             ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
 
         # authentication setting
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowLocalSchedulersModel",
+            '200': "UserDataModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/local_schedulers/{key}', 'GET',
+            '/workflows/{workflow}/jobs/{key}/user_data', 'POST',
             _path_params,
             _query_params,
             _header_params,
@@ -11633,40 +15521,20 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_workflows_workflow_resource_requirements(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, memory : Optional[StrictStr] = None, num_cpus : Optional[StrictInt] = None, num_gpus : Optional[StrictInt] = None, num_nodes : Optional[StrictInt] = None, runtime : Optional[StrictStr] = None, **kwargs) -> GetWorkflowsWorkflowResourceRequirementsResponse:  # noqa: E501
-        """Retrieve all resource requirements documents  # noqa: E501
+    def post_local_schedulers(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[LocalSchedulersModel, Field(..., description="local compute node configuration.")], **kwargs) -> LocalSchedulersModel:  # noqa: E501
+        """Store a local compute node configuration.  # noqa: E501
 
-        Retrieve all documents from the \"resource_requirements\" collection for one workflow.  # noqa: E501
+        Store a local compute node configuration in the \"local_schedulers\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_resource_requirements(workflow, skip, limit, sort_by, reverse_sort, key, name, memory, num_cpus, num_gpus, num_nodes, runtime, async_req=True)
+        >>> thread = api.post_local_schedulers(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param name:
-        :type name: str
-        :param memory:
-        :type memory: str
-        :param num_cpus:
-        :type num_cpus: int
-        :param num_gpus:
-        :type num_gpus: int
-        :param num_nodes:
-        :type num_nodes: int
-        :param runtime:
-        :type runtime: str
+        :param body: local compute node configuration. (required)
+        :type body: LocalSchedulersModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -11676,48 +15544,28 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: GetWorkflowsWorkflowResourceRequirementsResponse
+        :rtype: LocalSchedulersModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_resource_requirements_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_resource_requirements_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, memory, num_cpus, num_gpus, num_nodes, runtime, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the post_local_schedulers_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_local_schedulers_with_http_info(workflow, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def get_workflows_workflow_resource_requirements_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, memory : Optional[StrictStr] = None, num_cpus : Optional[StrictInt] = None, num_gpus : Optional[StrictInt] = None, num_nodes : Optional[StrictInt] = None, runtime : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all resource requirements documents  # noqa: E501
+    def post_local_schedulers_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[LocalSchedulersModel, Field(..., description="local compute node configuration.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store a local compute node configuration.  # noqa: E501
 
-        Retrieve all documents from the \"resource_requirements\" collection for one workflow.  # noqa: E501
+        Store a local compute node configuration in the \"local_schedulers\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_resource_requirements_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, memory, num_cpus, num_gpus, num_nodes, runtime, async_req=True)
+        >>> thread = api.post_local_schedulers_with_http_info(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param name:
-        :type name: str
-        :param memory:
-        :type memory: str
-        :param num_cpus:
-        :type num_cpus: int
-        :param num_gpus:
-        :type num_gpus: int
-        :param num_nodes:
-        :type num_nodes: int
-        :param runtime:
-        :type runtime: str
+        :param body: local compute node configuration. (required)
+        :type body: LocalSchedulersModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -11740,24 +15588,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowResourceRequirementsResponse, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(LocalSchedulersModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
-            'skip',
-            'limit',
-            'sort_by',
-            'reverse_sort',
-            'key',
-            'name',
-            'memory',
-            'num_cpus',
-            'num_gpus',
-            'num_nodes',
-            'runtime'
+            'body'
         ]
         _all_params.extend(
             [
@@ -11776,7 +15614,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_resource_requirements" % _key
+                    " to method post_local_schedulers" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -11791,39 +15629,6 @@ class DefaultApi(object):
 
         # process the query parameters
         _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('sort_by') is not None:  # noqa: E501
-            _query_params.append(('sort_by', _params['sort_by']))
-
-        if _params.get('reverse_sort') is not None:  # noqa: E501
-            _query_params.append(('reverse_sort', _params['reverse_sort']))
-
-        if _params.get('key') is not None:  # noqa: E501
-            _query_params.append(('_key', _params['key']))
-
-        if _params.get('name') is not None:  # noqa: E501
-            _query_params.append(('name', _params['name']))
-
-        if _params.get('memory') is not None:  # noqa: E501
-            _query_params.append(('memory', _params['memory']))
-
-        if _params.get('num_cpus') is not None:  # noqa: E501
-            _query_params.append(('num_cpus', _params['num_cpus']))
-
-        if _params.get('num_gpus') is not None:  # noqa: E501
-            _query_params.append(('num_gpus', _params['num_gpus']))
-
-        if _params.get('num_nodes') is not None:  # noqa: E501
-            _query_params.append(('num_nodes', _params['num_nodes']))
-
-        if _params.get('runtime') is not None:  # noqa: E501
-            _query_params.append(('runtime', _params['runtime']))
-
         # process the header parameters
         _header_params = dict(_params.get('_headers', {}))
         # process the form parameters
@@ -11831,20 +15636,30 @@ class DefaultApi(object):
         _files = {}
         # process the body parameter
         _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
         # set the HTTP header `Accept`
         _header_params['Accept'] = self.api_client.select_header_accept(
             ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
 
         # authentication setting
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "GetWorkflowsWorkflowResourceRequirementsResponse",
+            '200': "LocalSchedulersModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/resource_requirements', 'GET',
+            '/workflows/{workflow}/local_schedulers', 'POST',
             _path_params,
             _query_params,
             _header_params,
@@ -11861,20 +15676,20 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_workflows_workflow_resource_requirements_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the resource_requirements document")], **kwargs) -> WorkflowResourceRequirementsModel:  # noqa: E501
-        """Retrieve the resource requirements for a key.  # noqa: E501
+    def post_resource_requirements(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[ResourceRequirementsModel, Field(..., description="resource requirements.")], **kwargs) -> ResourceRequirementsModel:  # noqa: E501
+        """Store a resource requirements.  # noqa: E501
 
-        Retrieve the document from the \"resource_requirements\" collection by key.  # noqa: E501
+        Store a resource requirements in the \"resource_requirements\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_resource_requirements_key(workflow, key, async_req=True)
+        >>> thread = api.post_resource_requirements(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param key: key of the resource_requirements document (required)
-        :type key: str
+        :param body: resource requirements. (required)
+        :type body: ResourceRequirementsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -11884,28 +15699,28 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowResourceRequirementsModel
+        :rtype: ResourceRequirementsModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_resource_requirements_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_resource_requirements_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the post_resource_requirements_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_resource_requirements_with_http_info(workflow, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def get_workflows_workflow_resource_requirements_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the resource_requirements document")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the resource requirements for a key.  # noqa: E501
+    def post_resource_requirements_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[ResourceRequirementsModel, Field(..., description="resource requirements.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store a resource requirements.  # noqa: E501
 
-        Retrieve the document from the \"resource_requirements\" collection by key.  # noqa: E501
+        Store a resource requirements in the \"resource_requirements\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_resource_requirements_key_with_http_info(workflow, key, async_req=True)
+        >>> thread = api.post_resource_requirements_with_http_info(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param key: key of the resource_requirements document (required)
-        :type key: str
+        :param body: resource requirements. (required)
+        :type body: ResourceRequirementsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -11928,14 +15743,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowResourceRequirementsModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(ResourceRequirementsModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
-            'key'
+            'body'
         ]
         _all_params.extend(
             [
@@ -11954,7 +15769,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_resource_requirements_key" % _key
+                    " to method post_resource_requirements" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -11966,9 +15781,6 @@ class DefaultApi(object):
         if _params['workflow']:
             _path_params['workflow'] = _params['workflow']
 
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
 
         # process the query parameters
         _query_params = []
@@ -11979,20 +15791,30 @@ class DefaultApi(object):
         _files = {}
         # process the body parameter
         _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
         # set the HTTP header `Accept`
         _header_params['Accept'] = self.api_client.select_header_accept(
             ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
 
         # authentication setting
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowResourceRequirementsModel",
+            '200': "ResourceRequirementsModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/resource_requirements/{key}', 'GET',
+            '/workflows/{workflow}/resource_requirements', 'POST',
             _path_params,
             _query_params,
             _header_params,
@@ -12009,36 +15831,20 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_workflows_workflow_results(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, job_key : Optional[StrictStr] = None, run_id : Optional[StrictInt] = None, return_code : Optional[StrictInt] = None, status : Optional[StrictStr] = None, **kwargs) -> GetWorkflowsWorkflowResultsResponse:  # noqa: E501
-        """Retrieve all result documents  # noqa: E501
+    def post_results(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[ResultsModel, Field(..., description="result.")], **kwargs) -> ResultsModel:  # noqa: E501
+        """Store a result.  # noqa: E501
 
-        Retrieve all documents from the \"results\" collection for one workflow.  # noqa: E501
+        Store a result in the \"results\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_results(workflow, skip, limit, sort_by, reverse_sort, key, job_key, run_id, return_code, status, async_req=True)
+        >>> thread = api.post_results(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param job_key:
-        :type job_key: str
-        :param run_id:
-        :type run_id: int
-        :param return_code:
-        :type return_code: int
-        :param status:
-        :type status: str
+        :param body: result. (required)
+        :type body: ResultsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -12048,44 +15854,28 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: GetWorkflowsWorkflowResultsResponse
+        :rtype: ResultsModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_results_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_results_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, job_key, run_id, return_code, status, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the post_results_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_results_with_http_info(workflow, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def get_workflows_workflow_results_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, job_key : Optional[StrictStr] = None, run_id : Optional[StrictInt] = None, return_code : Optional[StrictInt] = None, status : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all result documents  # noqa: E501
+    def post_results_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[ResultsModel, Field(..., description="result.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store a result.  # noqa: E501
 
-        Retrieve all documents from the \"results\" collection for one workflow.  # noqa: E501
+        Store a result in the \"results\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_results_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, job_key, run_id, return_code, status, async_req=True)
+        >>> thread = api.post_results_with_http_info(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param job_key:
-        :type job_key: str
-        :param run_id:
-        :type run_id: int
-        :param return_code:
-        :type return_code: int
-        :param status:
-        :type status: str
+        :param body: result. (required)
+        :type body: ResultsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -12108,22 +15898,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowResultsResponse, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(ResultsModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
-            'skip',
-            'limit',
-            'sort_by',
-            'reverse_sort',
-            'key',
-            'job_key',
-            'run_id',
-            'return_code',
-            'status'
+            'body'
         ]
         _all_params.extend(
             [
@@ -12142,7 +15924,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_results" % _key
+                    " to method post_results" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -12157,33 +15939,6 @@ class DefaultApi(object):
 
         # process the query parameters
         _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('sort_by') is not None:  # noqa: E501
-            _query_params.append(('sort_by', _params['sort_by']))
-
-        if _params.get('reverse_sort') is not None:  # noqa: E501
-            _query_params.append(('reverse_sort', _params['reverse_sort']))
-
-        if _params.get('key') is not None:  # noqa: E501
-            _query_params.append(('_key', _params['key']))
-
-        if _params.get('job_key') is not None:  # noqa: E501
-            _query_params.append(('job_key', _params['job_key']))
-
-        if _params.get('run_id') is not None:  # noqa: E501
-            _query_params.append(('run_id', _params['run_id']))
-
-        if _params.get('return_code') is not None:  # noqa: E501
-            _query_params.append(('return_code', _params['return_code']))
-
-        if _params.get('status') is not None:  # noqa: E501
-            _query_params.append(('status', _params['status']))
-
         # process the header parameters
         _header_params = dict(_params.get('_headers', {}))
         # process the form parameters
@@ -12191,20 +15946,30 @@ class DefaultApi(object):
         _files = {}
         # process the body parameter
         _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
         # set the HTTP header `Accept`
         _header_params['Accept'] = self.api_client.select_header_accept(
             ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
 
         # authentication setting
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "GetWorkflowsWorkflowResultsResponse",
+            '200': "ResultsModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/results', 'GET',
+            '/workflows/{workflow}/results', 'POST',
             _path_params,
             _query_params,
             _header_params,
@@ -12221,20 +15986,20 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_workflows_workflow_results_find_by_job_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> WorkflowResultsModel:  # noqa: E501
-        """Retrieve the latest result for a job  # noqa: E501
+    def post_scheduled_compute_nodes(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[ScheduledComputeNodesModel, Field(..., description="scheduled compute node.")], **kwargs) -> ScheduledComputeNodesModel:  # noqa: E501
+        """Store a scheduled compute node.  # noqa: E501
 
-        Retrieve the latest result for a job. Throws an error if no result is stored.  # noqa: E501
+        Store a scheduled compute node in the \"scheduled_compute_nodes\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_results_find_by_job_key(workflow, key, async_req=True)
+        >>> thread = api.post_scheduled_compute_nodes(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param key: Job key (required)
-        :type key: str
+        :param body: scheduled compute node. (required)
+        :type body: ScheduledComputeNodesModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -12244,28 +16009,28 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowResultsModel
+        :rtype: ScheduledComputeNodesModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_results_find_by_job_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_results_find_by_job_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the post_scheduled_compute_nodes_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_scheduled_compute_nodes_with_http_info(workflow, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def get_workflows_workflow_results_find_by_job_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the latest result for a job  # noqa: E501
+    def post_scheduled_compute_nodes_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[ScheduledComputeNodesModel, Field(..., description="scheduled compute node.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store a scheduled compute node.  # noqa: E501
 
-        Retrieve the latest result for a job. Throws an error if no result is stored.  # noqa: E501
+        Store a scheduled compute node in the \"scheduled_compute_nodes\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_results_find_by_job_key_with_http_info(workflow, key, async_req=True)
+        >>> thread = api.post_scheduled_compute_nodes_with_http_info(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param key: Job key (required)
-        :type key: str
+        :param body: scheduled compute node. (required)
+        :type body: ScheduledComputeNodesModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -12288,14 +16053,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowResultsModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(ScheduledComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
-            'key'
+            'body'
         ]
         _all_params.extend(
             [
@@ -12314,7 +16079,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_results_find_by_job_key" % _key
+                    " to method post_scheduled_compute_nodes" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -12326,9 +16091,6 @@ class DefaultApi(object):
         if _params['workflow']:
             _path_params['workflow'] = _params['workflow']
 
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
 
         # process the query parameters
         _query_params = []
@@ -12339,20 +16101,30 @@ class DefaultApi(object):
         _files = {}
         # process the body parameter
         _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
         # set the HTTP header `Accept`
         _header_params['Accept'] = self.api_client.select_header_accept(
             ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
 
         # authentication setting
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowResultsModel",
+            '200': "ScheduledComputeNodesModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/results/find_by_job/{key}', 'GET',
+            '/workflows/{workflow}/scheduled_compute_nodes', 'POST',
             _path_params,
             _query_params,
             _header_params,
@@ -12369,20 +16141,20 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_workflows_workflow_results_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the results document")], **kwargs) -> WorkflowResultsModel:  # noqa: E501
-        """Retrieve the result for a key.  # noqa: E501
+    def post_slurm_schedulers(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[SlurmSchedulersModel, Field(..., description="Slurm compute node configuration.")], **kwargs) -> SlurmSchedulersModel:  # noqa: E501
+        """Store a Slurm compute node configuration.  # noqa: E501
 
-        Retrieve the document from the \"results\" collection by key.  # noqa: E501
+        Store a Slurm compute node configuration in the \"slurm_schedulers\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_results_key(workflow, key, async_req=True)
+        >>> thread = api.post_slurm_schedulers(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param key: key of the results document (required)
-        :type key: str
+        :param body: Slurm compute node configuration. (required)
+        :type body: SlurmSchedulersModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -12392,28 +16164,28 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowResultsModel
+        :rtype: SlurmSchedulersModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_results_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_results_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the post_slurm_schedulers_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_slurm_schedulers_with_http_info(workflow, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def get_workflows_workflow_results_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the results document")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the result for a key.  # noqa: E501
+    def post_slurm_schedulers_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[SlurmSchedulersModel, Field(..., description="Slurm compute node configuration.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store a Slurm compute node configuration.  # noqa: E501
 
-        Retrieve the document from the \"results\" collection by key.  # noqa: E501
+        Store a Slurm compute node configuration in the \"slurm_schedulers\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_results_key_with_http_info(workflow, key, async_req=True)
+        >>> thread = api.post_slurm_schedulers_with_http_info(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param key: key of the results document (required)
-        :type key: str
+        :param body: Slurm compute node configuration. (required)
+        :type body: SlurmSchedulersModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -12436,14 +16208,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowResultsModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(SlurmSchedulersModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
-            'key'
+            'body'
         ]
         _all_params.extend(
             [
@@ -12462,7 +16234,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_results_key" % _key
+                    " to method post_slurm_schedulers" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -12474,9 +16246,6 @@ class DefaultApi(object):
         if _params['workflow']:
             _path_params['workflow'] = _params['workflow']
 
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
 
         # process the query parameters
         _query_params = []
@@ -12487,20 +16256,30 @@ class DefaultApi(object):
         _files = {}
         # process the body parameter
         _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
         # set the HTTP header `Accept`
         _header_params['Accept'] = self.api_client.select_header_accept(
             ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
 
         # authentication setting
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowResultsModel",
+            '200': "SlurmSchedulersModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/results/{key}', 'GET',
+            '/workflows/{workflow}/slurm_schedulers', 'POST',
             _path_params,
             _query_params,
             _header_params,
@@ -12517,34 +16296,20 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_workflows_workflow_scheduled_compute_nodes(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, scheduler_id : Optional[StrictStr] = None, scheduler_config_id : Optional[StrictStr] = None, status : Optional[StrictStr] = None, **kwargs) -> GetWorkflowsWorkflowScheduledComputeNodesResponse:  # noqa: E501
-        """Retrieve all scheduled compute node documents  # noqa: E501
+    def post_user_data(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[UserDataModel, Field(..., description="user data.")], **kwargs) -> UserDataModel:  # noqa: E501
+        """Store a user data.  # noqa: E501
 
-        Retrieve all documents from the \"scheduled_compute_nodes\" collection for one workflow.  # noqa: E501
+        Store a user data in the \"user_data\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_scheduled_compute_nodes(workflow, skip, limit, sort_by, reverse_sort, key, scheduler_id, scheduler_config_id, status, async_req=True)
+        >>> thread = api.post_user_data(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param scheduler_id:
-        :type scheduler_id: str
-        :param scheduler_config_id:
-        :type scheduler_config_id: str
-        :param status:
-        :type status: str
+        :param body: user data. (required)
+        :type body: UserDataModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -12554,42 +16319,28 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: GetWorkflowsWorkflowScheduledComputeNodesResponse
+        :rtype: UserDataModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_scheduled_compute_nodes_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_scheduled_compute_nodes_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, scheduler_id, scheduler_config_id, status, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the post_user_data_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.post_user_data_with_http_info(workflow, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def get_workflows_workflow_scheduled_compute_nodes_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, scheduler_id : Optional[StrictStr] = None, scheduler_config_id : Optional[StrictStr] = None, status : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all scheduled compute node documents  # noqa: E501
+    def post_user_data_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[UserDataModel, Field(..., description="user data.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Store a user data.  # noqa: E501
 
-        Retrieve all documents from the \"scheduled_compute_nodes\" collection for one workflow.  # noqa: E501
+        Store a user data in the \"user_data\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_workflows_workflow_scheduled_compute_nodes_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, scheduler_id, scheduler_config_id, status, async_req=True)
+        >>> thread = api.post_user_data_with_http_info(workflow, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param scheduler_id:
-        :type scheduler_id: str
-        :param scheduler_config_id:
-        :type scheduler_config_id: str
-        :param status:
-        :type status: str
+        :param body: user data. (required)
+        :type body: UserDataModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -12612,21 +16363,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowScheduledComputeNodesResponse, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(UserDataModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
-            'skip',
-            'limit',
-            'sort_by',
-            'reverse_sort',
-            'key',
-            'scheduler_id',
-            'scheduler_config_id',
-            'status'
+            'body'
         ]
         _all_params.extend(
             [
@@ -12645,7 +16389,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_scheduled_compute_nodes" % _key
+                    " to method post_user_data" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -12660,30 +16404,6 @@ class DefaultApi(object):
 
         # process the query parameters
         _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('sort_by') is not None:  # noqa: E501
-            _query_params.append(('sort_by', _params['sort_by']))
-
-        if _params.get('reverse_sort') is not None:  # noqa: E501
-            _query_params.append(('reverse_sort', _params['reverse_sort']))
-
-        if _params.get('key') is not None:  # noqa: E501
-            _query_params.append(('_key', _params['key']))
-
-        if _params.get('scheduler_id') is not None:  # noqa: E501
-            _query_params.append(('scheduler_id', _params['scheduler_id']))
-
-        if _params.get('scheduler_config_id') is not None:  # noqa: E501
-            _query_params.append(('scheduler_config_id', _params['scheduler_config_id']))
-
-        if _params.get('status') is not None:  # noqa: E501
-            _query_params.append(('status', _params['status']))
-
         # process the header parameters
         _header_params = dict(_params.get('_headers', {}))
         # process the form parameters
@@ -12691,912 +16411,30 @@ class DefaultApi(object):
         _files = {}
         # process the body parameter
         _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
         # set the HTTP header `Accept`
         _header_params['Accept'] = self.api_client.select_header_accept(
             ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
 
         # authentication setting
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "GetWorkflowsWorkflowScheduledComputeNodesResponse",
+            '200': "UserDataModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/scheduled_compute_nodes', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_scheduled_compute_nodes_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the scheduled_compute_nodes document")], **kwargs) -> WorkflowScheduledComputeNodesModel:  # noqa: E501
-        """Retrieve the scheduled compute node for a key.  # noqa: E501
-
-        Retrieve the document from the \"scheduled_compute_nodes\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_scheduled_compute_nodes_key(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the scheduled_compute_nodes document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowScheduledComputeNodesModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_scheduled_compute_nodes_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_scheduled_compute_nodes_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_scheduled_compute_nodes_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the scheduled_compute_nodes document")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the scheduled compute node for a key.  # noqa: E501
-
-        Retrieve the document from the \"scheduled_compute_nodes\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_scheduled_compute_nodes_key_with_http_info(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the scheduled_compute_nodes document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowScheduledComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_scheduled_compute_nodes_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowScheduledComputeNodesModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/scheduled_compute_nodes/{key}', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_slurm_schedulers(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, account : Optional[StrictStr] = None, gres : Optional[StrictStr] = None, mem : Optional[StrictStr] = None, nodes : Optional[StrictInt] = None, partition : Optional[StrictStr] = None, qos : Optional[StrictStr] = None, tmp : Optional[StrictStr] = None, walltime : Optional[StrictStr] = None, **kwargs) -> GetWorkflowsWorkflowSlurmSchedulersResponse:  # noqa: E501
-        """Retrieve all Slurm compute node configuration documents  # noqa: E501
-
-        Retrieve all documents from the \"slurm_schedulers\" collection for one workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_slurm_schedulers(workflow, skip, limit, sort_by, reverse_sort, key, name, account, gres, mem, nodes, partition, qos, tmp, walltime, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param name:
-        :type name: str
-        :param account:
-        :type account: str
-        :param gres:
-        :type gres: str
-        :param mem:
-        :type mem: str
-        :param nodes:
-        :type nodes: int
-        :param partition:
-        :type partition: str
-        :param qos:
-        :type qos: str
-        :param tmp:
-        :type tmp: str
-        :param walltime:
-        :type walltime: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: GetWorkflowsWorkflowSlurmSchedulersResponse
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_slurm_schedulers_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_slurm_schedulers_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, account, gres, mem, nodes, partition, qos, tmp, walltime, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_slurm_schedulers_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, account : Optional[StrictStr] = None, gres : Optional[StrictStr] = None, mem : Optional[StrictStr] = None, nodes : Optional[StrictInt] = None, partition : Optional[StrictStr] = None, qos : Optional[StrictStr] = None, tmp : Optional[StrictStr] = None, walltime : Optional[StrictStr] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all Slurm compute node configuration documents  # noqa: E501
-
-        Retrieve all documents from the \"slurm_schedulers\" collection for one workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_slurm_schedulers_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, account, gres, mem, nodes, partition, qos, tmp, walltime, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param name:
-        :type name: str
-        :param account:
-        :type account: str
-        :param gres:
-        :type gres: str
-        :param mem:
-        :type mem: str
-        :param nodes:
-        :type nodes: int
-        :param partition:
-        :type partition: str
-        :param qos:
-        :type qos: str
-        :param tmp:
-        :type tmp: str
-        :param walltime:
-        :type walltime: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowSlurmSchedulersResponse, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'skip',
-            'limit',
-            'sort_by',
-            'reverse_sort',
-            'key',
-            'name',
-            'account',
-            'gres',
-            'mem',
-            'nodes',
-            'partition',
-            'qos',
-            'tmp',
-            'walltime'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_slurm_schedulers" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('sort_by') is not None:  # noqa: E501
-            _query_params.append(('sort_by', _params['sort_by']))
-
-        if _params.get('reverse_sort') is not None:  # noqa: E501
-            _query_params.append(('reverse_sort', _params['reverse_sort']))
-
-        if _params.get('key') is not None:  # noqa: E501
-            _query_params.append(('_key', _params['key']))
-
-        if _params.get('name') is not None:  # noqa: E501
-            _query_params.append(('name', _params['name']))
-
-        if _params.get('account') is not None:  # noqa: E501
-            _query_params.append(('account', _params['account']))
-
-        if _params.get('gres') is not None:  # noqa: E501
-            _query_params.append(('gres', _params['gres']))
-
-        if _params.get('mem') is not None:  # noqa: E501
-            _query_params.append(('mem', _params['mem']))
-
-        if _params.get('nodes') is not None:  # noqa: E501
-            _query_params.append(('nodes', _params['nodes']))
-
-        if _params.get('partition') is not None:  # noqa: E501
-            _query_params.append(('partition', _params['partition']))
-
-        if _params.get('qos') is not None:  # noqa: E501
-            _query_params.append(('qos', _params['qos']))
-
-        if _params.get('tmp') is not None:  # noqa: E501
-            _query_params.append(('tmp', _params['tmp']))
-
-        if _params.get('walltime') is not None:  # noqa: E501
-            _query_params.append(('walltime', _params['walltime']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "GetWorkflowsWorkflowSlurmSchedulersResponse",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/slurm_schedulers', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_slurm_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the slurm_schedulers document")], **kwargs) -> WorkflowSlurmSchedulersModel:  # noqa: E501
-        """Retrieve the Slurm compute node configuration for a key.  # noqa: E501
-
-        Retrieve the document from the \"slurm_schedulers\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_slurm_schedulers_key(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the slurm_schedulers document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowSlurmSchedulersModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_slurm_schedulers_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_slurm_schedulers_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_slurm_schedulers_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the slurm_schedulers document")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the Slurm compute node configuration for a key.  # noqa: E501
-
-        Retrieve the document from the \"slurm_schedulers\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_slurm_schedulers_key_with_http_info(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the slurm_schedulers document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowSlurmSchedulersModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_slurm_schedulers_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowSlurmSchedulersModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/slurm_schedulers/{key}', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_user_data(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, is_ephemeral : Optional[StrictBool] = None, **kwargs) -> GetWorkflowsWorkflowUserDataResponse:  # noqa: E501
-        """Retrieve all user data documents  # noqa: E501
-
-        Retrieve all documents from the \"user_data\" collection for one workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_user_data(workflow, skip, limit, sort_by, reverse_sort, key, name, is_ephemeral, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param name:
-        :type name: str
-        :param is_ephemeral:
-        :type is_ephemeral: bool
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: GetWorkflowsWorkflowUserDataResponse
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_user_data_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_user_data_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, is_ephemeral, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_user_data_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], skip : Optional[Union[StrictFloat, StrictInt]] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, sort_by : Optional[StrictStr] = None, reverse_sort : Optional[StrictBool] = None, key : Optional[StrictStr] = None, name : Optional[StrictStr] = None, is_ephemeral : Optional[StrictBool] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve all user data documents  # noqa: E501
-
-        Retrieve all documents from the \"user_data\" collection for one workflow.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_user_data_with_http_info(workflow, skip, limit, sort_by, reverse_sort, key, name, is_ephemeral, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param skip:
-        :type skip: float
-        :param limit:
-        :type limit: float
-        :param sort_by:
-        :type sort_by: str
-        :param reverse_sort:
-        :type reverse_sort: bool
-        :param key:
-        :type key: str
-        :param name:
-        :type name: str
-        :param is_ephemeral:
-        :type is_ephemeral: bool
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(GetWorkflowsWorkflowUserDataResponse, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'skip',
-            'limit',
-            'sort_by',
-            'reverse_sort',
-            'key',
-            'name',
-            'is_ephemeral'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_user_data" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        if _params.get('skip') is not None:  # noqa: E501
-            _query_params.append(('skip', _params['skip']))
-
-        if _params.get('limit') is not None:  # noqa: E501
-            _query_params.append(('limit', _params['limit']))
-
-        if _params.get('sort_by') is not None:  # noqa: E501
-            _query_params.append(('sort_by', _params['sort_by']))
-
-        if _params.get('reverse_sort') is not None:  # noqa: E501
-            _query_params.append(('reverse_sort', _params['reverse_sort']))
-
-        if _params.get('key') is not None:  # noqa: E501
-            _query_params.append(('_key', _params['key']))
-
-        if _params.get('name') is not None:  # noqa: E501
-            _query_params.append(('name', _params['name']))
-
-        if _params.get('is_ephemeral') is not None:  # noqa: E501
-            _query_params.append(('is_ephemeral', _params['is_ephemeral']))
-
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "GetWorkflowsWorkflowUserDataResponse",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/user_data', 'GET',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def get_workflows_workflow_user_data_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the user_data document")], **kwargs) -> WorkflowUserDataModel:  # noqa: E501
-        """Retrieve the user data for a key.  # noqa: E501
-
-        Retrieve the document from the \"user_data\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_user_data_key(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the user_data document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowUserDataModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the get_workflows_workflow_user_data_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.get_workflows_workflow_user_data_key_with_http_info(workflow, key, **kwargs)  # noqa: E501
-
-    @validate_call
-    def get_workflows_workflow_user_data_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="key of the user_data document")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Retrieve the user data for a key.  # noqa: E501
-
-        Retrieve the document from the \"user_data\" collection by key.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.get_workflows_workflow_user_data_key_with_http_info(workflow, key, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: key of the user_data document (required)
-        :type key: str
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowUserDataModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method get_workflows_workflow_user_data_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowUserDataModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/user_data/{key}', 'GET',
+            '/workflows/{workflow}/user_data', 'POST',
             _path_params,
             _query_params,
             _header_params,
@@ -15748,20 +18586,22 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def post_workflows_workflow_aws_schedulers(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowAwsSchedulersModel, Field(..., description="AWS compute node configuration.")], **kwargs) -> WorkflowAwsSchedulersModel:  # noqa: E501
-        """Store a AWS compute node configuration.  # noqa: E501
+    def put_aws_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the AWS compute node configuration.")], body : Annotated[AwsSchedulersModel, Field(..., description="AWS compute node configuration to update in the collection.")], **kwargs) -> AwsSchedulersModel:  # noqa: E501
+        """Update AWS compute node configuration  # noqa: E501
 
-        Store a AWS compute node configuration in the \"aws_schedulers\" collection.  # noqa: E501
+        Update a document in the \"aws_schedulers\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_aws_schedulers(workflow, body, async_req=True)
+        >>> thread = api.put_aws_schedulers_key(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: AWS compute node configuration. (required)
-        :type body: WorkflowAwsSchedulersModel
+        :param key: key of the AWS compute node configuration. (required)
+        :type key: str
+        :param body: AWS compute node configuration to update in the collection. (required)
+        :type body: AwsSchedulersModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -15771,28 +18611,30 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowAwsSchedulersModel
+        :rtype: AwsSchedulersModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_aws_schedulers_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_aws_schedulers_with_http_info(workflow, body, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the put_aws_schedulers_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.put_aws_schedulers_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def post_workflows_workflow_aws_schedulers_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowAwsSchedulersModel, Field(..., description="AWS compute node configuration.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store a AWS compute node configuration.  # noqa: E501
+    def put_aws_schedulers_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the AWS compute node configuration.")], body : Annotated[AwsSchedulersModel, Field(..., description="AWS compute node configuration to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Update AWS compute node configuration  # noqa: E501
 
-        Store a AWS compute node configuration in the \"aws_schedulers\" collection.  # noqa: E501
+        Update a document in the \"aws_schedulers\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_aws_schedulers_with_http_info(workflow, body, async_req=True)
+        >>> thread = api.put_aws_schedulers_key_with_http_info(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: AWS compute node configuration. (required)
-        :type body: WorkflowAwsSchedulersModel
+        :param key: key of the AWS compute node configuration. (required)
+        :type key: str
+        :param body: AWS compute node configuration to update in the collection. (required)
+        :type body: AwsSchedulersModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -15815,13 +18657,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowAwsSchedulersModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(AwsSchedulersModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
+            'key',
             'body'
         ]
         _all_params.extend(
@@ -15841,7 +18684,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_aws_schedulers" % _key
+                    " to method put_aws_schedulers_key" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -15852,6 +18695,9 @@ class DefaultApi(object):
         _path_params = {}
         if _params['workflow']:
             _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
 
 
         # process the query parameters
@@ -15881,12 +18727,12 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowAwsSchedulersModel",
+            '200': "AwsSchedulersModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/aws_schedulers', 'POST',
+            '/workflows/{workflow}/aws_schedulers/{key}', 'PUT',
             _path_params,
             _query_params,
             _header_params,
@@ -15903,20 +18749,348 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def post_workflows_workflow_bulk_jobs(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : WorkflowBulkJobsModel, **kwargs) -> object:  # noqa: E501
-        """Add jobs in bulk with edge definitions.  # noqa: E501
+    def put_compute_node_stats_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the compute node statistics.")], body : Annotated[ComputeNodeStatsModel, Field(..., description="compute node statistics to update in the collection.")], **kwargs) -> ComputeNodeStatsModel:  # noqa: E501
+        """Update compute node statistics  # noqa: E501
 
-        Add jobs in bulk with edge definitions. Recommended max job count of 10,000.  # noqa: E501
+        Update a document in the \"compute_node_stats\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_bulk_jobs(workflow, body, async_req=True)
+        >>> thread = api.put_compute_node_stats_key(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: (required)
-        :type body: WorkflowBulkJobsModel
+        :param key: key of the compute node statistics. (required)
+        :type key: str
+        :param body: compute node statistics to update in the collection. (required)
+        :type body: ComputeNodeStatsModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: ComputeNodeStatsModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the put_compute_node_stats_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.put_compute_node_stats_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
+
+    @validate_call
+    def put_compute_node_stats_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the compute node statistics.")], body : Annotated[ComputeNodeStatsModel, Field(..., description="compute node statistics to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Update compute node statistics  # noqa: E501
+
+        Update a document in the \"compute_node_stats\" collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.put_compute_node_stats_key_with_http_info(workflow, key, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key. (required)
+        :type workflow: str
+        :param key: key of the compute node statistics. (required)
+        :type key: str
+        :param body: compute node statistics to update in the collection. (required)
+        :type body: ComputeNodeStatsModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(ComputeNodeStatsModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key',
+            'body'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method put_compute_node_stats_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "ComputeNodeStatsModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/compute_node_stats/{key}', 'PUT',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def put_compute_nodes_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the compute node.")], body : Annotated[ComputeNodesModel, Field(..., description="compute node to update in the collection.")], **kwargs) -> ComputeNodesModel:  # noqa: E501
+        """Update compute node  # noqa: E501
+
+        Update a document in the \"compute_nodes\" collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.put_compute_nodes_key(workflow, key, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key. (required)
+        :type workflow: str
+        :param key: key of the compute node. (required)
+        :type key: str
+        :param body: compute node to update in the collection. (required)
+        :type body: ComputeNodesModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: ComputeNodesModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the put_compute_nodes_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.put_compute_nodes_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
+
+    @validate_call
+    def put_compute_nodes_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the compute node.")], body : Annotated[ComputeNodesModel, Field(..., description="compute node to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Update compute node  # noqa: E501
+
+        Update a document in the \"compute_nodes\" collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.put_compute_nodes_key_with_http_info(workflow, key, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key. (required)
+        :type workflow: str
+        :param key: key of the compute node. (required)
+        :type key: str
+        :param body: compute node to update in the collection. (required)
+        :type body: ComputeNodesModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(ComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key',
+            'body'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method put_compute_nodes_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "ComputeNodesModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/compute_nodes/{key}', 'PUT',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def put_events_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the event.")], body : Annotated[Dict[str, Any], Field(..., description="event to update in the collection.")], **kwargs) -> object:  # noqa: E501
+        """Update event  # noqa: E501
+
+        Update a document in the \"events\" collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.put_events_key(workflow, key, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key. (required)
+        :type workflow: str
+        :param key: key of the event. (required)
+        :type key: str
+        :param body: event to update in the collection. (required)
+        :type body: object
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -15930,24 +19104,26 @@ class DefaultApi(object):
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_bulk_jobs_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_bulk_jobs_with_http_info(workflow, body, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the put_events_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.put_events_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def post_workflows_workflow_bulk_jobs_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : WorkflowBulkJobsModel, **kwargs) -> ApiResponse:  # noqa: E501
-        """Add jobs in bulk with edge definitions.  # noqa: E501
+    def put_events_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the event.")], body : Annotated[Dict[str, Any], Field(..., description="event to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Update event  # noqa: E501
 
-        Add jobs in bulk with edge definitions. Recommended max job count of 10,000.  # noqa: E501
+        Update a document in the \"events\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_bulk_jobs_with_http_info(workflow, body, async_req=True)
+        >>> thread = api.put_events_key_with_http_info(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: (required)
-        :type body: WorkflowBulkJobsModel
+        :param key: key of the event. (required)
+        :type key: str
+        :param body: event to update in the collection. (required)
+        :type body: object
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -15977,6 +19153,7 @@ class DefaultApi(object):
 
         _all_params = [
             'workflow',
+            'key',
             'body'
         ]
         _all_params.extend(
@@ -15996,7 +19173,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_bulk_jobs" % _key
+                    " to method put_events_key" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -16007,6 +19184,9 @@ class DefaultApi(object):
         _path_params = {}
         if _params['workflow']:
             _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
 
 
         # process the query parameters
@@ -16041,7 +19221,7 @@ class DefaultApi(object):
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/bulk_jobs', 'POST',
+            '/workflows/{workflow}/events/{key}', 'PUT',
             _path_params,
             _query_params,
             _header_params,
@@ -16058,20 +19238,22 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def post_workflows_workflow_compute_node_stats(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowComputeNodeStatsModel, Field(..., description="compute node statistics.")], **kwargs) -> WorkflowComputeNodeStatsModel:  # noqa: E501
-        """Store a compute node statistics.  # noqa: E501
+    def put_files_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the file.")], body : Annotated[FilesModel, Field(..., description="file to update in the collection.")], **kwargs) -> FilesModel:  # noqa: E501
+        """Update file  # noqa: E501
 
-        Store a compute node statistics in the \"compute_node_stats\" collection.  # noqa: E501
+        Update a document in the \"files\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_compute_node_stats(workflow, body, async_req=True)
+        >>> thread = api.put_files_key(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: compute node statistics. (required)
-        :type body: WorkflowComputeNodeStatsModel
+        :param key: key of the file. (required)
+        :type key: str
+        :param body: file to update in the collection. (required)
+        :type body: FilesModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -16081,28 +19263,30 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowComputeNodeStatsModel
+        :rtype: FilesModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_compute_node_stats_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_compute_node_stats_with_http_info(workflow, body, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the put_files_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.put_files_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def post_workflows_workflow_compute_node_stats_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowComputeNodeStatsModel, Field(..., description="compute node statistics.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store a compute node statistics.  # noqa: E501
+    def put_files_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the file.")], body : Annotated[FilesModel, Field(..., description="file to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Update file  # noqa: E501
 
-        Store a compute node statistics in the \"compute_node_stats\" collection.  # noqa: E501
+        Update a document in the \"files\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_compute_node_stats_with_http_info(workflow, body, async_req=True)
+        >>> thread = api.put_files_key_with_http_info(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: compute node statistics. (required)
-        :type body: WorkflowComputeNodeStatsModel
+        :param key: key of the file. (required)
+        :type key: str
+        :param body: file to update in the collection. (required)
+        :type body: FilesModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -16125,13 +19309,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowComputeNodeStatsModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(FilesModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
+            'key',
             'body'
         ]
         _all_params.extend(
@@ -16151,7 +19336,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_compute_node_stats" % _key
+                    " to method put_files_key" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -16162,6 +19347,9 @@ class DefaultApi(object):
         _path_params = {}
         if _params['workflow']:
             _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
 
 
         # process the query parameters
@@ -16191,12 +19379,12 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowComputeNodeStatsModel",
+            '200': "FilesModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/compute_node_stats', 'POST',
+            '/workflows/{workflow}/files/{key}', 'PUT',
             _path_params,
             _query_params,
             _header_params,
@@ -16213,20 +19401,22 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def post_workflows_workflow_compute_nodes(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowComputeNodesModel, Field(..., description="compute node.")], **kwargs) -> WorkflowComputeNodesModel:  # noqa: E501
-        """Store a compute node.  # noqa: E501
+    def put_job_process_stats_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the job process statistics.")], body : Annotated[JobProcessStatsModel, Field(..., description="job process statistics to update in the collection.")], **kwargs) -> JobProcessStatsModel:  # noqa: E501
+        """Update job process statistics  # noqa: E501
 
-        Store a compute node in the \"compute_nodes\" collection.  # noqa: E501
+        Update a document in the \"job_process_stats\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_compute_nodes(workflow, body, async_req=True)
+        >>> thread = api.put_job_process_stats_key(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: compute node. (required)
-        :type body: WorkflowComputeNodesModel
+        :param key: key of the job process statistics. (required)
+        :type key: str
+        :param body: job process statistics to update in the collection. (required)
+        :type body: JobProcessStatsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -16236,28 +19426,30 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowComputeNodesModel
+        :rtype: JobProcessStatsModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_compute_nodes_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_compute_nodes_with_http_info(workflow, body, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the put_job_process_stats_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.put_job_process_stats_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def post_workflows_workflow_compute_nodes_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowComputeNodesModel, Field(..., description="compute node.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store a compute node.  # noqa: E501
+    def put_job_process_stats_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the job process statistics.")], body : Annotated[JobProcessStatsModel, Field(..., description="job process statistics to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Update job process statistics  # noqa: E501
 
-        Store a compute node in the \"compute_nodes\" collection.  # noqa: E501
+        Update a document in the \"job_process_stats\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_compute_nodes_with_http_info(workflow, body, async_req=True)
+        >>> thread = api.put_job_process_stats_key_with_http_info(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: compute node. (required)
-        :type body: WorkflowComputeNodesModel
+        :param key: key of the job process statistics. (required)
+        :type key: str
+        :param body: job process statistics to update in the collection. (required)
+        :type body: JobProcessStatsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -16280,13 +19472,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(JobProcessStatsModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
+            'key',
             'body'
         ]
         _all_params.extend(
@@ -16306,7 +19499,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_compute_nodes" % _key
+                    " to method put_job_process_stats_key" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -16317,6 +19510,9 @@ class DefaultApi(object):
         _path_params = {}
         if _params['workflow']:
             _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
 
 
         # process the query parameters
@@ -16346,12 +19542,12 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowComputeNodesModel",
+            '200': "JobProcessStatsModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/compute_nodes', 'POST',
+            '/workflows/{workflow}/job_process_stats/{key}', 'PUT',
             _path_params,
             _query_params,
             _header_params,
@@ -16368,22 +19564,22 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def post_workflows_workflow_edges_name(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], name : Annotated[StrictStr, Field(..., description="Edge name")], body : Annotated[EdgesNameModel, Field(..., description="Relationship between two vertexes")], **kwargs) -> EdgesNameModel:  # noqa: E501
-        """Store an edge between two vertexes.  # noqa: E501
+    def put_jobs_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the job.")], body : Annotated[JobsModel, Field(..., description="job to update in the collection.")], **kwargs) -> JobsModel:  # noqa: E501
+        """Update job  # noqa: E501
 
-        Store an edge between two vertexes in the designated collection.  # noqa: E501
+        Update a document in the \"jobs\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_edges_name(workflow, name, body, async_req=True)
+        >>> thread = api.put_jobs_key(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param name: Edge name (required)
-        :type name: str
-        :param body: Relationship between two vertexes (required)
-        :type body: EdgesNameModel
+        :param key: key of the job. (required)
+        :type key: str
+        :param body: job to update in the collection. (required)
+        :type body: JobsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -16393,30 +19589,30 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: EdgesNameModel
+        :rtype: JobsModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_edges_name_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_edges_name_with_http_info(workflow, name, body, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the put_jobs_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.put_jobs_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def post_workflows_workflow_edges_name_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], name : Annotated[StrictStr, Field(..., description="Edge name")], body : Annotated[EdgesNameModel, Field(..., description="Relationship between two vertexes")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store an edge between two vertexes.  # noqa: E501
+    def put_jobs_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the job.")], body : Annotated[JobsModel, Field(..., description="job to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Update job  # noqa: E501
 
-        Store an edge between two vertexes in the designated collection.  # noqa: E501
+        Update a document in the \"jobs\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_edges_name_with_http_info(workflow, name, body, async_req=True)
+        >>> thread = api.put_jobs_key_with_http_info(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param name: Edge name (required)
-        :type name: str
-        :param body: Relationship between two vertexes (required)
-        :type body: EdgesNameModel
+        :param key: key of the job. (required)
+        :type key: str
+        :param body: job to update in the collection. (required)
+        :type body: JobsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -16439,14 +19635,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(EdgesNameModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(JobsModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
-            'name',
+            'key',
             'body'
         ]
         _all_params.extend(
@@ -16466,7 +19662,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_edges_name" % _key
+                    " to method put_jobs_key" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -16478,8 +19674,8 @@ class DefaultApi(object):
         if _params['workflow']:
             _path_params['workflow'] = _params['workflow']
 
-        if _params['name']:
-            _path_params['name'] = _params['name']
+        if _params['key']:
+            _path_params['key'] = _params['key']
 
 
         # process the query parameters
@@ -16509,12 +19705,12 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "EdgesNameModel",
+            '200': "JobsModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/edges/{name}', 'POST',
+            '/workflows/{workflow}/jobs/{key}', 'PUT',
             _path_params,
             _query_params,
             _header_params,
@@ -16531,19 +19727,27 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def post_workflows_workflow_events(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[Dict[str, Any], Field(..., description="event.")], **kwargs) -> object:  # noqa: E501
-        """Store a event.  # noqa: E501
+    def put_jobs_key_manage_status_change_status_rev_run_id(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], status : Annotated[StrictStr, Field(..., description="New job status")], rev : Annotated[StrictStr, Field(..., description="Current job revision")], run_id : Annotated[StrictInt, Field(..., description="Current job run ID")], body : Optional[Dict[str, Any]] = None, **kwargs) -> JobsModel:  # noqa: E501
+        """Change the status of a job and manage side effects.  # noqa: E501
 
-        Store a event in the \"events\" collection.  # noqa: E501
+        Change the status of a job and manage side effects.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_events(workflow, body, async_req=True)
+        >>> thread = api.put_jobs_key_manage_status_change_status_rev_run_id(workflow, key, status, rev, run_id, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param body: event. (required)
+        :param key: Job key (required)
+        :type key: str
+        :param status: New job status (required)
+        :type status: str
+        :param rev: Current job revision (required)
+        :type rev: str
+        :param run_id: Current job run ID (required)
+        :type run_id: int
+        :param body:
         :type body: object
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
@@ -16554,27 +19758,35 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: object
+        :rtype: JobsModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_events_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_events_with_http_info(workflow, body, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the put_jobs_key_manage_status_change_status_rev_run_id_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.put_jobs_key_manage_status_change_status_rev_run_id_with_http_info(workflow, key, status, rev, run_id, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def post_workflows_workflow_events_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[Dict[str, Any], Field(..., description="event.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store a event.  # noqa: E501
+    def put_jobs_key_manage_status_change_status_rev_run_id_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], status : Annotated[StrictStr, Field(..., description="New job status")], rev : Annotated[StrictStr, Field(..., description="Current job revision")], run_id : Annotated[StrictInt, Field(..., description="Current job run ID")], body : Optional[Dict[str, Any]] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Change the status of a job and manage side effects.  # noqa: E501
 
-        Store a event in the \"events\" collection.  # noqa: E501
+        Change the status of a job and manage side effects.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_events_with_http_info(workflow, body, async_req=True)
+        >>> thread = api.put_jobs_key_manage_status_change_status_rev_run_id_with_http_info(workflow, key, status, rev, run_id, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
-        :param body: event. (required)
+        :param key: Job key (required)
+        :type key: str
+        :param status: New job status (required)
+        :type status: str
+        :param rev: Current job revision (required)
+        :type rev: str
+        :param run_id: Current job run ID (required)
+        :type run_id: int
+        :param body:
         :type body: object
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
@@ -16598,798 +19810,7 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(object, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_events" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "object",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/events', 'POST',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def post_workflows_workflow_files(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowFilesModel, Field(..., description="file.")], **kwargs) -> WorkflowFilesModel:  # noqa: E501
-        """Store a file.  # noqa: E501
-
-        Store a file in the \"files\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.post_workflows_workflow_files(workflow, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: file. (required)
-        :type body: WorkflowFilesModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowFilesModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_files_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_files_with_http_info(workflow, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def post_workflows_workflow_files_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowFilesModel, Field(..., description="file.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store a file.  # noqa: E501
-
-        Store a file in the \"files\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.post_workflows_workflow_files_with_http_info(workflow, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: file. (required)
-        :type body: WorkflowFilesModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowFilesModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_files" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowFilesModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/files', 'POST',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def post_workflows_workflow_job_process_stats(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowJobProcessStatsModel, Field(..., description="job process statistics.")], **kwargs) -> WorkflowJobProcessStatsModel:  # noqa: E501
-        """Store a job process statistics.  # noqa: E501
-
-        Store a job process statistics in the \"job_process_stats\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.post_workflows_workflow_job_process_stats(workflow, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: job process statistics. (required)
-        :type body: WorkflowJobProcessStatsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowJobProcessStatsModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_job_process_stats_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_job_process_stats_with_http_info(workflow, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def post_workflows_workflow_job_process_stats_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowJobProcessStatsModel, Field(..., description="job process statistics.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store a job process statistics.  # noqa: E501
-
-        Store a job process statistics in the \"job_process_stats\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.post_workflows_workflow_job_process_stats_with_http_info(workflow, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: job process statistics. (required)
-        :type body: WorkflowJobProcessStatsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowJobProcessStatsModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_job_process_stats" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowJobProcessStatsModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/job_process_stats', 'POST',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def post_workflows_workflow_job_specifications(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowJobSpecificationsModel, Field(..., description="job definition to store in the collection.")], **kwargs) -> WorkflowJobSpecificationsModel:  # noqa: E501
-        """Store a job and create edges.  # noqa: E501
-
-        Store a job in the \"jobs\" collection and create edges.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.post_workflows_workflow_job_specifications(workflow, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: job definition to store in the collection. (required)
-        :type body: WorkflowJobSpecificationsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowJobSpecificationsModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_job_specifications_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_job_specifications_with_http_info(workflow, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def post_workflows_workflow_job_specifications_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowJobSpecificationsModel, Field(..., description="job definition to store in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store a job and create edges.  # noqa: E501
-
-        Store a job in the \"jobs\" collection and create edges.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.post_workflows_workflow_job_specifications_with_http_info(workflow, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: job definition to store in the collection. (required)
-        :type body: WorkflowJobSpecificationsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowJobSpecificationsModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_job_specifications" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowJobSpecificationsModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/job_specifications', 'POST',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def post_workflows_workflow_jobs(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowJobsModel, Field(..., description="job.")], **kwargs) -> WorkflowJobsModel:  # noqa: E501
-        """Store a job.  # noqa: E501
-
-        Store a job in the \"jobs\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.post_workflows_workflow_jobs(workflow, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: job. (required)
-        :type body: WorkflowJobsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowJobsModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_jobs_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_jobs_with_http_info(workflow, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def post_workflows_workflow_jobs_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowJobsModel, Field(..., description="job.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store a job.  # noqa: E501
-
-        Store a job in the \"jobs\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.post_workflows_workflow_jobs_with_http_info(workflow, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: job. (required)
-        :type body: WorkflowJobsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowJobsModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_jobs" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowJobsModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/jobs', 'POST',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def post_workflows_workflow_jobs_key_complete_job_status_rev_run_id(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], status : Annotated[StrictStr, Field(..., description="New job status.")], rev : Annotated[StrictStr, Field(..., description="Current job revision.")], run_id : Annotated[StrictInt, Field(..., description="Current job run ID")], body : Annotated[WorkflowResultsModel, Field(..., description="Result of the job.")], **kwargs) -> WorkflowJobsModel:  # noqa: E501
-        """Complete a job and add a result.  # noqa: E501
-
-        Complete a job, connect it to a result, and manage side effects.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.post_workflows_workflow_jobs_key_complete_job_status_rev_run_id(workflow, key, status, rev, run_id, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param status: New job status. (required)
-        :type status: str
-        :param rev: Current job revision. (required)
-        :type rev: str
-        :param run_id: Current job run ID (required)
-        :type run_id: int
-        :param body: Result of the job. (required)
-        :type body: WorkflowResultsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowJobsModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_jobs_key_complete_job_status_rev_run_id_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_jobs_key_complete_job_status_rev_run_id_with_http_info(workflow, key, status, rev, run_id, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def post_workflows_workflow_jobs_key_complete_job_status_rev_run_id_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], status : Annotated[StrictStr, Field(..., description="New job status.")], rev : Annotated[StrictStr, Field(..., description="Current job revision.")], run_id : Annotated[StrictInt, Field(..., description="Current job run ID")], body : Annotated[WorkflowResultsModel, Field(..., description="Result of the job.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Complete a job and add a result.  # noqa: E501
-
-        Complete a job, connect it to a result, and manage side effects.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.post_workflows_workflow_jobs_key_complete_job_status_rev_run_id_with_http_info(workflow, key, status, rev, run_id, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param status: New job status. (required)
-        :type status: str
-        :param rev: Current job revision. (required)
-        :type rev: str
-        :param run_id: Current job run ID (required)
-        :type run_id: int
-        :param body: Result of the job. (required)
-        :type body: WorkflowResultsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowJobsModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(JobsModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -17419,7 +19840,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_jobs_key_complete_job_status_rev_run_id" % _key
+                    " to method put_jobs_key_manage_status_change_status_rev_run_id" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -17471,12 +19892,12 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowJobsModel",
+            '200': "JobsModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}', 'POST',
+            '/workflows/{workflow}/jobs/{key}/manage_status_change/{status}/{rev}/{run_id}', 'PUT',
             _path_params,
             _query_params,
             _header_params,
@@ -17493,22 +19914,24 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def post_workflows_workflow_jobs_key_user_data(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], body : Annotated[WorkflowUserDataModel, Field(..., description="User data for the job.")], **kwargs) -> WorkflowUserDataModel:  # noqa: E501
-        """Store user data for a job.  # noqa: E501
+    def put_jobs_key_resource_requirements_rr_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], rr_key : StrictStr, body : Optional[Dict[str, Any]] = None, **kwargs) -> EdgesNameModel:  # noqa: E501
+        """Set the resource requirements for a job.  # noqa: E501
 
-        Store user data for a job and connect the two vertexes.  # noqa: E501
+        Set the resource requirements for a job, replacing any current value.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_jobs_key_user_data(workflow, key, body, async_req=True)
+        >>> thread = api.put_jobs_key_resource_requirements_rr_key(workflow, key, rr_key, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
         :param key: Job key (required)
         :type key: str
-        :param body: User data for the job. (required)
-        :type body: WorkflowUserDataModel
+        :param rr_key: (required)
+        :type rr_key: str
+        :param body:
+        :type body: object
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -17518,30 +19941,32 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowUserDataModel
+        :rtype: EdgesNameModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_jobs_key_user_data_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_jobs_key_user_data_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the put_jobs_key_resource_requirements_rr_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.put_jobs_key_resource_requirements_rr_key_with_http_info(workflow, key, rr_key, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def post_workflows_workflow_jobs_key_user_data_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], body : Annotated[WorkflowUserDataModel, Field(..., description="User data for the job.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store user data for a job.  # noqa: E501
+    def put_jobs_key_resource_requirements_rr_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], rr_key : StrictStr, body : Optional[Dict[str, Any]] = None, **kwargs) -> ApiResponse:  # noqa: E501
+        """Set the resource requirements for a job.  # noqa: E501
 
-        Store user data for a job and connect the two vertexes.  # noqa: E501
+        Set the resource requirements for a job, replacing any current value.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_jobs_key_user_data_with_http_info(workflow, key, body, async_req=True)
+        >>> thread = api.put_jobs_key_resource_requirements_rr_key_with_http_info(workflow, key, rr_key, body, async_req=True)
         >>> result = thread.get()
 
         :param workflow: Workflow key (required)
         :type workflow: str
         :param key: Job key (required)
         :type key: str
-        :param body: User data for the job. (required)
-        :type body: WorkflowUserDataModel
+        :param rr_key: (required)
+        :type rr_key: str
+        :param body:
+        :type body: object
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -17564,7 +19989,174 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowUserDataModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(EdgesNameModel, status_code(int), headers(HTTPHeaderDict))
+        """
+
+        _params = locals()
+
+        _all_params = [
+            'workflow',
+            'key',
+            'rr_key',
+            'body'
+        ]
+        _all_params.extend(
+            [
+                'async_req',
+                '_return_http_data_only',
+                '_preload_content',
+                '_request_timeout',
+                '_request_auth',
+                '_content_type',
+                '_headers'
+            ]
+        )
+
+        # validate the arguments
+        for _key, _val in _params['kwargs'].items():
+            if _key not in _all_params:
+                raise ApiTypeError(
+                    "Got an unexpected keyword argument '%s'"
+                    " to method put_jobs_key_resource_requirements_rr_key" % _key
+                )
+            _params[_key] = _val
+        del _params['kwargs']
+
+        _collection_formats = {}
+
+        # process the path parameters
+        _path_params = {}
+        if _params['workflow']:
+            _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
+
+        if _params['rr_key']:
+            _path_params['rr_key'] = _params['rr_key']
+
+
+        # process the query parameters
+        _query_params = []
+        # process the header parameters
+        _header_params = dict(_params.get('_headers', {}))
+        # process the form parameters
+        _form_params = []
+        _files = {}
+        # process the body parameter
+        _body_params = None
+        if _params['body'] is not None:
+            _body_params = _params['body']
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            ['application/json'])  # noqa: E501
+
+        # set the HTTP header `Content-Type`
+        _content_types_list = _params.get('_content_type',
+            self.api_client.select_header_content_type(
+                ['application/json']))
+        if _content_types_list:
+                _header_params['Content-Type'] = _content_types_list
+
+        # authentication setting
+        _auth_settings = []  # noqa: E501
+
+        _response_types_map = {
+            '200': "EdgesNameModel",
+            '500': "InlineResponse500",
+        }
+
+        return self.api_client.call_api(
+            '/workflows/{workflow}/jobs/{key}/resource_requirements/{rr_key}', 'PUT',
+            _path_params,
+            _query_params,
+            _header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            response_types_map=_response_types_map,
+            auth_settings=_auth_settings,
+            async_req=_params.get('async_req'),
+            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
+            _preload_content=_params.get('_preload_content', True),
+            _request_timeout=_params.get('_request_timeout'),
+            collection_formats=_collection_formats,
+            _request_auth=_params.get('_request_auth'))
+
+    @validate_call
+    def put_local_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the local compute node configuration.")], body : Annotated[LocalSchedulersModel, Field(..., description="local compute node configuration to update in the collection.")], **kwargs) -> LocalSchedulersModel:  # noqa: E501
+        """Update local compute node configuration  # noqa: E501
+
+        Update a document in the \"local_schedulers\" collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.put_local_schedulers_key(workflow, key, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key. (required)
+        :type workflow: str
+        :param key: key of the local compute node configuration. (required)
+        :type key: str
+        :param body: local compute node configuration to update in the collection. (required)
+        :type body: LocalSchedulersModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: LocalSchedulersModel
+        """
+        kwargs['_return_http_data_only'] = True
+        if '_preload_content' in kwargs:
+            raise ValueError("Error! Please call the put_local_schedulers_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.put_local_schedulers_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
+
+    @validate_call
+    def put_local_schedulers_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the local compute node configuration.")], body : Annotated[LocalSchedulersModel, Field(..., description="local compute node configuration to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Update local compute node configuration  # noqa: E501
+
+        Update a document in the \"local_schedulers\" collection.  # noqa: E501
+        This method makes a synchronous HTTP request by default. To make an
+        asynchronous HTTP request, please pass async_req=True
+
+        >>> thread = api.put_local_schedulers_key_with_http_info(workflow, key, body, async_req=True)
+        >>> result = thread.get()
+
+        :param workflow: Workflow key. (required)
+        :type workflow: str
+        :param key: key of the local compute node configuration. (required)
+        :type key: str
+        :param body: local compute node configuration to update in the collection. (required)
+        :type body: LocalSchedulersModel
+        :param async_req: Whether to execute the request asynchronously.
+        :type async_req: bool, optional
+        :param _preload_content: if False, the ApiResponse.data will
+                                 be set to none and raw_data will store the 
+                                 HTTP response body without reading/decoding.
+                                 Default is True.
+        :type _preload_content: bool, optional
+        :param _return_http_data_only: response data instead of ApiResponse
+                                       object with status code, headers, etc
+        :type _return_http_data_only: bool, optional
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the authentication
+                              in the spec for a single request.
+        :type _request_auth: dict, optional
+        :type _content_type: string, optional: force content-type for the request
+        :return: Returns the result object.
+                 If the method is called asynchronously,
+                 returns the request thread.
+        :rtype: tuple(LocalSchedulersModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
@@ -17591,7 +20183,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_jobs_key_user_data" % _key
+                    " to method put_local_schedulers_key" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -17634,12 +20226,12 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowUserDataModel",
+            '200': "LocalSchedulersModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/jobs/{key}/user_data', 'POST',
+            '/workflows/{workflow}/local_schedulers/{key}', 'PUT',
             _path_params,
             _query_params,
             _header_params,
@@ -17656,20 +20248,22 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def post_workflows_workflow_local_schedulers(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowLocalSchedulersModel, Field(..., description="local compute node configuration.")], **kwargs) -> WorkflowLocalSchedulersModel:  # noqa: E501
-        """Store a local compute node configuration.  # noqa: E501
+    def put_resource_requirements_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the resource requirements.")], body : Annotated[ResourceRequirementsModel, Field(..., description="resource requirements to update in the collection.")], **kwargs) -> ResourceRequirementsModel:  # noqa: E501
+        """Update resource requirements  # noqa: E501
 
-        Store a local compute node configuration in the \"local_schedulers\" collection.  # noqa: E501
+        Update a document in the \"resource_requirements\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_local_schedulers(workflow, body, async_req=True)
+        >>> thread = api.put_resource_requirements_key(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: local compute node configuration. (required)
-        :type body: WorkflowLocalSchedulersModel
+        :param key: key of the resource requirements. (required)
+        :type key: str
+        :param body: resource requirements to update in the collection. (required)
+        :type body: ResourceRequirementsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -17679,28 +20273,30 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowLocalSchedulersModel
+        :rtype: ResourceRequirementsModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_local_schedulers_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_local_schedulers_with_http_info(workflow, body, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the put_resource_requirements_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.put_resource_requirements_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def post_workflows_workflow_local_schedulers_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowLocalSchedulersModel, Field(..., description="local compute node configuration.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store a local compute node configuration.  # noqa: E501
+    def put_resource_requirements_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the resource requirements.")], body : Annotated[ResourceRequirementsModel, Field(..., description="resource requirements to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Update resource requirements  # noqa: E501
 
-        Store a local compute node configuration in the \"local_schedulers\" collection.  # noqa: E501
+        Update a document in the \"resource_requirements\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_local_schedulers_with_http_info(workflow, body, async_req=True)
+        >>> thread = api.put_resource_requirements_key_with_http_info(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: local compute node configuration. (required)
-        :type body: WorkflowLocalSchedulersModel
+        :param key: key of the resource requirements. (required)
+        :type key: str
+        :param body: resource requirements to update in the collection. (required)
+        :type body: ResourceRequirementsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -17723,13 +20319,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowLocalSchedulersModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(ResourceRequirementsModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
+            'key',
             'body'
         ]
         _all_params.extend(
@@ -17749,7 +20346,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_local_schedulers" % _key
+                    " to method put_resource_requirements_key" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -17760,6 +20357,9 @@ class DefaultApi(object):
         _path_params = {}
         if _params['workflow']:
             _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
 
 
         # process the query parameters
@@ -17789,12 +20389,12 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowLocalSchedulersModel",
+            '200': "ResourceRequirementsModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/local_schedulers', 'POST',
+            '/workflows/{workflow}/resource_requirements/{key}', 'PUT',
             _path_params,
             _query_params,
             _header_params,
@@ -17811,20 +20411,22 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def post_workflows_workflow_resource_requirements(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowResourceRequirementsModel, Field(..., description="resource requirements.")], **kwargs) -> WorkflowResourceRequirementsModel:  # noqa: E501
-        """Store a resource requirements.  # noqa: E501
+    def put_results_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the result.")], body : Annotated[ResultsModel, Field(..., description="result to update in the collection.")], **kwargs) -> ResultsModel:  # noqa: E501
+        """Update result  # noqa: E501
 
-        Store a resource requirements in the \"resource_requirements\" collection.  # noqa: E501
+        Update a document in the \"results\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_resource_requirements(workflow, body, async_req=True)
+        >>> thread = api.put_results_key(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: resource requirements. (required)
-        :type body: WorkflowResourceRequirementsModel
+        :param key: key of the result. (required)
+        :type key: str
+        :param body: result to update in the collection. (required)
+        :type body: ResultsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -17834,28 +20436,30 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowResourceRequirementsModel
+        :rtype: ResultsModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_resource_requirements_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_resource_requirements_with_http_info(workflow, body, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the put_results_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.put_results_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def post_workflows_workflow_resource_requirements_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowResourceRequirementsModel, Field(..., description="resource requirements.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store a resource requirements.  # noqa: E501
+    def put_results_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the result.")], body : Annotated[ResultsModel, Field(..., description="result to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Update result  # noqa: E501
 
-        Store a resource requirements in the \"resource_requirements\" collection.  # noqa: E501
+        Update a document in the \"results\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_resource_requirements_with_http_info(workflow, body, async_req=True)
+        >>> thread = api.put_results_key_with_http_info(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: resource requirements. (required)
-        :type body: WorkflowResourceRequirementsModel
+        :param key: key of the result. (required)
+        :type key: str
+        :param body: result to update in the collection. (required)
+        :type body: ResultsModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -17878,13 +20482,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowResourceRequirementsModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(ResultsModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
+            'key',
             'body'
         ]
         _all_params.extend(
@@ -17904,7 +20509,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_resource_requirements" % _key
+                    " to method put_results_key" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -17915,6 +20520,9 @@ class DefaultApi(object):
         _path_params = {}
         if _params['workflow']:
             _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
 
 
         # process the query parameters
@@ -17944,12 +20552,12 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowResourceRequirementsModel",
+            '200': "ResultsModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/resource_requirements', 'POST',
+            '/workflows/{workflow}/results/{key}', 'PUT',
             _path_params,
             _query_params,
             _header_params,
@@ -17966,20 +20574,22 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def post_workflows_workflow_results(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowResultsModel, Field(..., description="result.")], **kwargs) -> WorkflowResultsModel:  # noqa: E501
-        """Store a result.  # noqa: E501
+    def put_scheduled_compute_nodes_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the scheduled compute node.")], body : Annotated[ScheduledComputeNodesModel, Field(..., description="scheduled compute node to update in the collection.")], **kwargs) -> ScheduledComputeNodesModel:  # noqa: E501
+        """Update scheduled compute node  # noqa: E501
 
-        Store a result in the \"results\" collection.  # noqa: E501
+        Update a document in the \"scheduled_compute_nodes\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_results(workflow, body, async_req=True)
+        >>> thread = api.put_scheduled_compute_nodes_key(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: result. (required)
-        :type body: WorkflowResultsModel
+        :param key: key of the scheduled compute node. (required)
+        :type key: str
+        :param body: scheduled compute node to update in the collection. (required)
+        :type body: ScheduledComputeNodesModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -17989,28 +20599,30 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowResultsModel
+        :rtype: ScheduledComputeNodesModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_results_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_results_with_http_info(workflow, body, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the put_scheduled_compute_nodes_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.put_scheduled_compute_nodes_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def post_workflows_workflow_results_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowResultsModel, Field(..., description="result.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store a result.  # noqa: E501
+    def put_scheduled_compute_nodes_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the scheduled compute node.")], body : Annotated[ScheduledComputeNodesModel, Field(..., description="scheduled compute node to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Update scheduled compute node  # noqa: E501
 
-        Store a result in the \"results\" collection.  # noqa: E501
+        Update a document in the \"scheduled_compute_nodes\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_results_with_http_info(workflow, body, async_req=True)
+        >>> thread = api.put_scheduled_compute_nodes_key_with_http_info(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: result. (required)
-        :type body: WorkflowResultsModel
+        :param key: key of the scheduled compute node. (required)
+        :type key: str
+        :param body: scheduled compute node to update in the collection. (required)
+        :type body: ScheduledComputeNodesModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -18033,13 +20645,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowResultsModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(ScheduledComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
+            'key',
             'body'
         ]
         _all_params.extend(
@@ -18059,7 +20672,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_results" % _key
+                    " to method put_scheduled_compute_nodes_key" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -18070,6 +20683,9 @@ class DefaultApi(object):
         _path_params = {}
         if _params['workflow']:
             _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
 
 
         # process the query parameters
@@ -18099,12 +20715,12 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowResultsModel",
+            '200': "ScheduledComputeNodesModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/results', 'POST',
+            '/workflows/{workflow}/scheduled_compute_nodes/{key}', 'PUT',
             _path_params,
             _query_params,
             _header_params,
@@ -18121,20 +20737,22 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def post_workflows_workflow_scheduled_compute_nodes(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowScheduledComputeNodesModel, Field(..., description="scheduled compute node.")], **kwargs) -> WorkflowScheduledComputeNodesModel:  # noqa: E501
-        """Store a scheduled compute node.  # noqa: E501
+    def put_slurm_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the Slurm compute node configuration.")], body : Annotated[SlurmSchedulersModel, Field(..., description="Slurm compute node configuration to update in the collection.")], **kwargs) -> SlurmSchedulersModel:  # noqa: E501
+        """Update Slurm compute node configuration  # noqa: E501
 
-        Store a scheduled compute node in the \"scheduled_compute_nodes\" collection.  # noqa: E501
+        Update a document in the \"slurm_schedulers\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_scheduled_compute_nodes(workflow, body, async_req=True)
+        >>> thread = api.put_slurm_schedulers_key(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: scheduled compute node. (required)
-        :type body: WorkflowScheduledComputeNodesModel
+        :param key: key of the Slurm compute node configuration. (required)
+        :type key: str
+        :param body: Slurm compute node configuration to update in the collection. (required)
+        :type body: SlurmSchedulersModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -18144,28 +20762,30 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowScheduledComputeNodesModel
+        :rtype: SlurmSchedulersModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_scheduled_compute_nodes_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_scheduled_compute_nodes_with_http_info(workflow, body, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the put_slurm_schedulers_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.put_slurm_schedulers_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def post_workflows_workflow_scheduled_compute_nodes_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowScheduledComputeNodesModel, Field(..., description="scheduled compute node.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store a scheduled compute node.  # noqa: E501
+    def put_slurm_schedulers_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the Slurm compute node configuration.")], body : Annotated[SlurmSchedulersModel, Field(..., description="Slurm compute node configuration to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Update Slurm compute node configuration  # noqa: E501
 
-        Store a scheduled compute node in the \"scheduled_compute_nodes\" collection.  # noqa: E501
+        Update a document in the \"slurm_schedulers\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_scheduled_compute_nodes_with_http_info(workflow, body, async_req=True)
+        >>> thread = api.put_slurm_schedulers_key_with_http_info(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: scheduled compute node. (required)
-        :type body: WorkflowScheduledComputeNodesModel
+        :param key: key of the Slurm compute node configuration. (required)
+        :type key: str
+        :param body: Slurm compute node configuration to update in the collection. (required)
+        :type body: SlurmSchedulersModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -18188,13 +20808,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowScheduledComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(SlurmSchedulersModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
+            'key',
             'body'
         ]
         _all_params.extend(
@@ -18214,7 +20835,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_scheduled_compute_nodes" % _key
+                    " to method put_slurm_schedulers_key" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -18225,6 +20846,9 @@ class DefaultApi(object):
         _path_params = {}
         if _params['workflow']:
             _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
 
 
         # process the query parameters
@@ -18254,12 +20878,12 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowScheduledComputeNodesModel",
+            '200': "SlurmSchedulersModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/scheduled_compute_nodes', 'POST',
+            '/workflows/{workflow}/slurm_schedulers/{key}', 'PUT',
             _path_params,
             _query_params,
             _header_params,
@@ -18276,20 +20900,22 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def post_workflows_workflow_slurm_schedulers(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowSlurmSchedulersModel, Field(..., description="Slurm compute node configuration.")], **kwargs) -> WorkflowSlurmSchedulersModel:  # noqa: E501
-        """Store a Slurm compute node configuration.  # noqa: E501
+    def put_user_data_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the user data.")], body : Annotated[UserDataModel, Field(..., description="user data to update in the collection.")], **kwargs) -> UserDataModel:  # noqa: E501
+        """Update user data  # noqa: E501
 
-        Store a Slurm compute node configuration in the \"slurm_schedulers\" collection.  # noqa: E501
+        Update a document in the \"user_data\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_slurm_schedulers(workflow, body, async_req=True)
+        >>> thread = api.put_user_data_key(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: Slurm compute node configuration. (required)
-        :type body: WorkflowSlurmSchedulersModel
+        :param key: key of the user data. (required)
+        :type key: str
+        :param body: user data to update in the collection. (required)
+        :type body: UserDataModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _request_timeout: timeout setting for this request. If one
@@ -18299,28 +20925,30 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: WorkflowSlurmSchedulersModel
+        :rtype: UserDataModel
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_slurm_schedulers_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_slurm_schedulers_with_http_info(workflow, body, **kwargs)  # noqa: E501
+            raise ValueError("Error! Please call the put_user_data_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
+        return self.put_user_data_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
 
     @validate_call
-    def post_workflows_workflow_slurm_schedulers_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowSlurmSchedulersModel, Field(..., description="Slurm compute node configuration.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store a Slurm compute node configuration.  # noqa: E501
+    def put_user_data_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the user data.")], body : Annotated[UserDataModel, Field(..., description="user data to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
+        """Update user data  # noqa: E501
 
-        Store a Slurm compute node configuration in the \"slurm_schedulers\" collection.  # noqa: E501
+        Update a document in the \"user_data\" collection.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_workflow_slurm_schedulers_with_http_info(workflow, body, async_req=True)
+        >>> thread = api.put_user_data_key_with_http_info(workflow, key, body, async_req=True)
         >>> result = thread.get()
 
-        :param workflow: Workflow key (required)
+        :param workflow: Workflow key. (required)
         :type workflow: str
-        :param body: Slurm compute node configuration. (required)
-        :type body: WorkflowSlurmSchedulersModel
+        :param key: key of the user data. (required)
+        :type key: str
+        :param body: user data to update in the collection. (required)
+        :type body: UserDataModel
         :param async_req: Whether to execute the request asynchronously.
         :type async_req: bool, optional
         :param _preload_content: if False, the ApiResponse.data will
@@ -18343,13 +20971,14 @@ class DefaultApi(object):
         :return: Returns the result object.
                  If the method is called asynchronously,
                  returns the request thread.
-        :rtype: tuple(WorkflowSlurmSchedulersModel, status_code(int), headers(HTTPHeaderDict))
+        :rtype: tuple(UserDataModel, status_code(int), headers(HTTPHeaderDict))
         """
 
         _params = locals()
 
         _all_params = [
             'workflow',
+            'key',
             'body'
         ]
         _all_params.extend(
@@ -18369,7 +20998,7 @@ class DefaultApi(object):
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_slurm_schedulers" % _key
+                    " to method put_user_data_key" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -18380,6 +21009,9 @@ class DefaultApi(object):
         _path_params = {}
         if _params['workflow']:
             _path_params['workflow'] = _params['workflow']
+
+        if _params['key']:
+            _path_params['key'] = _params['key']
 
 
         # process the query parameters
@@ -18409,167 +21041,12 @@ class DefaultApi(object):
         _auth_settings = []  # noqa: E501
 
         _response_types_map = {
-            '200': "WorkflowSlurmSchedulersModel",
+            '200': "UserDataModel",
             '500': "InlineResponse500",
         }
 
         return self.api_client.call_api(
-            '/workflows/{workflow}/slurm_schedulers', 'POST',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def post_workflows_workflow_user_data(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowUserDataModel, Field(..., description="user data.")], **kwargs) -> WorkflowUserDataModel:  # noqa: E501
-        """Store a user data.  # noqa: E501
-
-        Store a user data in the \"user_data\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.post_workflows_workflow_user_data(workflow, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: user data. (required)
-        :type body: WorkflowUserDataModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowUserDataModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the post_workflows_workflow_user_data_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_workflow_user_data_with_http_info(workflow, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def post_workflows_workflow_user_data_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[WorkflowUserDataModel, Field(..., description="user data.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Store a user data.  # noqa: E501
-
-        Store a user data in the \"user_data\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.post_workflows_workflow_user_data_with_http_info(workflow, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: user data. (required)
-        :type body: WorkflowUserDataModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowUserDataModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method post_workflows_workflow_user_data" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowUserDataModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/user_data', 'POST',
+            '/workflows/{workflow}/user_data/{key}', 'PUT',
             _path_params,
             _query_params,
             _header_params,
@@ -19190,2483 +21667,6 @@ class DefaultApi(object):
 
         return self.api_client.call_api(
             '/workflows/{key}/status', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def put_workflows_workflow_aws_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the AWS compute node configuration.")], body : Annotated[WorkflowAwsSchedulersModel, Field(..., description="AWS compute node configuration to update in the collection.")], **kwargs) -> WorkflowAwsSchedulersModel:  # noqa: E501
-        """Update AWS compute node configuration  # noqa: E501
-
-        Update a document in the \"aws_schedulers\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_aws_schedulers_key(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the AWS compute node configuration. (required)
-        :type key: str
-        :param body: AWS compute node configuration to update in the collection. (required)
-        :type body: WorkflowAwsSchedulersModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowAwsSchedulersModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the put_workflows_workflow_aws_schedulers_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.put_workflows_workflow_aws_schedulers_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def put_workflows_workflow_aws_schedulers_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the AWS compute node configuration.")], body : Annotated[WorkflowAwsSchedulersModel, Field(..., description="AWS compute node configuration to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Update AWS compute node configuration  # noqa: E501
-
-        Update a document in the \"aws_schedulers\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_aws_schedulers_key_with_http_info(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the AWS compute node configuration. (required)
-        :type key: str
-        :param body: AWS compute node configuration to update in the collection. (required)
-        :type body: WorkflowAwsSchedulersModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowAwsSchedulersModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method put_workflows_workflow_aws_schedulers_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowAwsSchedulersModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/aws_schedulers/{key}', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def put_workflows_workflow_compute_node_stats_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the compute node statistics.")], body : Annotated[WorkflowComputeNodeStatsModel, Field(..., description="compute node statistics to update in the collection.")], **kwargs) -> WorkflowComputeNodeStatsModel:  # noqa: E501
-        """Update compute node statistics  # noqa: E501
-
-        Update a document in the \"compute_node_stats\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_compute_node_stats_key(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the compute node statistics. (required)
-        :type key: str
-        :param body: compute node statistics to update in the collection. (required)
-        :type body: WorkflowComputeNodeStatsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowComputeNodeStatsModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the put_workflows_workflow_compute_node_stats_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.put_workflows_workflow_compute_node_stats_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def put_workflows_workflow_compute_node_stats_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the compute node statistics.")], body : Annotated[WorkflowComputeNodeStatsModel, Field(..., description="compute node statistics to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Update compute node statistics  # noqa: E501
-
-        Update a document in the \"compute_node_stats\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_compute_node_stats_key_with_http_info(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the compute node statistics. (required)
-        :type key: str
-        :param body: compute node statistics to update in the collection. (required)
-        :type body: WorkflowComputeNodeStatsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowComputeNodeStatsModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method put_workflows_workflow_compute_node_stats_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowComputeNodeStatsModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/compute_node_stats/{key}', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def put_workflows_workflow_compute_nodes_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the compute node.")], body : Annotated[WorkflowComputeNodesModel, Field(..., description="compute node to update in the collection.")], **kwargs) -> WorkflowComputeNodesModel:  # noqa: E501
-        """Update compute node  # noqa: E501
-
-        Update a document in the \"compute_nodes\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_compute_nodes_key(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the compute node. (required)
-        :type key: str
-        :param body: compute node to update in the collection. (required)
-        :type body: WorkflowComputeNodesModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowComputeNodesModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the put_workflows_workflow_compute_nodes_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.put_workflows_workflow_compute_nodes_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def put_workflows_workflow_compute_nodes_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the compute node.")], body : Annotated[WorkflowComputeNodesModel, Field(..., description="compute node to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Update compute node  # noqa: E501
-
-        Update a document in the \"compute_nodes\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_compute_nodes_key_with_http_info(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the compute node. (required)
-        :type key: str
-        :param body: compute node to update in the collection. (required)
-        :type body: WorkflowComputeNodesModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method put_workflows_workflow_compute_nodes_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowComputeNodesModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/compute_nodes/{key}', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def put_workflows_workflow_events_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the event.")], body : Annotated[Dict[str, Any], Field(..., description="event to update in the collection.")], **kwargs) -> object:  # noqa: E501
-        """Update event  # noqa: E501
-
-        Update a document in the \"events\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_events_key(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the event. (required)
-        :type key: str
-        :param body: event to update in the collection. (required)
-        :type body: object
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: object
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the put_workflows_workflow_events_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.put_workflows_workflow_events_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def put_workflows_workflow_events_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the event.")], body : Annotated[Dict[str, Any], Field(..., description="event to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Update event  # noqa: E501
-
-        Update a document in the \"events\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_events_key_with_http_info(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the event. (required)
-        :type key: str
-        :param body: event to update in the collection. (required)
-        :type body: object
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(object, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method put_workflows_workflow_events_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "object",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/events/{key}', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def put_workflows_workflow_files_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the file.")], body : Annotated[WorkflowFilesModel, Field(..., description="file to update in the collection.")], **kwargs) -> WorkflowFilesModel:  # noqa: E501
-        """Update file  # noqa: E501
-
-        Update a document in the \"files\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_files_key(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the file. (required)
-        :type key: str
-        :param body: file to update in the collection. (required)
-        :type body: WorkflowFilesModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowFilesModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the put_workflows_workflow_files_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.put_workflows_workflow_files_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def put_workflows_workflow_files_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the file.")], body : Annotated[WorkflowFilesModel, Field(..., description="file to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Update file  # noqa: E501
-
-        Update a document in the \"files\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_files_key_with_http_info(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the file. (required)
-        :type key: str
-        :param body: file to update in the collection. (required)
-        :type body: WorkflowFilesModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowFilesModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method put_workflows_workflow_files_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowFilesModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/files/{key}', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def put_workflows_workflow_job_process_stats_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the job process statistics.")], body : Annotated[WorkflowJobProcessStatsModel, Field(..., description="job process statistics to update in the collection.")], **kwargs) -> WorkflowJobProcessStatsModel:  # noqa: E501
-        """Update job process statistics  # noqa: E501
-
-        Update a document in the \"job_process_stats\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_job_process_stats_key(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the job process statistics. (required)
-        :type key: str
-        :param body: job process statistics to update in the collection. (required)
-        :type body: WorkflowJobProcessStatsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowJobProcessStatsModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the put_workflows_workflow_job_process_stats_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.put_workflows_workflow_job_process_stats_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def put_workflows_workflow_job_process_stats_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the job process statistics.")], body : Annotated[WorkflowJobProcessStatsModel, Field(..., description="job process statistics to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Update job process statistics  # noqa: E501
-
-        Update a document in the \"job_process_stats\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_job_process_stats_key_with_http_info(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the job process statistics. (required)
-        :type key: str
-        :param body: job process statistics to update in the collection. (required)
-        :type body: WorkflowJobProcessStatsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowJobProcessStatsModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method put_workflows_workflow_job_process_stats_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowJobProcessStatsModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/job_process_stats/{key}', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def put_workflows_workflow_jobs_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the job.")], body : Annotated[WorkflowJobsModel, Field(..., description="job to update in the collection.")], **kwargs) -> WorkflowJobsModel:  # noqa: E501
-        """Update job  # noqa: E501
-
-        Update a document in the \"jobs\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_jobs_key(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the job. (required)
-        :type key: str
-        :param body: job to update in the collection. (required)
-        :type body: WorkflowJobsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowJobsModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the put_workflows_workflow_jobs_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.put_workflows_workflow_jobs_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def put_workflows_workflow_jobs_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the job.")], body : Annotated[WorkflowJobsModel, Field(..., description="job to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Update job  # noqa: E501
-
-        Update a document in the \"jobs\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_jobs_key_with_http_info(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the job. (required)
-        :type key: str
-        :param body: job to update in the collection. (required)
-        :type body: WorkflowJobsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowJobsModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method put_workflows_workflow_jobs_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowJobsModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/jobs/{key}', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], status : Annotated[StrictStr, Field(..., description="New job status")], rev : Annotated[StrictStr, Field(..., description="Current job revision")], run_id : Annotated[StrictInt, Field(..., description="Current job run ID")], body : Optional[Dict[str, Any]] = None, **kwargs) -> WorkflowJobsModel:  # noqa: E501
-        """Change the status of a job and manage side effects.  # noqa: E501
-
-        Change the status of a job and manage side effects.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id(workflow, key, status, rev, run_id, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param status: New job status (required)
-        :type status: str
-        :param rev: Current job revision (required)
-        :type rev: str
-        :param run_id: Current job run ID (required)
-        :type run_id: int
-        :param body:
-        :type body: object
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowJobsModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id_with_http_info(workflow, key, status, rev, run_id, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], status : Annotated[StrictStr, Field(..., description="New job status")], rev : Annotated[StrictStr, Field(..., description="Current job revision")], run_id : Annotated[StrictInt, Field(..., description="Current job run ID")], body : Optional[Dict[str, Any]] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Change the status of a job and manage side effects.  # noqa: E501
-
-        Change the status of a job and manage side effects.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id_with_http_info(workflow, key, status, rev, run_id, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param status: New job status (required)
-        :type status: str
-        :param rev: Current job revision (required)
-        :type rev: str
-        :param run_id: Current job run ID (required)
-        :type run_id: int
-        :param body:
-        :type body: object
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowJobsModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'status',
-            'rev',
-            'run_id',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-        if _params['status']:
-            _path_params['status'] = _params['status']
-
-        if _params['rev']:
-            _path_params['rev'] = _params['rev']
-
-        if _params['run_id']:
-            _path_params['run_id'] = _params['run_id']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowJobsModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/jobs/{key}/manage_status_change/{status}/{rev}/{run_id}', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def put_workflows_workflow_jobs_key_resource_requirements_rr_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], rr_key : StrictStr, body : Optional[Dict[str, Any]] = None, **kwargs) -> EdgesNameModel:  # noqa: E501
-        """Set the resource requirements for a job.  # noqa: E501
-
-        Set the resource requirements for a job, replacing any current value.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_jobs_key_resource_requirements_rr_key(workflow, key, rr_key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param rr_key: (required)
-        :type rr_key: str
-        :param body:
-        :type body: object
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: EdgesNameModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the put_workflows_workflow_jobs_key_resource_requirements_rr_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.put_workflows_workflow_jobs_key_resource_requirements_rr_key_with_http_info(workflow, key, rr_key, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def put_workflows_workflow_jobs_key_resource_requirements_rr_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key")], key : Annotated[StrictStr, Field(..., description="Job key")], rr_key : StrictStr, body : Optional[Dict[str, Any]] = None, **kwargs) -> ApiResponse:  # noqa: E501
-        """Set the resource requirements for a job.  # noqa: E501
-
-        Set the resource requirements for a job, replacing any current value.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_jobs_key_resource_requirements_rr_key_with_http_info(workflow, key, rr_key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param key: Job key (required)
-        :type key: str
-        :param rr_key: (required)
-        :type rr_key: str
-        :param body:
-        :type body: object
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(EdgesNameModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'rr_key',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method put_workflows_workflow_jobs_key_resource_requirements_rr_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-        if _params['rr_key']:
-            _path_params['rr_key'] = _params['rr_key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "EdgesNameModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/jobs/{key}/resource_requirements/{rr_key}', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def put_workflows_workflow_local_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the local compute node configuration.")], body : Annotated[WorkflowLocalSchedulersModel, Field(..., description="local compute node configuration to update in the collection.")], **kwargs) -> WorkflowLocalSchedulersModel:  # noqa: E501
-        """Update local compute node configuration  # noqa: E501
-
-        Update a document in the \"local_schedulers\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_local_schedulers_key(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the local compute node configuration. (required)
-        :type key: str
-        :param body: local compute node configuration to update in the collection. (required)
-        :type body: WorkflowLocalSchedulersModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowLocalSchedulersModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the put_workflows_workflow_local_schedulers_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.put_workflows_workflow_local_schedulers_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def put_workflows_workflow_local_schedulers_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the local compute node configuration.")], body : Annotated[WorkflowLocalSchedulersModel, Field(..., description="local compute node configuration to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Update local compute node configuration  # noqa: E501
-
-        Update a document in the \"local_schedulers\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_local_schedulers_key_with_http_info(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the local compute node configuration. (required)
-        :type key: str
-        :param body: local compute node configuration to update in the collection. (required)
-        :type body: WorkflowLocalSchedulersModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowLocalSchedulersModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method put_workflows_workflow_local_schedulers_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowLocalSchedulersModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/local_schedulers/{key}', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def put_workflows_workflow_resource_requirements_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the resource requirements.")], body : Annotated[WorkflowResourceRequirementsModel, Field(..., description="resource requirements to update in the collection.")], **kwargs) -> WorkflowResourceRequirementsModel:  # noqa: E501
-        """Update resource requirements  # noqa: E501
-
-        Update a document in the \"resource_requirements\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_resource_requirements_key(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the resource requirements. (required)
-        :type key: str
-        :param body: resource requirements to update in the collection. (required)
-        :type body: WorkflowResourceRequirementsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowResourceRequirementsModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the put_workflows_workflow_resource_requirements_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.put_workflows_workflow_resource_requirements_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def put_workflows_workflow_resource_requirements_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the resource requirements.")], body : Annotated[WorkflowResourceRequirementsModel, Field(..., description="resource requirements to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Update resource requirements  # noqa: E501
-
-        Update a document in the \"resource_requirements\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_resource_requirements_key_with_http_info(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the resource requirements. (required)
-        :type key: str
-        :param body: resource requirements to update in the collection. (required)
-        :type body: WorkflowResourceRequirementsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowResourceRequirementsModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method put_workflows_workflow_resource_requirements_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowResourceRequirementsModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/resource_requirements/{key}', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def put_workflows_workflow_results_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the result.")], body : Annotated[WorkflowResultsModel, Field(..., description="result to update in the collection.")], **kwargs) -> WorkflowResultsModel:  # noqa: E501
-        """Update result  # noqa: E501
-
-        Update a document in the \"results\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_results_key(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the result. (required)
-        :type key: str
-        :param body: result to update in the collection. (required)
-        :type body: WorkflowResultsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowResultsModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the put_workflows_workflow_results_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.put_workflows_workflow_results_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def put_workflows_workflow_results_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the result.")], body : Annotated[WorkflowResultsModel, Field(..., description="result to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Update result  # noqa: E501
-
-        Update a document in the \"results\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_results_key_with_http_info(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the result. (required)
-        :type key: str
-        :param body: result to update in the collection. (required)
-        :type body: WorkflowResultsModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowResultsModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method put_workflows_workflow_results_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowResultsModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/results/{key}', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def put_workflows_workflow_scheduled_compute_nodes_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the scheduled compute node.")], body : Annotated[WorkflowScheduledComputeNodesModel, Field(..., description="scheduled compute node to update in the collection.")], **kwargs) -> WorkflowScheduledComputeNodesModel:  # noqa: E501
-        """Update scheduled compute node  # noqa: E501
-
-        Update a document in the \"scheduled_compute_nodes\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_scheduled_compute_nodes_key(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the scheduled compute node. (required)
-        :type key: str
-        :param body: scheduled compute node to update in the collection. (required)
-        :type body: WorkflowScheduledComputeNodesModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowScheduledComputeNodesModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the put_workflows_workflow_scheduled_compute_nodes_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.put_workflows_workflow_scheduled_compute_nodes_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def put_workflows_workflow_scheduled_compute_nodes_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the scheduled compute node.")], body : Annotated[WorkflowScheduledComputeNodesModel, Field(..., description="scheduled compute node to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Update scheduled compute node  # noqa: E501
-
-        Update a document in the \"scheduled_compute_nodes\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_scheduled_compute_nodes_key_with_http_info(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the scheduled compute node. (required)
-        :type key: str
-        :param body: scheduled compute node to update in the collection. (required)
-        :type body: WorkflowScheduledComputeNodesModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowScheduledComputeNodesModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method put_workflows_workflow_scheduled_compute_nodes_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowScheduledComputeNodesModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/scheduled_compute_nodes/{key}', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def put_workflows_workflow_slurm_schedulers_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the Slurm compute node configuration.")], body : Annotated[WorkflowSlurmSchedulersModel, Field(..., description="Slurm compute node configuration to update in the collection.")], **kwargs) -> WorkflowSlurmSchedulersModel:  # noqa: E501
-        """Update Slurm compute node configuration  # noqa: E501
-
-        Update a document in the \"slurm_schedulers\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_slurm_schedulers_key(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the Slurm compute node configuration. (required)
-        :type key: str
-        :param body: Slurm compute node configuration to update in the collection. (required)
-        :type body: WorkflowSlurmSchedulersModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowSlurmSchedulersModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the put_workflows_workflow_slurm_schedulers_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.put_workflows_workflow_slurm_schedulers_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def put_workflows_workflow_slurm_schedulers_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the Slurm compute node configuration.")], body : Annotated[WorkflowSlurmSchedulersModel, Field(..., description="Slurm compute node configuration to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Update Slurm compute node configuration  # noqa: E501
-
-        Update a document in the \"slurm_schedulers\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_slurm_schedulers_key_with_http_info(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the Slurm compute node configuration. (required)
-        :type key: str
-        :param body: Slurm compute node configuration to update in the collection. (required)
-        :type body: WorkflowSlurmSchedulersModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowSlurmSchedulersModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method put_workflows_workflow_slurm_schedulers_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowSlurmSchedulersModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/slurm_schedulers/{key}', 'PUT',
-            _path_params,
-            _query_params,
-            _header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            response_types_map=_response_types_map,
-            auth_settings=_auth_settings,
-            async_req=_params.get('async_req'),
-            _return_http_data_only=_params.get('_return_http_data_only'),  # noqa: E501
-            _preload_content=_params.get('_preload_content', True),
-            _request_timeout=_params.get('_request_timeout'),
-            collection_formats=_collection_formats,
-            _request_auth=_params.get('_request_auth'))
-
-    @validate_call
-    def put_workflows_workflow_user_data_key(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the user data.")], body : Annotated[WorkflowUserDataModel, Field(..., description="user data to update in the collection.")], **kwargs) -> WorkflowUserDataModel:  # noqa: E501
-        """Update user data  # noqa: E501
-
-        Update a document in the \"user_data\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_user_data_key(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the user data. (required)
-        :type key: str
-        :param body: user data to update in the collection. (required)
-        :type body: WorkflowUserDataModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: WorkflowUserDataModel
-        """
-        kwargs['_return_http_data_only'] = True
-        if '_preload_content' in kwargs:
-            raise ValueError("Error! Please call the put_workflows_workflow_user_data_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.put_workflows_workflow_user_data_key_with_http_info(workflow, key, body, **kwargs)  # noqa: E501
-
-    @validate_call
-    def put_workflows_workflow_user_data_key_with_http_info(self, workflow : Annotated[StrictStr, Field(..., description="Workflow key.")], key : Annotated[StrictStr, Field(..., description="key of the user data.")], body : Annotated[WorkflowUserDataModel, Field(..., description="user data to update in the collection.")], **kwargs) -> ApiResponse:  # noqa: E501
-        """Update user data  # noqa: E501
-
-        Update a document in the \"user_data\" collection.  # noqa: E501
-        This method makes a synchronous HTTP request by default. To make an
-        asynchronous HTTP request, please pass async_req=True
-
-        >>> thread = api.put_workflows_workflow_user_data_key_with_http_info(workflow, key, body, async_req=True)
-        >>> result = thread.get()
-
-        :param workflow: Workflow key. (required)
-        :type workflow: str
-        :param key: key of the user data. (required)
-        :type key: str
-        :param body: user data to update in the collection. (required)
-        :type body: WorkflowUserDataModel
-        :param async_req: Whether to execute the request asynchronously.
-        :type async_req: bool, optional
-        :param _preload_content: if False, the ApiResponse.data will
-                                 be set to none and raw_data will store the 
-                                 HTTP response body without reading/decoding.
-                                 Default is True.
-        :type _preload_content: bool, optional
-        :param _return_http_data_only: response data instead of ApiResponse
-                                       object with status code, headers, etc
-        :type _return_http_data_only: bool, optional
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the authentication
-                              in the spec for a single request.
-        :type _request_auth: dict, optional
-        :type _content_type: string, optional: force content-type for the request
-        :return: Returns the result object.
-                 If the method is called asynchronously,
-                 returns the request thread.
-        :rtype: tuple(WorkflowUserDataModel, status_code(int), headers(HTTPHeaderDict))
-        """
-
-        _params = locals()
-
-        _all_params = [
-            'workflow',
-            'key',
-            'body'
-        ]
-        _all_params.extend(
-            [
-                'async_req',
-                '_return_http_data_only',
-                '_preload_content',
-                '_request_timeout',
-                '_request_auth',
-                '_content_type',
-                '_headers'
-            ]
-        )
-
-        # validate the arguments
-        for _key, _val in _params['kwargs'].items():
-            if _key not in _all_params:
-                raise ApiTypeError(
-                    "Got an unexpected keyword argument '%s'"
-                    " to method put_workflows_workflow_user_data_key" % _key
-                )
-            _params[_key] = _val
-        del _params['kwargs']
-
-        _collection_formats = {}
-
-        # process the path parameters
-        _path_params = {}
-        if _params['workflow']:
-            _path_params['workflow'] = _params['workflow']
-
-        if _params['key']:
-            _path_params['key'] = _params['key']
-
-
-        # process the query parameters
-        _query_params = []
-        # process the header parameters
-        _header_params = dict(_params.get('_headers', {}))
-        # process the form parameters
-        _form_params = []
-        _files = {}
-        # process the body parameter
-        _body_params = None
-        if _params['body'] is not None:
-            _body_params = _params['body']
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            ['application/json'])  # noqa: E501
-
-        # set the HTTP header `Content-Type`
-        _content_types_list = _params.get('_content_type',
-            self.api_client.select_header_content_type(
-                ['application/json']))
-        if _content_types_list:
-                _header_params['Content-Type'] = _content_types_list
-
-        # authentication setting
-        _auth_settings = []  # noqa: E501
-
-        _response_types_map = {
-            '200': "WorkflowUserDataModel",
-            '500': "InlineResponse500",
-        }
-
-        return self.api_client.call_api(
-            '/workflows/{workflow}/user_data/{key}', 'PUT',
             _path_params,
             _query_params,
             _header_params,

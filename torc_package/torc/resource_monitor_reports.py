@@ -23,7 +23,7 @@ def iter_compute_node_stats(api, workflow_key, exclude_process=False):
     ------
     dict
     """
-    for node_stats in iter_documents(api.get_workflows_workflow_compute_node_stats, workflow_key):
+    for node_stats in iter_documents(api.get_compute_node_stats, workflow_key):
         hostname = node_stats.hostname
         for stat in node_stats.stats:
             if exclude_process and stat.resource_type == "Process":
@@ -53,10 +53,8 @@ def iter_job_process_stats(api, workflow_key, **kwargs):
     ------
     dict
     """
-    for job in iter_documents(api.get_workflows_workflow_jobs, workflow_key, **kwargs):
-        for stat in send_api_command(
-            api.get_workflows_workflow_jobs_key_process_stats, workflow_key, job.key
-        ):
+    for job in iter_documents(api.get_jobs, workflow_key, **kwargs):
+        for stat in send_api_command(api.get_jobs_key_process_stats, workflow_key, job.key):
             stats = remove_db_keys(stat.to_dict())
             yield {
                 "job_key": stats["job_key"],

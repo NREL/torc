@@ -20,12 +20,12 @@ import json
 
 from typing import List, Optional
 from pydantic import Field, ConfigDict, BaseModel, StrictStr
+from torc.openapi_client.models.files_model import FilesModel
+from torc.openapi_client.models.job_specifications_model import JobSpecificationsModel
+from torc.openapi_client.models.resource_requirements_model import ResourceRequirementsModel
+from torc.openapi_client.models.user_data_model import UserDataModel
 from torc.openapi_client.models.workflow_config_model import WorkflowConfigModel
-from torc.openapi_client.models.workflow_files_model import WorkflowFilesModel
-from torc.openapi_client.models.workflow_job_specifications_model import WorkflowJobSpecificationsModel
-from torc.openapi_client.models.workflow_resource_requirements_model import WorkflowResourceRequirementsModel
 from torc.openapi_client.models.workflow_specifications_schedulers import WorkflowSpecificationsSchedulers
-from torc.openapi_client.models.workflow_user_data_model import WorkflowUserDataModel
 from typing_extensions import Annotated
 
 class WorkflowSpecificationsModel(BaseModel):
@@ -36,10 +36,10 @@ class WorkflowSpecificationsModel(BaseModel):
     key: Optional[StrictStr] = None
     user: Optional[StrictStr] = None
     description: Optional[StrictStr] = None
-    jobs: Optional[Annotated[List[WorkflowJobSpecificationsModel], Field()]] = None
-    files: Optional[Annotated[List[WorkflowFilesModel], Field()]] = None
-    user_data: Optional[Annotated[List[WorkflowUserDataModel], Field()]] = None
-    resource_requirements: Optional[Annotated[List[WorkflowResourceRequirementsModel], Field()]] = None
+    jobs: Optional[Annotated[List[JobSpecificationsModel], Field()]] = None
+    files: Optional[Annotated[List[FilesModel], Field()]] = None
+    user_data: Optional[Annotated[List[UserDataModel], Field()]] = None
+    resource_requirements: Optional[Annotated[List[ResourceRequirementsModel], Field()]] = None
     schedulers: Optional[WorkflowSpecificationsSchedulers] = None
     config: Optional[WorkflowConfigModel] = None
     __properties = ["name", "key", "user", "description", "jobs", "files", "user_data", "resource_requirements", "schedulers", "config"]
@@ -114,10 +114,10 @@ class WorkflowSpecificationsModel(BaseModel):
             "key": obj.get("key"),
             "user": obj.get("user"),
             "description": obj.get("description"),
-            "jobs": [WorkflowJobSpecificationsModel.from_dict(_item) for _item in obj.get("jobs")] if obj.get("jobs") is not None else None,
-            "files": [WorkflowFilesModel.from_dict(_item) for _item in obj.get("files")] if obj.get("files") is not None else None,
-            "user_data": [WorkflowUserDataModel.from_dict(_item) for _item in obj.get("user_data")] if obj.get("user_data") is not None else None,
-            "resource_requirements": [WorkflowResourceRequirementsModel.from_dict(_item) for _item in obj.get("resource_requirements")] if obj.get("resource_requirements") is not None else None,
+            "jobs": [JobSpecificationsModel.from_dict(_item) for _item in obj.get("jobs")] if obj.get("jobs") is not None else None,
+            "files": [FilesModel.from_dict(_item) for _item in obj.get("files")] if obj.get("files") is not None else None,
+            "user_data": [UserDataModel.from_dict(_item) for _item in obj.get("user_data")] if obj.get("user_data") is not None else None,
+            "resource_requirements": [ResourceRequirementsModel.from_dict(_item) for _item in obj.get("resource_requirements")] if obj.get("resource_requirements") is not None else None,
             "schedulers": WorkflowSpecificationsSchedulers.from_dict(obj.get("schedulers")) if obj.get("schedulers") is not None else None,
             "config": WorkflowConfigModel.from_dict(obj.get("config")) if obj.get("config") is not None else None
         })

@@ -4,8 +4,8 @@ import multiprocessing
 import os
 import sys
 
-from torc.openapi_client.models.workflow_user_data_model import (
-    WorkflowUserDataModel,
+from torc.openapi_client.models.user_data_model import (
+    UserDataModel,
 )
 
 from torc.api import make_api
@@ -26,8 +26,8 @@ workflow_key = os.environ["TORC_WORKFLOW_KEY"]
 job_key = os.environ["TORC_JOB_KEY"]
 
 affinity = os.sched_getaffinity(os.getpid())  # pylint: disable=no-member
-result = WorkflowUserDataModel(
+result = UserDataModel(
     name="result",
     data={"affinity": list(affinity), "num_cpus": multiprocessing.cpu_count()},
 )
-api.post_workflows_workflow_user_data(workflow_key, result)
+api.post_user_data(workflow_key, result)

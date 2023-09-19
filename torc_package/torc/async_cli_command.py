@@ -10,7 +10,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-from torc.openapi_client.models.workflow_results_model import WorkflowResultsModel
+from torc.openapi_client.models.results_model import ResultsModel
 
 from torc.common import JOB_STDIO_DIR, JobStatus
 
@@ -58,7 +58,7 @@ class AsyncJobBase(abc.ABC):
 
         Returns
         -------
-        WorkflowResultsModel
+        ResultsModel
         """
 
     @abc.abstractmethod
@@ -126,7 +126,7 @@ class AsyncCliCommand(AsyncJobBase):
 
     def get_result(self, run_id):
         assert self._is_complete
-        return WorkflowResultsModel(
+        return ResultsModel(
             job_key=self.key,
             run_id=run_id,
             return_code=self._return_code,

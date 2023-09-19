@@ -2,13 +2,13 @@
 Helper struct to build a workflow dynamically
 """
 mutable struct WorkflowBuilder
-    files::Vector{APIClient.WorkflowFilesModel}
-    jobs::Vector{APIClient.WorkflowJobSpecificationsModel}
-    resource_requirements::Vector{APIClient.WorkflowResourceRequirementsModel}
-    aws_schedulers::Vector{APIClient.WorkflowAwsSchedulersModel}
-    local_schedulers::Vector{APIClient.WorkflowLocalSchedulersModel}
-    slurm_schedulers::Vector{APIClient.WorkflowSlurmSchedulersModel}
-    user_data::Vector{APIClient.WorkflowUserDataModel}
+    files::Vector{APIClient.FilesModel}
+    jobs::Vector{APIClient.JobSpecificationsModel}
+    resource_requirements::Vector{APIClient.ResourceRequirementsModel}
+    aws_schedulers::Vector{APIClient.AwsSchedulersModel}
+    local_schedulers::Vector{APIClient.LocalSchedulersModel}
+    slurm_schedulers::Vector{APIClient.SlurmSchedulersModel}
+    user_data::Vector{APIClient.UserDataModel}
     resource_monitor_config::Union{
         Nothing,
         APIClient.ComputeNodeResourceStatsModel,
@@ -21,13 +21,13 @@ end
 
 function WorkflowBuilder()
     WorkflowBuilder(
-        Vector{APIClient.WorkflowFilesModel}(),
-        Vector{APIClient.WorkflowJobSpecificationsModel}(),
-        Vector{APIClient.WorkflowResourceRequirementsModel}(),
-        Vector{APIClient.WorkflowAwsSchedulersModel}(),
-        Vector{APIClient.WorkflowLocalSchedulersModel}(),
-        Vector{APIClient.WorkflowSlurmSchedulersModel}(),
-        Vector{APIClient.WorkflowUserDataModel}(),
+        Vector{APIClient.FilesModel}(),
+        Vector{APIClient.JobSpecificationsModel}(),
+        Vector{APIClient.ResourceRequirementsModel}(),
+        Vector{APIClient.AwsSchedulersModel}(),
+        Vector{APIClient.LocalSchedulersModel}(),
+        Vector{APIClient.SlurmSchedulersModel}(),
+        Vector{APIClient.UserDataModel}(),
         APIClient.ComputeNodeResourceStatsModel(),
         0,
         nothing,
@@ -40,7 +40,7 @@ end
 Add a file and return it.
 """
 function add_file!(builder::WorkflowBuilder, args...; kwargs...)
-    push!(builder.files, APIClient.WorkflowFilesModel(args...; kwargs...))
+    push!(builder.files, APIClient.FilesModel(args...; kwargs...))
     return builder.files[end]
 end
 
@@ -48,7 +48,7 @@ end
 Add a job and return it.
 """
 function add_job!(builder::WorkflowBuilder, args...; kwargs...)
-    push!(builder.jobs, APIClient.WorkflowJobSpecificationsModel(args...; kwargs...))
+    push!(builder.jobs, APIClient.JobSpecificationsModel(args...; kwargs...))
     return builder.jobs[end]
 end
 
@@ -58,7 +58,7 @@ Add a resource requirements object and return it.
 function add_resource_requirements!(builder::WorkflowBuilder, args...; kwargs...)
     push!(
         builder.resource_requirements,
-        APIClient.WorkflowResourceRequirementsModel(args...; kwargs...),
+        APIClient.ResourceRequirementsModel(args...; kwargs...),
     )
     return builder.resource_requirements[end]
 end
@@ -67,7 +67,7 @@ end
 Add an AWS scheduler and return it.
 """
 function add_aws_scheduler!(builder::WorkflowBuilder, args...; kwargs...)
-    push!(builder.aws_schedulers, APIClient.WorkflowAwsSchedulersModel(args...; kwargs...))
+    push!(builder.aws_schedulers, APIClient.AwsSchedulersModel(args...; kwargs...))
     return builder.aws_schedulers[end]
 end
 
@@ -77,7 +77,7 @@ Add a local scheduler and return it.
 function add_local_scheduler!(builder::WorkflowBuilder, args...; kwargs...)
     push!(
         builder.local_schedulers,
-        APIClient.WorkflowLocalSchedulersModel(args...; kwargs...),
+        APIClient.LocalSchedulersModel(args...; kwargs...),
     )
     return builder.local_schedulers[end]
 end
@@ -88,7 +88,7 @@ Add a local scheduler and return it.
 function add_slurm_scheduler!(builder::WorkflowBuilder, args...; kwargs...)
     push!(
         builder.slurm_schedulers,
-        APIClient.WorkflowSlurmSchedulersModel(args...; kwargs...),
+        APIClient.SlurmSchedulersModel(args...; kwargs...),
     )
     return builder.slurm_schedulers[end]
 end
@@ -97,7 +97,7 @@ end
 Add a user data object and return it.
 """
 function add_user_data!(builder::WorkflowBuilder, args...; kwargs...)
-    push!(builder.user_data, APIClient.WorkflowUserDataModel(args...; kwargs...))
+    push!(builder.user_data, APIClient.UserDataModel(args...; kwargs...))
     return builder.user_data[end]
 end
 

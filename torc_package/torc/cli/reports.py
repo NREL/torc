@@ -59,9 +59,9 @@ def results(ctx, api, job_keys, output: Path, run_id):
     run_ids = set(run_id)
 
     if job_keys:
-        jobs = [api.get_workflows_workflow_jobs_key(workflow_key, x) for x in job_keys]
+        jobs = [api.get_jobs_key(workflow_key, x) for x in job_keys]
     else:
-        jobs = list(iter_documents(api.get_workflows_workflow_jobs, workflow_key))
+        jobs = list(iter_documents(api.get_jobs, workflow_key))
     jobs.sort(key=lambda x: int(x.key))
 
     job_key_to_name = {}
@@ -73,14 +73,10 @@ def results(ctx, api, job_keys, output: Path, run_id):
         if run_ids:
             for rid in run_ids:
                 filters["run_id"] = rid
-                for result in iter_documents(
-                    api.get_workflows_workflow_results, workflow_key, **filters
-                ):
+                for result in iter_documents(api.get_results, workflow_key, **filters):
                     results_by_job[job.key].append(result)
         else:
-            for result in iter_documents(
-                api.get_workflows_workflow_results, workflow_key, **filters
-            ):
+            for result in iter_documents(api.get_results, workflow_key, **filters):
                 results_by_job[job.key].append(result)
 
     lookup_by_job_and_run_id = {}

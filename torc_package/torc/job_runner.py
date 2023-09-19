@@ -28,11 +28,11 @@ from resource_monitor.models import (
 from resource_monitor.resource_monitor import run_monitor_async
 from resource_monitor.timing.timer_stats import Timer
 from torc.openapi_client import DefaultApi
-from torc.openapi_client.models.workflow_compute_nodes_model import (
-    WorkflowComputeNodesModel,
+from torc.openapi_client.models.compute_nodes_model import (
+    ComputeNodesModel,
 )
-from torc.openapi_client.models.workflow_compute_node_stats_model import (
-    WorkflowComputeNodeStatsModel,
+from torc.openapi_client.models.compute_node_stats_model import (
+    ComputeNodeStatsModel,
 )
 from torc.openapi_client.models.compute_nodes_resources import (
     ComputeNodesResources,
@@ -41,8 +41,8 @@ from torc.openapi_client.models.compute_node_stats import (
     ComputeNodeStats,
 )
 from torc.openapi_client.models.edges_name_model import EdgesNameModel
-from torc.openapi_client.models.workflow_job_process_stats_model import (
-    WorkflowJobProcessStatsModel,
+from torc.openapi_client.models.job_process_stats_model import (
+    JobProcessStatsModel,
 )
 from torc.openapi_client.models.workflows_model import WorkflowsModel
 
@@ -340,7 +340,7 @@ class JobRunner:
             logger.error("Failed to schedule compute nodes: %s", ret)
 
     def _create_compute_node(self, scheduler):
-        compute_node = WorkflowComputeNodesModel(
+        compute_node = ComputeNodesModel(
             hostname=self._hostname,
             pid=os.getpid(),
             start_time=str(datetime.now()),
@@ -349,7 +349,7 @@ class JobRunner:
             scheduler=scheduler or {},
         )
         self._compute_node = send_api_command(
-            self._api.post_workflows_workflow_compute_nodes,
+            self._api.post_compute_nodes,
             self._workflow.key,
             compute_node,
         )
@@ -361,7 +361,7 @@ class JobRunner:
             - datetime.strptime(self._compute_node.start_time, "%Y-%m-%d %H:%M:%S.%f").timestamp()
         )
         send_api_command(
-            self._api.put_workflows_workflow_compute_nodes_key,
+            self._api.put_compute_nodes_key,
             self._workflow.key,
             self._compute_node.key,
             self._compute_node,
@@ -370,7 +370,7 @@ class JobRunner:
 
     def _complete_job(self, job, result, status):
         job = send_api_command(
-            self._api.post_workflows_workflow_jobs_key_complete_job_status_rev_run_id,
+            self._api.post_jobs_key_complete_job_status_rev_run_id,
             self._workflow.key,
             job.id,
             status,
@@ -382,7 +382,7 @@ class JobRunner:
 
     def _decrement_resources(self, job):
         job_resources = send_api_command(
-            self._api.get_workflows_workflow_jobs_key_resource_requirements,
+            self._api.get_jobs_key_resource_requirements,
             self._workflow.key,
             job.key,
         )
@@ -396,7 +396,7 @@ class JobRunner:
 
     def _increment_resources(self, job):
         job_resources = send_api_command(
-            self._api.get_workflows_workflow_jobs_key_resource_requirements,
+            self._api.get_jobs_key_resource_requirements,
             self._workflow.key,
             job.key,
         )
@@ -423,7 +423,7 @@ class JobRunner:
 
     def _log_worker_start_event(self):
         send_api_command(
-            self._api.post_workflows_workflow_events,
+            self._api.post_events,
             self._workflow.key,
             {
                 "category": "worker",
@@ -437,7 +437,7 @@ class JobRunner:
 
     def _log_worker_stop_event(self):
         send_api_command(
-            self._api.post_workflows_workflow_events,
+            self._api.post_events,
             self._workflow.key,
             {
                 "category": "worker",
@@ -450,7 +450,7 @@ class JobRunner:
 
     def _log_worker_schedule_event(self, scheduler_id):
         send_api_command(
-            self._api.post_workflows_workflow_events,
+            self._api.post_events,
             self._workflow.key,
             {
                 "category": "worker",
@@ -464,7 +464,7 @@ class JobRunner:
 
     def _log_job_start_event(self, job_key: str, job_name: str):
         send_api_command(
-            self._api.post_workflows_workflow_events,
+            self._api.post_events,
             self._workflow.key,
             {
                 "category": "job",
@@ -479,7 +479,7 @@ class JobRunner:
 
     def _log_job_complete_event(self, job_key: str, job_name: str, status: str, return_code: int):
         send_api_command(
-            self._api.post_workflows_workflow_events,
+            self._api.post_events,
             self._workflow.key,
             {
                 "category": "job",
@@ -522,7 +522,7 @@ class JobRunner:
             job.wait_for_completion(status)
             assert job.is_complete()
             job.db_job = send_api_command(
-                self._api.get_workflows_workflow_jobs_key,
+                self._api.get_jobs_key,
                 self._workflow.key,
                 job.key,
             )
@@ -564,7 +564,7 @@ class JobRunner:
         # The database changes db_job._rev on every update.
         # This reassigns job.db_job in order to stay current.
         job.db_job = send_api_command(
-            self._api.put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id,
+            self._api.put_jobs_key_manage_status_change_status_rev_run_id,
             self._workflow.key,
             job.key,
             JobStatus.SUBMITTED.value,
@@ -575,7 +575,7 @@ class JobRunner:
         if self._stats.process:
             self._pids[job.key] = job.pid
         send_api_command(
-            self._api.post_workflows_workflow_edges_name,
+            self._api.post_edges_name,
             self._workflow.key,
             "executed",
             EdgesNameModel(
@@ -678,9 +678,9 @@ class JobRunner:
                 stats.append(ComputeNodeStats(**x))
             if stats:
                 send_api_command(
-                    self._api.post_workflows_workflow_compute_node_stats,
+                    self._api.post_compute_node_stats,
                     self._workflow.key,
-                    WorkflowComputeNodeStatsModel(
+                    ComputeNodeStatsModel(
                         hostname=self._hostname,
                         stats=stats,
                         timestamp=str(datetime.now()),
@@ -694,9 +694,9 @@ class JobRunner:
 
     def _post_compute_node_stats(self, results: ComputeNodeResourceStatResults):
         res = send_api_command(
-            self._api.post_workflows_workflow_compute_node_stats,
+            self._api.post_compute_node_stats,
             self._workflow.key,
-            WorkflowComputeNodeStatsModel(
+            ComputeNodeStatsModel(
                 hostname=self._hostname,
                 # These json methods let Pydantic run its data type conversions.
                 stats=[
@@ -706,7 +706,7 @@ class JobRunner:
             ),
         )
         send_api_command(
-            self._api.post_workflows_workflow_edges_name,
+            self._api.post_edges_name,
             self._workflow.key,
             "node_used",
             EdgesNameModel(
@@ -720,9 +720,9 @@ class JobRunner:
 
     def _post_job_process_stats(self, result: ProcessStatResults):
         res = send_api_command(
-            self._api.post_workflows_workflow_job_process_stats,
+            self._api.post_job_process_stats,
             self._workflow.key,
-            WorkflowJobProcessStatsModel(
+            JobProcessStatsModel(
                 avg_cpu_percent=result.average["cpu_percent"],
                 max_cpu_percent=result.maximum["cpu_percent"],
                 avg_rss=result.average["rss"],
@@ -734,7 +734,7 @@ class JobRunner:
             ),
         )
         send_api_command(
-            self._api.post_workflows_workflow_edges_name,
+            self._api.post_edges_name,
             self._workflow.key,
             "process_used",
             EdgesNameModel(
@@ -745,7 +745,7 @@ class JobRunner:
 
     def _update_file_info(self, job):
         for file in iter_documents(
-            self._api.get_workflows_workflow_files_produced_by_job_key,
+            self._api.get_files_produced_by_job_key,
             self._workflow.key,
             job.key,
         ):
@@ -760,7 +760,7 @@ class JobRunner:
             # file.file_hash = compute_file_hash(path)
             file.st_mtime = path.stat().st_mtime
             send_api_command(
-                self._api.put_workflows_workflow_files_key,
+                self._api.put_files_key,
                 self._workflow.key,
                 file.key,
                 file,

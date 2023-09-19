@@ -9,11 +9,11 @@
         reason=nothing,
     )
 
-    - jobs::Vector{WorkflowJobsModel}
+    - jobs::Vector{JobsModel}
     - reason::String
 """
 Base.@kwdef mutable struct PostWorkflowsKeyPrepareJobsForSubmissionResponse <: OpenAPI.APIModel
-    jobs::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{WorkflowJobsModel} }
+    jobs::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{JobsModel} }
     reason::Union{Nothing, String} = nothing
 
     function PostWorkflowsKeyPrepareJobsForSubmissionResponse(jobs, reason, )
@@ -23,7 +23,7 @@ Base.@kwdef mutable struct PostWorkflowsKeyPrepareJobsForSubmissionResponse <: O
     end
 end # type PostWorkflowsKeyPrepareJobsForSubmissionResponse
 
-const _property_types_PostWorkflowsKeyPrepareJobsForSubmissionResponse = Dict{Symbol,String}(Symbol("jobs")=>"Vector{WorkflowJobsModel}", Symbol("reason")=>"String", )
+const _property_types_PostWorkflowsKeyPrepareJobsForSubmissionResponse = Dict{Symbol,String}(Symbol("jobs")=>"Vector{JobsModel}", Symbol("reason")=>"String", )
 OpenAPI.property_type(::Type{ PostWorkflowsKeyPrepareJobsForSubmissionResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_PostWorkflowsKeyPrepareJobsForSubmissionResponse[name]))}
 
 function check_required(o::PostWorkflowsKeyPrepareJobsForSubmissionResponse)

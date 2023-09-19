@@ -21,10 +21,10 @@
     - key::String
     - user::String
     - description::String
-    - jobs::Vector{WorkflowJobSpecificationsModel}
-    - files::Vector{WorkflowFilesModel}
-    - user_data::Vector{WorkflowUserDataModel}
-    - resource_requirements::Vector{WorkflowResourceRequirementsModel}
+    - jobs::Vector{JobSpecificationsModel}
+    - files::Vector{FilesModel}
+    - user_data::Vector{UserDataModel}
+    - resource_requirements::Vector{ResourceRequirementsModel}
     - schedulers::WorkflowSpecificationsSchedulers
     - config::WorkflowConfigModel
 """
@@ -33,10 +33,10 @@ Base.@kwdef mutable struct WorkflowSpecificationsModel <: OpenAPI.APIModel
     key::Union{Nothing, String} = nothing
     user::Union{Nothing, String} = nothing
     description::Union{Nothing, String} = nothing
-    jobs::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{WorkflowJobSpecificationsModel} }
-    files::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{WorkflowFilesModel} }
-    user_data::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{WorkflowUserDataModel} }
-    resource_requirements::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{WorkflowResourceRequirementsModel} }
+    jobs::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{JobSpecificationsModel} }
+    files::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{FilesModel} }
+    user_data::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{UserDataModel} }
+    resource_requirements::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{ResourceRequirementsModel} }
     schedulers = nothing # spec type: Union{ Nothing, WorkflowSpecificationsSchedulers }
     config = nothing # spec type: Union{ Nothing, WorkflowConfigModel }
 
@@ -55,7 +55,7 @@ Base.@kwdef mutable struct WorkflowSpecificationsModel <: OpenAPI.APIModel
     end
 end # type WorkflowSpecificationsModel
 
-const _property_types_WorkflowSpecificationsModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("key")=>"String", Symbol("user")=>"String", Symbol("description")=>"String", Symbol("jobs")=>"Vector{WorkflowJobSpecificationsModel}", Symbol("files")=>"Vector{WorkflowFilesModel}", Symbol("user_data")=>"Vector{WorkflowUserDataModel}", Symbol("resource_requirements")=>"Vector{WorkflowResourceRequirementsModel}", Symbol("schedulers")=>"WorkflowSpecificationsSchedulers", Symbol("config")=>"WorkflowConfigModel", )
+const _property_types_WorkflowSpecificationsModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("key")=>"String", Symbol("user")=>"String", Symbol("description")=>"String", Symbol("jobs")=>"Vector{JobSpecificationsModel}", Symbol("files")=>"Vector{FilesModel}", Symbol("user_data")=>"Vector{UserDataModel}", Symbol("resource_requirements")=>"Vector{ResourceRequirementsModel}", Symbol("schedulers")=>"WorkflowSpecificationsSchedulers", Symbol("config")=>"WorkflowConfigModel", )
 OpenAPI.property_type(::Type{ WorkflowSpecificationsModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_WorkflowSpecificationsModel[name]))}
 
 function check_required(o::WorkflowSpecificationsModel)

@@ -299,7 +299,7 @@ parameters and jobs, and will restart only the affected jobs. Here's how to do t
     $ torc user-data modify 3141813 -d '{"module":"simulation.py","func":"run","params":{"var1":"100","var2":100}}'
 
 .. note:: You can get and set user-data through the Python API. Search for
-   get_workflows_workflow_user_data_key and put_workflows_workflow_user_data_key at
+   get_user_data_key and put_user_data_key at
    :ref:`default-api`.
 
 3. Restart the workflow.

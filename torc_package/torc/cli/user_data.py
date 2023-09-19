@@ -5,8 +5,8 @@ import logging
 
 import click
 import json5
-from torc.openapi_client.models.workflow_user_data_model import (
-    WorkflowUserDataModel,
+from torc.openapi_client.models.user_data_model import (
+    UserDataModel,
 )
 from torc.openapi_client.models.edges_name_model import EdgesNameModel
 
@@ -74,17 +74,17 @@ def add(ctx, api, data, ephemeral, name, stores, consumes):
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
     if data is None:
-        ud = WorkflowUserDataModel(name=name, is_ephemeral=ephemeral)
+        ud = UserDataModel(name=name, is_ephemeral=ephemeral)
     else:
         obj = json5.loads(data)
-        ud = WorkflowUserDataModel(name=name, is_ephemeral=ephemeral, data=obj)
+        ud = UserDataModel(name=name, is_ephemeral=ephemeral, data=obj)
 
-    ud = api.post_workflows_workflow_user_data(workflow_key, ud)
+    ud = api.post_user_data(workflow_key, ud)
     stores_edge = None
     consumes_edges = []
     if stores is not None:
-        stored_by_job = api.get_workflows_workflow_jobs_key(workflow_key, stores)
-        stores_edge = api.post_workflows_workflow_edges_name(
+        stored_by_job = api.get_jobs_key(workflow_key, stores)
+        stores_edge = api.post_edges_name(
             workflow_key,
             "stores",
             EdgesNameModel(
@@ -94,8 +94,8 @@ def add(ctx, api, data, ephemeral, name, stores, consumes):
         )
     if consumes:
         for job_key in consumes:
-            consumed_by_job = api.get_workflows_workflow_jobs_key(workflow_key, job_key)
-            consumes_edge = api.post_workflows_workflow_edges_name(
+            consumed_by_job = api.get_jobs_key(workflow_key, job_key)
+            consumes_edge = api.post_edges_name(
                 workflow_key,
                 "consumes",
                 EdgesNameModel(
@@ -142,7 +142,7 @@ def modify(ctx, api, user_data_key, name, data, ephemeral):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
-    ud = api.get_workflows_workflow_user_data_key(workflow_key, user_data_key)
+    ud = api.get_user_data_key(workflow_key, user_data_key)
     changed = False
     if name is not None:
         ud.name = name
@@ -155,7 +155,7 @@ def modify(ctx, api, user_data_key, name, data, ephemeral):
         changed = True
 
     if changed:
-        ud = api.put_workflows_workflow_user_data_key(workflow_key, user_data_key, ud)
+        ud = api.put_user_data_key(workflow_key, user_data_key, ud)
         if output_format == "text":
             logger.info("Modified user_data key = %s", user_data_key)
         else:
@@ -192,7 +192,7 @@ def delete_all(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    keys = [x["_key"] for x in iter_documents(api.get_workflows_workflow_user_data, workflow_key)]
+    keys = [x["_key"] for x in iter_documents(api.get_user_data, workflow_key)]
     msg = f"This command will delete {len(keys)} user data objects."
     confirm_change(ctx, msg)
     for key in keys:
@@ -209,7 +209,7 @@ def get(ctx, api, key):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    item = api.get_workflows_workflow_user_data_key(workflow_key, key).to_dict()
+    item = api.get_user_data_key(workflow_key, key).to_dict()
     item.pop("_id")
     print(json.dumps(item, indent=2))
 
@@ -237,7 +237,7 @@ def list_user_data(ctx, api, filters, limit, skip):
     if limit is not None:
         filters["limit"] = limit
     data = []
-    for item in iter_documents(api.get_workflows_workflow_user_data, workflow_key, **filters):
+    for item in iter_documents(api.get_user_data, workflow_key, **filters):
         item = item.to_dict()
         item.pop("_id")
         data.append(item)

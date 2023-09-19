@@ -17,14 +17,14 @@ api = make_api(config.database_url)
 
 workflow_key = os.environ["TORC_WORKFLOW_KEY"]
 job_key = os.environ["TORC_JOB_KEY"]
-result = api.get_workflows_workflow_jobs_key_user_data_consumes(workflow_key, job_key)
+result = api.get_jobs_key_user_data_consumes(workflow_key, job_key)
 assert len(result.items) == 2, result
 total = 0
 for item in result.items:
     total += item.data["val"]
 
-result = api.get_workflows_workflow_jobs_key_user_data_stores(workflow_key, job_key)
+result = api.get_jobs_key_user_data_stores(workflow_key, job_key)
 assert len(result.items) == 1, result
 output_data = result.items[0]
 output_data.data = {"result": total}
-api.put_workflows_workflow_user_data_key(workflow_key, output_data.key, output_data)
+api.put_user_data_key(workflow_key, output_data.key, output_data)

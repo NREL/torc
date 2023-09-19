@@ -15,7 +15,7 @@
         blocked_by=nothing,
     )
 
-    - job::WorkflowJobsModel
+    - job::JobsModel
     - resource_requirements::String
     - scheduler::String
     - input_files::Vector{String}
@@ -25,7 +25,7 @@
     - blocked_by::Vector{String}
 """
 Base.@kwdef mutable struct JobWithEdgesModel <: OpenAPI.APIModel
-    job = nothing # spec type: Union{ Nothing, WorkflowJobsModel }
+    job = nothing # spec type: Union{ Nothing, JobsModel }
     resource_requirements::Union{Nothing, String} = nothing
     scheduler::Union{Nothing, String} = nothing
     input_files::Union{Nothing, Vector{String}} = nothing
@@ -47,7 +47,7 @@ Base.@kwdef mutable struct JobWithEdgesModel <: OpenAPI.APIModel
     end
 end # type JobWithEdgesModel
 
-const _property_types_JobWithEdgesModel = Dict{Symbol,String}(Symbol("job")=>"WorkflowJobsModel", Symbol("resource_requirements")=>"String", Symbol("scheduler")=>"String", Symbol("input_files")=>"Vector{String}", Symbol("output_files")=>"Vector{String}", Symbol("input_user_data")=>"Vector{String}", Symbol("output_user_data")=>"Vector{String}", Symbol("blocked_by")=>"Vector{String}", )
+const _property_types_JobWithEdgesModel = Dict{Symbol,String}(Symbol("job")=>"JobsModel", Symbol("resource_requirements")=>"String", Symbol("scheduler")=>"String", Symbol("input_files")=>"Vector{String}", Symbol("output_files")=>"Vector{String}", Symbol("input_user_data")=>"Vector{String}", Symbol("output_user_data")=>"Vector{String}", Symbol("blocked_by")=>"Vector{String}", )
 OpenAPI.property_type(::Type{ JobWithEdgesModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_JobWithEdgesModel[name]))}
 
 function check_required(o::JobWithEdgesModel)

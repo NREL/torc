@@ -102,7 +102,7 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
         nodes = json.loads(result.stdout)["compute_nodes"]
         assert len(nodes) == 2
 
-        results = api.get_workflows_workflow_results(key).items
+        results = api.get_results(key).items
         assert len(results) == 4
         for result in results:
             assert result.return_code == 0
@@ -122,7 +122,7 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
 
         start_events = []
         complete_events = []
-        for event in iter_documents(api.get_workflows_workflow_events, key):
+        for event in iter_documents(api.get_events, key):
             if event.get("category") == "job" and event.get("type") in ("start", "complete"):
                 timestamp = datetime.strptime(event["timestamp"], "%Y-%m-%dT%H:%M:%S.%fZ")
                 item = {
@@ -242,14 +242,14 @@ def _create_cpu_affinity_workflow(output_dir, slurm_account):
 
 
 def _check_cpu_affinity_results(api, key):
-    results = api.get_workflows_workflow_results(key).items
+    results = api.get_results(key).items
     assert len(results) == 4
     for result in results:
         assert result.return_code == 0
     # Eagle value
     num_cpus = None
     total_cpu_affinity = set()
-    for ud in api.get_workflows_workflow_user_data(key).items:
+    for ud in api.get_user_data(key).items:
         if num_cpus is None:
             num_cpus = ud.data["num_cpus"]
         else:
@@ -284,9 +284,7 @@ def _fix_mem_requirement(spec_file, index, mem):
 
 def _get_scheduler_by_name(api, workflow_key):
     slurm_configs = [
-        x
-        for x in iter_documents(api.get_workflows_workflow_slurm_schedulers, workflow_key)
-        if x.name == "debug"
+        x for x in iter_documents(api.get_slurm_schedulers, workflow_key) if x.name == "debug"
     ]
     assert slurm_configs
     return slurm_configs[0]
@@ -305,9 +303,7 @@ def _wait_for_workflow_complete(api, key, timeout=600):
 
 
 def _wait_for_compute_nodes(api, key):
-    slurm_job_ids = {
-        x.scheduler["slurm_job_id"] for x in api.get_workflows_workflow_compute_nodes(key).items
-    }
+    slurm_job_ids = {x.scheduler["slurm_job_id"] for x in api.get_compute_nodes(key).items}
     intf = SlurmInterface()
     timeout = time.time() + 300
     while time.time() < timeout and slurm_job_ids:

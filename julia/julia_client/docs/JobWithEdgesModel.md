@@ -4,7 +4,7 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**job** | [***WorkflowJobsModel**](WorkflowJobsModel.md) |  | [default to nothing]
+**job** | [***JobsModel**](JobsModel.md) |  | [default to nothing]
 **resource_requirements** | **String** |  | [optional] [default to nothing]
 **scheduler** | **String** |  | [optional] [default to nothing]
 **input_files** | **Vector{String}** |  | [optional] [default to nothing]

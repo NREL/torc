@@ -20,14 +20,14 @@ import json
 
 from typing import List, Optional
 from pydantic import Field, ConfigDict, BaseModel, StrictStr
-from torc.openapi_client.models.workflow_jobs_model import WorkflowJobsModel
+from torc.openapi_client.models.jobs_model import JobsModel
 from typing_extensions import Annotated
 
 class PostWorkflowsKeyPrepareJobsForSubmissionResponse(BaseModel):
     """
     PostWorkflowsKeyPrepareJobsForSubmissionResponse
     """
-    jobs: Optional[Annotated[List[WorkflowJobsModel], Field()]] = None
+    jobs: Optional[Annotated[List[JobsModel], Field()]] = None
     reason: Optional[StrictStr] = None
     __properties = ["jobs", "reason"]
     model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
@@ -70,7 +70,7 @@ class PostWorkflowsKeyPrepareJobsForSubmissionResponse(BaseModel):
             return PostWorkflowsKeyPrepareJobsForSubmissionResponse.model_validate(obj)
 
         _obj = PostWorkflowsKeyPrepareJobsForSubmissionResponse.model_validate({
-            "jobs": [WorkflowJobsModel.from_dict(_item) for _item in obj.get("jobs")] if obj.get("jobs") is not None else None,
+            "jobs": [JobsModel.from_dict(_item) for _item in obj.get("jobs")] if obj.get("jobs") is not None else None,
             "reason": obj.get("reason")
         })
         return _obj

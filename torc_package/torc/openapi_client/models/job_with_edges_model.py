@@ -20,14 +20,14 @@ import json
 
 from typing import List, Optional
 from pydantic import ConfigDict, BaseModel, Field, StrictStr
-from torc.openapi_client.models.workflow_jobs_model import WorkflowJobsModel
+from torc.openapi_client.models.jobs_model import JobsModel
 from typing_extensions import Annotated
 
 class JobWithEdgesModel(BaseModel):
     """
     JobWithEdgesModel
     """
-    job: WorkflowJobsModel = Field(...)
+    job: JobsModel = Field(...)
     resource_requirements: Optional[StrictStr] = None
     scheduler: Optional[StrictStr] = None
     input_files: Optional[Annotated[List[StrictStr], Field()]] = None
@@ -72,7 +72,7 @@ class JobWithEdgesModel(BaseModel):
             return JobWithEdgesModel.model_validate(obj)
 
         _obj = JobWithEdgesModel.model_validate({
-            "job": WorkflowJobsModel.from_dict(obj.get("job")) if obj.get("job") is not None else None,
+            "job": JobsModel.from_dict(obj.get("job")) if obj.get("job") is not None else None,
             "resource_requirements": obj.get("resource_requirements"),
             "scheduler": obj.get("scheduler"),
             "input_files": obj.get("input_files"),

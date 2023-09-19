@@ -9,7 +9,7 @@ from pathlib import Path
 
 import click
 import json5
-from torc.openapi_client.models.workflow_jobs_model import WorkflowJobsModel
+from torc.openapi_client.models.jobs_model import JobsModel
 from torc.openapi_client.models.workflows_model import WorkflowsModel
 from torc.openapi_client.models.workflow_specifications_model import (
     WorkflowSpecificationsModel,
@@ -179,9 +179,7 @@ def create_from_commands_file(
         print(json.dumps({"filename": filename, "key": workflow.key}))
     for i, command in enumerate(commands, start=1):
         name = str(i)
-        api.post_workflows_workflow_jobs(
-            workflow.key, WorkflowJobsModel(name=name, command=command)
-        )
+        api.post_jobs(workflow.key, JobsModel(name=name, command=command))
     if update_rc_with_key:
         _update_torc_rc(api, workflow)
 
@@ -306,7 +304,7 @@ def list_scheduler_configs(ctx, api):
     workflow_key = get_workflow_key_from_context(ctx, api)
     items = []
     for scheduler in ("aws_schedulers", "local_schedulers", "slurm_schedulers"):
-        method = getattr(api, f"get_workflows_workflow_{scheduler}")
+        method = getattr(api, f"get_{scheduler}")
         for doc in iter_documents(method, workflow_key):
             items.append(doc.id)
 
@@ -557,7 +555,7 @@ def start(ctx, api, auto_tune_resource_requirements, ignore_missing_data):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     _exit_if_jobs_are_running(api, workflow_key)
-    done_jobs = api.get_workflows_workflow_jobs(workflow_key, status="done", limit=1).items
+    done_jobs = api.get_jobs(workflow_key, status="done", limit=1).items
     if done_jobs:
         workflow = api.get_workflows_key(workflow_key)
         msg = f"""This workflow has one or more jobs with a status of 'done.' This command will
@@ -609,7 +607,7 @@ def start_workflow(
         auto_tune_resource_requirements=auto_tune_resource_requirements,
         ignore_missing_data=ignore_missing_data,
     )
-    api.post_workflows_workflow_events(
+    api.post_events(
         workflow_key,
         {
             "category": "workflow",
@@ -625,7 +623,7 @@ def restart_workflow(api, workflow_key, only_uninitialized=False, ignore_missing
     """Restarts the workflow."""
     mgr = WorkflowManager(api, workflow_key)
     mgr.restart(ignore_missing_data=ignore_missing_data, only_uninitialized=only_uninitialized)
-    api.post_workflows_workflow_events(
+    api.post_events(
         workflow_key,
         {
             "category": "workflow",
@@ -641,7 +639,7 @@ def reset_workflow_status(api, workflow_key):
     """Resets the status of the workflow."""
     api.post_workflows_key_reset_status(workflow_key)
     logger.info("Reset workflow status")
-    api.post_workflows_workflow_events(
+    api.post_events(
         workflow_key,
         {
             "category": "workflow",
@@ -656,7 +654,7 @@ def reset_workflow_job_status(api, workflow_key, failed_only=False):
     """Resets the status of the workflow jobs."""
     api.post_workflows_key_reset_job_status(workflow_key, failed_only=failed_only)
     logger.info("Reset job status, failed_only=%s", failed_only)
-    api.post_workflows_workflow_events(
+    api.post_events(
         workflow_key,
         {
             "category": "workflow",
@@ -670,7 +668,7 @@ def reset_workflow_job_status(api, workflow_key, failed_only=False):
 def cancel_workflow(api, workflow_key):
     """Cancels the workflow."""
     # TODO: Handling different scheduler types needs to be at a lower level.
-    for job in api.get_workflows_workflow_scheduled_compute_nodes(workflow_key).items:
+    for job in api.get_scheduled_compute_nodes(workflow_key).items:
         if (
             job.status != "complete"
             and job.scheduler_config_id.split("/")[0].split("__")[0] == "slurm_schedulers"
@@ -680,11 +678,11 @@ def cancel_workflow(api, workflow_key):
             return_code = intf.cancel_job(job.scheduler_id)
             if return_code == 0:
                 job.status = "complete"
-                api.put_workflows_workflow_scheduled_compute_nodes_key(workflow_key, job.key, job)
+                api.put_scheduled_compute_nodes_key(workflow_key, job.key, job)
             # else: Ignore all return codes and try to cancel all jobs.
     api.put_workflows_key_cancel(workflow_key)
     logger.info("Canceled workflow %s", workflow_key)
-    api.post_workflows_workflow_events(
+    api.post_events(
         workflow_key,
         {
             "category": "workflow",
@@ -697,8 +695,8 @@ def cancel_workflow(api, workflow_key):
 
 def has_running_jobs(api, workflow_key) -> bool:
     """Returns True if jobs are running."""
-    submitted = api.get_workflows_workflow_jobs(workflow_key, status="submitted", limit=1)
-    sub_pend = api.get_workflows_workflow_jobs(workflow_key, status="submitted_pending", limit=1)
+    submitted = api.get_jobs(workflow_key, status="submitted", limit=1)
+    sub_pend = api.get_jobs(workflow_key, status="submitted_pending", limit=1)
     return len(submitted.items) > 0 or len(sub_pend.items) > 0
 
 

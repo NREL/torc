@@ -12,10 +12,10 @@ from click.testing import CliRunner
 from torc.openapi_client.models.compute_nodes_resources import (
     ComputeNodesResources,
 )
-from torc.openapi_client.models.workflow_user_data_model import (
-    WorkflowUserDataModel,
+from torc.openapi_client.models.user_data_model import (
+    UserDataModel,
 )
-from torc.openapi_client.models.workflow_results_model import WorkflowResultsModel
+from torc.openapi_client.models.results_model import ResultsModel
 
 from torc.api import iter_documents
 from torc.cli.torc import cli
@@ -34,7 +34,7 @@ def test_run_workflow(diamond_workflow):
     db, scheduler_config_id, output_dir = diamond_workflow
     api = db.api
     timer_stats_collector.enable()
-    user_data_work1 = api.get_workflows_workflow_jobs_key_user_data_consumes(
+    user_data_work1 = api.get_jobs_key_user_data_consumes(
         db.workflow.key, db.get_document_key("jobs", "work1")
     )
     assert len(user_data_work1.items) == 1
@@ -59,7 +59,7 @@ def test_run_workflow(diamond_workflow):
 
     assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
     for name in ["preprocess", "work1", "work2", "postprocess"]:
-        result = api.get_workflows_workflow_results_find_by_job_key(
+        result = api.get_results_find_by_job_key(
             db.workflow.key, db.get_document_key("jobs", name)
         )
         assert result.return_code == 0
@@ -70,26 +70,21 @@ def test_run_workflow(diamond_workflow):
         # assert file.file_hash
         assert file.st_mtime
 
-    result_data_work1 = WorkflowUserDataModel(name="result1", data={"result": 1})
-    result_data_overall = WorkflowUserDataModel(name="overall_result", data={"overall_result": 2})
-    result_data_work1 = api.post_workflows_workflow_jobs_key_user_data(
+    result_data_work1 = UserDataModel(name="result1", data={"result": 1})
+    result_data_overall = UserDataModel(name="overall_result", data={"overall_result": 2})
+    result_data_work1 = api.post_jobs_key_user_data(
         db.workflow.key, db.get_document_key("jobs", "work1"), result_data_work1
     )
-    ud_work1_consumes = api.get_workflows_workflow_jobs_key_user_data_consumes(
+    ud_work1_consumes = api.get_jobs_key_user_data_consumes(
         db.workflow.key, db.get_document_key("jobs", "work1")
     )
     assert len(ud_work1_consumes.items) == 1
-    ud_work1_produces = api.get_workflows_workflow_jobs_key_user_data_stores(
+    ud_work1_produces = api.get_jobs_key_user_data_stores(
         db.workflow.key, db.get_document_key("jobs", "work1")
     )
     assert len(ud_work1_produces.items) == 1
-    result_data_overall = api.post_workflows_workflow_user_data(
-        db.workflow.key, result_data_overall
-    )
-    assert (
-        api.get_workflows_workflow_user_data_key(db.workflow.key, result_data_overall.key).name
-        == "overall_result"
-    )
+    result_data_overall = api.post_user_data(db.workflow.key, result_data_overall)
+    assert api.get_user_data_key(db.workflow.key, result_data_overall.key).name == "overall_result"
 
     events = db.list_documents("events")
     # start for workflow, start and stop for worker, start and stop for each job
@@ -147,7 +142,7 @@ def test_run_workflow_user_data_dependencies(diamond_workflow_user_data):
 
         assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
         for name in ["preprocess", "work1", "work2", "postprocess"]:
-            result = api.get_workflows_workflow_results_find_by_job_key(
+            result = api.get_results_find_by_job_key(
                 db.workflow.key, db.get_document_key("jobs", name)
             )
             assert result.return_code == 0
@@ -168,13 +163,11 @@ def test_run_workflow_user_data_dependencies(diamond_workflow_user_data):
     ud = db.get_document("user_data", "inputs")
     new_value = 42
     ud.data["val"] = new_value
-    api.put_workflows_workflow_user_data_key(db.workflow.key, ud.key, ud)
+    api.put_user_data_key(db.workflow.key, ud.key, ud)
     mgr.restart()
     assert not api.get_workflows_key_is_complete(db.workflow.key).is_complete
     for name in ["preprocess", "work1", "work2", "postprocess"]:
-        job = api.get_workflows_workflow_jobs_key(
-            db.workflow.key, db.get_document_key("jobs", name)
-        )
+        job = api.get_jobs_key(db.workflow.key, db.get_document_key("jobs", name))
         if job.name == "preprocess":
             assert job.status == "ready"
         else:
@@ -199,13 +192,13 @@ def test_run_workflow_user_data_ephemeral(workflow_with_ephemeral_resource, tmp_
     )
     runner.run_worker()
     assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
-    for result in iter_documents(api.get_workflows_workflow_results, db.workflow.key):
+    for result in iter_documents(api.get_results, db.workflow.key):
         assert result.return_code == 0
     assert db.get_document("user_data", "resource").data
     # Change the command so that the job gets rerun.
     job = db.get_document("jobs", "use_resource")
     job.command += " dummy_arg"
-    api.put_workflows_workflow_jobs_key(db.workflow.key, job.key, job)
+    api.put_jobs_key(db.workflow.key, job.key, job)
     mgr.restart()
     assert not db.get_document("user_data", "resource").data
     runner = JobRunner(
@@ -218,7 +211,7 @@ def test_run_workflow_user_data_ephemeral(workflow_with_ephemeral_resource, tmp_
     runner.run_worker()
     assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
     count = 0
-    for result in iter_documents(api.get_workflows_workflow_results, db.workflow.key):
+    for result in iter_documents(api.get_results, db.workflow.key):
         assert result.return_code == 0
         count += 1
     assert count == 4
@@ -242,7 +235,7 @@ def test_run_workflow_missing_user_data(diamond_workflow_user_data):
     mgr = WorkflowManager(api, db.workflow.key)
     ud = db.get_document("user_data", "inputs")
     ud.data.clear()
-    api.put_workflows_workflow_user_data_key(db.workflow.key, ud.key, ud)
+    api.put_user_data_key(db.workflow.key, ud.key, ud)
     with pytest.raises(InvalidWorkflow):
         mgr.start()
 
@@ -283,9 +276,7 @@ def test_cancel_with_failed_job(workflow_with_cancel):
     runner.run_worker()
     assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
     assert db.get_document("jobs", "job1").status == "done"
-    result = api.get_workflows_workflow_results_find_by_job_key(
-        db.workflow.key, db.get_document_key("jobs", "job1")
-    )
+    result = api.get_results_find_by_job_key(db.workflow.key, db.get_document_key("jobs", "job1"))
     assert result.return_code == 1
     expected_status = "canceled" if cancel_on_blocking_job_failure else "done"
     assert db.get_document("jobs", "job2").status == expected_status
@@ -314,9 +305,9 @@ def test_reset_job_status_failed_only(completed_workflow):
     for name in ("preprocess", "work1", "work2", "postprocess"):
         assert db.get_document("jobs", name).status == "done"
     job = db.get_document("jobs", "work2")
-    result = db.api.get_workflows_workflow_results_find_by_job_key(db.workflow.key, job.key)
+    result = db.api.get_results_find_by_job_key(db.workflow.key, job.key)
     result.return_code = 1
-    db.api.put_workflows_workflow_results_key(db.workflow.key, result.key, result)
+    db.api.put_results_key(db.workflow.key, result.key, result)
     db.api.post_workflows_key_reset_job_status(db.workflow.key, failed_only=True)
     assert db.get_document("jobs", "work2").status == "uninitialized"
     assert db.get_document("jobs", "postprocess").status == "uninitialized"
@@ -337,9 +328,9 @@ def test_reset_job_status_failed_blocked(completed_workflow):
     for name in ("preprocess", "work1", "work2", "postprocess"):
         assert db.get_document("jobs", name).status == "done"
     job = db.get_document("jobs", "preprocess")
-    result = db.api.get_workflows_workflow_results_find_by_job_key(db.workflow.key, job.key)
+    result = db.api.get_results_find_by_job_key(db.workflow.key, job.key)
     result.return_code = 1
-    db.api.put_workflows_workflow_results_key(db.workflow.key, result.key, result)
+    db.api.put_results_key(db.workflow.key, result.key, result)
     db.api.post_workflows_key_reset_job_status(db.workflow.key, failed_only=True)
     for name in ("preprocess", "work1", "work2", "postprocess"):
         assert db.get_document("jobs", name).status == "uninitialized"
@@ -359,9 +350,9 @@ def test_reset_job_status_cli(completed_workflow):
     for name in ("preprocess", "work1", "work2", "postprocess"):
         assert db.get_document("jobs", name).status == "done"
     job = db.get_document("jobs", "work1")
-    result = db.api.get_workflows_workflow_results_find_by_job_key(db.workflow.key, job.key)
+    result = db.api.get_results_find_by_job_key(db.workflow.key, job.key)
     result.return_code = 1
-    api.put_workflows_workflow_results_key(db.workflow.key, result.key, result)
+    api.put_results_key(db.workflow.key, result.key, result)
 
     runner = CliRunner(mix_stderr=False)
     result = runner.invoke(
@@ -412,7 +403,7 @@ def test_reinitialize_workflow_changed_non_critical_fields(completed_workflow, f
     db, _, _ = completed_workflow
     mgr = WorkflowManager(db.api, db.workflow.key)
     preprocess = None
-    for job in iter_documents(db.api.get_workflows_workflow_jobs, db.workflow.key):
+    for job in iter_documents(db.api.get_jobs, db.workflow.key):
         if job.name == "preprocess":
             preprocess = job
         assert job.status == "done"
@@ -422,9 +413,9 @@ def test_reinitialize_workflow_changed_non_critical_fields(completed_workflow, f
         "cancel_on_blocking_job_failure": not preprocess.cancel_on_blocking_job_failure,
     }
     setattr(preprocess, field, new_values[field])
-    db.api.put_workflows_workflow_jobs_key(db.workflow.key, preprocess.key, preprocess)
+    db.api.put_jobs_key(db.workflow.key, preprocess.key, preprocess)
     mgr.restart()
-    for job in iter_documents(db.api.get_workflows_workflow_jobs, db.workflow.key):
+    for job in iter_documents(db.api.get_jobs, db.workflow.key):
         assert job.status == "done"
 
 
@@ -436,7 +427,7 @@ def test_reinitialize_workflow_changed_critical_fields(completed_workflow, field
     job = db.get_document("jobs", "preprocess")
     assert job.status == "done"
     setattr(job, field, "new value")
-    db.api.put_workflows_workflow_jobs_key(db.workflow.key, job.key, job)
+    db.api.put_jobs_key(db.workflow.key, job.key, job)
     mgr.restart()
     assert db.get_document("jobs", "preprocess").status == "ready"
     for name in ("work1", "work2", "postprocess"):
@@ -575,7 +566,7 @@ def test_restart_uninitialized(diamond_workflow):
     for name in ("preprocess", "work1", "work2"):
         job = db.get_document("jobs", name)
         status = "done"
-        result = WorkflowResultsModel(
+        result = ResultsModel(
             job_key=job.key,
             run_id=1,
             return_code=0,
@@ -583,18 +574,16 @@ def test_restart_uninitialized(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.post_workflows_workflow_jobs_key_complete_job_status_rev_run_id(
+        job = api.post_jobs_key_complete_job_status_rev_run_id(
             db.workflow.key, job.id, status, job.rev, 1, result
         )
 
-        for file in api.get_workflows_workflow_files_produced_by_job_key(
-            db.workflow.key, job.key
-        ).items:
+        for file in api.get_files_produced_by_job_key(db.workflow.key, job.key).items:
             path = Path(file.path)
             if not path.exists():
                 path.touch()
                 file.st_mtime = path.stat().st_mtime
-                api.put_workflows_workflow_files_key(db.workflow.key, file.key, file)
+                api.put_files_key(db.workflow.key, file.key, file)
 
     runner = CliRunner(mix_stderr=False)
     job_key = db.get_document("jobs", "work2").key
@@ -650,7 +639,7 @@ def test_run_independent_job_workflow(independent_job_workflow, tmp_path):
 
     assert db.api.get_workflows_key_is_complete(db.workflow.key).is_complete
     for name in (str(i) for i in range(num_jobs)):
-        result = db.api.get_workflows_workflow_results_find_by_job_key(
+        result = db.api.get_results_find_by_job_key(
             db.workflow.key, db.get_document_key("jobs", name)
         )
         assert result.return_code == 0
@@ -696,7 +685,7 @@ def test_concurrent_submitters(independent_job_workflow, tmp_path):
     assert ret == 0
     assert db.api.get_workflows_key_is_complete(db.workflow.key).is_complete
     for name in (str(i) for i in range(num_jobs)):
-        result = db.api.get_workflows_workflow_results_find_by_job_key(
+        result = db.api.get_results_find_by_job_key(
             db.workflow.key, db.get_document_key("jobs", name)
         )
         assert result.return_code == 0
@@ -720,14 +709,14 @@ def test_map_functions(mapped_function_workflow):
     assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
     for i in range(5):
         job_key = db.get_document_key("jobs", str(i))
-        result = api.get_workflows_workflow_results_find_by_job_key(db.workflow.key, job_key)
+        result = api.get_results_find_by_job_key(db.workflow.key, job_key)
         assert result.return_code == 0
-        output_ud = api.get_workflows_workflow_jobs_key_user_data_stores(db.workflow.key, job_key)
+        output_ud = api.get_jobs_key_user_data_stores(db.workflow.key, job_key)
         assert len(output_ud.items) == 1
         assert "result" in output_ud.items[0].data
         assert "output_data_path" in output_ud.items[0].data
     pp_key = db.get_document_key("jobs", "postprocess")
-    output_ud = api.get_workflows_workflow_jobs_key_user_data_stores(db.workflow.key, pp_key)
+    output_ud = api.get_jobs_key_user_data_stores(db.workflow.key, pp_key)
     assert len(output_ud.items) == 1
     assert "total" in output_ud.items[0].data
     assert output_ud.items[0].data["total"] == 25
@@ -735,9 +724,9 @@ def test_map_functions(mapped_function_workflow):
 
 
 def _fake_complete_job(api, workflow_key, job):
-    job = api.put_workflows_workflow_jobs_key(workflow_key, job.key, job)
+    job = api.put_jobs_key(workflow_key, job.key, job)
     status = "done"
-    result = WorkflowResultsModel(
+    result = ResultsModel(
         job_key=job.key,
         run_id=1,
         return_code=0,
@@ -745,7 +734,7 @@ def _fake_complete_job(api, workflow_key, job):
         completion_time=str(datetime.now()),
         status=status,
     )
-    job = api.post_workflows_workflow_jobs_key_complete_job_status_rev_run_id(
+    job = api.post_jobs_key_complete_job_status_rev_run_id(
         workflow_key,
         job.key,
         status,

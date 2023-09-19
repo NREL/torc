@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import click
 
-from torc.openapi_client.models.workflow_results_model import WorkflowResultsModel
+from torc.openapi_client.models.results_model import ResultsModel
 from torc.api import iter_documents, map_job_keys_to_names, list_model_fields
 from .common import (
     check_database_url,
@@ -98,7 +98,7 @@ def list_results(
     mapping = None if exclude_job_names else map_job_keys_to_names(api, workflow_key)
     items = []
     results_by_job_key = defaultdict(list)
-    for item in iter_documents(api.get_workflows_workflow_results, workflow_key, **filters):
+    for item in iter_documents(api.get_results, workflow_key, **filters):
         row = {}
         if not exclude_job_names:
             row["job_name"] = mapping[item.job_key]
@@ -113,7 +113,7 @@ def list_results(
             job_results.sort(key=lambda x: x["run_id"])
             items.append(job_results[-1])
 
-    columns = list_model_fields(WorkflowResultsModel)
+    columns = list_model_fields(ResultsModel)
     if not exclude_job_names:
         assert columns[0] == "job_key", columns
         columns.insert(1, "job_name")

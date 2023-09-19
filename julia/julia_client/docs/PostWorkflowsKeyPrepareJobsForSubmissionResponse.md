@@ -4,7 +4,7 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**jobs** | [**Vector{WorkflowJobsModel}**](WorkflowJobsModel.md) |  | [optional] [default to nothing]
+**jobs** | [**Vector{JobsModel}**](JobsModel.md) |  | [optional] [default to nothing]
 **reason** | **String** |  | [optional] [default to nothing]
 
 

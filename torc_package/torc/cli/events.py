@@ -68,7 +68,7 @@ def list_events(ctx, api, after_key, filters, limit, skip):
             logger.warning("Skip is ignored when --after-key is set.")
         evts = iter_documents(api.get_events_after_key, workflow_key, after_key, **filters)
     else:
-        evts = iter_documents(api.get_workflows_workflow_events, workflow_key, **filters)
+        evts = iter_documents(api.get_events, workflow_key, **filters)
 
     data = []
     for event in evts:

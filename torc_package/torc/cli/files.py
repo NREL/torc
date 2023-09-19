@@ -4,7 +4,7 @@ import json
 import logging
 
 import click
-from torc.openapi_client.models.workflow_files_model import WorkflowFilesModel
+from torc.openapi_client.models.files_model import FilesModel
 
 from torc.api import iter_documents, list_model_fields
 from .common import (
@@ -47,7 +47,7 @@ def add(ctx, api, name, path):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
-    file = WorkflowFilesModel(
+    file = FilesModel(
         name=name,
         path=path,
     )
@@ -82,7 +82,7 @@ def delete_all(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    for file in iter_documents(api.get_workflows_workflow_files, workflow_key):
+    for file in iter_documents(api.get_files, workflow_key):
         api.delete_workflows_workflow_files_key(workflow_key, file.key)
         logger.info("Deleted file %s", file.key)
 
@@ -129,11 +129,8 @@ def list_files(ctx, api, filters, sort_by, reverse_sort):
         filters["sort_by"] = sort_by
         filters["reverse_sort"] = reverse_sort
     table_title = f"Files in workflow {workflow_key}"
-    items = (
-        x.to_dict()
-        for x in iter_documents(api.get_workflows_workflow_files, workflow_key, **filters)
-    )
-    columns = list_model_fields(WorkflowFilesModel)
+    items = (x.to_dict() for x in iter_documents(api.get_files, workflow_key, **filters))
+    columns = list_model_fields(FilesModel)
     columns.remove("_id")
     columns.remove("_rev")
     print_items(ctx, items, table_title, columns, "files")

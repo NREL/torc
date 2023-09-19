@@ -4,8 +4,8 @@ import json
 import logging
 
 import click
-from torc.openapi_client.models.workflow_resource_requirements_model import (
-    WorkflowResourceRequirementsModel,
+from torc.openapi_client.models.resource_requirements_model import (
+    ResourceRequirementsModel,
 )
 
 from torc.api import iter_documents, list_model_fields
@@ -82,20 +82,18 @@ def add(ctx, api, name, num_cpus, memory, runtime, num_nodes, apply_to_all_jobs)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
-    rr = WorkflowResourceRequirementsModel(
+    rr = ResourceRequirementsModel(
         name=name,
         num_cpus=num_cpus,
         memory=memory,
         runtime=runtime,
         num_nodes=num_nodes,
     )
-    rr = api.post_workflows_workflow_resource_requirements(workflow_key, rr)
+    rr = api.post_resource_requirements(workflow_key, rr)
     edges = []
     if apply_to_all_jobs:
-        for job in iter_documents(api.get_workflows_workflow_jobs, workflow_key):
-            edge = api.put_workflows_workflow_jobs_key_resource_requirements_rr_key(
-                workflow_key, job.key, rr.key
-            )
+        for job in iter_documents(api.get_jobs, workflow_key):
+            edge = api.put_jobs_key_resource_requirements_rr_key(workflow_key, job.key, rr.key)
             edges.append(edge.to_dict())
 
     if output_format == "text":
@@ -146,9 +144,7 @@ def modify(ctx, api, resource_requirements_key, **kwargs):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
-    rr = api.get_workflows_workflow_resource_requirements_key(
-        workflow_key, resource_requirements_key
-    )
+    rr = api.get_resource_requirements_key(workflow_key, resource_requirements_key)
     changed = False
     for param in ("name", "num_cpus", "memory", "runtime", "num_nodes"):
         val = kwargs[param]
@@ -157,9 +153,7 @@ def modify(ctx, api, resource_requirements_key, **kwargs):
             changed = True
 
     if changed:
-        rr = api.put_workflows_workflow_resource_requirements_key(
-            workflow_key, resource_requirements_key, rr
-        )
+        rr = api.put_resource_requirements_key(workflow_key, resource_requirements_key, rr)
         if output_format == "text":
             logger.info(
                 "Modified resource requirements key = %s",
@@ -195,9 +189,7 @@ def delete_all(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    for resource_requirement in iter_documents(
-        api.get_workflows_workflow_resource_requirements, workflow_key
-    ):
+    for resource_requirement in iter_documents(api.get_resource_requirements, workflow_key):
         api.delete_workflows_workflow_resource_requirements_key(
             workflow_key, resource_requirement.key
         )
@@ -262,13 +254,10 @@ def list_resource_requirements(ctx, api, filters, limit, skip, sort_by, reverse_
         filters["sort_by"] = sort_by
         filters["reverse_sort"] = reverse_sort
     items = (
-        x.to_dict()
-        for x in iter_documents(
-            api.get_workflows_workflow_resource_requirements, workflow_key, **filters
-        )
+        x.to_dict() for x in iter_documents(api.get_resource_requirements, workflow_key, **filters)
     )
 
-    columns = list_model_fields(WorkflowResourceRequirementsModel)
+    columns = list_model_fields(ResourceRequirementsModel)
     columns.remove("_id")
     columns.remove("_rev")
     table_title = f"Resource requirements in workflow {workflow_key}"

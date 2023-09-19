@@ -10,14 +10,14 @@
         slurm_schedulers=nothing,
     )
 
-    - aws_schedulers::Vector{WorkflowAwsSchedulersModel}
-    - local_schedulers::Vector{WorkflowLocalSchedulersModel}
-    - slurm_schedulers::Vector{WorkflowSlurmSchedulersModel}
+    - aws_schedulers::Vector{AwsSchedulersModel}
+    - local_schedulers::Vector{LocalSchedulersModel}
+    - slurm_schedulers::Vector{SlurmSchedulersModel}
 """
 Base.@kwdef mutable struct WorkflowSpecificationsSchedulers <: OpenAPI.APIModel
-    aws_schedulers::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{WorkflowAwsSchedulersModel} }
-    local_schedulers::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{WorkflowLocalSchedulersModel} }
-    slurm_schedulers::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{WorkflowSlurmSchedulersModel} }
+    aws_schedulers::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{AwsSchedulersModel} }
+    local_schedulers::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{LocalSchedulersModel} }
+    slurm_schedulers::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{SlurmSchedulersModel} }
 
     function WorkflowSpecificationsSchedulers(aws_schedulers, local_schedulers, slurm_schedulers, )
         OpenAPI.validate_property(WorkflowSpecificationsSchedulers, Symbol("aws_schedulers"), aws_schedulers)
@@ -27,7 +27,7 @@ Base.@kwdef mutable struct WorkflowSpecificationsSchedulers <: OpenAPI.APIModel
     end
 end # type WorkflowSpecificationsSchedulers
 
-const _property_types_WorkflowSpecificationsSchedulers = Dict{Symbol,String}(Symbol("aws_schedulers")=>"Vector{WorkflowAwsSchedulersModel}", Symbol("local_schedulers")=>"Vector{WorkflowLocalSchedulersModel}", Symbol("slurm_schedulers")=>"Vector{WorkflowSlurmSchedulersModel}", )
+const _property_types_WorkflowSpecificationsSchedulers = Dict{Symbol,String}(Symbol("aws_schedulers")=>"Vector{AwsSchedulersModel}", Symbol("local_schedulers")=>"Vector{LocalSchedulersModel}", Symbol("slurm_schedulers")=>"Vector{SlurmSchedulersModel}", )
 OpenAPI.property_type(::Type{ WorkflowSpecificationsSchedulers }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_WorkflowSpecificationsSchedulers[name]))}
 
 function check_required(o::WorkflowSpecificationsSchedulers)

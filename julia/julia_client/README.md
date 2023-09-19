@@ -49,9 +49,48 @@ Class | Method
 *DefaultApi* | [**delete_workflows_workflow_slurm_schedulers_key**](docs/DefaultApi.md#delete_workflows_workflow_slurm_schedulers_key)<br/>**DELETE** /workflows/{workflow}/slurm_schedulers/{key}<br/>Delete a document of type Slurm compute node configuration
 *DefaultApi* | [**delete_workflows_workflow_user_data**](docs/DefaultApi.md#delete_workflows_workflow_user_data)<br/>**DELETE** /workflows/{workflow}/user_data<br/>Delete all documents of type user data for a workflow
 *DefaultApi* | [**delete_workflows_workflow_user_data_key**](docs/DefaultApi.md#delete_workflows_workflow_user_data_key)<br/>**DELETE** /workflows/{workflow}/user_data/{key}<br/>Delete a document of type user data
+*DefaultApi* | [**get_aws_schedulers**](docs/DefaultApi.md#get_aws_schedulers)<br/>**GET** /workflows/{workflow}/aws_schedulers<br/>Retrieve all AWS compute node configuration documents
+*DefaultApi* | [**get_aws_schedulers_key**](docs/DefaultApi.md#get_aws_schedulers_key)<br/>**GET** /workflows/{workflow}/aws_schedulers/{key}<br/>Retrieve the AWS compute node configuration for a key.
+*DefaultApi* | [**get_compute_node_stats**](docs/DefaultApi.md#get_compute_node_stats)<br/>**GET** /workflows/{workflow}/compute_node_stats<br/>Retrieve all compute node statistics documents
+*DefaultApi* | [**get_compute_node_stats_key**](docs/DefaultApi.md#get_compute_node_stats_key)<br/>**GET** /workflows/{workflow}/compute_node_stats/{key}<br/>Retrieve the compute node statistics for a key.
+*DefaultApi* | [**get_compute_nodes**](docs/DefaultApi.md#get_compute_nodes)<br/>**GET** /workflows/{workflow}/compute_nodes<br/>Retrieve all compute node documents
+*DefaultApi* | [**get_compute_nodes_key**](docs/DefaultApi.md#get_compute_nodes_key)<br/>**GET** /workflows/{workflow}/compute_nodes/{key}<br/>Retrieve the compute node for a key.
+*DefaultApi* | [**get_edges_name**](docs/DefaultApi.md#get_edges_name)<br/>**GET** /workflows/{workflow}/edges/{name}<br/>Retrieve all edges from the designated collection.
+*DefaultApi* | [**get_edges_name_key**](docs/DefaultApi.md#get_edges_name_key)<br/>**GET** /workflows/{workflow}/edges/{name}/{key}<br/>Retrieve an edge
+*DefaultApi* | [**get_events**](docs/DefaultApi.md#get_events)<br/>**GET** /workflows/{workflow}/events<br/>Retrieve all event documents
 *DefaultApi* | [**get_events_after_key**](docs/DefaultApi.md#get_events_after_key)<br/>**GET** /workflows/{key}/events_after_key/{event_key}<br/>Return all events newer than the event with event_key.
+*DefaultApi* | [**get_events_key**](docs/DefaultApi.md#get_events_key)<br/>**GET** /workflows/{workflow}/events/{key}<br/>Retrieve the event for a key.
+*DefaultApi* | [**get_files**](docs/DefaultApi.md#get_files)<br/>**GET** /workflows/{workflow}/files<br/>Retrieve all file documents
+*DefaultApi* | [**get_files_key**](docs/DefaultApi.md#get_files_key)<br/>**GET** /workflows/{workflow}/files/{key}<br/>Retrieve the file for a key.
+*DefaultApi* | [**get_files_produced_by_job_key**](docs/DefaultApi.md#get_files_produced_by_job_key)<br/>**GET** /workflows/{workflow}/files/produced_by_job/{key}<br/>Retrieve files produced by a job
+*DefaultApi* | [**get_job_keys**](docs/DefaultApi.md#get_job_keys)<br/>**GET** /workflows/{workflow}/job_keys<br/>Retrieve all job keys for a workflow.
+*DefaultApi* | [**get_job_process_stats**](docs/DefaultApi.md#get_job_process_stats)<br/>**GET** /workflows/{workflow}/job_process_stats<br/>Retrieve all job process statistics documents
+*DefaultApi* | [**get_job_process_stats_key**](docs/DefaultApi.md#get_job_process_stats_key)<br/>**GET** /workflows/{workflow}/job_process_stats/{key}<br/>Retrieve the job process statistics for a key.
+*DefaultApi* | [**get_job_specifications**](docs/DefaultApi.md#get_job_specifications)<br/>**GET** /workflows/{workflow}/job_specifications<br/>Retrieve all job definitions
+*DefaultApi* | [**get_job_specifications_key**](docs/DefaultApi.md#get_job_specifications_key)<br/>**GET** /workflows/{workflow}/job_specifications/{key}<br/>Retrieve a job
+*DefaultApi* | [**get_jobs**](docs/DefaultApi.md#get_jobs)<br/>**GET** /workflows/{workflow}/jobs<br/>Retrieve all job documents
+*DefaultApi* | [**get_jobs_find_by_needs_file_key**](docs/DefaultApi.md#get_jobs_find_by_needs_file_key)<br/>**GET** /workflows/{workflow}/jobs/find_by_needs_file/{key}<br/>Retrieve all jobs that need a file
+*DefaultApi* | [**get_jobs_find_by_status_status**](docs/DefaultApi.md#get_jobs_find_by_status_status)<br/>**GET** /workflows/{workflow}/jobs/find_by_status/{status}<br/>Retrieve all jobs with a specific status
+*DefaultApi* | [**get_jobs_key**](docs/DefaultApi.md#get_jobs_key)<br/>**GET** /workflows/{workflow}/jobs/{key}<br/>Retrieve the job for a key.
+*DefaultApi* | [**get_jobs_key_process_stats**](docs/DefaultApi.md#get_jobs_key_process_stats)<br/>**GET** /workflows/{workflow}/jobs/{key}/process_stats<br/>Retrieve the job process stats for a job.
+*DefaultApi* | [**get_jobs_key_resource_requirements**](docs/DefaultApi.md#get_jobs_key_resource_requirements)<br/>**GET** /workflows/{workflow}/jobs/{key}/resource_requirements<br/>Retrieve the resource requirements for a job.
+*DefaultApi* | [**get_jobs_key_user_data_consumes**](docs/DefaultApi.md#get_jobs_key_user_data_consumes)<br/>**GET** /workflows/{workflow}/jobs/{key}/user_data_consumes<br/>Retrieve all user data consumed by a job.
+*DefaultApi* | [**get_jobs_key_user_data_stores**](docs/DefaultApi.md#get_jobs_key_user_data_stores)<br/>**GET** /workflows/{workflow}/jobs/{key}/user_data_stores<br/>Retrieve all user data for a job.
 *DefaultApi* | [**get_latest_event_key**](docs/DefaultApi.md#get_latest_event_key)<br/>**GET** /workflows/{key}/latest_event_key<br/>Return the key of the latest event.
+*DefaultApi* | [**get_local_schedulers**](docs/DefaultApi.md#get_local_schedulers)<br/>**GET** /workflows/{workflow}/local_schedulers<br/>Retrieve all local compute node configuration documents
+*DefaultApi* | [**get_local_schedulers_key**](docs/DefaultApi.md#get_local_schedulers_key)<br/>**GET** /workflows/{workflow}/local_schedulers/{key}<br/>Retrieve the local compute node configuration for a key.
 *DefaultApi* | [**get_ping**](docs/DefaultApi.md#get_ping)<br/>**GET** /ping<br/>Check if the service is running.
+*DefaultApi* | [**get_resource_requirements**](docs/DefaultApi.md#get_resource_requirements)<br/>**GET** /workflows/{workflow}/resource_requirements<br/>Retrieve all resource requirements documents
+*DefaultApi* | [**get_resource_requirements_key**](docs/DefaultApi.md#get_resource_requirements_key)<br/>**GET** /workflows/{workflow}/resource_requirements/{key}<br/>Retrieve the resource requirements for a key.
+*DefaultApi* | [**get_results**](docs/DefaultApi.md#get_results)<br/>**GET** /workflows/{workflow}/results<br/>Retrieve all result documents
+*DefaultApi* | [**get_results_find_by_job_key**](docs/DefaultApi.md#get_results_find_by_job_key)<br/>**GET** /workflows/{workflow}/results/find_by_job/{key}<br/>Retrieve the latest result for a job
+*DefaultApi* | [**get_results_key**](docs/DefaultApi.md#get_results_key)<br/>**GET** /workflows/{workflow}/results/{key}<br/>Retrieve the result for a key.
+*DefaultApi* | [**get_scheduled_compute_nodes**](docs/DefaultApi.md#get_scheduled_compute_nodes)<br/>**GET** /workflows/{workflow}/scheduled_compute_nodes<br/>Retrieve all scheduled compute node documents
+*DefaultApi* | [**get_scheduled_compute_nodes_key**](docs/DefaultApi.md#get_scheduled_compute_nodes_key)<br/>**GET** /workflows/{workflow}/scheduled_compute_nodes/{key}<br/>Retrieve the scheduled compute node for a key.
+*DefaultApi* | [**get_slurm_schedulers**](docs/DefaultApi.md#get_slurm_schedulers)<br/>**GET** /workflows/{workflow}/slurm_schedulers<br/>Retrieve all Slurm compute node configuration documents
+*DefaultApi* | [**get_slurm_schedulers_key**](docs/DefaultApi.md#get_slurm_schedulers_key)<br/>**GET** /workflows/{workflow}/slurm_schedulers/{key}<br/>Retrieve the Slurm compute node configuration for a key.
+*DefaultApi* | [**get_user_data**](docs/DefaultApi.md#get_user_data)<br/>**GET** /workflows/{workflow}/user_data<br/>Retrieve all user data documents
+*DefaultApi* | [**get_user_data_key**](docs/DefaultApi.md#get_user_data_key)<br/>**GET** /workflows/{workflow}/user_data/{key}<br/>Retrieve the user data for a key.
 *DefaultApi* | [**get_workflow_specifications_example**](docs/DefaultApi.md#get_workflow_specifications_example)<br/>**GET** /workflow_specifications/example<br/>Retrieve an example workflow specification
 *DefaultApi* | [**get_workflow_specifications_key**](docs/DefaultApi.md#get_workflow_specifications_key)<br/>**GET** /workflow_specifications/{key}<br/>Retrieve the current workflow
 *DefaultApi* | [**get_workflow_specifications_template**](docs/DefaultApi.md#get_workflow_specifications_template)<br/>**GET** /workflow_specifications/template<br/>Retrieve the workflow specification template
@@ -65,45 +104,24 @@ Class | Method
 *DefaultApi* | [**get_workflows_key_ready_job_requirements**](docs/DefaultApi.md#get_workflows_key_ready_job_requirements)<br/>**GET** /workflows/{key}/ready_job_requirements<br/>Return the resource requirements for ready jobs.
 *DefaultApi* | [**get_workflows_key_required_existing_files**](docs/DefaultApi.md#get_workflows_key_required_existing_files)<br/>**GET** /workflows/{key}/required_existing_files<br/>List files that must exist.
 *DefaultApi* | [**get_workflows_key_status**](docs/DefaultApi.md#get_workflows_key_status)<br/>**GET** /workflows/{key}/status<br/>Reports the workflow status.
-*DefaultApi* | [**get_workflows_workflow_aws_schedulers**](docs/DefaultApi.md#get_workflows_workflow_aws_schedulers)<br/>**GET** /workflows/{workflow}/aws_schedulers<br/>Retrieve all AWS compute node configuration documents
-*DefaultApi* | [**get_workflows_workflow_aws_schedulers_key**](docs/DefaultApi.md#get_workflows_workflow_aws_schedulers_key)<br/>**GET** /workflows/{workflow}/aws_schedulers/{key}<br/>Retrieve the AWS compute node configuration for a key.
-*DefaultApi* | [**get_workflows_workflow_compute_node_stats**](docs/DefaultApi.md#get_workflows_workflow_compute_node_stats)<br/>**GET** /workflows/{workflow}/compute_node_stats<br/>Retrieve all compute node statistics documents
-*DefaultApi* | [**get_workflows_workflow_compute_node_stats_key**](docs/DefaultApi.md#get_workflows_workflow_compute_node_stats_key)<br/>**GET** /workflows/{workflow}/compute_node_stats/{key}<br/>Retrieve the compute node statistics for a key.
-*DefaultApi* | [**get_workflows_workflow_compute_nodes**](docs/DefaultApi.md#get_workflows_workflow_compute_nodes)<br/>**GET** /workflows/{workflow}/compute_nodes<br/>Retrieve all compute node documents
-*DefaultApi* | [**get_workflows_workflow_compute_nodes_key**](docs/DefaultApi.md#get_workflows_workflow_compute_nodes_key)<br/>**GET** /workflows/{workflow}/compute_nodes/{key}<br/>Retrieve the compute node for a key.
-*DefaultApi* | [**get_workflows_workflow_edges_name**](docs/DefaultApi.md#get_workflows_workflow_edges_name)<br/>**GET** /workflows/{workflow}/edges/{name}<br/>Retrieve all edges from the designated collection.
-*DefaultApi* | [**get_workflows_workflow_edges_name_key**](docs/DefaultApi.md#get_workflows_workflow_edges_name_key)<br/>**GET** /workflows/{workflow}/edges/{name}/{key}<br/>Retrieve an edge
-*DefaultApi* | [**get_workflows_workflow_events**](docs/DefaultApi.md#get_workflows_workflow_events)<br/>**GET** /workflows/{workflow}/events<br/>Retrieve all event documents
-*DefaultApi* | [**get_workflows_workflow_events_key**](docs/DefaultApi.md#get_workflows_workflow_events_key)<br/>**GET** /workflows/{workflow}/events/{key}<br/>Retrieve the event for a key.
-*DefaultApi* | [**get_workflows_workflow_files**](docs/DefaultApi.md#get_workflows_workflow_files)<br/>**GET** /workflows/{workflow}/files<br/>Retrieve all file documents
-*DefaultApi* | [**get_workflows_workflow_files_key**](docs/DefaultApi.md#get_workflows_workflow_files_key)<br/>**GET** /workflows/{workflow}/files/{key}<br/>Retrieve the file for a key.
-*DefaultApi* | [**get_workflows_workflow_files_produced_by_job_key**](docs/DefaultApi.md#get_workflows_workflow_files_produced_by_job_key)<br/>**GET** /workflows/{workflow}/files/produced_by_job/{key}<br/>Retrieve files produced by a job
-*DefaultApi* | [**get_workflows_workflow_job_keys**](docs/DefaultApi.md#get_workflows_workflow_job_keys)<br/>**GET** /workflows/{workflow}/job_keys<br/>Retrieve all job keys for a workflow.
-*DefaultApi* | [**get_workflows_workflow_job_process_stats**](docs/DefaultApi.md#get_workflows_workflow_job_process_stats)<br/>**GET** /workflows/{workflow}/job_process_stats<br/>Retrieve all job process statistics documents
-*DefaultApi* | [**get_workflows_workflow_job_process_stats_key**](docs/DefaultApi.md#get_workflows_workflow_job_process_stats_key)<br/>**GET** /workflows/{workflow}/job_process_stats/{key}<br/>Retrieve the job process statistics for a key.
-*DefaultApi* | [**get_workflows_workflow_job_specifications**](docs/DefaultApi.md#get_workflows_workflow_job_specifications)<br/>**GET** /workflows/{workflow}/job_specifications<br/>Retrieve all job definitions
-*DefaultApi* | [**get_workflows_workflow_job_specifications_key**](docs/DefaultApi.md#get_workflows_workflow_job_specifications_key)<br/>**GET** /workflows/{workflow}/job_specifications/{key}<br/>Retrieve a job
-*DefaultApi* | [**get_workflows_workflow_jobs**](docs/DefaultApi.md#get_workflows_workflow_jobs)<br/>**GET** /workflows/{workflow}/jobs<br/>Retrieve all job documents
-*DefaultApi* | [**get_workflows_workflow_jobs_find_by_needs_file_key**](docs/DefaultApi.md#get_workflows_workflow_jobs_find_by_needs_file_key)<br/>**GET** /workflows/{workflow}/jobs/find_by_needs_file/{key}<br/>Retrieve all jobs that need a file
-*DefaultApi* | [**get_workflows_workflow_jobs_find_by_status_status**](docs/DefaultApi.md#get_workflows_workflow_jobs_find_by_status_status)<br/>**GET** /workflows/{workflow}/jobs/find_by_status/{status}<br/>Retrieve all jobs with a specific status
-*DefaultApi* | [**get_workflows_workflow_jobs_key**](docs/DefaultApi.md#get_workflows_workflow_jobs_key)<br/>**GET** /workflows/{workflow}/jobs/{key}<br/>Retrieve the job for a key.
-*DefaultApi* | [**get_workflows_workflow_jobs_key_process_stats**](docs/DefaultApi.md#get_workflows_workflow_jobs_key_process_stats)<br/>**GET** /workflows/{workflow}/jobs/{key}/process_stats<br/>Retrieve the job process stats for a job.
-*DefaultApi* | [**get_workflows_workflow_jobs_key_resource_requirements**](docs/DefaultApi.md#get_workflows_workflow_jobs_key_resource_requirements)<br/>**GET** /workflows/{workflow}/jobs/{key}/resource_requirements<br/>Retrieve the resource requirements for a job.
-*DefaultApi* | [**get_workflows_workflow_jobs_key_user_data_consumes**](docs/DefaultApi.md#get_workflows_workflow_jobs_key_user_data_consumes)<br/>**GET** /workflows/{workflow}/jobs/{key}/user_data_consumes<br/>Retrieve all user data consumed by a job.
-*DefaultApi* | [**get_workflows_workflow_jobs_key_user_data_stores**](docs/DefaultApi.md#get_workflows_workflow_jobs_key_user_data_stores)<br/>**GET** /workflows/{workflow}/jobs/{key}/user_data_stores<br/>Retrieve all user data for a job.
-*DefaultApi* | [**get_workflows_workflow_local_schedulers**](docs/DefaultApi.md#get_workflows_workflow_local_schedulers)<br/>**GET** /workflows/{workflow}/local_schedulers<br/>Retrieve all local compute node configuration documents
-*DefaultApi* | [**get_workflows_workflow_local_schedulers_key**](docs/DefaultApi.md#get_workflows_workflow_local_schedulers_key)<br/>**GET** /workflows/{workflow}/local_schedulers/{key}<br/>Retrieve the local compute node configuration for a key.
-*DefaultApi* | [**get_workflows_workflow_resource_requirements**](docs/DefaultApi.md#get_workflows_workflow_resource_requirements)<br/>**GET** /workflows/{workflow}/resource_requirements<br/>Retrieve all resource requirements documents
-*DefaultApi* | [**get_workflows_workflow_resource_requirements_key**](docs/DefaultApi.md#get_workflows_workflow_resource_requirements_key)<br/>**GET** /workflows/{workflow}/resource_requirements/{key}<br/>Retrieve the resource requirements for a key.
-*DefaultApi* | [**get_workflows_workflow_results**](docs/DefaultApi.md#get_workflows_workflow_results)<br/>**GET** /workflows/{workflow}/results<br/>Retrieve all result documents
-*DefaultApi* | [**get_workflows_workflow_results_find_by_job_key**](docs/DefaultApi.md#get_workflows_workflow_results_find_by_job_key)<br/>**GET** /workflows/{workflow}/results/find_by_job/{key}<br/>Retrieve the latest result for a job
-*DefaultApi* | [**get_workflows_workflow_results_key**](docs/DefaultApi.md#get_workflows_workflow_results_key)<br/>**GET** /workflows/{workflow}/results/{key}<br/>Retrieve the result for a key.
-*DefaultApi* | [**get_workflows_workflow_scheduled_compute_nodes**](docs/DefaultApi.md#get_workflows_workflow_scheduled_compute_nodes)<br/>**GET** /workflows/{workflow}/scheduled_compute_nodes<br/>Retrieve all scheduled compute node documents
-*DefaultApi* | [**get_workflows_workflow_scheduled_compute_nodes_key**](docs/DefaultApi.md#get_workflows_workflow_scheduled_compute_nodes_key)<br/>**GET** /workflows/{workflow}/scheduled_compute_nodes/{key}<br/>Retrieve the scheduled compute node for a key.
-*DefaultApi* | [**get_workflows_workflow_slurm_schedulers**](docs/DefaultApi.md#get_workflows_workflow_slurm_schedulers)<br/>**GET** /workflows/{workflow}/slurm_schedulers<br/>Retrieve all Slurm compute node configuration documents
-*DefaultApi* | [**get_workflows_workflow_slurm_schedulers_key**](docs/DefaultApi.md#get_workflows_workflow_slurm_schedulers_key)<br/>**GET** /workflows/{workflow}/slurm_schedulers/{key}<br/>Retrieve the Slurm compute node configuration for a key.
-*DefaultApi* | [**get_workflows_workflow_user_data**](docs/DefaultApi.md#get_workflows_workflow_user_data)<br/>**GET** /workflows/{workflow}/user_data<br/>Retrieve all user data documents
-*DefaultApi* | [**get_workflows_workflow_user_data_key**](docs/DefaultApi.md#get_workflows_workflow_user_data_key)<br/>**GET** /workflows/{workflow}/user_data/{key}<br/>Retrieve the user data for a key.
+*DefaultApi* | [**post_aws_schedulers**](docs/DefaultApi.md#post_aws_schedulers)<br/>**POST** /workflows/{workflow}/aws_schedulers<br/>Store a AWS compute node configuration.
+*DefaultApi* | [**post_bulk_jobs**](docs/DefaultApi.md#post_bulk_jobs)<br/>**POST** /workflows/{workflow}/bulk_jobs<br/>Add jobs in bulk with edge definitions.
+*DefaultApi* | [**post_compute_node_stats**](docs/DefaultApi.md#post_compute_node_stats)<br/>**POST** /workflows/{workflow}/compute_node_stats<br/>Store a compute node statistics.
+*DefaultApi* | [**post_compute_nodes**](docs/DefaultApi.md#post_compute_nodes)<br/>**POST** /workflows/{workflow}/compute_nodes<br/>Store a compute node.
+*DefaultApi* | [**post_edges_name**](docs/DefaultApi.md#post_edges_name)<br/>**POST** /workflows/{workflow}/edges/{name}<br/>Store an edge between two vertexes.
+*DefaultApi* | [**post_events**](docs/DefaultApi.md#post_events)<br/>**POST** /workflows/{workflow}/events<br/>Store a event.
+*DefaultApi* | [**post_files**](docs/DefaultApi.md#post_files)<br/>**POST** /workflows/{workflow}/files<br/>Store a file.
+*DefaultApi* | [**post_job_process_stats**](docs/DefaultApi.md#post_job_process_stats)<br/>**POST** /workflows/{workflow}/job_process_stats<br/>Store a job process statistics.
+*DefaultApi* | [**post_job_specifications**](docs/DefaultApi.md#post_job_specifications)<br/>**POST** /workflows/{workflow}/job_specifications<br/>Store a job and create edges.
+*DefaultApi* | [**post_jobs**](docs/DefaultApi.md#post_jobs)<br/>**POST** /workflows/{workflow}/jobs<br/>Store a job.
+*DefaultApi* | [**post_jobs_key_complete_job_status_rev_run_id**](docs/DefaultApi.md#post_jobs_key_complete_job_status_rev_run_id)<br/>**POST** /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}<br/>Complete a job and add a result.
+*DefaultApi* | [**post_jobs_key_user_data**](docs/DefaultApi.md#post_jobs_key_user_data)<br/>**POST** /workflows/{workflow}/jobs/{key}/user_data<br/>Store user data for a job.
+*DefaultApi* | [**post_local_schedulers**](docs/DefaultApi.md#post_local_schedulers)<br/>**POST** /workflows/{workflow}/local_schedulers<br/>Store a local compute node configuration.
+*DefaultApi* | [**post_resource_requirements**](docs/DefaultApi.md#post_resource_requirements)<br/>**POST** /workflows/{workflow}/resource_requirements<br/>Store a resource requirements.
+*DefaultApi* | [**post_results**](docs/DefaultApi.md#post_results)<br/>**POST** /workflows/{workflow}/results<br/>Store a result.
+*DefaultApi* | [**post_scheduled_compute_nodes**](docs/DefaultApi.md#post_scheduled_compute_nodes)<br/>**POST** /workflows/{workflow}/scheduled_compute_nodes<br/>Store a scheduled compute node.
+*DefaultApi* | [**post_slurm_schedulers**](docs/DefaultApi.md#post_slurm_schedulers)<br/>**POST** /workflows/{workflow}/slurm_schedulers<br/>Store a Slurm compute node configuration.
+*DefaultApi* | [**post_user_data**](docs/DefaultApi.md#post_user_data)<br/>**POST** /workflows/{workflow}/user_data<br/>Store a user data.
 *DefaultApi* | [**post_workflow_specifications**](docs/DefaultApi.md#post_workflow_specifications)<br/>**POST** /workflow_specifications<br/>Store a workflow.
 *DefaultApi* | [**post_workflows**](docs/DefaultApi.md#post_workflows)<br/>**POST** /workflows<br/>Store a workflow.
 *DefaultApi* | [**post_workflows_key_auto_tune_resource_requirements**](docs/DefaultApi.md#post_workflows_key_auto_tune_resource_requirements)<br/>**POST** /workflows/{key}/auto_tune_resource_requirements<br/>Enable workflow for auto-tuning resource requirements.
@@ -117,52 +135,59 @@ Class | Method
 *DefaultApi* | [**post_workflows_key_process_changed_job_inputs**](docs/DefaultApi.md#post_workflows_key_process_changed_job_inputs)<br/>**POST** /workflows/{key}/process_changed_job_inputs<br/>Check for changed job inputs and update status accordingly.
 *DefaultApi* | [**post_workflows_key_reset_job_status**](docs/DefaultApi.md#post_workflows_key_reset_job_status)<br/>**POST** /workflows/{key}/reset_job_status<br/>Reset job status.
 *DefaultApi* | [**post_workflows_key_reset_status**](docs/DefaultApi.md#post_workflows_key_reset_status)<br/>**POST** /workflows/{key}/reset_status<br/>Reset worklow status.
-*DefaultApi* | [**post_workflows_workflow_aws_schedulers**](docs/DefaultApi.md#post_workflows_workflow_aws_schedulers)<br/>**POST** /workflows/{workflow}/aws_schedulers<br/>Store a AWS compute node configuration.
-*DefaultApi* | [**post_workflows_workflow_bulk_jobs**](docs/DefaultApi.md#post_workflows_workflow_bulk_jobs)<br/>**POST** /workflows/{workflow}/bulk_jobs<br/>Add jobs in bulk with edge definitions.
-*DefaultApi* | [**post_workflows_workflow_compute_node_stats**](docs/DefaultApi.md#post_workflows_workflow_compute_node_stats)<br/>**POST** /workflows/{workflow}/compute_node_stats<br/>Store a compute node statistics.
-*DefaultApi* | [**post_workflows_workflow_compute_nodes**](docs/DefaultApi.md#post_workflows_workflow_compute_nodes)<br/>**POST** /workflows/{workflow}/compute_nodes<br/>Store a compute node.
-*DefaultApi* | [**post_workflows_workflow_edges_name**](docs/DefaultApi.md#post_workflows_workflow_edges_name)<br/>**POST** /workflows/{workflow}/edges/{name}<br/>Store an edge between two vertexes.
-*DefaultApi* | [**post_workflows_workflow_events**](docs/DefaultApi.md#post_workflows_workflow_events)<br/>**POST** /workflows/{workflow}/events<br/>Store a event.
-*DefaultApi* | [**post_workflows_workflow_files**](docs/DefaultApi.md#post_workflows_workflow_files)<br/>**POST** /workflows/{workflow}/files<br/>Store a file.
-*DefaultApi* | [**post_workflows_workflow_job_process_stats**](docs/DefaultApi.md#post_workflows_workflow_job_process_stats)<br/>**POST** /workflows/{workflow}/job_process_stats<br/>Store a job process statistics.
-*DefaultApi* | [**post_workflows_workflow_job_specifications**](docs/DefaultApi.md#post_workflows_workflow_job_specifications)<br/>**POST** /workflows/{workflow}/job_specifications<br/>Store a job and create edges.
-*DefaultApi* | [**post_workflows_workflow_jobs**](docs/DefaultApi.md#post_workflows_workflow_jobs)<br/>**POST** /workflows/{workflow}/jobs<br/>Store a job.
-*DefaultApi* | [**post_workflows_workflow_jobs_key_complete_job_status_rev_run_id**](docs/DefaultApi.md#post_workflows_workflow_jobs_key_complete_job_status_rev_run_id)<br/>**POST** /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}<br/>Complete a job and add a result.
-*DefaultApi* | [**post_workflows_workflow_jobs_key_user_data**](docs/DefaultApi.md#post_workflows_workflow_jobs_key_user_data)<br/>**POST** /workflows/{workflow}/jobs/{key}/user_data<br/>Store user data for a job.
-*DefaultApi* | [**post_workflows_workflow_local_schedulers**](docs/DefaultApi.md#post_workflows_workflow_local_schedulers)<br/>**POST** /workflows/{workflow}/local_schedulers<br/>Store a local compute node configuration.
-*DefaultApi* | [**post_workflows_workflow_resource_requirements**](docs/DefaultApi.md#post_workflows_workflow_resource_requirements)<br/>**POST** /workflows/{workflow}/resource_requirements<br/>Store a resource requirements.
-*DefaultApi* | [**post_workflows_workflow_results**](docs/DefaultApi.md#post_workflows_workflow_results)<br/>**POST** /workflows/{workflow}/results<br/>Store a result.
-*DefaultApi* | [**post_workflows_workflow_scheduled_compute_nodes**](docs/DefaultApi.md#post_workflows_workflow_scheduled_compute_nodes)<br/>**POST** /workflows/{workflow}/scheduled_compute_nodes<br/>Store a scheduled compute node.
-*DefaultApi* | [**post_workflows_workflow_slurm_schedulers**](docs/DefaultApi.md#post_workflows_workflow_slurm_schedulers)<br/>**POST** /workflows/{workflow}/slurm_schedulers<br/>Store a Slurm compute node configuration.
-*DefaultApi* | [**post_workflows_workflow_user_data**](docs/DefaultApi.md#post_workflows_workflow_user_data)<br/>**POST** /workflows/{workflow}/user_data<br/>Store a user data.
+*DefaultApi* | [**put_aws_schedulers_key**](docs/DefaultApi.md#put_aws_schedulers_key)<br/>**PUT** /workflows/{workflow}/aws_schedulers/{key}<br/>Update AWS compute node configuration
+*DefaultApi* | [**put_compute_node_stats_key**](docs/DefaultApi.md#put_compute_node_stats_key)<br/>**PUT** /workflows/{workflow}/compute_node_stats/{key}<br/>Update compute node statistics
+*DefaultApi* | [**put_compute_nodes_key**](docs/DefaultApi.md#put_compute_nodes_key)<br/>**PUT** /workflows/{workflow}/compute_nodes/{key}<br/>Update compute node
+*DefaultApi* | [**put_events_key**](docs/DefaultApi.md#put_events_key)<br/>**PUT** /workflows/{workflow}/events/{key}<br/>Update event
+*DefaultApi* | [**put_files_key**](docs/DefaultApi.md#put_files_key)<br/>**PUT** /workflows/{workflow}/files/{key}<br/>Update file
+*DefaultApi* | [**put_job_process_stats_key**](docs/DefaultApi.md#put_job_process_stats_key)<br/>**PUT** /workflows/{workflow}/job_process_stats/{key}<br/>Update job process statistics
+*DefaultApi* | [**put_jobs_key**](docs/DefaultApi.md#put_jobs_key)<br/>**PUT** /workflows/{workflow}/jobs/{key}<br/>Update job
+*DefaultApi* | [**put_jobs_key_manage_status_change_status_rev_run_id**](docs/DefaultApi.md#put_jobs_key_manage_status_change_status_rev_run_id)<br/>**PUT** /workflows/{workflow}/jobs/{key}/manage_status_change/{status}/{rev}/{run_id}<br/>Change the status of a job and manage side effects.
+*DefaultApi* | [**put_jobs_key_resource_requirements_rr_key**](docs/DefaultApi.md#put_jobs_key_resource_requirements_rr_key)<br/>**PUT** /workflows/{workflow}/jobs/{key}/resource_requirements/{rr_key}<br/>Set the resource requirements for a job.
+*DefaultApi* | [**put_local_schedulers_key**](docs/DefaultApi.md#put_local_schedulers_key)<br/>**PUT** /workflows/{workflow}/local_schedulers/{key}<br/>Update local compute node configuration
+*DefaultApi* | [**put_resource_requirements_key**](docs/DefaultApi.md#put_resource_requirements_key)<br/>**PUT** /workflows/{workflow}/resource_requirements/{key}<br/>Update resource requirements
+*DefaultApi* | [**put_results_key**](docs/DefaultApi.md#put_results_key)<br/>**PUT** /workflows/{workflow}/results/{key}<br/>Update result
+*DefaultApi* | [**put_scheduled_compute_nodes_key**](docs/DefaultApi.md#put_scheduled_compute_nodes_key)<br/>**PUT** /workflows/{workflow}/scheduled_compute_nodes/{key}<br/>Update scheduled compute node
+*DefaultApi* | [**put_slurm_schedulers_key**](docs/DefaultApi.md#put_slurm_schedulers_key)<br/>**PUT** /workflows/{workflow}/slurm_schedulers/{key}<br/>Update Slurm compute node configuration
+*DefaultApi* | [**put_user_data_key**](docs/DefaultApi.md#put_user_data_key)<br/>**PUT** /workflows/{workflow}/user_data/{key}<br/>Update user data
 *DefaultApi* | [**put_workflows_key**](docs/DefaultApi.md#put_workflows_key)<br/>**PUT** /workflows/{key}<br/>Update workflow
 *DefaultApi* | [**put_workflows_key_cancel**](docs/DefaultApi.md#put_workflows_key_cancel)<br/>**PUT** /workflows/{key}/cancel<br/>Cancel workflow.
 *DefaultApi* | [**put_workflows_key_config**](docs/DefaultApi.md#put_workflows_key_config)<br/>**PUT** /workflows/{key}/config<br/>Updates the workflow config.
 *DefaultApi* | [**put_workflows_key_status**](docs/DefaultApi.md#put_workflows_key_status)<br/>**PUT** /workflows/{key}/status<br/>Reports the workflow status.
-*DefaultApi* | [**put_workflows_workflow_aws_schedulers_key**](docs/DefaultApi.md#put_workflows_workflow_aws_schedulers_key)<br/>**PUT** /workflows/{workflow}/aws_schedulers/{key}<br/>Update AWS compute node configuration
-*DefaultApi* | [**put_workflows_workflow_compute_node_stats_key**](docs/DefaultApi.md#put_workflows_workflow_compute_node_stats_key)<br/>**PUT** /workflows/{workflow}/compute_node_stats/{key}<br/>Update compute node statistics
-*DefaultApi* | [**put_workflows_workflow_compute_nodes_key**](docs/DefaultApi.md#put_workflows_workflow_compute_nodes_key)<br/>**PUT** /workflows/{workflow}/compute_nodes/{key}<br/>Update compute node
-*DefaultApi* | [**put_workflows_workflow_events_key**](docs/DefaultApi.md#put_workflows_workflow_events_key)<br/>**PUT** /workflows/{workflow}/events/{key}<br/>Update event
-*DefaultApi* | [**put_workflows_workflow_files_key**](docs/DefaultApi.md#put_workflows_workflow_files_key)<br/>**PUT** /workflows/{workflow}/files/{key}<br/>Update file
-*DefaultApi* | [**put_workflows_workflow_job_process_stats_key**](docs/DefaultApi.md#put_workflows_workflow_job_process_stats_key)<br/>**PUT** /workflows/{workflow}/job_process_stats/{key}<br/>Update job process statistics
-*DefaultApi* | [**put_workflows_workflow_jobs_key**](docs/DefaultApi.md#put_workflows_workflow_jobs_key)<br/>**PUT** /workflows/{workflow}/jobs/{key}<br/>Update job
-*DefaultApi* | [**put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id**](docs/DefaultApi.md#put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id)<br/>**PUT** /workflows/{workflow}/jobs/{key}/manage_status_change/{status}/{rev}/{run_id}<br/>Change the status of a job and manage side effects.
-*DefaultApi* | [**put_workflows_workflow_jobs_key_resource_requirements_rr_key**](docs/DefaultApi.md#put_workflows_workflow_jobs_key_resource_requirements_rr_key)<br/>**PUT** /workflows/{workflow}/jobs/{key}/resource_requirements/{rr_key}<br/>Set the resource requirements for a job.
-*DefaultApi* | [**put_workflows_workflow_local_schedulers_key**](docs/DefaultApi.md#put_workflows_workflow_local_schedulers_key)<br/>**PUT** /workflows/{workflow}/local_schedulers/{key}<br/>Update local compute node configuration
-*DefaultApi* | [**put_workflows_workflow_resource_requirements_key**](docs/DefaultApi.md#put_workflows_workflow_resource_requirements_key)<br/>**PUT** /workflows/{workflow}/resource_requirements/{key}<br/>Update resource requirements
-*DefaultApi* | [**put_workflows_workflow_results_key**](docs/DefaultApi.md#put_workflows_workflow_results_key)<br/>**PUT** /workflows/{workflow}/results/{key}<br/>Update result
-*DefaultApi* | [**put_workflows_workflow_scheduled_compute_nodes_key**](docs/DefaultApi.md#put_workflows_workflow_scheduled_compute_nodes_key)<br/>**PUT** /workflows/{workflow}/scheduled_compute_nodes/{key}<br/>Update scheduled compute node
-*DefaultApi* | [**put_workflows_workflow_slurm_schedulers_key**](docs/DefaultApi.md#put_workflows_workflow_slurm_schedulers_key)<br/>**PUT** /workflows/{workflow}/slurm_schedulers/{key}<br/>Update Slurm compute node configuration
-*DefaultApi* | [**put_workflows_workflow_user_data_key**](docs/DefaultApi.md#put_workflows_workflow_user_data_key)<br/>**PUT** /workflows/{workflow}/user_data/{key}<br/>Update user data
 
 
 ## Models
 
  - [AutoTuneStatus](docs/AutoTuneStatus.md)
+ - [AwsSchedulersModel](docs/AwsSchedulersModel.md)
+ - [BulkJobsModel](docs/BulkJobsModel.md)
  - [ComputeNodeResourceStatsModel](docs/ComputeNodeResourceStatsModel.md)
  - [ComputeNodeStats](docs/ComputeNodeStats.md)
+ - [ComputeNodeStatsModel](docs/ComputeNodeStatsModel.md)
+ - [ComputeNodesModel](docs/ComputeNodesModel.md)
  - [ComputeNodesResources](docs/ComputeNodesResources.md)
  - [EdgesNameModel](docs/EdgesNameModel.md)
+ - [FilesModel](docs/FilesModel.md)
+ - [GetAwsSchedulersResponse](docs/GetAwsSchedulersResponse.md)
+ - [GetComputeNodeStatsResponse](docs/GetComputeNodeStatsResponse.md)
+ - [GetComputeNodesResponse](docs/GetComputeNodesResponse.md)
+ - [GetEdgesNameResponse](docs/GetEdgesNameResponse.md)
+ - [GetEventsResponse](docs/GetEventsResponse.md)
+ - [GetFilesProducedByJobKeyResponse](docs/GetFilesProducedByJobKeyResponse.md)
+ - [GetFilesResponse](docs/GetFilesResponse.md)
+ - [GetJobProcessStatsResponse](docs/GetJobProcessStatsResponse.md)
+ - [GetJobSpecificationsResponse](docs/GetJobSpecificationsResponse.md)
+ - [GetJobsFindByNeedsFileKeyResponse](docs/GetJobsFindByNeedsFileKeyResponse.md)
+ - [GetJobsFindByStatusStatusResponse](docs/GetJobsFindByStatusStatusResponse.md)
+ - [GetJobsKeyUserDataConsumesResponse](docs/GetJobsKeyUserDataConsumesResponse.md)
+ - [GetJobsKeyUserDataStoresResponse](docs/GetJobsKeyUserDataStoresResponse.md)
+ - [GetJobsResponse](docs/GetJobsResponse.md)
+ - [GetLocalSchedulersResponse](docs/GetLocalSchedulersResponse.md)
+ - [GetResourceRequirementsResponse](docs/GetResourceRequirementsResponse.md)
+ - [GetResultsResponse](docs/GetResultsResponse.md)
+ - [GetScheduledComputeNodesResponse](docs/GetScheduledComputeNodesResponse.md)
+ - [GetSlurmSchedulersResponse](docs/GetSlurmSchedulersResponse.md)
+ - [GetUserDataResponse](docs/GetUserDataResponse.md)
  - [GetWorkflowsKeyCollectionNamesResponse](docs/GetWorkflowsKeyCollectionNamesResponse.md)
  - [GetWorkflowsKeyDotGraphNameResponse](docs/GetWorkflowsKeyDotGraphNameResponse.md)
  - [GetWorkflowsKeyIsCompleteResponse](docs/GetWorkflowsKeyIsCompleteResponse.md)
@@ -170,53 +195,28 @@ Class | Method
  - [GetWorkflowsKeyReadyJobRequirementsResponse](docs/GetWorkflowsKeyReadyJobRequirementsResponse.md)
  - [GetWorkflowsKeyRequiredExistingFilesResponse](docs/GetWorkflowsKeyRequiredExistingFilesResponse.md)
  - [GetWorkflowsResponse](docs/GetWorkflowsResponse.md)
- - [GetWorkflowsWorkflowAwsSchedulersResponse](docs/GetWorkflowsWorkflowAwsSchedulersResponse.md)
- - [GetWorkflowsWorkflowComputeNodeStatsResponse](docs/GetWorkflowsWorkflowComputeNodeStatsResponse.md)
- - [GetWorkflowsWorkflowComputeNodesResponse](docs/GetWorkflowsWorkflowComputeNodesResponse.md)
- - [GetWorkflowsWorkflowEdgesNameResponse](docs/GetWorkflowsWorkflowEdgesNameResponse.md)
- - [GetWorkflowsWorkflowEventsResponse](docs/GetWorkflowsWorkflowEventsResponse.md)
- - [GetWorkflowsWorkflowFilesProducedByJobKeyResponse](docs/GetWorkflowsWorkflowFilesProducedByJobKeyResponse.md)
- - [GetWorkflowsWorkflowFilesResponse](docs/GetWorkflowsWorkflowFilesResponse.md)
- - [GetWorkflowsWorkflowJobProcessStatsResponse](docs/GetWorkflowsWorkflowJobProcessStatsResponse.md)
- - [GetWorkflowsWorkflowJobSpecificationsResponse](docs/GetWorkflowsWorkflowJobSpecificationsResponse.md)
- - [GetWorkflowsWorkflowJobsFindByNeedsFileKeyResponse](docs/GetWorkflowsWorkflowJobsFindByNeedsFileKeyResponse.md)
- - [GetWorkflowsWorkflowJobsFindByStatusStatusResponse](docs/GetWorkflowsWorkflowJobsFindByStatusStatusResponse.md)
- - [GetWorkflowsWorkflowJobsKeyUserDataConsumesResponse](docs/GetWorkflowsWorkflowJobsKeyUserDataConsumesResponse.md)
- - [GetWorkflowsWorkflowJobsKeyUserDataStoresResponse](docs/GetWorkflowsWorkflowJobsKeyUserDataStoresResponse.md)
- - [GetWorkflowsWorkflowJobsResponse](docs/GetWorkflowsWorkflowJobsResponse.md)
- - [GetWorkflowsWorkflowLocalSchedulersResponse](docs/GetWorkflowsWorkflowLocalSchedulersResponse.md)
- - [GetWorkflowsWorkflowResourceRequirementsResponse](docs/GetWorkflowsWorkflowResourceRequirementsResponse.md)
- - [GetWorkflowsWorkflowResultsResponse](docs/GetWorkflowsWorkflowResultsResponse.md)
- - [GetWorkflowsWorkflowScheduledComputeNodesResponse](docs/GetWorkflowsWorkflowScheduledComputeNodesResponse.md)
- - [GetWorkflowsWorkflowSlurmSchedulersResponse](docs/GetWorkflowsWorkflowSlurmSchedulersResponse.md)
- - [GetWorkflowsWorkflowUserDataResponse](docs/GetWorkflowsWorkflowUserDataResponse.md)
  - [InlineResponse500](docs/InlineResponse500.md)
+ - [JobProcessStatsModel](docs/JobProcessStatsModel.md)
+ - [JobSpecificationsModel](docs/JobSpecificationsModel.md)
  - [JobWithEdgesModel](docs/JobWithEdgesModel.md)
  - [JobsInternal](docs/JobsInternal.md)
+ - [JobsModel](docs/JobsModel.md)
+ - [LocalSchedulersModel](docs/LocalSchedulersModel.md)
  - [PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse](docs/PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse.md)
  - [PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse](docs/PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse.md)
  - [PostWorkflowsKeyPrepareJobsForSchedulingResponse](docs/PostWorkflowsKeyPrepareJobsForSchedulingResponse.md)
  - [PostWorkflowsKeyPrepareJobsForSubmissionResponse](docs/PostWorkflowsKeyPrepareJobsForSubmissionResponse.md)
  - [PostWorkflowsKeyPrepareNextJobsForSubmissionResponse](docs/PostWorkflowsKeyPrepareNextJobsForSubmissionResponse.md)
  - [PostWorkflowsKeyProcessChangedJobInputsResponse](docs/PostWorkflowsKeyProcessChangedJobInputsResponse.md)
- - [WorkflowAwsSchedulersModel](docs/WorkflowAwsSchedulersModel.md)
- - [WorkflowBulkJobsModel](docs/WorkflowBulkJobsModel.md)
- - [WorkflowComputeNodeStatsModel](docs/WorkflowComputeNodeStatsModel.md)
- - [WorkflowComputeNodesModel](docs/WorkflowComputeNodesModel.md)
+ - [ResourceRequirementsModel](docs/ResourceRequirementsModel.md)
+ - [ResultsModel](docs/ResultsModel.md)
+ - [ScheduledComputeNodesModel](docs/ScheduledComputeNodesModel.md)
+ - [SlurmSchedulersModel](docs/SlurmSchedulersModel.md)
+ - [UserDataModel](docs/UserDataModel.md)
  - [WorkflowConfigModel](docs/WorkflowConfigModel.md)
- - [WorkflowFilesModel](docs/WorkflowFilesModel.md)
- - [WorkflowJobProcessStatsModel](docs/WorkflowJobProcessStatsModel.md)
- - [WorkflowJobSpecificationsModel](docs/WorkflowJobSpecificationsModel.md)
- - [WorkflowJobsModel](docs/WorkflowJobsModel.md)
- - [WorkflowLocalSchedulersModel](docs/WorkflowLocalSchedulersModel.md)
- - [WorkflowResourceRequirementsModel](docs/WorkflowResourceRequirementsModel.md)
- - [WorkflowResultsModel](docs/WorkflowResultsModel.md)
- - [WorkflowScheduledComputeNodesModel](docs/WorkflowScheduledComputeNodesModel.md)
- - [WorkflowSlurmSchedulersModel](docs/WorkflowSlurmSchedulersModel.md)
  - [WorkflowSpecificationsModel](docs/WorkflowSpecificationsModel.md)
  - [WorkflowSpecificationsSchedulers](docs/WorkflowSpecificationsSchedulers.md)
  - [WorkflowStatusModel](docs/WorkflowStatusModel.md)
- - [WorkflowUserDataModel](docs/WorkflowUserDataModel.md)
  - [WorkflowsModel](docs/WorkflowsModel.md)
 
 

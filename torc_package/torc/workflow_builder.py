@@ -3,33 +3,33 @@
 import getpass
 
 
-from torc.openapi_client.models.workflow_files_model import WorkflowFilesModel
-from torc.openapi_client.models.workflow_job_specifications_model import (
-    WorkflowJobSpecificationsModel,
+from torc.openapi_client.models.files_model import FilesModel
+from torc.openapi_client.models.job_specifications_model import (
+    JobSpecificationsModel,
 )
 from torc.openapi_client.models.compute_node_resource_stats_model import (
     ComputeNodeResourceStatsModel,
 )
 from torc.openapi_client.models.workflow_config_model import WorkflowConfigModel
-from torc.openapi_client.models.workflow_resource_requirements_model import (
-    WorkflowResourceRequirementsModel,
+from torc.openapi_client.models.resource_requirements_model import (
+    ResourceRequirementsModel,
 )
 from torc.openapi_client.models.workflow_specifications_model import (
     WorkflowSpecificationsModel,
 )
-from torc.openapi_client.models.workflow_aws_schedulers_model import (
-    WorkflowAwsSchedulersModel,
+from torc.openapi_client.models.aws_schedulers_model import (
+    AwsSchedulersModel,
 )
-from torc.openapi_client.models.workflow_local_schedulers_model import (
-    WorkflowLocalSchedulersModel,
+from torc.openapi_client.models.local_schedulers_model import (
+    LocalSchedulersModel,
 )
-from torc.openapi_client.models.workflow_slurm_schedulers_model import (
-    WorkflowSlurmSchedulersModel,
+from torc.openapi_client.models.slurm_schedulers_model import (
+    SlurmSchedulersModel,
 )
 from torc.openapi_client.models.workflow_specifications_schedulers import (
     WorkflowSpecificationsSchedulers,
 )
-from torc.openapi_client.models.workflow_user_data_model import WorkflowUserDataModel
+from torc.openapi_client.models.user_data_model import UserDataModel
 from torc.cli.run_function import check_function
 
 
@@ -51,14 +51,14 @@ class WorkflowBuilder:
         self._compute_node_expiration_buffer_seconds = None
         self._compute_node_wait_for_healthy_database = None
 
-    def add_file(self, *args, **kwargs) -> WorkflowFilesModel:
+    def add_file(self, *args, **kwargs) -> FilesModel:
         """Add a file and return it."""
-        self._files.append(WorkflowFilesModel(*args, **kwargs))
+        self._files.append(FilesModel(*args, **kwargs))
         return self._files[-1]
 
-    def add_job(self, *args, **kwargs) -> WorkflowJobSpecificationsModel:
+    def add_job(self, *args, **kwargs) -> JobSpecificationsModel:
         """Add a job and return it."""
-        self._jobs.append(WorkflowJobSpecificationsModel(*args, **kwargs))
+        self._jobs.append(JobSpecificationsModel(*args, **kwargs))
         return self._jobs[-1]
 
     def map_function_to_jobs(
@@ -72,7 +72,7 @@ class WorkflowBuilder:
         scheduler=None,
         start_index=0,
         name_prefix="",
-    ) -> list[WorkflowJobSpecificationsModel]:
+    ) -> list[JobSpecificationsModel]:
         """Add a job that will call func for each item in params.
 
         Parameters
@@ -101,7 +101,7 @@ class WorkflowBuilder:
 
         Returns
         -------
-        list[WorkflowJobSpecificationsModel]
+        list[JobSpecificationsModel]
         """
         jobs = []
         output_data_names = []
@@ -149,29 +149,29 @@ class WorkflowBuilder:
 
         return jobs
 
-    def add_resource_requirements(self, *args, **kwargs) -> WorkflowResourceRequirementsModel:
+    def add_resource_requirements(self, *args, **kwargs) -> ResourceRequirementsModel:
         """Add a resource_requirement and return it."""
-        self._resource_requirements.append(WorkflowResourceRequirementsModel(*args, **kwargs))
+        self._resource_requirements.append(ResourceRequirementsModel(*args, **kwargs))
         return self._resource_requirements[-1]
 
-    def add_aws_scheduler(self, *args, **kwargs) -> WorkflowAwsSchedulersModel:
+    def add_aws_scheduler(self, *args, **kwargs) -> AwsSchedulersModel:
         """Add a slurm_scheduler and return it."""
-        self._aws_schedulers.append(WorkflowAwsSchedulersModel(*args, **kwargs))
+        self._aws_schedulers.append(AwsSchedulersModel(*args, **kwargs))
         return self._aws_schedulers[-1]
 
-    def add_local_scheduler(self, *args, **kwargs) -> WorkflowLocalSchedulersModel:
+    def add_local_scheduler(self, *args, **kwargs) -> LocalSchedulersModel:
         """Add a slurm_scheduler and return it."""
-        self._local_schedulers.append(WorkflowLocalSchedulersModel(*args, **kwargs))
+        self._local_schedulers.append(LocalSchedulersModel(*args, **kwargs))
         return self._local_schedulers[-1]
 
-    def add_slurm_scheduler(self, *args, **kwargs) -> WorkflowSlurmSchedulersModel:
+    def add_slurm_scheduler(self, *args, **kwargs) -> SlurmSchedulersModel:
         """Add a slurm_scheduler and return it."""
-        self._slurm_schedulers.append(WorkflowSlurmSchedulersModel(*args, **kwargs))
+        self._slurm_schedulers.append(SlurmSchedulersModel(*args, **kwargs))
         return self._slurm_schedulers[-1]
 
-    def add_user_data(self, *args, **kwargs) -> WorkflowUserDataModel:
+    def add_user_data(self, *args, **kwargs) -> UserDataModel:
         """Add user data and return it."""
-        self._user_data.append(WorkflowUserDataModel(*args, **kwargs))
+        self._user_data.append(UserDataModel(*args, **kwargs))
         return self._user_data[-1]
 
     def configure_resource_monitoring(self, *args, **kwargs):
@@ -252,17 +252,17 @@ class WorkflowBuilder:
         self._compute_node_wait_for_healthy_database = val
 
     @property
-    def files(self) -> list[WorkflowFilesModel]:
+    def files(self) -> list[FilesModel]:
         """Return a reference to the files list."""
         return self._files
 
     @property
-    def jobs(self) -> list[WorkflowJobSpecificationsModel]:
+    def jobs(self) -> list[JobSpecificationsModel]:
         """Return a reference to the jobs list."""
         return self._jobs
 
     @property
-    def resource_monitor_config(self) -> list[WorkflowResourceRequirementsModel]:
+    def resource_monitor_config(self) -> list[ResourceRequirementsModel]:
         """Return a reference to the resource requirements list."""
         return self._resource_requirements
 

@@ -52,6 +52,23 @@ def main():
             ("get_workflows_key_events_after_key_event_key", "get_events_after_key"),
             ("get_workflows_key_latest_event_key", "get_latest_event_key"),
             ("workflowsworkflowbulk_jobs_jobs", "job_with_edges_model"),
+            ("workflow_aws_schedulers_model", "aws_schedulers_model"),
+            ("workflow_bulk_jobs_model", "bulk_jobs_model"),
+            ("workflow_compute_node_stats_model", "compute_node_stats_model"),
+            ("workflow_compute_nodes_model", "compute_nodes_model"),
+            ("workflow_files_model", "files_model"),
+            ("workflow_job_process_stats_model", "job_process_stats_model"),
+            ("workflow_job_specifications_model", "job_specifications_model"),
+            ("workflow_jobs_model", "jobs_model"),
+            ("workflow_local_schedulers_model", "local_schedulers_model"),
+            ("workflow_resource_requirements_model", "resource_requirements_model"),
+            ("workflow_results_model", "results_model"),
+            ("workflow_scheduled_compute_nodes_model", "scheduled_compute_nodes_model"),
+            ("workflow_slurm_schedulers_model", "slurm_schedulers_model"),
+            ("workflow_user_data_model", "user_data_model"),
+            ("get_workflows_workflow_", "get_"),
+            ("post_workflows_workflow_", "post_"),
+            ("put_workflows_workflow_", "put_"),
         ],
     )
     os.rename(spec_file_tmp, spec_file)
@@ -160,43 +177,43 @@ def main():
             path="/workflows/{workflow}/aws_schedulers/{key}",
             responses=OpsComponent(
                 ops=["delete", "put"],
-                component="#/components/schemas/workflow_aws_schedulers_model",
+                component="#/components/schemas/aws_schedulers_model",
             ),
             requests=OpsComponent(
                 ops=["put"],
-                component="#/components/schemas/workflow_aws_schedulers_model",
+                component="#/components/schemas/aws_schedulers_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/compute_node_stats",
             responses=OpsComponent(
                 ops=["post"],
-                component="#/components/schemas/workflow_compute_node_stats_model",
+                component="#/components/schemas/compute_node_stats_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/compute_node_stats/{key}",
             responses=OpsComponent(
                 ops=["delete", "get", "put"],
-                component="#/components/schemas/workflow_compute_node_stats_model",
+                component="#/components/schemas/compute_node_stats_model",
             ),
             requests=OpsComponent(
                 ops=["put"],
-                component="#/components/schemas/workflow_compute_node_stats_model",
+                component="#/components/schemas/compute_node_stats_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/compute_nodes",
             responses=OpsComponent(
                 ops=["post"],
-                component="#/components/schemas/workflow_compute_nodes_model",
+                component="#/components/schemas/compute_nodes_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/compute_nodes/{key}",
             requests=OpsComponent(
                 ops=["put"],
-                component="#/components/schemas/workflow_compute_nodes_model",
+                component="#/components/schemas/compute_nodes_model",
             ),
         ),
         # Arango doesn't handle the condition where the response schema composes another schema.
@@ -205,188 +222,188 @@ def main():
             path="/workflows/{workflow}/compute_nodes/{key}",
             responses=OpsComponent(
                 ops=["delete", "get", "put"],
-                component="#/components/schemas/workflow_compute_nodes_model",
+                component="#/components/schemas/compute_nodes_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/files/{key}",
             requests=OpsComponent(
                 ops=["put"],
-                component="#/components/schemas/workflow_files_model",
+                component="#/components/schemas/files_model",
             ),
             responses=OpsComponent(
                 ops=["delete", "put"],
-                component="#/components/schemas/workflow_files_model",
+                component="#/components/schemas/files_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/job_process_stats/{key}",
             requests=OpsComponent(
                 ops=["put"],
-                component="#/components/schemas/workflow_job_process_stats_model",
+                component="#/components/schemas/job_process_stats_model",
             ),
             responses=OpsComponent(
                 ops=["delete", "put"],
-                component="#/components/schemas/workflow_job_process_stats_model",
+                component="#/components/schemas/job_process_stats_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/job_specifications",
             responses=OpsComponent(
                 ops=["post"],
-                component="#/components/schemas/workflow_job_specifications_model",
+                component="#/components/schemas/job_specifications_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/job_specifications/{key}",
             responses=OpsComponent(
                 ops=["get"],
-                component="#/components/schemas/workflow_job_specifications_model",
+                component="#/components/schemas/job_specifications_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/jobs",
             responses=OpsComponent(
                 ops=["post"],
-                component="#/components/schemas/workflow_jobs_model",
+                component="#/components/schemas/jobs_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/jobs/{key}",
             requests=OpsComponent(
                 ops=["put"],
-                component="#/components/schemas/workflow_jobs_model",
+                component="#/components/schemas/jobs_model",
             ),
             responses=OpsComponent(
                 ops=["delete", "get", "put"],
-                component="#/components/schemas/workflow_jobs_model",
+                component="#/components/schemas/jobs_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}",
             requests=OpsComponent(
                 ops=["post"],
-                component="#/components/schemas/workflow_results_model",
+                component="#/components/schemas/results_model",
             ),
             responses=OpsComponent(
                 ops=["post"],
-                component="#/components/schemas/workflow_jobs_model",
+                component="#/components/schemas/jobs_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/jobs/{key}/manage_status_change/{status}/{rev}/{run_id}",
             responses=OpsComponent(
                 ops=["put"],
-                component="#/components/schemas/workflow_jobs_model",
+                component="#/components/schemas/jobs_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/jobs/{key}/process_stats",
             responses=OpsComponent(
                 ops=["get"],
-                component="#/components/schemas/workflow_job_process_stats_model",
+                component="#/components/schemas/job_process_stats_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/jobs/{key}/resource_requirements",
             responses=OpsComponent(
                 ops=["get"],
-                component="#/components/schemas/workflow_resource_requirements_model",
+                component="#/components/schemas/resource_requirements_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/local_schedulers/{key}",
             requests=OpsComponent(
                 ops=["put"],
-                component="#/components/schemas/workflow_local_schedulers_model",
+                component="#/components/schemas/local_schedulers_model",
             ),
             responses=OpsComponent(
                 ops=["delete", "put"],
-                component="#/components/schemas/workflow_local_schedulers_model",
+                component="#/components/schemas/local_schedulers_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/resource_requirements/{key}",
             requests=OpsComponent(
                 ops=["put"],
-                component="#/components/schemas/workflow_resource_requirements_model",
+                component="#/components/schemas/resource_requirements_model",
             ),
             responses=OpsComponent(
                 ops=["delete", "put"],
-                component="#/components/schemas/workflow_resource_requirements_model",
+                component="#/components/schemas/resource_requirements_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/results/{key}",
             requests=OpsComponent(
                 ops=["put"],
-                component="#/components/schemas/workflow_results_model",
+                component="#/components/schemas/results_model",
             ),
             responses=OpsComponent(
                 ops=["delete", "put"],
-                component="#/components/schemas/workflow_results_model",
+                component="#/components/schemas/results_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/results/find_by_job/{key}",
             responses=OpsComponent(
                 ops=["get"],
-                component="#/components/schemas/workflow_results_model",
+                component="#/components/schemas/results_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/scheduled_compute_nodes/{key}",
             requests=OpsComponent(
                 ops=["put"],
-                component="#/components/schemas/workflow_scheduled_compute_nodes_model",
+                component="#/components/schemas/scheduled_compute_nodes_model",
             ),
             responses=OpsComponent(
                 ops=["delete", "put"],
-                component="#/components/schemas/workflow_scheduled_compute_nodes_model",
+                component="#/components/schemas/scheduled_compute_nodes_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/slurm_schedulers/{key}",
             requests=OpsComponent(
                 ops=["put"],
-                component="#/components/schemas/workflow_slurm_schedulers_model",
+                component="#/components/schemas/slurm_schedulers_model",
             ),
             responses=OpsComponent(
                 ops=["delete", "put"],
-                component="#/components/schemas/workflow_slurm_schedulers_model",
+                component="#/components/schemas/slurm_schedulers_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/user_data",
             requests=OpsComponent(
                 ops=["post"],
-                component="#/components/schemas/workflow_user_data_model",
+                component="#/components/schemas/user_data_model",
             ),
             responses=OpsComponent(
                 ops=["post"],
-                component="#/components/schemas/workflow_user_data_model",
+                component="#/components/schemas/user_data_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/jobs/{key}/user_data",
             requests=OpsComponent(
                 ops=["post"],
-                component="#/components/schemas/workflow_user_data_model",
+                component="#/components/schemas/user_data_model",
             ),
             responses=OpsComponent(
                 ops=["post"],
-                component="#/components/schemas/workflow_user_data_model",
+                component="#/components/schemas/user_data_model",
             ),
         ),
         ApiCommand(
             path="/workflows/{workflow}/user_data/{key}",
             requests=OpsComponent(
                 ops=["put"],
-                component="#/components/schemas/workflow_user_data_model",
+                component="#/components/schemas/user_data_model",
             ),
             responses=OpsComponent(
                 ops=["delete", "put"],
-                component="#/components/schemas/workflow_user_data_model",
+                component="#/components/schemas/user_data_model",
             ),
         ),
         ApiCommand(
@@ -400,7 +417,7 @@ def main():
             path="/workflows/{key}/events_after_key/{event_key}",
             responses=OpsComponent(
                 ops=["get"],
-                component="#/components/schemas/get_workflows_workflow_events_response",
+                component="#/components/schemas/get_events_response",
             ),
         ),
     ]
@@ -412,69 +429,69 @@ def main():
     schemas["get_workflows_response"]["properties"]["items"]["items"][
         "$ref"
     ] = "#/components/schemas/workflows_model"
-    schemas["get_workflows_workflow_compute_node_stats_response"]["properties"]["items"]["items"][
+    schemas["get_compute_node_stats_response"]["properties"]["items"]["items"][
         "$ref"
-    ] = "#/components/schemas/workflow_compute_node_stats_model"
-    schemas["get_workflows_workflow_aws_schedulers_response"]["properties"]["items"]["items"][
+    ] = "#/components/schemas/compute_node_stats_model"
+    schemas["get_aws_schedulers_response"]["properties"]["items"]["items"][
         "$ref"
-    ] = "#/components/schemas/workflow_aws_schedulers_model"
-    schemas["get_workflows_workflow_local_schedulers_response"]["properties"]["items"]["items"][
+    ] = "#/components/schemas/aws_schedulers_model"
+    schemas["get_local_schedulers_response"]["properties"]["items"]["items"][
         "$ref"
-    ] = "#/components/schemas/workflow_local_schedulers_model"
-    schemas["get_workflows_workflow_slurm_schedulers_response"]["properties"]["items"]["items"][
+    ] = "#/components/schemas/local_schedulers_model"
+    schemas["get_slurm_schedulers_response"]["properties"]["items"]["items"][
         "$ref"
-    ] = "#/components/schemas/workflow_slurm_schedulers_model"
-    schemas["get_workflows_workflow_files_response"]["properties"]["items"]["items"][
+    ] = "#/components/schemas/slurm_schedulers_model"
+    schemas["get_files_response"]["properties"]["items"]["items"][
         "$ref"
-    ] = "#/components/schemas/workflow_files_model"
-    schemas["get_workflows_workflow_jobs_response"]["properties"]["items"]["items"][
+    ] = "#/components/schemas/files_model"
+    schemas["get_jobs_response"]["properties"]["items"]["items"][
         "$ref"
-    ] = "#/components/schemas/workflow_jobs_model"
-    schemas["get_workflows_workflow_job_process_stats_response"]["properties"]["items"]["items"][
+    ] = "#/components/schemas/jobs_model"
+    schemas["get_job_process_stats_response"]["properties"]["items"]["items"][
         "$ref"
-    ] = "#/components/schemas/workflow_job_process_stats_model"
-    schemas["get_workflows_workflow_resource_requirements_response"]["properties"]["items"][
-        "items"
-    ]["$ref"] = "#/components/schemas/workflow_resource_requirements_model"
-    schemas["get_workflows_workflow_results_response"]["properties"]["items"]["items"][
+    ] = "#/components/schemas/job_process_stats_model"
+    schemas["get_resource_requirements_response"]["properties"]["items"]["items"][
         "$ref"
-    ] = "#/components/schemas/workflow_results_model"
-    schemas["get_workflows_workflow_scheduled_compute_nodes_response"]["properties"]["items"][
-        "items"
-    ]["$ref"] = "#/components/schemas/workflow_scheduled_compute_nodes_model"
+    ] = "#/components/schemas/resource_requirements_model"
+    schemas["get_results_response"]["properties"]["items"]["items"][
+        "$ref"
+    ] = "#/components/schemas/results_model"
+    schemas["get_scheduled_compute_nodes_response"]["properties"]["items"]["items"][
+        "$ref"
+    ] = "#/components/schemas/scheduled_compute_nodes_model"
     schemas["post_workflows_key_prepare_jobs_for_submission_response"]["properties"]["jobs"][
         "items"
-    ]["$ref"] = "#/components/schemas/workflow_jobs_model"
+    ]["$ref"] = "#/components/schemas/jobs_model"
     schemas["post_workflows_key_prepare_next_jobs_for_submission_response"]["properties"]["jobs"][
         "items"
-    ]["$ref"] = "#/components/schemas/workflow_jobs_model"
+    ]["$ref"] = "#/components/schemas/jobs_model"
     schemas["workflow_specifications_schedulers"]["properties"]["aws_schedulers"]["items"][
         "$ref"
-    ] = "#/components/schemas/workflow_aws_schedulers_model"
+    ] = "#/components/schemas/aws_schedulers_model"
     schemas["workflow_specifications_schedulers"]["properties"]["local_schedulers"]["items"][
         "$ref"
-    ] = "#/components/schemas/workflow_local_schedulers_model"
+    ] = "#/components/schemas/local_schedulers_model"
     schemas["workflow_specifications_schedulers"]["properties"]["slurm_schedulers"]["items"][
         "$ref"
-    ] = "#/components/schemas/workflow_slurm_schedulers_model"
-    schemas["get_workflows_workflow_user_data_response"]["properties"]["items"]["items"][
+    ] = "#/components/schemas/slurm_schedulers_model"
+    schemas["get_user_data_response"]["properties"]["items"]["items"][
         "$ref"
-    ] = "#/components/schemas/workflow_user_data_model"
-    schemas["get_workflows_workflow_compute_nodes_response"]["properties"]["items"]["items"][
+    ] = "#/components/schemas/user_data_model"
+    schemas["get_compute_nodes_response"]["properties"]["items"]["items"][
         "$ref"
-    ] = "#/components/schemas/workflow_compute_nodes_model"
+    ] = "#/components/schemas/compute_nodes_model"
     schemas["workflow_specifications_model"]["properties"]["config"][
         "$ref"
     ] = "#/components/schemas/workflow_config_model"
     schemas["job_with_edges_model"]["properties"]["job"][
         "$ref"
-    ] = "#/components/schemas/workflow_jobs_model"
+    ] = "#/components/schemas/jobs_model"
     w_spec_props = schemas["workflow_specifications_model"]["properties"]
-    w_spec_props["files"]["items"]["$ref"] = "#/components/schemas/workflow_files_model"
-    w_spec_props["user_data"]["items"]["$ref"] = "#/components/schemas/workflow_user_data_model"
+    w_spec_props["files"]["items"]["$ref"] = "#/components/schemas/files_model"
+    w_spec_props["user_data"]["items"]["$ref"] = "#/components/schemas/user_data_model"
     w_spec_props["resource_requirements"]["items"][
         "$ref"
-    ] = "#/components/schemas/workflow_resource_requirements_model"
+    ] = "#/components/schemas/resource_requirements_model"
 
     # The JavaScript Joi script needs to have .allow(null, '') for validation to work.
     # For some reason that produces type=object in the schema. Change to string.
@@ -482,9 +499,9 @@ def main():
         ("key_prepare_jobs_for_submission_model", "scheduler_config_id"),
         ("compute_nodes_resources", "scheduler_config_id"),
         ("jobs_internal", "scheduler_config_id"),
-        ("workflow_job_specifications_model", "scheduler"),
-        ("workflow_job_specifications_model", "invocation_script"),
-        ("workflow_jobs_model", "invocation_script"),
+        ("job_specifications_model", "scheduler"),
+        ("job_specifications_model", "invocation_script"),
+        ("jobs_model", "invocation_script"),
         ("workflows_model", "description"),
         ("workflows_model", "name"),
         ("workflows_model", "timestamp"),
@@ -492,10 +509,10 @@ def main():
         ("workflow_specifications_model", "description"),
         ("workflow_specifications_model", "name"),
         ("workflow_specifications_model", "user"),
-        ("workflow_slurm_schedulers_model", "extra"),
-        ("workflow_slurm_schedulers_model", "gres"),
-        ("workflow_slurm_schedulers_model", "mem"),
-        ("workflow_slurm_schedulers_model", "tmp"),
+        ("slurm_schedulers_model", "extra"),
+        ("slurm_schedulers_model", "gres"),
+        ("slurm_schedulers_model", "mem"),
+        ("slurm_schedulers_model", "tmp"),
         ("compute_nodes_resources", "time_limit"),
     ]:
         data["components"]["schemas"][component]["properties"][field]["type"] = "string"

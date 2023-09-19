@@ -37,7 +37,7 @@ class WorkflowManager:
             only_uninitialized=only_uninitialized,
         )
         send_api_command(
-            self._api.post_workflows_workflow_events,
+            self._api.post_events,
             self._key,
             {
                 "category": "workflow",
@@ -72,7 +72,7 @@ class WorkflowManager:
             logger.info("Enabled auto-tuning of resource requirements.")
 
         send_api_command(
-            self._api.post_workflows_workflow_events,
+            self._api.post_events,
             self._key,
             {
                 "category": "workflow",
@@ -98,7 +98,7 @@ class WorkflowManager:
             return
         result = send_api_command(self._api.get_workflows_key_required_existing_files, self._key)
         for key in result.files:
-            file = send_api_command(self._api.get_workflows_workflow_files_key, self._key, key)
+            file = send_api_command(self._api.get_files_key, self._key, key)
             if not Path(file.path).exists():
                 raise InvalidWorkflow(f"File {key=} {file.path=} should exist but does not.")
 
@@ -111,7 +111,7 @@ class WorkflowManager:
             raise InvalidWorkflow(f"User data keys are missing data: {msg}")
 
     def _process_changed_files(self):
-        for file in iter_documents(self._api.get_workflows_workflow_files, self._key):
+        for file in iter_documents(self._api.get_files, self._key):
             path = Path(file.path)
             old = {
                 "exists": file.st_mtime is not None,
@@ -128,7 +128,7 @@ class WorkflowManager:
                 if file.st_mtime and not new["exists"]:
                     file.st_mtime = None
                     send_api_command(
-                        self._api.put_workflows_workflow_files_key,
+                        self._api.put_files_key,
                         self._key,
                         file.key,
                         file,
@@ -138,12 +138,12 @@ class WorkflowManager:
 
     def _initialize_files(self):
         """Initialize the file stats in the database."""
-        for file in iter_documents(self._api.get_workflows_workflow_files, self._key):
+        for file in iter_documents(self._api.get_files, self._key):
             path = Path(file.path)
             if path.exists():
                 file.st_mtime = path.stat().st_mtime
                 send_api_command(
-                    self._api.put_workflows_workflow_files_key,
+                    self._api.put_files_key,
                     self._key,
                     file.key,
                     file,
@@ -184,12 +184,12 @@ class WorkflowManager:
     def _update_jobs_if_output_files_are_missing(self):
         run_id = None
         for job in send_api_command(
-            self._api.get_workflows_workflow_jobs_find_by_status_status,
+            self._api.get_jobs_find_by_status_status,
             self._key,
             JobStatus.DONE.value,
         ).items:
             for file in send_api_command(
-                self._api.get_workflows_workflow_files_produced_by_job_key,
+                self._api.get_files_produced_by_job_key,
                 self._key,
                 job.key,
             ).items:
@@ -201,7 +201,7 @@ class WorkflowManager:
                         ).run_id
                     status = JobStatus.UNINITIALIZED.value
                     send_api_command(
-                        self._api.put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id,
+                        self._api.put_jobs_key_manage_status_change_status_rev_run_id,
                         self._key,
                         job.key,
                         status,
@@ -218,14 +218,14 @@ class WorkflowManager:
     def _update_jobs_on_file_change(self, file):
         run_id = send_api_command(self._api.get_workflows_key_status, self._key).run_id
         for job in iter_documents(
-            self._api.get_workflows_workflow_jobs_find_by_needs_file_key,
+            self._api.get_jobs_find_by_needs_file_key,
             self._key,
             file.key,
         ):
             if job.status in (JobStatus.DONE.value, JobStatus.CANCELED.value):
                 status = JobStatus.UNINITIALIZED.value
                 send_api_command(
-                    self._api.put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id,
+                    self._api.put_jobs_key_manage_status_change_status_rev_run_id,
                     self._key,
                     job.key,
                     status,
