@@ -49,6 +49,10 @@ Note that if you don't have a CLI executable for your jobs and instead want torc
 input parameters across workers, you can call ``WorkflowBuilder.map_function_to_jobs()``. Refer to
 the tutorial :ref:`map-function-tutorial` for more information.
 
+You can also build a workflow incrementally directly through the torc API. This is required for
+workflows with more than 10,000 jobs. Refer to `build_large_workflow.py
+<https://github.nrel.gov/viz/wms/blob/main/examples/build_large_workflow.py>`_.
+
 Configure with the Julia API
 =============================
 The :ref:`workflow-builder` class provides a mechanism to build a workflow with a simple Julia

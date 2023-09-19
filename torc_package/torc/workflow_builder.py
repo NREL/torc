@@ -2,7 +2,6 @@
 
 import getpass
 
-
 from torc.openapi_client.models.files_model import FilesModel
 from torc.openapi_client.models.job_specifications_model import (
     JobSpecificationsModel,
