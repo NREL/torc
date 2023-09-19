@@ -159,7 +159,9 @@ router.post('/workflows/:key/initialize_jobs', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   try {
-    documents.clearEphemeralUserData(workflow);
+    if (req.clear_ephemeral_user_data) {
+      query.clearEphemeralUserData(workflow);
+    }
     query.addBlocksEdgesFromFiles(workflow);
     query.addBlocksEdgesFromUserData(workflow);
     query.initializeJobStatus(workflow, req.queryParams.only_uninitialized);
@@ -171,6 +173,8 @@ router.post('/workflows/:key/initialize_jobs', function(req, res) {
     .pathParam('key', joi.string().required(), 'Workflow key')
     .queryParam('only_uninitialized', joi.boolean().optional().default(false),
         'Only initialize jobs with a status of uninitialized.')
+    .queryParam('clear_ephemeral_user_data', joi.boolean().optional().default(true),
+        'Clear all ephemeral user data.')
     .body(joi.object().optional(), '')
     .response(joi.object(), 'message')
     .summary('Initialize job relationships.')
@@ -180,7 +184,7 @@ router.post('/workflows/:key/process_changed_job_inputs', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   try {
-    documents.clearEphemeralUserData(workflow);
+    query.clearEphemeralUserData(workflow);
     const reinitializedJobs = documents.processChangedJobInputs(workflow);
     res.send({reinitialized_jobs: reinitializedJobs});
   } catch (e) {
@@ -409,8 +413,13 @@ router.post('/workflows/:key/reset_job_status', function(req, res) {
   const failedOnly = req.queryParams.failed_only;
   const workflow = documents.getWorkflow(key, res);
   try {
-    query.resetJobStatus(workflow, failedOnly);
-    res.send({message: `Reset job status to ${JobStatus.Uninitialized}`});
+    if (failedOnly) {
+      query.resetFailedJobStatus(workflow);
+    } else {
+      query.resetJobStatus(workflow);
+    }
+    const status = JobStatus.Uninitialized;
+    res.send({message: `Reset job status to ${status} failed_only=${failedOnly}`});
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Reset job status workflow key=${key}`);
   }

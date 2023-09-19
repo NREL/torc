@@ -111,7 +111,7 @@ def diamond_workflow(tmp_path):
     builder.add_job(
         name="work1",
         command=f"python {WORK} -i {f1.path} -o {f2.path}",
-        consumes_user_data=["my_val1"],
+        input_user_data=["my_val1"],
         input_files=[f1.name],
         output_files=[f2.name],
         resource_requirements=medium.name,
@@ -120,7 +120,7 @@ def diamond_workflow(tmp_path):
     builder.add_job(
         name="work2",
         command=f"python {WORK} -i {f1.path} -o {f3.path}",
-        consumes_user_data=["my_val2"],
+        input_user_data=["my_val2"],
         input_files=[f1.name],
         output_files=[f3.name],
         resource_requirements=large.name,
@@ -184,32 +184,32 @@ def diamond_workflow_user_data(tmp_path):
     builder.add_job(
         name="preprocess",
         command=f"python {PREPROCESS_UD}",
-        consumes_user_data=[inputs.name],
-        stores_user_data=[d1.name, d2.name],
+        input_user_data=[inputs.name],
+        output_user_data=[d1.name, d2.name],
         resource_requirements=small.name,
         scheduler="local_schedulers/test",
     )
     builder.add_job(
         name="work1",
         command=f"python {WORK_UD}",
-        consumes_user_data=[d1.name],
-        stores_user_data=[d3.name],
+        input_user_data=[d1.name],
+        output_user_data=[d3.name],
         resource_requirements=medium.name,
         scheduler="local_schedulers/test",
     )
     builder.add_job(
         name="work2",
         command=f"python {WORK_UD}",
-        consumes_user_data=[d2.name],
-        stores_user_data=[d4.name],
+        input_user_data=[d2.name],
+        output_user_data=[d4.name],
         resource_requirements=large.name,
         scheduler="local_schedulers/test",
     )
     builder.add_job(
         name="postprocess",
         command=f"python {POSTPROCESS_UD}",
-        consumes_user_data=[d3.name, d4.name],
-        stores_user_data=[d5.name],
+        input_user_data=[d3.name, d4.name],
+        output_user_data=[d5.name],
         resource_requirements=small.name,
         scheduler="local_schedulers/test",
     )
@@ -234,12 +234,12 @@ def workflow_with_ephemeral_resource():
     builder.add_job(
         name="create_resource",
         command=f"python {CREATE_RESOURCE_JOB}",
-        stores_user_data=[resource.name],
+        output_user_data=[resource.name],
     )
     builder.add_job(
         name="use_resource",
         command=f"python {USE_RESOURCE_JOB}",
-        consumes_user_data=[resource.name],
+        input_user_data=[resource.name],
     )
 
     spec = builder.build()
@@ -328,11 +328,10 @@ def completed_workflow(diamond_workflow):
     mgr.start()
     workflow_status = api.get_workflows_key_status(db.workflow.key)
 
-    job_keys = [job.key for job in api.get_workflows_workflow_jobs(db.workflow.key).items]
-    for job_key in job_keys:
+    for name in ("preprocess", "work1", "work2", "postprocess"):
         # Completing a job this way will cause blocked jobs to change status and revision,
         # so we need to update each time.
-        job = api.get_workflows_workflow_jobs_key(db.workflow.key, job_key)
+        job = db.get_document("jobs", name)
         status = "done"
         result = WorkflowResultsModel(
             job_key=job.key,
@@ -343,7 +342,7 @@ def completed_workflow(diamond_workflow):
             status=status,
         )
         job = api.post_workflows_workflow_jobs_key_complete_job_status_rev_run_id(
-            db.workflow.key, job_key, status, job.rev, workflow_status.run_id, result
+            db.workflow.key, job.key, status, job.rev, workflow_status.run_id, result
         )
 
     yield db, scheduler_config_id, output_dir

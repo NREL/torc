@@ -66,10 +66,10 @@ function addJobSpecification(jobSpec, workflow) {
   if (jobSpec.scheduler != '' && jobSpec.scheduler != null) {
     schedulerConfigId = getSchedulerConfig(jobSpec.scheduler, workflow)._id;
   }
-  for (const name of jobSpec.consumes_user_data) {
+  for (const name of jobSpec.input_user_data) {
     getDocumentByUniqueFilter(userDataCollection, {name: name});
   }
-  for (const name of jobSpec.stores_user_data) {
+  for (const name of jobSpec.output_user_data) {
     getDocumentByUniqueFilter(userDataCollection, {name: name});
   }
   if (jobSpec.resource_requirements != null) {
@@ -104,12 +104,12 @@ function addJobSpecification(jobSpec, workflow) {
     const edge = {_from: blockingJob._id, _to: job._id};
     blocksCollection.save(edge);
   }
-  for (const name of jobSpec.consumes_user_data) {
+  for (const name of jobSpec.input_user_data) {
     const userData = getDocumentByUniqueFilter(userDataCollection, {name: name});
     const edge = {_from: job._id, _to: userData._id};
     consumesCollection.save(edge);
   }
-  for (const name of jobSpec.stores_user_data) {
+  for (const name of jobSpec.output_user_data) {
     const userData = getDocumentByUniqueFilter(userDataCollection, {name: name});
     const edge = {_from: job._id, _to: userData._id};
     storesCollection.save(edge);
@@ -124,6 +124,67 @@ function addJobSpecification(jobSpec, workflow) {
     scheduledBysCollection.save(edge);
   }
   return job;
+}
+
+/**
+ * Add a job with its edge definitions.
+ * @param {schemas.jobWithEdges} job
+ * @param {Object} workflow
+ * @return {Object}
+ */
+function addJobWithEdges(job, workflow) {
+  const blocksCollection = config.getWorkflowCollection(workflow, 'blocks');
+  const needsCollection = config.getWorkflowCollection(workflow, 'needs');
+  const producesCollection = config.getWorkflowCollection(workflow, 'produces');
+  const requiresCollection = config.getWorkflowCollection(workflow, 'requires');
+  const consumesCollection = config.getWorkflowCollection(workflow, 'consumes');
+  const scheduledBysCollection = config.getWorkflowCollection(workflow, 'scheduled_bys');
+  const storesCollection = config.getWorkflowCollection(workflow, 'stores');
+
+  const meta = addJob(job.job, workflow);
+  Object.assign(job.job, meta);
+  const jobId = job.job._id;
+
+  if (job.resource_requirements != null) {
+    requiresCollection.save({_from: jobId, _to: job.resource_requirements});
+  }
+  if (job.scheduler != null) {
+    scheduledBysCollection.save({_from: jobId, _to: job.scheduler});
+  }
+  for (const id of job.input_files) {
+    needsCollection.save({_from: jobId, _to: id});
+  }
+  for (const id of job.output_files) {
+    producesCollection.save({_from: jobId, _to: id});
+  }
+  for (const id of job.input_user_data) {
+    consumesCollection.save({_from: jobId, _to: id});
+  }
+  for (const id of job.output_user_data) {
+    storesCollection.save({_from: jobId, _to: id});
+  }
+  for (const id of job.blocked_by) {
+    blocksCollection.save({_from: id, _to: jobId});
+  }
+
+  return job;
+}
+
+/**
+ * Add jobs in bulk with all edge definitions.
+ * This is essentially required for large workflows because it reduces network traffic
+ * significantly, and so is much faster.
+ * @param {Array} jobs
+ * @param {Object} workflow
+ * @return {Array}
+ */
+function bulkAddJobsWithEdges(jobs, workflow) {
+  const jobKeys = [];
+  for (const job of jobs) {
+    addJobWithEdges(job, workflow);
+    jobKeys.push(job._key);
+  }
+  return jobKeys;
 }
 
 /**
@@ -224,7 +285,7 @@ function addWorkflow(doc) {
   db.has_workflow_status.save(statusEdge);
 
   config.createWorkflowCollections(doc);
-  console.log(`Added workflow ${doc._key}`);
+  console.debug(`Added workflow ${doc._key}`);
   return doc;
 }
 
@@ -240,24 +301,6 @@ function cancelWorkflow(workflow) {
 }
 
 /**
- * Clear all ephemeral user data.
- * @param {Object} workflow
- */
-function clearEphemeralUserData(workflow) {
-  for (const item of query.listUserDataWithEphemeralData(workflow)) {
-    if (item.data != null) {
-      const keys = Object.keys(item.data);
-      if (keys.length > 0) {
-        for (const key of Object.keys(item.data)) {
-          delete item.data[key];
-        }
-        updateWorkflowDocument(workflow, 'user_data', item);
-      }
-    }
-  }
-}
-
-/**
  * Compute a hash of all job inputs that can affect results.
  * @param {Object} job
  * @param {Object} workflow
@@ -267,8 +310,8 @@ function computeJobInputHash(job, workflow) {
   const data = {
     command: job.command,
     invocation_script: job.invocation_script,
-    consumes_user_data_keys: query.listConsumesUserDataRevisions(job, workflow),
-    stores_user_data_keys: query.listStoresUserDataRevisions(job, workflow),
+    input_user_data_keys: query.listConsumesUserDataRevisions(job, workflow),
+    output_user_data_keys: query.listStoresUserDataRevisions(job, workflow),
     needs_file_keys: query.listNeedsFileRevisions(job, workflow),
   };
   return utils.hashCode(JSON.stringify(data));
@@ -422,10 +465,17 @@ function processChangedJobInputs(workflow) {
   const reinitializedJobs = [];
 
   for (const job of jobsCollection.byExample({'status': JobStatus.Done})) {
+    // The query below will update all downstream jobs.
+    const curJob = reinitializedJobs.length == 0 ? job : jobsCollection.document(job._key);
+    if (curJob.status == JobStatus.Uninitialized) {
+      reinitializedJobs.push(job._key);
+      continue;
+    }
     const hash = computeJobInputHash(job, workflow);
     if (hash != job.internal.hash) {
       job.status = JobStatus.Uninitialized;
       updateWorkflowDocument(workflow, 'jobs', job);
+      query.updateJobsFromCompletionReversal(job, workflow);
       reinitializedJobs.push(job._key);
     }
   }
@@ -450,6 +500,8 @@ module.exports = {
   addFile,
   addJob,
   addJobSpecification,
+  addJobWithEdges,
+  bulkAddJobsWithEdges,
   addResourceRequirements,
   addResult,
   addScheduler,
@@ -457,7 +509,6 @@ module.exports = {
   addWorkflow,
   cancelWorkflow,
   computeJobInputHash,
-  clearEphemeralUserData,
   deleteWorkflow,
   getSchedulerConfig,
   getWorkflow,

@@ -12,7 +12,7 @@ from pathlib import Path
 
 from torc.openapi_client.models.workflow_results_model import WorkflowResultsModel
 
-from torc.common import JOB_STDIO_DIR
+from torc.common import JOB_STDIO_DIR, JobStatus
 
 logger = logging.getLogger(__name__)
 
@@ -143,7 +143,7 @@ class AsyncCliCommand(AsyncJobBase):
             return True
 
         if self._pipe.poll() is not None:
-            self._complete("done")
+            self._complete(JobStatus.DONE.value)
 
         return not self._is_running
 

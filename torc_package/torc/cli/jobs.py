@@ -9,6 +9,7 @@ import click
 
 from torc.openapi_client.models.workflow_jobs_model import WorkflowJobsModel
 from torc.api import iter_documents, list_model_fields, wait_for_healthy_database
+from torc.common import JobStatus
 from torc.exceptions import DatabaseOffline
 from torc.job_runner import JobRunner, JOB_COMPLETION_POLL_INTERVAL
 from torc.resource_monitor_reports import iter_job_process_stats
@@ -343,11 +344,24 @@ def reset_status(ctx, api, job_keys):
     )
     confirm_change(ctx, msg)
     count = 0
+    run_id = api.get_workflows_key_status(workflow_key).run_id
     for key in job_keys:
         job = api.get_workflows_workflow_jobs_key(workflow_key, key)
-        if job.status != "uninitialized":
-            job.status = "uninitialized"
-            api.put_workflows_workflow_jobs_key(workflow_key, key, job)
+        if job.status != JobStatus.UNINITIALIZED.value:
+            match job.status:
+                case JobStatus.UNINITIALIZED.value:
+                    pass
+                case JobStatus.DONE.value | JobStatus.CANCELED.value | JobStatus.TERMINATED.value:
+                    api.put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id(
+                        workflow_key,
+                        job.key,
+                        JobStatus.UNINITIALIZED.value,
+                        job.rev,
+                        run_id,
+                    )
+                case _:
+                    job.status = JobStatus.UNINITIALIZED.value
+                    api.put_workflows_workflow_jobs_key(workflow_key, key, job)
             count += 1
             logger.info("Reset job status of job key=%s name=%s", job.key, job.name)
 
@@ -364,6 +378,7 @@ def reset_status(ctx, api, job_keys):
     type=int,
     help="Enable CPU affinity for this number of CPUs per job.",
 )
+@click.option("-l", "--log-suffix", default="", type=str, help="Log file suffix")
 @click.option(
     "-m",
     "--max-parallel-jobs",
@@ -404,6 +419,7 @@ def run(
     ctx,
     api,
     cpu_affinity_cpus_per_job,
+    log_suffix,
     max_parallel_jobs,
     output: Path,
     poll_interval,
@@ -421,7 +437,7 @@ def run(
     output.mkdir(exist_ok=True)
     hostname = socket.gethostname()
     check_database_url(api)
-    log_file = output / f"worker_{hostname}.log"
+    log_file = output / f"worker_{hostname}_{log_suffix}.log"
     my_logger = setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
     my_logger.info(get_cli_string())
     workflow = api.get_workflows_key(workflow_key)

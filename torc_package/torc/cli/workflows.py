@@ -581,6 +581,9 @@ reset all job statuses to 'uninitialized' and then 'ready' or 'blocked.'
         sys.exit(1)
 
 
+# The functions below exist apart from the CLI functions so that the TUI can call them.
+
+
 def create_workflow_from_json_file(api, filename: Path, user=None):
     """Create a workflow from a JSON/JSON5 file."""
     if user is None:

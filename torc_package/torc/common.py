@@ -1,5 +1,7 @@
 """Common definitions in this package"""
 
+import enum
+
 from pydantic import BaseModel, ConfigDict  # pylint: disable=no-name-in-module
 
 from resource_monitor.timing.timer_stats import TimerStatsCollector
@@ -25,3 +27,20 @@ class TorcBaseModel(BaseModel):
         extra="forbid",
         use_enum_values=False,
     )
+
+
+class JobStatus(enum.Enum):
+    """Defines all job statuses."""
+
+    # Keep in sync with the JobStatus definition in the torc-service.
+
+    UNINITIALIZED = "uninitialized"
+    BLOCKED = "blocked"
+    CANCELED = "canceled"
+    TERMINATED = "terminated"
+    DONE = "done"
+    READY = "ready"
+    SCHEDULED = "scheduled"
+    SUBMITTED = "submitted"
+    SUBMITTEDpENDING = "submitted_pending"
+    DISABLED = "disabled"

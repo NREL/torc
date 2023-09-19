@@ -8,15 +8,16 @@ const config = require('./config');
 
 /**
  * Add 'blocks' edges between jobs by looking at their file edges.
+ * Safe to call multiple times; will skip duplicates.
  * @param {Object} workflow
  */
 function addBlocksEdgesFromFiles(workflow) {
   const graphName = config.getWorkflowGraphName(workflow);
   const blocksCollection = config.getWorkflowCollection(workflow, 'blocks');
   const needs = config.getWorkflowCollectionName(workflow, 'needs');
-  const needsCollection = config.getWorkflowCollection(workflow, 'needs');
   const produces = config.getWorkflowCollectionName(workflow, 'produces');
   const files = config.getWorkflowCollection(workflow, 'files');
+  // PERF: This is slow and needs to be made into one query.
   for (const file of files.all()) {
     const fid = file._id;
     const fromVertices = query`
@@ -36,18 +37,10 @@ function addBlocksEdgesFromFiles(workflow) {
             OPTIONS { edgeCollections: ${needs} }
             RETURN v._id
       `;
-      for (const item of utils.product(
-          fromVertices.toArray(),
-          toVertices.toArray(),
-      )) {
+      for (const item of utils.product(fromVertices.toArray(), toVertices.toArray())) {
         const fromVertex = item[0];
         const toVertex = item[1];
-        const cursor = query({count: true})`
-            FOR edge IN ${needsCollection}
-              FILTER edge._from == ${fromVertex} AND edge._to == ${toVertex}
-              RETURN edge
-            `;
-        if (cursor.count() == 0) {
+        if (blocksCollection.firstExample({_from: fromVertex, _to: toVertex}) === null) {
           blocksCollection.save({_from: fromVertex, _to: toVertex});
         }
       }
@@ -57,15 +50,16 @@ function addBlocksEdgesFromFiles(workflow) {
 
 /**
  * Add 'blocks' edges between jobs by looking at their user_data consumes/stores edges.
+ * Safe to call multiple times; will skip duplicates.
  * @param {Object} workflow
  */
 function addBlocksEdgesFromUserData(workflow) {
   const graphName = config.getWorkflowGraphName(workflow);
   const blocksCollection = config.getWorkflowCollection(workflow, 'blocks');
   const consumes = config.getWorkflowCollectionName(workflow, 'consumes');
-  const consumesCollection = config.getWorkflowCollection(workflow, 'consumes');
   const stores = config.getWorkflowCollectionName(workflow, 'stores');
   const userData = config.getWorkflowCollection(workflow, 'user_data');
+  // PERF: This is slow and needs to be made into one query.
   for (const item of userData.all()) {
     const fromVertices = query`
       FOR v
@@ -84,18 +78,10 @@ function addBlocksEdgesFromUserData(workflow) {
             OPTIONS { edgeCollections: ${consumes} }
             RETURN v._id
       `;
-      for (const item of utils.product(
-          fromVertices.toArray(),
-          toVertices.toArray(),
-      )) {
+      for (const item of utils.product(fromVertices.toArray(), toVertices.toArray())) {
         const fromVertex = item[0];
         const toVertex = item[1];
-        const cursor = query({count: true})`
-            FOR edge IN ${consumesCollection}
-              FILTER edge._from == ${fromVertex} AND edge._to == ${toVertex}
-              RETURN edge
-            `;
-        if (cursor.count() == 0) {
+        if (blocksCollection.firstExample({_from: fromVertex, _to: toVertex}) === null) {
           blocksCollection.save({_from: fromVertex, _to: toVertex});
         }
       }
@@ -117,17 +103,12 @@ function cancelWorkflowJobs(workflow) {
       allowImplicit: false,
     },
     action: function() {
-      const cursor = query`
+      query`
         FOR job IN ${collection}
           FILTER job.status == ${JobStatus.Submitted}
           || job.status == ${JobStatus.SubmittedPending}
-          RETURN job
+          UPDATE job WITH { status: ${JobStatus.Canceled} } IN ${collection}
       `;
-
-      for (const job of cursor) {
-        job.status = JobStatus.Canceled;
-        collection.update(job, job, {mergeObjects: false});
-      }
     },
   });
 }
@@ -255,8 +236,8 @@ function getJobSpecification(job, workflow) {
   const blockingJobs = [];
   const inputFiles = [];
   const outputFiles = [];
-  const consumesUserData = [];
-  const storesUserData = [];
+  const inputUserData = [];
+  const outputUserData = [];
 
   for (const blockingJob of getBlockingJobs(job, workflow)) {
     blockingJobs.push(blockingJob.name);
@@ -271,13 +252,13 @@ function getJobSpecification(job, workflow) {
     delete(data._id);
     delete(data._key);
     delete(data._rev);
-    consumesUserData.push(data.name);
+    inputUserData.push(data.name);
   }
   for (const data of listUserDataStoredByJob(job, workflow)) {
     delete(data._id);
     delete(data._key);
     delete(data._rev);
-    storesUserData.push(data.name);
+    outputUserData.push(data.name);
   }
 
   const scheduler = getJobScheduler(job, workflow);
@@ -291,8 +272,8 @@ function getJobSpecification(job, workflow) {
     needs_compute_node_schedule: job.needs_compute_node_schedule,
     resource_requirements: getJobResourceRequirements(job, workflow).name,
     scheduler: scheduler == null ? '' : scheduler._id,
-    consumes_user_data: consumesUserData,
-    stores_user_data: storesUserData,
+    input_user_data: inputUserData,
+    output_user_data: outputUserData,
   };
 }
 
@@ -596,6 +577,30 @@ function listUserDataWithEphemeralData(workflow) {
 }
 
 /**
+ * Clear all ephemeral user data.
+ * @param {Object} workflow
+ */
+function clearEphemeralUserData(workflow) {
+  const collection = config.getWorkflowCollection(workflow, 'user_data');
+  // TODO: How to clear the data inside the query? It would be faster.
+  // But we probably won't ever have many of these.
+  const cursor = query`
+    FOR doc in ${collection}
+      FILTER doc.is_ephemeral && doc.data != NULL && LENGTH(doc.data) > 0
+      RETURN doc
+  `;
+  for (const doc of cursor) {
+    const keys = Object.keys(doc.data);
+    if (keys.length > 0) {
+      for (const key of Object.keys(doc.data)) {
+        delete doc.data[key];
+      }
+      collection.update(doc, doc, {mergeObjects: false});
+    }
+  }
+}
+
+/**
  * Return the workflow config.
  * @param {Object} workflow
  * @return {Object}
@@ -635,43 +640,127 @@ function getWorkflowStatus(workflow) {
   return cursor.next();
 }
 
+/**
+ * Initialize job resource requirements.
+ * @param {Object} workflow
+ */
+function initializeJobResourceRequirements(workflow) {
+  const resourceRequirements = config.getWorkflowCollection(workflow, 'resource_requirements');
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'requires');
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
+
+  // Temporarily add the computed fields to each document to avoid the function calls in the
+  // jobs query below.
+  for (const rr of resourceRequirements.all()) {
+    rr.runtime_seconds = utils.getTimeDurationInSeconds(rr.runtime);
+    rr.memory_bytes = utils.getMemoryInBytes(rr.memory);
+    resourceRequirements.update(rr, rr);
+  }
+
+  query`
+    FOR job in ${jobs}
+      FOR v, e, p
+          IN 1
+          OUTBOUND job._id
+          GRAPH ${graphName}
+          OPTIONS { edgeCollections: ${edgeName} }
+          LET newInternal = MERGE(job.internal, {
+              num_cpus: p.vertices[1].num_cpus,
+              num_gpus: p.vertices[1].num_gpus,
+              num_nodes: p.vertices[1].num_nodes,
+              memory_bytes: p.vertices[1].memory_bytes,
+              runtime_seconds: p.vertices[1].runtime_seconds,
+            }
+          )
+          UPDATE job WITH { internal: newInternal } IN ${jobs}
+    `;
+  const rr = schemas.resourceRequirements.validate({name: 'default'}).value;
+  rr.runtime_seconds = utils.getTimeDurationInSeconds(rr.runtime);
+  rr.memory_bytes = utils.getMemoryInBytes(rr.memory);
+
+  // Cover the jobs that do not have a requires edge.
+  query`
+    FOR job in ${jobs}
+      FILTER job.internal.num_cpus == 0
+      LET newInternal = MERGE(job.internal, {
+          num_cpus: ${rr.num_cpus},
+          num_gpus: ${rr.num_gpus},
+          num_nodes: ${rr.num_nodes},
+          memory_bytes: ${rr.memory_bytes},
+          runtime_seconds: ${rr.runtime_seconds},
+        }
+      )
+      UPDATE job WITH { internal: newInternal } IN ${jobs}
+  `;
+
+  for (const rr of resourceRequirements.all()) {
+    delete rr.memory_bytes;
+    delete rr.runtime_seconds;
+    resourceRequirements.update(rr, rr);
+  }
+}
+
+/**
+ * Initialize job scheduler.
+ * @param {Object} workflow
+ */
+function initializeJobScheduler(workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'scheduled_bys');
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
+
+  query`
+    FOR job in ${jobs}
+      FOR v, e, p
+          IN 1
+          OUTBOUND job._id
+          GRAPH ${graphName}
+          OPTIONS { edgeCollections: ${edgeName} }
+          LET newInternal = MERGE(job.internal, {
+              scheduler_config_id: IS_NULL(p.vertices[1]._id) ? '' : p.vertices[1]._id,
+            }
+          )
+          UPDATE job WITH { internal: newInternal } IN ${jobs}
+    `;
+}
+
 /** Set initial job statuses to blocked or ready. The default behavior changes all existing
- * statuses except JobStatus.Disabled. Set onlyUninitialized=true if the user is managing
- * existing statuses on a workflow restart.
+ * statuses except JobStatus.Disabled.
  * @param {Object} workflow
  * @param {Boolean} onlyUninitialized
  */
 function initializeJobStatus(workflow, onlyUninitialized) {
-  // TODO: Can this be more efficient with one traversal?
+  initializeJobResourceRequirements(workflow);
+  initializeJobScheduler(workflow);
+
+  const graphName = config.getWorkflowGraphName(workflow);
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
-  for (const job of jobs.all()) {
-    const jobResources = getJobResourceRequirements(job, workflow);
-    if (job.internal == null) {
-      job.internal = schemas.jobInternal.validate({}).value;
-    }
-    const scheduler = getJobScheduler(job, workflow);
-    if (scheduler == null) {
-      job.internal.scheduler_config_id = '';
-    } else {
-      job.internal.scheduler_config_id = scheduler._id;
-    }
-    job.internal.memory_bytes = utils.getMemoryInBytes(jobResources.memory);
-    job.internal.runtime_seconds = utils.getTimeDurationInSeconds(jobResources.runtime);
-    job.internal.num_cpus = jobResources.num_cpus;
-    job.internal.num_gpus = jobResources.num_gpus;
-    job.internal.num_nodes = jobResources.num_nodes;
-    if (
-      job.status != JobStatus.Disabled &&
-        (!onlyUninitialized || job.status == JobStatus.Uninitialized)
-    ) {
-      if (isJobInitiallyBlocked(job, workflow)) {
-        job.status = JobStatus.Blocked;
-      } else if (job.status != JobStatus.Done) {
-        job.status = JobStatus.Ready;
-      }
-    }
-    jobs.update(job, job, {mergeObjects: false});
-  }
+  const edgeName = config.getWorkflowCollectionName(workflow, 'blocks');
+
+  // This is not strictly necessary but is a good safety net against bugs elsewhere.
+  uninitializeBlockedJobs(workflow);
+
+  query`
+    FOR job in ${jobs}
+      FILTER job.status != ${JobStatus.Disabled}
+      FOR v
+          IN 1
+          INBOUND job._id
+          GRAPH ${graphName}
+          OPTIONS { edgeCollections: ${edgeName} }
+          FILTER v.status != ${JobStatus.Done}
+            && (!${onlyUninitialized} || job.status == ${JobStatus.Uninitialized})
+          UPDATE job WITH { status: ${JobStatus.Blocked} } IN ${jobs}
+  `;
+  // Initialize all unblocked jobs.
+  query`
+    FOR job in ${jobs}
+        FILTER job.status != ${JobStatus.Disabled}
+          && job.status != ${JobStatus.Blocked}
+          && job.status != ${JobStatus.Done}
+        UPDATE job WITH { status: ${JobStatus.Ready} } IN ${jobs}
+  `;
   console.debug(
       `Initialized all incomplete job status to ${JobStatus.Ready} or ${JobStatus.Blocked}`,
   );
@@ -1173,14 +1262,12 @@ function prepareJobsForScheduling(workflow) {
       const cursor = query({count: true})`
         FOR job IN ${collection}
           FILTER job.status == ${JobStatus.Ready} && job.needs_compute_node_schedule
-          RETURN job
+          UPDATE job WITH { status: ${JobStatus.Scheduled} } IN ${collection}
+          RETURN job.internal.scheduler_config_id
       `;
 
-      for (const job of cursor) {
-        job.status = JobStatus.Scheduled;
-        const meta = collection.update(job, job, {mergeObjects: false});
-        Object.assign(job, meta);
-        schedulers.push(job.internal.scheduler_config_id);
+      for (const scheduler of cursor) {
+        schedulers.push(scheduler);
       }
     },
   });
@@ -1214,28 +1301,45 @@ function processConsumedUserData(workflow) {
   return reinitializedJobs;
 }
 
-/** Reset job status to uninitialized.
+/** Reset failed job status to uninitialized.
  * @param {Object} workflow
- * @param {boolean} failedOnly
  */
-function resetJobStatus(workflow, failedOnly) {
-  const jobsCollection = config.getWorkflowCollection(workflow, 'jobs');
-  const workflowStatus = getWorkflowStatus(workflow);
+function resetFailedJobStatus(workflow) {
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'returned');
+  const runId = getWorkflowStatus(workflow).run_id;
 
-  // PERF: this could be one query.
-  for (const job of jobsCollection.all()) {
-    if (failedOnly) {
-      const result = getJobResultByRunId(job, workflow, workflowStatus.run_id);
-      // This only includes jobs that completed and failed.
-      // Some jobs may not have run because they were already successful.
-      // Jobs that did not complete will get reset in the workflow restart command.
-      if (result == null || result.return_code == 0) {
-        continue;
-      }
-    }
-    job.status = JobStatus.Uninitialized;
-    jobsCollection.update(job, job, {mergeObjects: false});
+  const cursor = query`
+    FOR job in ${jobs}
+      FOR v, e, p
+        IN 1
+        OUTBOUND job._id
+        GRAPH ${graphName}
+        OPTIONS { edgeCollections: ${edgeName} }
+        FILTER p.vertices[1].run_id == ${runId} && p.vertices[1].return_code != 0
+        UPDATE job WITH { status: ${JobStatus.Uninitialized} } IN ${jobs}
+        RETURN job
+  `;
+  console.debug(`Reset failed job status to ${JobStatus.Uninitialized}`);
+
+  // Would it be faster to call uninitializeBlockedJobs?
+  for (const job of cursor) {
+    updateJobsFromCompletionReversal(job, workflow);
   }
+}
+
+/** Reset all job status to uninitialized.
+ * @param {Object} workflow
+ */
+function resetJobStatus(workflow) {
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
+
+  query`
+    FOR job in ${jobs}
+      FILTER job.status != ${JobStatus.Uninitialized}
+      UPDATE job WITH ({ status: ${JobStatus.Uninitialized} }) in ${jobs}
+  `;
   console.debug(`Reset job status to ${JobStatus.Uninitialized}`);
 }
 
@@ -1286,6 +1390,7 @@ function setupAutoTuneResourceRequirements(workflow) {
     throw new Error('The auto-tune feature requires collection of job process stats.');
   }
 
+  // PERF: make one query
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
   for (const job of jobs.all()) {
     if (job.status == JobStatus.Blocked) {
@@ -1323,6 +1428,7 @@ function processAutoTuneResourceRequirementsResults(workflow) {
   const autoTuneJobs = new Set();
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
 
+  // PERF: This will be slow with huge numbers of jobs.
   // FUTURE: consider whether all changes can be made atomically.
   for (const key of workflowStatus.auto_tune_status.job_keys) {
     const job = jobs.document(key);
@@ -1419,21 +1525,37 @@ function updateJobsFromCompletionReversal(job, workflow) {
   const edgeName = config.getWorkflowCollectionName(workflow, 'blocks');
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
   const numJobs = jobs.count();
-  const cursor = query`
+  query`
     FOR v, e, p
       IN 1..${numJobs}
       OUTBOUND ${job._id}
       GRAPH ${graphName}
       OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
-      RETURN v
+      FILTER v.status != ${JobStatus.Uninitialized}
+      UPDATE v WITH { status: ${JobStatus.Uninitialized} } IN ${jobs}
   `;
-  for (const downstreamJob of cursor) {
-    if (downstreamJob.status != JobStatus.Uninitialized) {
-      downstreamJob.status = JobStatus.Uninitialized;
-      jobs.update(downstreamJob, downstreamJob, {mergeObjects: false});
-      console.debug(`Reset job=${downstreamJob._key} status to ${JobStatus.Uninitialized}`);
-    }
-  }
+}
+
+/**
+ * Ensure that all jobs downstream of an uninitialized job are also uninitialized.
+ * @param {Object} workflow
+ */
+function uninitializeBlockedJobs(workflow) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'blocks');
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
+  const numJobs = jobs.count();
+  query`
+    FOR job in ${jobs}
+      FILTER job.status == ${JobStatus.Uninitialized}
+      FOR v, e, p
+        IN 1..${numJobs}
+        OUTBOUND job._id
+        GRAPH ${graphName}
+        OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
+        FILTER v.status != ${JobStatus.Uninitialized}
+        UPDATE v WITH { status: ${JobStatus.Uninitialized} } IN ${jobs}
+  `;
 }
 
 /**
@@ -1487,17 +1609,20 @@ module.exports = {
   listUserDataConsumedByJob,
   listUserDataStoredByJob,
   listUserDataWithEphemeralData,
+  clearEphemeralUserData,
   manageJobStatusChange,
   prepareJobsForSubmission,
   prepareJobsForSubmissionNoResourceChecks,
   prepareJobsForScheduling,
   processAutoTuneResourceRequirementsResults,
   processConsumedUserData,
+  resetFailedJobStatus,
   resetJobStatus,
   resetWorkflowConfig,
   resetWorkflowStatus,
   setOrReplaceJobResourceRequirements,
   setupAutoTuneResourceRequirements,
   updateBlockedJobsFromCompletion,
+  updateJobsFromCompletionReversal,
   updateWorkflowConfig,
 };

@@ -48,7 +48,7 @@ from torc.openapi_client.models.workflows_model import WorkflowsModel
 
 import torc.version
 from torc.api import send_api_command, iter_documents, wait_for_healthy_database
-from torc.common import JOB_STDIO_DIR, STATS_DIR, timer_stats_collector
+from torc.common import JOB_STDIO_DIR, STATS_DIR, timer_stats_collector, JobStatus
 from torc.exceptions import InvalidParameter, DatabaseOffline
 from torc.utils.cpu_affinity_mask_tracker import CpuAffinityMaskTracker
 from torc.utils.filesystem_factory import make_path
@@ -503,7 +503,7 @@ class JobRunner:
                 self._update_file_info(job)
 
         for job in done_jobs:
-            self._cleanup_job(job, "done")
+            self._cleanup_job(job, JobStatus.DONE.value)
 
         if done_jobs:
             logger.info("Found %s completions", len(done_jobs))
@@ -517,7 +517,7 @@ class JobRunner:
             job.cancel()
             logger.info("Canceled job key=%s name=%s", job.key, job.db_job.name)
 
-        status = "canceled"
+        status = JobStatus.CANCELED.value
         for job in jobs:
             job.wait_for_completion(status)
             assert job.is_complete()
@@ -539,7 +539,7 @@ class JobRunner:
             else:
                 no_wait_for_exit_jobs.append(job)
 
-        status = "terminated"
+        status = JobStatus.TERMINATED.value
         for job in wait_for_exit_jobs:
             job.wait_for_completion(status)
             assert job.is_complete()
@@ -567,7 +567,7 @@ class JobRunner:
             self._api.put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id,
             self._workflow.key,
             job.key,
-            "submitted",
+            JobStatus.SUBMITTED.value,
             job.db_job.rev,
             self._run_id,
         )

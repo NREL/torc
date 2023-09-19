@@ -291,28 +291,105 @@ def test_cancel_with_failed_job(workflow_with_cancel):
     assert db.get_document("jobs", "job2").status == expected_status
 
 
+def test_reset_job_status_all(completed_workflow):
+    """Verify that only job statuses can be reset."""
+    db, _, _ = completed_workflow
+    for name in ("preprocess", "work1", "work2", "postprocess"):
+        assert db.get_document("jobs", name).status == "done"
+    db.api.post_workflows_key_reset_job_status(db.workflow.key, failed_only=False)
+    for name in ("preprocess", "work1", "work2", "postprocess"):
+        assert db.get_document("jobs", name).status == "uninitialized"
+
+    mgr = WorkflowManager(db.api, db.workflow.key)
+    mgr.restart()
+
+    assert db.get_document("jobs", "preprocess").status == "ready"
+    for name in ("work1", "work2", "postprocess"):
+        assert db.get_document("jobs", name).status == "blocked"
+
+
 def test_reset_job_status_failed_only(completed_workflow):
     """Verify that only jobs with failed status can be reset."""
     db, _, _ = completed_workflow
     for name in ("preprocess", "work1", "work2", "postprocess"):
-        job = db.get_document("jobs", name)
-        assert job.status == "done"
+        assert db.get_document("jobs", name).status == "done"
     job = db.get_document("jobs", "work2")
     result = db.api.get_workflows_workflow_results_find_by_job_key(db.workflow.key, job.key)
     result.return_code = 1
     db.api.put_workflows_workflow_results_key(db.workflow.key, result.key, result)
     db.api.post_workflows_key_reset_job_status(db.workflow.key, failed_only=True)
     assert db.get_document("jobs", "work2").status == "uninitialized"
-    for name in ("preprocess", "work1", "postprocess"):
-        job = db.get_document("jobs", name)
-        assert job.status == "done"
+    assert db.get_document("jobs", "postprocess").status == "uninitialized"
+    for name in ("preprocess", "work1"):
+        assert db.get_document("jobs", name).status == "done"
 
     mgr = WorkflowManager(db.api, db.workflow.key)
     mgr.restart()
     for name in ("preprocess", "work1"):
-        job = db.get_document("jobs", name)
-        assert job.status == "done"
+        assert db.get_document("jobs", name).status == "done"
     assert db.get_document("jobs", "work2").status == "ready"
+    assert db.get_document("jobs", "postprocess").status == "blocked"
+
+
+def test_reset_job_status_failed_blocked(completed_workflow):
+    """Verify that resetting a failed job resets all downstream jobs."""
+    db, _, _ = completed_workflow
+    for name in ("preprocess", "work1", "work2", "postprocess"):
+        assert db.get_document("jobs", name).status == "done"
+    job = db.get_document("jobs", "preprocess")
+    result = db.api.get_workflows_workflow_results_find_by_job_key(db.workflow.key, job.key)
+    result.return_code = 1
+    db.api.put_workflows_workflow_results_key(db.workflow.key, result.key, result)
+    db.api.post_workflows_key_reset_job_status(db.workflow.key, failed_only=True)
+    for name in ("preprocess", "work1", "work2", "postprocess"):
+        assert db.get_document("jobs", name).status == "uninitialized"
+
+    mgr = WorkflowManager(db.api, db.workflow.key)
+    mgr.restart()
+
+    assert db.get_document("jobs", "preprocess").status == "ready"
+    for name in ("work1", "work2", "postprocess"):
+        assert db.get_document("jobs", name).status == "blocked"
+
+
+def test_reset_job_status_cli(completed_workflow):
+    """Test the CLI command to reset job status."""
+    db, _, _ = completed_workflow
+    api = db.api
+    for name in ("preprocess", "work1", "work2", "postprocess"):
+        assert db.get_document("jobs", name).status == "done"
+    job = db.get_document("jobs", "work1")
+    result = db.api.get_workflows_workflow_results_find_by_job_key(db.workflow.key, job.key)
+    result.return_code = 1
+    api.put_workflows_workflow_results_key(db.workflow.key, result.key, result)
+
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(
+        cli,
+        [
+            "-k",
+            db.workflow.key,
+            "-u",
+            api.api_client.configuration.host,
+            "-n",
+            "jobs",
+            "reset-status",
+            job.key,
+        ],
+    )
+    assert result.exit_code == 0
+
+    for name in ("preprocess", "work2"):
+        assert db.get_document("jobs", name).status == "done"
+    for name in ("work1", "postprocess"):
+        assert db.get_document("jobs", name).status == "uninitialized"
+
+    mgr = WorkflowManager(db.api, db.workflow.key)
+    mgr.restart()
+
+    for name in ("preprocess", "work2"):
+        assert db.get_document("jobs", name).status == "done"
+    assert db.get_document("jobs", "work1").status == "ready"
     assert db.get_document("jobs", "postprocess").status == "blocked"
 
 
@@ -526,8 +603,10 @@ def test_restart_uninitialized(diamond_workflow):
         cli, ["-n", "-u", url, "-k", db.workflow.key, "jobs", "reset-status", job_key]
     )
     assert result.exit_code == 0
+    assert db.get_document("jobs", "preprocess").status == "done"
+    assert db.get_document("jobs", "work1").status == "done"
     assert db.get_document("jobs", "work2").status == "uninitialized"
-    assert db.get_document("jobs", "postprocess").status == "ready"
+    assert db.get_document("jobs", "postprocess").status == "uninitialized"
     result = runner.invoke(
         cli,
         ["-n", "-u", url, "-k", db.workflow.key, "workflows", "restart", "--only-uninitialized"],
@@ -536,7 +615,7 @@ def test_restart_uninitialized(diamond_workflow):
     assert db.get_document("jobs", "preprocess").status == "done"
     assert db.get_document("jobs", "work1").status == "done"
     assert db.get_document("jobs", "work2").status == "ready"
-    assert db.get_document("jobs", "postprocess").status == "ready"
+    assert db.get_document("jobs", "postprocess").status == "blocked"
 
 
 @pytest.mark.parametrize("num_jobs", [5])

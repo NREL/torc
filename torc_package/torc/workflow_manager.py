@@ -6,6 +6,7 @@ import socket
 from pathlib import Path
 
 from torc.api import send_api_command, iter_documents
+from torc.common import JobStatus
 from torc.exceptions import InvalidWorkflow
 
 
@@ -29,10 +30,12 @@ class WorkflowManager:
         only_uninitialized : bool
             If True, only initialize jobs with a status of uninitialized.
         """
-        self._check_workflow(ignore_missing_data=ignore_missing_data)
         self._bump_run_id()
         send_api_command(self._api.post_workflows_key_reset_status, self._key)
-        self._reinitialize_jobs(only_uninitialized=only_uninitialized)
+        self.reinitialize_jobs(
+            ignore_missing_data=ignore_missing_data,
+            only_uninitialized=only_uninitialized,
+        )
         send_api_command(
             self._api.post_workflows_workflow_events,
             self._key,
@@ -155,7 +158,17 @@ class WorkflowManager:
         )
         logger.info("Changed all uninitialized jobs to ready or blocked.")
 
-    def _reinitialize_jobs(self, only_uninitialized=False):
+    def reinitialize_jobs(self, ignore_missing_data=False, only_uninitialized=False):
+        """Reinitialize jobs. Account for jobs that are new or have been reset.
+
+        Parameters
+        ----------
+        ignore_missing_data : bool
+            If True, ignore checks for missing files and user_data.
+        only_uninitialized : bool
+            If True, only initialize jobs with a status of uninitialized.
+        """
+        self._check_workflow(ignore_missing_data=ignore_missing_data)
         self._process_changed_files()
         self._update_jobs_if_output_files_are_missing()
         response = send_api_command(
@@ -169,10 +182,11 @@ class WorkflowManager:
         self._initialize_jobs(only_uninitialized=only_uninitialized)
 
     def _update_jobs_if_output_files_are_missing(self):
+        run_id = None
         for job in send_api_command(
             self._api.get_workflows_workflow_jobs_find_by_status_status,
             self._key,
-            "done",
+            JobStatus.DONE.value,
         ).items:
             for file in send_api_command(
                 self._api.get_workflows_workflow_files_produced_by_job_key,
@@ -181,17 +195,23 @@ class WorkflowManager:
             ).items:
                 path = Path(file.path)
                 if not path.exists():
-                    job.status = "uninitialized"
+                    if run_id is None:
+                        run_id = send_api_command(
+                            self._api.get_workflows_key_status, self._key
+                        ).run_id
+                    status = JobStatus.UNINITIALIZED.value
                     send_api_command(
-                        self._api.put_workflows_workflow_jobs_key,
+                        self._api.put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id,
                         self._key,
                         job.key,
-                        job,
+                        status,
+                        job.rev,
+                        run_id,
                     )
                     logger.info(
                         "Changed job %s from done to %s because output file is missing",
                         job.key,
-                        job.status,
+                        status,
                     )
                     break
 
@@ -202,8 +222,8 @@ class WorkflowManager:
             self._key,
             file.key,
         ):
-            if job.status in ("done", "canceled"):
-                status = "uninitialized"
+            if job.status in (JobStatus.DONE.value, JobStatus.CANCELED.value):
+                status = JobStatus.UNINITIALIZED.value
                 send_api_command(
                     self._api.put_workflows_workflow_jobs_key_manage_status_change_status_rev_run_id,
                     self._key,
