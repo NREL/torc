@@ -260,7 +260,7 @@ function addWorkflowDocument(doc, collectionName, workflow, checkExisting, allow
  * @return {Object}
  */
 function addWorkflow(doc) {
-  if (doc.timestamp == null) {
+  if (doc.timestamp == null || doc.timestamp == '') {
     doc.timestamp = (new Date()).toISOString();
   }
   const meta = db.workflows.save(doc);
