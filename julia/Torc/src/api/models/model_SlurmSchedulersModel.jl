@@ -10,6 +10,7 @@
         gres=nothing,
         mem=nothing,
         nodes=nothing,
+        ntasks_per_node=nothing,
         partition=nothing,
         qos="normal",
         tmp=nothing,
@@ -25,6 +26,7 @@
     - gres::String
     - mem::String
     - nodes::Int64
+    - ntasks_per_node::Int64
     - partition::String
     - qos::String
     - tmp::String
@@ -40,6 +42,7 @@ Base.@kwdef mutable struct SlurmSchedulersModel <: OpenAPI.APIModel
     gres::Union{Nothing, String} = nothing
     mem::Union{Nothing, String} = nothing
     nodes::Union{Nothing, Int64} = nothing
+    ntasks_per_node::Union{Nothing, Int64} = nothing
     partition::Union{Nothing, String} = nothing
     qos::Union{Nothing, String} = "normal"
     tmp::Union{Nothing, String} = nothing
@@ -49,12 +52,13 @@ Base.@kwdef mutable struct SlurmSchedulersModel <: OpenAPI.APIModel
     _id::Union{Nothing, String} = nothing
     _rev::Union{Nothing, String} = nothing
 
-    function SlurmSchedulersModel(name, account, gres, mem, nodes, partition, qos, tmp, walltime, extra, _key, _id, _rev, )
+    function SlurmSchedulersModel(name, account, gres, mem, nodes, ntasks_per_node, partition, qos, tmp, walltime, extra, _key, _id, _rev, )
         OpenAPI.validate_property(SlurmSchedulersModel, Symbol("name"), name)
         OpenAPI.validate_property(SlurmSchedulersModel, Symbol("account"), account)
         OpenAPI.validate_property(SlurmSchedulersModel, Symbol("gres"), gres)
         OpenAPI.validate_property(SlurmSchedulersModel, Symbol("mem"), mem)
         OpenAPI.validate_property(SlurmSchedulersModel, Symbol("nodes"), nodes)
+        OpenAPI.validate_property(SlurmSchedulersModel, Symbol("ntasks_per_node"), ntasks_per_node)
         OpenAPI.validate_property(SlurmSchedulersModel, Symbol("partition"), partition)
         OpenAPI.validate_property(SlurmSchedulersModel, Symbol("qos"), qos)
         OpenAPI.validate_property(SlurmSchedulersModel, Symbol("tmp"), tmp)
@@ -63,11 +67,11 @@ Base.@kwdef mutable struct SlurmSchedulersModel <: OpenAPI.APIModel
         OpenAPI.validate_property(SlurmSchedulersModel, Symbol("_key"), _key)
         OpenAPI.validate_property(SlurmSchedulersModel, Symbol("_id"), _id)
         OpenAPI.validate_property(SlurmSchedulersModel, Symbol("_rev"), _rev)
-        return new(name, account, gres, mem, nodes, partition, qos, tmp, walltime, extra, _key, _id, _rev, )
+        return new(name, account, gres, mem, nodes, ntasks_per_node, partition, qos, tmp, walltime, extra, _key, _id, _rev, )
     end
 end # type SlurmSchedulersModel
 
-const _property_types_SlurmSchedulersModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("account")=>"String", Symbol("gres")=>"String", Symbol("mem")=>"String", Symbol("nodes")=>"Int64", Symbol("partition")=>"String", Symbol("qos")=>"String", Symbol("tmp")=>"String", Symbol("walltime")=>"String", Symbol("extra")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
+const _property_types_SlurmSchedulersModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("account")=>"String", Symbol("gres")=>"String", Symbol("mem")=>"String", Symbol("nodes")=>"Int64", Symbol("ntasks_per_node")=>"Int64", Symbol("partition")=>"String", Symbol("qos")=>"String", Symbol("tmp")=>"String", Symbol("walltime")=>"String", Symbol("extra")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ SlurmSchedulersModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_SlurmSchedulersModel[name]))}
 
 function check_required(o::SlurmSchedulersModel)

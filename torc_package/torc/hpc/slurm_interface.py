@@ -6,6 +6,8 @@ import re
 import subprocess
 from datetime import datetime
 
+import psutil
+
 from torc.exceptions import ExecutionError
 from torc.utils.files import create_script
 from torc.utils.run_command import run_command
@@ -132,7 +134,8 @@ class SlurmInterface(HpcInterface):
             if isinstance(value, float):
                 value = int(value)
             if value is not None:
-                text += f"#SBATCH --{param}={value}\n"
+                name = param.replace("_", "-")
+                text += f"#SBATCH --{name}={value}\n"
 
         if config.get("extra"):
             text += f"#SBATCH {config['extra']}\n"
@@ -205,6 +208,9 @@ class SlurmInterface(HpcInterface):
         return os.environ["SLURM_TASK_PID"]
 
     def get_memory_gb(self):
+        if os.environ.get("SLURM_CLUSTER_NAME", "") == "kestrel":
+            # TODO: This may not be correct for shared nodes.
+            return psutil.virtual_memory().total / (1024 * 1024 * 1024)
         return int(os.environ["SLURM_MEM_PER_NODE"]) / 1024
 
     def get_num_nodes(self):

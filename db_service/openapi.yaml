@@ -6250,6 +6250,8 @@ components:
           type: string
         nodes:
           type: integer
+        ntasks_per_node:
+          type: integer
         partition:
           type: string
         qos:

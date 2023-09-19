@@ -30,6 +30,7 @@ class SlurmSchedulersModel(BaseModel):
     gres: Optional[StrictStr] = None
     mem: Optional[StrictStr] = None
     nodes: StrictInt = Field(...)
+    ntasks_per_node: Optional[StrictInt] = None
     partition: Optional[StrictStr] = None
     qos: Optional[StrictStr] = 'normal'
     tmp: Optional[StrictStr] = None
@@ -38,7 +39,7 @@ class SlurmSchedulersModel(BaseModel):
     key: Optional[StrictStr] = Field(None, alias="_key")
     id: Optional[StrictStr] = Field(None, alias="_id")
     rev: Optional[StrictStr] = Field(None, alias="_rev")
-    __properties = ["name", "account", "gres", "mem", "nodes", "partition", "qos", "tmp", "walltime", "extra", "_key", "_id", "_rev"]
+    __properties = ["name", "account", "gres", "mem", "nodes", "ntasks_per_node", "partition", "qos", "tmp", "walltime", "extra", "_key", "_id", "_rev"]
     model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
 
     def to_str(self) -> str:
@@ -77,6 +78,7 @@ class SlurmSchedulersModel(BaseModel):
             "gres": obj.get("gres"),
             "mem": obj.get("mem"),
             "nodes": obj.get("nodes"),
+            "ntasks_per_node": obj.get("ntasks_per_node"),
             "partition": obj.get("partition"),
             "qos": obj.get("qos") if obj.get("qos") is not None else 'normal',
             "tmp": obj.get("tmp"),

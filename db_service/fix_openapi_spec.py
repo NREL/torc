@@ -516,6 +516,9 @@ def main():
         ("compute_nodes_resources", "time_limit"),
     ]:
         data["components"]["schemas"][component]["properties"][field]["type"] = "string"
+    data["components"]["schemas"]["slurm_schedulers_model"]["properties"]["ntasks_per_node"][
+        "type"
+    ] = "integer"
 
     for name in (
         "aws_schedulers_key_model",

@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **gres** | **String** |  | [optional] [default to nothing]
 **mem** | **String** |  | [optional] [default to nothing]
 **nodes** | **Int64** |  | [default to nothing]
+**ntasks_per_node** | **Int64** |  | [optional] [default to nothing]
 **partition** | **String** |  | [optional] [default to nothing]
 **qos** | **String** |  | [optional] [default to "normal"]
 **tmp** | **String** |  | [optional] [default to nothing]

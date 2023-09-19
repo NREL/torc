@@ -254,6 +254,7 @@ const slurmScheduler = joi.object().required().keys({
   gres: joi.string().optional().allow(null),
   mem: joi.string().optional().allow(null),
   nodes: joi.number().integer().required(),
+  ntasks_per_node: joi.number().integer().optional().allow(null),
   partition: joi.string(),
   qos: joi.string().default('normal'),
   tmp: joi.string().optional().allow(null),
