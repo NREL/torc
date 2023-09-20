@@ -2,7 +2,7 @@
 
 import getpass
 
-from torc.api import make_api, send_api_command
+from torc.api import make_api, add_bulk_jobs
 from torc.loggers import setup_logging
 from torc.openapi_client.models.compute_node_resource_stats_model import (
     ComputeNodeResourceStatsModel,
@@ -10,8 +10,9 @@ from torc.openapi_client.models.compute_node_resource_stats_model import (
 from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
 from torc.openapi_client.models.workflows_model import WorkflowsModel
 from torc.openapi_client.models.jobs_model import JobsModel
-from torc.openapi_client.models.bulk_jobs_model import BulkJobsModel
-from torc.openapi_client.models.resource_requirements_model import ResourceRequirementsModel
+from torc.openapi_client.models.resource_requirements_model import (
+    ResourceRequirementsModel,
+)
 from torc.openapi_client.models.slurm_schedulers_model import SlurmSchedulersModel
 
 
@@ -49,29 +50,21 @@ def create_workflow(api):
         ),
     )
 
-    job_count = 20_000
-    jobs_remaining = job_count
-    max_transfer_size = 10_000
-    job_index = 1
-    while jobs_remaining > 0:
-        jobs = []
-        for i in range(job_index, job_index + max_transfer_size):
-            job = JobWithEdgesModel(
-                job=JobsModel(
-                    name=f"job{i}",
-                    command="python my_script.py",
-                ),
-                resource_requirements=resource_requirements.id,
-                scheduler=scheduler.id,
-            )
-            jobs.append(job)
-            jobs_remaining -= 1
-            if jobs_remaining == 0:
-                break
-        send_api_command(api.post_bulk_jobs, workflow.key, BulkJobsModel(jobs=jobs))
-        job_index += max_transfer_size
+    jobs = (
+        JobWithEdgesModel(
+            job=JobsModel(
+                name=f"job{i}",
+                command="python my_script.py",
+            ),
+            resource_requirements=resource_requirements.id,
+            scheduler=scheduler.id,
+        )
+        for i in range(1, 20_001)
+    )
 
-    logger.info("Created workflow %s with %s jobs", workflow.key, job_count)
+    job_keys = add_bulk_jobs(api, workflow.key, jobs)
+
+    logger.info("Created workflow %s with %s jobs", workflow.key, len(job_keys))
     return workflow.key
 
 

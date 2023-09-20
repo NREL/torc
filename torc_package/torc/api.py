@@ -9,6 +9,7 @@ from resource_monitor.timing.timer_stats import Timer
 from torc.openapi_client import ApiClient, DefaultApi
 from torc.openapi_client.configuration import Configuration
 from torc.openapi_client.rest import ApiException
+from torc.openapi_client.models.bulk_jobs_model import BulkJobsModel
 from torc.common import timer_stats_collector
 from torc.exceptions import DatabaseOffline
 
@@ -136,6 +137,39 @@ def send_api_command(func, *args, raise_on_error=True, **kwargs):
                 raise DatabaseOffline(f"Received exception from API client: {exc=}") from exc
             logger.info("Exception is ignored.")
             return None
+
+
+def add_bulk_jobs(api: DefaultApi, workflow_key: str, jobs, max_transfer_size=10_000):
+    """Add an iterable of jobs to the workflow.
+
+    Parameters
+    ----------
+    api : DefaultApi
+    workflow_key : str
+    jobs : list
+        Any iterable of JobWithEdges
+    max_transfer_size : int
+        Maximum number of jobs to add per API call. 10,000 is recommended.
+
+    Returns
+    -------
+    list
+        List of keys of created jobs. Provided in same order as jobs.
+    """
+    job_keys = []
+    batch = []
+    for job in jobs:
+        batch.append(job)
+        if len(batch) > max_transfer_size:
+            res = send_api_command(api.post_bulk_jobs, workflow_key, BulkJobsModel(jobs=batch))
+            job_keys += res["items"]
+            batch.clear()
+
+    if batch:
+        res = send_api_command(api.post_bulk_jobs, workflow_key, BulkJobsModel(jobs=batch))
+        job_keys += res["items"]
+
+    return job_keys
 
 
 def sanitize_workflow(data: dict):

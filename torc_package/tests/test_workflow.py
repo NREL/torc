@@ -16,8 +16,10 @@ from torc.openapi_client.models.user_data_model import (
     UserDataModel,
 )
 from torc.openapi_client.models.results_model import ResultsModel
+from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
+from torc.openapi_client.models.jobs_model import JobsModel
 
-from torc.api import iter_documents
+from torc.api import iter_documents, add_bulk_jobs
 from torc.cli.torc import cli
 from torc.common import GiB
 from torc.exceptions import InvalidWorkflow
@@ -721,6 +723,34 @@ def test_map_functions(mapped_function_workflow):
     assert "total" in output_ud.items[0].data
     assert output_ud.items[0].data["total"] == 25
     assert "output_data_paths" in output_ud.items[0].data
+
+
+def test_add_bulk_jobs(diamond_workflow):
+    """Test the add_bulk_jobs function."""
+    db = diamond_workflow[0]
+    api = db.api
+    initial_job_keys = api.get_job_keys(db.workflow.key)["items"]
+    assert len(initial_job_keys) == 4
+    resource_requirements = api.get_resource_requirements(db.workflow.key).items[0]
+
+    jobs = (
+        JobWithEdgesModel(
+            job=JobsModel(
+                name=f"added_job{i}",
+                command="python my_script.py",
+            ),
+            resource_requirements=resource_requirements.id,
+        )
+        for i in range(1, 51)
+    )
+
+    job_keys = add_bulk_jobs(api, db.workflow.key, jobs, max_transfer_size=11)
+    assert len(job_keys) == 50
+    names = [x.name for x in api.get_jobs(db.workflow.key).items[len(initial_job_keys) :]]
+    assert names == [f"added_job{i}" for i in range(1, 51)]
+
+    final_job_keys = api.get_job_keys(db.workflow.key)["items"]
+    assert len(final_job_keys) == len(initial_job_keys) + 50
 
 
 def _fake_complete_job(api, workflow_key, job):
