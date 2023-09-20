@@ -12,6 +12,7 @@ hopefully improve with newer versions of Arango.
    is OK with Swagger v2 but fails with OpenAPI v7. Remove the *key_model variants.
 """
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -76,8 +77,11 @@ def main():
     with open(spec_file, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
+    with open("config.json", encoding="utf-8") as f:
+        version = json.load(f)["packageVersion"]
+
     data["info"]["title"] = "torc"
-    data["info"]["version"] = "v0.2.5"
+    data["info"]["version"] = f"v{version}"
     data["info"]["license"] = {"name": "BSD 3-Clause"}
 
     _replace_paths_and_components(
