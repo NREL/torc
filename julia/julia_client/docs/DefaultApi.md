@@ -75,6 +75,7 @@ Method | HTTP request | Description
 [**get_slurm_schedulers_key**](DefaultApi.md#get_slurm_schedulers_key) | **GET** /workflows/{workflow}/slurm_schedulers/{key} | Retrieve the Slurm compute node configuration for a key.
 [**get_user_data**](DefaultApi.md#get_user_data) | **GET** /workflows/{workflow}/user_data | Retrieve all user data documents
 [**get_user_data_key**](DefaultApi.md#get_user_data_key) | **GET** /workflows/{workflow}/user_data/{key} | Retrieve the user data for a key.
+[**get_version**](DefaultApi.md#get_version) | **GET** /version | Return the version of the service.
 [**get_workflow_specifications_example**](DefaultApi.md#get_workflow_specifications_example) | **GET** /workflow_specifications/example | Retrieve an example workflow specification
 [**get_workflow_specifications_key**](DefaultApi.md#get_workflow_specifications_key) | **GET** /workflow_specifications/{key} | Retrieve the current workflow
 [**get_workflow_specifications_template**](DefaultApi.md#get_workflow_specifications_template) | **GET** /workflow_specifications/template | Retrieve the workflow specification template
@@ -2683,6 +2684,32 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**UserDataModel**](UserDataModel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **get_version**
+> get_version(_api::DefaultApi; _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> get_version(_api::DefaultApi, response_stream::Channel; _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+
+Return the version of the service.
+
+Return the version of the service.
+
+### Required Parameters
+This endpoint does not need any parameter.
+
+### Return type
+
+**Any**
 
 ### Authorization
 

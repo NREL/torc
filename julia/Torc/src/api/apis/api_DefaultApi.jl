@@ -2630,6 +2630,36 @@ function get_user_data_key(_api::DefaultApi, response_stream::Channel, workflow:
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
+const _returntypes_get_version_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+)
+
+function _oacinternal_get_version(_api::DefaultApi; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_get_version_DefaultApi, "/version", [])
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Return the version of the service.
+
+Return the version of the service.
+
+Params:
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function get_version(_api::DefaultApi; _mediaType=nothing)
+    _ctx = _oacinternal_get_version(_api; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function get_version(_api::DefaultApi, response_stream::Channel; _mediaType=nothing)
+    _ctx = _oacinternal_get_version(_api; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
 const _returntypes_get_workflow_specifications_example_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowSpecificationsModel,
     Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
@@ -4859,6 +4889,7 @@ export get_slurm_schedulers
 export get_slurm_schedulers_key
 export get_user_data
 export get_user_data_key
+export get_version
 export get_workflow_specifications_example
 export get_workflow_specifications_key
 export get_workflow_specifications_template

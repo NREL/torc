@@ -91,6 +91,7 @@ Class | Method
 *DefaultApi* | [**get_slurm_schedulers_key**](docs/DefaultApi.md#get_slurm_schedulers_key)<br/>**GET** /workflows/{workflow}/slurm_schedulers/{key}<br/>Retrieve the Slurm compute node configuration for a key.
 *DefaultApi* | [**get_user_data**](docs/DefaultApi.md#get_user_data)<br/>**GET** /workflows/{workflow}/user_data<br/>Retrieve all user data documents
 *DefaultApi* | [**get_user_data_key**](docs/DefaultApi.md#get_user_data_key)<br/>**GET** /workflows/{workflow}/user_data/{key}<br/>Retrieve the user data for a key.
+*DefaultApi* | [**get_version**](docs/DefaultApi.md#get_version)<br/>**GET** /version<br/>Return the version of the service.
 *DefaultApi* | [**get_workflow_specifications_example**](docs/DefaultApi.md#get_workflow_specifications_example)<br/>**GET** /workflow_specifications/example<br/>Retrieve an example workflow specification
 *DefaultApi* | [**get_workflow_specifications_key**](docs/DefaultApi.md#get_workflow_specifications_key)<br/>**GET** /workflow_specifications/{key}<br/>Retrieve the current workflow
 *DefaultApi* | [**get_workflow_specifications_template**](docs/DefaultApi.md#get_workflow_specifications_template)<br/>**GET** /workflow_specifications/template<br/>Retrieve the workflow specification template

@@ -11,6 +11,7 @@ const schemas = require('./schemas');
 const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
 const collection = db._collection('workflows');
+const VERSION = '0.2.5'; // TODO: this needs to be stored in one file for all torc SW to read
 module.exports = router;
 
 router.get('/ping', function(req, res) {
@@ -19,6 +20,13 @@ router.get('/ping', function(req, res) {
     .response(joi.object(), 'Message')
     .summary('Check if the service is running.')
     .description('Check if the service is running.');
+
+router.get('/version', function(req, res) {
+  res.send({version: VERSION});
+})
+    .response(joi.object(), 'Version')
+    .summary('Return the version of the service.')
+    .description('Return the version of the service.');
 
 router.post('/workflows', function(req, res) {
   try {
