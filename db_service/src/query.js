@@ -1166,9 +1166,9 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
             && job.internal.num_nodes == ${workerResources.num_nodes}
             && (job.internal.scheduler_config_id == ''
                 || job.internal.scheduler_config_id == ${schedulerConfigId})
+          LIMIT ${queryLimit}
           SORT job.internal.num_gpus DESC, job.internal.memory_bytes DESC,
                job.internal.runtime_seconds DESC
-          LIMIT ${queryLimit}
           RETURN job
       `;
 
