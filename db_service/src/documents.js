@@ -130,7 +130,7 @@ function addJobSpecification(jobSpec, workflow) {
  * Add a job with its edge definitions.
  * @param {schemas.jobWithEdges} job
  * @param {Object} workflow
- * @return {Object}
+ * @return {string}
  */
 function addJobWithEdges(job, workflow) {
   const blocksCollection = config.getWorkflowCollection(workflow, 'blocks');
@@ -142,8 +142,7 @@ function addJobWithEdges(job, workflow) {
   const storesCollection = config.getWorkflowCollection(workflow, 'stores');
 
   const meta = addJob(job.job, workflow);
-  Object.assign(job.job, meta);
-  const jobId = job.job._id;
+  const jobId = meta._id;
 
   if (job.resource_requirements != null) {
     requiresCollection.save({_from: jobId, _to: job.resource_requirements});
@@ -167,7 +166,7 @@ function addJobWithEdges(job, workflow) {
     blocksCollection.save({_from: id, _to: jobId});
   }
 
-  return job;
+  return meta._key;
 }
 
 /**
@@ -181,8 +180,8 @@ function addJobWithEdges(job, workflow) {
 function bulkAddJobsWithEdges(jobs, workflow) {
   const jobKeys = [];
   for (const job of jobs) {
-    addJobWithEdges(job, workflow);
-    jobKeys.push(job._key);
+    const key = addJobWithEdges(job, workflow);
+    jobKeys.push(key);
   }
   return jobKeys;
 }

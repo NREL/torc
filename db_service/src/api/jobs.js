@@ -28,7 +28,7 @@ router.get('workflows/:workflow/job_keys', function(req, res) {
   const workflow = documents.getWorkflow(workflowKey, res);
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
   const keys = [];
-  for (const job of jobs) {
+  for (const job of jobs.all()) {
     keys.push(job._key);
   }
   res.send({items: keys});
