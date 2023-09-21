@@ -15,7 +15,7 @@ from torc.torc_rc import TorcRuntimeConfig
 
 logger = logging.getLogger(__name__)
 
-# TODO DT: give more information about the workflows to be deleted in the warn message.
+# TODO: give more information about the workflows to be deleted in the warn message.
 #   Make one common message to use for workflow warns.
 # Add delete --user=X
 

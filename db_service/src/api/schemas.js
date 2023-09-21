@@ -226,6 +226,8 @@ const workflowConfig = joi.object().required().keys({
   compute_node_wait_for_new_jobs_seconds: joi.number().default(0),
   compute_node_ignore_workflow_completion: joi.boolean().default(false),
   compute_node_wait_for_healthy_database_minutes: joi.number().default(20),
+  prepare_jobs_sort_method: joi.string()
+      .default('gpus_runtime_memory').valid('gpus_runtime_memory', 'gpus_memory_runtime', 'none'),
   _key: joi.string().optional(),
   _id: joi.string().optional(),
   _rev: joi.string().optional(),

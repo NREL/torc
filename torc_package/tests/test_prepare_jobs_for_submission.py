@@ -5,9 +5,9 @@ from torc.openapi_client.models.compute_nodes_resources import (
 )
 
 
-def test_limited_by_cpu(job_requirement_variations):
+def test_limited_by_cpu(job_requirement_uniform):
     """Ensure that the CPU limits aren't exceeded."""
-    db = job_requirement_variations
+    db = job_requirement_uniform
     api = db.api
     resources = ComputeNodesResources(
         num_cpus=36,
@@ -17,14 +17,12 @@ def test_limited_by_cpu(job_requirement_variations):
         time_limit="P0DT4H",
     )
     response = api.post_workflows_key_prepare_jobs_for_submission(db.workflow.key, resources)
-    assert len(response.jobs) == 3
-    for job in response.jobs:
-        assert job.name.startswith("medium_job")
+    assert len(response.jobs) == 9
 
 
-def test_limited_by_memory(job_requirement_variations):
+def test_limited_by_memory(job_requirement_uniform):
     """Ensure that the memory limits aren't exceeded."""
-    db = job_requirement_variations
+    db = job_requirement_uniform
     api = db.api
     resources = ComputeNodesResources(
         num_cpus=200,
@@ -34,14 +32,12 @@ def test_limited_by_memory(job_requirement_variations):
         time_limit="P0DT4H",
     )
     response = api.post_workflows_key_prepare_jobs_for_submission(db.workflow.key, resources)
-    assert len(response.jobs) == 10
-    for job in response.jobs:
-        assert job.name.startswith("medium_job")
+    assert len(response.jobs) == 82 // 4
 
 
-def test_limited_by_time(job_requirement_variations):
+def test_limited_by_time(job_requirement_runtime):
     """Ensure that the time limits aren't exceeded."""
-    db = job_requirement_variations
+    db = job_requirement_runtime
     api = db.api
     resources = ComputeNodesResources(
         num_cpus=36,
@@ -55,8 +51,8 @@ def test_limited_by_time(job_requirement_variations):
     assert response.jobs[0].name == "short_job"
 
 
-def test_get_by_walltime(job_requirement_variations):
-    """Ensure that walltime is prioritizted."""
+def test_walltime_over_memory(job_requirement_variations):
+    """Ensure that walltime is prioritized over memory by default."""
     db = job_requirement_variations
     api = db.api
     resources = ComputeNodesResources(
@@ -69,6 +65,67 @@ def test_get_by_walltime(job_requirement_variations):
     response = api.post_workflows_key_prepare_jobs_for_submission(db.workflow.key, resources)
     assert len(response.jobs) >= 1
     assert response.jobs[0].name == "long_job"
+
+
+def test_memory_over_walltime(job_requirement_variations):
+    """Ensure that memory is prioritized over walltime with a custom setting."""
+    db = job_requirement_variations
+    api = db.api
+    resources = ComputeNodesResources(
+        num_cpus=36,
+        memory_gb=92,
+        num_gpus=0,
+        num_nodes=1,
+        time_limit="P0DT24H",
+    )
+    response = api.post_workflows_key_prepare_jobs_for_submission(
+        db.workflow.key,
+        resources,
+        sort_method="gpus_memory_runtime",
+    )
+    assert len(response.jobs) >= 1
+    assert response.jobs[0].name == "large_job_no_scheduler"
+
+
+def test_runtime_sorting(job_requirement_runtime):
+    """Ensure that jobs are sorted by runtime."""
+    db = job_requirement_runtime
+    api = db.api
+    resources = ComputeNodesResources(
+        num_cpus=36,
+        memory_gb=92,
+        num_gpus=0,
+        num_nodes=1,
+        time_limit="P0DT24H",
+    )
+    response = api.post_workflows_key_prepare_jobs_for_submission(
+        db.workflow.key,
+        resources,
+    )
+    assert len(response.jobs) == 2
+    assert response.jobs[0].name.startswith("medium")
+    assert response.jobs[1].name.startswith("short")
+
+
+def test_no_sorting(job_requirement_runtime):
+    """Ensure that jobs can be unsorted."""
+    db = job_requirement_runtime
+    api = db.api
+    resources = ComputeNodesResources(
+        num_cpus=36,
+        memory_gb=92,
+        num_gpus=0,
+        num_nodes=1,
+        time_limit="P0DT24H",
+    )
+    response = api.post_workflows_key_prepare_jobs_for_submission(
+        db.workflow.key,
+        resources,
+        sort_method="none",
+    )
+    assert len(response.jobs) == 2
+    assert response.jobs[0].name.startswith("short")
+    assert response.jobs[1].name.startswith("medium")
 
 
 def test_get_by_gpu(job_requirement_variations):

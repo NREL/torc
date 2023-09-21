@@ -5311,6 +5311,18 @@ paths:
         explode: false
         schema:
           type: string
+      - name: sort_method
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: string
+          enum:
+          - gpus_runtime_memory
+          - gpus_memory_runtime
+          - none
+          default: gpus_runtime_memory
       - name: limit
         in: query
         required: false
@@ -6150,6 +6162,13 @@ components:
           default: false
         compute_node_wait_for_healthy_database_minutes:
           type: number
+        prepare_jobs_sort_method:
+          type: string
+          enum:
+          - gpus_runtime_memory
+          - gpus_memory_runtime
+          - none
+          default: gpus_runtime_memory
         _key:
           type: string
         _id:

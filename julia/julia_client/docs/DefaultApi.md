@@ -3941,8 +3941,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **post_workflows_key_prepare_jobs_for_submission**
-> post_workflows_key_prepare_jobs_for_submission(_api::DefaultApi, key::String, body::ComputeNodesResources; limit=nothing, _mediaType=nothing) -> PostWorkflowsKeyPrepareJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse <br/>
-> post_workflows_key_prepare_jobs_for_submission(_api::DefaultApi, response_stream::Channel, key::String, body::ComputeNodesResources; limit=nothing, _mediaType=nothing) -> Channel{ PostWorkflowsKeyPrepareJobsForSubmissionResponse }, OpenAPI.Clients.ApiResponse
+> post_workflows_key_prepare_jobs_for_submission(_api::DefaultApi, key::String, body::ComputeNodesResources; sort_method=nothing, limit=nothing, _mediaType=nothing) -> PostWorkflowsKeyPrepareJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse <br/>
+> post_workflows_key_prepare_jobs_for_submission(_api::DefaultApi, response_stream::Channel, key::String, body::ComputeNodesResources; sort_method=nothing, limit=nothing, _mediaType=nothing) -> Channel{ PostWorkflowsKeyPrepareJobsForSubmissionResponse }, OpenAPI.Clients.ApiResponse
 
 Return ready jobs, accounting for resource requirements.
 
@@ -3960,6 +3960,7 @@ Name | Type | Description  | Notes
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **sort_method** | **String**|  | [default to &quot;gpus_runtime_memory&quot;]
  **limit** | **Float64**|  | [default to 100000.0]
 
 ### Return type

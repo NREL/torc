@@ -17764,20 +17764,22 @@ class DefaultApi(object):
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def post_workflows_key_prepare_jobs_for_submission(self, key : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[ComputeNodesResources, Field(..., description="Available worker resources.")], limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> PostWorkflowsKeyPrepareJobsForSubmissionResponse:  # noqa: E501
+    def post_workflows_key_prepare_jobs_for_submission(self, key : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[ComputeNodesResources, Field(..., description="Available worker resources.")], sort_method : Optional[StrictStr] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> PostWorkflowsKeyPrepareJobsForSubmissionResponse:  # noqa: E501
         """Return ready jobs, accounting for resource requirements.  # noqa: E501
 
         Return jobs that are ready for submission and meet worker resource Sets status to submitted_pending.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_key_prepare_jobs_for_submission(key, body, limit, async_req=True)
+        >>> thread = api.post_workflows_key_prepare_jobs_for_submission(key, body, sort_method, limit, async_req=True)
         >>> result = thread.get()
 
         :param key: Workflow key (required)
         :type key: str
         :param body: Available worker resources. (required)
         :type body: ComputeNodesResources
+        :param sort_method:
+        :type sort_method: str
         :param limit:
         :type limit: float
         :param async_req: Whether to execute the request asynchronously.
@@ -17794,23 +17796,25 @@ class DefaultApi(object):
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
             raise ValueError("Error! Please call the post_workflows_key_prepare_jobs_for_submission_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data")
-        return self.post_workflows_key_prepare_jobs_for_submission_with_http_info(key, body, limit, **kwargs)  # noqa: E501
+        return self.post_workflows_key_prepare_jobs_for_submission_with_http_info(key, body, sort_method, limit, **kwargs)  # noqa: E501
 
     @validate_call
-    def post_workflows_key_prepare_jobs_for_submission_with_http_info(self, key : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[ComputeNodesResources, Field(..., description="Available worker resources.")], limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> ApiResponse:  # noqa: E501
+    def post_workflows_key_prepare_jobs_for_submission_with_http_info(self, key : Annotated[StrictStr, Field(..., description="Workflow key")], body : Annotated[ComputeNodesResources, Field(..., description="Available worker resources.")], sort_method : Optional[StrictStr] = None, limit : Optional[Union[StrictFloat, StrictInt]] = None, **kwargs) -> ApiResponse:  # noqa: E501
         """Return ready jobs, accounting for resource requirements.  # noqa: E501
 
         Return jobs that are ready for submission and meet worker resource Sets status to submitted_pending.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.post_workflows_key_prepare_jobs_for_submission_with_http_info(key, body, limit, async_req=True)
+        >>> thread = api.post_workflows_key_prepare_jobs_for_submission_with_http_info(key, body, sort_method, limit, async_req=True)
         >>> result = thread.get()
 
         :param key: Workflow key (required)
         :type key: str
         :param body: Available worker resources. (required)
         :type body: ComputeNodesResources
+        :param sort_method:
+        :type sort_method: str
         :param limit:
         :type limit: float
         :param async_req: Whether to execute the request asynchronously.
@@ -17843,6 +17847,7 @@ class DefaultApi(object):
         _all_params = [
             'key',
             'body',
+            'sort_method',
             'limit'
         ]
         _all_params.extend(
@@ -17877,6 +17882,9 @@ class DefaultApi(object):
 
         # process the query parameters
         _query_params = []
+        if _params.get('sort_method') is not None:  # noqa: E501
+            _query_params.append(('sort_method', _params['sort_method']))
+
         if _params.get('limit') is not None:  # noqa: E501
             _query_params.append(('limit', _params['limit']))
 

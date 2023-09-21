@@ -246,7 +246,9 @@ router.post('/workflows/:key/prepare_jobs_for_submission', function(req, res) {
       const resources = req.body;
       const qp = req.queryParams == null ? {} : req.queryParams;
       const reason = {message: ''};
-      const jobs = query.prepareJobsForSubmission(workflow, resources, qp.limit, reason);
+      const jobs = query.prepareJobsForSubmission(
+          workflow, resources, qp.sort_method, qp.limit, reason,
+      );
       const items = [];
       for (const job of jobs) {
         items.push(job);
@@ -258,6 +260,8 @@ router.post('/workflows/:key/prepare_jobs_for_submission', function(req, res) {
   }
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
+    .queryParam('sort_method', joi.string().default('gpus_runtime_memory')
+        .valid('gpus_runtime_memory', 'gpus_memory_runtime', 'none'))
     .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
     .body(schemas.workerResources, 'Available worker resources.')
     .response(joi.object().required().keys(

@@ -59,6 +59,14 @@ Defaults to 30 seconds.
 ``compute_node_wait_for_healthy_database_minutes`` (int): Inform all compute nodes to wait this
 number of minutes if the database becomes unresponsive. Defaults to 20 minutes.
 
+``prepare_jobs_sort_method`` (str): Inform all compute nodes to use this sort method when
+requesting jobs. Options are ``gpus_runtime_memory`` (default), ``gpus_memory_runtime``, and
+``none``. The default behavior is to sort jobs by GPUs, runtime, and then memory. There may be
+cases where you want to guarantee that bigger-memory jobs are sorted first; in those cases choose
+``gpus_memory_runtime``. Choose ``none`` if you have a large number of jobs (tens or hundreds of
+thousands) and sorting isn't important. There is a performance cost in the database for sorting
+high job counts.
+
 Upload
 ------
 Here's how to upload the workflow to the database:

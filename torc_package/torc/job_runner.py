@@ -610,6 +610,7 @@ class JobRunner:
             self._api.post_workflows_key_prepare_jobs_for_submission,
             self._workflow.key,
             self._resources,
+            sort_method=self._config.prepare_jobs_sort_method,
             **kwargs,
         )
         if ready_jobs.jobs:

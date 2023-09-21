@@ -19,7 +19,7 @@ import json
 
 
 from typing import Optional, Union
-from pydantic import ConfigDict, BaseModel, Field, StrictBool, StrictFloat, StrictInt, StrictStr
+from pydantic import field_validator, ConfigDict, BaseModel, Field, StrictBool, StrictFloat, StrictInt, StrictStr
 from torc.openapi_client.models.compute_node_resource_stats_model import ComputeNodeResourceStatsModel
 
 class WorkflowConfigModel(BaseModel):
@@ -31,10 +31,22 @@ class WorkflowConfigModel(BaseModel):
     compute_node_wait_for_new_jobs_seconds: Optional[Union[StrictFloat, StrictInt]] = None
     compute_node_ignore_workflow_completion: Optional[StrictBool] = False
     compute_node_wait_for_healthy_database_minutes: Optional[Union[StrictFloat, StrictInt]] = None
+    prepare_jobs_sort_method: Optional[StrictStr] = 'gpus_runtime_memory'
     key: Optional[StrictStr] = Field(None, alias="_key")
     id: Optional[StrictStr] = Field(None, alias="_id")
     rev: Optional[StrictStr] = Field(None, alias="_rev")
-    __properties = ["compute_node_resource_stats", "compute_node_expiration_buffer_seconds", "compute_node_wait_for_new_jobs_seconds", "compute_node_ignore_workflow_completion", "compute_node_wait_for_healthy_database_minutes", "_key", "_id", "_rev"]
+    __properties = ["compute_node_resource_stats", "compute_node_expiration_buffer_seconds", "compute_node_wait_for_new_jobs_seconds", "compute_node_ignore_workflow_completion", "compute_node_wait_for_healthy_database_minutes", "prepare_jobs_sort_method", "_key", "_id", "_rev"]
+
+    @field_validator('prepare_jobs_sort_method')
+    @classmethod
+    def prepare_jobs_sort_method_validate_enum(cls, value):
+        """Validates the enum"""
+        if value is None:
+            return value
+
+        if value not in ('gpus_runtime_memory', 'gpus_memory_runtime', 'none'):
+            raise ValueError("must be one of enum values ('gpus_runtime_memory', 'gpus_memory_runtime', 'none')")
+        return value
     model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
 
     def to_str(self) -> str:
@@ -76,6 +88,7 @@ class WorkflowConfigModel(BaseModel):
             "compute_node_wait_for_new_jobs_seconds": obj.get("compute_node_wait_for_new_jobs_seconds"),
             "compute_node_ignore_workflow_completion": obj.get("compute_node_ignore_workflow_completion") if obj.get("compute_node_ignore_workflow_completion") is not None else False,
             "compute_node_wait_for_healthy_database_minutes": obj.get("compute_node_wait_for_healthy_database_minutes"),
+            "prepare_jobs_sort_method": obj.get("prepare_jobs_sort_method") if obj.get("prepare_jobs_sort_method") is not None else 'gpus_runtime_memory',
             "key": obj.get("_key"),
             "id": obj.get("_id"),
             "rev": obj.get("_rev")

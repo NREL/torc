@@ -17,6 +17,7 @@ mutable struct WorkflowBuilder
     compute_node_wait_for_healthy_database_minutes::Union{Int, Nothing}
     compute_node_expiration_buffer_seconds::Union{Int, Nothing}
     compute_node_ignore_workflow_completion::Bool
+    prepare_jobs_sort_method::String
 end
 
 function WorkflowBuilder()
@@ -33,6 +34,7 @@ function WorkflowBuilder()
         nothing,
         nothing,
         false,
+        "gpus_runtime_memory",
     )
 end
 
@@ -143,6 +145,14 @@ to jobs. If not set, take the database's default value of 30 seconds.
 """
 function set_compute_node_expiration_buffer_seconds!(builder::WorkflowBuilder, val::Int)
     builder.compute_node_expiration_buffer_seconds = val
+end
+
+"""
+Inform all compute nodes to use this sort method when calling the
+prepare_jobs_for_submission command.
+"""
+function set_prepare_jobs_sort_method!(builder::WorkflowBuilder, val::Bool)
+    builder.prepare_jobs_sort_method = val
 end
 
 """

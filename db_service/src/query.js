@@ -1,5 +1,5 @@
 'use strict';
-const {query} = require('@arangodb');
+const {aql, query} = require('@arangodb');
 const db = require('@arangodb').db;
 const {GiB, JobStatus, GRAPH_NAME} = require('./defs');
 const schemas = require('./api/schemas');
@@ -1132,11 +1132,12 @@ function manageJobStatusChange(job, workflow, runId) {
  * Prepare a list of jobs for submission that meet the worker resource availability.
  * @param {Object} workflow
  * @param {Object} workerResources
+ * @param {string} sortMethod
  * @param {Number} limit
  * @param {Object} reason
  * @return {Array}
  */
-function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
+function prepareJobsForSubmission(workflow, workerResources, sortMethod, limit, reason) {
   const jobs = [];
   const collection = config.getWorkflowCollection(workflow, 'jobs');
   const collectionName = config.getWorkflowCollectionName(workflow, 'jobs');
@@ -1149,6 +1150,7 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
       Number.MAX_SAFE_INTEGER : utils.getTimeDurationInSeconds(workerResources.time_limit);
   const schedulerConfigId = workerResources.scheduler_config_id == null ? '' :
     workerResources.scheduler_config_id;
+  const sortCommand = makeSortCommand(sortMethod);
 
   db._executeTransaction({
     collections: {
@@ -1156,7 +1158,7 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
       allowImplicit: false,
     },
     action: function() {
-      const cursor = query({count: true})`
+      const cursor = query`
         FOR job IN ${collection}
           FILTER (job.status == ${JobStatus.Ready} || job.status == ${JobStatus.Scheduled})
             && job.internal.memory_bytes <= ${availableMemory}
@@ -1166,9 +1168,8 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
             && job.internal.num_nodes == ${workerResources.num_nodes}
             && (job.internal.scheduler_config_id == ''
                 || job.internal.scheduler_config_id == ${schedulerConfigId})
+          ${sortCommand}
           LIMIT ${queryLimit}
-          SORT job.internal.num_gpus DESC, job.internal.memory_bytes DESC,
-               job.internal.runtime_seconds DESC
           RETURN job
       `;
 
@@ -1203,6 +1204,28 @@ function prepareJobsForSubmission(workflow, workerResources, limit, reason) {
   }
   console.debug(`Prepared ${jobs.length} jobs for submission.`);
   return jobs;
+}
+
+/**
+ * Return an aql.literal string for a sort command.
+ * @param {string} sortMethod
+ * @return {Object}
+ */
+function makeSortCommand(sortMethod) {
+  let sortStr = null;
+  const memStr = 'job.internal.memory_bytes DESC';
+  const gpuStr = 'SORT job.internal.num_gpus DESC';
+  const runtimeStr = 'job.internal.runtime_seconds DESC';
+  if (sortMethod == 'gpus_runtime_memory') {
+    sortStr = `${gpuStr}, ${runtimeStr}, ${memStr}`;
+  } else if (sortMethod == 'gpus_memory_runtime') {
+    sortStr = `${gpuStr}, ${memStr}, ${runtimeStr}`;
+  } else if (sortMethod == 'none') {
+    sortStr = '';
+  } else {
+    throw new Error(`Unsupported sort_method=${sortMethod}`);
+  }
+  return aql.literal(sortStr);
 }
 
 /**

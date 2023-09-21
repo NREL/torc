@@ -10,6 +10,7 @@
         compute_node_wait_for_new_jobs_seconds=nothing,
         compute_node_ignore_workflow_completion=false,
         compute_node_wait_for_healthy_database_minutes=nothing,
+        prepare_jobs_sort_method="gpus_runtime_memory",
         _key=nothing,
         _id=nothing,
         _rev=nothing,
@@ -20,6 +21,7 @@
     - compute_node_wait_for_new_jobs_seconds::Float64
     - compute_node_ignore_workflow_completion::Bool
     - compute_node_wait_for_healthy_database_minutes::Float64
+    - prepare_jobs_sort_method::String
     - _key::String
     - _id::String
     - _rev::String
@@ -30,24 +32,26 @@ Base.@kwdef mutable struct WorkflowConfigModel <: OpenAPI.APIModel
     compute_node_wait_for_new_jobs_seconds::Union{Nothing, Float64} = nothing
     compute_node_ignore_workflow_completion::Union{Nothing, Bool} = false
     compute_node_wait_for_healthy_database_minutes::Union{Nothing, Float64} = nothing
+    prepare_jobs_sort_method::Union{Nothing, String} = "gpus_runtime_memory"
     _key::Union{Nothing, String} = nothing
     _id::Union{Nothing, String} = nothing
     _rev::Union{Nothing, String} = nothing
 
-    function WorkflowConfigModel(compute_node_resource_stats, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, _key, _id, _rev, )
+    function WorkflowConfigModel(compute_node_resource_stats, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, prepare_jobs_sort_method, _key, _id, _rev, )
         OpenAPI.validate_property(WorkflowConfigModel, Symbol("compute_node_resource_stats"), compute_node_resource_stats)
         OpenAPI.validate_property(WorkflowConfigModel, Symbol("compute_node_expiration_buffer_seconds"), compute_node_expiration_buffer_seconds)
         OpenAPI.validate_property(WorkflowConfigModel, Symbol("compute_node_wait_for_new_jobs_seconds"), compute_node_wait_for_new_jobs_seconds)
         OpenAPI.validate_property(WorkflowConfigModel, Symbol("compute_node_ignore_workflow_completion"), compute_node_ignore_workflow_completion)
         OpenAPI.validate_property(WorkflowConfigModel, Symbol("compute_node_wait_for_healthy_database_minutes"), compute_node_wait_for_healthy_database_minutes)
+        OpenAPI.validate_property(WorkflowConfigModel, Symbol("prepare_jobs_sort_method"), prepare_jobs_sort_method)
         OpenAPI.validate_property(WorkflowConfigModel, Symbol("_key"), _key)
         OpenAPI.validate_property(WorkflowConfigModel, Symbol("_id"), _id)
         OpenAPI.validate_property(WorkflowConfigModel, Symbol("_rev"), _rev)
-        return new(compute_node_resource_stats, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, _key, _id, _rev, )
+        return new(compute_node_resource_stats, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, prepare_jobs_sort_method, _key, _id, _rev, )
     end
 end # type WorkflowConfigModel
 
-const _property_types_WorkflowConfigModel = Dict{Symbol,String}(Symbol("compute_node_resource_stats")=>"ComputeNodeResourceStatsModel", Symbol("compute_node_expiration_buffer_seconds")=>"Float64", Symbol("compute_node_wait_for_new_jobs_seconds")=>"Float64", Symbol("compute_node_ignore_workflow_completion")=>"Bool", Symbol("compute_node_wait_for_healthy_database_minutes")=>"Float64", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
+const _property_types_WorkflowConfigModel = Dict{Symbol,String}(Symbol("compute_node_resource_stats")=>"ComputeNodeResourceStatsModel", Symbol("compute_node_expiration_buffer_seconds")=>"Float64", Symbol("compute_node_wait_for_new_jobs_seconds")=>"Float64", Symbol("compute_node_ignore_workflow_completion")=>"Bool", Symbol("compute_node_wait_for_healthy_database_minutes")=>"Float64", Symbol("prepare_jobs_sort_method")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ WorkflowConfigModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_WorkflowConfigModel[name]))}
 
 function check_required(o::WorkflowConfigModel)
@@ -55,4 +59,7 @@ function check_required(o::WorkflowConfigModel)
 end
 
 function OpenAPI.validate_property(::Type{ WorkflowConfigModel }, name::Symbol, val)
+    if name === Symbol("prepare_jobs_sort_method")
+        OpenAPI.validate_param(name, "WorkflowConfigModel", :enum, val, ["gpus_runtime_memory", "gpus_memory_runtime", "none"])
+    end
 end

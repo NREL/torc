@@ -21,10 +21,12 @@ commands:
     to automatically schedule for you. You must set ``needs_compute_node_schedule`` as well.
   - You can use it to ensure that your desired compute node / job assignments are achieved. The
     torc worker app pulls ready jobs after first sorting them in descending order by these
-    attributes: GPUs, memory, wall-time. This will prevent big-memory nodes from picking up
-    small-memory jobs. However, you may prefer a different priority. For example, you may prefer
-    sorting by wall-time before memory. This setting ensures that a compute node will only pull
-    jobs that you want it to get. Future versions of torc may allow additional customization.
+    attributes: GPUs, runtime, memory. This will ensure that long jobs will start first and usually
+    prevent big-memory nodes from picking up small-memory jobs. However, you may prefer a different
+    priority. For example, you may prefer sorting by memory before runtime. This setting ensures
+    that a compute node will only pull jobs that you want it to get. Refer to
+    ``prepare_jobs_sort_method`` in :ref:`advanced_config_options` for additional customization
+    options.
 
 - **needs_compute_node_schedule**: As mentioned above with ``scheduler``, setting this to ``true``
   can enable automatic compute node scheduling.

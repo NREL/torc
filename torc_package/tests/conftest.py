@@ -552,6 +552,53 @@ def mapped_function_workflow(tmp_path):
 
 
 @pytest.fixture
+def job_requirement_uniform():
+    """Creates a workflow with uniform resource requirements."""
+    api = _initialize_api()
+    builder = WorkflowBuilder()
+    short = builder.add_resource_requirements(
+        name="short", num_cpus=4, memory="4g", runtime="P0DT30M"
+    )
+
+    for i in range(1, 31):
+        builder.add_job(name=f"job{i}", command="noop", resource_requirements=short.name)
+
+    spec = builder.build(user=getpass.getuser(), name="test")
+    workflow = api.post_workflow_specifications(spec)
+    db = DatabaseInterface(api, workflow)
+    mgr = WorkflowManager(api, db.workflow.key)
+    mgr.start()
+    yield db
+    api.delete_workflows_key(workflow.key)
+    api.api_client.close()
+
+
+@pytest.fixture
+def job_requirement_runtime():
+    """Creates a workflow with two different runtime resource requirements."""
+    api = _initialize_api()
+    builder = WorkflowBuilder()
+    short = builder.add_resource_requirements(
+        name="short", num_cpus=4, memory="4g", runtime="P0DT40M"
+    )
+    medium = builder.add_resource_requirements(
+        name="medium", num_cpus=4, memory="4g", runtime="P0DT50M"
+    )
+
+    builder.add_job(name="short_job", command="noop", resource_requirements=short.name)
+    builder.add_job(name="medium_job", command="noop", resource_requirements=medium.name)
+
+    spec = builder.build(user=getpass.getuser(), name="test")
+    workflow = api.post_workflow_specifications(spec)
+    db = DatabaseInterface(api, workflow)
+    mgr = WorkflowManager(api, db.workflow.key)
+    mgr.start()
+    yield db
+    api.delete_workflows_key(workflow.key)
+    api.api_client.close()
+
+
+@pytest.fixture
 def job_requirement_variations():
     """Creates a workflow with varying resource requirements."""
     api = _initialize_api()
@@ -597,6 +644,11 @@ def job_requirement_variations():
             resource_requirements=large.name,
             scheduler="slurm_schedulers/bigmem",
         )
+    builder.add_job(
+        name="large_job_no_scheduler",
+        command="noop",
+        resource_requirements=large.name,
+    )
     builder.add_job(name="gpu_job", command="noop", resource_requirements=gpu.name)
     builder.add_job(name="long_job", command="noop", resource_requirements=long.name)
 

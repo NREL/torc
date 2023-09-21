@@ -3954,9 +3954,10 @@ const _returntypes_post_workflows_key_prepare_jobs_for_submission_DefaultApi = D
     Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
 )
 
-function _oacinternal_post_workflows_key_prepare_jobs_for_submission(_api::DefaultApi, key::String, body::ComputeNodesResources; limit=nothing, _mediaType=nothing)
+function _oacinternal_post_workflows_key_prepare_jobs_for_submission(_api::DefaultApi, key::String, body::ComputeNodesResources; sort_method=nothing, limit=nothing, _mediaType=nothing)
     _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_post_workflows_key_prepare_jobs_for_submission_DefaultApi, "/workflows/{key}/prepare_jobs_for_submission", [], body)
     OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_param(_ctx.query, "sort_method", sort_method)  # type String
     OpenAPI.Clients.set_param(_ctx.query, "limit", limit)  # type Float64
     OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
     OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
@@ -3970,17 +3971,18 @@ Return jobs that are ready for submission and meet worker resource Sets status t
 Params:
 - key::String (required)
 - body::ComputeNodesResources (required)
+- sort_method::String
 - limit::Float64
 
 Return: PostWorkflowsKeyPrepareJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse
 """
-function post_workflows_key_prepare_jobs_for_submission(_api::DefaultApi, key::String, body::ComputeNodesResources; limit=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_post_workflows_key_prepare_jobs_for_submission(_api, key, body; limit=limit, _mediaType=_mediaType)
+function post_workflows_key_prepare_jobs_for_submission(_api::DefaultApi, key::String, body::ComputeNodesResources; sort_method=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_post_workflows_key_prepare_jobs_for_submission(_api, key, body; sort_method=sort_method, limit=limit, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx)
 end
 
-function post_workflows_key_prepare_jobs_for_submission(_api::DefaultApi, response_stream::Channel, key::String, body::ComputeNodesResources; limit=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_post_workflows_key_prepare_jobs_for_submission(_api, key, body; limit=limit, _mediaType=_mediaType)
+function post_workflows_key_prepare_jobs_for_submission(_api::DefaultApi, response_stream::Channel, key::String, body::ComputeNodesResources; sort_method=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_post_workflows_key_prepare_jobs_for_submission(_api, key, body; sort_method=sort_method, limit=limit, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 

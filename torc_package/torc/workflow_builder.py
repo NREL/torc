@@ -49,6 +49,7 @@ class WorkflowBuilder:
         self._compute_node_ignore_workflow_completion = False
         self._compute_node_expiration_buffer_seconds = None
         self._compute_node_wait_for_healthy_database = None
+        self._prepare_jobs_sort_method = "gpus_runtime_memory"
 
     def add_file(self, *args, **kwargs) -> FilesModel:
         """Add a file and return it."""
@@ -251,6 +252,23 @@ class WorkflowBuilder:
         self._compute_node_wait_for_healthy_database = val
 
     @property
+    def prepare_jobs_sort_method(self) -> str:
+        """Return the value for prepare_jobs_sort_method."""
+        return self._prepare_jobs_sort_method
+
+    @prepare_jobs_sort_method.setter
+    def prepare_jobs_sort_method(self, val):
+        """Inform all compute nodes to use this sort method when calling the
+        prepare_jobs_for_submission command.
+
+        Parameters
+        ----------
+        val : str
+            Sort method, defaults to gpus_runtime_memory
+        """
+        self._prepare_jobs_sort_method = val
+
+    @property
     def files(self) -> list[FilesModel]:
         """Return a reference to the files list."""
         return self._files
@@ -278,6 +296,7 @@ class WorkflowBuilder:
             compute_node_ignore_workflow_completion=self._compute_node_ignore_workflow_completion,
             compute_node_expiration_buffer_seconds=self._compute_node_expiration_buffer_seconds,
             compute_node_wait_for_healthy_database=self._compute_node_wait_for_healthy_database,
+            prepare_jobs_sort_method=self._prepare_jobs_sort_method,
         )
         if not kwargs.get("user"):
             kwargs["user"] = getpass.getuser()
