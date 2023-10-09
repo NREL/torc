@@ -5,7 +5,7 @@ from pathlib import Path
 
 import click
 
-import torc.version
+import torc
 from torc.api import make_api
 from torc.cli.common import get_log_level_from_str
 from torc.cli.collections import collections
@@ -84,7 +84,7 @@ logger = logging.getLogger(__name__)
     help="Database URL. Ex: http://localhost:8529/_db/workflows/torc-service",
 )
 @click.version_option(
-    version=torc.version.__version__,
+    version=torc.__version__,
 )
 @click.pass_context
 def cli(

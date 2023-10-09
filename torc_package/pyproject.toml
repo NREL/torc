@@ -1,3 +1,80 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "torc"
+dynamic = ["version"]
+description = "Provides workflow automation services"
+requires-python = ">=3.10"
+license = "BSD-3-Clause"
+readme = "README.md"
+authors = [
+    {name = "Daniel Thom", email = "daniel.thom@nrel.gov"},
+]
+include_package_data = true
+keywords = ["hpc", "workflow"]
+classifiers=[
+    "Development Status :: 4 - Beta",
+    "License :: OSI Approved :: BSD License",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.10",
+]
+dependencies = [
+    "click",
+    "connectorx==0.3.2",
+    "graphviz",
+    "json5",
+    "plotly",
+    "polars~=0.19.7",
+    "psutil",
+    "prettytable",
+    "pyarrow",
+    "pydantic~=2.4.0",
+    "s3path",
+    "textual",
+    "resource_monitor @ git+https://github.nrel.gov/dthom/resource_monitor.git",
+    "resource_monitor~=0.1.6",
+    # These are required by the openapi_client. Keep in sync with its setup.py.
+    "python_dateutil>=2.5.3",
+    "urllib3>=1.25.3,<2.1.0",
+    # The generated code currently uses v1; we are using bump-pydantic to upgrade.
+    # pydantic >= 1.10.5, < 2
+    "aenum>=3.1.11",
+]
+
+[tool.hatch.version]
+path = "torc/__init__.py"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "bump-pydantic",
+    "flake8",
+    "furo",
+    "ghp-import",
+    "pre-commit",
+    "pylint",
+    "pytest",
+    "pytest-cov",
+    "sphinx",
+    "sphinx-click",
+    "sphinxcontrib-openapi",
+    "sphinx-copybutton",
+    "textual-dev",
+]
+plots = [
+    "networkx",
+    "networkxgmml",
+    "pygraphviz",
+]
+
+[project.scripts]
+torc = "torc.cli.torc:cli"
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-ra"

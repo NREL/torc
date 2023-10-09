@@ -46,7 +46,7 @@ from torc.openapi_client.models.job_process_stats_model import (
 )
 from torc.openapi_client.models.workflows_model import WorkflowsModel
 
-import torc.version
+import torc
 from torc.api import send_api_command, iter_documents, wait_for_healthy_database
 from torc.common import JOB_STDIO_DIR, STATS_DIR, timer_stats_collector, JobStatus
 from torc.exceptions import InvalidParameter, DatabaseOffline
@@ -202,7 +202,7 @@ class JobRunner:
         logger.info(
             "Run torc worker version=%s api_service_version=%s db=%s hostname=%s end_time=%s "
             "compute_node_key=%s resources=%s config=%s",
-            torc.version.__version__,
+            torc.__version__,
             send_api_command(self._api.get_version)["version"],
             self._api.api_client.configuration.host,
             self._hostname,
@@ -431,7 +431,7 @@ class JobRunner:
                 "category": "worker",
                 "type": "start",
                 "node_name": self._hostname,
-                "torc_version": torc.version.__version__,
+                "torc_version": torc.__version__,
                 "message": f"Started worker {self._hostname}",
             },
             raise_on_error=False,

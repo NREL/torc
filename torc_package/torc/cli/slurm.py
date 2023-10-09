@@ -19,7 +19,7 @@ from torc.openapi_client.models.compute_nodes_resources import (
 )
 from torc.openapi_client.rest import ApiException
 
-import torc.version
+import torc
 from torc.api import (
     iter_documents,
     remove_db_keys,
@@ -334,7 +334,7 @@ def schedule_nodes(
     log_file = output / "schedule_nodes.log"
     setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
     logger.info(get_cli_string())
-    logger.info("torc version %s", torc.version.__version__)
+    logger.info("torc version %s", torc.__version__)
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
 
@@ -422,7 +422,7 @@ def schedule_slurm_nodes(
             "num_jobs": len(job_ids),
             "job_ids": job_ids,
             "scheduler_config_id": config.id,
-            "torc_version": torc.version.__version__,
+            "torc_version": torc.__version__,
             "message": f"Submitted {len(job_ids)} job request(s) to {hpc_type.value}",
         },
     )
