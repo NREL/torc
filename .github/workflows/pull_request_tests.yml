@@ -20,16 +20,25 @@ jobs:
         python -m pip install --upgrade pip
         python -m pip install './torc_package[dev]'
     - name: Setup ArangoDB
+      uses: rhizomenetwork/arangodb-action@v1
+      with:
+        root_password: openSesame
+    - name: Configure ArangoDB
       run: |
         apt-get update
-        apt-get install -y podman zip curl
-        podman run --name=arangodb -d -v $GITHUB_WORKSPACE:/data -p 8529:8529 -e ARANGO_ROOT_PASSWORD=openSesame docker.io/arangodb:3.11.4
+        apt-get install -y zip curl npm podman
+        cd db_service
+        npm install
+        npm install --global foxx-cli@2.1.1
+        cd ..
+        #podman run --name=arangodb -d -v $GITHUB_WORKSPACE:/data -p 8529:8529 -e ARANGO_ROOT_PASSWORD=openSesame docker.io/arangodb:3.11.4
         curl -u "root:openSesame" -X GET http://localhost:8529/_db/_system/_api/database
         curl -u "root:openSesame" -X POST http://localhost:8529/_db/_system/_api/database --data '{"name":"test-workflows"}'
         curl -u "root:openSesame" -X GET http://localhost:8529/_db/_system/_api/database
         echo "openSesame" > password
         zip -r torc-service.zip db_service/manifest.json db_service/index.js db_service/node_modules db_service/src db_service/scripts
-        podman exec arangodb foxx install --server http://localhost:8529 --username root -p /data/password -D test-workflows /torc-service /data/torc-service.zip
+        foxx install --server http://localhost:8529 --username root -p password -D test-workflows /torc-service torc-service.zip
+        #podman exec arangodb foxx install --server http://localhost:8529 --username root -p /data/password -D test-workflows /torc-service /data/torc-service.zip
         bash db_service/make_api.sh
         rm torc-service.zip password
     - name: Run pytest
