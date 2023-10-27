@@ -1165,7 +1165,7 @@ function prepareJobsForSubmission(workflow, workerResources, sortMethod, limit, 
             && job.internal.num_cpus <= ${availableCpus}
             && job.internal.num_gpus <= ${availableGpus}
             && job.internal.runtime_seconds <= ${workerTimeLimit}
-            && job.internal.num_nodes == ${workerResources.num_nodes}
+            && job.internal.num_nodes <= ${workerResources.num_nodes}
             && (job.internal.scheduler_config_id == ''
                 || job.internal.scheduler_config_id == ${schedulerConfigId})
           ${sortCommand}
