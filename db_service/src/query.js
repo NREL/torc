@@ -1052,7 +1052,7 @@ function listMissingUserData(workflow) {
 
   for (const udId of expectedUserData) {
     const ud = userDataCollection.document(udId);
-    if (Object.keys(ud.data).length == 0) {
+    if (ud.data != null && Object.keys(ud.data).length == 0) {
       missingUserData.push(ud._key);
     }
   }
