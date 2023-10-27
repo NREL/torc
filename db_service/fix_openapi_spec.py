@@ -77,7 +77,7 @@ def main():
     with open(spec_file, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
-    with open("config.json", encoding="utf-8") as f:
+    with open(Path("db_service") / "config.json", encoding="utf-8") as f:
         version = json.load(f)["packageVersion"]
 
     data["info"]["title"] = "torc"
