@@ -139,7 +139,7 @@ def send_api_command(func, *args, raise_on_error=True, **kwargs):
             return None
 
 
-def add_bulk_jobs(api: DefaultApi, workflow_key: str, jobs, max_transfer_size=10_000):
+def add_jobs(api: DefaultApi, workflow_key: str, jobs, max_transfer_size=10_000):
     """Add an iterable of jobs to the workflow.
 
     Parameters
@@ -170,6 +170,10 @@ def add_bulk_jobs(api: DefaultApi, workflow_key: str, jobs, max_transfer_size=10
         job_keys += res["items"]
 
     return job_keys
+
+
+# TODO: Remove after notifying users to update.
+add_bulk_jobs = add_jobs
 
 
 def sanitize_workflow(data: dict):

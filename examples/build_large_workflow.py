@@ -2,7 +2,7 @@
 
 import getpass
 
-from torc.api import make_api, add_bulk_jobs
+from torc.api import make_api, add_jobs
 from torc.loggers import setup_logging
 from torc.openapi_client.models.compute_node_resource_stats_model import (
     ComputeNodeResourceStatsModel,
@@ -62,7 +62,7 @@ def create_workflow(api):
         for i in range(1, 20_001)
     )
 
-    job_keys = add_bulk_jobs(api, workflow.key, jobs)
+    job_keys = add_jobs(api, workflow.key, jobs)
 
     logger.info("Created workflow %s with %s jobs", workflow.key, len(job_keys))
     return workflow.key
