@@ -22,6 +22,7 @@ jobs:
     - name: Setup ArangoDB
       uses: rhizomenetwork/arangodb-action@v1
       with:
+        port: 8529
         root_password: openSesame
     - name: Configure ArangoDB
       run: |
@@ -37,7 +38,8 @@ jobs:
         curl -u "root:openSesame" -X GET http://localhost:8529/_db/_system/_api/database
         echo "openSesame" > password
         zip -r torc-service.zip db_service/manifest.json db_service/index.js db_service/node_modules db_service/src db_service/scripts
-        foxx install --server http://localhost:8529 --username root -p password -D test-workflows /torc-service torc-service.zip
+        podman run -v $GITHUB_WORKSPACE:/data -p 8529:8529 docker.io/arangodb:3.11.4 foxx install --server http://localhost:8529 --username root -p /data/password -D test-workflows /torc-service /data/torc-service.zip
+        #foxx install --server http://localhost:8529 --username root -p password -D test-workflows /torc-service torc-service.zip
         #podman exec arangodb foxx install --server http://localhost:8529 --username root -p /data/password -D test-workflows /torc-service /data/torc-service.zip
         bash db_service/make_api.sh
         rm torc-service.zip password
