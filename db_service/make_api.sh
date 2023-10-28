@@ -1,6 +1,10 @@
 OPENAPI_CLI_VERSION=v7.0.0
 SWAGGER_CLI_VERSION=v3:3.0.36
 
+if [ -z ${CONTAINER_EXEC} ]; then
+    CONTAINER_EXEC=docker
+fi
+
 if [ -z ${TORC_DATABASE_NAME} ]; then
     TORC_DATABASE_NAME=test-workflows
 fi
@@ -13,7 +17,7 @@ if [ -z ${TORC_USER} ]; then
     TORC_USER=root
 fi
 
-rm -f swagger.json openapi.yaml
+rm -f db_service/swagger.json db_service/openapi.yaml
 if [ -z ${TORC_PASSWORD} ]; then
     user=${TORC_USER}:openSesame
 else
@@ -33,30 +37,30 @@ fi
 
 function swap_text()
 {
-    sed -i .bk "$1" openapi.yaml
+    sed -i .bk "$1" db_service/openapi.yaml
     ret=$?
     if [ $ret -ne 0 ]; then
         echo "sed failed: $ret"
         exit 1
     fi
-    rm openapi.yaml.bk
+    rm db_service/openapi.yaml.bk
 }
 
-echo "$swagger" | jq . > swagger.json
+echo "$swagger" | jq . > db_service/swagger.json
 
 
 if [ ! -z ${LOCAL_SWAGGER_CODEGEN_CLI} ]; then
-    # This podman container below doesn't work on Macs with M1 or M2 processors.
+    # This docker container below doesn't work on Macs with M1 or M2 processors.
     # Those users need to download
     # https://mvnrepository.com/artifact/io.swagger.codegen.v3/swagger-codegen-cli/3.0.36
     # and set this environment variable.
     # TODO: find a better solution.
     java -jar ${LOCAL_SWAGGER_CODEGEN_CLI} \
-        generate --lang=openapi-yaml --input-spec=swagger.json -o .
+        generate --lang=openapi-yaml --input-spec=db_service/swagger.json -o .
 else
-    podman run \
+    ${CONTAINER_EXEC} run \
         -v $(pwd)/db_service:/db_service \
-        swaggerapi/swagger-codegen-cli-${SWAGGER_CLI_VERSION} \
+        docker.io/swaggerapi/swagger-codegen-cli-${SWAGGER_CLI_VERSION} \
         generate --lang=openapi-yaml --input-spec=/db_service/swagger.json -o /db_service
 fi
 
@@ -65,8 +69,8 @@ if [ $ret -ne 0 ]; then
     echo "Failed to convert swagger.json to openapi.yaml"
     exit 1
 fi
-rm swagger.json
-python db_service/fix_openapi_spec.py openapi.yaml
+rm db_service/swagger.json
+python db_service/fix_openapi_spec.py db_service/openapi.yaml
 if [ $? -ne 0 ]; then
     echo "Failed to fix the openapi specification"
     exit 1
@@ -84,10 +88,10 @@ fi
 rm -rf ${JULIA_CLIENT}
 mkdir ${JULIA_CLIENT}
 
-podman run \
+${CONTAINER_EXEC} run \
     -v $(pwd)/db_service:/db_service \
     -v ${PYTHON_CLIENT}:/python_client \
-    openapitools/openapi-generator-cli:${OPENAPI_CLI_VERSION} \
+    docker.io/openapitools/openapi-generator-cli:${OPENAPI_CLI_VERSION} \
     generate -g python --input-spec=/db_service/openapi.yaml -o /python_client -c /db_service/config.json
 if [ $? -ne 0 ]; then
     echo "Failed to build the python client ***"
@@ -107,7 +111,7 @@ find ${PYTHON_CLIENT}/torc -name "*.py" -exec sed -i .bk "s/validate_arguments/v
 find ${PYTHON_CLIENT}/torc -name "*.py" -exec sed -i .bk "s/self.dict(/self.model_dump(/g" {} \;
 find ${PYTHON_CLIENT}/torc -name "*.bk" -exec rm {} \;
 
-podman run \
+${CONTAINER_EXEC} run \
     -v $(pwd)/db_service:/db_service \
     -v ${JULIA_CLIENT}:/julia_client \
     openapitools/openapi-generator-cli \

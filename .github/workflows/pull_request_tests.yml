@@ -24,7 +24,7 @@ jobs:
     - name: Configure ArangoDB
       run: |
         apt-get update
-        apt-get install -y npm zip curl docker podman
+        apt-get install -y npm zip curl docker
         curl -s -X POST http://127.0.0.1:8529/_db/_system/_api/database --data '{"name":"test-workflows"}'
         cd db_service
         npm install
