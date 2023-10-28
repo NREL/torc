@@ -93,10 +93,10 @@ def diamond_workflow(tmp_path):
         name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
     )
     medium = builder.add_resource_requirements(
-        name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
+        name="medium", num_cpus=2, memory="2g", runtime="P0DT8H"
     )
     large = builder.add_resource_requirements(
-        name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
+        name="large", num_cpus=2, memory="3g", runtime="P0DT12H"
     )
 
     scheduler = builder.add_local_scheduler(name="test")
@@ -174,10 +174,10 @@ def diamond_workflow_user_data(tmp_path):
         name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
     )
     medium = builder.add_resource_requirements(
-        name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
+        name="medium", num_cpus=2, memory="2g", runtime="P0DT8H"
     )
     large = builder.add_resource_requirements(
-        name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
+        name="large", num_cpus=2, memory="3g", runtime="P0DT12H"
     )
 
     scheduler = builder.add_local_scheduler(name="test")
@@ -411,8 +411,8 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
     output_dir.mkdir()
 
     small = ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT1H")
-    medium = ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H")
-    large = ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H")
+    medium = ResourceRequirementsModel(name="medium", num_cpus=2, memory="2g", runtime="P0DT8H")
+    large = ResourceRequirementsModel(name="large", num_cpus=2, memory="3g", runtime="P0DT12H")
 
     num_jobs_per_category = 3
     small_jobs = [
