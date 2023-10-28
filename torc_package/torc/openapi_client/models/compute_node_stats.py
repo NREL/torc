@@ -18,21 +18,31 @@ import re  # noqa: F401
 import json
 
 
-from typing import Any, Dict, Optional
-from pydantic import ConfigDict, BaseModel, Field, StrictInt, StrictStr
+from typing import Any, Dict, Optional, Union
+from pydantic import BaseModel, StrictInt, StrictStr
+from typing import Dict, Any
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 class ComputeNodeStats(BaseModel):
     """
     ComputeNodeStats
     """
-    resource_type: StrictStr = Field(...)
-    average: Dict[str, Any] = Field(...)
-    minimum: Dict[str, Any] = Field(...)
-    maximum: Dict[str, Any] = Field(...)
-    num_samples: StrictInt = Field(...)
+    resource_type: StrictStr
+    average: Union[str, Any]
+    minimum: Union[str, Any]
+    maximum: Union[str, Any]
+    num_samples: StrictInt
     job_key: Optional[StrictStr] = None
-    __properties = ["resource_type", "average", "minimum", "maximum", "num_samples", "job_key"]
-    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+    __properties: ClassVar[List[str]] = ["resource_type", "average", "minimum", "maximum", "num_samples", "job_key"]
+
+    model_config = {
+        "populate_by_name": True,
+        "validate_assignment": True
+    }
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -40,31 +50,42 @@ class ComputeNodeStats(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> ComputeNodeStats:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of ComputeNodeStats from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.model_dump(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude={
+            },
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> ComputeNodeStats:
+    def from_dict(cls, obj: dict) -> Self:
         """Create an instance of ComputeNodeStats from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return ComputeNodeStats.model_validate(obj)
+            return cls.model_validate(obj)
 
-        _obj = ComputeNodeStats.model_validate({
+        _obj = cls.model_validate({
             "resource_type": obj.get("resource_type"),
             "average": obj.get("average"),
             "minimum": obj.get("minimum"),

@@ -1,5 +1,9 @@
-OPENAPI_CLI_VERSION=v7.0.0
+# This will become 7.1.0 whenever that is released (to support pydantic v2).
+OPENAPI_CLI_VERSION=latest
 SWAGGER_CLI_VERSION=v3:3.0.36
+
+set -x
+set -e
 
 if [ -z ${CONTAINER_EXEC} ]; then
     CONTAINER_EXEC=docker
@@ -24,11 +28,6 @@ else
     user="${TORC_USER}:${TORC_PASSWORD}"
 fi
 swagger=$(curl -u ${user} --silent -X GET ${TORC_URL}/_db/${TORC_DATABASE_NAME}/_admin/aardvark/foxxes/docs/swagger.json\?mount\=%2Ftorc-service)
-ret=$?
-if [ $ret -ne 0 ]; then
-    echo "Failed to download swagger.json"
-    exit 1
-fi
 error=$(echo "${swagger}" | jq '.error')
 if [[ ${error} == true ]]; then
     echo "${swagger}" | jq .
@@ -38,11 +37,6 @@ fi
 function swap_text()
 {
     sed -i.bk "$1" db_service/openapi.yaml
-    ret=$?
-    if [ $ret -ne 0 ]; then
-        echo "sed failed: $ret"
-        exit 1
-    fi
     rm db_service/openapi.yaml.bk
 }
 
@@ -56,7 +50,7 @@ if [ ! -z ${LOCAL_SWAGGER_CODEGEN_CLI} ]; then
     # and set this environment variable.
     # TODO: find a better solution.
     java -jar ${LOCAL_SWAGGER_CODEGEN_CLI} \
-        generate --lang=openapi-yaml --input-spec=db_service/swagger.json -o .
+        generate --lang=openapi-yaml --input-spec=db_service/swagger.json -o db_service
 else
     ${CONTAINER_EXEC} run \
         -v $(pwd)/db_service:/db_service \
@@ -64,17 +58,8 @@ else
         generate --lang=openapi-yaml --input-spec=/db_service/swagger.json -o /db_service
 fi
 
-ret=$?
-if [ $ret -ne 0 ]; then
-    echo "Failed to convert swagger.json to openapi.yaml"
-    exit 1
-fi
 rm db_service/swagger.json
 python db_service/fix_openapi_spec.py db_service/openapi.yaml
-if [ $? -ne 0 ]; then
-    echo "Failed to fix the openapi specification"
-    exit 1
-fi
 
 if [ -z ${PYTHON_CLIENT} ]; then
     PYTHON_CLIENT=$(pwd)/db_service/python_client
@@ -93,33 +78,12 @@ ${CONTAINER_EXEC} run \
     -v ${PYTHON_CLIENT}:/python_client \
     docker.io/openapitools/openapi-generator-cli:${OPENAPI_CLI_VERSION} \
     generate -g python --input-spec=/db_service/openapi.yaml -o /python_client -c /db_service/config.json
-if [ $? -ne 0 ]; then
-    echo "Failed to build the python client ***"
-    exit 1
-fi
-
-cd ${PYTHON_CLIENT}
-bump-pydantic torc
-if [ $? -ne 0 ]; then
-    echo "Failed to convert OpenAPI pydantic models."
-    exit 1
-fi
-cd -
-# Fix pydantic methods that are deprecated in v2.
-find ${PYTHON_CLIENT}/torc -name "*.py" -exec sed -i.bk "s/parse_obj/model_validate/g" {} \;
-find ${PYTHON_CLIENT}/torc -name "*.py" -exec sed -i.bk "s/validate_arguments/validate_call/g" {} \;
-find ${PYTHON_CLIENT}/torc -name "*.py" -exec sed -i.bk "s/self.dict(/self.model_dump(/g" {} \;
-find ${PYTHON_CLIENT}/torc -name "*.bk" -exec rm {} \;
 
 ${CONTAINER_EXEC} run \
     -v $(pwd)/db_service:/db_service \
     -v ${JULIA_CLIENT}:/julia_client \
-    openapitools/openapi-generator-cli \
+    docker.io/openapitools/openapi-generator-cli:latest \
     generate -g julia-client --input-spec=/db_service/openapi.yaml -o /julia_client
-if [ $? -ne 0 ]; then
-    echo "Failed to build the julia client"
-    exit 1
-fi
 
 rm -rf torc_package/torc/openapi_client
 rm -rf julia/Torc/src/api

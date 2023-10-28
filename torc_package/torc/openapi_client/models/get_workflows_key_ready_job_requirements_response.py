@@ -19,21 +19,31 @@ import json
 
 
 from typing import Union
-from pydantic import ConfigDict, BaseModel, Field, StrictFloat, StrictInt, StrictStr
+from pydantic import BaseModel, StrictFloat, StrictInt, StrictStr
+from typing import Dict, Any
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 class GetWorkflowsKeyReadyJobRequirementsResponse(BaseModel):
     """
     GetWorkflowsKeyReadyJobRequirementsResponse
     """
-    num_jobs: StrictInt = Field(...)
-    num_cpus: StrictInt = Field(...)
-    num_gpus: StrictInt = Field(...)
-    memory_gb: Union[StrictFloat, StrictInt] = Field(...)
-    max_memory_gb: Union[StrictFloat, StrictInt] = Field(...)
-    max_num_nodes: StrictInt = Field(...)
-    max_runtime: StrictStr = Field(...)
-    __properties = ["num_jobs", "num_cpus", "num_gpus", "memory_gb", "max_memory_gb", "max_num_nodes", "max_runtime"]
-    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+    num_jobs: StrictInt
+    num_cpus: StrictInt
+    num_gpus: StrictInt
+    memory_gb: Union[StrictFloat, StrictInt]
+    max_memory_gb: Union[StrictFloat, StrictInt]
+    max_num_nodes: StrictInt
+    max_runtime: StrictStr
+    __properties: ClassVar[List[str]] = ["num_jobs", "num_cpus", "num_gpus", "memory_gb", "max_memory_gb", "max_num_nodes", "max_runtime"]
+
+    model_config = {
+        "populate_by_name": True,
+        "validate_assignment": True
+    }
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -41,31 +51,42 @@ class GetWorkflowsKeyReadyJobRequirementsResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> GetWorkflowsKeyReadyJobRequirementsResponse:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of GetWorkflowsKeyReadyJobRequirementsResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.model_dump(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude={
+            },
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> GetWorkflowsKeyReadyJobRequirementsResponse:
+    def from_dict(cls, obj: dict) -> Self:
         """Create an instance of GetWorkflowsKeyReadyJobRequirementsResponse from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return GetWorkflowsKeyReadyJobRequirementsResponse.model_validate(obj)
+            return cls.model_validate(obj)
 
-        _obj = GetWorkflowsKeyReadyJobRequirementsResponse.model_validate({
+        _obj = cls.model_validate({
             "num_jobs": obj.get("num_jobs"),
             "num_cpus": obj.get("num_cpus"),
             "num_gpus": obj.get("num_gpus"),

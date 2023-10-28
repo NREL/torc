@@ -19,21 +19,32 @@ import json
 
 
 from typing import Optional
-from pydantic import ConfigDict, BaseModel, Field, StrictBool, StrictInt, StrictStr
+from pydantic import BaseModel, StrictBool, StrictInt, StrictStr
+from pydantic import Field
 from torc.openapi_client.models.auto_tune_status import AutoTuneStatus
+from typing import Dict, Any
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 class WorkflowStatusModel(BaseModel):
     """
     WorkflowStatusModel
     """
-    is_canceled: StrictBool = Field(...)
-    run_id: StrictInt = Field(...)
-    auto_tune_status: AutoTuneStatus = Field(...)
-    key: Optional[StrictStr] = Field(None, alias="_key")
-    id: Optional[StrictStr] = Field(None, alias="_id")
-    rev: Optional[StrictStr] = Field(None, alias="_rev")
-    __properties = ["is_canceled", "run_id", "auto_tune_status", "_key", "_id", "_rev"]
-    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+    is_canceled: StrictBool
+    run_id: StrictInt
+    auto_tune_status: AutoTuneStatus
+    key: Optional[StrictStr] = Field(default=None, alias="_key")
+    id: Optional[StrictStr] = Field(default=None, alias="_id")
+    rev: Optional[StrictStr] = Field(default=None, alias="_rev")
+    __properties: ClassVar[List[str]] = ["is_canceled", "run_id", "auto_tune_status", "_key", "_id", "_rev"]
+
+    model_config = {
+        "populate_by_name": True,
+        "validate_assignment": True
+    }
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -41,40 +52,51 @@ class WorkflowStatusModel(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> WorkflowStatusModel:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of WorkflowStatusModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.model_dump(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude={
+            },
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of auto_tune_status
         if self.auto_tune_status:
             _dict['auto_tune_status'] = self.auto_tune_status.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> WorkflowStatusModel:
+    def from_dict(cls, obj: dict) -> Self:
         """Create an instance of WorkflowStatusModel from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return WorkflowStatusModel.model_validate(obj)
+            return cls.model_validate(obj)
 
-        _obj = WorkflowStatusModel.model_validate({
+        _obj = cls.model_validate({
             "is_canceled": obj.get("is_canceled"),
             "run_id": obj.get("run_id"),
             "auto_tune_status": AutoTuneStatus.from_dict(obj.get("auto_tune_status")) if obj.get("auto_tune_status") is not None else None,
-            "key": obj.get("_key"),
-            "id": obj.get("_id"),
-            "rev": obj.get("_rev")
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
         })
         return _obj
 

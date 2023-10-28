@@ -18,21 +18,32 @@ import re  # noqa: F401
 import json
 
 
-from typing import Any, Dict, Optional
-from pydantic import ConfigDict, BaseModel, Field, StrictStr
+from typing import Any, Dict, Optional, Union
+from pydantic import BaseModel, StrictStr
+from pydantic import Field
+from typing import Dict, Any
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 class EdgesNameModel(BaseModel):
     """
     EdgesNameModel
     """
-    var_from: StrictStr = Field(..., alias="_from")
-    to: StrictStr = Field(..., alias="_to")
-    data: Optional[Dict[str, Any]] = None
-    key: Optional[StrictStr] = Field(None, alias="_key")
-    id: Optional[StrictStr] = Field(None, alias="_id")
-    rev: Optional[StrictStr] = Field(None, alias="_rev")
-    __properties = ["_from", "_to", "data", "_key", "_id", "_rev"]
-    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+    var_from: StrictStr = Field(alias="_from")
+    to: StrictStr = Field(alias="_to")
+    data: Optional[Union[str, Any]] = None
+    key: Optional[StrictStr] = Field(default=None, alias="_key")
+    id: Optional[StrictStr] = Field(default=None, alias="_id")
+    rev: Optional[StrictStr] = Field(default=None, alias="_rev")
+    __properties: ClassVar[List[str]] = ["_from", "_to", "data", "_key", "_id", "_rev"]
+
+    model_config = {
+        "populate_by_name": True,
+        "validate_assignment": True
+    }
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -40,37 +51,48 @@ class EdgesNameModel(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> EdgesNameModel:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of EdgesNameModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.model_dump(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude={
+            },
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> EdgesNameModel:
+    def from_dict(cls, obj: dict) -> Self:
         """Create an instance of EdgesNameModel from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return EdgesNameModel.model_validate(obj)
+            return cls.model_validate(obj)
 
-        _obj = EdgesNameModel.model_validate({
-            "var_from": obj.get("_from"),
-            "to": obj.get("_to"),
+        _obj = cls.model_validate({
+            "_from": obj.get("_from"),
+            "_to": obj.get("_to"),
             "data": obj.get("data"),
-            "key": obj.get("_key"),
-            "id": obj.get("_id"),
-            "rev": obj.get("_rev")
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
         })
         return _obj
 
