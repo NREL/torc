@@ -37,7 +37,7 @@ fi
 
 function swap_text()
 {
-    sed -i .bk "$1" db_service/openapi.yaml
+    sed -i.bk "$1" db_service/openapi.yaml
     ret=$?
     if [ $ret -ne 0 ]; then
         echo "sed failed: $ret"
@@ -106,9 +106,9 @@ if [ $? -ne 0 ]; then
 fi
 cd -
 # Fix pydantic methods that are deprecated in v2.
-find ${PYTHON_CLIENT}/torc -name "*.py" -exec sed -i .bk "s/parse_obj/model_validate/g" {} \;
-find ${PYTHON_CLIENT}/torc -name "*.py" -exec sed -i .bk "s/validate_arguments/validate_call/g" {} \;
-find ${PYTHON_CLIENT}/torc -name "*.py" -exec sed -i .bk "s/self.dict(/self.model_dump(/g" {} \;
+find ${PYTHON_CLIENT}/torc -name "*.py" -exec sed -i.bk "s/parse_obj/model_validate/g" {} \;
+find ${PYTHON_CLIENT}/torc -name "*.py" -exec sed -i.bk "s/validate_arguments/validate_call/g" {} \;
+find ${PYTHON_CLIENT}/torc -name "*.py" -exec sed -i.bk "s/self.dict(/self.model_dump(/g" {} \;
 find ${PYTHON_CLIENT}/torc -name "*.bk" -exec rm {} \;
 
 ${CONTAINER_EXEC} run \

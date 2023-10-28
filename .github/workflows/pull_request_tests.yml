@@ -33,4 +33,6 @@ jobs:
         bash db_service/make_api.sh
     - name: Run pytest
       run: |
-        python -m pytest -v --disable-warnings torc_package/tests
+        cd torc_package
+        torc config create -u http://localhost:8529/_db/test-workflows/torc-service
+        python -m pytest -v --disable-warnings tests
