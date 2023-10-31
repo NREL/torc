@@ -5318,11 +5318,11 @@ paths:
         explode: true
         schema:
           type: string
+          default: gpus_runtime_memory
           enum:
           - gpus_runtime_memory
           - gpus_memory_runtime
           - none
-          default: gpus_runtime_memory
       - name: limit
         in: query
         required: false
@@ -5950,12 +5950,13 @@ paths:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
       x-codegen-request-body-name: body
-  /workflows/{key}/latest_event_key:
+  /workflows/{key}/latest_event_timestamp:
     get:
       tags: []
-      summary: Return the key of the latest event.
-      description: Return the key of the latest event.
-      operationId: get_latest_event_key
+      summary: Return the timestamp of the latest event.
+      description: Return the timestamp of the latest event in ms since the epoch
+        in UTC.
+      operationId: get_latest_event_timestamp
       parameters:
       - name: key
         in: path
@@ -5979,12 +5980,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-  /workflows/{key}/events_after_key/{event_key}:
+  /workflows/{key}/events_after_timestamp/{timestamp}:
     get:
       tags: []
       summary: Return all events newer than the event with event_key.
       description: Return all events newer than the event with event_key.
-      operationId: get_events_after_key
+      operationId: get_events_after_timestamp
       parameters:
       - name: key
         in: path
@@ -5994,14 +5995,15 @@ paths:
         explode: false
         schema:
           type: string
-      - name: event_key
+      - name: timestamp
         in: path
-        description: Event key
+        description: Timestamp expressed as number of milliseconds since the epoch
+          in UTC
         required: true
         style: simple
         explode: false
         schema:
-          type: string
+          type: number
       - name: category
         in: query
         required: false
@@ -6164,11 +6166,11 @@ components:
           type: number
         prepare_jobs_sort_method:
           type: string
+          default: gpus_runtime_memory
           enum:
           - gpus_runtime_memory
           - gpus_memory_runtime
           - none
-          default: gpus_runtime_memory
         _key:
           type: string
         _id:

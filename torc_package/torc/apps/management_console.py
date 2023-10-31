@@ -656,28 +656,30 @@ class TorcManagementConsole(App):
             return
         poll_interval = int(poll_interval_str)
 
-        last_event = self._api.get_latest_event_key(workflow_key)["key"]
+        timestamp = self._api.get_latest_event_timestamp(workflow_key)["key"]
         self._event_monitor_timer = threading.Timer(
-            poll_interval, self._run_monitor, (workflow_key, poll_interval, last_event)
+            poll_interval, self._run_monitor, (workflow_key, poll_interval, timestamp)
         )
         self._event_monitor_timer.start()
         self.query_one("#event_log", RichLog).write("Started event monitoring")
 
-    def _run_monitor(self, workflow_key, poll_interval, last_event):
+    def _run_monitor(self, workflow_key, poll_interval, timestamp):
         try:
             event_ = None
-            for event in iter_documents(self._api.get_events_after_key, workflow_key, last_event):
+            for event in iter_documents(
+                self._api.get_events_after_timestamp, workflow_key, timestamp
+            ):
                 event.pop("_id")
                 event.pop("_rev")
                 self.query_one("#event_log", RichLog).write(json.dumps(event, indent=2))
                 event_ = event
             if event_ is not None:
-                last_event = event_["_key"]
+                timestamp = event_["timestamp"]
         except Exception as e:  # pylint: disable=broad-exception-caught
             self.query_one("#event_log", RichLog).write(f"failed to get events {e}")
 
         self._event_monitor_timer = threading.Timer(
-            poll_interval, self._run_monitor, (workflow_key, poll_interval, last_event)
+            poll_interval, self._run_monitor, (workflow_key, poll_interval, timestamp)
         )
         self._event_monitor_timer.start()
 

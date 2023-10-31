@@ -6975,10 +6975,10 @@ class DefaultApi:
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_events_after_key(
+    def get_events_after_timestamp(
         self,
         key: Annotated[StrictStr, Field(description="Workflow key")],
-        event_key: Annotated[StrictStr, Field(description="Event key")],
+        timestamp: Annotated[Union[StrictFloat, StrictInt], Field(description="Timestamp expressed as number of milliseconds since the epoch in UTC")],
         category: Optional[StrictStr] = None,
         skip: Annotated[Optional[Union[StrictFloat, StrictInt]], Field(description="Ignored")] = None,
         limit: Optional[Union[StrictFloat, StrictInt]] = None,
@@ -6990,13 +6990,13 @@ class DefaultApi:
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_events_after_key(key, event_key, category, skip, limit, async_req=True)
+        >>> thread = api.get_events_after_timestamp(key, timestamp, category, skip, limit, async_req=True)
         >>> result = thread.get()
 
         :param key: Workflow key (required)
         :type key: str
-        :param event_key: Event key (required)
-        :type event_key: str
+        :param timestamp: Timestamp expressed as number of milliseconds since the epoch in UTC (required)
+        :type timestamp: float
         :param category:
         :type category: str
         :param skip: Ignored
@@ -7016,12 +7016,12 @@ class DefaultApi:
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            message = "Error! Please call the get_events_after_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
+            message = "Error! Please call the get_events_after_timestamp_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
             raise ValueError(message)
 
-        return self.get_events_after_key_with_http_info.raw_function(
+        return self.get_events_after_timestamp_with_http_info.raw_function(
             key,
-            event_key,
+            timestamp,
             category,
             skip,
             limit,
@@ -7029,10 +7029,10 @@ class DefaultApi:
         )
 
     @validate_call
-    def get_events_after_key_with_http_info(
+    def get_events_after_timestamp_with_http_info(
         self,
         key: Annotated[StrictStr, Field(description="Workflow key")],
-        event_key: Annotated[StrictStr, Field(description="Event key")],
+        timestamp: Annotated[Union[StrictFloat, StrictInt], Field(description="Timestamp expressed as number of milliseconds since the epoch in UTC")],
         category: Optional[StrictStr] = None,
         skip: Annotated[Optional[Union[StrictFloat, StrictInt]], Field(description="Ignored")] = None,
         limit: Optional[Union[StrictFloat, StrictInt]] = None,
@@ -7044,13 +7044,13 @@ class DefaultApi:
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_events_after_key_with_http_info(key, event_key, category, skip, limit, async_req=True)
+        >>> thread = api.get_events_after_timestamp_with_http_info(key, timestamp, category, skip, limit, async_req=True)
         >>> result = thread.get()
 
         :param key: Workflow key (required)
         :type key: str
-        :param event_key: Event key (required)
-        :type event_key: str
+        :param timestamp: Timestamp expressed as number of milliseconds since the epoch in UTC (required)
+        :type timestamp: float
         :param category:
         :type category: str
         :param skip: Ignored
@@ -7086,7 +7086,7 @@ class DefaultApi:
 
         _all_params = [
             'key',
-            'event_key',
+            'timestamp',
             'category',
             'skip',
             'limit'
@@ -7108,7 +7108,7 @@ class DefaultApi:
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method get_events_after_key" % _key
+                    " to method get_events_after_timestamp" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -7120,8 +7120,8 @@ class DefaultApi:
         if _params['key'] is not None:
             _path_params['key'] = _params['key']
 
-        if _params['event_key'] is not None:
-            _path_params['event_key'] = _params['event_key']
+        if _params['timestamp'] is not None:
+            _path_params['timestamp'] = _params['timestamp']
 
 
         # process the query parameters
@@ -7155,7 +7155,7 @@ class DefaultApi:
         }
 
         return self.api_client.call_api(
-            '/workflows/{key}/events_after_key/{event_key}', 'GET',
+            '/workflows/{key}/events_after_timestamp/{timestamp}', 'GET',
             _path_params,
             _query_params,
             _header_params,
@@ -10257,18 +10257,18 @@ class DefaultApi:
             _request_auth=_params.get('_request_auth'))
 
     @validate_call
-    def get_latest_event_key(
+    def get_latest_event_timestamp(
         self,
         key: Annotated[StrictStr, Field(description="Workflow key")],
         **kwargs,
     ) -> object:
-        """Return the key of the latest event.  # noqa: E501
+        """Return the timestamp of the latest event.  # noqa: E501
 
-        Return the key of the latest event.  # noqa: E501
+        Return the timestamp of the latest event in ms since the epoch in UTC.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_latest_event_key(key, async_req=True)
+        >>> thread = api.get_latest_event_timestamp(key, async_req=True)
         >>> result = thread.get()
 
         :param key: Workflow key (required)
@@ -10286,27 +10286,27 @@ class DefaultApi:
         """
         kwargs['_return_http_data_only'] = True
         if '_preload_content' in kwargs:
-            message = "Error! Please call the get_latest_event_key_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
+            message = "Error! Please call the get_latest_event_timestamp_with_http_info method with `_preload_content` instead and obtain raw data from ApiResponse.raw_data"  # noqa: E501
             raise ValueError(message)
 
-        return self.get_latest_event_key_with_http_info.raw_function(
+        return self.get_latest_event_timestamp_with_http_info.raw_function(
             key,
             **kwargs,
         )
 
     @validate_call
-    def get_latest_event_key_with_http_info(
+    def get_latest_event_timestamp_with_http_info(
         self,
         key: Annotated[StrictStr, Field(description="Workflow key")],
         **kwargs,
     ) -> ApiResponse:
-        """Return the key of the latest event.  # noqa: E501
+        """Return the timestamp of the latest event.  # noqa: E501
 
-        Return the key of the latest event.  # noqa: E501
+        Return the timestamp of the latest event in ms since the epoch in UTC.  # noqa: E501
         This method makes a synchronous HTTP request by default. To make an
         asynchronous HTTP request, please pass async_req=True
 
-        >>> thread = api.get_latest_event_key_with_http_info(key, async_req=True)
+        >>> thread = api.get_latest_event_timestamp_with_http_info(key, async_req=True)
         >>> result = thread.get()
 
         :param key: Workflow key (required)
@@ -10358,7 +10358,7 @@ class DefaultApi:
             if _key not in _all_params:
                 raise ApiTypeError(
                     "Got an unexpected keyword argument '%s'"
-                    " to method get_latest_event_key" % _key
+                    " to method get_latest_event_timestamp" % _key
                 )
             _params[_key] = _val
         del _params['kwargs']
@@ -10393,7 +10393,7 @@ class DefaultApi:
         }
 
         return self.api_client.call_api(
-            '/workflows/{key}/latest_event_key', 'GET',
+            '/workflows/{key}/latest_event_timestamp', 'GET',
             _path_params,
             _query_params,
             _header_params,

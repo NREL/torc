@@ -42,7 +42,7 @@ Method | HTTP request | Description
 [**get_edges_name**](DefaultApi.md#get_edges_name) | **GET** /workflows/{workflow}/edges/{name} | Retrieve all edges from the designated collection.
 [**get_edges_name_key**](DefaultApi.md#get_edges_name_key) | **GET** /workflows/{workflow}/edges/{name}/{key} | Retrieve an edge
 [**get_events**](DefaultApi.md#get_events) | **GET** /workflows/{workflow}/events | Retrieve all event documents
-[**get_events_after_key**](DefaultApi.md#get_events_after_key) | **GET** /workflows/{key}/events_after_key/{event_key} | Return all events newer than the event with event_key.
+[**get_events_after_timestamp**](DefaultApi.md#get_events_after_timestamp) | **GET** /workflows/{key}/events_after_timestamp/{timestamp} | Return all events newer than the event with event_key.
 [**get_events_key**](DefaultApi.md#get_events_key) | **GET** /workflows/{workflow}/events/{key} | Retrieve the event for a key.
 [**get_files**](DefaultApi.md#get_files) | **GET** /workflows/{workflow}/files | Retrieve all file documents
 [**get_files_key**](DefaultApi.md#get_files_key) | **GET** /workflows/{workflow}/files/{key} | Retrieve the file for a key.
@@ -60,7 +60,7 @@ Method | HTTP request | Description
 [**get_jobs_key_resource_requirements**](DefaultApi.md#get_jobs_key_resource_requirements) | **GET** /workflows/{workflow}/jobs/{key}/resource_requirements | Retrieve the resource requirements for a job.
 [**get_jobs_key_user_data_consumes**](DefaultApi.md#get_jobs_key_user_data_consumes) | **GET** /workflows/{workflow}/jobs/{key}/user_data_consumes | Retrieve all user data consumed by a job.
 [**get_jobs_key_user_data_stores**](DefaultApi.md#get_jobs_key_user_data_stores) | **GET** /workflows/{workflow}/jobs/{key}/user_data_stores | Retrieve all user data for a job.
-[**get_latest_event_key**](DefaultApi.md#get_latest_event_key) | **GET** /workflows/{key}/latest_event_key | Return the key of the latest event.
+[**get_latest_event_timestamp**](DefaultApi.md#get_latest_event_timestamp) | **GET** /workflows/{key}/latest_event_timestamp | Return the timestamp of the latest event.
 [**get_local_schedulers**](DefaultApi.md#get_local_schedulers) | **GET** /workflows/{workflow}/local_schedulers | Retrieve all local compute node configuration documents
 [**get_local_schedulers_key**](DefaultApi.md#get_local_schedulers_key) | **GET** /workflows/{workflow}/local_schedulers/{key} | Retrieve the local compute node configuration for a key.
 [**get_ping**](DefaultApi.md#get_ping) | **GET** /ping | Check if the service is running.
@@ -1529,9 +1529,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **get_events_after_key**
-> get_events_after_key(_api::DefaultApi, key::String, event_key::String; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> GetEventsResponse, OpenAPI.Clients.ApiResponse <br/>
-> get_events_after_key(_api::DefaultApi, response_stream::Channel, key::String, event_key::String; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ GetEventsResponse }, OpenAPI.Clients.ApiResponse
+# **get_events_after_timestamp**
+> get_events_after_timestamp(_api::DefaultApi, key::String, timestamp::Float64; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> GetEventsResponse, OpenAPI.Clients.ApiResponse <br/>
+> get_events_after_timestamp(_api::DefaultApi, response_stream::Channel, key::String, timestamp::Float64; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ GetEventsResponse }, OpenAPI.Clients.ApiResponse
 
 Return all events newer than the event with event_key.
 
@@ -1543,7 +1543,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
 **key** | **String**| Workflow key | [default to nothing]
-**event_key** | **String**| Event key | [default to nothing]
+**timestamp** | **Float64**| Timestamp expressed as number of milliseconds since the epoch in UTC | [default to nothing]
 
 ### Optional Parameters
 
@@ -2157,13 +2157,13 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **get_latest_event_key**
-> get_latest_event_key(_api::DefaultApi, key::String; _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> get_latest_event_key(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **get_latest_event_timestamp**
+> get_latest_event_timestamp(_api::DefaultApi, key::String; _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> get_latest_event_timestamp(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
-Return the key of the latest event.
+Return the timestamp of the latest event.
 
-Return the key of the latest event.
+Return the timestamp of the latest event in ms since the epoch in UTC.
 
 ### Required Parameters
 

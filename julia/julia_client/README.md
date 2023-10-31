@@ -58,7 +58,7 @@ Class | Method
 *DefaultApi* | [**get_edges_name**](docs/DefaultApi.md#get_edges_name)<br/>**GET** /workflows/{workflow}/edges/{name}<br/>Retrieve all edges from the designated collection.
 *DefaultApi* | [**get_edges_name_key**](docs/DefaultApi.md#get_edges_name_key)<br/>**GET** /workflows/{workflow}/edges/{name}/{key}<br/>Retrieve an edge
 *DefaultApi* | [**get_events**](docs/DefaultApi.md#get_events)<br/>**GET** /workflows/{workflow}/events<br/>Retrieve all event documents
-*DefaultApi* | [**get_events_after_key**](docs/DefaultApi.md#get_events_after_key)<br/>**GET** /workflows/{key}/events_after_key/{event_key}<br/>Return all events newer than the event with event_key.
+*DefaultApi* | [**get_events_after_timestamp**](docs/DefaultApi.md#get_events_after_timestamp)<br/>**GET** /workflows/{key}/events_after_timestamp/{timestamp}<br/>Return all events newer than the event with event_key.
 *DefaultApi* | [**get_events_key**](docs/DefaultApi.md#get_events_key)<br/>**GET** /workflows/{workflow}/events/{key}<br/>Retrieve the event for a key.
 *DefaultApi* | [**get_files**](docs/DefaultApi.md#get_files)<br/>**GET** /workflows/{workflow}/files<br/>Retrieve all file documents
 *DefaultApi* | [**get_files_key**](docs/DefaultApi.md#get_files_key)<br/>**GET** /workflows/{workflow}/files/{key}<br/>Retrieve the file for a key.
@@ -76,7 +76,7 @@ Class | Method
 *DefaultApi* | [**get_jobs_key_resource_requirements**](docs/DefaultApi.md#get_jobs_key_resource_requirements)<br/>**GET** /workflows/{workflow}/jobs/{key}/resource_requirements<br/>Retrieve the resource requirements for a job.
 *DefaultApi* | [**get_jobs_key_user_data_consumes**](docs/DefaultApi.md#get_jobs_key_user_data_consumes)<br/>**GET** /workflows/{workflow}/jobs/{key}/user_data_consumes<br/>Retrieve all user data consumed by a job.
 *DefaultApi* | [**get_jobs_key_user_data_stores**](docs/DefaultApi.md#get_jobs_key_user_data_stores)<br/>**GET** /workflows/{workflow}/jobs/{key}/user_data_stores<br/>Retrieve all user data for a job.
-*DefaultApi* | [**get_latest_event_key**](docs/DefaultApi.md#get_latest_event_key)<br/>**GET** /workflows/{key}/latest_event_key<br/>Return the key of the latest event.
+*DefaultApi* | [**get_latest_event_timestamp**](docs/DefaultApi.md#get_latest_event_timestamp)<br/>**GET** /workflows/{key}/latest_event_timestamp<br/>Return the timestamp of the latest event.
 *DefaultApi* | [**get_local_schedulers**](docs/DefaultApi.md#get_local_schedulers)<br/>**GET** /workflows/{workflow}/local_schedulers<br/>Retrieve all local compute node configuration documents
 *DefaultApi* | [**get_local_schedulers_key**](docs/DefaultApi.md#get_local_schedulers_key)<br/>**GET** /workflows/{workflow}/local_schedulers/{key}<br/>Retrieve the local compute node configuration for a key.
 *DefaultApi* | [**get_ping**](docs/DefaultApi.md#get_ping)<br/>**GET** /ping<br/>Check if the service is running.

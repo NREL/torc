@@ -50,7 +50,8 @@ def main():
                 "workflow_specifications_config_compute_node_resource_stats",
                 "compute_node_resource_stats_model",
             ),
-            ("get_workflows_key_events_after_key_event_key", "get_events_after_key"),
+            ("get_workflows_key_events_after_timestamp_timestamp", "get_events_after_timestamp"),
+            ("get_workflows_key_latest_event_timestamp", "get_latest_event_timestamp"),
             ("get_workflows_key_latest_event_key", "get_latest_event_key"),
             ("workflowsworkflowbulk_jobs_jobs", "job_with_edges_model"),
             ("workflow_aws_schedulers_model", "aws_schedulers_model"),
@@ -77,7 +78,7 @@ def main():
     with open(spec_file, "r", encoding="utf-8") as f:
         data = yaml.safe_load(f)
 
-    with open(Path("db_service") / "config.json", encoding="utf-8") as f:
+    with open("config.json", encoding="utf-8") as f:
         version = json.load(f)["packageVersion"]
 
     data["info"]["title"] = "torc"
@@ -418,7 +419,7 @@ def main():
             ),
         ),
         ApiCommand(
-            path="/workflows/{key}/events_after_key/{event_key}",
+            path="/workflows/{key}/events_after_timestamp/{timestamp}",
             responses=OpsComponent(
                 ops=["get"],
                 component="#/components/schemas/get_events_response",

@@ -1354,15 +1354,15 @@ function get_events(_api::DefaultApi, response_stream::Channel, workflow::String
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
-const _returntypes_get_events_after_key_DefaultApi = Dict{Regex,Type}(
+const _returntypes_get_events_after_timestamp_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetEventsResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
 )
 
-function _oacinternal_get_events_after_key(_api::DefaultApi, key::String, event_key::String; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_get_events_after_key_DefaultApi, "/workflows/{key}/events_after_key/{event_key}", [])
+function _oacinternal_get_events_after_timestamp(_api::DefaultApi, key::String, timestamp::Float64; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_get_events_after_timestamp_DefaultApi, "/workflows/{key}/events_after_timestamp/{timestamp}", [])
     OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "event_key", event_key)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "timestamp", timestamp)  # type Float64
     OpenAPI.Clients.set_param(_ctx.query, "category", category)  # type String
     OpenAPI.Clients.set_param(_ctx.query, "skip", skip)  # type Float64
     OpenAPI.Clients.set_param(_ctx.query, "limit", limit)  # type Float64
@@ -1377,20 +1377,20 @@ Return all events newer than the event with event_key.
 
 Params:
 - key::String (required)
-- event_key::String (required)
+- timestamp::Float64 (required)
 - category::String
 - skip::Float64
 - limit::Float64
 
 Return: GetEventsResponse, OpenAPI.Clients.ApiResponse
 """
-function get_events_after_key(_api::DefaultApi, key::String, event_key::String; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_get_events_after_key(_api, key, event_key; category=category, skip=skip, limit=limit, _mediaType=_mediaType)
+function get_events_after_timestamp(_api::DefaultApi, key::String, timestamp::Float64; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_get_events_after_timestamp(_api, key, timestamp; category=category, skip=skip, limit=limit, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx)
 end
 
-function get_events_after_key(_api::DefaultApi, response_stream::Channel, key::String, event_key::String; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_get_events_after_key(_api, key, event_key; category=category, skip=skip, limit=limit, _mediaType=_mediaType)
+function get_events_after_timestamp(_api::DefaultApi, response_stream::Channel, key::String, timestamp::Float64; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_get_events_after_timestamp(_api, key, timestamp; category=category, skip=skip, limit=limit, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -2026,35 +2026,35 @@ function get_jobs_key_user_data_stores(_api::DefaultApi, response_stream::Channe
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
-const _returntypes_get_latest_event_key_DefaultApi = Dict{Regex,Type}(
+const _returntypes_get_latest_event_timestamp_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
     Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
 )
 
-function _oacinternal_get_latest_event_key(_api::DefaultApi, key::String; _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_get_latest_event_key_DefaultApi, "/workflows/{key}/latest_event_key", [])
+function _oacinternal_get_latest_event_timestamp(_api::DefaultApi, key::String; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_get_latest_event_timestamp_DefaultApi, "/workflows/{key}/latest_event_timestamp", [])
     OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
     OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
     OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
     return _ctx
 end
 
-@doc raw"""Return the key of the latest event.
+@doc raw"""Return the timestamp of the latest event.
 
-Return the key of the latest event.
+Return the timestamp of the latest event in ms since the epoch in UTC.
 
 Params:
 - key::String (required)
 
 Return: Any, OpenAPI.Clients.ApiResponse
 """
-function get_latest_event_key(_api::DefaultApi, key::String; _mediaType=nothing)
-    _ctx = _oacinternal_get_latest_event_key(_api, key; _mediaType=_mediaType)
+function get_latest_event_timestamp(_api::DefaultApi, key::String; _mediaType=nothing)
+    _ctx = _oacinternal_get_latest_event_timestamp(_api, key; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx)
 end
 
-function get_latest_event_key(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing)
-    _ctx = _oacinternal_get_latest_event_key(_api, key; _mediaType=_mediaType)
+function get_latest_event_timestamp(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing)
+    _ctx = _oacinternal_get_latest_event_timestamp(_api, key; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -4858,7 +4858,7 @@ export get_compute_nodes_key
 export get_edges_name
 export get_edges_name_key
 export get_events
-export get_events_after_key
+export get_events_after_timestamp
 export get_events_key
 export get_files
 export get_files_key
@@ -4876,7 +4876,7 @@ export get_jobs_key_process_stats
 export get_jobs_key_resource_requirements
 export get_jobs_key_user_data_consumes
 export get_jobs_key_user_data_stores
-export get_latest_event_key
+export get_latest_event_timestamp
 export get_local_schedulers
 export get_local_schedulers_key
 export get_ping
