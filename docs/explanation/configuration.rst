@@ -40,8 +40,7 @@ and customize as you wish.
 
 Advanced Configuration Options
 ------------------------------
-You can specify these options in the ``config`` section of the workflow specification. They are
-also available in the ``WorkflowBuilder`` Python and Julia client libraries.
+You can specify these options in the ``config`` section of the workflow specification.
 
 ``compute_node_wait_for_new_jobs_seconds`` (int): Inform all compute nodes to wait for new jobs for
 this time period before exiting. Does not apply if the workflow is complete. Defaults to 0.

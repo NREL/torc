@@ -31,6 +31,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_click",
     "sphinxcontrib.openapi",
+    "sphinx_tabs.tabs",
 ]
 
 templates_path = ["_templates"]

@@ -22,7 +22,7 @@ def create_workflow(api):
     workflow = WorkflowsModel(
         user=getpass.getuser(),
         name="large_workflow",
-        description="Demo creation of a large workflow directly throught the API.",
+        description="Demo creation of a large workflow directly through the API.",
     )
     workflow = api.post_workflows(workflow)
     config = api.get_workflows_key_config(workflow.key)
@@ -54,7 +54,7 @@ def create_workflow(api):
         JobWithEdgesModel(
             job=JobsModel(
                 name=f"job{i}",
-                command="python my_script.py",
+                command=f"python my_script.py {i}",
             ),
             resource_requirements=resource_requirements.id,
             scheduler=scheduler.id,

@@ -596,7 +596,7 @@ def run_jobs(
         raise
     finally:
         if activated_slurm_job:
-            # TODO: This is not very accurate. Other nodes in the allocation could still be
+            # TODO: This is not very accurate. Other nodes in the allocation could still be active.
             # active. It would be better to do this from the caller of this command.
             node.status = "complete"
             api.put_scheduled_compute_nodes_key(workflow_key, node.key, node)

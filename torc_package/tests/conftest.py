@@ -24,17 +24,16 @@ from torc.openapi_client.models.job_specifications_model import (
 from torc.openapi_client.models.resource_requirements_model import (
     ResourceRequirementsModel,
 )
+from torc.openapi_client.models.workflows_model import WorkflowsModel
 from torc.openapi_client.models.workflow_specifications_model import (
     WorkflowSpecificationsModel,
 )
-from torc.openapi_client.models.workflow_config_model import (
-    WorkflowConfigModel,
-)
+from torc.openapi_client.models.workflow_config_model import WorkflowConfigModel
 from torc.openapi_client.models.results_model import ResultsModel
 from torc.openapi_client.models.compute_node_resource_stats_model import (
     ComputeNodeResourceStatsModel,
 )
-from torc.api import iter_documents
+from torc.api import iter_documents, map_function_to_jobs
 from torc.cli.torc import cli
 from torc.torc_rc import TorcRuntimeConfig
 from torc.utils.files import load_data, dump_data
@@ -534,17 +533,17 @@ def mapped_function_workflow(tmp_path):
     api = _initialize_api()
     output_dir = tmp_path / "output"
     output_dir.mkdir()
-    builder = WorkflowBuilder()
+    workflow = api.post_workflows(WorkflowsModel(user="test", name="test_workflow"))
     params = [{"val": i} for i in range(5)]
-    builder.map_function_to_jobs(
+    map_function_to_jobs(
+        api,
+        workflow.key,
         "mapped_function",
         "run",
         params,
         module_directory="tests/scripts",
         postprocess_func="postprocess",
     )
-    spec = builder.build()
-    workflow = api.post_workflow_specifications(spec)
     db = DatabaseInterface(api, workflow)
     yield db, output_dir
     api.delete_workflows_key(workflow.key)

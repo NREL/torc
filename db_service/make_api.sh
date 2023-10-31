@@ -21,7 +21,7 @@ if [ -z ${TORC_USER} ]; then
     TORC_USER=root
 fi
 
-rm -f db_service/swagger.json db_service/openapi.yaml
+rm -f swagger.json openapi.yaml
 if [ -z ${TORC_PASSWORD} ]; then
     user=${TORC_USER}:openSesame
 else
@@ -36,11 +36,11 @@ fi
 
 function swap_text()
 {
-    sed -i.bk "$1" db_service/openapi.yaml
-    rm db_service/openapi.yaml.bk
+    sed -i.bk "$1" openapi.yaml
+    rm openapi.yaml.bk
 }
 
-echo "$swagger" | jq . > db_service/swagger.json
+echo "$swagger" | jq . > swagger.json
 
 
 if [ ! -z ${LOCAL_SWAGGER_CODEGEN_CLI} ]; then
@@ -50,46 +50,46 @@ if [ ! -z ${LOCAL_SWAGGER_CODEGEN_CLI} ]; then
     # and set this environment variable.
     # TODO: find a better solution.
     java -jar ${LOCAL_SWAGGER_CODEGEN_CLI} \
-        generate --lang=openapi-yaml --input-spec=db_service/swagger.json -o db_service
+        generate --lang=openapi-yaml --input-spec=swagger.json -o .
 else
     ${CONTAINER_EXEC} run \
-        -v $(pwd)/db_service:/db_service \
+        -v $(pwd):/data \
         docker.io/swaggerapi/swagger-codegen-cli-${SWAGGER_CLI_VERSION} \
-        generate --lang=openapi-yaml --input-spec=/db_service/swagger.json -o /db_service
+        generate --lang=openapi-yaml --input-spec=/data/swagger.json -o /data
 fi
 
-rm db_service/swagger.json
-python db_service/fix_openapi_spec.py db_service/openapi.yaml
+rm swagger.json
+python fix_openapi_spec.py openapi.yaml
 
 if [ -z ${PYTHON_CLIENT} ]; then
-    PYTHON_CLIENT=$(pwd)/db_service/python_client
+    PYTHON_CLIENT=$(pwd)/python_client
 fi
 rm -rf ${PYTHON_CLIENT}
 mkdir ${PYTHON_CLIENT}
 
 if [ -z ${JULIA_CLIENT} ]; then
-    JULIA_CLIENT=$(pwd)/db_service/julia_client
+    JULIA_CLIENT=$(pwd)/julia_client
 fi
 rm -rf ${JULIA_CLIENT}
 mkdir ${JULIA_CLIENT}
 
 ${CONTAINER_EXEC} run \
-    -v $(pwd)/db_service:/db_service \
+    -v $(pwd):/data \
     -v ${PYTHON_CLIENT}:/python_client \
     docker.io/openapitools/openapi-generator-cli:${OPENAPI_CLI_VERSION} \
-    generate -g python --input-spec=/db_service/openapi.yaml -o /python_client -c /db_service/config.json
+    generate -g python --input-spec=/data/openapi.yaml -o /python_client -c /data/config.json
 
 ${CONTAINER_EXEC} run \
-    -v $(pwd)/db_service:/db_service \
+    -v $(pwd):/data \
     -v ${JULIA_CLIENT}:/julia_client \
     docker.io/openapitools/openapi-generator-cli:latest \
-    generate -g julia-client --input-spec=/db_service/openapi.yaml -o /julia_client
+    generate -g julia-client --input-spec=/data/openapi.yaml -o /julia_client
 
-rm -rf torc_package/torc/openapi_client
-rm -rf julia/Torc/src/api
-rm -rf julia/julia_client/docs
-rm julia/julia_client/README.md
-mv ${PYTHON_CLIENT}/torc/openapi_client torc_package/torc/openapi_client
-mv ${JULIA_CLIENT}/src julia/Torc/src/api
-mv ${JULIA_CLIENT}/docs julia/julia_client/
-mv ${JULIA_CLIENT}/README.md julia/julia_client/
+rm -rf ../torc_package/torc/openapi_client
+rm -rf ../julia/Torc/src/api
+rm -rf ../julia/julia_client/docs
+rm ../julia/julia_client/README.md
+mv ${PYTHON_CLIENT}/torc/openapi_client ../torc_package/torc/openapi_client
+mv ${JULIA_CLIENT}/src ../julia/Torc/src/api
+mv ${JULIA_CLIENT}/docs ../julia/julia_client/
+mv ${JULIA_CLIENT}/README.md ../julia/julia_client/

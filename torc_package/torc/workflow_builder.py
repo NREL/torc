@@ -29,7 +29,7 @@ from torc.openapi_client.models.workflow_specifications_schedulers import (
     WorkflowSpecificationsSchedulers,
 )
 from torc.openapi_client.models.user_data_model import UserDataModel
-from torc.cli.run_function import check_function
+from torc.common import check_function
 
 
 class WorkflowBuilder:

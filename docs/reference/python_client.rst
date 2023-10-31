@@ -1,3 +1,5 @@
+.. _python-client-api-reference:
+
 ###########################
 Python Client API Reference
 ###########################

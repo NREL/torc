@@ -15,10 +15,6 @@ from torc.torc_rc import TorcRuntimeConfig
 
 logger = logging.getLogger(__name__)
 
-# TODO: give more information about the workflows to be deleted in the warn message.
-#   Make one common message to use for workflow warns.
-# Add delete --user=X
-
 
 def check_database_url(api):
     """Raises an exception if a database URL is not set."""
@@ -136,7 +132,6 @@ def get_workflow_key_from_context(ctx, api):
             "\nThis command requires a workflow key and one was not provided. "
             "Please choose one from below.\n"
         )
-        # TODO: filter by user. Still might have issues with hundreds of workflows
         doc = prompt_user_for_document(
             "workflow",
             api.get_workflows,

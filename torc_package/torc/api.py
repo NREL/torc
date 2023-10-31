@@ -8,9 +8,12 @@ from resource_monitor.timing.timer_stats import Timer
 
 from torc.openapi_client import ApiClient, DefaultApi
 from torc.openapi_client.configuration import Configuration
+from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
 from torc.openapi_client.rest import ApiException
 from torc.openapi_client.models.bulk_jobs_model import BulkJobsModel
-from torc.common import timer_stats_collector
+from torc.openapi_client.models.jobs_model import JobsModel
+from torc.openapi_client.models.user_data_model import UserDataModel
+from torc.common import timer_stats_collector, check_function
 from torc.exceptions import DatabaseOffline
 
 
@@ -174,6 +177,112 @@ def add_jobs(api: DefaultApi, workflow_key: str, jobs, max_transfer_size=10_000)
 
 # TODO: Remove after notifying users to update.
 add_bulk_jobs = add_jobs
+
+
+def map_function_to_jobs(
+    api: DefaultApi,
+    workflow_key,
+    module: str,
+    func: str,
+    params: list[dict],
+    postprocess_func: str | None = None,
+    module_directory=None,
+    resource_requirements=None,
+    scheduler=None,
+    start_index=0,
+    name_prefix="",
+) -> list[str]:
+    """Add a job that will call func for each item in params.
+
+    Parameters
+    ----------
+    api : DefaultApi
+    workflow_key : str
+    module : str
+        Name of module that contains func. If it is not available in the Python path, specify
+        the parent directory in module_directory.
+    func : str
+        Name of the function in module to be called.
+    params : list[dict]
+        Each item in this list will be passed to func. The contents must be serializable to
+        JSON.
+    postprocess_func : str
+        Optional name of the function in module to be called to postprocess all results.
+    module_directory : str | None
+        Required if module is not importable.
+    resource_requirements : str | None
+        Optional id of resource_requirements that should be used by each job.
+    scheduler : str | None
+        Optional id of scheduler that should be used by each job.
+    start_index : int
+        Starting index to use for job names.
+    name_prefix : str
+        Prepend job names with this prefix; defaults to an empty string. Names will be the
+        index converted to a string.
+
+    Returns
+    -------
+    list[str]
+    """
+    jobs = []
+    output_data_ids = []
+    for i, job_params in enumerate(params, start=start_index):
+        check_function(module, func, module_directory)
+        data = {
+            "module": module,
+            "func": func,
+            "params": job_params,
+        }
+        if module_directory is not None:
+            data["module_directory"] = module_directory
+        job_name = f"{name_prefix}{i}"
+        input_ud = api.post_user_data(
+            workflow_key, UserDataModel(name=f"input_{job_name}", data=data)
+        )
+        output_ud = api.post_user_data(
+            workflow_key, UserDataModel(name=f"output_{job_name}", data=data)
+        )
+        output_data_ids.append(output_ud.id)
+        job = JobWithEdgesModel(
+            job=JobsModel(
+                name=job_name,
+                command="torc jobs run-function",
+            ),
+            input_user_data=[input_ud.id],
+            output_user_data=[output_ud.id],
+            resource_requirements=resource_requirements,
+            scheduler=scheduler,
+        )
+        jobs.append(job)
+
+    if postprocess_func is not None:
+        check_function(module, postprocess_func, module_directory)
+        data = {
+            "module": module,
+            "func": postprocess_func,
+        }
+        if module_directory is not None:
+            data["module_directory"] = module_directory
+        input_ud = api.post_user_data(
+            workflow_key, UserDataModel(name="input_postprocess", data=data)
+        )
+        output_ud = api.post_user_data(
+            workflow_key, UserDataModel(name="postprocess_result", data=data)
+        )
+        jobs.append(
+            JobWithEdgesModel(
+                job=JobsModel(
+                    name="postprocess",
+                    command="torc jobs run-postprocess",
+                ),
+                input_user_data=[input_ud.id] + output_data_ids,
+                output_user_data=[output_ud.id],
+                resource_requirements=resource_requirements,
+                scheduler=scheduler,
+            )
+        )
+
+    return add_jobs(api, workflow_key, jobs)
 
 
 def sanitize_workflow(data: dict):

@@ -24,13 +24,13 @@ jobs:
     - name: Configure ArangoDB
       run: |
         apt-get update
-        apt-get install -y npm zip curl docker
+        apt-get install -y npm zip curl docker graphviz graphviz-dev
         curl -s -X POST http://127.0.0.1:8529/_db/_system/_api/database --data '{"name":"test-workflows"}'
         cd db_service
         npm install
         zip -r - manifest.json index.js node_modules src scripts | docker exec -i arangodb_container foxx install --server http://127.0.0.1:8529 -D test-workflows /torc-service @
+        bash make_api.sh
         cd ..
-        bash db_service/make_api.sh
     - name: Run pytest
       run: |
         cd torc_package

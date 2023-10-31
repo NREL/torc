@@ -16,7 +16,7 @@ Ensure that you are in the ``torc_package`` directory. It has a ``tests`` subdir
 required by this workflow.
 
 .. note:: There are Python and Julia scripts to create an identical workflow in the same
-   ``examples`` directory. They use torc's ``WorkflowBuilder`` with the OpenAPI client interfaces.
+   ``examples`` directory. They use torc's OpenAPI client interfaces.
 
     - `Python <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py>`_
     - `Julia <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.jl>`_

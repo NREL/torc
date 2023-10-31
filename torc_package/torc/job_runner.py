@@ -501,16 +501,11 @@ class JobRunner:
         for job in self._outstanding_jobs.values():
             if job.is_complete():
                 done_jobs.append(job)
-                # TODO: check return code first
-                self._update_file_info(job)
 
         for job in done_jobs:
             self._cleanup_job(job, JobStatus.DONE.value)
 
-        if done_jobs:
-            logger.info("Found %s completions", len(done_jobs))
-        else:
-            logger.debug("Found 0 completions")
+        logger.info("Found %s completions", len(done_jobs))
         return len(done_jobs)
 
     def _cancel_jobs(self, jobs):
@@ -553,6 +548,10 @@ class JobRunner:
 
     def _cleanup_job(self, job: AsyncCliCommand, status):
         result = job.get_result(self._run_id)
+
+        if result.return_code == 0:
+            self._update_file_info(job)
+
         self._log_job_complete_event(job.key, job.db_job.name, status, result.return_code)
         self._complete_job(job.db_job, result, status)
         self._outstanding_jobs.pop(job.key)

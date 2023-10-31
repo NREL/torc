@@ -64,6 +64,7 @@ dev = [
     "sphinx-click",
     "sphinxcontrib-openapi",
     "sphinx-copybutton",
+    "sphinx-tabs~=3.4",
     "textual-dev",
 ]
 plots = [
