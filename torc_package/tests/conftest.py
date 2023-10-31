@@ -61,7 +61,6 @@ def pytest_sessionstart(session):
     """Records existing workflows."""
     api = _initialize_api()
     session.torc_workflow_keys = {x.key for x in iter_documents(api.get_workflows)}
-    api.api_client.close()
 
 
 def pytest_sessionfinish(session, exitstatus):  # pylint: disable=unused-argument
@@ -69,7 +68,6 @@ def pytest_sessionfinish(session, exitstatus):  # pylint: disable=unused-argumen
     api = _initialize_api()
     for key in {x.key for x in iter_documents(api.get_workflows)} - session.torc_workflow_keys:
         api.delete_workflows_key(key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -151,7 +149,6 @@ def diamond_workflow(tmp_path):
     scheduler = db.get_document("local_schedulers", "test")
     yield db, scheduler.id, output_dir
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -220,7 +217,6 @@ def diamond_workflow_user_data(tmp_path):
     scheduler = db.get_document("local_schedulers", "test")
     yield db, scheduler.id, output_dir
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -247,7 +243,6 @@ def workflow_with_ephemeral_resource():
     api.post_workflows_key_initialize_jobs(workflow.key)
     yield db
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -271,7 +266,6 @@ def independent_job_workflow(num_jobs):
     api.post_workflows_key_initialize_jobs(workflow.key)
     yield db, num_jobs
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 def _initialize_api():
@@ -309,7 +303,6 @@ def workflow_with_cancel(tmp_path, cancel_on_blocking_job_failure):
     api.post_workflows_key_initialize_jobs(workflow.key)
     yield db, tmp_path, cancel_on_blocking_job_failure
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -459,7 +452,6 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
     api.post_workflows_key_initialize_jobs(workflow.key)
     yield db, output_dir, monitor_type
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -500,7 +492,6 @@ def cancelable_workflow(tmp_path):
     mgr.start()
     yield db, scheduler.id, output_dir
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture()
@@ -524,7 +515,6 @@ def create_workflow_cli(tmp_path_factory):
     yield key, url, tmp_path
     result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "workflows", "delete", key])
     assert result.exit_code == 0
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -547,7 +537,6 @@ def mapped_function_workflow(tmp_path):
     db = DatabaseInterface(api, workflow)
     yield db, output_dir
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -569,7 +558,6 @@ def job_requirement_uniform():
     mgr.start()
     yield db
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -594,7 +582,6 @@ def job_requirement_runtime():
     mgr.start()
     yield db
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -658,7 +645,6 @@ def job_requirement_variations():
     mgr.start()
     yield db
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -666,7 +652,6 @@ def db_api():
     """Returns an api instance."""
     api = _initialize_api()
     yield api, api.api_client.configuration.host
-    api.api_client.close()
 
 
 def pytest_addoption(parser):

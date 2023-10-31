@@ -49,7 +49,6 @@ def setup_api():
 
     yield api, output_dir, script_output_dir
 
-    api.api_client.close()
     for path in (output_dir, script_output_dir):
         if path.exists():
             shutil.rmtree(path)

@@ -138,9 +138,6 @@ def callback(api, *args, **kwargs):  # pylint: disable=unused-argument
                 timer_stats_collector.log_json_stats(timer_file)
                 break
 
-    if api is not None:
-        api.api_client.close()
-
 
 cli.add_command(collections)
 cli.add_command(compute_nodes)
