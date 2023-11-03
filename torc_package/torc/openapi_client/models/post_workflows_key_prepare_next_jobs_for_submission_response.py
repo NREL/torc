@@ -18,10 +18,9 @@ import re  # noqa: F401
 import json
 
 
-from typing import List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel
 from torc.openapi_client.models.jobs_model import JobsModel
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
@@ -30,7 +29,7 @@ except ImportError:
 class PostWorkflowsKeyPrepareNextJobsForSubmissionResponse(BaseModel):
     """
     PostWorkflowsKeyPrepareNextJobsForSubmissionResponse
-    """
+    """ # noqa: E501
     jobs: Optional[List[JobsModel]] = None
     __properties: ClassVar[List[str]] = ["jobs"]
 
@@ -80,7 +79,7 @@ class PostWorkflowsKeyPrepareNextJobsForSubmissionResponse(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of PostWorkflowsKeyPrepareNextJobsForSubmissionResponse from a dict"""
         if obj is None:
             return None

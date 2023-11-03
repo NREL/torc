@@ -4146,13 +4146,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/inline_response_500'
       security: []
-  /workflows/{workflow}/bulk_jobs:
+  /workflows/{workflow}/job_with_edges:
     post:
       tags: []
-      summary: Add jobs in bulk with edge definitions.
-      description: Add jobs in bulk with edge definitions. Recommended max job count
-        of 10,000.
-      operationId: post_bulk_jobs
+      summary: Add a job with edge definitions.
+      description: Add a job with edge definitions.
+      operationId: post_job_with_edges
       parameters:
       - name: workflow
         in: path
@@ -4166,7 +4165,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/bulk_jobs_model'
+              $ref: '#/components/schemas/job_with_edges_model'
         required: true
       responses:
         '200':
@@ -4174,7 +4173,44 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                $ref: '#/components/schemas/jobs_model'
+        '500':
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/inline_response_500'
+      security: []
+      x-codegen-request-body-name: body
+  /workflows/{workflow}/bulk_jobs_with_edges:
+    post:
+      tags: []
+      summary: Add jobs in bulk with edge definitions.
+      description: Add jobs in bulk with edge definitions. Recommended max job count
+        of 10,000.
+      operationId: post_bulk_jobs_with_edges
+      parameters:
+      - name: workflow
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/bulk_jobs_with_edges_model'
+        required: true
+      responses:
+        '200':
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/post_bulk_jobs_with_edges_response'
         '500':
           description: Default error response.
           content:
@@ -5318,11 +5354,11 @@ paths:
         explode: true
         schema:
           type: string
-          default: gpus_runtime_memory
           enum:
           - gpus_runtime_memory
           - gpus_memory_runtime
           - none
+          default: gpus_runtime_memory
       - name: limit
         in: query
         required: false
@@ -6082,6 +6118,15 @@ paths:
       security: []
 components:
   schemas:
+    bulk_jobs_with_edges_model:
+      required:
+      - jobs
+      type: object
+      properties:
+        jobs:
+          type: array
+          items:
+            $ref: '#/components/schemas/job_with_edges_model'
     workflow_status_model:
       required:
       - auto_tune_status
@@ -6166,11 +6211,11 @@ components:
           type: number
         prepare_jobs_sort_method:
           type: string
-          default: gpus_runtime_memory
           enum:
           - gpus_runtime_memory
           - gpus_memory_runtime
           - none
+          default: gpus_runtime_memory
         _key:
           type: string
         _id:
@@ -6205,15 +6250,6 @@ components:
           type: string
         _rev:
           type: string
-    bulk_jobs_model:
-      required:
-      - jobs
-      type: object
-      properties:
-        jobs:
-          type: array
-          items:
-            $ref: '#/components/schemas/job_with_edges_model'
     aws_schedulers_model:
       type: object
       properties:
@@ -6225,6 +6261,37 @@ components:
           type: string
         _rev:
           type: string
+    job_with_edges_model:
+      required:
+      - job
+      type: object
+      properties:
+        job:
+          $ref: '#/components/schemas/jobs_model'
+        resource_requirements:
+          type: string
+        scheduler:
+          type: string
+        input_files:
+          type: array
+          items:
+            type: string
+        output_files:
+          type: array
+          items:
+            type: string
+        input_user_data:
+          type: array
+          items:
+            type: string
+        output_user_data:
+          type: array
+          items:
+            type: string
+        blocked_by:
+          type: array
+          items:
+            type: string
     inline_response_500:
       required:
       - error
@@ -6275,6 +6342,36 @@ components:
           type: string
         _rev:
           type: string
+    jobs_model:
+      required:
+      - command
+      type: object
+      properties:
+        name:
+          type: string
+        command:
+          type: string
+        invocation_script:
+          type: string
+        status:
+          type: string
+        needs_compute_node_schedule:
+          type: boolean
+          default: false
+        cancel_on_blocking_job_failure:
+          type: boolean
+          default: true
+        supports_termination:
+          type: boolean
+          default: false
+        internal:
+          $ref: '#/components/schemas/jobs_internal'
+        _key:
+          type: string
+        _id:
+          type: string
+        _rev:
+          type: string
     slurm_schedulers_model:
       required:
       - account
@@ -6317,37 +6414,6 @@ components:
           type: boolean
           default: false
         job_keys:
-          type: array
-          items:
-            type: string
-    job_with_edges_model:
-      required:
-      - job
-      type: object
-      properties:
-        job:
-          $ref: '#/components/schemas/jobs_model'
-        resource_requirements:
-          type: string
-        scheduler:
-          type: string
-        input_files:
-          type: array
-          items:
-            type: string
-        output_files:
-          type: array
-          items:
-            type: string
-        input_user_data:
-          type: array
-          items:
-            type: string
-        output_user_data:
-          type: array
-          items:
-            type: string
-        blocked_by:
           type: array
           items:
             type: string
@@ -6532,36 +6598,6 @@ components:
           type: string
         _rev:
           type: string
-    jobs_model:
-      required:
-      - command
-      type: object
-      properties:
-        name:
-          type: string
-        command:
-          type: string
-        invocation_script:
-          type: string
-        status:
-          type: string
-        needs_compute_node_schedule:
-          type: boolean
-          default: false
-        cancel_on_blocking_job_failure:
-          type: boolean
-          default: true
-        supports_termination:
-          type: boolean
-          default: false
-        internal:
-          $ref: '#/components/schemas/jobs_internal'
-        _key:
-          type: string
-        _id:
-          type: string
-        _rev:
-          type: string
     workflow_specifications_model:
       type: object
       properties:
@@ -6711,6 +6747,13 @@ components:
           type: integer
         has_more:
           type: boolean
+    post_bulk_jobs_with_edges_response:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/jobs_model'
     get_compute_nodes_response:
       required:
       - count

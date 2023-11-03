@@ -3,6 +3,7 @@
 import itertools
 import logging
 import time
+import warnings
 
 from resource_monitor.timing.timer_stats import Timer
 
@@ -10,7 +11,7 @@ from torc.openapi_client import ApiClient, DefaultApi
 from torc.openapi_client.configuration import Configuration
 from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
 from torc.openapi_client.rest import ApiException
-from torc.openapi_client.models.bulk_jobs_model import BulkJobsModel
+from torc.openapi_client.models.bulk_jobs_with_edges_model import BulkJobsWithEdgesModel
 from torc.openapi_client.models.jobs_model import JobsModel
 from torc.openapi_client.models.user_data_model import UserDataModel
 from torc.common import timer_stats_collector, check_function
@@ -142,7 +143,9 @@ def send_api_command(func, *args, raise_on_error=True, **kwargs):
             return None
 
 
-def add_jobs(api: DefaultApi, workflow_key: str, jobs, max_transfer_size=10_000):
+def add_jobs(
+    api: DefaultApi, workflow_key: str, jobs, max_transfer_size=10_000
+) -> list[JobsModel]:
     """Add an iterable of jobs to the workflow.
 
     Parameters
@@ -159,24 +162,30 @@ def add_jobs(api: DefaultApi, workflow_key: str, jobs, max_transfer_size=10_000)
     list
         List of keys of created jobs. Provided in same order as jobs.
     """
-    job_keys = []
+    added_jobs = []
     batch = []
     for job in jobs:
         batch.append(job)
         if len(batch) > max_transfer_size:
-            res = send_api_command(api.post_bulk_jobs, workflow_key, BulkJobsModel(jobs=batch))
-            job_keys += res["items"]
+            res = send_api_command(
+                api.post_bulk_jobs_with_edges, workflow_key, BulkJobsWithEdgesModel(jobs=batch)
+            )
+            added_jobs += res.items
             batch.clear()
 
     if batch:
-        res = send_api_command(api.post_bulk_jobs, workflow_key, BulkJobsModel(jobs=batch))
-        job_keys += res["items"]
+        res = send_api_command(
+            api.post_bulk_jobs_with_edges, workflow_key, BulkJobsWithEdgesModel(jobs=batch)
+        )
+        added_jobs += res.items
 
-    return job_keys
+    return added_jobs
 
 
-# TODO: Remove after notifying users to update.
-add_bulk_jobs = add_jobs
+def add_bulk_jobs(*args, **kwargs):
+    """Add an iterable of jobs to the workflow."""
+    warnings.warn("Use add_jobs instead.", category=DeprecationWarning, stacklevel=2)
+    return [x.key for x in add_jobs(*args, **kwargs)]
 
 
 def map_function_to_jobs(
@@ -191,7 +200,7 @@ def map_function_to_jobs(
     scheduler=None,
     start_index=0,
     name_prefix="",
-) -> list[str]:
+) -> list[JobsModel]:
     """Add a job that will call func for each item in params.
 
     Parameters

@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 
-from typing import List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
 from torc.openapi_client.models.files_model import FilesModel
 from torc.openapi_client.models.job_specifications_model import JobSpecificationsModel
@@ -26,7 +26,6 @@ from torc.openapi_client.models.resource_requirements_model import ResourceRequi
 from torc.openapi_client.models.user_data_model import UserDataModel
 from torc.openapi_client.models.workflow_config_model import WorkflowConfigModel
 from torc.openapi_client.models.workflow_specifications_schedulers import WorkflowSpecificationsSchedulers
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
@@ -35,7 +34,7 @@ except ImportError:
 class WorkflowSpecificationsModel(BaseModel):
     """
     WorkflowSpecificationsModel
-    """
+    """ # noqa: E501
     name: Optional[StrictStr] = None
     key: Optional[StrictStr] = None
     user: Optional[StrictStr] = None
@@ -121,7 +120,7 @@ class WorkflowSpecificationsModel(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of WorkflowSpecificationsModel from a dict"""
         if obj is None:
             return None

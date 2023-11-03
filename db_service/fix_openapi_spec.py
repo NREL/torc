@@ -50,12 +50,14 @@ def main():
                 "workflow_specifications_config_compute_node_resource_stats",
                 "compute_node_resource_stats_model",
             ),
+            ("jobs_key_model", "jobs_model"),
             ("get_workflows_key_events_after_timestamp_timestamp", "get_events_after_timestamp"),
             ("get_workflows_key_latest_event_timestamp", "get_latest_event_timestamp"),
             ("get_workflows_key_latest_event_key", "get_latest_event_key"),
+            ("workflow_job_with_edges_model", "job_with_edges_model"),
             ("workflowsworkflowbulk_jobs_jobs", "job_with_edges_model"),
             ("workflow_aws_schedulers_model", "aws_schedulers_model"),
-            ("workflow_bulk_jobs_model", "bulk_jobs_model"),
+            ("workflow_bulk_jobs_with_edges_model", "bulk_jobs_with_edges_model"),
             ("workflow_compute_node_stats_model", "compute_node_stats_model"),
             ("workflow_compute_nodes_model", "compute_nodes_model"),
             ("workflow_files_model", "files_model"),
@@ -89,6 +91,7 @@ def main():
         data,
         [
             ("/workflows/{workflow}/aws_schedulers", "get"),
+            ("/workflows/{workflow}/bulk_jobs_with_edges", "post"),
             ("/workflows/{workflow}/compute_nodes", "get"),
             ("/workflows/{workflow}/compute_node_stats", "get"),
             ("/workflows/{workflow}/events", "get"),
@@ -264,6 +267,13 @@ def main():
             responses=OpsComponent(
                 ops=["get"],
                 component="#/components/schemas/job_specifications_model",
+            ),
+        ),
+        ApiCommand(
+            path="/workflows/{workflow}/job_with_edges",
+            responses=OpsComponent(
+                ops=["post"],
+                component="#/components/schemas/jobs_model",
             ),
         ),
         ApiCommand(

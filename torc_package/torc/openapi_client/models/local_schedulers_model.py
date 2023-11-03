@@ -18,10 +18,9 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional
+from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictInt, StrictStr
 from pydantic import Field
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
@@ -30,7 +29,7 @@ except ImportError:
 class LocalSchedulersModel(BaseModel):
     """
     LocalSchedulersModel
-    """
+    """ # noqa: E501
     name: Optional[StrictStr] = 'default'
     memory: Optional[StrictStr] = None
     num_cpus: Optional[StrictInt] = None
@@ -78,7 +77,7 @@ class LocalSchedulersModel(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of LocalSchedulersModel from a dict"""
         if obj is None:
             return None

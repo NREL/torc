@@ -3121,13 +3121,13 @@ function post_aws_schedulers(_api::DefaultApi, response_stream::Channel, workflo
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
-const _returntypes_post_bulk_jobs_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+const _returntypes_post_bulk_jobs_with_edges_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => PostBulkJobsWithEdgesResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
 )
 
-function _oacinternal_post_bulk_jobs(_api::DefaultApi, workflow::String, body::BulkJobsModel; _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_post_bulk_jobs_DefaultApi, "/workflows/{workflow}/bulk_jobs", [], body)
+function _oacinternal_post_bulk_jobs_with_edges(_api::DefaultApi, workflow::String, body::BulkJobsWithEdgesModel; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_post_bulk_jobs_with_edges_DefaultApi, "/workflows/{workflow}/bulk_jobs_with_edges", [], body)
     OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
     OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
     OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
@@ -3140,17 +3140,17 @@ Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
 
 Params:
 - workflow::String (required)
-- body::BulkJobsModel (required)
+- body::BulkJobsWithEdgesModel (required)
 
-Return: Any, OpenAPI.Clients.ApiResponse
+Return: PostBulkJobsWithEdgesResponse, OpenAPI.Clients.ApiResponse
 """
-function post_bulk_jobs(_api::DefaultApi, workflow::String, body::BulkJobsModel; _mediaType=nothing)
-    _ctx = _oacinternal_post_bulk_jobs(_api, workflow, body; _mediaType=_mediaType)
+function post_bulk_jobs_with_edges(_api::DefaultApi, workflow::String, body::BulkJobsWithEdgesModel; _mediaType=nothing)
+    _ctx = _oacinternal_post_bulk_jobs_with_edges(_api, workflow, body; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx)
 end
 
-function post_bulk_jobs(_api::DefaultApi, response_stream::Channel, workflow::String, body::BulkJobsModel; _mediaType=nothing)
-    _ctx = _oacinternal_post_bulk_jobs(_api, workflow, body; _mediaType=_mediaType)
+function post_bulk_jobs_with_edges(_api::DefaultApi, response_stream::Channel, workflow::String, body::BulkJobsWithEdgesModel; _mediaType=nothing)
+    _ctx = _oacinternal_post_bulk_jobs_with_edges(_api, workflow, body; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -3384,6 +3384,39 @@ end
 
 function post_job_specifications(_api::DefaultApi, response_stream::Channel, workflow::String, body::JobSpecificationsModel; _mediaType=nothing)
     _ctx = _oacinternal_post_job_specifications(_api, workflow, body; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_post_job_with_edges_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => JobsModel,
+    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+)
+
+function _oacinternal_post_job_with_edges(_api::DefaultApi, workflow::String, body::JobWithEdgesModel; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_post_job_with_edges_DefaultApi, "/workflows/{workflow}/job_with_edges", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Add a job with edge definitions.
+
+Add a job with edge definitions.
+
+Params:
+- workflow::String (required)
+- body::JobWithEdgesModel (required)
+
+Return: JobsModel, OpenAPI.Clients.ApiResponse
+"""
+function post_job_with_edges(_api::DefaultApi, workflow::String, body::JobWithEdgesModel; _mediaType=nothing)
+    _ctx = _oacinternal_post_job_with_edges(_api, workflow, body; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function post_job_with_edges(_api::DefaultApi, response_stream::Channel, workflow::String, body::JobWithEdgesModel; _mediaType=nothing)
+    _ctx = _oacinternal_post_job_with_edges(_api, workflow, body; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -4906,7 +4939,7 @@ export get_workflows_key_ready_job_requirements
 export get_workflows_key_required_existing_files
 export get_workflows_key_status
 export post_aws_schedulers
-export post_bulk_jobs
+export post_bulk_jobs_with_edges
 export post_compute_node_stats
 export post_compute_nodes
 export post_edges_name
@@ -4914,6 +4947,7 @@ export post_events
 export post_files
 export post_job_process_stats
 export post_job_specifications
+export post_job_with_edges
 export post_jobs
 export post_jobs_key_complete_job_status_rev_run_id
 export post_jobs_key_user_data

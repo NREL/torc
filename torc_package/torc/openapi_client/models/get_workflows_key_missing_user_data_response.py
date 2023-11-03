@@ -18,9 +18,8 @@ import re  # noqa: F401
 import json
 
 
-from typing import List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
@@ -29,7 +28,7 @@ except ImportError:
 class GetWorkflowsKeyMissingUserDataResponse(BaseModel):
     """
     GetWorkflowsKeyMissingUserDataResponse
-    """
+    """ # noqa: E501
     user_data: Optional[List[StrictStr]] = None
     __properties: ClassVar[List[str]] = ["user_data"]
 
@@ -72,7 +71,7 @@ class GetWorkflowsKeyMissingUserDataResponse(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of GetWorkflowsKeyMissingUserDataResponse from a dict"""
         if obj is None:
             return None

@@ -36,7 +36,7 @@ function addPostMethod(router, descriptor) {
     }
     try {
       if (descriptor.customPost != null) {
-        descriptor.customPost(doc, workflow);
+        doc = descriptor.customPost(doc, workflow);
       } else {
         const collection = config.getWorkflowCollection(workflow, descriptor.collection);
         const meta = collection.save(doc);

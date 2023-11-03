@@ -18,10 +18,9 @@ import re  # noqa: F401
 import json
 
 
-from typing import List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictBool, StrictInt
 from torc.openapi_client.models.scheduled_compute_nodes_model import ScheduledComputeNodesModel
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
@@ -30,7 +29,7 @@ except ImportError:
 class GetScheduledComputeNodesResponse(BaseModel):
     """
     GetScheduledComputeNodesResponse
-    """
+    """ # noqa: E501
     items: Optional[List[ScheduledComputeNodesModel]] = None
     skip: StrictInt
     max_limit: StrictInt
@@ -85,7 +84,7 @@ class GetScheduledComputeNodesResponse(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of GetScheduledComputeNodesResponse from a dict"""
         if obj is None:
             return None

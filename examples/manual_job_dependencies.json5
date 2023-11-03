@@ -1,0 +1,56 @@
+{
+  name: "manual_job_dependencies",
+  description: "Demo creation of a workflow with job dependencies specified manually.",
+  jobs: [
+    {
+      name: "job1",
+      command: "echo test",
+      resource_requirements: "medium",
+    },
+    {
+      name: "job2",
+      command: "echo test",
+      resource_requirements: "medium",
+    },
+    {
+      name: "job3",
+      command: "echo test",
+      resource_requirements: "medium",
+    },
+    {
+      name: "postprocess",
+      command: "echo test",
+      cancel_on_blocking_job_failure: true,
+      resource_requirements: "small",
+      blocked_by: ["job1", "job2", "job3"],
+    },
+  ],
+  resource_requirements: [
+    {
+      name: "small",
+      num_cpus: 1,
+      num_gpus: 0,
+      num_nodes: 1,
+      memory: "1g",
+      runtime: "P0DT45M",
+    },
+    {
+      name: "medium",
+      num_cpus: 4,
+      num_gpus: 0,
+      num_nodes: 1,
+      memory: "10g",
+      runtime: "P0DT3H"
+    },
+  ],
+  "schedulers": {
+    "slurm_schedulers": [
+      {
+        "name": "short",
+        "account": "my_account",
+        "nodes": 1,
+        "walltime": "04:00:00",
+      }
+    ],
+  },
+}

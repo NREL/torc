@@ -18,11 +18,10 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional
+from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictBool, StrictInt, StrictStr
 from pydantic import Field
 from torc.openapi_client.models.auto_tune_status import AutoTuneStatus
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
@@ -31,7 +30,7 @@ except ImportError:
 class WorkflowStatusModel(BaseModel):
     """
     WorkflowStatusModel
-    """
+    """ # noqa: E501
     is_canceled: StrictBool
     run_id: StrictInt
     auto_tune_status: AutoTuneStatus
@@ -82,7 +81,7 @@ class WorkflowStatusModel(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of WorkflowStatusModel from a dict"""
         if obj is None:
             return None

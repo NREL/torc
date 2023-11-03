@@ -18,10 +18,9 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional, Union
+from typing import Any, ClassVar, Dict, List, Optional, Union
 from pydantic import BaseModel, StrictFloat, StrictInt, StrictStr
 from pydantic import Field
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
@@ -30,7 +29,7 @@ except ImportError:
 class ResultsModel(BaseModel):
     """
     ResultsModel
-    """
+    """ # noqa: E501
     job_key: StrictStr
     run_id: StrictInt
     return_code: StrictInt
@@ -81,7 +80,7 @@ class ResultsModel(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of ResultsModel from a dict"""
         if obj is None:
             return None

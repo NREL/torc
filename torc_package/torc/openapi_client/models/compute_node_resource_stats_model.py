@@ -18,9 +18,8 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional, Union
+from typing import Any, ClassVar, Dict, List, Optional, Union
 from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
@@ -29,7 +28,7 @@ except ImportError:
 class ComputeNodeResourceStatsModel(BaseModel):
     """
     ComputeNodeResourceStatsModel
-    """
+    """ # noqa: E501
     cpu: Optional[StrictBool] = True
     disk: Optional[StrictBool] = False
     memory: Optional[StrictBool] = True
@@ -81,7 +80,7 @@ class ComputeNodeResourceStatsModel(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of ComputeNodeResourceStatsModel from a dict"""
         if obj is None:
             return None

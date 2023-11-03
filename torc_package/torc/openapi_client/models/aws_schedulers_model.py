@@ -18,10 +18,9 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional
+from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
 from pydantic import Field
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
@@ -30,7 +29,7 @@ except ImportError:
 class AwsSchedulersModel(BaseModel):
     """
     AwsSchedulersModel
-    """
+    """ # noqa: E501
     name: Optional[StrictStr] = None
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
@@ -76,7 +75,7 @@ class AwsSchedulersModel(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of AwsSchedulersModel from a dict"""
         if obj is None:
             return None

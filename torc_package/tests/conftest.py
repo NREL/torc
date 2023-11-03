@@ -18,9 +18,11 @@ from torc.openapi_client.models.workflow_specifications_schedulers import (
 from torc.openapi_client.models.local_schedulers_model import (
     LocalSchedulersModel,
 )
+from torc.openapi_client.models.jobs_model import JobsModel
 from torc.openapi_client.models.job_specifications_model import (
     JobSpecificationsModel,
 )
+from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
 from torc.openapi_client.models.resource_requirements_model import (
     ResourceRequirementsModel,
 )
@@ -250,18 +252,27 @@ def independent_job_workflow(num_jobs):
     """Creates a workflow out of independent jobs."""
     api = _initialize_api()
 
-    small = ResourceRequirementsModel(name="small", num_cpus=1, memory="1m", runtime="P0DT0H1M")
-    jobs = []
-    for i in range(num_jobs):
-        job = JobSpecificationsModel(
-            name=str(i),
-            command="echo hello",
-            resource_requirements=small.name,
-        )
-        jobs.append(job)
+    workflow = api.post_workflows(WorkflowsModel(user="test", name="test"))
+    small = api.post_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(
+            name="small",
+            num_cpus=1,
+            memory="1m",
+            runtime="P0DT0H1M",
+        ),
+    )
 
-    spec = WorkflowSpecificationsModel(jobs=jobs, resource_requirements=[small])
-    workflow = api.post_workflow_specifications(spec)
+    for i in range(num_jobs):
+        job = JobWithEdgesModel(
+            job=JobsModel(
+                name=str(i),
+                command="echo hello",
+            ),
+            resource_requirements=small.id,
+        )
+        api.post_job_with_edges(workflow.key, job)
+
     db = DatabaseInterface(api, workflow)
     api.post_workflows_key_initialize_jobs(workflow.key)
     yield db, num_jobs

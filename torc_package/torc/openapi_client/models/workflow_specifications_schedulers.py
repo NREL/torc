@@ -18,12 +18,11 @@ import re  # noqa: F401
 import json
 
 
-from typing import List, Optional
+from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel
 from torc.openapi_client.models.aws_schedulers_model import AwsSchedulersModel
 from torc.openapi_client.models.local_schedulers_model import LocalSchedulersModel
 from torc.openapi_client.models.slurm_schedulers_model import SlurmSchedulersModel
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
@@ -32,7 +31,7 @@ except ImportError:
 class WorkflowSpecificationsSchedulers(BaseModel):
     """
     WorkflowSpecificationsSchedulers
-    """
+    """ # noqa: E501
     aws_schedulers: Optional[List[AwsSchedulersModel]] = None
     local_schedulers: Optional[List[LocalSchedulersModel]] = None
     slurm_schedulers: Optional[List[SlurmSchedulersModel]] = None
@@ -98,7 +97,7 @@ class WorkflowSpecificationsSchedulers(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of WorkflowSpecificationsSchedulers from a dict"""
         if obj is None:
             return None

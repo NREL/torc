@@ -27,24 +27,24 @@ end
 Add an iterable of jobs to the workflow.
 """
 function add_jobs(api::APIClient.DefaultApi, workflow_key::String, jobs, max_transfer_size=10_000)
-    job_keys = []
+    added_jobs = []
     batch = []
     for job in jobs
         push!(batch, job)
         if length(batch) > max_transfer_size
-            res = send_api_command(api, APIClient.post_bulk_jobs, workflow_key, APIClient.BulkJobsModel(jobs=batch))
-            job_keys = vcat(job_keys, res["items"])
-            job_keys += res["items"]
+            res = send_api_command(api, APIClient.post_bulk_jobs_with_edges, workflow_key, APIClient.BulkJobsModel(jobs=batch))
+            added_jobs = vcat(added_jobs, res["items"])
+            added_jobs += res["items"]
             empty!(batch)
         end
     end
 
     if length(batch) > 0
-        res = send_api_command(api, APIClient.post_bulk_jobs, workflow_key, APIClient.BulkJobsModel(jobs=batch))
-        job_keys = vcat(job_keys, res["items"])
+        res = send_api_command(api, APIClient.post_bulk_jobs_with_edges, workflow_key, APIClient.BulkJobsModel(jobs=batch))
+        added_jobs = vcat(added_jobs, res["items"])
     end
 
-    return job_keys
+    return added_jobs
 end
 
 export make_api

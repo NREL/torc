@@ -99,6 +99,20 @@ const job = joi.object().required().keys({
   _rev: joi.string(),
 });
 
+// const jobIdentifiers = joi.object().required().keys({
+//   _key: joi.string(),
+//   _id: joi.string(),
+//   _rev: joi.string(),
+// });
+
+// const jobsIdentifiers = joi.object().required().keys({
+//   items: joi.array().items(jobIdentifiers),
+// });
+
+const jobsResponse = joi.object().required().keys({
+  items: joi.array().items(job),
+});
+
 // This schema is used in the user workflow construction but is never stored.
 const jobSpecification = joi.object().required().keys({
   name: joi.string().optional(),
@@ -490,6 +504,7 @@ module.exports = {
   file,
   isComplete,
   job,
+  jobsResponse,
   jobInternal,
   jobProcessStats,
   jobSpecification,

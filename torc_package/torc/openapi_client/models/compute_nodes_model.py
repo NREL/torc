@@ -18,11 +18,10 @@ import re  # noqa: F401
 import json
 
 
-from typing import Any, Dict, Optional, Union
+from typing import Any, ClassVar, Dict, List, Optional, Union
 from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr
 from pydantic import Field
 from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
@@ -31,7 +30,7 @@ except ImportError:
 class ComputeNodesModel(BaseModel):
     """
     ComputeNodesModel
-    """
+    """ # noqa: E501
     hostname: StrictStr
     pid: StrictInt
     start_time: StrictStr
@@ -86,7 +85,7 @@ class ComputeNodesModel(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of ComputeNodesModel from a dict"""
         if obj is None:
             return None

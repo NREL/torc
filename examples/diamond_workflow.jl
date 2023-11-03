@@ -1,6 +1,7 @@
 using Torc
 import Torc: APIClient
 
+const TORC_SERVICE_URL = "http://localhost:8529/_db/test-workflows/torc-service"
 const PREPROCESS = joinpath("tests", "scripts", "preprocess.py")
 const POSTPROCESS = joinpath("tests", "scripts", "postprocess.py")
 const WORK = joinpath("tests", "scripts", "work.py")
@@ -157,8 +158,7 @@ function build_workflow(api, workflow)
 end
 
 function main()
-    url = "http://localhost:8529/_db/test-workflows/torc-service"
-    api = make_api(url)
+    api = make_api(TORC_SERVICE_URL)
     workflow = create_workflow(api)
     try
         build_workflow(api, workflow)

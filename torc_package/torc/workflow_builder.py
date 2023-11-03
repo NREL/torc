@@ -1,6 +1,7 @@
 """Helper code to build a workflow dynamically"""
 
 import getpass
+import warnings
 
 from torc.openapi_client.models.files_model import FilesModel
 from torc.openapi_client.models.job_specifications_model import (
@@ -36,6 +37,9 @@ class WorkflowBuilder:
     """Helper class to build a workflow dynamically"""
 
     def __init__(self):
+        warnings.warn(
+            "Use the direct API calls instead.", category=DeprecationWarning, stacklevel=2
+        )
         self._files = []
         self._jobs = []
         self._resource_monitor_config = None

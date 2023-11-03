@@ -18,9 +18,8 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional, Union
+from typing import Any, ClassVar, Dict, List, Optional, Union
 from pydantic import BaseModel, StrictFloat, StrictInt, StrictStr
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
@@ -29,7 +28,7 @@ except ImportError:
 class JobsInternal(BaseModel):
     """
     JobsInternal
-    """
+    """ # noqa: E501
     memory_bytes: Optional[StrictInt] = None
     num_cpus: Optional[StrictInt] = None
     num_gpus: Optional[StrictInt] = None
@@ -78,7 +77,7 @@ class JobsInternal(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of JobsInternal from a dict"""
         if obj is None:
             return None

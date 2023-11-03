@@ -90,7 +90,7 @@ Method | HTTP request | Description
 [**get_workflows_key_required_existing_files**](DefaultApi.md#get_workflows_key_required_existing_files) | **GET** /workflows/{key}/required_existing_files | List files that must exist.
 [**get_workflows_key_status**](DefaultApi.md#get_workflows_key_status) | **GET** /workflows/{key}/status | Reports the workflow status.
 [**post_aws_schedulers**](DefaultApi.md#post_aws_schedulers) | **POST** /workflows/{workflow}/aws_schedulers | Store a AWS compute node configuration.
-[**post_bulk_jobs**](DefaultApi.md#post_bulk_jobs) | **POST** /workflows/{workflow}/bulk_jobs | Add jobs in bulk with edge definitions.
+[**post_bulk_jobs_with_edges**](DefaultApi.md#post_bulk_jobs_with_edges) | **POST** /workflows/{workflow}/bulk_jobs_with_edges | Add jobs in bulk with edge definitions.
 [**post_compute_node_stats**](DefaultApi.md#post_compute_node_stats) | **POST** /workflows/{workflow}/compute_node_stats | Store a compute node statistics.
 [**post_compute_nodes**](DefaultApi.md#post_compute_nodes) | **POST** /workflows/{workflow}/compute_nodes | Store a compute node.
 [**post_edges_name**](DefaultApi.md#post_edges_name) | **POST** /workflows/{workflow}/edges/{name} | Store an edge between two vertexes.
@@ -98,6 +98,7 @@ Method | HTTP request | Description
 [**post_files**](DefaultApi.md#post_files) | **POST** /workflows/{workflow}/files | Store a file.
 [**post_job_process_stats**](DefaultApi.md#post_job_process_stats) | **POST** /workflows/{workflow}/job_process_stats | Store a job process statistics.
 [**post_job_specifications**](DefaultApi.md#post_job_specifications) | **POST** /workflows/{workflow}/job_specifications | Store a job and create edges.
+[**post_job_with_edges**](DefaultApi.md#post_job_with_edges) | **POST** /workflows/{workflow}/job_with_edges | Add a job with edge definitions.
 [**post_jobs**](DefaultApi.md#post_jobs) | **POST** /workflows/{workflow}/jobs | Store a job.
 [**post_jobs_key_complete_job_status_rev_run_id**](DefaultApi.md#post_jobs_key_complete_job_status_rev_run_id) | **POST** /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id} | Complete a job and add a result.
 [**post_jobs_key_user_data**](DefaultApi.md#post_jobs_key_user_data) | **POST** /workflows/{workflow}/jobs/{key}/user_data | Store user data for a job.
@@ -3153,9 +3154,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **post_bulk_jobs**
-> post_bulk_jobs(_api::DefaultApi, workflow::String, body::BulkJobsModel; _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> post_bulk_jobs(_api::DefaultApi, response_stream::Channel, workflow::String, body::BulkJobsModel; _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **post_bulk_jobs_with_edges**
+> post_bulk_jobs_with_edges(_api::DefaultApi, workflow::String, body::BulkJobsWithEdgesModel; _mediaType=nothing) -> PostBulkJobsWithEdgesResponse, OpenAPI.Clients.ApiResponse <br/>
+> post_bulk_jobs_with_edges(_api::DefaultApi, response_stream::Channel, workflow::String, body::BulkJobsWithEdgesModel; _mediaType=nothing) -> Channel{ PostBulkJobsWithEdgesResponse }, OpenAPI.Clients.ApiResponse
 
 Add jobs in bulk with edge definitions.
 
@@ -3167,11 +3168,11 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**BulkJobsModel**](BulkJobsModel.md)|  | 
+**body** | [**BulkJobsWithEdgesModel**](BulkJobsWithEdgesModel.md)|  | 
 
 ### Return type
 
-**Any**
+[**PostBulkJobsWithEdgesResponse**](PostBulkJobsWithEdgesResponse.md)
 
 ### Authorization
 
@@ -3390,6 +3391,37 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**JobSpecificationsModel**](JobSpecificationsModel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **post_job_with_edges**
+> post_job_with_edges(_api::DefaultApi, workflow::String, body::JobWithEdgesModel; _mediaType=nothing) -> JobsModel, OpenAPI.Clients.ApiResponse <br/>
+> post_job_with_edges(_api::DefaultApi, response_stream::Channel, workflow::String, body::JobWithEdgesModel; _mediaType=nothing) -> Channel{ JobsModel }, OpenAPI.Clients.ApiResponse
+
+Add a job with edge definitions.
+
+Add a job with edge definitions.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**workflow** | **String**| Workflow key | [default to nothing]
+**body** | [**JobWithEdgesModel**](JobWithEdgesModel.md)|  | 
+
+### Return type
+
+[**JobsModel**](JobsModel.md)
 
 ### Authorization
 

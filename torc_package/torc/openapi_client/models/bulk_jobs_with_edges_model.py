@@ -18,19 +18,18 @@ import re  # noqa: F401
 import json
 
 
-from typing import List
+from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel
 from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class BulkJobsModel(BaseModel):
+class BulkJobsWithEdgesModel(BaseModel):
     """
-    BulkJobsModel
-    """
+    BulkJobsWithEdgesModel
+    """ # noqa: E501
     jobs: List[JobWithEdgesModel]
     __properties: ClassVar[List[str]] = ["jobs"]
 
@@ -51,7 +50,7 @@ class BulkJobsModel(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of BulkJobsModel from a JSON string"""
+        """Create an instance of BulkJobsWithEdgesModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -80,8 +79,8 @@ class BulkJobsModel(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
-        """Create an instance of BulkJobsModel from a dict"""
+    def from_dict(cls, obj: Dict) -> Self:
+        """Create an instance of BulkJobsWithEdgesModel from a dict"""
         if obj is None:
             return None
 

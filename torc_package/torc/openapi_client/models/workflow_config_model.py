@@ -18,11 +18,10 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional, Union
+from typing import Any, ClassVar, Dict, List, Optional, Union
 from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr, field_validator
 from pydantic import Field
 from torc.openapi_client.models.compute_node_resource_stats_model import ComputeNodeResourceStatsModel
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
@@ -31,7 +30,7 @@ except ImportError:
 class WorkflowConfigModel(BaseModel):
     """
     WorkflowConfigModel
-    """
+    """ # noqa: E501
     compute_node_resource_stats: Optional[ComputeNodeResourceStatsModel] = None
     compute_node_expiration_buffer_seconds: Optional[Union[StrictFloat, StrictInt]] = None
     compute_node_wait_for_new_jobs_seconds: Optional[Union[StrictFloat, StrictInt]] = None
@@ -95,7 +94,7 @@ class WorkflowConfigModel(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of WorkflowConfigModel from a dict"""
         if obj is None:
             return None

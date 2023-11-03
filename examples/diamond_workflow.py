@@ -2,7 +2,6 @@
 
 import getpass
 import json
-import logging
 from pathlib import Path
 
 from torc.api import make_api, add_jobs
@@ -10,6 +9,7 @@ from torc.loggers import setup_logging
 from torc.openapi_client.models.compute_node_resource_stats_model import (
     ComputeNodeResourceStatsModel,
 )
+from torc.openapi_client.api import DefaultApi
 from torc.openapi_client.models.files_model import FilesModel
 from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
 from torc.openapi_client.models.workflows_model import WorkflowsModel
@@ -18,18 +18,19 @@ from torc.openapi_client.models.resource_requirements_model import (
     ResourceRequirementsModel,
 )
 
-# from torc.openapi_client.models.slurm_schedulers_model import SlurmSchedulersModel
+from torc.openapi_client.models.slurm_schedulers_model import SlurmSchedulersModel
 
 
+TORC_SERVICE_URL = "http://localhost:8529/_db/test-workflows/torc-service"
 TEST_WORKFLOW = "test_workflow"
 PREPROCESS = Path("tests") / "worker" / "scripts" / "preprocess.py"
 POSTPROCESS = Path("tests") / "worker" / "scripts" / "postprocess.py"
 WORK = Path("tests") / "worker" / "scripts" / "work.py"
 
-logger = logging.getLogger(__name__)
+logger = setup_logging(__name__)
 
 
-def create_workflow(api) -> WorkflowsModel:
+def create_workflow(api: DefaultApi) -> WorkflowsModel:
     """Create the workflow"""
     workflow = WorkflowsModel(
         user=getpass.getuser(),
@@ -39,7 +40,7 @@ def create_workflow(api) -> WorkflowsModel:
     return api.post_workflows(workflow)
 
 
-def build_workflow(api, workflow):
+def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
     """Creates a workflow with implicit job dependencies declared through files."""
     config = api.get_workflows_key_config(workflow.key)
     config.compute_node_resource_stats = ComputeNodeResourceStatsModel(
@@ -72,15 +73,15 @@ def build_workflow(api, workflow):
         workflow.key,
         ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H"),
     )
-    # scheduler = api.post_slurm_schedulers(
-    #    workflow.key,
-    #    SlurmSchedulersModel(
-    #        name="short",
-    #        account="my_account",
-    #        nodes=1,
-    #        walltime="04:00:00",
-    #    ),
-    # )
+    api.post_slurm_schedulers(
+        workflow.key,
+        SlurmSchedulersModel(
+            name="short",
+            account="my_account",
+            nodes=1,
+            walltime="04:00:00",
+        ),
+    )
 
     jobs = [
         JobWithEdgesModel(
@@ -120,15 +121,14 @@ def build_workflow(api, workflow):
             resource_requirements=small.id,
         ),
     ]
-    job_keys = add_jobs(api, workflow.key, jobs)
+    add_jobs(api, workflow.key, jobs)
 
-    logger.info("Created workflow %s with %s jobs", workflow.key, len(job_keys))
+    logger.info("Created workflow %s with %s jobs", workflow.key, len(jobs))
 
 
 def main():
     """Entry point"""
-    api = make_api("http://localhost:8529/_db/test-workflows/torc-service")
-    setup_logging(__name__)
+    api = make_api(TORC_SERVICE_URL)
     workflow = create_workflow(api)
     try:
         build_workflow(api, workflow)

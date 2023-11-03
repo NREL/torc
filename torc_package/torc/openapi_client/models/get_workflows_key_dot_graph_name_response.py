@@ -18,9 +18,8 @@ import re  # noqa: F401
 import json
 
 
-
+from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictStr
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
@@ -29,7 +28,7 @@ except ImportError:
 class GetWorkflowsKeyDotGraphNameResponse(BaseModel):
     """
     GetWorkflowsKeyDotGraphNameResponse
-    """
+    """ # noqa: E501
     graph: StrictStr
     __properties: ClassVar[List[str]] = ["graph"]
 
@@ -72,7 +71,7 @@ class GetWorkflowsKeyDotGraphNameResponse(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of GetWorkflowsKeyDotGraphNameResponse from a dict"""
         if obj is None:
             return None

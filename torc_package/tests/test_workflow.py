@@ -744,8 +744,8 @@ def test_add_bulk_jobs(diamond_workflow):
         for i in range(1, 51)
     )
 
-    job_keys = add_jobs(api, db.workflow.key, jobs, max_transfer_size=11)
-    assert len(job_keys) == 50
+    added_jobs = add_jobs(api, db.workflow.key, jobs, max_transfer_size=11)
+    assert len(added_jobs) == 50
     names = [x.name for x in api.get_jobs(db.workflow.key).items[len(initial_job_keys) :]]
     assert names == [f"added_job{i}" for i in range(1, 51)]
 

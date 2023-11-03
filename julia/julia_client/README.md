@@ -106,7 +106,7 @@ Class | Method
 *DefaultApi* | [**get_workflows_key_required_existing_files**](docs/DefaultApi.md#get_workflows_key_required_existing_files)<br/>**GET** /workflows/{key}/required_existing_files<br/>List files that must exist.
 *DefaultApi* | [**get_workflows_key_status**](docs/DefaultApi.md#get_workflows_key_status)<br/>**GET** /workflows/{key}/status<br/>Reports the workflow status.
 *DefaultApi* | [**post_aws_schedulers**](docs/DefaultApi.md#post_aws_schedulers)<br/>**POST** /workflows/{workflow}/aws_schedulers<br/>Store a AWS compute node configuration.
-*DefaultApi* | [**post_bulk_jobs**](docs/DefaultApi.md#post_bulk_jobs)<br/>**POST** /workflows/{workflow}/bulk_jobs<br/>Add jobs in bulk with edge definitions.
+*DefaultApi* | [**post_bulk_jobs_with_edges**](docs/DefaultApi.md#post_bulk_jobs_with_edges)<br/>**POST** /workflows/{workflow}/bulk_jobs_with_edges<br/>Add jobs in bulk with edge definitions.
 *DefaultApi* | [**post_compute_node_stats**](docs/DefaultApi.md#post_compute_node_stats)<br/>**POST** /workflows/{workflow}/compute_node_stats<br/>Store a compute node statistics.
 *DefaultApi* | [**post_compute_nodes**](docs/DefaultApi.md#post_compute_nodes)<br/>**POST** /workflows/{workflow}/compute_nodes<br/>Store a compute node.
 *DefaultApi* | [**post_edges_name**](docs/DefaultApi.md#post_edges_name)<br/>**POST** /workflows/{workflow}/edges/{name}<br/>Store an edge between two vertexes.
@@ -114,6 +114,7 @@ Class | Method
 *DefaultApi* | [**post_files**](docs/DefaultApi.md#post_files)<br/>**POST** /workflows/{workflow}/files<br/>Store a file.
 *DefaultApi* | [**post_job_process_stats**](docs/DefaultApi.md#post_job_process_stats)<br/>**POST** /workflows/{workflow}/job_process_stats<br/>Store a job process statistics.
 *DefaultApi* | [**post_job_specifications**](docs/DefaultApi.md#post_job_specifications)<br/>**POST** /workflows/{workflow}/job_specifications<br/>Store a job and create edges.
+*DefaultApi* | [**post_job_with_edges**](docs/DefaultApi.md#post_job_with_edges)<br/>**POST** /workflows/{workflow}/job_with_edges<br/>Add a job with edge definitions.
 *DefaultApi* | [**post_jobs**](docs/DefaultApi.md#post_jobs)<br/>**POST** /workflows/{workflow}/jobs<br/>Store a job.
 *DefaultApi* | [**post_jobs_key_complete_job_status_rev_run_id**](docs/DefaultApi.md#post_jobs_key_complete_job_status_rev_run_id)<br/>**POST** /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}<br/>Complete a job and add a result.
 *DefaultApi* | [**post_jobs_key_user_data**](docs/DefaultApi.md#post_jobs_key_user_data)<br/>**POST** /workflows/{workflow}/jobs/{key}/user_data<br/>Store user data for a job.
@@ -161,7 +162,7 @@ Class | Method
 
  - [AutoTuneStatus](docs/AutoTuneStatus.md)
  - [AwsSchedulersModel](docs/AwsSchedulersModel.md)
- - [BulkJobsModel](docs/BulkJobsModel.md)
+ - [BulkJobsWithEdgesModel](docs/BulkJobsWithEdgesModel.md)
  - [ComputeNodeResourceStatsModel](docs/ComputeNodeResourceStatsModel.md)
  - [ComputeNodeStats](docs/ComputeNodeStats.md)
  - [ComputeNodeStatsModel](docs/ComputeNodeStatsModel.md)
@@ -203,6 +204,7 @@ Class | Method
  - [JobsInternal](docs/JobsInternal.md)
  - [JobsModel](docs/JobsModel.md)
  - [LocalSchedulersModel](docs/LocalSchedulersModel.md)
+ - [PostBulkJobsWithEdgesResponse](docs/PostBulkJobsWithEdgesResponse.md)
  - [PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse](docs/PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse.md)
  - [PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse](docs/PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse.md)
  - [PostWorkflowsKeyPrepareJobsForSchedulingResponse](docs/PostWorkflowsKeyPrepareJobsForSchedulingResponse.md)

@@ -18,9 +18,8 @@ import re  # noqa: F401
 import json
 
 
-
+from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel, StrictBool
-from typing import Dict, Any
 try:
     from typing import Self
 except ImportError:
@@ -29,7 +28,7 @@ except ImportError:
 class GetWorkflowsKeyIsCompleteResponse(BaseModel):
     """
     GetWorkflowsKeyIsCompleteResponse
-    """
+    """ # noqa: E501
     is_canceled: StrictBool
     is_complete: StrictBool
     __properties: ClassVar[List[str]] = ["is_canceled", "is_complete"]
@@ -73,7 +72,7 @@ class GetWorkflowsKeyIsCompleteResponse(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> Self:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of GetWorkflowsKeyIsCompleteResponse from a dict"""
         if obj is None:
             return None
