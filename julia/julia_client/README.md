@@ -20,35 +20,35 @@ Documentation is also embedded in Julia which can be used with a Julia specific 
 
 Class | Method
 ------------ | -------------
+*DefaultApi* | [**delete_aws_schedulers**](docs/DefaultApi.md#delete_aws_schedulers)<br/>**DELETE** /workflows/{workflow}/aws_schedulers<br/>Delete all documents of type AWS compute node configuration for a workflow
+*DefaultApi* | [**delete_aws_schedulers_key**](docs/DefaultApi.md#delete_aws_schedulers_key)<br/>**DELETE** /workflows/{workflow}/aws_schedulers/{key}<br/>Delete a document of type AWS compute node configuration
+*DefaultApi* | [**delete_compute_node_stats**](docs/DefaultApi.md#delete_compute_node_stats)<br/>**DELETE** /workflows/{workflow}/compute_node_stats<br/>Delete all documents of type compute node statistics for a workflow
+*DefaultApi* | [**delete_compute_node_stats_key**](docs/DefaultApi.md#delete_compute_node_stats_key)<br/>**DELETE** /workflows/{workflow}/compute_node_stats/{key}<br/>Delete a document of type compute node statistics
+*DefaultApi* | [**delete_compute_nodes**](docs/DefaultApi.md#delete_compute_nodes)<br/>**DELETE** /workflows/{workflow}/compute_nodes<br/>Delete all documents of type compute node for a workflow
+*DefaultApi* | [**delete_compute_nodes_key**](docs/DefaultApi.md#delete_compute_nodes_key)<br/>**DELETE** /workflows/{workflow}/compute_nodes/{key}<br/>Delete a document of type compute node
+*DefaultApi* | [**delete_edges_name**](docs/DefaultApi.md#delete_edges_name)<br/>**DELETE** /workflows/{workflow}/edges/{name}<br/>Delete all edges from the designated collection
+*DefaultApi* | [**delete_edges_name_key**](docs/DefaultApi.md#delete_edges_name_key)<br/>**DELETE** /workflows/{workflow}/edges/{name}/{key}<br/>Delete an edge
+*DefaultApi* | [**delete_events**](docs/DefaultApi.md#delete_events)<br/>**DELETE** /workflows/{workflow}/events<br/>Delete all documents of type event for a workflow
+*DefaultApi* | [**delete_events_key**](docs/DefaultApi.md#delete_events_key)<br/>**DELETE** /workflows/{workflow}/events/{key}<br/>Delete a document of type event
+*DefaultApi* | [**delete_files**](docs/DefaultApi.md#delete_files)<br/>**DELETE** /workflows/{workflow}/files<br/>Delete all documents of type file for a workflow
+*DefaultApi* | [**delete_files_key**](docs/DefaultApi.md#delete_files_key)<br/>**DELETE** /workflows/{workflow}/files/{key}<br/>Delete a document of type file
+*DefaultApi* | [**delete_job_process_stats**](docs/DefaultApi.md#delete_job_process_stats)<br/>**DELETE** /workflows/{workflow}/job_process_stats<br/>Delete all documents of type job process statistics for a workflow
+*DefaultApi* | [**delete_job_process_stats_key**](docs/DefaultApi.md#delete_job_process_stats_key)<br/>**DELETE** /workflows/{workflow}/job_process_stats/{key}<br/>Delete a document of type job process statistics
+*DefaultApi* | [**delete_jobs**](docs/DefaultApi.md#delete_jobs)<br/>**DELETE** /workflows/{workflow}/jobs<br/>Delete all documents of type job for a workflow
+*DefaultApi* | [**delete_jobs_key**](docs/DefaultApi.md#delete_jobs_key)<br/>**DELETE** /workflows/{workflow}/jobs/{key}<br/>Delete a document of type job
+*DefaultApi* | [**delete_local_schedulers**](docs/DefaultApi.md#delete_local_schedulers)<br/>**DELETE** /workflows/{workflow}/local_schedulers<br/>Delete all documents of type local compute node configuration for a workflow
+*DefaultApi* | [**delete_local_schedulers_key**](docs/DefaultApi.md#delete_local_schedulers_key)<br/>**DELETE** /workflows/{workflow}/local_schedulers/{key}<br/>Delete a document of type local compute node configuration
+*DefaultApi* | [**delete_resource_requirements**](docs/DefaultApi.md#delete_resource_requirements)<br/>**DELETE** /workflows/{workflow}/resource_requirements<br/>Delete all documents of type resource requirements for a workflow
+*DefaultApi* | [**delete_resource_requirements_key**](docs/DefaultApi.md#delete_resource_requirements_key)<br/>**DELETE** /workflows/{workflow}/resource_requirements/{key}<br/>Delete a document of type resource requirements
+*DefaultApi* | [**delete_results**](docs/DefaultApi.md#delete_results)<br/>**DELETE** /workflows/{workflow}/results<br/>Delete all documents of type result for a workflow
+*DefaultApi* | [**delete_results_key**](docs/DefaultApi.md#delete_results_key)<br/>**DELETE** /workflows/{workflow}/results/{key}<br/>Delete a document of type result
+*DefaultApi* | [**delete_scheduled_compute_nodes**](docs/DefaultApi.md#delete_scheduled_compute_nodes)<br/>**DELETE** /workflows/{workflow}/scheduled_compute_nodes<br/>Delete all documents of type scheduled compute node for a workflow
+*DefaultApi* | [**delete_scheduled_compute_nodes_key**](docs/DefaultApi.md#delete_scheduled_compute_nodes_key)<br/>**DELETE** /workflows/{workflow}/scheduled_compute_nodes/{key}<br/>Delete a document of type scheduled compute node
+*DefaultApi* | [**delete_slurm_schedulers**](docs/DefaultApi.md#delete_slurm_schedulers)<br/>**DELETE** /workflows/{workflow}/slurm_schedulers<br/>Delete all documents of type Slurm compute node configuration for a workflow
+*DefaultApi* | [**delete_slurm_schedulers_key**](docs/DefaultApi.md#delete_slurm_schedulers_key)<br/>**DELETE** /workflows/{workflow}/slurm_schedulers/{key}<br/>Delete a document of type Slurm compute node configuration
+*DefaultApi* | [**delete_user_data**](docs/DefaultApi.md#delete_user_data)<br/>**DELETE** /workflows/{workflow}/user_data<br/>Delete all documents of type user data for a workflow
+*DefaultApi* | [**delete_user_data_key**](docs/DefaultApi.md#delete_user_data_key)<br/>**DELETE** /workflows/{workflow}/user_data/{key}<br/>Delete a document of type user data
 *DefaultApi* | [**delete_workflows_key**](docs/DefaultApi.md#delete_workflows_key)<br/>**DELETE** /workflows/{key}<br/>Delete a workflow
-*DefaultApi* | [**delete_workflows_workflow_aws_schedulers**](docs/DefaultApi.md#delete_workflows_workflow_aws_schedulers)<br/>**DELETE** /workflows/{workflow}/aws_schedulers<br/>Delete all documents of type AWS compute node configuration for a workflow
-*DefaultApi* | [**delete_workflows_workflow_aws_schedulers_key**](docs/DefaultApi.md#delete_workflows_workflow_aws_schedulers_key)<br/>**DELETE** /workflows/{workflow}/aws_schedulers/{key}<br/>Delete a document of type AWS compute node configuration
-*DefaultApi* | [**delete_workflows_workflow_compute_node_stats**](docs/DefaultApi.md#delete_workflows_workflow_compute_node_stats)<br/>**DELETE** /workflows/{workflow}/compute_node_stats<br/>Delete all documents of type compute node statistics for a workflow
-*DefaultApi* | [**delete_workflows_workflow_compute_node_stats_key**](docs/DefaultApi.md#delete_workflows_workflow_compute_node_stats_key)<br/>**DELETE** /workflows/{workflow}/compute_node_stats/{key}<br/>Delete a document of type compute node statistics
-*DefaultApi* | [**delete_workflows_workflow_compute_nodes**](docs/DefaultApi.md#delete_workflows_workflow_compute_nodes)<br/>**DELETE** /workflows/{workflow}/compute_nodes<br/>Delete all documents of type compute node for a workflow
-*DefaultApi* | [**delete_workflows_workflow_compute_nodes_key**](docs/DefaultApi.md#delete_workflows_workflow_compute_nodes_key)<br/>**DELETE** /workflows/{workflow}/compute_nodes/{key}<br/>Delete a document of type compute node
-*DefaultApi* | [**delete_workflows_workflow_edges_name**](docs/DefaultApi.md#delete_workflows_workflow_edges_name)<br/>**DELETE** /workflows/{workflow}/edges/{name}<br/>Delete all edges from the designated collection
-*DefaultApi* | [**delete_workflows_workflow_edges_name_key**](docs/DefaultApi.md#delete_workflows_workflow_edges_name_key)<br/>**DELETE** /workflows/{workflow}/edges/{name}/{key}<br/>Delete an edge
-*DefaultApi* | [**delete_workflows_workflow_events**](docs/DefaultApi.md#delete_workflows_workflow_events)<br/>**DELETE** /workflows/{workflow}/events<br/>Delete all documents of type event for a workflow
-*DefaultApi* | [**delete_workflows_workflow_events_key**](docs/DefaultApi.md#delete_workflows_workflow_events_key)<br/>**DELETE** /workflows/{workflow}/events/{key}<br/>Delete a document of type event
-*DefaultApi* | [**delete_workflows_workflow_files**](docs/DefaultApi.md#delete_workflows_workflow_files)<br/>**DELETE** /workflows/{workflow}/files<br/>Delete all documents of type file for a workflow
-*DefaultApi* | [**delete_workflows_workflow_files_key**](docs/DefaultApi.md#delete_workflows_workflow_files_key)<br/>**DELETE** /workflows/{workflow}/files/{key}<br/>Delete a document of type file
-*DefaultApi* | [**delete_workflows_workflow_job_process_stats**](docs/DefaultApi.md#delete_workflows_workflow_job_process_stats)<br/>**DELETE** /workflows/{workflow}/job_process_stats<br/>Delete all documents of type job process statistics for a workflow
-*DefaultApi* | [**delete_workflows_workflow_job_process_stats_key**](docs/DefaultApi.md#delete_workflows_workflow_job_process_stats_key)<br/>**DELETE** /workflows/{workflow}/job_process_stats/{key}<br/>Delete a document of type job process statistics
-*DefaultApi* | [**delete_workflows_workflow_jobs**](docs/DefaultApi.md#delete_workflows_workflow_jobs)<br/>**DELETE** /workflows/{workflow}/jobs<br/>Delete all documents of type job for a workflow
-*DefaultApi* | [**delete_workflows_workflow_jobs_key**](docs/DefaultApi.md#delete_workflows_workflow_jobs_key)<br/>**DELETE** /workflows/{workflow}/jobs/{key}<br/>Delete a document of type job
-*DefaultApi* | [**delete_workflows_workflow_local_schedulers**](docs/DefaultApi.md#delete_workflows_workflow_local_schedulers)<br/>**DELETE** /workflows/{workflow}/local_schedulers<br/>Delete all documents of type local compute node configuration for a workflow
-*DefaultApi* | [**delete_workflows_workflow_local_schedulers_key**](docs/DefaultApi.md#delete_workflows_workflow_local_schedulers_key)<br/>**DELETE** /workflows/{workflow}/local_schedulers/{key}<br/>Delete a document of type local compute node configuration
-*DefaultApi* | [**delete_workflows_workflow_resource_requirements**](docs/DefaultApi.md#delete_workflows_workflow_resource_requirements)<br/>**DELETE** /workflows/{workflow}/resource_requirements<br/>Delete all documents of type resource requirements for a workflow
-*DefaultApi* | [**delete_workflows_workflow_resource_requirements_key**](docs/DefaultApi.md#delete_workflows_workflow_resource_requirements_key)<br/>**DELETE** /workflows/{workflow}/resource_requirements/{key}<br/>Delete a document of type resource requirements
-*DefaultApi* | [**delete_workflows_workflow_results**](docs/DefaultApi.md#delete_workflows_workflow_results)<br/>**DELETE** /workflows/{workflow}/results<br/>Delete all documents of type result for a workflow
-*DefaultApi* | [**delete_workflows_workflow_results_key**](docs/DefaultApi.md#delete_workflows_workflow_results_key)<br/>**DELETE** /workflows/{workflow}/results/{key}<br/>Delete a document of type result
-*DefaultApi* | [**delete_workflows_workflow_scheduled_compute_nodes**](docs/DefaultApi.md#delete_workflows_workflow_scheduled_compute_nodes)<br/>**DELETE** /workflows/{workflow}/scheduled_compute_nodes<br/>Delete all documents of type scheduled compute node for a workflow
-*DefaultApi* | [**delete_workflows_workflow_scheduled_compute_nodes_key**](docs/DefaultApi.md#delete_workflows_workflow_scheduled_compute_nodes_key)<br/>**DELETE** /workflows/{workflow}/scheduled_compute_nodes/{key}<br/>Delete a document of type scheduled compute node
-*DefaultApi* | [**delete_workflows_workflow_slurm_schedulers**](docs/DefaultApi.md#delete_workflows_workflow_slurm_schedulers)<br/>**DELETE** /workflows/{workflow}/slurm_schedulers<br/>Delete all documents of type Slurm compute node configuration for a workflow
-*DefaultApi* | [**delete_workflows_workflow_slurm_schedulers_key**](docs/DefaultApi.md#delete_workflows_workflow_slurm_schedulers_key)<br/>**DELETE** /workflows/{workflow}/slurm_schedulers/{key}<br/>Delete a document of type Slurm compute node configuration
-*DefaultApi* | [**delete_workflows_workflow_user_data**](docs/DefaultApi.md#delete_workflows_workflow_user_data)<br/>**DELETE** /workflows/{workflow}/user_data<br/>Delete all documents of type user data for a workflow
-*DefaultApi* | [**delete_workflows_workflow_user_data_key**](docs/DefaultApi.md#delete_workflows_workflow_user_data_key)<br/>**DELETE** /workflows/{workflow}/user_data/{key}<br/>Delete a document of type user data
 *DefaultApi* | [**get_aws_schedulers**](docs/DefaultApi.md#get_aws_schedulers)<br/>**GET** /workflows/{workflow}/aws_schedulers<br/>Retrieve all AWS compute node configuration documents
 *DefaultApi* | [**get_aws_schedulers_key**](docs/DefaultApi.md#get_aws_schedulers_key)<br/>**GET** /workflows/{workflow}/aws_schedulers/{key}<br/>Retrieve the AWS compute node configuration for a key.
 *DefaultApi* | [**get_compute_node_stats**](docs/DefaultApi.md#get_compute_node_stats)<br/>**GET** /workflows/{workflow}/compute_node_stats<br/>Retrieve all compute node statistics documents
@@ -58,7 +58,7 @@ Class | Method
 *DefaultApi* | [**get_edges_name**](docs/DefaultApi.md#get_edges_name)<br/>**GET** /workflows/{workflow}/edges/{name}<br/>Retrieve all edges from the designated collection.
 *DefaultApi* | [**get_edges_name_key**](docs/DefaultApi.md#get_edges_name_key)<br/>**GET** /workflows/{workflow}/edges/{name}/{key}<br/>Retrieve an edge
 *DefaultApi* | [**get_events**](docs/DefaultApi.md#get_events)<br/>**GET** /workflows/{workflow}/events<br/>Retrieve all event documents
-*DefaultApi* | [**get_events_after_key**](docs/DefaultApi.md#get_events_after_key)<br/>**GET** /workflows/{key}/events_after_key/{event_key}<br/>Return all events newer than the event with event_key.
+*DefaultApi* | [**get_events_after_timestamp**](docs/DefaultApi.md#get_events_after_timestamp)<br/>**GET** /workflows/{key}/events_after_timestamp/{timestamp}<br/>Return all events newer than the event with event_key.
 *DefaultApi* | [**get_events_key**](docs/DefaultApi.md#get_events_key)<br/>**GET** /workflows/{workflow}/events/{key}<br/>Retrieve the event for a key.
 *DefaultApi* | [**get_files**](docs/DefaultApi.md#get_files)<br/>**GET** /workflows/{workflow}/files<br/>Retrieve all file documents
 *DefaultApi* | [**get_files_key**](docs/DefaultApi.md#get_files_key)<br/>**GET** /workflows/{workflow}/files/{key}<br/>Retrieve the file for a key.
@@ -76,7 +76,7 @@ Class | Method
 *DefaultApi* | [**get_jobs_key_resource_requirements**](docs/DefaultApi.md#get_jobs_key_resource_requirements)<br/>**GET** /workflows/{workflow}/jobs/{key}/resource_requirements<br/>Retrieve the resource requirements for a job.
 *DefaultApi* | [**get_jobs_key_user_data_consumes**](docs/DefaultApi.md#get_jobs_key_user_data_consumes)<br/>**GET** /workflows/{workflow}/jobs/{key}/user_data_consumes<br/>Retrieve all user data consumed by a job.
 *DefaultApi* | [**get_jobs_key_user_data_stores**](docs/DefaultApi.md#get_jobs_key_user_data_stores)<br/>**GET** /workflows/{workflow}/jobs/{key}/user_data_stores<br/>Retrieve all user data for a job.
-*DefaultApi* | [**get_latest_event_key**](docs/DefaultApi.md#get_latest_event_key)<br/>**GET** /workflows/{key}/latest_event_key<br/>Return the key of the latest event.
+*DefaultApi* | [**get_latest_event_timestamp**](docs/DefaultApi.md#get_latest_event_timestamp)<br/>**GET** /workflows/{key}/latest_event_timestamp<br/>Return the timestamp of the latest event.
 *DefaultApi* | [**get_local_schedulers**](docs/DefaultApi.md#get_local_schedulers)<br/>**GET** /workflows/{workflow}/local_schedulers<br/>Retrieve all local compute node configuration documents
 *DefaultApi* | [**get_local_schedulers_key**](docs/DefaultApi.md#get_local_schedulers_key)<br/>**GET** /workflows/{workflow}/local_schedulers/{key}<br/>Retrieve the local compute node configuration for a key.
 *DefaultApi* | [**get_ping**](docs/DefaultApi.md#get_ping)<br/>**GET** /ping<br/>Check if the service is running.
@@ -106,7 +106,7 @@ Class | Method
 *DefaultApi* | [**get_workflows_key_required_existing_files**](docs/DefaultApi.md#get_workflows_key_required_existing_files)<br/>**GET** /workflows/{key}/required_existing_files<br/>List files that must exist.
 *DefaultApi* | [**get_workflows_key_status**](docs/DefaultApi.md#get_workflows_key_status)<br/>**GET** /workflows/{key}/status<br/>Reports the workflow status.
 *DefaultApi* | [**post_aws_schedulers**](docs/DefaultApi.md#post_aws_schedulers)<br/>**POST** /workflows/{workflow}/aws_schedulers<br/>Store a AWS compute node configuration.
-*DefaultApi* | [**post_bulk_jobs**](docs/DefaultApi.md#post_bulk_jobs)<br/>**POST** /workflows/{workflow}/bulk_jobs<br/>Add jobs in bulk with edge definitions.
+*DefaultApi* | [**post_bulk_jobs_with_edges**](docs/DefaultApi.md#post_bulk_jobs_with_edges)<br/>**POST** /workflows/{workflow}/bulk_jobs_with_edges<br/>Add jobs in bulk with edge definitions.
 *DefaultApi* | [**post_compute_node_stats**](docs/DefaultApi.md#post_compute_node_stats)<br/>**POST** /workflows/{workflow}/compute_node_stats<br/>Store a compute node statistics.
 *DefaultApi* | [**post_compute_nodes**](docs/DefaultApi.md#post_compute_nodes)<br/>**POST** /workflows/{workflow}/compute_nodes<br/>Store a compute node.
 *DefaultApi* | [**post_edges_name**](docs/DefaultApi.md#post_edges_name)<br/>**POST** /workflows/{workflow}/edges/{name}<br/>Store an edge between two vertexes.
@@ -114,6 +114,7 @@ Class | Method
 *DefaultApi* | [**post_files**](docs/DefaultApi.md#post_files)<br/>**POST** /workflows/{workflow}/files<br/>Store a file.
 *DefaultApi* | [**post_job_process_stats**](docs/DefaultApi.md#post_job_process_stats)<br/>**POST** /workflows/{workflow}/job_process_stats<br/>Store a job process statistics.
 *DefaultApi* | [**post_job_specifications**](docs/DefaultApi.md#post_job_specifications)<br/>**POST** /workflows/{workflow}/job_specifications<br/>Store a job and create edges.
+*DefaultApi* | [**post_job_with_edges**](docs/DefaultApi.md#post_job_with_edges)<br/>**POST** /workflows/{workflow}/job_with_edges<br/>Add a job with edge definitions.
 *DefaultApi* | [**post_jobs**](docs/DefaultApi.md#post_jobs)<br/>**POST** /workflows/{workflow}/jobs<br/>Store a job.
 *DefaultApi* | [**post_jobs_key_complete_job_status_rev_run_id**](docs/DefaultApi.md#post_jobs_key_complete_job_status_rev_run_id)<br/>**POST** /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}<br/>Complete a job and add a result.
 *DefaultApi* | [**post_jobs_key_user_data**](docs/DefaultApi.md#post_jobs_key_user_data)<br/>**POST** /workflows/{workflow}/jobs/{key}/user_data<br/>Store user data for a job.
@@ -161,12 +162,13 @@ Class | Method
 
  - [AutoTuneStatus](docs/AutoTuneStatus.md)
  - [AwsSchedulersModel](docs/AwsSchedulersModel.md)
- - [BulkJobsModel](docs/BulkJobsModel.md)
+ - [BulkJobsWithEdgesModel](docs/BulkJobsWithEdgesModel.md)
  - [ComputeNodeResourceStatsModel](docs/ComputeNodeResourceStatsModel.md)
  - [ComputeNodeStats](docs/ComputeNodeStats.md)
  - [ComputeNodeStatsModel](docs/ComputeNodeStatsModel.md)
  - [ComputeNodesModel](docs/ComputeNodesModel.md)
  - [ComputeNodesResources](docs/ComputeNodesResources.md)
+ - [DefaultErrorResponse](docs/DefaultErrorResponse.md)
  - [EdgesNameModel](docs/EdgesNameModel.md)
  - [FilesModel](docs/FilesModel.md)
  - [GetAwsSchedulersResponse](docs/GetAwsSchedulersResponse.md)
@@ -196,13 +198,13 @@ Class | Method
  - [GetWorkflowsKeyReadyJobRequirementsResponse](docs/GetWorkflowsKeyReadyJobRequirementsResponse.md)
  - [GetWorkflowsKeyRequiredExistingFilesResponse](docs/GetWorkflowsKeyRequiredExistingFilesResponse.md)
  - [GetWorkflowsResponse](docs/GetWorkflowsResponse.md)
- - [InlineResponse500](docs/InlineResponse500.md)
  - [JobProcessStatsModel](docs/JobProcessStatsModel.md)
  - [JobSpecificationsModel](docs/JobSpecificationsModel.md)
  - [JobWithEdgesModel](docs/JobWithEdgesModel.md)
  - [JobsInternal](docs/JobsInternal.md)
  - [JobsModel](docs/JobsModel.md)
  - [LocalSchedulersModel](docs/LocalSchedulersModel.md)
+ - [PostBulkJobsWithEdgesResponse](docs/PostBulkJobsWithEdgesResponse.md)
  - [PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse](docs/PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse.md)
  - [PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse](docs/PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse.md)
  - [PostWorkflowsKeyPrepareJobsForSchedulingResponse](docs/PostWorkflowsKeyPrepareJobsForSchedulingResponse.md)

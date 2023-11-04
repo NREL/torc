@@ -18,26 +18,36 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional, Union
-from pydantic import ConfigDict, BaseModel, Field, StrictFloat, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional, Union
+from pydantic import BaseModel, StrictFloat, StrictInt, StrictStr
+from pydantic import Field
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 class JobProcessStatsModel(BaseModel):
     """
     JobProcessStatsModel
-    """
-    job_key: StrictStr = Field(...)
-    run_id: StrictInt = Field(...)
-    avg_cpu_percent: Union[StrictFloat, StrictInt] = Field(...)
-    max_cpu_percent: Union[StrictFloat, StrictInt] = Field(...)
-    avg_rss: Union[StrictFloat, StrictInt] = Field(...)
-    max_rss: Union[StrictFloat, StrictInt] = Field(...)
-    num_samples: StrictInt = Field(...)
-    timestamp: StrictStr = Field(...)
-    key: Optional[StrictStr] = Field(None, alias="_key")
-    id: Optional[StrictStr] = Field(None, alias="_id")
-    rev: Optional[StrictStr] = Field(None, alias="_rev")
-    __properties = ["job_key", "run_id", "avg_cpu_percent", "max_cpu_percent", "avg_rss", "max_rss", "num_samples", "timestamp", "_key", "_id", "_rev"]
-    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+    """ # noqa: E501
+    job_key: StrictStr
+    run_id: StrictInt
+    avg_cpu_percent: Union[StrictFloat, StrictInt]
+    max_cpu_percent: Union[StrictFloat, StrictInt]
+    avg_rss: Union[StrictFloat, StrictInt]
+    max_rss: Union[StrictFloat, StrictInt]
+    num_samples: StrictInt
+    timestamp: StrictStr
+    key: Optional[StrictStr] = Field(default=None, alias="_key")
+    id: Optional[StrictStr] = Field(default=None, alias="_id")
+    rev: Optional[StrictStr] = Field(default=None, alias="_rev")
+    __properties: ClassVar[List[str]] = ["job_key", "run_id", "avg_cpu_percent", "max_cpu_percent", "avg_rss", "max_rss", "num_samples", "timestamp", "_key", "_id", "_rev"]
+
+    model_config = {
+        "populate_by_name": True,
+        "validate_assignment": True
+    }
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -45,31 +55,42 @@ class JobProcessStatsModel(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> JobProcessStatsModel:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of JobProcessStatsModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.model_dump(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude={
+            },
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> JobProcessStatsModel:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of JobProcessStatsModel from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return JobProcessStatsModel.model_validate(obj)
+            return cls.model_validate(obj)
 
-        _obj = JobProcessStatsModel.model_validate({
+        _obj = cls.model_validate({
             "job_key": obj.get("job_key"),
             "run_id": obj.get("run_id"),
             "avg_cpu_percent": obj.get("avg_cpu_percent"),
@@ -78,9 +99,9 @@ class JobProcessStatsModel(BaseModel):
             "max_rss": obj.get("max_rss"),
             "num_samples": obj.get("num_samples"),
             "timestamp": obj.get("timestamp"),
-            "key": obj.get("_key"),
-            "id": obj.get("_id"),
-            "rev": obj.get("_rev")
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
         })
         return _obj
 

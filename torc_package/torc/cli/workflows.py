@@ -270,11 +270,19 @@ def delete(ctx, api, workflow_keys):
         logger.warning("No workflow keys were passed")
         return
 
-    msg = "This command will delete all specified workflows."
-    confirm_change(ctx, msg)
-    for key in workflow_keys:
-        api.delete_workflows_key(key)
-        logger.info("Deleted workflow %s", key)
+    _delete_workflows_with_warning(ctx, api, workflow_keys)
+
+
+@click.command()
+@click.argument("user")
+@click.pass_obj
+@click.pass_context
+def delete_by_user(ctx, api, user):
+    """Delete all workflows for a user."""
+    setup_cli_logging(ctx, __name__)
+    check_database_url(api)
+    keys = [x.key for x in iter_documents(api.get_workflows, user=user)]
+    _delete_workflows_with_warning(ctx, api, keys)
 
 
 @click.command()
@@ -285,8 +293,22 @@ def delete_all(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     keys = [x.key for x in iter_documents(api.get_workflows)]
-    keys_str = " ".join(keys)
-    msg = f"This command will delete the workflows with these keys: {keys_str}"
+    _delete_workflows_with_warning(ctx, api, keys)
+
+
+def _delete_workflows_with_warning(ctx, api, keys):
+    items = (api.get_workflows_key(x).to_dict() for x in keys)
+    columns = list_model_fields(WorkflowsModel)
+    columns.remove("_id")
+    columns.remove("_rev")
+    print_items(
+        ctx,
+        items,
+        "Workflows",
+        columns,
+        "workflows",
+    )
+    msg = "This command will delete the workflows above. Continue?"
     confirm_change(ctx, msg)
     for key in keys:
         api.delete_workflows_key(key)
@@ -439,10 +461,18 @@ def recommend_nodes(ctx, api, num_cpus, scheduler_config_id):
 
 @click.command()
 @click.argument("workflow_key")
+@click.option(
+    "-f",
+    "--failed-only",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Only reset the status of failed jobs.",
+)
 @click.pass_obj
 @click.pass_context
-def reset_status(ctx, api, workflow_key):
-    """Reset the status of the workflow."""
+def reset_status(ctx, api, workflow_key, failed_only):
+    """Reset the status of the workflow and all jobs."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow = api.get_workflows_key(workflow_key)
@@ -454,32 +484,6 @@ def reset_status(ctx, api, workflow_key):
 """
     confirm_change(ctx, msg)
     reset_workflow_status(api, workflow_key)
-
-
-@click.command()
-@click.option(
-    "-f",
-    "--failed-only",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Only reset the status of failed jobs.",
-)
-@click.argument("workflow_key")
-@click.pass_obj
-@click.pass_context
-def reset_job_status(ctx, api, workflow_key, failed_only):
-    """Reset the status of jobs. Resets all jobs unless failed_only is true."""
-    setup_cli_logging(ctx, __name__)
-    check_database_url(api)
-    workflow = api.get_workflows_key(workflow_key)
-    msg = f"""This command will reset the status of all jobs in this workflow:
-    key: {workflow_key}
-    user: {workflow.user}
-    name: {workflow.name}
-    description: {workflow.description}
-"""
-    confirm_change(ctx, msg)
     reset_workflow_job_status(api, workflow_key, failed_only=failed_only)
 
 
@@ -874,13 +878,13 @@ workflows.add_command(create_from_commands_file)
 workflows.add_command(create_from_json_file)
 workflows.add_command(modify)
 workflows.add_command(delete)
+workflows.add_command(delete_by_user)
 workflows.add_command(delete_all)
 workflows.add_command(list_scheduler_configs)
 workflows.add_command(list_workflows)
 workflows.add_command(process_auto_tune_resource_requirements_results)
 workflows.add_command(recommend_nodes)
 workflows.add_command(reset_status)
-workflows.add_command(reset_job_status)
 workflows.add_command(restart)
 workflows.add_command(set_compute_node_parameters)
 workflows.add_command(start)

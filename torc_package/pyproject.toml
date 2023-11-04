@@ -31,7 +31,7 @@ dependencies = [
     "prettytable",
     "pyarrow",
     "pydantic~=2.4.0",
-    "s3path",
+    #"s3path",
     "textual",
     "resource_monitor @ git+https://github.nrel.gov/dthom/resource_monitor.git",
     "resource_monitor~=0.1.6",
@@ -64,6 +64,7 @@ dev = [
     "sphinx-click",
     "sphinxcontrib-openapi",
     "sphinx-copybutton",
+    "sphinx-tabs~=3.4",
     "textual-dev",
 ]
 plots = [

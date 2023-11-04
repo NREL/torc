@@ -36,7 +36,7 @@ def test_api_nodes_by_key(create_workflow_cli):
             if not isinstance(val, dict):
                 val = val.to_dict()
             assert val == item
-            getattr(api, f"delete_workflows_workflow_{name}_key")(workflow_key, key)
+            getattr(api, f"delete_{name}_key")(workflow_key, key)
             with pytest.raises(ApiException):
                 getattr(api, f"get_{name}_key")(workflow_key, key)
             val = _fix_fields(name, remove_db_keys(val))
@@ -52,7 +52,7 @@ def test_api_nodes_by_key(create_workflow_cli):
 
             getattr(api, f"put_{name}_key")(workflow_key, key, _fix_fields(name, val2))
 
-        getattr(api, f"delete_workflows_workflow_{name}")(workflow_key)
+        getattr(api, f"delete_{name}")(workflow_key)
         result = getattr(api, f"get_{name}")(workflow_key)
         assert len(result.items) == 0
 
@@ -100,11 +100,11 @@ def test_api_edges(completed_workflow):
             if not isinstance(val, dict):
                 val = val.to_dict()
             assert val == item
-            api.delete_workflows_workflow_edges_name_key(db.workflow.key, name, key)
+            api.delete_edges_name_key(db.workflow.key, name, key)
             with pytest.raises(ApiException):
                 val = api.get_edges_name_key(db.workflow.key, name, key)
 
-        api.delete_workflows_workflow_edges_name(db.workflow.key, name)
+        api.delete_edges_name(db.workflow.key, name)
         result = api.get_edges_name(db.workflow.key, name)
         assert len(result.items) == 0
 

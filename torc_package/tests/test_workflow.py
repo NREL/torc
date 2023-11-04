@@ -19,7 +19,7 @@ from torc.openapi_client.models.results_model import ResultsModel
 from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
 from torc.openapi_client.models.jobs_model import JobsModel
 
-from torc.api import iter_documents, add_bulk_jobs
+from torc.api import iter_documents, add_jobs
 from torc.cli.torc import cli
 from torc.common import GiB
 from torc.exceptions import InvalidWorkflow
@@ -726,7 +726,7 @@ def test_map_functions(mapped_function_workflow):
 
 
 def test_add_bulk_jobs(diamond_workflow):
-    """Test the add_bulk_jobs function."""
+    """Test the add_jobs helper function."""
     db = diamond_workflow[0]
     api = db.api
     initial_job_keys = api.get_job_keys(db.workflow.key)["items"]
@@ -744,8 +744,8 @@ def test_add_bulk_jobs(diamond_workflow):
         for i in range(1, 51)
     )
 
-    job_keys = add_bulk_jobs(api, db.workflow.key, jobs, max_transfer_size=11)
-    assert len(job_keys) == 50
+    added_jobs = add_jobs(api, db.workflow.key, jobs, max_transfer_size=11)
+    assert len(added_jobs) == 50
     names = [x.name for x in api.get_jobs(db.workflow.key).items[len(initial_job_keys) :]]
     assert names == [f"added_job{i}" for i in range(1, 51)]
 

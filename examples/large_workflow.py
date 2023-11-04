@@ -1,9 +1,10 @@
-"""Example large workflow using direct API"""
+"""Example large workflow using the API"""
 
 import getpass
 
-from torc.api import make_api, add_bulk_jobs
+from torc.api import make_api, add_jobs
 from torc.loggers import setup_logging
+from torc.openapi_client.api import DefaultApi
 from torc.openapi_client.models.compute_node_resource_stats_model import (
     ComputeNodeResourceStatsModel,
 )
@@ -15,16 +16,23 @@ from torc.openapi_client.models.resource_requirements_model import (
 )
 from torc.openapi_client.models.slurm_schedulers_model import SlurmSchedulersModel
 
+TORC_SERVICE_URL = "http://localhost:8529/_db/test-workflows/torc-service"
 
-def create_workflow(api):
+logger = setup_logging(__name__)
+
+
+def create_workflow(api: DefaultApi) -> WorkflowsModel:
     """Creates a workflow directly through the API."""
-    logger = setup_logging(__name__)
     workflow = WorkflowsModel(
         user=getpass.getuser(),
         name="large_workflow",
-        description="Demo creation of a large workflow directly throught the API.",
+        description="Demo creation of a large workflow directly through the API.",
     )
-    workflow = api.post_workflows(workflow)
+    return api.post_workflows(workflow)
+
+
+def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
+    """Builds the workflow."""
     config = api.get_workflows_key_config(workflow.key)
     config.compute_node_resource_stats = ComputeNodeResourceStatsModel(
         cpu=True,
@@ -54,7 +62,7 @@ def create_workflow(api):
         JobWithEdgesModel(
             job=JobsModel(
                 name=f"job{i}",
-                command="python my_script.py",
+                command=f"python my_script.py {i}",
             ),
             resource_requirements=resource_requirements.id,
             scheduler=scheduler.id,
@@ -62,16 +70,22 @@ def create_workflow(api):
         for i in range(1, 20_001)
     )
 
-    job_keys = add_bulk_jobs(api, workflow.key, jobs)
+    add_jobs(api, workflow.key, jobs)
 
-    logger.info("Created workflow %s with %s jobs", workflow.key, len(job_keys))
+    logger.info("Created workflow %s", workflow.key)
     return workflow.key
 
 
 def main():
     """Entry point"""
-    api = make_api("http://localhost:8529/_db/test-workflows/torc-service")
-    create_workflow(api)
+    api = make_api(TORC_SERVICE_URL)
+    workflow = create_workflow(api)
+    try:
+        build_workflow(api, workflow)
+    except Exception:
+        logger.exception("Failed to build workflow")
+        api.delete_workflows_key(workflow.key)
+        raise
 
 
 if __name__ == "__main__":

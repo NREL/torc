@@ -18,32 +18,40 @@ import re  # noqa: F401
 import json
 
 
-from typing import List, Optional
-from pydantic import Field, ConfigDict, BaseModel, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, StrictStr
 from torc.openapi_client.models.files_model import FilesModel
 from torc.openapi_client.models.job_specifications_model import JobSpecificationsModel
 from torc.openapi_client.models.resource_requirements_model import ResourceRequirementsModel
 from torc.openapi_client.models.user_data_model import UserDataModel
 from torc.openapi_client.models.workflow_config_model import WorkflowConfigModel
 from torc.openapi_client.models.workflow_specifications_schedulers import WorkflowSpecificationsSchedulers
-from typing_extensions import Annotated
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 class WorkflowSpecificationsModel(BaseModel):
     """
     WorkflowSpecificationsModel
-    """
+    """ # noqa: E501
     name: Optional[StrictStr] = None
     key: Optional[StrictStr] = None
     user: Optional[StrictStr] = None
     description: Optional[StrictStr] = None
-    jobs: Optional[Annotated[List[JobSpecificationsModel], Field()]] = None
-    files: Optional[Annotated[List[FilesModel], Field()]] = None
-    user_data: Optional[Annotated[List[UserDataModel], Field()]] = None
-    resource_requirements: Optional[Annotated[List[ResourceRequirementsModel], Field()]] = None
+    jobs: Optional[List[JobSpecificationsModel]] = None
+    files: Optional[List[FilesModel]] = None
+    user_data: Optional[List[UserDataModel]] = None
+    resource_requirements: Optional[List[ResourceRequirementsModel]] = None
     schedulers: Optional[WorkflowSpecificationsSchedulers] = None
     config: Optional[WorkflowConfigModel] = None
-    __properties = ["name", "key", "user", "description", "jobs", "files", "user_data", "resource_requirements", "schedulers", "config"]
-    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+    __properties: ClassVar[List[str]] = ["name", "key", "user", "description", "jobs", "files", "user_data", "resource_requirements", "schedulers", "config"]
+
+    model_config = {
+        "populate_by_name": True,
+        "validate_assignment": True
+    }
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -51,19 +59,30 @@ class WorkflowSpecificationsModel(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> WorkflowSpecificationsModel:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of WorkflowSpecificationsModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.model_dump(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude={
+            },
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in jobs (list)
         _items = []
         if self.jobs:
@@ -101,15 +120,15 @@ class WorkflowSpecificationsModel(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> WorkflowSpecificationsModel:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of WorkflowSpecificationsModel from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return WorkflowSpecificationsModel.model_validate(obj)
+            return cls.model_validate(obj)
 
-        _obj = WorkflowSpecificationsModel.model_validate({
+        _obj = cls.model_validate({
             "name": obj.get("name"),
             "key": obj.get("key"),
             "user": obj.get("user"),

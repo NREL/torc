@@ -18,23 +18,24 @@ from torc.openapi_client.models.workflow_specifications_schedulers import (
 from torc.openapi_client.models.local_schedulers_model import (
     LocalSchedulersModel,
 )
+from torc.openapi_client.models.jobs_model import JobsModel
 from torc.openapi_client.models.job_specifications_model import (
     JobSpecificationsModel,
 )
+from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
 from torc.openapi_client.models.resource_requirements_model import (
     ResourceRequirementsModel,
 )
+from torc.openapi_client.models.workflows_model import WorkflowsModel
 from torc.openapi_client.models.workflow_specifications_model import (
     WorkflowSpecificationsModel,
 )
-from torc.openapi_client.models.workflow_config_model import (
-    WorkflowConfigModel,
-)
+from torc.openapi_client.models.workflow_config_model import WorkflowConfigModel
 from torc.openapi_client.models.results_model import ResultsModel
 from torc.openapi_client.models.compute_node_resource_stats_model import (
     ComputeNodeResourceStatsModel,
 )
-from torc.api import iter_documents
+from torc.api import iter_documents, map_function_to_jobs
 from torc.cli.torc import cli
 from torc.torc_rc import TorcRuntimeConfig
 from torc.utils.files import load_data, dump_data
@@ -62,7 +63,6 @@ def pytest_sessionstart(session):
     """Records existing workflows."""
     api = _initialize_api()
     session.torc_workflow_keys = {x.key for x in iter_documents(api.get_workflows)}
-    api.api_client.close()
 
 
 def pytest_sessionfinish(session, exitstatus):  # pylint: disable=unused-argument
@@ -70,7 +70,6 @@ def pytest_sessionfinish(session, exitstatus):  # pylint: disable=unused-argumen
     api = _initialize_api()
     for key in {x.key for x in iter_documents(api.get_workflows)} - session.torc_workflow_keys:
         api.delete_workflows_key(key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -93,10 +92,10 @@ def diamond_workflow(tmp_path):
         name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
     )
     medium = builder.add_resource_requirements(
-        name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
+        name="medium", num_cpus=2, memory="2g", runtime="P0DT8H"
     )
     large = builder.add_resource_requirements(
-        name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
+        name="large", num_cpus=2, memory="3g", runtime="P0DT12H"
     )
 
     scheduler = builder.add_local_scheduler(name="test")
@@ -152,7 +151,6 @@ def diamond_workflow(tmp_path):
     scheduler = db.get_document("local_schedulers", "test")
     yield db, scheduler.id, output_dir
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -174,10 +172,10 @@ def diamond_workflow_user_data(tmp_path):
         name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
     )
     medium = builder.add_resource_requirements(
-        name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
+        name="medium", num_cpus=2, memory="2g", runtime="P0DT8H"
     )
     large = builder.add_resource_requirements(
-        name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
+        name="large", num_cpus=2, memory="3g", runtime="P0DT12H"
     )
 
     scheduler = builder.add_local_scheduler(name="test")
@@ -221,7 +219,6 @@ def diamond_workflow_user_data(tmp_path):
     scheduler = db.get_document("local_schedulers", "test")
     yield db, scheduler.id, output_dir
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -248,7 +245,6 @@ def workflow_with_ephemeral_resource():
     api.post_workflows_key_initialize_jobs(workflow.key)
     yield db
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -256,23 +252,31 @@ def independent_job_workflow(num_jobs):
     """Creates a workflow out of independent jobs."""
     api = _initialize_api()
 
-    small = ResourceRequirementsModel(name="small", num_cpus=1, memory="1m", runtime="P0DT0H1M")
-    jobs = []
-    for i in range(num_jobs):
-        job = JobSpecificationsModel(
-            name=str(i),
-            command="echo hello",
-            resource_requirements=small.name,
-        )
-        jobs.append(job)
+    workflow = api.post_workflows(WorkflowsModel(user="test", name="test"))
+    small = api.post_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(
+            name="small",
+            num_cpus=1,
+            memory="1m",
+            runtime="P0DT0H1M",
+        ),
+    )
 
-    spec = WorkflowSpecificationsModel(jobs=jobs, resource_requirements=[small])
-    workflow = api.post_workflow_specifications(spec)
+    for i in range(num_jobs):
+        job = JobWithEdgesModel(
+            job=JobsModel(
+                name=str(i),
+                command="echo hello",
+            ),
+            resource_requirements=small.id,
+        )
+        api.post_job_with_edges(workflow.key, job)
+
     db = DatabaseInterface(api, workflow)
     api.post_workflows_key_initialize_jobs(workflow.key)
     yield db, num_jobs
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 def _initialize_api():
@@ -310,7 +314,6 @@ def workflow_with_cancel(tmp_path, cancel_on_blocking_job_failure):
     api.post_workflows_key_initialize_jobs(workflow.key)
     yield db, tmp_path, cancel_on_blocking_job_failure
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -411,8 +414,8 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
     output_dir.mkdir()
 
     small = ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT1H")
-    medium = ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H")
-    large = ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H")
+    medium = ResourceRequirementsModel(name="medium", num_cpus=2, memory="2g", runtime="P0DT8H")
+    large = ResourceRequirementsModel(name="large", num_cpus=2, memory="3g", runtime="P0DT12H")
 
     num_jobs_per_category = 3
     small_jobs = [
@@ -460,7 +463,6 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
     api.post_workflows_key_initialize_jobs(workflow.key)
     yield db, output_dir, monitor_type
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -501,7 +503,6 @@ def cancelable_workflow(tmp_path):
     mgr.start()
     yield db, scheduler.id, output_dir
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture()
@@ -525,7 +526,6 @@ def create_workflow_cli(tmp_path_factory):
     yield key, url, tmp_path
     result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "workflows", "delete", key])
     assert result.exit_code == 0
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -534,21 +534,20 @@ def mapped_function_workflow(tmp_path):
     api = _initialize_api()
     output_dir = tmp_path / "output"
     output_dir.mkdir()
-    builder = WorkflowBuilder()
+    workflow = api.post_workflows(WorkflowsModel(user="test", name="test_workflow"))
     params = [{"val": i} for i in range(5)]
-    builder.map_function_to_jobs(
+    map_function_to_jobs(
+        api,
+        workflow.key,
         "mapped_function",
         "run",
         params,
         module_directory="tests/scripts",
         postprocess_func="postprocess",
     )
-    spec = builder.build()
-    workflow = api.post_workflow_specifications(spec)
     db = DatabaseInterface(api, workflow)
     yield db, output_dir
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -570,7 +569,6 @@ def job_requirement_uniform():
     mgr.start()
     yield db
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -595,7 +593,6 @@ def job_requirement_runtime():
     mgr.start()
     yield db
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -659,7 +656,6 @@ def job_requirement_variations():
     mgr.start()
     yield db
     api.delete_workflows_key(workflow.key)
-    api.api_client.close()
 
 
 @pytest.fixture
@@ -667,7 +663,6 @@ def db_api():
     """Returns an api instance."""
     api = _initialize_api()
     yield api, api.api_client.configuration.host
-    api.api_client.close()
 
 
 def pytest_addoption(parser):

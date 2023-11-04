@@ -22,7 +22,7 @@ Installation
 
 .. code-block:: console
 
-   $ conda create -y -n torc python=3.10
+   $ conda create -y -n torc python=3.11
    $ conda activate torc
 
 4. Install the Python package ``torc``.

@@ -10,16 +10,28 @@ const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
 module.exports = router;
 
-router.post('workflows/:workflow/bulk_jobs', function(req, res) {
+router.post('workflows/:workflow/job_with_edges', function(req, res) {
+  const workflowKey = req.pathParams.workflow;
+  const workflow = documents.getWorkflow(workflowKey, res);
+  const job = documents.addJobWithEdges(req.body, workflow);
+  res.send(job);
+})
+    .pathParam('workflow', joi.string().required(), 'Workflow key')
+    .body(schemas.jobWithEdgeIds)
+    .response(schemas.jobsResponse)
+    .summary('Add a job with edge definitions.')
+    .description('Add a job with edge definitions.');
+
+router.post('workflows/:workflow/bulk_jobs_with_edges', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const workflow = documents.getWorkflow(workflowKey, res);
   const jobs = req.body.jobs;
-  const keys = documents.bulkAddJobsWithEdges(jobs, workflow);
-  res.send({items: keys});
+  const jobMeta = documents.bulkAddJobsWithEdges(jobs, workflow);
+  res.send({items: jobMeta});
 })
     .pathParam('workflow', joi.string().required(), 'Workflow key')
     .body(schemas.jobsWithEdgeIds)
-    .response(joi.object())
+    .response(schemas.jobsResponse)
     .summary('Add jobs in bulk with edge definitions.')
     .description('Add jobs in bulk with edge definitions. Recommended max job count of 10,000.');
 
@@ -42,10 +54,11 @@ router.get('/workflows/:workflow/jobs/find_by_status/:status', function(req, res
   const workflowKey = req.pathParams.workflow;
   const workflow = documents.getWorkflow(workflowKey, res);
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
+  const status = req.pathParams.status;
   const qp = req.queryParams;
   const limit = utils.getItemsLimit(qp.limit);
   try {
-    const cursor = jobs.byExample({status: req.pathParams.status});
+    const cursor = jobs.byExample({status: status});
     const items = [];
     for (const job of cursor.skip(qp.skip).limit(limit)) {
       items.push(job);

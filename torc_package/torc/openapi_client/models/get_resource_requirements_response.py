@@ -18,23 +18,31 @@ import re  # noqa: F401
 import json
 
 
-from typing import List, Optional
-from pydantic import ConfigDict, BaseModel, Field, StrictBool, StrictInt
+from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, StrictBool, StrictInt
 from torc.openapi_client.models.resource_requirements_model import ResourceRequirementsModel
-from typing_extensions import Annotated
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 class GetResourceRequirementsResponse(BaseModel):
     """
     GetResourceRequirementsResponse
-    """
-    items: Optional[Annotated[List[ResourceRequirementsModel], Field()]] = None
-    skip: StrictInt = Field(...)
-    max_limit: StrictInt = Field(...)
-    count: StrictInt = Field(...)
-    total_count: StrictInt = Field(...)
-    has_more: StrictBool = Field(...)
-    __properties = ["items", "skip", "max_limit", "count", "total_count", "has_more"]
-    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+    """ # noqa: E501
+    items: Optional[List[ResourceRequirementsModel]] = None
+    skip: StrictInt
+    max_limit: StrictInt
+    count: StrictInt
+    total_count: StrictInt
+    has_more: StrictBool
+    __properties: ClassVar[List[str]] = ["items", "skip", "max_limit", "count", "total_count", "has_more"]
+
+    model_config = {
+        "populate_by_name": True,
+        "validate_assignment": True
+    }
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -42,19 +50,30 @@ class GetResourceRequirementsResponse(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> GetResourceRequirementsResponse:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of GetResourceRequirementsResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.model_dump(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude={
+            },
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in items (list)
         _items = []
         if self.items:
@@ -65,15 +84,15 @@ class GetResourceRequirementsResponse(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> GetResourceRequirementsResponse:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of GetResourceRequirementsResponse from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return GetResourceRequirementsResponse.model_validate(obj)
+            return cls.model_validate(obj)
 
-        _obj = GetResourceRequirementsResponse.model_validate({
+        _obj = cls.model_validate({
             "items": [ResourceRequirementsModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
             "skip": obj.get("skip"),
             "max_limit": obj.get("max_limit"),

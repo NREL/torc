@@ -39,22 +39,92 @@ Configure a workflow specification
     2023-07-31 16:48:32,982 - INFO [torc.cli.workflows workflows.py:234] : Created a workflow from workflow.json5 with key=14022560
 
 
+OpenAPI Clients
+===============
+.. note:: This method is recommended if your workflow has more than 10,000 jobs and required if the
+   total size of the workflow exceeds 500 MiB.
+
+
 Configure with the Python API
-=============================
-The :ref:`workflow-builder` class provides a mechanism to build a workflow with a simple Python
-script. Refer to that API documentation and this `example Python script
-<https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py>`_.
+-----------------------------
+You can build a workflow through the torc Python API. Refer to this `example Python script
+<https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py>`_ and the
+:ref:`python-client-api-reference` .
 
 Note that if you don't have a CLI executable for your jobs and instead want torc to map a list of
-input parameters across workers, you can call ``WorkflowBuilder.map_function_to_jobs()``. Refer to
+input parameters across workers, you can call ``torc.api.map_function_to_jobs()``. Refer to
 the tutorial :ref:`map-function-tutorial` for more information.
 
-You can also build a workflow incrementally directly through the torc API. This is required for
-workflows with more than 10,000 jobs. Refer to `build_large_workflow.py
-<https://github.nrel.gov/viz/wms/blob/main/examples/build_large_workflow.py>`_.
-
 Configure with the Julia API
-=============================
-The :ref:`workflow-builder` class provides a mechanism to build a workflow with a simple Julia
-script. Refer to that API documentation and this `example Julia script
+----------------------------
+You can build a workflow through the torc Julia API. Refer to this `example Julia script
 <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.jl>`_.
+
+Compute node configuration options
+==================================
+Refer to :ref:`advanced_config_options` for how to customize behavior of the torc worker
+application on compute nodes. Here are some example settings:
+
+.. tabs::
+
+   .. code-tab:: js JSON5
+
+    user: "user",
+    name: "my_workflow",
+    config: {
+      compute_node_resource_stats: {
+        cpu: true,
+        disk: false,
+        memory: true,
+        network: false,
+        process: true,
+        monitor_type: "periodic",
+        make_plots: true,
+        interval: 10
+      },
+      compute_node_ignore_workflow_completion: false,
+    }
+
+   .. code-tab:: py
+
+    from torc.openapi_client.models.workflows_model import WorkflowsModel
+    from torc.openapi_client.models.compute_node_resource_stats_model import (
+        ComputeNodeResourceStatsModel,
+    )
+    from torc.api import make_api
+
+    api = make_api("http://localhost:8529/_db/test-workflows/torc-service")
+    workflow = WorkflowsModel(user="user", name="my_workflow")
+    config = api.get_workflows_key_config(workflow.key)
+    config.compute_node_resource_stats = ComputeNodeResourceStatsModel(
+        cpu=True,
+        memory=True,
+        process=True,
+        interval=10,
+        monitor_type="aggregation",
+    )
+    config.compute_node_ignore_workflow_completion = False
+    api.put_workflows_key_config(workflow.key, config)
+
+
+   .. code-tab:: jl
+
+    using Torc
+    import Torc: APIClient
+
+    api = make_api("http://localhost:8529/_db/test-workflows/torc-service")
+    workflow = send_api_command(
+        api,
+        APIClient.post_workflows,
+        APIClient.WorkflowsModel(user = "user", name = "my_workflow")
+    )
+    config = send_api_command(api, APIClient.get_workflows_key_config, workflow._key)
+    config.compute_node_resource_stats = APIClient.ComputeNodeResourceStatsModel(
+        cpu=true,
+        memory=true,
+        process=true,
+        interval=10,
+        monitor_type="aggregation",
+    )
+    config.compute_node_ignore_workflow_completion = false
+    send_api_command(api, APIClient.put_workflows_key_config, workflow._key, config)

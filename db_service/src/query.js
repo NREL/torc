@@ -389,48 +389,42 @@ function getJobsThatNeedFile(file, workflow, skip, limit) {
 }
 
 /**
- * Return the key of the latest event.
- * Only works in single-sharded collections.
+ * Return the timestamp of the latest event.
  * @param {string} workflow
  * @return {string}
  */
-function getLatestEventKey(workflow) {
+function getLatestEventTimestamp(workflow) {
   const collection = config.getWorkflowCollection(workflow, 'events');
-  const cursor = query({count: true})`
+  const cursor = query`
     FOR event in ${collection}
-      COLLECT AGGREGATE max = MAX(TO_NUMBER(event._key))
-      RETURN TO_STRING(max)
+    COLLECT AGGREGATE max = MAX(event.timestamp)
+    RETURN max
   `;
-  if (cursor.count() == 0) {
-    return null;
-  }
   return cursor.toArray()[0];
 }
 
 /**
- * Return all events newer than the event with key.
- * Only works in single-sharded collections.
+ * Return all events recorded after the timestamp.
  * @param {string} workflow
- * @param {string} key
+ * @param {number} timestamp - ms since epoch in UTC
  * @param {string} category
  * @param {number} limit
  * @return {Array}
  */
-function getEventsAfterKey(workflow, key, category, limit) {
+function getEventsAfterTimestamp(workflow, timestamp, category, limit) {
   const collection = config.getWorkflowCollection(workflow, 'events');
-  const keyId = parseInt(key);
 
   if (category == null) {
     return query({count: true})`
       FOR event in ${collection}
-        FILTER TO_NUMBER(event._key) > ${keyId}
+        FILTER event.timestamp > ${timestamp}
         LIMIT ${limit}
         RETURN event
     `;
   } else {
     return query({count: true})`
       FOR event in ${collection}
-        FILTER TO_NUMBER(event._key) > ${keyId} && event.category == ${category}
+        FILTER event.timestamp > ${timestamp} && event.category == ${category}
         LIMIT ${limit}
         RETURN event
     `;
@@ -1052,7 +1046,7 @@ function listMissingUserData(workflow) {
 
   for (const udId of expectedUserData) {
     const ud = userDataCollection.document(udId);
-    if (Object.keys(ud.data).length == 0) {
+    if (ud.data != null && Object.keys(ud.data).length == 0) {
       missingUserData.push(ud._key);
     }
   }
@@ -1165,7 +1159,7 @@ function prepareJobsForSubmission(workflow, workerResources, sortMethod, limit, 
             && job.internal.num_cpus <= ${availableCpus}
             && job.internal.num_gpus <= ${availableGpus}
             && job.internal.runtime_seconds <= ${workerTimeLimit}
-            && job.internal.num_nodes == ${workerResources.num_nodes}
+            && job.internal.num_nodes <= ${workerResources.num_nodes}
             && (job.internal.scheduler_config_id == ''
                 || job.internal.scheduler_config_id == ${schedulerConfigId})
           ${sortCommand}
@@ -1480,7 +1474,7 @@ function processAutoTuneResourceRequirementsResults(workflow) {
     const rrCollection = config.getWorkflowCollection(workflow, 'resource_requirements');
     rrCollection.update(rr, rr, {mergeObjects: false});
     const event = {
-      timestamp: (new Date()).toISOString(),
+      timestamp: Date.now(),
       category: 'resource_requirements',
       type: 'update',
       name: rr.name,
@@ -1610,8 +1604,8 @@ module.exports = {
   getWorkflowConfig,
   getWorkflowStatus,
   getJobSpecification,
-  getLatestEventKey,
-  getEventsAfterKey,
+  getLatestEventTimestamp,
+  getEventsAfterTimestamp,
   initializeJobStatus,
   isJobBlocked,
   isJobInitiallyBlocked,

@@ -142,7 +142,7 @@ def delete(ctx, api, job_keys):
     msg = f"This command will delete {len(job_keys)} jobs in workflow {workflow_key}."
     confirm_change(ctx, msg)
     for key in job_keys:
-        api.delete_workflows_workflow_jobs_key(workflow_key, key)
+        api.delete_jobs_key(workflow_key, key)
         logger.info("Deleted workflow=%s job=%s", workflow_key, key)
 
 
@@ -158,7 +158,7 @@ def delete_all(ctx, api):
     msg = f"This command will delete the {len(job_keys)} jobs in workflow {workflow_key}."
     confirm_change(ctx, msg)
     for key in job_keys:
-        api.delete_workflows_workflow_jobs_key(workflow_key, key)
+        api.delete_jobs_key(workflow_key, key)
         logger.info("Deleted job %s", key)
 
 

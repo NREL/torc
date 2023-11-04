@@ -543,29 +543,29 @@ router.post('/workflows/:key/join_by_outbound_edge/:collection/:edge', function(
     .summary('Retrieve a joined table of two collections.')
     .description('Retrieve a table of the collections joined by an outbound edge.');
 
-router.get('/workflows/:key/latest_event_key', function(req, res) {
+router.get('/workflows/:key/latest_event_timestamp', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   try {
-    res.send({key: query.getLatestEventKey(workflow)});
+    res.send({timestamp: query.getLatestEventTimestamp(workflow)});
   } catch (e) {
-    utils.handleArangoApiErrors(e, res, 'Get latest event key');
+    utils.handleArangoApiErrors(e, res, 'Get latest event timestamp');
   }
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
     .response(joi.object())
-    .summary('Return the key of the latest event.')
-    .description('Return the key of the latest event.');
+    .summary('Return the timestamp of the latest event.')
+    .description('Return the timestamp of the latest event in ms since the epoch in UTC.');
 
 // This method would be better expressed as a filter on get_events, but we don't currently
-// have a way to say "greater than this field casted to a number".
-router.get('/workflows/:key/events_after_key/:event_key', function(req, res) {
+// have a way to say "greater than this value".
+router.get('/workflows/:key/events_after_timestamp/:timestamp', function(req, res) {
   const workflowKey = req.pathParams.key;
   const workflow = documents.getWorkflow(workflowKey, res);
   const qp = req.queryParams;
   try {
-    const cursor = query.getEventsAfterKey(
-        workflow, req.pathParams.event_key, qp.category, qp.limit,
+    const cursor = query.getEventsAfterTimestamp(
+        workflow, req.pathParams.timestamp, qp.category, qp.limit,
     );
     const items = cursor.toArray();
     res.send(utils.makeCursorResult(items, 0, cursor.count()));
@@ -574,7 +574,8 @@ router.get('/workflows/:key/events_after_key/:event_key', function(req, res) {
   }
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
-    .pathParam('event_key', joi.string().required(), 'Event key')
+    .pathParam('timestamp', joi.number().required(),
+        'Timestamp expressed as number of milliseconds since the epoch in UTC')
     .queryParam('category', joi.string().default(null))
     .queryParam('skip', joi.number().default(0), 'Ignored')
     .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))

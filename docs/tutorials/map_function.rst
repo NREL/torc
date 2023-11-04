@@ -50,7 +50,7 @@ Let's suppose that your code is in a module called ``simulation.py`` and looks s
 You need to run this function on hundreds of sets of input parameters and want torc to help you
 scale this work on an HPC.
 
-The recommended procedure for this task is torc's ``WorkflowBuilder`` class as shown below. The
+The recommended procedure for this task is torc's Python API as shown below. The
 goal is to mimic the behavior of Python's `concurrent.futures.ProcessPoolExecutor.map
 <https://docs.python.org/3/library/concurrent.futures.html#processpoolexecutor>`_
 as much as possible.
@@ -72,7 +72,7 @@ Torc Overview
 =============
 Here is what torc does to solve this problem:
 
-- User creates an instance of the ``WorkflowBuilder`` class to create a workflow in Python.
+- User creates a workflow in Python.
 - User passes a runnable function as well as a list of all input parameters that need to be mapped
   to the function.
 - For each set of input parameters torc creates an object in the ``user-data`` collection in the
@@ -87,13 +87,19 @@ Here is what torc does to solve this problem:
 
 Build the workflow
 ==================
-1. Write a script to create the workflow. Save this code in a file called ``builder.py``. Note that
-   you need to correct the ``api`` URL and the Slurm ``account``.
+1. Write a script to create the workflow. Note that you need to correct the ``api`` URL and the
+   Slurm ``account``.
 
 .. code-block:: python
 
-    from torc.api import make_api
-    from torc.workflow_builder import WorkflowBuilder
+    import getpass
+
+    from torc.api import make_api, map_function_to_jobs
+    from torc.openapi_client.models.workflows_model import WorkflowsModel
+    from torc.openapi_client.models.jobs_model import JobsModel
+    from torc.openapi_client.models.resource_requirements_model import (
+        ResourceRequirementsModel,
+    )
 
     api = make_api("http://localhost:8529/_db/workflows/torc-service")
     params = [
@@ -101,41 +107,48 @@ Build the workflow
         {"input1": 4, "input2": 5, "input3": 6},
         {"input1": 7, "input2": 8, "input3": 9},
     ]
-    builder = WorkflowBuilder()
-    builder.add_resource_requirements(
-        name="medium",
-        num_cpus=4,
-        memory="20G",
-        runtime="P0DT1H",
+    workflow = WorkflowsModel(
+        user=getpass.getuser(),
+        name="my_workflow",
+        description="My workflow",
     )
-    jobs = builder.map_function_to_jobs(
+    rr = api.post_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(name="medium", num_cpus=4, memory="20g", runtime="P0DT1H"),
+    )
+    jobs = map_function_to_jobs(
+        api,
+        workflow.key,
         "simulation",
         "run",
         params,
-        resource_requirements="medium",
+        resource_requirements=rr.id,
         # Note that this is optional.
         postprocess_func="postprocess",
     )
-    builder.add_slurm_scheduler(
-        name="short",
-        account="my_account",
-        nodes=1,
-        mem="180224",
-        walltime="04:00:00",
+    scheduler = api.post_slurm_schedulers(
+        workflow.key,
+        SlurmSchedulersModel(
+            name="short",
+            account="my_account",
+            mem="180224",
+            walltime="04:00:00",
+        ),
     )
     # This is optional, but can be useful to look at actual resource utilization.
-    builder.configure_resource_monitoring(
+    config = api.get_workflows_key_config(workflow.key)
+    config.compute_node_resource_stats = ComputeNodeResourceStatsModel(
         cpu=True,
         memory=True,
         process=True,
         interval=5,
+        monitor_type="periodic",
         make_plots=True,
     )
-    spec = builder.build()
-    workflow = api.post_workflow_specifications(spec)
+    api.put_workflows_key_config(workflow.key, config)
     print(f"Created workflow with key {workflow.key} {len(jobs)} jobs.")
 
-.. note:: Refer to :ref:`workflow-builder` for complete API documentation.
+.. note:: Refer to :ref:`python-client-api-reference` for complete API documentation.
 
 **Requirements**:
 
@@ -170,7 +183,7 @@ Build the workflow
 
 .. code-block:: console
 
-    $ python builder.py
+    $ python <your-script>
     Created workflow 3141686 with 3 jobs.
 
 3. Optional: Save the workflow key in the environment to save typing.

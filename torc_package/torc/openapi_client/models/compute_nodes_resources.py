@@ -18,21 +18,30 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional, Union
-from pydantic import ConfigDict, BaseModel, Field, StrictFloat, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional, Union
+from pydantic import BaseModel, StrictFloat, StrictInt, StrictStr
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 class ComputeNodesResources(BaseModel):
     """
     ComputeNodesResources
-    """
-    num_cpus: StrictInt = Field(...)
-    memory_gb: Union[StrictFloat, StrictInt] = Field(...)
+    """ # noqa: E501
+    num_cpus: StrictInt
+    memory_gb: Union[StrictFloat, StrictInt]
     num_gpus: Optional[StrictInt] = None
     num_nodes: Optional[StrictInt] = None
     time_limit: Optional[StrictStr] = None
     scheduler_config_id: Optional[StrictStr] = None
-    __properties = ["num_cpus", "memory_gb", "num_gpus", "num_nodes", "time_limit", "scheduler_config_id"]
-    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+    __properties: ClassVar[List[str]] = ["num_cpus", "memory_gb", "num_gpus", "num_nodes", "time_limit", "scheduler_config_id"]
+
+    model_config = {
+        "populate_by_name": True,
+        "validate_assignment": True
+    }
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -40,31 +49,42 @@ class ComputeNodesResources(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> ComputeNodesResources:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of ComputeNodesResources from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.model_dump(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude={
+            },
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> ComputeNodesResources:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of ComputeNodesResources from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return ComputeNodesResources.model_validate(obj)
+            return cls.model_validate(obj)
 
-        _obj = ComputeNodesResources.model_validate({
+        _obj = cls.model_validate({
             "num_cpus": obj.get("num_cpus"),
             "memory_gb": obj.get("memory_gb"),
             "num_gpus": obj.get("num_gpus"),

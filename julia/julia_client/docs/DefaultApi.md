@@ -4,35 +4,35 @@ All URIs are relative to *http://localhost/_db/test-workflows/torc-service*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**delete_aws_schedulers**](DefaultApi.md#delete_aws_schedulers) | **DELETE** /workflows/{workflow}/aws_schedulers | Delete all documents of type AWS compute node configuration for a workflow
+[**delete_aws_schedulers_key**](DefaultApi.md#delete_aws_schedulers_key) | **DELETE** /workflows/{workflow}/aws_schedulers/{key} | Delete a document of type AWS compute node configuration
+[**delete_compute_node_stats**](DefaultApi.md#delete_compute_node_stats) | **DELETE** /workflows/{workflow}/compute_node_stats | Delete all documents of type compute node statistics for a workflow
+[**delete_compute_node_stats_key**](DefaultApi.md#delete_compute_node_stats_key) | **DELETE** /workflows/{workflow}/compute_node_stats/{key} | Delete a document of type compute node statistics
+[**delete_compute_nodes**](DefaultApi.md#delete_compute_nodes) | **DELETE** /workflows/{workflow}/compute_nodes | Delete all documents of type compute node for a workflow
+[**delete_compute_nodes_key**](DefaultApi.md#delete_compute_nodes_key) | **DELETE** /workflows/{workflow}/compute_nodes/{key} | Delete a document of type compute node
+[**delete_edges_name**](DefaultApi.md#delete_edges_name) | **DELETE** /workflows/{workflow}/edges/{name} | Delete all edges from the designated collection
+[**delete_edges_name_key**](DefaultApi.md#delete_edges_name_key) | **DELETE** /workflows/{workflow}/edges/{name}/{key} | Delete an edge
+[**delete_events**](DefaultApi.md#delete_events) | **DELETE** /workflows/{workflow}/events | Delete all documents of type event for a workflow
+[**delete_events_key**](DefaultApi.md#delete_events_key) | **DELETE** /workflows/{workflow}/events/{key} | Delete a document of type event
+[**delete_files**](DefaultApi.md#delete_files) | **DELETE** /workflows/{workflow}/files | Delete all documents of type file for a workflow
+[**delete_files_key**](DefaultApi.md#delete_files_key) | **DELETE** /workflows/{workflow}/files/{key} | Delete a document of type file
+[**delete_job_process_stats**](DefaultApi.md#delete_job_process_stats) | **DELETE** /workflows/{workflow}/job_process_stats | Delete all documents of type job process statistics for a workflow
+[**delete_job_process_stats_key**](DefaultApi.md#delete_job_process_stats_key) | **DELETE** /workflows/{workflow}/job_process_stats/{key} | Delete a document of type job process statistics
+[**delete_jobs**](DefaultApi.md#delete_jobs) | **DELETE** /workflows/{workflow}/jobs | Delete all documents of type job for a workflow
+[**delete_jobs_key**](DefaultApi.md#delete_jobs_key) | **DELETE** /workflows/{workflow}/jobs/{key} | Delete a document of type job
+[**delete_local_schedulers**](DefaultApi.md#delete_local_schedulers) | **DELETE** /workflows/{workflow}/local_schedulers | Delete all documents of type local compute node configuration for a workflow
+[**delete_local_schedulers_key**](DefaultApi.md#delete_local_schedulers_key) | **DELETE** /workflows/{workflow}/local_schedulers/{key} | Delete a document of type local compute node configuration
+[**delete_resource_requirements**](DefaultApi.md#delete_resource_requirements) | **DELETE** /workflows/{workflow}/resource_requirements | Delete all documents of type resource requirements for a workflow
+[**delete_resource_requirements_key**](DefaultApi.md#delete_resource_requirements_key) | **DELETE** /workflows/{workflow}/resource_requirements/{key} | Delete a document of type resource requirements
+[**delete_results**](DefaultApi.md#delete_results) | **DELETE** /workflows/{workflow}/results | Delete all documents of type result for a workflow
+[**delete_results_key**](DefaultApi.md#delete_results_key) | **DELETE** /workflows/{workflow}/results/{key} | Delete a document of type result
+[**delete_scheduled_compute_nodes**](DefaultApi.md#delete_scheduled_compute_nodes) | **DELETE** /workflows/{workflow}/scheduled_compute_nodes | Delete all documents of type scheduled compute node for a workflow
+[**delete_scheduled_compute_nodes_key**](DefaultApi.md#delete_scheduled_compute_nodes_key) | **DELETE** /workflows/{workflow}/scheduled_compute_nodes/{key} | Delete a document of type scheduled compute node
+[**delete_slurm_schedulers**](DefaultApi.md#delete_slurm_schedulers) | **DELETE** /workflows/{workflow}/slurm_schedulers | Delete all documents of type Slurm compute node configuration for a workflow
+[**delete_slurm_schedulers_key**](DefaultApi.md#delete_slurm_schedulers_key) | **DELETE** /workflows/{workflow}/slurm_schedulers/{key} | Delete a document of type Slurm compute node configuration
+[**delete_user_data**](DefaultApi.md#delete_user_data) | **DELETE** /workflows/{workflow}/user_data | Delete all documents of type user data for a workflow
+[**delete_user_data_key**](DefaultApi.md#delete_user_data_key) | **DELETE** /workflows/{workflow}/user_data/{key} | Delete a document of type user data
 [**delete_workflows_key**](DefaultApi.md#delete_workflows_key) | **DELETE** /workflows/{key} | Delete a workflow
-[**delete_workflows_workflow_aws_schedulers**](DefaultApi.md#delete_workflows_workflow_aws_schedulers) | **DELETE** /workflows/{workflow}/aws_schedulers | Delete all documents of type AWS compute node configuration for a workflow
-[**delete_workflows_workflow_aws_schedulers_key**](DefaultApi.md#delete_workflows_workflow_aws_schedulers_key) | **DELETE** /workflows/{workflow}/aws_schedulers/{key} | Delete a document of type AWS compute node configuration
-[**delete_workflows_workflow_compute_node_stats**](DefaultApi.md#delete_workflows_workflow_compute_node_stats) | **DELETE** /workflows/{workflow}/compute_node_stats | Delete all documents of type compute node statistics for a workflow
-[**delete_workflows_workflow_compute_node_stats_key**](DefaultApi.md#delete_workflows_workflow_compute_node_stats_key) | **DELETE** /workflows/{workflow}/compute_node_stats/{key} | Delete a document of type compute node statistics
-[**delete_workflows_workflow_compute_nodes**](DefaultApi.md#delete_workflows_workflow_compute_nodes) | **DELETE** /workflows/{workflow}/compute_nodes | Delete all documents of type compute node for a workflow
-[**delete_workflows_workflow_compute_nodes_key**](DefaultApi.md#delete_workflows_workflow_compute_nodes_key) | **DELETE** /workflows/{workflow}/compute_nodes/{key} | Delete a document of type compute node
-[**delete_workflows_workflow_edges_name**](DefaultApi.md#delete_workflows_workflow_edges_name) | **DELETE** /workflows/{workflow}/edges/{name} | Delete all edges from the designated collection
-[**delete_workflows_workflow_edges_name_key**](DefaultApi.md#delete_workflows_workflow_edges_name_key) | **DELETE** /workflows/{workflow}/edges/{name}/{key} | Delete an edge
-[**delete_workflows_workflow_events**](DefaultApi.md#delete_workflows_workflow_events) | **DELETE** /workflows/{workflow}/events | Delete all documents of type event for a workflow
-[**delete_workflows_workflow_events_key**](DefaultApi.md#delete_workflows_workflow_events_key) | **DELETE** /workflows/{workflow}/events/{key} | Delete a document of type event
-[**delete_workflows_workflow_files**](DefaultApi.md#delete_workflows_workflow_files) | **DELETE** /workflows/{workflow}/files | Delete all documents of type file for a workflow
-[**delete_workflows_workflow_files_key**](DefaultApi.md#delete_workflows_workflow_files_key) | **DELETE** /workflows/{workflow}/files/{key} | Delete a document of type file
-[**delete_workflows_workflow_job_process_stats**](DefaultApi.md#delete_workflows_workflow_job_process_stats) | **DELETE** /workflows/{workflow}/job_process_stats | Delete all documents of type job process statistics for a workflow
-[**delete_workflows_workflow_job_process_stats_key**](DefaultApi.md#delete_workflows_workflow_job_process_stats_key) | **DELETE** /workflows/{workflow}/job_process_stats/{key} | Delete a document of type job process statistics
-[**delete_workflows_workflow_jobs**](DefaultApi.md#delete_workflows_workflow_jobs) | **DELETE** /workflows/{workflow}/jobs | Delete all documents of type job for a workflow
-[**delete_workflows_workflow_jobs_key**](DefaultApi.md#delete_workflows_workflow_jobs_key) | **DELETE** /workflows/{workflow}/jobs/{key} | Delete a document of type job
-[**delete_workflows_workflow_local_schedulers**](DefaultApi.md#delete_workflows_workflow_local_schedulers) | **DELETE** /workflows/{workflow}/local_schedulers | Delete all documents of type local compute node configuration for a workflow
-[**delete_workflows_workflow_local_schedulers_key**](DefaultApi.md#delete_workflows_workflow_local_schedulers_key) | **DELETE** /workflows/{workflow}/local_schedulers/{key} | Delete a document of type local compute node configuration
-[**delete_workflows_workflow_resource_requirements**](DefaultApi.md#delete_workflows_workflow_resource_requirements) | **DELETE** /workflows/{workflow}/resource_requirements | Delete all documents of type resource requirements for a workflow
-[**delete_workflows_workflow_resource_requirements_key**](DefaultApi.md#delete_workflows_workflow_resource_requirements_key) | **DELETE** /workflows/{workflow}/resource_requirements/{key} | Delete a document of type resource requirements
-[**delete_workflows_workflow_results**](DefaultApi.md#delete_workflows_workflow_results) | **DELETE** /workflows/{workflow}/results | Delete all documents of type result for a workflow
-[**delete_workflows_workflow_results_key**](DefaultApi.md#delete_workflows_workflow_results_key) | **DELETE** /workflows/{workflow}/results/{key} | Delete a document of type result
-[**delete_workflows_workflow_scheduled_compute_nodes**](DefaultApi.md#delete_workflows_workflow_scheduled_compute_nodes) | **DELETE** /workflows/{workflow}/scheduled_compute_nodes | Delete all documents of type scheduled compute node for a workflow
-[**delete_workflows_workflow_scheduled_compute_nodes_key**](DefaultApi.md#delete_workflows_workflow_scheduled_compute_nodes_key) | **DELETE** /workflows/{workflow}/scheduled_compute_nodes/{key} | Delete a document of type scheduled compute node
-[**delete_workflows_workflow_slurm_schedulers**](DefaultApi.md#delete_workflows_workflow_slurm_schedulers) | **DELETE** /workflows/{workflow}/slurm_schedulers | Delete all documents of type Slurm compute node configuration for a workflow
-[**delete_workflows_workflow_slurm_schedulers_key**](DefaultApi.md#delete_workflows_workflow_slurm_schedulers_key) | **DELETE** /workflows/{workflow}/slurm_schedulers/{key} | Delete a document of type Slurm compute node configuration
-[**delete_workflows_workflow_user_data**](DefaultApi.md#delete_workflows_workflow_user_data) | **DELETE** /workflows/{workflow}/user_data | Delete all documents of type user data for a workflow
-[**delete_workflows_workflow_user_data_key**](DefaultApi.md#delete_workflows_workflow_user_data_key) | **DELETE** /workflows/{workflow}/user_data/{key} | Delete a document of type user data
 [**get_aws_schedulers**](DefaultApi.md#get_aws_schedulers) | **GET** /workflows/{workflow}/aws_schedulers | Retrieve all AWS compute node configuration documents
 [**get_aws_schedulers_key**](DefaultApi.md#get_aws_schedulers_key) | **GET** /workflows/{workflow}/aws_schedulers/{key} | Retrieve the AWS compute node configuration for a key.
 [**get_compute_node_stats**](DefaultApi.md#get_compute_node_stats) | **GET** /workflows/{workflow}/compute_node_stats | Retrieve all compute node statistics documents
@@ -42,7 +42,7 @@ Method | HTTP request | Description
 [**get_edges_name**](DefaultApi.md#get_edges_name) | **GET** /workflows/{workflow}/edges/{name} | Retrieve all edges from the designated collection.
 [**get_edges_name_key**](DefaultApi.md#get_edges_name_key) | **GET** /workflows/{workflow}/edges/{name}/{key} | Retrieve an edge
 [**get_events**](DefaultApi.md#get_events) | **GET** /workflows/{workflow}/events | Retrieve all event documents
-[**get_events_after_key**](DefaultApi.md#get_events_after_key) | **GET** /workflows/{key}/events_after_key/{event_key} | Return all events newer than the event with event_key.
+[**get_events_after_timestamp**](DefaultApi.md#get_events_after_timestamp) | **GET** /workflows/{key}/events_after_timestamp/{timestamp} | Return all events newer than the event with event_key.
 [**get_events_key**](DefaultApi.md#get_events_key) | **GET** /workflows/{workflow}/events/{key} | Retrieve the event for a key.
 [**get_files**](DefaultApi.md#get_files) | **GET** /workflows/{workflow}/files | Retrieve all file documents
 [**get_files_key**](DefaultApi.md#get_files_key) | **GET** /workflows/{workflow}/files/{key} | Retrieve the file for a key.
@@ -60,7 +60,7 @@ Method | HTTP request | Description
 [**get_jobs_key_resource_requirements**](DefaultApi.md#get_jobs_key_resource_requirements) | **GET** /workflows/{workflow}/jobs/{key}/resource_requirements | Retrieve the resource requirements for a job.
 [**get_jobs_key_user_data_consumes**](DefaultApi.md#get_jobs_key_user_data_consumes) | **GET** /workflows/{workflow}/jobs/{key}/user_data_consumes | Retrieve all user data consumed by a job.
 [**get_jobs_key_user_data_stores**](DefaultApi.md#get_jobs_key_user_data_stores) | **GET** /workflows/{workflow}/jobs/{key}/user_data_stores | Retrieve all user data for a job.
-[**get_latest_event_key**](DefaultApi.md#get_latest_event_key) | **GET** /workflows/{key}/latest_event_key | Return the key of the latest event.
+[**get_latest_event_timestamp**](DefaultApi.md#get_latest_event_timestamp) | **GET** /workflows/{key}/latest_event_timestamp | Return the timestamp of the latest event.
 [**get_local_schedulers**](DefaultApi.md#get_local_schedulers) | **GET** /workflows/{workflow}/local_schedulers | Retrieve all local compute node configuration documents
 [**get_local_schedulers_key**](DefaultApi.md#get_local_schedulers_key) | **GET** /workflows/{workflow}/local_schedulers/{key} | Retrieve the local compute node configuration for a key.
 [**get_ping**](DefaultApi.md#get_ping) | **GET** /ping | Check if the service is running.
@@ -90,7 +90,7 @@ Method | HTTP request | Description
 [**get_workflows_key_required_existing_files**](DefaultApi.md#get_workflows_key_required_existing_files) | **GET** /workflows/{key}/required_existing_files | List files that must exist.
 [**get_workflows_key_status**](DefaultApi.md#get_workflows_key_status) | **GET** /workflows/{key}/status | Reports the workflow status.
 [**post_aws_schedulers**](DefaultApi.md#post_aws_schedulers) | **POST** /workflows/{workflow}/aws_schedulers | Store a AWS compute node configuration.
-[**post_bulk_jobs**](DefaultApi.md#post_bulk_jobs) | **POST** /workflows/{workflow}/bulk_jobs | Add jobs in bulk with edge definitions.
+[**post_bulk_jobs_with_edges**](DefaultApi.md#post_bulk_jobs_with_edges) | **POST** /workflows/{workflow}/bulk_jobs_with_edges | Add jobs in bulk with edge definitions.
 [**post_compute_node_stats**](DefaultApi.md#post_compute_node_stats) | **POST** /workflows/{workflow}/compute_node_stats | Store a compute node statistics.
 [**post_compute_nodes**](DefaultApi.md#post_compute_nodes) | **POST** /workflows/{workflow}/compute_nodes | Store a compute node.
 [**post_edges_name**](DefaultApi.md#post_edges_name) | **POST** /workflows/{workflow}/edges/{name} | Store an edge between two vertexes.
@@ -98,6 +98,7 @@ Method | HTTP request | Description
 [**post_files**](DefaultApi.md#post_files) | **POST** /workflows/{workflow}/files | Store a file.
 [**post_job_process_stats**](DefaultApi.md#post_job_process_stats) | **POST** /workflows/{workflow}/job_process_stats | Store a job process statistics.
 [**post_job_specifications**](DefaultApi.md#post_job_specifications) | **POST** /workflows/{workflow}/job_specifications | Store a job and create edges.
+[**post_job_with_edges**](DefaultApi.md#post_job_with_edges) | **POST** /workflows/{workflow}/job_with_edges | Add a job with edge definitions.
 [**post_jobs**](DefaultApi.md#post_jobs) | **POST** /workflows/{workflow}/jobs | Store a job.
 [**post_jobs_key_complete_job_status_rev_run_id**](DefaultApi.md#post_jobs_key_complete_job_status_rev_run_id) | **POST** /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id} | Complete a job and add a result.
 [**post_jobs_key_user_data**](DefaultApi.md#post_jobs_key_user_data) | **POST** /workflows/{workflow}/jobs/{key}/user_data | Store user data for a job.
@@ -141,45 +142,9 @@ Method | HTTP request | Description
 [**put_workflows_key_status**](DefaultApi.md#put_workflows_key_status) | **PUT** /workflows/{key}/status | Reports the workflow status.
 
 
-# **delete_workflows_key**
-> delete_workflows_key(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing) -> WorkflowsModel, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_key(_api::DefaultApi, response_stream::Channel, key::String; body=nothing, _mediaType=nothing) -> Channel{ WorkflowsModel }, OpenAPI.Clients.ApiResponse
-
-Delete a workflow
-
-Deletes a document from the \"workflows\" collection by key.
-
-### Required Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key. | [default to nothing]
-
-### Optional Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
-
-### Return type
-
-[**WorkflowsModel**](WorkflowsModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-# **delete_workflows_workflow_aws_schedulers**
-> delete_workflows_workflow_aws_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_aws_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **delete_aws_schedulers**
+> delete_aws_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> delete_aws_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Delete all documents of type AWS compute node configuration for a workflow
 
@@ -213,9 +178,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_aws_schedulers_key**
-> delete_workflows_workflow_aws_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> AwsSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_aws_schedulers_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ AwsSchedulersModel }, OpenAPI.Clients.ApiResponse
+# **delete_aws_schedulers_key**
+> delete_aws_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> AwsSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_aws_schedulers_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ AwsSchedulersModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type AWS compute node configuration
 
@@ -250,9 +215,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_compute_node_stats**
-> delete_workflows_workflow_compute_node_stats(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_compute_node_stats(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **delete_compute_node_stats**
+> delete_compute_node_stats(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> delete_compute_node_stats(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Delete all documents of type compute node statistics for a workflow
 
@@ -286,9 +251,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_compute_node_stats_key**
-> delete_workflows_workflow_compute_node_stats_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> ComputeNodeStatsModel, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_compute_node_stats_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ ComputeNodeStatsModel }, OpenAPI.Clients.ApiResponse
+# **delete_compute_node_stats_key**
+> delete_compute_node_stats_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> ComputeNodeStatsModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_compute_node_stats_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ ComputeNodeStatsModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type compute node statistics
 
@@ -323,9 +288,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_compute_nodes**
-> delete_workflows_workflow_compute_nodes(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **delete_compute_nodes**
+> delete_compute_nodes(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> delete_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Delete all documents of type compute node for a workflow
 
@@ -359,9 +324,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_compute_nodes_key**
-> delete_workflows_workflow_compute_nodes_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> ComputeNodesModel, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_compute_nodes_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ ComputeNodesModel }, OpenAPI.Clients.ApiResponse
+# **delete_compute_nodes_key**
+> delete_compute_nodes_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> ComputeNodesModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_compute_nodes_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ ComputeNodesModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type compute node
 
@@ -396,9 +361,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_edges_name**
-> delete_workflows_workflow_edges_name(_api::DefaultApi, workflow::String, name::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_edges_name(_api::DefaultApi, response_stream::Channel, workflow::String, name::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **delete_edges_name**
+> delete_edges_name(_api::DefaultApi, workflow::String, name::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> delete_edges_name(_api::DefaultApi, response_stream::Channel, workflow::String, name::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Delete all edges from the designated collection
 
@@ -433,9 +398,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_edges_name_key**
-> delete_workflows_workflow_edges_name_key(_api::DefaultApi, workflow::String, name::String, key::String; body=nothing, _mediaType=nothing) -> EdgesNameModel, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_edges_name_key(_api::DefaultApi, response_stream::Channel, workflow::String, name::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ EdgesNameModel }, OpenAPI.Clients.ApiResponse
+# **delete_edges_name_key**
+> delete_edges_name_key(_api::DefaultApi, workflow::String, name::String, key::String; body=nothing, _mediaType=nothing) -> EdgesNameModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_edges_name_key(_api::DefaultApi, response_stream::Channel, workflow::String, name::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ EdgesNameModel }, OpenAPI.Clients.ApiResponse
 
 Delete an edge
 
@@ -471,9 +436,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_events**
-> delete_workflows_workflow_events(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_events(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **delete_events**
+> delete_events(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> delete_events(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Delete all documents of type event for a workflow
 
@@ -507,9 +472,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_events_key**
-> delete_workflows_workflow_events_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_events_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **delete_events_key**
+> delete_events_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> delete_events_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type event
 
@@ -544,9 +509,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_files**
-> delete_workflows_workflow_files(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_files(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **delete_files**
+> delete_files(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> delete_files(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Delete all documents of type file for a workflow
 
@@ -580,9 +545,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_files_key**
-> delete_workflows_workflow_files_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> FilesModel, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_files_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ FilesModel }, OpenAPI.Clients.ApiResponse
+# **delete_files_key**
+> delete_files_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> FilesModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_files_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ FilesModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type file
 
@@ -617,9 +582,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_job_process_stats**
-> delete_workflows_workflow_job_process_stats(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_job_process_stats(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **delete_job_process_stats**
+> delete_job_process_stats(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> delete_job_process_stats(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Delete all documents of type job process statistics for a workflow
 
@@ -653,9 +618,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_job_process_stats_key**
-> delete_workflows_workflow_job_process_stats_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> JobProcessStatsModel, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_job_process_stats_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ JobProcessStatsModel }, OpenAPI.Clients.ApiResponse
+# **delete_job_process_stats_key**
+> delete_job_process_stats_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> JobProcessStatsModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_job_process_stats_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ JobProcessStatsModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type job process statistics
 
@@ -690,9 +655,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_jobs**
-> delete_workflows_workflow_jobs(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_jobs(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **delete_jobs**
+> delete_jobs(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> delete_jobs(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Delete all documents of type job for a workflow
 
@@ -726,9 +691,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_jobs_key**
-> delete_workflows_workflow_jobs_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> JobsModel, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_jobs_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ JobsModel }, OpenAPI.Clients.ApiResponse
+# **delete_jobs_key**
+> delete_jobs_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> JobsModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_jobs_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ JobsModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type job
 
@@ -763,9 +728,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_local_schedulers**
-> delete_workflows_workflow_local_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_local_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **delete_local_schedulers**
+> delete_local_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> delete_local_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Delete all documents of type local compute node configuration for a workflow
 
@@ -799,9 +764,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_local_schedulers_key**
-> delete_workflows_workflow_local_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> LocalSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_local_schedulers_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ LocalSchedulersModel }, OpenAPI.Clients.ApiResponse
+# **delete_local_schedulers_key**
+> delete_local_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> LocalSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_local_schedulers_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ LocalSchedulersModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type local compute node configuration
 
@@ -836,9 +801,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_resource_requirements**
-> delete_workflows_workflow_resource_requirements(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_resource_requirements(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **delete_resource_requirements**
+> delete_resource_requirements(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> delete_resource_requirements(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Delete all documents of type resource requirements for a workflow
 
@@ -872,9 +837,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_resource_requirements_key**
-> delete_workflows_workflow_resource_requirements_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> ResourceRequirementsModel, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_resource_requirements_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ ResourceRequirementsModel }, OpenAPI.Clients.ApiResponse
+# **delete_resource_requirements_key**
+> delete_resource_requirements_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> ResourceRequirementsModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_resource_requirements_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ ResourceRequirementsModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type resource requirements
 
@@ -909,9 +874,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_results**
-> delete_workflows_workflow_results(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_results(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **delete_results**
+> delete_results(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> delete_results(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Delete all documents of type result for a workflow
 
@@ -945,9 +910,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_results_key**
-> delete_workflows_workflow_results_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> ResultsModel, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_results_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ ResultsModel }, OpenAPI.Clients.ApiResponse
+# **delete_results_key**
+> delete_results_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> ResultsModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_results_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ ResultsModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type result
 
@@ -982,9 +947,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_scheduled_compute_nodes**
-> delete_workflows_workflow_scheduled_compute_nodes(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_scheduled_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **delete_scheduled_compute_nodes**
+> delete_scheduled_compute_nodes(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> delete_scheduled_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Delete all documents of type scheduled compute node for a workflow
 
@@ -1018,9 +983,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_scheduled_compute_nodes_key**
-> delete_workflows_workflow_scheduled_compute_nodes_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> ScheduledComputeNodesModel, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_scheduled_compute_nodes_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ ScheduledComputeNodesModel }, OpenAPI.Clients.ApiResponse
+# **delete_scheduled_compute_nodes_key**
+> delete_scheduled_compute_nodes_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> ScheduledComputeNodesModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_scheduled_compute_nodes_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ ScheduledComputeNodesModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type scheduled compute node
 
@@ -1055,9 +1020,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_slurm_schedulers**
-> delete_workflows_workflow_slurm_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_slurm_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **delete_slurm_schedulers**
+> delete_slurm_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> delete_slurm_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Delete all documents of type Slurm compute node configuration for a workflow
 
@@ -1091,9 +1056,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_slurm_schedulers_key**
-> delete_workflows_workflow_slurm_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> SlurmSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_slurm_schedulers_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ SlurmSchedulersModel }, OpenAPI.Clients.ApiResponse
+# **delete_slurm_schedulers_key**
+> delete_slurm_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> SlurmSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_slurm_schedulers_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ SlurmSchedulersModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type Slurm compute node configuration
 
@@ -1128,9 +1093,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_user_data**
-> delete_workflows_workflow_user_data(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_user_data(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **delete_user_data**
+> delete_user_data(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> delete_user_data(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
 Delete all documents of type user data for a workflow
 
@@ -1164,9 +1129,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **delete_workflows_workflow_user_data_key**
-> delete_workflows_workflow_user_data_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> UserDataModel, OpenAPI.Clients.ApiResponse <br/>
-> delete_workflows_workflow_user_data_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ UserDataModel }, OpenAPI.Clients.ApiResponse
+# **delete_user_data_key**
+> delete_user_data_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> UserDataModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_user_data_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ UserDataModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type user data
 
@@ -1189,6 +1154,42 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**UserDataModel**](UserDataModel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **delete_workflows_key**
+> delete_workflows_key(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing) -> WorkflowsModel, OpenAPI.Clients.ApiResponse <br/>
+> delete_workflows_key(_api::DefaultApi, response_stream::Channel, key::String; body=nothing, _mediaType=nothing) -> Channel{ WorkflowsModel }, OpenAPI.Clients.ApiResponse
+
+Delete a workflow
+
+Deletes a document from the \"workflows\" collection by key.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**key** | **String**| Workflow key. | [default to nothing]
+
+### Optional Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **body** | **Any**|  | 
+
+### Return type
+
+[**WorkflowsModel**](WorkflowsModel.md)
 
 ### Authorization
 
@@ -1529,9 +1530,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **get_events_after_key**
-> get_events_after_key(_api::DefaultApi, key::String, event_key::String; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> GetEventsResponse, OpenAPI.Clients.ApiResponse <br/>
-> get_events_after_key(_api::DefaultApi, response_stream::Channel, key::String, event_key::String; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ GetEventsResponse }, OpenAPI.Clients.ApiResponse
+# **get_events_after_timestamp**
+> get_events_after_timestamp(_api::DefaultApi, key::String, timestamp::Float64; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> GetEventsResponse, OpenAPI.Clients.ApiResponse <br/>
+> get_events_after_timestamp(_api::DefaultApi, response_stream::Channel, key::String, timestamp::Float64; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ GetEventsResponse }, OpenAPI.Clients.ApiResponse
 
 Return all events newer than the event with event_key.
 
@@ -1543,7 +1544,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
 **key** | **String**| Workflow key | [default to nothing]
-**event_key** | **String**| Event key | [default to nothing]
+**timestamp** | **Float64**| Timestamp expressed as number of milliseconds since the epoch in UTC | [default to nothing]
 
 ### Optional Parameters
 
@@ -2157,13 +2158,13 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **get_latest_event_key**
-> get_latest_event_key(_api::DefaultApi, key::String; _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> get_latest_event_key(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **get_latest_event_timestamp**
+> get_latest_event_timestamp(_api::DefaultApi, key::String; _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
+> get_latest_event_timestamp(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
 
-Return the key of the latest event.
+Return the timestamp of the latest event.
 
-Return the key of the latest event.
+Return the timestamp of the latest event in ms since the epoch in UTC.
 
 ### Required Parameters
 
@@ -3153,9 +3154,9 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **post_bulk_jobs**
-> post_bulk_jobs(_api::DefaultApi, workflow::String, body::BulkJobsModel; _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
-> post_bulk_jobs(_api::DefaultApi, response_stream::Channel, workflow::String, body::BulkJobsModel; _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
+# **post_bulk_jobs_with_edges**
+> post_bulk_jobs_with_edges(_api::DefaultApi, workflow::String, body::BulkJobsWithEdgesModel; _mediaType=nothing) -> PostBulkJobsWithEdgesResponse, OpenAPI.Clients.ApiResponse <br/>
+> post_bulk_jobs_with_edges(_api::DefaultApi, response_stream::Channel, workflow::String, body::BulkJobsWithEdgesModel; _mediaType=nothing) -> Channel{ PostBulkJobsWithEdgesResponse }, OpenAPI.Clients.ApiResponse
 
 Add jobs in bulk with edge definitions.
 
@@ -3167,11 +3168,11 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**BulkJobsModel**](BulkJobsModel.md)|  | 
+**body** | [**BulkJobsWithEdgesModel**](BulkJobsWithEdgesModel.md)|  | 
 
 ### Return type
 
-**Any**
+[**PostBulkJobsWithEdgesResponse**](PostBulkJobsWithEdgesResponse.md)
 
 ### Authorization
 
@@ -3390,6 +3391,37 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**JobSpecificationsModel**](JobSpecificationsModel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **post_job_with_edges**
+> post_job_with_edges(_api::DefaultApi, workflow::String, body::JobWithEdgesModel; _mediaType=nothing) -> JobsModel, OpenAPI.Clients.ApiResponse <br/>
+> post_job_with_edges(_api::DefaultApi, response_stream::Channel, workflow::String, body::JobWithEdgesModel; _mediaType=nothing) -> Channel{ JobsModel }, OpenAPI.Clients.ApiResponse
+
+Add a job with edge definitions.
+
+Add a job with edge definitions.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**workflow** | **String**| Workflow key | [default to nothing]
+**body** | [**JobWithEdgesModel**](JobWithEdgesModel.md)|  | 
+
+### Return type
+
+[**JobsModel**](JobsModel.md)
 
 ### Authorization
 

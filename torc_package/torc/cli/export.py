@@ -153,6 +153,8 @@ def _get_type_from_schema(properties: dict):
                 data_type = schema_type_to_python.get(item["type"], str)
             elif "$ref" in item:
                 raise NotImplementedError(f"Bug: $ref not supported: {item=}")
+            elif not item:
+                continue
             else:
                 raise NotImplementedError(f"Bug: {item=}")
     elif "$ref" in properties:

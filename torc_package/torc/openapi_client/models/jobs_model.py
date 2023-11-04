@@ -18,27 +18,37 @@ import re  # noqa: F401
 import json
 
 
-from typing import Optional
-from pydantic import ConfigDict, BaseModel, Field, StrictBool, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, StrictBool, StrictStr
+from pydantic import Field
 from torc.openapi_client.models.jobs_internal import JobsInternal
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 class JobsModel(BaseModel):
     """
     JobsModel
-    """
+    """ # noqa: E501
     name: Optional[StrictStr] = None
-    command: StrictStr = Field(...)
+    command: StrictStr
     invocation_script: Optional[StrictStr] = None
     status: Optional[StrictStr] = None
     needs_compute_node_schedule: Optional[StrictBool] = False
     cancel_on_blocking_job_failure: Optional[StrictBool] = True
     supports_termination: Optional[StrictBool] = False
     internal: Optional[JobsInternal] = None
-    key: Optional[StrictStr] = Field(None, alias="_key")
-    id: Optional[StrictStr] = Field(None, alias="_id")
-    rev: Optional[StrictStr] = Field(None, alias="_rev")
-    __properties = ["name", "command", "invocation_script", "status", "needs_compute_node_schedule", "cancel_on_blocking_job_failure", "supports_termination", "internal", "_key", "_id", "_rev"]
-    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+    key: Optional[StrictStr] = Field(default=None, alias="_key")
+    id: Optional[StrictStr] = Field(default=None, alias="_id")
+    rev: Optional[StrictStr] = Field(default=None, alias="_rev")
+    __properties: ClassVar[List[str]] = ["name", "command", "invocation_script", "status", "needs_compute_node_schedule", "cancel_on_blocking_job_failure", "supports_termination", "internal", "_key", "_id", "_rev"]
+
+    model_config = {
+        "populate_by_name": True,
+        "validate_assignment": True
+    }
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -46,34 +56,45 @@ class JobsModel(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> JobsModel:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of JobsModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.model_dump(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude={
+            },
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of internal
         if self.internal:
             _dict['internal'] = self.internal.to_dict()
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> JobsModel:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of JobsModel from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return JobsModel.model_validate(obj)
+            return cls.model_validate(obj)
 
-        _obj = JobsModel.model_validate({
+        _obj = cls.model_validate({
             "name": obj.get("name"),
             "command": obj.get("command"),
             "invocation_script": obj.get("invocation_script"),
@@ -82,9 +103,9 @@ class JobsModel(BaseModel):
             "cancel_on_blocking_job_failure": obj.get("cancel_on_blocking_job_failure") if obj.get("cancel_on_blocking_job_failure") is not None else True,
             "supports_termination": obj.get("supports_termination") if obj.get("supports_termination") is not None else False,
             "internal": JobsInternal.from_dict(obj.get("internal")) if obj.get("internal") is not None else None,
-            "key": obj.get("_key"),
-            "id": obj.get("_id"),
-            "rev": obj.get("_rev")
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
         })
         return _obj
 

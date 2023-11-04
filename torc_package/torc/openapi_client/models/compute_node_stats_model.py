@@ -18,23 +18,32 @@ import re  # noqa: F401
 import json
 
 
-from typing import List, Optional
-from pydantic import ConfigDict, BaseModel, Field, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, StrictStr
+from pydantic import Field
 from torc.openapi_client.models.compute_node_stats import ComputeNodeStats
-from typing_extensions import Annotated
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 class ComputeNodeStatsModel(BaseModel):
     """
     ComputeNodeStatsModel
-    """
-    hostname: StrictStr = Field(...)
-    stats: Optional[Annotated[List[ComputeNodeStats], Field()]] = None
-    timestamp: StrictStr = Field(...)
-    key: Optional[StrictStr] = Field(None, alias="_key")
-    id: Optional[StrictStr] = Field(None, alias="_id")
-    rev: Optional[StrictStr] = Field(None, alias="_rev")
-    __properties = ["hostname", "stats", "timestamp", "_key", "_id", "_rev"]
-    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+    """ # noqa: E501
+    hostname: StrictStr
+    stats: Optional[List[ComputeNodeStats]] = None
+    timestamp: StrictStr
+    key: Optional[StrictStr] = Field(default=None, alias="_key")
+    id: Optional[StrictStr] = Field(default=None, alias="_id")
+    rev: Optional[StrictStr] = Field(default=None, alias="_rev")
+    __properties: ClassVar[List[str]] = ["hostname", "stats", "timestamp", "_key", "_id", "_rev"]
+
+    model_config = {
+        "populate_by_name": True,
+        "validate_assignment": True
+    }
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -42,19 +51,30 @@ class ComputeNodeStatsModel(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> ComputeNodeStatsModel:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of ComputeNodeStatsModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.model_dump(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude={
+            },
+            exclude_none=True,
+        )
         # override the default output from pydantic by calling `to_dict()` of each item in stats (list)
         _items = []
         if self.stats:
@@ -65,21 +85,21 @@ class ComputeNodeStatsModel(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> ComputeNodeStatsModel:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of ComputeNodeStatsModel from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return ComputeNodeStatsModel.model_validate(obj)
+            return cls.model_validate(obj)
 
-        _obj = ComputeNodeStatsModel.model_validate({
+        _obj = cls.model_validate({
             "hostname": obj.get("hostname"),
             "stats": [ComputeNodeStats.from_dict(_item) for _item in obj.get("stats")] if obj.get("stats") is not None else None,
             "timestamp": obj.get("timestamp"),
-            "key": obj.get("_key"),
-            "id": obj.get("_id"),
-            "rev": obj.get("_rev")
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
         })
         return _obj
 

@@ -141,8 +141,8 @@ function addJobWithEdges(job, workflow) {
   const scheduledBysCollection = config.getWorkflowCollection(workflow, 'scheduled_bys');
   const storesCollection = config.getWorkflowCollection(workflow, 'stores');
 
-  const meta = addJob(job.job, workflow);
-  const jobId = meta._id;
+  const addedJob = addJob(job.job, workflow);
+  const jobId = addedJob._id;
 
   if (job.resource_requirements != null) {
     requiresCollection.save({_from: jobId, _to: job.resource_requirements});
@@ -166,7 +166,7 @@ function addJobWithEdges(job, workflow) {
     blocksCollection.save({_from: id, _to: jobId});
   }
 
-  return meta._key;
+  return addedJob;
 }
 
 /**
@@ -178,12 +178,11 @@ function addJobWithEdges(job, workflow) {
  * @return {Array}
  */
 function bulkAddJobsWithEdges(jobs, workflow) {
-  const jobKeys = [];
+  const addedJobs = [];
   for (const job of jobs) {
-    const key = addJobWithEdges(job, workflow);
-    jobKeys.push(key);
+    addedJobs.push(addJobWithEdges(job, workflow));
   }
-  return jobKeys;
+  return addedJobs;
 }
 
 /**
@@ -229,7 +228,7 @@ function addUserData(doc, workflow) {
 }
 
 /**
- * Add a document to the database and connect it with the workflow.
+ * Add a document to the database.
  * @param {Object} doc
  * @param {string} collectionName
  * @param {Object} workflow
@@ -249,8 +248,9 @@ function addWorkflowDocument(doc, collectionName, workflow, checkExisting, allow
     throw new Error(`key=${doc._key} cannot be set on document insertion`);
   }
   const meta = collection.save(doc);
-  Object.assign(doc, meta);
-  return doc;
+  const newDoc = JSON.parse(JSON.stringify(doc));
+  Object.assign(newDoc, meta);
+  return newDoc;
 }
 
 /**

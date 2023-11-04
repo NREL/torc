@@ -6,12 +6,12 @@ import sys
 
 import click
 
+from torc.common import check_function
 from torc.loggers import setup_logging
 from .common import (
     check_database_url,
     get_workflow_key_from_context,
 )
-from .run_function import check_function
 
 
 logger = logging.getLogger(__name__)

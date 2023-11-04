@@ -18,18 +18,26 @@ import re  # noqa: F401
 import json
 
 
-from typing import List, Optional
-from pydantic import Field, ConfigDict, BaseModel, StrictBool, StrictStr
-from typing_extensions import Annotated
+from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, StrictBool, StrictStr
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 class AutoTuneStatus(BaseModel):
     """
     AutoTuneStatus
-    """
+    """ # noqa: E501
     enabled: Optional[StrictBool] = False
-    job_keys: Optional[Annotated[List[StrictStr], Field()]] = None
-    __properties = ["enabled", "job_keys"]
-    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+    job_keys: Optional[List[StrictStr]] = None
+    __properties: ClassVar[List[str]] = ["enabled", "job_keys"]
+
+    model_config = {
+        "populate_by_name": True,
+        "validate_assignment": True
+    }
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -37,31 +45,42 @@ class AutoTuneStatus(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> AutoTuneStatus:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of AutoTuneStatus from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.model_dump(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude={
+            },
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> AutoTuneStatus:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of AutoTuneStatus from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return AutoTuneStatus.model_validate(obj)
+            return cls.model_validate(obj)
 
-        _obj = AutoTuneStatus.model_validate({
+        _obj = cls.model_validate({
             "enabled": obj.get("enabled") if obj.get("enabled") is not None else False,
             "job_keys": obj.get("job_keys")
         })

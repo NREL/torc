@@ -1,4 +1,4 @@
-# InlineResponse500
+# DefaultErrorResponse
 
 
 ## Properties

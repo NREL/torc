@@ -18,30 +18,38 @@ import re  # noqa: F401
 import json
 
 
-from typing import List, Optional
-from pydantic import ConfigDict, BaseModel, Field, StrictBool, StrictStr
-from typing_extensions import Annotated
+from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, StrictBool, StrictStr
+try:
+    from typing import Self
+except ImportError:
+    from typing_extensions import Self
 
 class JobSpecificationsModel(BaseModel):
     """
     JobSpecificationsModel
-    """
+    """ # noqa: E501
     name: Optional[StrictStr] = None
     key: Optional[StrictStr] = None
-    command: StrictStr = Field(...)
+    command: StrictStr
     invocation_script: Optional[StrictStr] = None
     cancel_on_blocking_job_failure: Optional[StrictBool] = True
     supports_termination: Optional[StrictBool] = False
     scheduler: Optional[StrictStr] = None
     needs_compute_node_schedule: Optional[StrictBool] = False
-    input_user_data: Optional[Annotated[List[StrictStr], Field()]] = None
-    output_user_data: Optional[Annotated[List[StrictStr], Field()]] = None
+    input_user_data: Optional[List[StrictStr]] = None
+    output_user_data: Optional[List[StrictStr]] = None
     resource_requirements: Optional[StrictStr] = None
-    input_files: Optional[Annotated[List[StrictStr], Field()]] = None
-    output_files: Optional[Annotated[List[StrictStr], Field()]] = None
-    blocked_by: Optional[Annotated[List[StrictStr], Field()]] = None
-    __properties = ["name", "key", "command", "invocation_script", "cancel_on_blocking_job_failure", "supports_termination", "scheduler", "needs_compute_node_schedule", "input_user_data", "output_user_data", "resource_requirements", "input_files", "output_files", "blocked_by"]
-    model_config = ConfigDict(populate_by_name=True, validate_assignment=True)
+    input_files: Optional[List[StrictStr]] = None
+    output_files: Optional[List[StrictStr]] = None
+    blocked_by: Optional[List[StrictStr]] = None
+    __properties: ClassVar[List[str]] = ["name", "key", "command", "invocation_script", "cancel_on_blocking_job_failure", "supports_termination", "scheduler", "needs_compute_node_schedule", "input_user_data", "output_user_data", "resource_requirements", "input_files", "output_files", "blocked_by"]
+
+    model_config = {
+        "populate_by_name": True,
+        "validate_assignment": True
+    }
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -49,31 +57,42 @@ class JobSpecificationsModel(BaseModel):
 
     def to_json(self) -> str:
         """Returns the JSON representation of the model using alias"""
+        # TODO: pydantic v2: use .model_dump_json(by_alias=True, exclude_unset=True) instead
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> JobSpecificationsModel:
+    def from_json(cls, json_str: str) -> Self:
         """Create an instance of JobSpecificationsModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
-    def to_dict(self):
-        """Returns the dictionary representation of the model using alias"""
-        _dict = self.model_dump(by_alias=True,
-                          exclude={
-                          },
-                          exclude_none=True)
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the dictionary representation of the model using alias.
+
+        This has the following differences from calling pydantic's
+        `self.model_dump(by_alias=True)`:
+
+        * `None` is only added to the output dict for nullable fields that
+          were set at model initialization. Other fields with value `None`
+          are ignored.
+        """
+        _dict = self.model_dump(
+            by_alias=True,
+            exclude={
+            },
+            exclude_none=True,
+        )
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: dict) -> JobSpecificationsModel:
+    def from_dict(cls, obj: Dict) -> Self:
         """Create an instance of JobSpecificationsModel from a dict"""
         if obj is None:
             return None
 
         if not isinstance(obj, dict):
-            return JobSpecificationsModel.model_validate(obj)
+            return cls.model_validate(obj)
 
-        _obj = JobSpecificationsModel.model_validate({
+        _obj = cls.model_validate({
             "name": obj.get("name"),
             "key": obj.get("key"),
             "command": obj.get("command"),
