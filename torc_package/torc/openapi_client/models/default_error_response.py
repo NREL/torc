@@ -26,9 +26,9 @@ try:
 except ImportError:
     from typing_extensions import Self
 
-class InlineResponse500(BaseModel):
+class DefaultErrorResponse(BaseModel):
     """
-    InlineResponse500
+    DefaultErrorResponse
     """ # noqa: E501
     error: Union[str, Any]
     error_num: Optional[StrictInt] = Field(default=None, alias="errorNum")
@@ -53,7 +53,7 @@ class InlineResponse500(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of InlineResponse500 from a JSON string"""
+        """Create an instance of DefaultErrorResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -76,7 +76,7 @@ class InlineResponse500(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of InlineResponse500 from a dict"""
+        """Create an instance of DefaultErrorResponse from a dict"""
         if obj is None:
             return None
 

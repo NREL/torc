@@ -70,7 +70,7 @@ def delete(ctx, api, file_keys):
         logger.warning("No file keys were passed")
     workflow_key = get_workflow_key_from_context(ctx, api)
     for key in file_keys:
-        api.delete_workflows_workflow_files_key(workflow_key, key)
+        api.delete_files_key(workflow_key, key)
         logger.info("Deleted workflow=%s file=%s", workflow_key, key)
 
 
@@ -83,7 +83,7 @@ def delete_all(ctx, api):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     for file in iter_documents(api.get_files, workflow_key):
-        api.delete_workflows_workflow_files_key(workflow_key, file.key)
+        api.delete_files_key(workflow_key, file.key)
         logger.info("Deleted file %s", file.key)
 
 

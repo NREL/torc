@@ -3,60 +3,75 @@
 ********************
 Generate Client APIs
 ********************
-The software package uses the ``OpenAPI`` and ``Swagger`` tools to auto-generate client APIs from
-Docker containers.
+The software package uses the ``OpenAPI`` tools to auto-generate client APIs from Docker
+containers.
 
-.. note:: You must have Docker installed.
+.. note:: You must have Docker (or Podman) installed.
 
-The Swagger container does not support Macs with M1 or M2 processors. If you have one of those then
-you'll need to download the Swagger jar file from this `Maven repository
-<https://mvnrepository.com/artifact/io.swagger.codegen.v3/swagger-codegen-cli/3.0.36>`_ and then
-set the environment variable ``LOCAL_SWAGGER_CODEGEN_CLI`` with the path to the file. For example,
+This repository stores an OpenAPI specification at ``db_service/openapi.yaml``. If you add, delete,
+or modify APIs in the torc-service then you must modify this file. You can do this manually by
+editing the file with your changes or semi-manually by converting the ArangoDB-generated Swagger
+v2 specification to OpenAPI v3 and then making custom edits. There is no fully-automated method
+because the ArangoDB-generated methods have several problems:
+
+- Method names can be nonsensical, like ``workflowsworkflowcompute_node_stats_stats``.
+- It doesn't recognize models that are returned in the get-all methods and instead makes inline
+  models. Those inline models cannot be used in put methods.
+- It doesn't handle the case where one schema composes another. It creates an inline model for
+  the composed schema and those cannot be used in put methods.
+- It generates duplicate models like workflow_jobs_model and jobs_key_model. This
+  is OK with Swagger v2 but fails with OpenAPI v3.
+
+One way to approach this problem is the following:
+
+- Generate an ``openapi.yaml`` without your changes (instructions below).
+- Generate an ``openapi.yaml`` with your changes.
+- Make a textual diff, edit it, and then add it to the official ``openapi.yaml``.
+
+Be sure to follow existing conventions:
+
+- Use ``model`` instead of ``body``.
+- Replace odd-looking strings, like ``workflows_workflow_jobs`` with ``jobs``.
+- Ensure that that are no names with ``inline``.
+
+How to generate openapi.yaml
+============================
+
+1. Download the Swagger v2 specification from ArangoDB. You can do this in the ArangoDB web UI on
+   the ``torc-services`` API page or by running this command, after adjusting your URL and
+   username/password.
 
 .. code-block:: console
 
-    $ export LOCAL_SWAGGER_CODEGEN_CLI=~/Downloads/swagger-codegen-cli-3.0.36.jar
+    $ curl --silent -X GET http://localhost:8529/_db/test-workflows/_admin/aardvark/foxxes/docs/swagger.json\?mount\=%2Ftorc-service > swagger.json
 
-This repository stores an OpenAPI specification at ``db_service/openapi.yaml``.
-If the API definitions are changed then this needs to be regenerated. Here's how to to that:
+2. Download this `Java .jar
+   file<https://mvnrepository.com/artifact/io.swagger.codegen.v3/swagger-codegen-cli/3.0.36>`_
 
-1. Start the workflow database. By default the script assumes it is running at
-http://localhost:8529. You can change it by setting this environment variable with your hostname
-and port:
-
-.. code-block:: console
-
-   $ export TORC_URL=http://hostname:port
-
-2. Set the database name in this environment variable. Replace ``db_name`` with your database name.
+3. Assuming that you saved the specification to ``swagger.json``, run this command to
+   convert the spec to OpenAPI v3 (``./openapi.yaml``):
 
 .. code-block:: console
 
-   $ export TORC_DATABASE_NAME=db_name
+    $ java -jar swagger-codegen-cli-3.0.36.jar generate --lang=openapi-yaml --input-spec=swagger.json
 
-3. Optionally set these environment variables for username/password. The default username is
-   ``root``.
+=============
 
-.. code-block:: console
+How to generate OpenAPI clients
+===============================
 
-   $ export TORC_USER=$USER
-   $ export TORC_PASSWORD=my-password
-
-4. Change to the ``db_service`` directory in the repository.
+1. Change to the ``db_service`` directory in the repository.
 
 .. code-block:: console
 
    $ cd db_service
 
-5. Set the ``packageVersion`` in config.json to the same value as in
+2. Set the ``packageVersion`` in config.json to the same value as in
    ``torc_package/torc/version.py``.
 
-6. Generate the Python and Julia client by running the script below. It performs the following
+3. Generate the Python and Julia client by running the script below. It performs the following
    actions:
 
-- Download the API specification `swagger.json` from the API endpoint. This is created by ArangoDB.
-- Convert the spec from v2.0 (Swagger) to v3.0 (OpenAPI).
-- Rename input schemas to names that make more sense for the application.
 - Create a Python client package.
 - Create a Julia client package.
 - Copy the Python package directory, ``python_client/openapi_client``, into the ``torc`` package at
@@ -66,9 +81,9 @@ and port:
 
 .. code-block:: console
 
-   $ bash make_api.sh
+   $ bash make_api_clients.sh
 
 This procedure could be implemented to generate additional client programming languages. Refer to
 the ``OpenAPI`` documentation for more information.
 
-7. Commit changes to the repository.
+4. Commit changes to the repository.

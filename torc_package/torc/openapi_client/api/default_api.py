@@ -104,299 +104,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_key(
-        self,
-        key: Annotated[StrictStr, Field(description="Workflow key.")],
-        body: Optional[Dict[str, Any]] = None,
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> WorkflowsModel:
-        """Delete a workflow
-
-        Deletes a document from the \"workflows\" collection by key.
-
-        :param key: Workflow key. (required)
-        :type key: str
-        :param body:
-        :type body: object
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._delete_workflows_key_serialize(
-            key=key,
-            body=body,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
-            '500': "InlineResponse500"
-            
-        }
-        response_data = self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        response_data.read()
-        return self.api_client.response_deserialize(
-            response_data=response_data,
-            response_types_map=_response_types_map,
-        ).data
-
-
-    @validate_call
-    def delete_workflows_key_with_http_info(
-        self,
-        key: Annotated[StrictStr, Field(description="Workflow key.")],
-        body: Optional[Dict[str, Any]] = None,
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[WorkflowsModel]:
-        """Delete a workflow
-
-        Deletes a document from the \"workflows\" collection by key.
-
-        :param key: Workflow key. (required)
-        :type key: str
-        :param body:
-        :type body: object
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._delete_workflows_key_serialize(
-            key=key,
-            body=body,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
-            '500': "InlineResponse500"
-            
-        }
-        response_data = self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        response_data.read()
-        return self.api_client.response_deserialize(
-            response_data=response_data,
-            response_types_map=_response_types_map,
-        )
-
-
-    @validate_call
-    def delete_workflows_key_without_preload_content(
-        self,
-        key: Annotated[StrictStr, Field(description="Workflow key.")],
-        body: Optional[Dict[str, Any]] = None,
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> RESTResponseType:
-        """Delete a workflow
-
-        Deletes a document from the \"workflows\" collection by key.
-
-        :param key: Workflow key. (required)
-        :type key: str
-        :param body:
-        :type body: object
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._delete_workflows_key_serialize(
-            key=key,
-            body=body,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
-            '500': "InlineResponse500"
-            
-        }
-        response_data = self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        return response_data.response
-
-
-    def _delete_workflows_key_serialize(
-        self,
-        key,
-        body,
-        _request_auth,
-        _content_type,
-        _headers,
-        _host_index,
-    ) -> Tuple:
-
-        _host = None
-
-        _collection_formats: Dict[str, str] = {
-            
-        }
-
-        _path_params: Dict[str, str] = {}
-        _query_params: List[Tuple[str, str]] = []
-        _header_params: Dict[str, Optional[str]] = _headers or {}
-        _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
-        _body_params: Optional[bytes] = None
-
-        # process the path parameters
-        if key is not None:
-            _path_params['key'] = key
-        # process the query parameters
-        # process the header parameters
-        # process the form parameters
-        # process the body parameter
-        if body is not None:
-            _body_params = body
-
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
-
-        # set the HTTP header `Content-Type`
-        if _content_type:
-            _header_params['Content-Type'] = _content_type
-        else:
-            _default_content_type = (
-                self.api_client.select_header_content_type(
-                    [
-                        'application/json'
-                    ]
-                )
-            )
-            if _default_content_type is not None:
-                _header_params['Content-Type'] = _default_content_type
-
-        # authentication setting
-        _auth_settings: List[str] = [
-        ]
-
-        return self.api_client.param_serialize(
-            method='DELETE',
-            resource_path='/workflows/{key}',
-            path_params=_path_params,
-            query_params=_query_params,
-            header_params=_header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            auth_settings=_auth_settings,
-            collection_formats=_collection_formats,
-            _host=_host,
-            _request_auth=_request_auth
-        )
-
-
-
-
-    @validate_call
-    def delete_workflows_workflow_aws_schedulers(
+    def delete_aws_schedulers(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -443,7 +151,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_aws_schedulers_serialize(
+        _param = self._delete_aws_schedulers_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -454,7 +162,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -469,7 +177,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_aws_schedulers_with_http_info(
+    def delete_aws_schedulers_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -516,7 +224,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_aws_schedulers_serialize(
+        _param = self._delete_aws_schedulers_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -527,7 +235,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -542,7 +250,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_aws_schedulers_without_preload_content(
+    def delete_aws_schedulers_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -589,7 +297,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_aws_schedulers_serialize(
+        _param = self._delete_aws_schedulers_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -600,7 +308,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -610,7 +318,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_aws_schedulers_serialize(
+    def _delete_aws_schedulers_serialize(
         self,
         workflow,
         body,
@@ -688,7 +396,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_aws_schedulers_key(
+    def delete_aws_schedulers_key(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the AWS compute node configuration document.")],
@@ -738,7 +446,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_aws_schedulers_key_serialize(
+        _param = self._delete_aws_schedulers_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -750,7 +458,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -765,7 +473,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_aws_schedulers_key_with_http_info(
+    def delete_aws_schedulers_key_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the AWS compute node configuration document.")],
@@ -815,7 +523,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_aws_schedulers_key_serialize(
+        _param = self._delete_aws_schedulers_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -827,7 +535,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -842,7 +550,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_aws_schedulers_key_without_preload_content(
+    def delete_aws_schedulers_key_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the AWS compute node configuration document.")],
@@ -892,7 +600,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_aws_schedulers_key_serialize(
+        _param = self._delete_aws_schedulers_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -904,7 +612,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -914,7 +622,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_aws_schedulers_key_serialize(
+    def _delete_aws_schedulers_key_serialize(
         self,
         workflow,
         key,
@@ -995,7 +703,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_compute_node_stats(
+    def delete_compute_node_stats(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -1042,7 +750,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_compute_node_stats_serialize(
+        _param = self._delete_compute_node_stats_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -1053,7 +761,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -1068,7 +776,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_compute_node_stats_with_http_info(
+    def delete_compute_node_stats_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -1115,7 +823,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_compute_node_stats_serialize(
+        _param = self._delete_compute_node_stats_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -1126,7 +834,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -1141,7 +849,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_compute_node_stats_without_preload_content(
+    def delete_compute_node_stats_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -1188,7 +896,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_compute_node_stats_serialize(
+        _param = self._delete_compute_node_stats_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -1199,7 +907,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -1209,7 +917,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_compute_node_stats_serialize(
+    def _delete_compute_node_stats_serialize(
         self,
         workflow,
         body,
@@ -1287,7 +995,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_compute_node_stats_key(
+    def delete_compute_node_stats_key(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the compute node statistics document.")],
@@ -1337,7 +1045,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_compute_node_stats_key_serialize(
+        _param = self._delete_compute_node_stats_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -1349,7 +1057,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -1364,7 +1072,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_compute_node_stats_key_with_http_info(
+    def delete_compute_node_stats_key_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the compute node statistics document.")],
@@ -1414,7 +1122,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_compute_node_stats_key_serialize(
+        _param = self._delete_compute_node_stats_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -1426,7 +1134,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -1441,7 +1149,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_compute_node_stats_key_without_preload_content(
+    def delete_compute_node_stats_key_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the compute node statistics document.")],
@@ -1491,7 +1199,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_compute_node_stats_key_serialize(
+        _param = self._delete_compute_node_stats_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -1503,7 +1211,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -1513,7 +1221,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_compute_node_stats_key_serialize(
+    def _delete_compute_node_stats_key_serialize(
         self,
         workflow,
         key,
@@ -1594,7 +1302,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_compute_nodes(
+    def delete_compute_nodes(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -1641,7 +1349,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_compute_nodes_serialize(
+        _param = self._delete_compute_nodes_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -1652,7 +1360,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -1667,7 +1375,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_compute_nodes_with_http_info(
+    def delete_compute_nodes_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -1714,7 +1422,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_compute_nodes_serialize(
+        _param = self._delete_compute_nodes_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -1725,7 +1433,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -1740,7 +1448,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_compute_nodes_without_preload_content(
+    def delete_compute_nodes_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -1787,7 +1495,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_compute_nodes_serialize(
+        _param = self._delete_compute_nodes_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -1798,7 +1506,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -1808,7 +1516,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_compute_nodes_serialize(
+    def _delete_compute_nodes_serialize(
         self,
         workflow,
         body,
@@ -1886,7 +1594,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_compute_nodes_key(
+    def delete_compute_nodes_key(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the compute node document.")],
@@ -1936,7 +1644,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_compute_nodes_key_serialize(
+        _param = self._delete_compute_nodes_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -1948,7 +1656,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -1963,7 +1671,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_compute_nodes_key_with_http_info(
+    def delete_compute_nodes_key_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the compute node document.")],
@@ -2013,7 +1721,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_compute_nodes_key_serialize(
+        _param = self._delete_compute_nodes_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -2025,7 +1733,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -2040,7 +1748,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_compute_nodes_key_without_preload_content(
+    def delete_compute_nodes_key_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the compute node document.")],
@@ -2090,7 +1798,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_compute_nodes_key_serialize(
+        _param = self._delete_compute_nodes_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -2102,7 +1810,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -2112,7 +1820,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_compute_nodes_key_serialize(
+    def _delete_compute_nodes_key_serialize(
         self,
         workflow,
         key,
@@ -2193,7 +1901,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_edges_name(
+    def delete_edges_name(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         name: Annotated[StrictStr, Field(description="Edge collection name")],
@@ -2243,7 +1951,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_edges_name_serialize(
+        _param = self._delete_edges_name_serialize(
             workflow=workflow,
             name=name,
             body=body,
@@ -2255,7 +1963,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -2270,7 +1978,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_edges_name_with_http_info(
+    def delete_edges_name_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         name: Annotated[StrictStr, Field(description="Edge collection name")],
@@ -2320,7 +2028,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_edges_name_serialize(
+        _param = self._delete_edges_name_serialize(
             workflow=workflow,
             name=name,
             body=body,
@@ -2332,7 +2040,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -2347,7 +2055,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_edges_name_without_preload_content(
+    def delete_edges_name_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         name: Annotated[StrictStr, Field(description="Edge collection name")],
@@ -2397,7 +2105,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_edges_name_serialize(
+        _param = self._delete_edges_name_serialize(
             workflow=workflow,
             name=name,
             body=body,
@@ -2409,7 +2117,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -2419,7 +2127,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_edges_name_serialize(
+    def _delete_edges_name_serialize(
         self,
         workflow,
         name,
@@ -2500,7 +2208,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_edges_name_key(
+    def delete_edges_name_key(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         name: Annotated[StrictStr, Field(description="Edge name.")],
@@ -2553,7 +2261,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_edges_name_key_serialize(
+        _param = self._delete_edges_name_key_serialize(
             workflow=workflow,
             name=name,
             key=key,
@@ -2566,7 +2274,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgesNameModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -2581,7 +2289,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_edges_name_key_with_http_info(
+    def delete_edges_name_key_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         name: Annotated[StrictStr, Field(description="Edge name.")],
@@ -2634,7 +2342,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_edges_name_key_serialize(
+        _param = self._delete_edges_name_key_serialize(
             workflow=workflow,
             name=name,
             key=key,
@@ -2647,7 +2355,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgesNameModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -2662,7 +2370,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_edges_name_key_without_preload_content(
+    def delete_edges_name_key_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         name: Annotated[StrictStr, Field(description="Edge name.")],
@@ -2715,7 +2423,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_edges_name_key_serialize(
+        _param = self._delete_edges_name_key_serialize(
             workflow=workflow,
             name=name,
             key=key,
@@ -2728,7 +2436,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgesNameModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -2738,7 +2446,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_edges_name_key_serialize(
+    def _delete_edges_name_key_serialize(
         self,
         workflow,
         name,
@@ -2822,7 +2530,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_events(
+    def delete_events(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -2869,7 +2577,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_events_serialize(
+        _param = self._delete_events_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -2880,7 +2588,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -2895,7 +2603,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_events_with_http_info(
+    def delete_events_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -2942,7 +2650,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_events_serialize(
+        _param = self._delete_events_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -2953,7 +2661,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -2968,7 +2676,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_events_without_preload_content(
+    def delete_events_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -3015,7 +2723,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_events_serialize(
+        _param = self._delete_events_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -3026,7 +2734,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -3036,7 +2744,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_events_serialize(
+    def _delete_events_serialize(
         self,
         workflow,
         body,
@@ -3114,7 +2822,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_events_key(
+    def delete_events_key(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the event document.")],
@@ -3164,7 +2872,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_events_key_serialize(
+        _param = self._delete_events_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -3176,7 +2884,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -3191,7 +2899,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_events_key_with_http_info(
+    def delete_events_key_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the event document.")],
@@ -3241,7 +2949,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_events_key_serialize(
+        _param = self._delete_events_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -3253,7 +2961,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -3268,7 +2976,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_events_key_without_preload_content(
+    def delete_events_key_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the event document.")],
@@ -3318,7 +3026,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_events_key_serialize(
+        _param = self._delete_events_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -3330,7 +3038,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -3340,7 +3048,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_events_key_serialize(
+    def _delete_events_key_serialize(
         self,
         workflow,
         key,
@@ -3421,7 +3129,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_files(
+    def delete_files(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -3468,7 +3176,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_files_serialize(
+        _param = self._delete_files_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -3479,7 +3187,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -3494,7 +3202,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_files_with_http_info(
+    def delete_files_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -3541,7 +3249,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_files_serialize(
+        _param = self._delete_files_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -3552,7 +3260,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -3567,7 +3275,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_files_without_preload_content(
+    def delete_files_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -3614,7 +3322,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_files_serialize(
+        _param = self._delete_files_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -3625,7 +3333,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -3635,7 +3343,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_files_serialize(
+    def _delete_files_serialize(
         self,
         workflow,
         body,
@@ -3713,7 +3421,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_files_key(
+    def delete_files_key(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the file document.")],
@@ -3763,7 +3471,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_files_key_serialize(
+        _param = self._delete_files_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -3775,7 +3483,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FilesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -3790,7 +3498,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_files_key_with_http_info(
+    def delete_files_key_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the file document.")],
@@ -3840,7 +3548,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_files_key_serialize(
+        _param = self._delete_files_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -3852,7 +3560,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FilesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -3867,7 +3575,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_files_key_without_preload_content(
+    def delete_files_key_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the file document.")],
@@ -3917,7 +3625,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_files_key_serialize(
+        _param = self._delete_files_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -3929,7 +3637,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FilesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -3939,7 +3647,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_files_key_serialize(
+    def _delete_files_key_serialize(
         self,
         workflow,
         key,
@@ -4020,7 +3728,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_job_process_stats(
+    def delete_job_process_stats(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -4067,7 +3775,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_job_process_stats_serialize(
+        _param = self._delete_job_process_stats_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -4078,7 +3786,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -4093,7 +3801,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_job_process_stats_with_http_info(
+    def delete_job_process_stats_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -4140,7 +3848,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_job_process_stats_serialize(
+        _param = self._delete_job_process_stats_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -4151,7 +3859,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -4166,7 +3874,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_job_process_stats_without_preload_content(
+    def delete_job_process_stats_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -4213,7 +3921,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_job_process_stats_serialize(
+        _param = self._delete_job_process_stats_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -4224,7 +3932,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -4234,7 +3942,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_job_process_stats_serialize(
+    def _delete_job_process_stats_serialize(
         self,
         workflow,
         body,
@@ -4312,7 +4020,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_job_process_stats_key(
+    def delete_job_process_stats_key(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the job process statistics document.")],
@@ -4362,7 +4070,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_job_process_stats_key_serialize(
+        _param = self._delete_job_process_stats_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -4374,7 +4082,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -4389,7 +4097,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_job_process_stats_key_with_http_info(
+    def delete_job_process_stats_key_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the job process statistics document.")],
@@ -4439,7 +4147,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_job_process_stats_key_serialize(
+        _param = self._delete_job_process_stats_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -4451,7 +4159,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -4466,7 +4174,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_job_process_stats_key_without_preload_content(
+    def delete_job_process_stats_key_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the job process statistics document.")],
@@ -4516,7 +4224,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_job_process_stats_key_serialize(
+        _param = self._delete_job_process_stats_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -4528,7 +4236,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -4538,7 +4246,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_job_process_stats_key_serialize(
+    def _delete_job_process_stats_key_serialize(
         self,
         workflow,
         key,
@@ -4619,7 +4327,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_jobs(
+    def delete_jobs(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -4666,7 +4374,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_jobs_serialize(
+        _param = self._delete_jobs_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -4677,7 +4385,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -4692,7 +4400,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_jobs_with_http_info(
+    def delete_jobs_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -4739,7 +4447,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_jobs_serialize(
+        _param = self._delete_jobs_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -4750,7 +4458,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -4765,7 +4473,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_jobs_without_preload_content(
+    def delete_jobs_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -4812,7 +4520,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_jobs_serialize(
+        _param = self._delete_jobs_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -4823,7 +4531,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -4833,7 +4541,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_jobs_serialize(
+    def _delete_jobs_serialize(
         self,
         workflow,
         body,
@@ -4911,7 +4619,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_jobs_key(
+    def delete_jobs_key(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the job document.")],
@@ -4961,7 +4669,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_jobs_key_serialize(
+        _param = self._delete_jobs_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -4973,7 +4681,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -4988,7 +4696,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_jobs_key_with_http_info(
+    def delete_jobs_key_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the job document.")],
@@ -5038,7 +4746,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_jobs_key_serialize(
+        _param = self._delete_jobs_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -5050,7 +4758,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -5065,7 +4773,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_jobs_key_without_preload_content(
+    def delete_jobs_key_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the job document.")],
@@ -5115,7 +4823,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_jobs_key_serialize(
+        _param = self._delete_jobs_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -5127,7 +4835,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -5137,7 +4845,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_jobs_key_serialize(
+    def _delete_jobs_key_serialize(
         self,
         workflow,
         key,
@@ -5218,7 +4926,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_local_schedulers(
+    def delete_local_schedulers(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -5265,7 +4973,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_local_schedulers_serialize(
+        _param = self._delete_local_schedulers_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -5276,7 +4984,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -5291,7 +4999,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_local_schedulers_with_http_info(
+    def delete_local_schedulers_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -5338,7 +5046,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_local_schedulers_serialize(
+        _param = self._delete_local_schedulers_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -5349,7 +5057,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -5364,7 +5072,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_local_schedulers_without_preload_content(
+    def delete_local_schedulers_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -5411,7 +5119,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_local_schedulers_serialize(
+        _param = self._delete_local_schedulers_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -5422,7 +5130,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -5432,7 +5140,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_local_schedulers_serialize(
+    def _delete_local_schedulers_serialize(
         self,
         workflow,
         body,
@@ -5510,7 +5218,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_local_schedulers_key(
+    def delete_local_schedulers_key(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the local compute node configuration document.")],
@@ -5560,7 +5268,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_local_schedulers_key_serialize(
+        _param = self._delete_local_schedulers_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -5572,7 +5280,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -5587,7 +5295,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_local_schedulers_key_with_http_info(
+    def delete_local_schedulers_key_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the local compute node configuration document.")],
@@ -5637,7 +5345,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_local_schedulers_key_serialize(
+        _param = self._delete_local_schedulers_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -5649,7 +5357,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -5664,7 +5372,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_local_schedulers_key_without_preload_content(
+    def delete_local_schedulers_key_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the local compute node configuration document.")],
@@ -5714,7 +5422,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_local_schedulers_key_serialize(
+        _param = self._delete_local_schedulers_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -5726,7 +5434,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -5736,7 +5444,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_local_schedulers_key_serialize(
+    def _delete_local_schedulers_key_serialize(
         self,
         workflow,
         key,
@@ -5817,7 +5525,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_resource_requirements(
+    def delete_resource_requirements(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -5864,7 +5572,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_resource_requirements_serialize(
+        _param = self._delete_resource_requirements_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -5875,7 +5583,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -5890,7 +5598,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_resource_requirements_with_http_info(
+    def delete_resource_requirements_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -5937,7 +5645,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_resource_requirements_serialize(
+        _param = self._delete_resource_requirements_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -5948,7 +5656,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -5963,7 +5671,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_resource_requirements_without_preload_content(
+    def delete_resource_requirements_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -6010,7 +5718,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_resource_requirements_serialize(
+        _param = self._delete_resource_requirements_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -6021,7 +5729,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -6031,7 +5739,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_resource_requirements_serialize(
+    def _delete_resource_requirements_serialize(
         self,
         workflow,
         body,
@@ -6109,7 +5817,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_resource_requirements_key(
+    def delete_resource_requirements_key(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the resource requirements document.")],
@@ -6159,7 +5867,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_resource_requirements_key_serialize(
+        _param = self._delete_resource_requirements_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -6171,7 +5879,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -6186,7 +5894,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_resource_requirements_key_with_http_info(
+    def delete_resource_requirements_key_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the resource requirements document.")],
@@ -6236,7 +5944,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_resource_requirements_key_serialize(
+        _param = self._delete_resource_requirements_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -6248,7 +5956,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -6263,7 +5971,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_resource_requirements_key_without_preload_content(
+    def delete_resource_requirements_key_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the resource requirements document.")],
@@ -6313,7 +6021,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_resource_requirements_key_serialize(
+        _param = self._delete_resource_requirements_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -6325,7 +6033,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -6335,7 +6043,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_resource_requirements_key_serialize(
+    def _delete_resource_requirements_key_serialize(
         self,
         workflow,
         key,
@@ -6416,7 +6124,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_results(
+    def delete_results(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -6463,7 +6171,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_results_serialize(
+        _param = self._delete_results_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -6474,7 +6182,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -6489,7 +6197,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_results_with_http_info(
+    def delete_results_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -6536,7 +6244,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_results_serialize(
+        _param = self._delete_results_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -6547,7 +6255,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -6562,7 +6270,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_results_without_preload_content(
+    def delete_results_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -6609,7 +6317,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_results_serialize(
+        _param = self._delete_results_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -6620,7 +6328,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -6630,7 +6338,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_results_serialize(
+    def _delete_results_serialize(
         self,
         workflow,
         body,
@@ -6708,7 +6416,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_results_key(
+    def delete_results_key(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the result document.")],
@@ -6758,7 +6466,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_results_key_serialize(
+        _param = self._delete_results_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -6770,7 +6478,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -6785,7 +6493,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_results_key_with_http_info(
+    def delete_results_key_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the result document.")],
@@ -6835,7 +6543,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_results_key_serialize(
+        _param = self._delete_results_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -6847,7 +6555,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -6862,7 +6570,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_results_key_without_preload_content(
+    def delete_results_key_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the result document.")],
@@ -6912,7 +6620,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_results_key_serialize(
+        _param = self._delete_results_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -6924,7 +6632,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -6934,7 +6642,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_results_key_serialize(
+    def _delete_results_key_serialize(
         self,
         workflow,
         key,
@@ -7015,7 +6723,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_scheduled_compute_nodes(
+    def delete_scheduled_compute_nodes(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -7062,7 +6770,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_scheduled_compute_nodes_serialize(
+        _param = self._delete_scheduled_compute_nodes_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -7073,7 +6781,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -7088,7 +6796,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_scheduled_compute_nodes_with_http_info(
+    def delete_scheduled_compute_nodes_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -7135,7 +6843,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_scheduled_compute_nodes_serialize(
+        _param = self._delete_scheduled_compute_nodes_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -7146,7 +6854,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -7161,7 +6869,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_scheduled_compute_nodes_without_preload_content(
+    def delete_scheduled_compute_nodes_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -7208,7 +6916,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_scheduled_compute_nodes_serialize(
+        _param = self._delete_scheduled_compute_nodes_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -7219,7 +6927,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -7229,7 +6937,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_scheduled_compute_nodes_serialize(
+    def _delete_scheduled_compute_nodes_serialize(
         self,
         workflow,
         body,
@@ -7307,7 +7015,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_scheduled_compute_nodes_key(
+    def delete_scheduled_compute_nodes_key(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the scheduled compute node document.")],
@@ -7357,7 +7065,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_scheduled_compute_nodes_key_serialize(
+        _param = self._delete_scheduled_compute_nodes_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -7369,7 +7077,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -7384,7 +7092,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_scheduled_compute_nodes_key_with_http_info(
+    def delete_scheduled_compute_nodes_key_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the scheduled compute node document.")],
@@ -7434,7 +7142,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_scheduled_compute_nodes_key_serialize(
+        _param = self._delete_scheduled_compute_nodes_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -7446,7 +7154,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -7461,7 +7169,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_scheduled_compute_nodes_key_without_preload_content(
+    def delete_scheduled_compute_nodes_key_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the scheduled compute node document.")],
@@ -7511,7 +7219,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_scheduled_compute_nodes_key_serialize(
+        _param = self._delete_scheduled_compute_nodes_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -7523,7 +7231,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -7533,7 +7241,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_scheduled_compute_nodes_key_serialize(
+    def _delete_scheduled_compute_nodes_key_serialize(
         self,
         workflow,
         key,
@@ -7614,7 +7322,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_slurm_schedulers(
+    def delete_slurm_schedulers(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -7661,7 +7369,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_slurm_schedulers_serialize(
+        _param = self._delete_slurm_schedulers_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -7672,7 +7380,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -7687,7 +7395,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_slurm_schedulers_with_http_info(
+    def delete_slurm_schedulers_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -7734,7 +7442,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_slurm_schedulers_serialize(
+        _param = self._delete_slurm_schedulers_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -7745,7 +7453,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -7760,7 +7468,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_slurm_schedulers_without_preload_content(
+    def delete_slurm_schedulers_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -7807,7 +7515,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_slurm_schedulers_serialize(
+        _param = self._delete_slurm_schedulers_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -7818,7 +7526,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -7828,7 +7536,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_slurm_schedulers_serialize(
+    def _delete_slurm_schedulers_serialize(
         self,
         workflow,
         body,
@@ -7906,7 +7614,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_slurm_schedulers_key(
+    def delete_slurm_schedulers_key(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the Slurm compute node configuration document.")],
@@ -7956,7 +7664,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_slurm_schedulers_key_serialize(
+        _param = self._delete_slurm_schedulers_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -7968,7 +7676,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -7983,7 +7691,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_slurm_schedulers_key_with_http_info(
+    def delete_slurm_schedulers_key_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the Slurm compute node configuration document.")],
@@ -8033,7 +7741,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_slurm_schedulers_key_serialize(
+        _param = self._delete_slurm_schedulers_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -8045,7 +7753,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -8060,7 +7768,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_slurm_schedulers_key_without_preload_content(
+    def delete_slurm_schedulers_key_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the Slurm compute node configuration document.")],
@@ -8110,7 +7818,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_slurm_schedulers_key_serialize(
+        _param = self._delete_slurm_schedulers_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -8122,7 +7830,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -8132,7 +7840,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_slurm_schedulers_key_serialize(
+    def _delete_slurm_schedulers_key_serialize(
         self,
         workflow,
         key,
@@ -8213,7 +7921,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_user_data(
+    def delete_user_data(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -8260,7 +7968,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_user_data_serialize(
+        _param = self._delete_user_data_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -8271,7 +7979,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -8286,7 +7994,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_user_data_with_http_info(
+    def delete_user_data_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -8333,7 +8041,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_user_data_serialize(
+        _param = self._delete_user_data_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -8344,7 +8052,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -8359,7 +8067,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_user_data_without_preload_content(
+    def delete_user_data_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         body: Optional[Dict[str, Any]] = None,
@@ -8406,7 +8114,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_user_data_serialize(
+        _param = self._delete_user_data_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -8417,7 +8125,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -8427,7 +8135,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_user_data_serialize(
+    def _delete_user_data_serialize(
         self,
         workflow,
         body,
@@ -8505,7 +8213,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_user_data_key(
+    def delete_user_data_key(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the user data document.")],
@@ -8555,7 +8263,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_user_data_key_serialize(
+        _param = self._delete_user_data_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -8567,7 +8275,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -8582,7 +8290,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_user_data_key_with_http_info(
+    def delete_user_data_key_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the user data document.")],
@@ -8632,7 +8340,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_user_data_key_serialize(
+        _param = self._delete_user_data_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -8644,7 +8352,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -8659,7 +8367,7 @@ class DefaultApi:
 
 
     @validate_call
-    def delete_workflows_workflow_user_data_key_without_preload_content(
+    def delete_user_data_key_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         key: Annotated[StrictStr, Field(description="key of the user data document.")],
@@ -8709,7 +8417,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._delete_workflows_workflow_user_data_key_serialize(
+        _param = self._delete_user_data_key_serialize(
             workflow=workflow,
             key=key,
             body=body,
@@ -8721,7 +8429,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -8731,7 +8439,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _delete_workflows_workflow_user_data_key_serialize(
+    def _delete_user_data_key_serialize(
         self,
         workflow,
         key,
@@ -8796,6 +8504,298 @@ class DefaultApi:
         return self.api_client.param_serialize(
             method='DELETE',
             resource_path='/workflows/{workflow}/user_data/{key}',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def delete_workflows_key(
+        self,
+        key: Annotated[StrictStr, Field(description="Workflow key.")],
+        body: Optional[Dict[str, Any]] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> WorkflowsModel:
+        """Delete a workflow
+
+        Deletes a document from the \"workflows\" collection by key.
+
+        :param key: Workflow key. (required)
+        :type key: str
+        :param body:
+        :type body: object
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_workflows_key_serialize(
+            key=key,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "WorkflowsModel",
+            '500': "DefaultErrorResponse"
+            
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def delete_workflows_key_with_http_info(
+        self,
+        key: Annotated[StrictStr, Field(description="Workflow key.")],
+        body: Optional[Dict[str, Any]] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[WorkflowsModel]:
+        """Delete a workflow
+
+        Deletes a document from the \"workflows\" collection by key.
+
+        :param key: Workflow key. (required)
+        :type key: str
+        :param body:
+        :type body: object
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_workflows_key_serialize(
+            key=key,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "WorkflowsModel",
+            '500': "DefaultErrorResponse"
+            
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def delete_workflows_key_without_preload_content(
+        self,
+        key: Annotated[StrictStr, Field(description="Workflow key.")],
+        body: Optional[Dict[str, Any]] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Delete a workflow
+
+        Deletes a document from the \"workflows\" collection by key.
+
+        :param key: Workflow key. (required)
+        :type key: str
+        :param body:
+        :type body: object
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._delete_workflows_key_serialize(
+            key=key,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "WorkflowsModel",
+            '500': "DefaultErrorResponse"
+            
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _delete_workflows_key_serialize(
+        self,
+        key,
+        body,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> Tuple:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+            
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, str] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if key is not None:
+            _path_params['key'] = key
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if body is not None:
+            _body_params = body
+
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            [
+                'application/json'
+            ]
+        )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='DELETE',
+            resource_path='/workflows/{key}',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -8890,7 +8890,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetAwsSchedulersResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -8983,7 +8983,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetAwsSchedulersResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -9076,7 +9076,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetAwsSchedulersResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -9236,7 +9236,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -9309,7 +9309,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -9382,7 +9382,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -9535,7 +9535,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetComputeNodeStatsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -9628,7 +9628,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetComputeNodeStatsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -9721,7 +9721,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetComputeNodeStatsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -9881,7 +9881,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -9954,7 +9954,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -10027,7 +10027,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -10184,7 +10184,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetComputeNodesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -10281,7 +10281,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetComputeNodesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -10378,7 +10378,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetComputeNodesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -10543,7 +10543,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -10616,7 +10616,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -10689,7 +10689,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -10830,7 +10830,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetEdgesNameResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -10911,7 +10911,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetEdgesNameResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -10992,7 +10992,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetEdgesNameResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -11139,7 +11139,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgesNameModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -11216,7 +11216,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgesNameModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -11293,7 +11293,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgesNameModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -11449,7 +11449,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetEventsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -11542,7 +11542,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetEventsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -11635,7 +11635,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetEventsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -11807,7 +11807,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetEventsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -11892,7 +11892,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetEventsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -11977,7 +11977,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetEventsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -12125,7 +12125,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -12198,7 +12198,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -12271,7 +12271,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -12428,7 +12428,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetFilesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -12525,7 +12525,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetFilesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -12622,7 +12622,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetFilesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -12787,7 +12787,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FilesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -12860,7 +12860,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FilesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -12933,7 +12933,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FilesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -13074,7 +13074,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetFilesProducedByJobKeyResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -13155,7 +13155,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetFilesProducedByJobKeyResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -13236,7 +13236,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetFilesProducedByJobKeyResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -13375,7 +13375,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -13444,7 +13444,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -13513,7 +13513,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -13667,7 +13667,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobProcessStatsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -13764,7 +13764,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobProcessStatsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -13861,7 +13861,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobProcessStatsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -14026,7 +14026,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -14099,7 +14099,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -14172,7 +14172,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -14309,7 +14309,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobSpecificationsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -14386,7 +14386,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobSpecificationsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -14463,7 +14463,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobSpecificationsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -14603,7 +14603,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobSpecificationsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -14676,7 +14676,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobSpecificationsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -14749,7 +14749,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobSpecificationsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -14918,7 +14918,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -15027,7 +15027,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -15136,7 +15136,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -15324,7 +15324,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobsFindByNeedsFileKeyResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -15405,7 +15405,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobsFindByNeedsFileKeyResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -15486,7 +15486,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobsFindByNeedsFileKeyResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -15637,7 +15637,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobsFindByStatusStatusResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -15718,7 +15718,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobsFindByStatusStatusResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -15799,7 +15799,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobsFindByStatusStatusResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -15942,7 +15942,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -16015,7 +16015,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -16088,7 +16088,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -16221,7 +16221,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "List[JobProcessStatsModel]",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -16294,7 +16294,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "List[JobProcessStatsModel]",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -16367,7 +16367,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "List[JobProcessStatsModel]",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -16500,7 +16500,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -16573,7 +16573,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -16646,7 +16646,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -16779,7 +16779,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobsKeyUserDataConsumesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -16852,7 +16852,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobsKeyUserDataConsumesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -16925,7 +16925,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobsKeyUserDataConsumesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -17058,7 +17058,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobsKeyUserDataStoresResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -17131,7 +17131,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobsKeyUserDataStoresResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -17204,7 +17204,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetJobsKeyUserDataStoresResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -17333,7 +17333,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -17402,7 +17402,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -17471,7 +17471,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -17625,7 +17625,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetLocalSchedulersResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -17722,7 +17722,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetLocalSchedulersResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -17819,7 +17819,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetLocalSchedulersResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -17984,7 +17984,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -18057,7 +18057,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -18130,7 +18130,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -18255,7 +18255,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -18320,7 +18320,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -18385,7 +18385,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -18552,7 +18552,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetResourceRequirementsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -18665,7 +18665,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetResourceRequirementsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -18778,7 +18778,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetResourceRequirementsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -18963,7 +18963,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -19036,7 +19036,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -19109,7 +19109,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -19274,7 +19274,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetResultsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -19379,7 +19379,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetResultsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -19484,7 +19484,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetResultsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -19659,7 +19659,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -19732,7 +19732,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -19805,7 +19805,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -19938,7 +19938,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -20011,7 +20011,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -20084,7 +20084,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -20245,7 +20245,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetScheduledComputeNodesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -20346,7 +20346,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetScheduledComputeNodesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -20447,7 +20447,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetScheduledComputeNodesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -20617,7 +20617,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -20690,7 +20690,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -20763,7 +20763,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -20948,7 +20948,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetSlurmSchedulersResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -21073,7 +21073,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetSlurmSchedulersResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -21198,7 +21198,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetSlurmSchedulersResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -21398,7 +21398,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -21471,7 +21471,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -21544,7 +21544,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -21701,7 +21701,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetUserDataResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -21798,7 +21798,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetUserDataResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -21895,7 +21895,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetUserDataResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -22060,7 +22060,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -22133,7 +22133,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -22206,7 +22206,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -22331,7 +22331,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -22396,7 +22396,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -22461,7 +22461,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -22580,7 +22580,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -22645,7 +22645,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -22710,7 +22710,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -22833,7 +22833,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -22902,7 +22902,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -22971,7 +22971,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -23093,7 +23093,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -23158,7 +23158,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -23223,7 +23223,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -23370,7 +23370,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -23463,7 +23463,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -23556,7 +23556,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -23714,7 +23714,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -23783,7 +23783,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -23852,7 +23852,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -23978,7 +23978,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyCollectionNamesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -24047,7 +24047,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyCollectionNamesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -24116,7 +24116,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyCollectionNamesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -24242,7 +24242,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowConfigModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -24311,7 +24311,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowConfigModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -24380,7 +24380,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowConfigModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -24510,7 +24510,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyDotGraphNameResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -24583,7 +24583,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyDotGraphNameResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -24656,7 +24656,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyDotGraphNameResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -24785,7 +24785,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyIsCompleteResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -24854,7 +24854,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyIsCompleteResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -24923,7 +24923,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyIsCompleteResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -25049,7 +25049,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyMissingUserDataResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -25118,7 +25118,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyMissingUserDataResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -25187,7 +25187,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyMissingUserDataResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -25317,7 +25317,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyReadyJobRequirementsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -25390,7 +25390,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyReadyJobRequirementsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -25463,7 +25463,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyReadyJobRequirementsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -25594,7 +25594,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyRequiredExistingFilesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -25663,7 +25663,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyRequiredExistingFilesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -25732,7 +25732,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetWorkflowsKeyRequiredExistingFilesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -25858,7 +25858,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -25927,7 +25927,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -25996,7 +25996,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -26126,7 +26126,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -26199,7 +26199,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -26272,7 +26272,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -26418,7 +26418,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostBulkJobsWithEdgesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -26491,7 +26491,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostBulkJobsWithEdgesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -26564,7 +26564,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostBulkJobsWithEdgesResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -26710,7 +26710,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -26783,7 +26783,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -26856,7 +26856,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -27002,7 +27002,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -27075,7 +27075,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -27148,7 +27148,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -27298,7 +27298,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgesNameModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -27375,7 +27375,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgesNameModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -27452,7 +27452,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgesNameModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -27601,7 +27601,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -27674,7 +27674,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -27747,7 +27747,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -27893,7 +27893,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FilesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -27966,7 +27966,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FilesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -28039,7 +28039,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FilesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -28185,7 +28185,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -28258,7 +28258,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -28331,7 +28331,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -28477,7 +28477,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobSpecificationsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -28550,7 +28550,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobSpecificationsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -28623,7 +28623,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobSpecificationsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -28769,7 +28769,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -28842,7 +28842,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -28915,7 +28915,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -29061,7 +29061,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -29134,7 +29134,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -29207,7 +29207,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -29369,7 +29369,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -29458,7 +29458,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -29547,7 +29547,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -29709,7 +29709,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -29786,7 +29786,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -29863,7 +29863,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -30012,7 +30012,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -30085,7 +30085,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -30158,7 +30158,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -30304,7 +30304,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -30377,7 +30377,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -30450,7 +30450,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -30596,7 +30596,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -30669,7 +30669,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -30742,7 +30742,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -30888,7 +30888,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -30961,7 +30961,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -31034,7 +31034,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -31180,7 +31180,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -31253,7 +31253,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -31326,7 +31326,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -31472,7 +31472,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -31545,7 +31545,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -31618,7 +31618,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -31760,7 +31760,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -31829,7 +31829,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -31898,7 +31898,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -32037,7 +32037,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -32106,7 +32106,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -32175,7 +32175,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -32318,7 +32318,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -32391,7 +32391,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -32464,7 +32464,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -32618,7 +32618,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -32699,7 +32699,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -32780,7 +32780,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -32960,7 +32960,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -33057,7 +33057,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -33154,7 +33154,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -33350,7 +33350,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -33447,7 +33447,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -33544,7 +33544,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -33716,7 +33716,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyPrepareJobsForSchedulingResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -33789,7 +33789,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyPrepareJobsForSchedulingResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -33862,7 +33862,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyPrepareJobsForSchedulingResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -34016,7 +34016,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyPrepareJobsForSubmissionResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -34097,7 +34097,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyPrepareJobsForSubmissionResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -34178,7 +34178,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyPrepareJobsForSubmissionResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -34338,7 +34338,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyPrepareNextJobsForSubmissionResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -34415,7 +34415,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyPrepareNextJobsForSubmissionResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -34492,7 +34492,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyPrepareNextJobsForSubmissionResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -34643,7 +34643,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -34716,7 +34716,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -34789,7 +34789,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -34935,7 +34935,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyProcessChangedJobInputsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -35008,7 +35008,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyProcessChangedJobInputsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -35081,7 +35081,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PostWorkflowsKeyProcessChangedJobInputsResponse",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -35231,7 +35231,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -35308,7 +35308,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -35385,7 +35385,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -35536,7 +35536,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -35609,7 +35609,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -35682,7 +35682,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -35832,7 +35832,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -35909,7 +35909,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -35986,7 +35986,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -36139,7 +36139,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -36216,7 +36216,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -36293,7 +36293,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -36446,7 +36446,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -36523,7 +36523,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -36600,7 +36600,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -36753,7 +36753,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -36830,7 +36830,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -36907,7 +36907,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -37060,7 +37060,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FilesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -37137,7 +37137,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FilesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -37214,7 +37214,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FilesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -37367,7 +37367,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -37444,7 +37444,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -37521,7 +37521,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -37674,7 +37674,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -37751,7 +37751,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -37828,7 +37828,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -37993,7 +37993,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -38082,7 +38082,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -38171,7 +38171,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -38337,7 +38337,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgesNameModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -38418,7 +38418,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgesNameModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -38499,7 +38499,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgesNameModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -38655,7 +38655,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -38732,7 +38732,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -38809,7 +38809,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -38962,7 +38962,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -39039,7 +39039,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -39116,7 +39116,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -39269,7 +39269,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -39346,7 +39346,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -39423,7 +39423,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -39576,7 +39576,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -39653,7 +39653,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -39730,7 +39730,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -39883,7 +39883,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -39960,7 +39960,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -40037,7 +40037,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulersModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -40190,7 +40190,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -40267,7 +40267,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -40344,7 +40344,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -40493,7 +40493,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -40566,7 +40566,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -40639,7 +40639,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowsModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -40785,7 +40785,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -40858,7 +40858,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -40931,7 +40931,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -41077,7 +41077,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowConfigModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -41150,7 +41150,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowConfigModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -41223,7 +41223,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowConfigModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -41369,7 +41369,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -41442,7 +41442,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(
@@ -41515,7 +41515,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
-            '500': "InlineResponse500"
+            '500': "DefaultErrorResponse"
             
         }
         response_data = self.api_client.call_api(

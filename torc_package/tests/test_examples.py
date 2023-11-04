@@ -14,12 +14,12 @@ def test_manual_dependencies_python():
 
 def test_manual_dependencies_julia():
     """Test the manual-dependencies Julia example."""
-    project = str(Path(__file__).parent.parent.parent / "julia" / "Torc")
+    project = Path(__file__).parent.parent.parent / "julia" / "Torc"
     subprocess.run(
         [
             "julia",
             "--project",
-            project,
+            str(project),
             str(EXAMPLES_DIR / "manual_job_dependencies.jl"),
         ],
         check=True,

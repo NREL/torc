@@ -405,7 +405,7 @@ def schedule_slurm_nodes(
                 start_one_worker_per_node=start_one_worker_per_node,
             )
         except Exception:
-            api.delete_workflows_workflow_scheduled_compute_nodes_key(workflow_key, node.key)
+            api.delete_scheduled_compute_nodes_key(workflow_key, node.key)
             raise
 
         node.scheduler_id = job_id

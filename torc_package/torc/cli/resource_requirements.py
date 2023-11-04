@@ -177,7 +177,7 @@ def delete(ctx, api, resource_requirement_keys):
         logger.warning("No resource requirement keys were passed")
     workflow_key = get_workflow_key_from_context(ctx, api)
     for key in resource_requirement_keys:
-        api.delete_workflows_workflow_resource_requirements_key(workflow_key, key)
+        api.delete_resource_requirements_key(workflow_key, key)
         logger.info("Deleted workflow=%s resource_requirements=%s", workflow_key, key)
 
 
@@ -190,9 +190,7 @@ def delete_all(ctx, api):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     for resource_requirement in iter_documents(api.get_resource_requirements, workflow_key):
-        api.delete_workflows_workflow_resource_requirements_key(
-            workflow_key, resource_requirement.key
-        )
+        api.delete_resource_requirements_key(workflow_key, resource_requirement.key)
         logger.info("Deleted resource_requirement %s", resource_requirement.key)
 
 

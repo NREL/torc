@@ -180,7 +180,7 @@ def delete(ctx, api, user_data_keys):
     confirm_change(ctx, msg)
     workflow_key = get_workflow_key_from_context(ctx, api)
     for key in user_data_keys:
-        api.delete_workflows_workflow_user_data_key(workflow_key, key)
+        api.delete_user_data_key(workflow_key, key)
         logger.info("Deleted user_data=%s", key)
 
 
@@ -196,7 +196,7 @@ def delete_all(ctx, api):
     msg = f"This command will delete {len(keys)} user data objects."
     confirm_change(ctx, msg)
     for key in keys:
-        api.delete_workflows_workflow_user_data_key(workflow_key, key)
+        api.delete_user_data_key(workflow_key, key)
         logger.info("Deleted user_data %s", key)
 
 

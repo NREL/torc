@@ -11,9 +11,965 @@ This can be used to construct the `OpenAPI.Clients.Client` instance.
 """
 basepath(::Type{ DefaultApi }) = "http://localhost/_db/test-workflows/torc-service"
 
+const _returntypes_delete_aws_schedulers_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_aws_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_aws_schedulers_DefaultApi, "/workflows/{workflow}/aws_schedulers", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete all documents of type AWS compute node configuration for a workflow
+
+Delete all documents from the \"aws_schedulers\" collection for a workflow.
+
+Params:
+- workflow::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function delete_aws_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_aws_schedulers(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_aws_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_aws_schedulers(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_aws_schedulers_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => AwsSchedulersModel,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_aws_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_aws_schedulers_key_DefaultApi, "/workflows/{workflow}/aws_schedulers/{key}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete a document of type AWS compute node configuration
+
+Deletes a document from the \"aws_schedulers\" collection by key.
+
+Params:
+- workflow::String (required)
+- key::String (required)
+- body::Any
+
+Return: AwsSchedulersModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_aws_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_aws_schedulers_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_aws_schedulers_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_aws_schedulers_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_compute_node_stats_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_compute_node_stats(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_compute_node_stats_DefaultApi, "/workflows/{workflow}/compute_node_stats", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete all documents of type compute node statistics for a workflow
+
+Delete all documents from the \"compute_node_stats\" collection for a workflow.
+
+Params:
+- workflow::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function delete_compute_node_stats(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_compute_node_stats(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_compute_node_stats(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_compute_node_stats(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_compute_node_stats_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => ComputeNodeStatsModel,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_compute_node_stats_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_compute_node_stats_key_DefaultApi, "/workflows/{workflow}/compute_node_stats/{key}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete a document of type compute node statistics
+
+Deletes a document from the \"compute_node_stats\" collection by key.
+
+Params:
+- workflow::String (required)
+- key::String (required)
+- body::Any
+
+Return: ComputeNodeStatsModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_compute_node_stats_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_compute_node_stats_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_compute_node_stats_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_compute_node_stats_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_compute_nodes_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_compute_nodes(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_compute_nodes_DefaultApi, "/workflows/{workflow}/compute_nodes", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete all documents of type compute node for a workflow
+
+Delete all documents from the \"compute_nodes\" collection for a workflow.
+
+Params:
+- workflow::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function delete_compute_nodes(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_compute_nodes(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_compute_nodes(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_compute_nodes_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => ComputeNodesModel,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_compute_nodes_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_compute_nodes_key_DefaultApi, "/workflows/{workflow}/compute_nodes/{key}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete a document of type compute node
+
+Deletes a document from the \"compute_nodes\" collection by key.
+
+Params:
+- workflow::String (required)
+- key::String (required)
+- body::Any
+
+Return: ComputeNodesModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_compute_nodes_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_compute_nodes_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_compute_nodes_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_compute_nodes_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_edges_name_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_edges_name(_api::DefaultApi, workflow::String, name::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_edges_name_DefaultApi, "/workflows/{workflow}/edges/{name}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "name", name)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete all edges from the designated collection
+
+Deletes all edges from the designated collection.
+
+Params:
+- workflow::String (required)
+- name::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function delete_edges_name(_api::DefaultApi, workflow::String, name::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_edges_name(_api, workflow, name; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_edges_name(_api::DefaultApi, response_stream::Channel, workflow::String, name::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_edges_name(_api, workflow, name; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_edges_name_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => EdgesNameModel,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_edges_name_key(_api::DefaultApi, workflow::String, name::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_edges_name_key_DefaultApi, "/workflows/{workflow}/edges/{name}/{key}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "name", name)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete an edge
+
+Deletes an edge from the designated collection by key.
+
+Params:
+- workflow::String (required)
+- name::String (required)
+- key::String (required)
+- body::Any
+
+Return: EdgesNameModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_edges_name_key(_api::DefaultApi, workflow::String, name::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_edges_name_key(_api, workflow, name, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_edges_name_key(_api::DefaultApi, response_stream::Channel, workflow::String, name::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_edges_name_key(_api, workflow, name, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_events_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_events(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_events_DefaultApi, "/workflows/{workflow}/events", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete all documents of type event for a workflow
+
+Delete all documents from the \"events\" collection for a workflow.
+
+Params:
+- workflow::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function delete_events(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_events(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_events(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_events(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_events_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_events_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_events_key_DefaultApi, "/workflows/{workflow}/events/{key}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete a document of type event
+
+Deletes a document from the \"events\" collection by key.
+
+Params:
+- workflow::String (required)
+- key::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function delete_events_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_events_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_events_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_events_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_files_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_files(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_files_DefaultApi, "/workflows/{workflow}/files", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete all documents of type file for a workflow
+
+Delete all documents from the \"files\" collection for a workflow.
+
+Params:
+- workflow::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function delete_files(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_files(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_files(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_files(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_files_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => FilesModel,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_files_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_files_key_DefaultApi, "/workflows/{workflow}/files/{key}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete a document of type file
+
+Deletes a document from the \"files\" collection by key.
+
+Params:
+- workflow::String (required)
+- key::String (required)
+- body::Any
+
+Return: FilesModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_files_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_files_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_files_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_files_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_job_process_stats_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_job_process_stats(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_job_process_stats_DefaultApi, "/workflows/{workflow}/job_process_stats", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete all documents of type job process statistics for a workflow
+
+Delete all documents from the \"job_process_stats\" collection for a workflow.
+
+Params:
+- workflow::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function delete_job_process_stats(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_job_process_stats(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_job_process_stats(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_job_process_stats(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_job_process_stats_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => JobProcessStatsModel,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_job_process_stats_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_job_process_stats_key_DefaultApi, "/workflows/{workflow}/job_process_stats/{key}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete a document of type job process statistics
+
+Deletes a document from the \"job_process_stats\" collection by key.
+
+Params:
+- workflow::String (required)
+- key::String (required)
+- body::Any
+
+Return: JobProcessStatsModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_job_process_stats_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_job_process_stats_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_job_process_stats_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_job_process_stats_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_jobs_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_jobs(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_jobs_DefaultApi, "/workflows/{workflow}/jobs", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete all documents of type job for a workflow
+
+Delete all documents from the \"jobs\" collection for a workflow.
+
+Params:
+- workflow::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function delete_jobs(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_jobs(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_jobs(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_jobs(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_jobs_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => JobsModel,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_jobs_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_jobs_key_DefaultApi, "/workflows/{workflow}/jobs/{key}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete a document of type job
+
+Deletes a document from the \"jobs\" collection by key.
+
+Params:
+- workflow::String (required)
+- key::String (required)
+- body::Any
+
+Return: JobsModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_jobs_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_jobs_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_jobs_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_jobs_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_local_schedulers_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_local_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_local_schedulers_DefaultApi, "/workflows/{workflow}/local_schedulers", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete all documents of type local compute node configuration for a workflow
+
+Delete all documents from the \"local_schedulers\" collection for a workflow.
+
+Params:
+- workflow::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function delete_local_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_local_schedulers(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_local_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_local_schedulers(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_local_schedulers_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => LocalSchedulersModel,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_local_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_local_schedulers_key_DefaultApi, "/workflows/{workflow}/local_schedulers/{key}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete a document of type local compute node configuration
+
+Deletes a document from the \"local_schedulers\" collection by key.
+
+Params:
+- workflow::String (required)
+- key::String (required)
+- body::Any
+
+Return: LocalSchedulersModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_local_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_local_schedulers_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_local_schedulers_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_local_schedulers_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_resource_requirements_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_resource_requirements(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_resource_requirements_DefaultApi, "/workflows/{workflow}/resource_requirements", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete all documents of type resource requirements for a workflow
+
+Delete all documents from the \"resource_requirements\" collection for a workflow.
+
+Params:
+- workflow::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function delete_resource_requirements(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_resource_requirements(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_resource_requirements(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_resource_requirements(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_resource_requirements_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => ResourceRequirementsModel,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_resource_requirements_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_resource_requirements_key_DefaultApi, "/workflows/{workflow}/resource_requirements/{key}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete a document of type resource requirements
+
+Deletes a document from the \"resource_requirements\" collection by key.
+
+Params:
+- workflow::String (required)
+- key::String (required)
+- body::Any
+
+Return: ResourceRequirementsModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_resource_requirements_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_resource_requirements_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_resource_requirements_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_resource_requirements_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_results_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_results(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_results_DefaultApi, "/workflows/{workflow}/results", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete all documents of type result for a workflow
+
+Delete all documents from the \"results\" collection for a workflow.
+
+Params:
+- workflow::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function delete_results(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_results(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_results(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_results(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_results_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => ResultsModel,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_results_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_results_key_DefaultApi, "/workflows/{workflow}/results/{key}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete a document of type result
+
+Deletes a document from the \"results\" collection by key.
+
+Params:
+- workflow::String (required)
+- key::String (required)
+- body::Any
+
+Return: ResultsModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_results_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_results_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_results_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_results_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_scheduled_compute_nodes_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_scheduled_compute_nodes(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_scheduled_compute_nodes_DefaultApi, "/workflows/{workflow}/scheduled_compute_nodes", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete all documents of type scheduled compute node for a workflow
+
+Delete all documents from the \"scheduled_compute_nodes\" collection for a workflow.
+
+Params:
+- workflow::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function delete_scheduled_compute_nodes(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_scheduled_compute_nodes(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_scheduled_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_scheduled_compute_nodes(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_scheduled_compute_nodes_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => ScheduledComputeNodesModel,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_scheduled_compute_nodes_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_scheduled_compute_nodes_key_DefaultApi, "/workflows/{workflow}/scheduled_compute_nodes/{key}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete a document of type scheduled compute node
+
+Deletes a document from the \"scheduled_compute_nodes\" collection by key.
+
+Params:
+- workflow::String (required)
+- key::String (required)
+- body::Any
+
+Return: ScheduledComputeNodesModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_scheduled_compute_nodes_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_scheduled_compute_nodes_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_scheduled_compute_nodes_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_scheduled_compute_nodes_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_slurm_schedulers_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_slurm_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_slurm_schedulers_DefaultApi, "/workflows/{workflow}/slurm_schedulers", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete all documents of type Slurm compute node configuration for a workflow
+
+Delete all documents from the \"slurm_schedulers\" collection for a workflow.
+
+Params:
+- workflow::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function delete_slurm_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_slurm_schedulers(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_slurm_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_slurm_schedulers(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_slurm_schedulers_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => SlurmSchedulersModel,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_slurm_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_slurm_schedulers_key_DefaultApi, "/workflows/{workflow}/slurm_schedulers/{key}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete a document of type Slurm compute node configuration
+
+Deletes a document from the \"slurm_schedulers\" collection by key.
+
+Params:
+- workflow::String (required)
+- key::String (required)
+- body::Any
+
+Return: SlurmSchedulersModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_slurm_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_slurm_schedulers_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_slurm_schedulers_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_slurm_schedulers_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_user_data_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_user_data(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_user_data_DefaultApi, "/workflows/{workflow}/user_data", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete all documents of type user data for a workflow
+
+Delete all documents from the \"user_data\" collection for a workflow.
+
+Params:
+- workflow::String (required)
+- body::Any
+
+Return: Any, OpenAPI.Clients.ApiResponse
+"""
+function delete_user_data(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_user_data(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_user_data(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_user_data(_api, workflow; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_delete_user_data_key_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => UserDataModel,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_delete_user_data_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_user_data_key_DefaultApi, "/workflows/{workflow}/user_data/{key}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Delete a document of type user data
+
+Deletes a document from the \"user_data\" collection by key.
+
+Params:
+- workflow::String (required)
+- key::String (required)
+- body::Any
+
+Return: UserDataModel, OpenAPI.Clients.ApiResponse
+"""
+function delete_user_data_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_user_data_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function delete_user_data_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_delete_user_data_key(_api, workflow, key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
 const _returntypes_delete_workflows_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_delete_workflows_key(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing)
@@ -44,965 +1000,9 @@ function delete_workflows_key(_api::DefaultApi, response_stream::Channel, key::S
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
-const _returntypes_delete_workflows_workflow_aws_schedulers_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_aws_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_aws_schedulers_DefaultApi, "/workflows/{workflow}/aws_schedulers", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete all documents of type AWS compute node configuration for a workflow
-
-Delete all documents from the \"aws_schedulers\" collection for a workflow.
-
-Params:
-- workflow::String (required)
-- body::Any
-
-Return: Any, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_aws_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_aws_schedulers(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_aws_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_aws_schedulers(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_aws_schedulers_key_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => AwsSchedulersModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_aws_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_aws_schedulers_key_DefaultApi, "/workflows/{workflow}/aws_schedulers/{key}", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete a document of type AWS compute node configuration
-
-Deletes a document from the \"aws_schedulers\" collection by key.
-
-Params:
-- workflow::String (required)
-- key::String (required)
-- body::Any
-
-Return: AwsSchedulersModel, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_aws_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_aws_schedulers_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_aws_schedulers_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_aws_schedulers_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_compute_node_stats_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_compute_node_stats(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_compute_node_stats_DefaultApi, "/workflows/{workflow}/compute_node_stats", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete all documents of type compute node statistics for a workflow
-
-Delete all documents from the \"compute_node_stats\" collection for a workflow.
-
-Params:
-- workflow::String (required)
-- body::Any
-
-Return: Any, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_compute_node_stats(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_compute_node_stats(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_compute_node_stats(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_compute_node_stats(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_compute_node_stats_key_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => ComputeNodeStatsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_compute_node_stats_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_compute_node_stats_key_DefaultApi, "/workflows/{workflow}/compute_node_stats/{key}", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete a document of type compute node statistics
-
-Deletes a document from the \"compute_node_stats\" collection by key.
-
-Params:
-- workflow::String (required)
-- key::String (required)
-- body::Any
-
-Return: ComputeNodeStatsModel, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_compute_node_stats_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_compute_node_stats_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_compute_node_stats_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_compute_node_stats_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_compute_nodes_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_compute_nodes(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_compute_nodes_DefaultApi, "/workflows/{workflow}/compute_nodes", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete all documents of type compute node for a workflow
-
-Delete all documents from the \"compute_nodes\" collection for a workflow.
-
-Params:
-- workflow::String (required)
-- body::Any
-
-Return: Any, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_compute_nodes(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_compute_nodes(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_compute_nodes(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_compute_nodes_key_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => ComputeNodesModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_compute_nodes_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_compute_nodes_key_DefaultApi, "/workflows/{workflow}/compute_nodes/{key}", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete a document of type compute node
-
-Deletes a document from the \"compute_nodes\" collection by key.
-
-Params:
-- workflow::String (required)
-- key::String (required)
-- body::Any
-
-Return: ComputeNodesModel, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_compute_nodes_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_compute_nodes_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_compute_nodes_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_compute_nodes_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_edges_name_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_edges_name(_api::DefaultApi, workflow::String, name::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_edges_name_DefaultApi, "/workflows/{workflow}/edges/{name}", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "name", name)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete all edges from the designated collection
-
-Deletes all edges from the designated collection.
-
-Params:
-- workflow::String (required)
-- name::String (required)
-- body::Any
-
-Return: Any, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_edges_name(_api::DefaultApi, workflow::String, name::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_edges_name(_api, workflow, name; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_edges_name(_api::DefaultApi, response_stream::Channel, workflow::String, name::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_edges_name(_api, workflow, name; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_edges_name_key_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => EdgesNameModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_edges_name_key(_api::DefaultApi, workflow::String, name::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_edges_name_key_DefaultApi, "/workflows/{workflow}/edges/{name}/{key}", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "name", name)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete an edge
-
-Deletes an edge from the designated collection by key.
-
-Params:
-- workflow::String (required)
-- name::String (required)
-- key::String (required)
-- body::Any
-
-Return: EdgesNameModel, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_edges_name_key(_api::DefaultApi, workflow::String, name::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_edges_name_key(_api, workflow, name, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_edges_name_key(_api::DefaultApi, response_stream::Channel, workflow::String, name::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_edges_name_key(_api, workflow, name, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_events_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_events(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_events_DefaultApi, "/workflows/{workflow}/events", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete all documents of type event for a workflow
-
-Delete all documents from the \"events\" collection for a workflow.
-
-Params:
-- workflow::String (required)
-- body::Any
-
-Return: Any, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_events(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_events(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_events(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_events(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_events_key_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_events_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_events_key_DefaultApi, "/workflows/{workflow}/events/{key}", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete a document of type event
-
-Deletes a document from the \"events\" collection by key.
-
-Params:
-- workflow::String (required)
-- key::String (required)
-- body::Any
-
-Return: Any, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_events_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_events_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_events_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_events_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_files_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_files(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_files_DefaultApi, "/workflows/{workflow}/files", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete all documents of type file for a workflow
-
-Delete all documents from the \"files\" collection for a workflow.
-
-Params:
-- workflow::String (required)
-- body::Any
-
-Return: Any, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_files(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_files(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_files(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_files(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_files_key_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => FilesModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_files_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_files_key_DefaultApi, "/workflows/{workflow}/files/{key}", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete a document of type file
-
-Deletes a document from the \"files\" collection by key.
-
-Params:
-- workflow::String (required)
-- key::String (required)
-- body::Any
-
-Return: FilesModel, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_files_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_files_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_files_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_files_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_job_process_stats_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_job_process_stats(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_job_process_stats_DefaultApi, "/workflows/{workflow}/job_process_stats", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete all documents of type job process statistics for a workflow
-
-Delete all documents from the \"job_process_stats\" collection for a workflow.
-
-Params:
-- workflow::String (required)
-- body::Any
-
-Return: Any, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_job_process_stats(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_job_process_stats(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_job_process_stats(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_job_process_stats(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_job_process_stats_key_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => JobProcessStatsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_job_process_stats_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_job_process_stats_key_DefaultApi, "/workflows/{workflow}/job_process_stats/{key}", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete a document of type job process statistics
-
-Deletes a document from the \"job_process_stats\" collection by key.
-
-Params:
-- workflow::String (required)
-- key::String (required)
-- body::Any
-
-Return: JobProcessStatsModel, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_job_process_stats_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_job_process_stats_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_job_process_stats_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_job_process_stats_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_jobs_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_jobs(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_jobs_DefaultApi, "/workflows/{workflow}/jobs", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete all documents of type job for a workflow
-
-Delete all documents from the \"jobs\" collection for a workflow.
-
-Params:
-- workflow::String (required)
-- body::Any
-
-Return: Any, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_jobs(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_jobs(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_jobs(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_jobs(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_jobs_key_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => JobsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_jobs_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_jobs_key_DefaultApi, "/workflows/{workflow}/jobs/{key}", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete a document of type job
-
-Deletes a document from the \"jobs\" collection by key.
-
-Params:
-- workflow::String (required)
-- key::String (required)
-- body::Any
-
-Return: JobsModel, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_jobs_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_jobs_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_jobs_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_jobs_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_local_schedulers_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_local_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_local_schedulers_DefaultApi, "/workflows/{workflow}/local_schedulers", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete all documents of type local compute node configuration for a workflow
-
-Delete all documents from the \"local_schedulers\" collection for a workflow.
-
-Params:
-- workflow::String (required)
-- body::Any
-
-Return: Any, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_local_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_local_schedulers(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_local_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_local_schedulers(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_local_schedulers_key_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => LocalSchedulersModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_local_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_local_schedulers_key_DefaultApi, "/workflows/{workflow}/local_schedulers/{key}", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete a document of type local compute node configuration
-
-Deletes a document from the \"local_schedulers\" collection by key.
-
-Params:
-- workflow::String (required)
-- key::String (required)
-- body::Any
-
-Return: LocalSchedulersModel, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_local_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_local_schedulers_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_local_schedulers_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_local_schedulers_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_resource_requirements_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_resource_requirements(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_resource_requirements_DefaultApi, "/workflows/{workflow}/resource_requirements", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete all documents of type resource requirements for a workflow
-
-Delete all documents from the \"resource_requirements\" collection for a workflow.
-
-Params:
-- workflow::String (required)
-- body::Any
-
-Return: Any, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_resource_requirements(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_resource_requirements(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_resource_requirements(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_resource_requirements(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_resource_requirements_key_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => ResourceRequirementsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_resource_requirements_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_resource_requirements_key_DefaultApi, "/workflows/{workflow}/resource_requirements/{key}", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete a document of type resource requirements
-
-Deletes a document from the \"resource_requirements\" collection by key.
-
-Params:
-- workflow::String (required)
-- key::String (required)
-- body::Any
-
-Return: ResourceRequirementsModel, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_resource_requirements_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_resource_requirements_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_resource_requirements_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_resource_requirements_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_results_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_results(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_results_DefaultApi, "/workflows/{workflow}/results", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete all documents of type result for a workflow
-
-Delete all documents from the \"results\" collection for a workflow.
-
-Params:
-- workflow::String (required)
-- body::Any
-
-Return: Any, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_results(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_results(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_results(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_results(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_results_key_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => ResultsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_results_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_results_key_DefaultApi, "/workflows/{workflow}/results/{key}", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete a document of type result
-
-Deletes a document from the \"results\" collection by key.
-
-Params:
-- workflow::String (required)
-- key::String (required)
-- body::Any
-
-Return: ResultsModel, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_results_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_results_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_results_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_results_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_scheduled_compute_nodes_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_scheduled_compute_nodes(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_scheduled_compute_nodes_DefaultApi, "/workflows/{workflow}/scheduled_compute_nodes", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete all documents of type scheduled compute node for a workflow
-
-Delete all documents from the \"scheduled_compute_nodes\" collection for a workflow.
-
-Params:
-- workflow::String (required)
-- body::Any
-
-Return: Any, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_scheduled_compute_nodes(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_scheduled_compute_nodes(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_scheduled_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_scheduled_compute_nodes(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_scheduled_compute_nodes_key_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => ScheduledComputeNodesModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_scheduled_compute_nodes_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_scheduled_compute_nodes_key_DefaultApi, "/workflows/{workflow}/scheduled_compute_nodes/{key}", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete a document of type scheduled compute node
-
-Deletes a document from the \"scheduled_compute_nodes\" collection by key.
-
-Params:
-- workflow::String (required)
-- key::String (required)
-- body::Any
-
-Return: ScheduledComputeNodesModel, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_scheduled_compute_nodes_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_scheduled_compute_nodes_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_scheduled_compute_nodes_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_scheduled_compute_nodes_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_slurm_schedulers_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_slurm_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_slurm_schedulers_DefaultApi, "/workflows/{workflow}/slurm_schedulers", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete all documents of type Slurm compute node configuration for a workflow
-
-Delete all documents from the \"slurm_schedulers\" collection for a workflow.
-
-Params:
-- workflow::String (required)
-- body::Any
-
-Return: Any, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_slurm_schedulers(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_slurm_schedulers(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_slurm_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_slurm_schedulers(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_slurm_schedulers_key_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => SlurmSchedulersModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_slurm_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_slurm_schedulers_key_DefaultApi, "/workflows/{workflow}/slurm_schedulers/{key}", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete a document of type Slurm compute node configuration
-
-Deletes a document from the \"slurm_schedulers\" collection by key.
-
-Params:
-- workflow::String (required)
-- key::String (required)
-- body::Any
-
-Return: SlurmSchedulersModel, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_slurm_schedulers_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_slurm_schedulers_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_slurm_schedulers_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_slurm_schedulers_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_user_data_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_user_data(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_user_data_DefaultApi, "/workflows/{workflow}/user_data", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete all documents of type user data for a workflow
-
-Delete all documents from the \"user_data\" collection for a workflow.
-
-Params:
-- workflow::String (required)
-- body::Any
-
-Return: Any, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_user_data(_api::DefaultApi, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_user_data(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_user_data(_api::DefaultApi, response_stream::Channel, workflow::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_user_data(_api, workflow; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
-const _returntypes_delete_workflows_workflow_user_data_key_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => UserDataModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
-)
-
-function _oacinternal_delete_workflows_workflow_user_data_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "DELETE", _returntypes_delete_workflows_workflow_user_data_key_DefaultApi, "/workflows/{workflow}/user_data/{key}", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Delete a document of type user data
-
-Deletes a document from the \"user_data\" collection by key.
-
-Params:
-- workflow::String (required)
-- key::String (required)
-- body::Any
-
-Return: UserDataModel, OpenAPI.Clients.ApiResponse
-"""
-function delete_workflows_workflow_user_data_key(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_user_data_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function delete_workflows_workflow_user_data_key(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_delete_workflows_workflow_user_data_key(_api, workflow, key; body=body, _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
 const _returntypes_get_aws_schedulers_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetAwsSchedulersResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_aws_schedulers(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, _mediaType=nothing)
@@ -1046,7 +1046,7 @@ end
 
 const _returntypes_get_aws_schedulers_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => AwsSchedulersModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_aws_schedulers_key(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -1080,7 +1080,7 @@ end
 
 const _returntypes_get_compute_node_stats_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetComputeNodeStatsResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_compute_node_stats(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, hostname=nothing, _mediaType=nothing)
@@ -1124,7 +1124,7 @@ end
 
 const _returntypes_get_compute_node_stats_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ComputeNodeStatsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_compute_node_stats_key(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -1158,7 +1158,7 @@ end
 
 const _returntypes_get_compute_nodes_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetComputeNodesResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_compute_nodes(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, hostname=nothing, is_active=nothing, _mediaType=nothing)
@@ -1204,7 +1204,7 @@ end
 
 const _returntypes_get_compute_nodes_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ComputeNodesModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_compute_nodes_key(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -1238,7 +1238,7 @@ end
 
 const _returntypes_get_edges_name_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetEdgesNameResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_edges_name(_api::DefaultApi, workflow::String, name::String; skip=nothing, limit=nothing, _mediaType=nothing)
@@ -1276,7 +1276,7 @@ end
 
 const _returntypes_get_edges_name_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => EdgesNameModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_edges_name_key(_api::DefaultApi, workflow::String, name::String, key::String; _mediaType=nothing)
@@ -1312,7 +1312,7 @@ end
 
 const _returntypes_get_events_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetEventsResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_events(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, category=nothing, _mediaType=nothing)
@@ -1356,7 +1356,7 @@ end
 
 const _returntypes_get_events_after_timestamp_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetEventsResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_events_after_timestamp(_api::DefaultApi, key::String, timestamp::Float64; category=nothing, skip=nothing, limit=nothing, _mediaType=nothing)
@@ -1396,7 +1396,7 @@ end
 
 const _returntypes_get_events_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_events_key(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -1430,7 +1430,7 @@ end
 
 const _returntypes_get_files_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetFilesResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_files(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, path=nothing, _mediaType=nothing)
@@ -1476,7 +1476,7 @@ end
 
 const _returntypes_get_files_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => FilesModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_files_key(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -1510,7 +1510,7 @@ end
 
 const _returntypes_get_files_produced_by_job_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetFilesProducedByJobKeyResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_files_produced_by_job_key(_api::DefaultApi, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing)
@@ -1548,7 +1548,7 @@ end
 
 const _returntypes_get_job_keys_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_job_keys(_api::DefaultApi, workflow::String; _mediaType=nothing)
@@ -1580,7 +1580,7 @@ end
 
 const _returntypes_get_job_process_stats_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetJobProcessStatsResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_job_process_stats(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, job_key=nothing, run_id=nothing, _mediaType=nothing)
@@ -1626,7 +1626,7 @@ end
 
 const _returntypes_get_job_process_stats_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobProcessStatsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_job_process_stats_key(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -1660,7 +1660,7 @@ end
 
 const _returntypes_get_job_specifications_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetJobSpecificationsResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_job_specifications(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, _mediaType=nothing)
@@ -1696,7 +1696,7 @@ end
 
 const _returntypes_get_job_specifications_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobSpecificationsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_job_specifications_key(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -1730,7 +1730,7 @@ end
 
 const _returntypes_get_jobs_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetJobsResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_jobs(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, command=nothing, status=nothing, cancel_on_blocking_job_failure=nothing, supports_termination=nothing, _mediaType=nothing)
@@ -1782,7 +1782,7 @@ end
 
 const _returntypes_get_jobs_find_by_needs_file_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetJobsFindByNeedsFileKeyResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_jobs_find_by_needs_file_key(_api::DefaultApi, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing)
@@ -1820,7 +1820,7 @@ end
 
 const _returntypes_get_jobs_find_by_status_status_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetJobsFindByStatusStatusResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_jobs_find_by_status_status(_api::DefaultApi, workflow::String, status::String; skip=nothing, limit=nothing, _mediaType=nothing)
@@ -1858,7 +1858,7 @@ end
 
 const _returntypes_get_jobs_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_jobs_key(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -1892,7 +1892,7 @@ end
 
 const _returntypes_get_jobs_key_process_stats_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Vector{JobProcessStatsModel},
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_jobs_key_process_stats(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -1926,7 +1926,7 @@ end
 
 const _returntypes_get_jobs_key_resource_requirements_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResourceRequirementsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_jobs_key_resource_requirements(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -1960,7 +1960,7 @@ end
 
 const _returntypes_get_jobs_key_user_data_consumes_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetJobsKeyUserDataConsumesResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_jobs_key_user_data_consumes(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -1994,7 +1994,7 @@ end
 
 const _returntypes_get_jobs_key_user_data_stores_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetJobsKeyUserDataStoresResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_jobs_key_user_data_stores(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -2028,7 +2028,7 @@ end
 
 const _returntypes_get_latest_event_timestamp_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_latest_event_timestamp(_api::DefaultApi, key::String; _mediaType=nothing)
@@ -2060,7 +2060,7 @@ end
 
 const _returntypes_get_local_schedulers_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetLocalSchedulersResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_local_schedulers(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, memory=nothing, num_cpus=nothing, _mediaType=nothing)
@@ -2106,7 +2106,7 @@ end
 
 const _returntypes_get_local_schedulers_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => LocalSchedulersModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_local_schedulers_key(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -2140,7 +2140,7 @@ end
 
 const _returntypes_get_ping_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_ping(_api::DefaultApi; _mediaType=nothing)
@@ -2170,7 +2170,7 @@ end
 
 const _returntypes_get_resource_requirements_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetResourceRequirementsResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_resource_requirements(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, memory=nothing, num_cpus=nothing, num_gpus=nothing, num_nodes=nothing, runtime=nothing, _mediaType=nothing)
@@ -2224,7 +2224,7 @@ end
 
 const _returntypes_get_resource_requirements_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResourceRequirementsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_resource_requirements_key(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -2258,7 +2258,7 @@ end
 
 const _returntypes_get_results_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetResultsResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_results(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, job_key=nothing, run_id=nothing, return_code=nothing, status=nothing, _mediaType=nothing)
@@ -2308,7 +2308,7 @@ end
 
 const _returntypes_get_results_find_by_job_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResultsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_results_find_by_job_key(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -2342,7 +2342,7 @@ end
 
 const _returntypes_get_results_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResultsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_results_key(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -2376,7 +2376,7 @@ end
 
 const _returntypes_get_scheduled_compute_nodes_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetScheduledComputeNodesResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_scheduled_compute_nodes(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, scheduler_id=nothing, scheduler_config_id=nothing, status=nothing, _mediaType=nothing)
@@ -2424,7 +2424,7 @@ end
 
 const _returntypes_get_scheduled_compute_nodes_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ScheduledComputeNodesModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_scheduled_compute_nodes_key(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -2458,7 +2458,7 @@ end
 
 const _returntypes_get_slurm_schedulers_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetSlurmSchedulersResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_slurm_schedulers(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, account=nothing, gres=nothing, mem=nothing, nodes=nothing, partition=nothing, qos=nothing, tmp=nothing, walltime=nothing, _mediaType=nothing)
@@ -2518,7 +2518,7 @@ end
 
 const _returntypes_get_slurm_schedulers_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => SlurmSchedulersModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_slurm_schedulers_key(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -2552,7 +2552,7 @@ end
 
 const _returntypes_get_user_data_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetUserDataResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_user_data(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, is_ephemeral=nothing, _mediaType=nothing)
@@ -2598,7 +2598,7 @@ end
 
 const _returntypes_get_user_data_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => UserDataModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_user_data_key(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
@@ -2632,7 +2632,7 @@ end
 
 const _returntypes_get_version_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_version(_api::DefaultApi; _mediaType=nothing)
@@ -2662,7 +2662,7 @@ end
 
 const _returntypes_get_workflow_specifications_example_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowSpecificationsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_workflow_specifications_example(_api::DefaultApi; _mediaType=nothing)
@@ -2692,7 +2692,7 @@ end
 
 const _returntypes_get_workflow_specifications_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowSpecificationsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_workflow_specifications_key(_api::DefaultApi, key::String; _mediaType=nothing)
@@ -2724,7 +2724,7 @@ end
 
 const _returntypes_get_workflow_specifications_template_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowSpecificationsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_workflow_specifications_template(_api::DefaultApi; _mediaType=nothing)
@@ -2754,7 +2754,7 @@ end
 
 const _returntypes_get_workflows_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetWorkflowsResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_workflows(_api::DefaultApi; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing)
@@ -2798,7 +2798,7 @@ end
 
 const _returntypes_get_workflows_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_workflows_key(_api::DefaultApi, key::String; _mediaType=nothing)
@@ -2830,7 +2830,7 @@ end
 
 const _returntypes_get_workflows_key_collection_names_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetWorkflowsKeyCollectionNamesResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_workflows_key_collection_names(_api::DefaultApi, key::String; _mediaType=nothing)
@@ -2862,7 +2862,7 @@ end
 
 const _returntypes_get_workflows_key_config_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowConfigModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_workflows_key_config(_api::DefaultApi, key::String; _mediaType=nothing)
@@ -2894,7 +2894,7 @@ end
 
 const _returntypes_get_workflows_key_dot_graph_name_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetWorkflowsKeyDotGraphNameResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_workflows_key_dot_graph_name(_api::DefaultApi, key::String, name::String; _mediaType=nothing)
@@ -2928,7 +2928,7 @@ end
 
 const _returntypes_get_workflows_key_is_complete_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetWorkflowsKeyIsCompleteResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_workflows_key_is_complete(_api::DefaultApi, key::String; _mediaType=nothing)
@@ -2960,7 +2960,7 @@ end
 
 const _returntypes_get_workflows_key_missing_user_data_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetWorkflowsKeyMissingUserDataResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_workflows_key_missing_user_data(_api::DefaultApi, key::String; _mediaType=nothing)
@@ -2992,7 +2992,7 @@ end
 
 const _returntypes_get_workflows_key_ready_job_requirements_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetWorkflowsKeyReadyJobRequirementsResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_workflows_key_ready_job_requirements(_api::DefaultApi, key::String; scheduler_config_id=nothing, _mediaType=nothing)
@@ -3026,7 +3026,7 @@ end
 
 const _returntypes_get_workflows_key_required_existing_files_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => GetWorkflowsKeyRequiredExistingFilesResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_workflows_key_required_existing_files(_api::DefaultApi, key::String; _mediaType=nothing)
@@ -3058,7 +3058,7 @@ end
 
 const _returntypes_get_workflows_key_status_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowStatusModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_get_workflows_key_status(_api::DefaultApi, key::String; _mediaType=nothing)
@@ -3090,7 +3090,7 @@ end
 
 const _returntypes_post_aws_schedulers_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => AwsSchedulersModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_aws_schedulers(_api::DefaultApi, workflow::String, body::AwsSchedulersModel; _mediaType=nothing)
@@ -3123,7 +3123,7 @@ end
 
 const _returntypes_post_bulk_jobs_with_edges_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => PostBulkJobsWithEdgesResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_bulk_jobs_with_edges(_api::DefaultApi, workflow::String, body::BulkJobsWithEdgesModel; _mediaType=nothing)
@@ -3156,7 +3156,7 @@ end
 
 const _returntypes_post_compute_node_stats_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ComputeNodeStatsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_compute_node_stats(_api::DefaultApi, workflow::String, body::ComputeNodeStatsModel; _mediaType=nothing)
@@ -3189,7 +3189,7 @@ end
 
 const _returntypes_post_compute_nodes_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ComputeNodesModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_compute_nodes(_api::DefaultApi, workflow::String, body::ComputeNodesModel; _mediaType=nothing)
@@ -3222,7 +3222,7 @@ end
 
 const _returntypes_post_edges_name_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => EdgesNameModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_edges_name(_api::DefaultApi, workflow::String, name::String, body::EdgesNameModel; _mediaType=nothing)
@@ -3257,7 +3257,7 @@ end
 
 const _returntypes_post_events_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_events(_api::DefaultApi, workflow::String, body::Any; _mediaType=nothing)
@@ -3290,7 +3290,7 @@ end
 
 const _returntypes_post_files_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => FilesModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_files(_api::DefaultApi, workflow::String, body::FilesModel; _mediaType=nothing)
@@ -3323,7 +3323,7 @@ end
 
 const _returntypes_post_job_process_stats_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobProcessStatsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_job_process_stats(_api::DefaultApi, workflow::String, body::JobProcessStatsModel; _mediaType=nothing)
@@ -3356,7 +3356,7 @@ end
 
 const _returntypes_post_job_specifications_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobSpecificationsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_job_specifications(_api::DefaultApi, workflow::String, body::JobSpecificationsModel; _mediaType=nothing)
@@ -3389,7 +3389,7 @@ end
 
 const _returntypes_post_job_with_edges_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_job_with_edges(_api::DefaultApi, workflow::String, body::JobWithEdgesModel; _mediaType=nothing)
@@ -3422,7 +3422,7 @@ end
 
 const _returntypes_post_jobs_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_jobs(_api::DefaultApi, workflow::String, body::JobsModel; _mediaType=nothing)
@@ -3455,7 +3455,7 @@ end
 
 const _returntypes_post_jobs_key_complete_job_status_rev_run_id_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_jobs_key_complete_job_status_rev_run_id(_api::DefaultApi, workflow::String, key::String, status::String, rev::String, run_id::Int64, body::ResultsModel; _mediaType=nothing)
@@ -3496,7 +3496,7 @@ end
 
 const _returntypes_post_jobs_key_user_data_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => UserDataModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_jobs_key_user_data(_api::DefaultApi, workflow::String, key::String, body::UserDataModel; _mediaType=nothing)
@@ -3531,7 +3531,7 @@ end
 
 const _returntypes_post_local_schedulers_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => LocalSchedulersModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_local_schedulers(_api::DefaultApi, workflow::String, body::LocalSchedulersModel; _mediaType=nothing)
@@ -3564,7 +3564,7 @@ end
 
 const _returntypes_post_resource_requirements_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResourceRequirementsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_resource_requirements(_api::DefaultApi, workflow::String, body::ResourceRequirementsModel; _mediaType=nothing)
@@ -3597,7 +3597,7 @@ end
 
 const _returntypes_post_results_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResultsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_results(_api::DefaultApi, workflow::String, body::ResultsModel; _mediaType=nothing)
@@ -3630,7 +3630,7 @@ end
 
 const _returntypes_post_scheduled_compute_nodes_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ScheduledComputeNodesModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_scheduled_compute_nodes(_api::DefaultApi, workflow::String, body::ScheduledComputeNodesModel; _mediaType=nothing)
@@ -3663,7 +3663,7 @@ end
 
 const _returntypes_post_slurm_schedulers_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => SlurmSchedulersModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_slurm_schedulers(_api::DefaultApi, workflow::String, body::SlurmSchedulersModel; _mediaType=nothing)
@@ -3696,7 +3696,7 @@ end
 
 const _returntypes_post_user_data_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => UserDataModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_user_data(_api::DefaultApi, workflow::String, body::UserDataModel; _mediaType=nothing)
@@ -3729,7 +3729,7 @@ end
 
 const _returntypes_post_workflow_specifications_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_workflow_specifications(_api::DefaultApi, body::WorkflowSpecificationsModel; _mediaType=nothing)
@@ -3760,7 +3760,7 @@ end
 
 const _returntypes_post_workflows_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_workflows(_api::DefaultApi, body::WorkflowsModel; _mediaType=nothing)
@@ -3791,7 +3791,7 @@ end
 
 const _returntypes_post_workflows_key_auto_tune_resource_requirements_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_workflows_key_auto_tune_resource_requirements(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing)
@@ -3824,7 +3824,7 @@ end
 
 const _returntypes_post_workflows_key_initialize_jobs_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_workflows_key_initialize_jobs(_api::DefaultApi, key::String; only_uninitialized=nothing, clear_ephemeral_user_data=nothing, body=nothing, _mediaType=nothing)
@@ -3861,7 +3861,7 @@ end
 
 const _returntypes_post_workflows_key_join_by_inbound_edge_collection_edge_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_workflows_key_join_by_inbound_edge_collection_edge(_api::DefaultApi, key::String, collection::String, edge::String, body::Any; collection_key=nothing, collection_name=nothing, skip=nothing, limit=nothing, _mediaType=nothing)
@@ -3906,7 +3906,7 @@ end
 
 const _returntypes_post_workflows_key_join_by_outbound_edge_collection_edge_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_workflows_key_join_by_outbound_edge_collection_edge(_api::DefaultApi, key::String, collection::String, edge::String, body::Any; collection_key=nothing, collection_name=nothing, skip=nothing, limit=nothing, _mediaType=nothing)
@@ -3951,7 +3951,7 @@ end
 
 const _returntypes_post_workflows_key_prepare_jobs_for_scheduling_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => PostWorkflowsKeyPrepareJobsForSchedulingResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_workflows_key_prepare_jobs_for_scheduling(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing)
@@ -3984,7 +3984,7 @@ end
 
 const _returntypes_post_workflows_key_prepare_jobs_for_submission_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => PostWorkflowsKeyPrepareJobsForSubmissionResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_workflows_key_prepare_jobs_for_submission(_api::DefaultApi, key::String, body::ComputeNodesResources; sort_method=nothing, limit=nothing, _mediaType=nothing)
@@ -4021,7 +4021,7 @@ end
 
 const _returntypes_post_workflows_key_prepare_next_jobs_for_submission_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => PostWorkflowsKeyPrepareNextJobsForSubmissionResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_workflows_key_prepare_next_jobs_for_submission(_api::DefaultApi, key::String; limit=nothing, body=nothing, _mediaType=nothing)
@@ -4056,7 +4056,7 @@ end
 
 const _returntypes_post_workflows_key_process_auto_tune_resource_requirements_results_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_workflows_key_process_auto_tune_resource_requirements_results(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing)
@@ -4089,7 +4089,7 @@ end
 
 const _returntypes_post_workflows_key_process_changed_job_inputs_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => PostWorkflowsKeyProcessChangedJobInputsResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_workflows_key_process_changed_job_inputs(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing)
@@ -4122,7 +4122,7 @@ end
 
 const _returntypes_post_workflows_key_reset_job_status_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_workflows_key_reset_job_status(_api::DefaultApi, key::String; failed_only=nothing, body=nothing, _mediaType=nothing)
@@ -4157,7 +4157,7 @@ end
 
 const _returntypes_post_workflows_key_reset_status_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_post_workflows_key_reset_status(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing)
@@ -4190,7 +4190,7 @@ end
 
 const _returntypes_put_aws_schedulers_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => AwsSchedulersModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_aws_schedulers_key(_api::DefaultApi, workflow::String, key::String, body::AwsSchedulersModel; _mediaType=nothing)
@@ -4225,7 +4225,7 @@ end
 
 const _returntypes_put_compute_node_stats_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ComputeNodeStatsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_compute_node_stats_key(_api::DefaultApi, workflow::String, key::String, body::ComputeNodeStatsModel; _mediaType=nothing)
@@ -4260,7 +4260,7 @@ end
 
 const _returntypes_put_compute_nodes_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ComputeNodesModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_compute_nodes_key(_api::DefaultApi, workflow::String, key::String, body::ComputeNodesModel; _mediaType=nothing)
@@ -4295,7 +4295,7 @@ end
 
 const _returntypes_put_events_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_events_key(_api::DefaultApi, workflow::String, key::String, body::Any; _mediaType=nothing)
@@ -4330,7 +4330,7 @@ end
 
 const _returntypes_put_files_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => FilesModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_files_key(_api::DefaultApi, workflow::String, key::String, body::FilesModel; _mediaType=nothing)
@@ -4365,7 +4365,7 @@ end
 
 const _returntypes_put_job_process_stats_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobProcessStatsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_job_process_stats_key(_api::DefaultApi, workflow::String, key::String, body::JobProcessStatsModel; _mediaType=nothing)
@@ -4400,7 +4400,7 @@ end
 
 const _returntypes_put_jobs_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_jobs_key(_api::DefaultApi, workflow::String, key::String, body::JobsModel; _mediaType=nothing)
@@ -4435,7 +4435,7 @@ end
 
 const _returntypes_put_jobs_key_manage_status_change_status_rev_run_id_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => JobsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_jobs_key_manage_status_change_status_rev_run_id(_api::DefaultApi, workflow::String, key::String, status::String, rev::String, run_id::Int64; body=nothing, _mediaType=nothing)
@@ -4476,7 +4476,7 @@ end
 
 const _returntypes_put_jobs_key_resource_requirements_rr_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => EdgesNameModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_jobs_key_resource_requirements_rr_key(_api::DefaultApi, workflow::String, key::String, rr_key::String; body=nothing, _mediaType=nothing)
@@ -4513,7 +4513,7 @@ end
 
 const _returntypes_put_local_schedulers_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => LocalSchedulersModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_local_schedulers_key(_api::DefaultApi, workflow::String, key::String, body::LocalSchedulersModel; _mediaType=nothing)
@@ -4548,7 +4548,7 @@ end
 
 const _returntypes_put_resource_requirements_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResourceRequirementsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_resource_requirements_key(_api::DefaultApi, workflow::String, key::String, body::ResourceRequirementsModel; _mediaType=nothing)
@@ -4583,7 +4583,7 @@ end
 
 const _returntypes_put_results_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ResultsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_results_key(_api::DefaultApi, workflow::String, key::String, body::ResultsModel; _mediaType=nothing)
@@ -4618,7 +4618,7 @@ end
 
 const _returntypes_put_scheduled_compute_nodes_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ScheduledComputeNodesModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_scheduled_compute_nodes_key(_api::DefaultApi, workflow::String, key::String, body::ScheduledComputeNodesModel; _mediaType=nothing)
@@ -4653,7 +4653,7 @@ end
 
 const _returntypes_put_slurm_schedulers_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => SlurmSchedulersModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_slurm_schedulers_key(_api::DefaultApi, workflow::String, key::String, body::SlurmSchedulersModel; _mediaType=nothing)
@@ -4688,7 +4688,7 @@ end
 
 const _returntypes_put_user_data_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => UserDataModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_user_data_key(_api::DefaultApi, workflow::String, key::String, body::UserDataModel; _mediaType=nothing)
@@ -4723,7 +4723,7 @@ end
 
 const _returntypes_put_workflows_key_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowsModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_workflows_key(_api::DefaultApi, key::String, body::WorkflowsModel; _mediaType=nothing)
@@ -4756,7 +4756,7 @@ end
 
 const _returntypes_put_workflows_key_cancel_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => Any,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_workflows_key_cancel(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing)
@@ -4789,7 +4789,7 @@ end
 
 const _returntypes_put_workflows_key_config_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowConfigModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_workflows_key_config(_api::DefaultApi, key::String, body::WorkflowConfigModel; _mediaType=nothing)
@@ -4822,7 +4822,7 @@ end
 
 const _returntypes_put_workflows_key_status_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => WorkflowStatusModel,
-    Regex("^" * replace("500", "x"=>".") * "\$") => InlineResponse500,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
 function _oacinternal_put_workflows_key_status(_api::DefaultApi, key::String, body::WorkflowStatusModel; _mediaType=nothing)
@@ -4853,35 +4853,35 @@ function put_workflows_key_status(_api::DefaultApi, response_stream::Channel, ke
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
+export delete_aws_schedulers
+export delete_aws_schedulers_key
+export delete_compute_node_stats
+export delete_compute_node_stats_key
+export delete_compute_nodes
+export delete_compute_nodes_key
+export delete_edges_name
+export delete_edges_name_key
+export delete_events
+export delete_events_key
+export delete_files
+export delete_files_key
+export delete_job_process_stats
+export delete_job_process_stats_key
+export delete_jobs
+export delete_jobs_key
+export delete_local_schedulers
+export delete_local_schedulers_key
+export delete_resource_requirements
+export delete_resource_requirements_key
+export delete_results
+export delete_results_key
+export delete_scheduled_compute_nodes
+export delete_scheduled_compute_nodes_key
+export delete_slurm_schedulers
+export delete_slurm_schedulers_key
+export delete_user_data
+export delete_user_data_key
 export delete_workflows_key
-export delete_workflows_workflow_aws_schedulers
-export delete_workflows_workflow_aws_schedulers_key
-export delete_workflows_workflow_compute_node_stats
-export delete_workflows_workflow_compute_node_stats_key
-export delete_workflows_workflow_compute_nodes
-export delete_workflows_workflow_compute_nodes_key
-export delete_workflows_workflow_edges_name
-export delete_workflows_workflow_edges_name_key
-export delete_workflows_workflow_events
-export delete_workflows_workflow_events_key
-export delete_workflows_workflow_files
-export delete_workflows_workflow_files_key
-export delete_workflows_workflow_job_process_stats
-export delete_workflows_workflow_job_process_stats_key
-export delete_workflows_workflow_jobs
-export delete_workflows_workflow_jobs_key
-export delete_workflows_workflow_local_schedulers
-export delete_workflows_workflow_local_schedulers_key
-export delete_workflows_workflow_resource_requirements
-export delete_workflows_workflow_resource_requirements_key
-export delete_workflows_workflow_results
-export delete_workflows_workflow_results_key
-export delete_workflows_workflow_scheduled_compute_nodes
-export delete_workflows_workflow_scheduled_compute_nodes_key
-export delete_workflows_workflow_slurm_schedulers
-export delete_workflows_workflow_slurm_schedulers_key
-export delete_workflows_workflow_user_data
-export delete_workflows_workflow_user_data_key
 export get_aws_schedulers
 export get_aws_schedulers_key
 export get_compute_node_stats

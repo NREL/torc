@@ -82,7 +82,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -118,7 +118,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
@@ -126,7 +126,7 @@ paths:
       summary: Delete all documents of type AWS compute node configuration for a workflow
       description: Delete all documents from the "aws_schedulers" collection for a
         workflow.
-      operationId: delete_workflows_workflow_aws_schedulers
+      operationId: delete_aws_schedulers
       parameters:
       - name: workflow
         in: path
@@ -154,7 +154,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/aws_schedulers/{key}:
@@ -192,7 +192,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -235,14 +235,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete a document of type AWS compute node configuration
       description: Deletes a document from the "aws_schedulers" collection by key.
-      operationId: delete_workflows_workflow_aws_schedulers_key
+      operationId: delete_aws_schedulers_key
       parameters:
       - name: workflow
         in: path
@@ -278,7 +278,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/compute_nodes:
@@ -362,7 +362,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -397,7 +397,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
@@ -405,7 +405,7 @@ paths:
       summary: Delete all documents of type compute node for a workflow
       description: Delete all documents from the "compute_nodes" collection for a
         workflow.
-      operationId: delete_workflows_workflow_compute_nodes
+      operationId: delete_compute_nodes
       parameters:
       - name: workflow
         in: path
@@ -433,7 +433,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/compute_nodes/{key}:
@@ -471,7 +471,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -514,14 +514,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete a document of type compute node
       description: Deletes a document from the "compute_nodes" collection by key.
-      operationId: delete_workflows_workflow_compute_nodes_key
+      operationId: delete_compute_nodes_key
       parameters:
       - name: workflow
         in: path
@@ -557,7 +557,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/compute_node_stats:
@@ -634,7 +634,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -669,7 +669,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
@@ -677,7 +677,7 @@ paths:
       summary: Delete all documents of type compute node statistics for a workflow
       description: Delete all documents from the "compute_node_stats" collection for
         a workflow.
-      operationId: delete_workflows_workflow_compute_node_stats
+      operationId: delete_compute_node_stats
       parameters:
       - name: workflow
         in: path
@@ -705,7 +705,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/compute_node_stats/{key}:
@@ -744,7 +744,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -787,7 +787,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
@@ -795,7 +795,7 @@ paths:
       summary: Delete a document of type compute node statistics
       description: Deletes a document from the "compute_node_stats" collection by
         key.
-      operationId: delete_workflows_workflow_compute_node_stats_key
+      operationId: delete_compute_node_stats_key
       parameters:
       - name: workflow
         in: path
@@ -831,7 +831,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/events:
@@ -907,7 +907,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -942,14 +942,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete all documents of type event for a workflow
       description: Delete all documents from the "events" collection for a workflow.
-      operationId: delete_workflows_workflow_events
+      operationId: delete_events
       parameters:
       - name: workflow
         in: path
@@ -977,7 +977,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/events/{key}:
@@ -1015,7 +1015,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -1058,14 +1058,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete a document of type event
       description: Deletes a document from the "events" collection by key.
-      operationId: delete_workflows_workflow_events_key
+      operationId: delete_events_key
       parameters:
       - name: workflow
         in: path
@@ -1101,7 +1101,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/files:
@@ -1184,7 +1184,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -1219,14 +1219,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete all documents of type file for a workflow
       description: Delete all documents from the "files" collection for a workflow.
-      operationId: delete_workflows_workflow_files
+      operationId: delete_files
       parameters:
       - name: workflow
         in: path
@@ -1254,7 +1254,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/files/{key}:
@@ -1292,7 +1292,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -1335,14 +1335,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete a document of type file
       description: Deletes a document from the "files" collection by key.
-      operationId: delete_workflows_workflow_files_key
+      operationId: delete_files_key
       parameters:
       - name: workflow
         in: path
@@ -1378,7 +1378,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/jobs:
@@ -1482,7 +1482,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -1517,14 +1517,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete all documents of type job for a workflow
       description: Delete all documents from the "jobs" collection for a workflow.
-      operationId: delete_workflows_workflow_jobs
+      operationId: delete_jobs
       parameters:
       - name: workflow
         in: path
@@ -1552,7 +1552,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/jobs/{key}:
@@ -1590,7 +1590,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -1633,14 +1633,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete a document of type job
       description: Deletes a document from the "jobs" collection by key.
-      operationId: delete_workflows_workflow_jobs_key
+      operationId: delete_jobs_key
       parameters:
       - name: workflow
         in: path
@@ -1676,7 +1676,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/job_process_stats:
@@ -1760,7 +1760,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -1795,7 +1795,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
@@ -1803,7 +1803,7 @@ paths:
       summary: Delete all documents of type job process statistics for a workflow
       description: Delete all documents from the "job_process_stats" collection for
         a workflow.
-      operationId: delete_workflows_workflow_job_process_stats
+      operationId: delete_job_process_stats
       parameters:
       - name: workflow
         in: path
@@ -1831,7 +1831,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/job_process_stats/{key}:
@@ -1870,7 +1870,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -1913,14 +1913,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete a document of type job process statistics
       description: Deletes a document from the "job_process_stats" collection by key.
-      operationId: delete_workflows_workflow_job_process_stats_key
+      operationId: delete_job_process_stats_key
       parameters:
       - name: workflow
         in: path
@@ -1956,7 +1956,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/local_schedulers:
@@ -2040,7 +2040,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -2076,7 +2076,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
@@ -2085,7 +2085,7 @@ paths:
         workflow
       description: Delete all documents from the "local_schedulers" collection for
         a workflow.
-      operationId: delete_workflows_workflow_local_schedulers
+      operationId: delete_local_schedulers
       parameters:
       - name: workflow
         in: path
@@ -2113,7 +2113,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/local_schedulers/{key}:
@@ -2152,7 +2152,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -2195,14 +2195,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete a document of type local compute node configuration
       description: Deletes a document from the "local_schedulers" collection by key.
-      operationId: delete_workflows_workflow_local_schedulers_key
+      operationId: delete_local_schedulers_key
       parameters:
       - name: workflow
         in: path
@@ -2238,7 +2238,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/resource_requirements:
@@ -2350,7 +2350,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -2385,7 +2385,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
@@ -2393,7 +2393,7 @@ paths:
       summary: Delete all documents of type resource requirements for a workflow
       description: Delete all documents from the "resource_requirements" collection
         for a workflow.
-      operationId: delete_workflows_workflow_resource_requirements
+      operationId: delete_resource_requirements
       parameters:
       - name: workflow
         in: path
@@ -2421,7 +2421,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/resource_requirements/{key}:
@@ -2460,7 +2460,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -2503,7 +2503,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
@@ -2511,7 +2511,7 @@ paths:
       summary: Delete a document of type resource requirements
       description: Deletes a document from the "resource_requirements" collection
         by key.
-      operationId: delete_workflows_workflow_resource_requirements_key
+      operationId: delete_resource_requirements_key
       parameters:
       - name: workflow
         in: path
@@ -2547,7 +2547,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/results:
@@ -2644,7 +2644,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -2679,14 +2679,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete all documents of type result for a workflow
       description: Delete all documents from the "results" collection for a workflow.
-      operationId: delete_workflows_workflow_results
+      operationId: delete_results
       parameters:
       - name: workflow
         in: path
@@ -2714,7 +2714,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/results/{key}:
@@ -2752,7 +2752,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -2795,14 +2795,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete a document of type result
       description: Deletes a document from the "results" collection by key.
-      operationId: delete_workflows_workflow_results_key
+      operationId: delete_results_key
       parameters:
       - name: workflow
         in: path
@@ -2838,7 +2838,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/scheduled_compute_nodes:
@@ -2929,7 +2929,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -2965,7 +2965,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
@@ -2973,7 +2973,7 @@ paths:
       summary: Delete all documents of type scheduled compute node for a workflow
       description: Delete all documents from the "scheduled_compute_nodes" collection
         for a workflow.
-      operationId: delete_workflows_workflow_scheduled_compute_nodes
+      operationId: delete_scheduled_compute_nodes
       parameters:
       - name: workflow
         in: path
@@ -3001,7 +3001,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/scheduled_compute_nodes/{key}:
@@ -3040,7 +3040,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -3083,7 +3083,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
@@ -3091,7 +3091,7 @@ paths:
       summary: Delete a document of type scheduled compute node
       description: Deletes a document from the "scheduled_compute_nodes" collection
         by key.
-      operationId: delete_workflows_workflow_scheduled_compute_nodes_key
+      operationId: delete_scheduled_compute_nodes_key
       parameters:
       - name: workflow
         in: path
@@ -3127,7 +3127,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/slurm_schedulers:
@@ -3260,7 +3260,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -3296,7 +3296,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
@@ -3305,7 +3305,7 @@ paths:
         workflow
       description: Delete all documents from the "slurm_schedulers" collection for
         a workflow.
-      operationId: delete_workflows_workflow_slurm_schedulers
+      operationId: delete_slurm_schedulers
       parameters:
       - name: workflow
         in: path
@@ -3333,7 +3333,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/slurm_schedulers/{key}:
@@ -3372,7 +3372,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -3415,14 +3415,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete a document of type Slurm compute node configuration
       description: Deletes a document from the "slurm_schedulers" collection by key.
-      operationId: delete_workflows_workflow_slurm_schedulers_key
+      operationId: delete_slurm_schedulers_key
       parameters:
       - name: workflow
         in: path
@@ -3458,7 +3458,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/user_data:
@@ -3542,7 +3542,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -3577,14 +3577,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete all documents of type user data for a workflow
       description: Delete all documents from the "user_data" collection for a workflow.
-      operationId: delete_workflows_workflow_user_data
+      operationId: delete_user_data
       parameters:
       - name: workflow
         in: path
@@ -3612,7 +3612,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/user_data/{key}:
@@ -3650,7 +3650,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -3693,14 +3693,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete a document of type user data
       description: Deletes a document from the "user_data" collection by key.
-      operationId: delete_workflows_workflow_user_data_key
+      operationId: delete_user_data_key
       parameters:
       - name: workflow
         in: path
@@ -3736,7 +3736,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/edges/{name}:
@@ -3790,7 +3790,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -3833,14 +3833,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
       tags: []
       summary: Delete all edges from the designated collection
       description: Deletes all edges from the designated collection.
-      operationId: delete_workflows_workflow_edges_name
+      operationId: delete_edges_name
       parameters:
       - name: workflow
         in: path
@@ -3876,7 +3876,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/edges/{name}/{key}:
@@ -3922,13 +3922,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     delete:
       tags: []
       summary: Delete an edge
       description: Deletes an edge from the designated collection by key.
-      operationId: delete_workflows_workflow_edges_name_key
+      operationId: delete_edges_name_key
       parameters:
       - name: workflow
         in: path
@@ -3972,7 +3972,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/files/produced_by_job/{key}:
@@ -4026,7 +4026,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{workflow}/job_specifications:
     get:
@@ -4071,7 +4071,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -4106,7 +4106,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/job_specifications/{key}:
@@ -4144,7 +4144,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{workflow}/job_with_edges:
     post:
@@ -4179,7 +4179,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/bulk_jobs_with_edges:
@@ -4216,7 +4216,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/job_keys:
@@ -4246,7 +4246,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{workflow}/jobs/find_by_status/{status}:
     get:
@@ -4299,7 +4299,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{workflow}/jobs/find_by_needs_file/{key}:
     get:
@@ -4352,7 +4352,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{workflow}/jobs/{key}/resource_requirements:
     get:
@@ -4389,7 +4389,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{workflow}/jobs/{key}/resource_requirements/{rr_key}:
     put:
@@ -4440,7 +4440,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/jobs/{key}/process_stats:
@@ -4480,7 +4480,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}:
     post:
@@ -4548,7 +4548,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/jobs/{key}/manage_status_change/{status}/{rev}/{run_id}:
@@ -4616,7 +4616,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/jobs/{key}/user_data:
@@ -4661,7 +4661,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{workflow}/jobs/{key}/user_data_stores:
@@ -4699,7 +4699,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{workflow}/jobs/{key}/user_data_consumes:
     get:
@@ -4736,7 +4736,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{workflow}/results/find_by_job/{key}:
     get:
@@ -4774,7 +4774,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflow_specifications:
     post:
@@ -4801,7 +4801,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflow_specifications/{key}:
@@ -4831,7 +4831,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflow_specifications/example:
     get:
@@ -4851,7 +4851,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflow_specifications/template:
     get:
@@ -4871,7 +4871,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /ping:
     get:
@@ -4891,7 +4891,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /version:
     get:
@@ -4911,7 +4911,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows:
     get:
@@ -4985,7 +4985,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     post:
       tags: []
@@ -5011,7 +5011,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}:
@@ -5041,7 +5041,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -5076,7 +5076,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
     delete:
@@ -5111,7 +5111,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}/is_complete:
@@ -5141,7 +5141,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{key}/ready_job_requirements:
     get:
@@ -5181,7 +5181,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{key}/initialize_jobs:
     post:
@@ -5234,7 +5234,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}/process_changed_job_inputs:
@@ -5270,7 +5270,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}/missing_user_data:
@@ -5300,7 +5300,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{key}/required_existing_files:
     get:
@@ -5329,7 +5329,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{key}/prepare_jobs_for_submission:
     post:
@@ -5386,7 +5386,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}/prepare_next_jobs_for_submission:
@@ -5431,7 +5431,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}/prepare_jobs_for_scheduling:
@@ -5468,7 +5468,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}/auto_tune_resource_requirements:
@@ -5504,7 +5504,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}/process_auto_tune_resource_requirements_results:
@@ -5540,7 +5540,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}/config:
@@ -5570,7 +5570,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -5605,7 +5605,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}/cancel:
@@ -5642,7 +5642,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}/reset_status:
@@ -5678,7 +5678,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}/reset_job_status:
@@ -5723,7 +5723,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}/status:
@@ -5753,7 +5753,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
     put:
       tags: []
@@ -5788,7 +5788,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}/collection_names:
@@ -5818,7 +5818,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{key}/join_by_inbound_edge/{collection}/{edge}:
     post:
@@ -5900,7 +5900,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}/join_by_outbound_edge/{collection}/{edge}:
@@ -5983,7 +5983,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
       x-codegen-request-body-name: body
   /workflows/{key}/latest_event_timestamp:
@@ -6014,7 +6014,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{key}/events_after_timestamp/{timestamp}:
     get:
@@ -6077,7 +6077,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
   /workflows/{key}/dot_graph/{name}:
     get:
@@ -6114,7 +6114,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/inline_response_500'
+                $ref: '#/components/schemas/default_error_response'
       security: []
 components:
   schemas:
@@ -6292,7 +6292,7 @@ components:
           type: array
           items:
             type: string
-    inline_response_500:
+    default_error_response:
       required:
       - error
       type: object
