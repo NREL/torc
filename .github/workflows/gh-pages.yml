@@ -6,7 +6,7 @@ on:
 
 jobs:
   make-pages:
-    runs-on: ubuntu-latest
+    runs-on: viz-runners
     steps:
       - uses: actions/checkout@v2
       - name: select python version
@@ -15,9 +15,8 @@ jobs:
           python-version: "3.11"
       - name: install dependencies
         run: |
-          sudo apt update
           python -m pip install --upgrade pip
-          python -m pip install '.[dev]'
+          python -m pip install './torc_package[dev]'
       - name: build documentation
         run: |
           cd docs

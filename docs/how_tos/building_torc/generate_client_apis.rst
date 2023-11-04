@@ -46,7 +46,7 @@ How to generate openapi.yaml
     $ curl --silent -X GET http://localhost:8529/_db/test-workflows/_admin/aardvark/foxxes/docs/swagger.json\?mount\=%2Ftorc-service > swagger.json
 
 2. Download this `Java .jar
-   file<https://mvnrepository.com/artifact/io.swagger.codegen.v3/swagger-codegen-cli/3.0.36>`_
+   file <https://mvnrepository.com/artifact/io.swagger.codegen.v3/swagger-codegen-cli/3.0.36>`_
 
 3. Assuming that you saved the specification to ``swagger.json``, run this command to
    convert the spec to OpenAPI v3 (``./openapi.yaml``):
