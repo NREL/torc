@@ -1,10 +1,10 @@
-# GetLocalSchedulersResponse
+# ListFilesResponse
 
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**items** | [**Vector{LocalSchedulersModel}**](LocalSchedulersModel.md) |  | [optional] [default to nothing]
+**items** | [**Vector{FilesModel}**](FilesModel.md) |  | [optional] [default to nothing]
 **skip** | **Int64** |  | [default to nothing]
 **max_limit** | **Int64** |  | [default to nothing]
 **count** | **Int64** |  | [default to nothing]

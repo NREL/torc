@@ -27,7 +27,7 @@ class DatabaseInterface:
         )
         lookup = defaultdict(dict)
         for doc_type in doc_types:
-            method = getattr(api, f"get_{doc_type}")
+            method = getattr(api, f"list_{doc_type}")
             for doc in iter_documents(method, workflow_key):
                 assert doc.name not in lookup[doc_type], f"{doc_type=} {doc.name=}"
                 lookup[doc_type][doc.name] = doc.key
@@ -45,7 +45,11 @@ class DatabaseInterface:
 
     def get_document(self, document_type, name):
         """Return the document from the API by first mapping the name."""
-        method = getattr(self._api, f"get_{document_type}_key")
+        if document_type in {"resource_requirements", "user_data"}:
+            get_one = f"get_{document_type}"
+        else:
+            get_one = f"get_{document_type[:-1]}"
+        method = getattr(self._api, get_one)
         return method(self._workflow.key, self._names_to_keys[document_type][name])
 
     def get_document_key(self, document_type, name):
@@ -54,7 +58,7 @@ class DatabaseInterface:
 
     def list_documents(self, document_type):
         """Return all documents of the givent type."""
-        method = getattr(self._api, f"get_{document_type}")
+        method = getattr(self._api, f"list_{document_type}")
         return list(iter_documents(method, self._workflow.key))
 
     @property

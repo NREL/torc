@@ -447,7 +447,7 @@ class TorcManagementConsole(App):
         # for col in ("key", "user", "name", "timestamp", "description"):
         for col in ("key", "user", "name", "timestamp"):
             table.add_column(col, key=col)
-        workflows = list(iter_documents(self._api.get_workflows, **filters))
+        workflows = list(iter_documents(self._api.list_workflows, **filters))
         workflows.sort(
             key=lambda x: datetime.fromisoformat(x.timestamp.replace("Z", "")),
             reverse=True,
@@ -523,7 +523,7 @@ class TorcManagementConsole(App):
             self._post_error_msg("Cannot start a workflow while jobs are running.")
             return
 
-        done_jobs = self._api.get_jobs(key, status="done", limit=1).items
+        done_jobs = self._api.list_jobs(key, status="done", limit=1).items
         if done_jobs:
             self._post_error_msg(
                 "Cannot start when jobs have completed. Please reset the workflow first."
@@ -599,7 +599,7 @@ class TorcManagementConsole(App):
             return
 
         try:
-            self._api.delete_workflows_key(key)
+            self._api.remove_workflow(key)
             logger.info("Deleted workflow %s", key)
             self._post_info_msg(f"Deleted workflow {key}")
             self._connect()
@@ -619,15 +619,15 @@ class TorcManagementConsole(App):
         if not num_slurm_jobs:
             return
 
-        ready_jobs = self._api.get_jobs(workflow_key, status="ready", limit=1)
+        ready_jobs = self._api.list_jobs(workflow_key, status="ready", limit=1)
         if not ready_jobs.items:
-            ready_jobs = self._api.get_jobs(workflow_key, status="scheduled", limit=1)
+            ready_jobs = self._api.list_jobs(workflow_key, status="scheduled", limit=1)
         if not ready_jobs.items:
             self._post_error_msg("No jobs are in the ready state. Did you start the workflow?")
             return
 
         start_one_worker_per_node = self.query_one("#one_worker_per_compute_node", Checkbox).value
-        config = self._api.get_slurm_schedulers_key(workflow_key, scheduler_key)
+        config = self._api.get_slurm_scheduler(workflow_key, scheduler_key)
         poll_interval = int(
             os.environ.get("TORC_JOB_COMPLETION_POLL_INTERVAL", JOB_COMPLETION_POLL_INTERVAL)
         )
@@ -727,7 +727,7 @@ def build_compute_node_table(table, table_id, api, workflow_key, **filters):
     columns = DATA_TABLES[table_id]["columns"]
     init_table(table, columns)
     for i, item in enumerate(
-        iter_documents(api.get_compute_nodes, workflow_key, **filters),
+        iter_documents(api.list_compute_nodes, workflow_key, **filters),
         start=1,
     ):
         data = item.dict()
@@ -760,7 +760,7 @@ def build_event_table(table, table_id, api, workflow_key, **filters):
     columns = DATA_TABLES[table_id]["columns"]
     init_table(table, columns)
     for i, item in enumerate(
-        iter_documents(api.get_events, workflow_key, **filters),
+        iter_documents(api.list_events, workflow_key, **filters),
         start=1,
     ):
         table.add_row(*make_event(item), key=item["_key"], label=str(i))
@@ -778,9 +778,9 @@ def build_results_table(table, table_id, api, workflow_key, **filters):
     """Build a table of results"""
     columns = DATA_TABLES[table_id]["columns"]
     init_table(table, columns)
-    key_to_job_name = {x.key: x.name for x in iter_documents(api.get_jobs, workflow_key)}
+    key_to_job_name = {x.key: x.name for x in iter_documents(api.list_jobs, workflow_key)}
     for i, item in enumerate(
-        iter_documents(api.get_results, workflow_key, **filters),
+        iter_documents(api.list_results, workflow_key, **filters),
         start=1,
     ):
         values = []
@@ -812,7 +812,7 @@ DATA_TABLES = {
     "jobs": {
         "name": "Jobs",
         "columns": ("name", "status", "key"),
-        "method": "get_jobs",
+        "method": "list_jobs",
         "table_builder": build_document_table,
     },
     "resource_requirements": {
@@ -826,7 +826,7 @@ DATA_TABLES = {
             "runtime",
             "key",
         ),
-        "method": "get_resource_requirements",
+        "method": "list_resource_requirements",
         "table_builder": build_document_table,
     },
     "results": {
@@ -844,7 +844,7 @@ DATA_TABLES = {
     "scheduled_compute_nodes": {
         "name": "Scheduled Nodes",
         "columns": ("scheduler_id", "status"),
-        "method": "get_scheduled_compute_nodes",
+        "method": "list_scheduled_compute_nodes",
         "table_builder": build_document_table,
     },
     "slurm_schedulers": {
@@ -861,7 +861,7 @@ DATA_TABLES = {
             "extra",
             "key",
         ),
-        "method": "get_slurm_schedulers",
+        "method": "list_slurm_schedulers",
         "table_builder": build_document_table,
     },
 }

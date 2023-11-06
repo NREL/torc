@@ -23,7 +23,7 @@ if __name__ == "__main__":
     job_completion_poll_interval = 0.1
     setup_logging(__name__)  # , filename=output_dir / f"{os.getpid()}.log")
     api = DefaultApi(ApiClient(configuration))
-    workflow = api.get_workflows_key(workflow_key)
+    workflow = api.get_workflow(workflow_key)
     runner = JobRunner(
         api,
         workflow,

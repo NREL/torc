@@ -34,7 +34,7 @@ def run_postprocess(ctx, api):
 
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    resp = api.get_jobs_key_user_data_consumes(workflow_key, job_key)
+    resp = api.list_job_user_data_consumes(workflow_key, job_key)
     results = []
     func = None
     module = None
@@ -67,7 +67,7 @@ def run_postprocess(ctx, api):
         ret = 1
 
     if result is not None:
-        resp = api.get_jobs_key_user_data_stores(workflow_key, job_key)
+        resp = api.list_job_user_data_stores(workflow_key, job_key)
         if len(resp.items) != 1:
             logger.error(
                 "Received unexpected output data placeholder from database job_key=%s resp=%s",
@@ -77,7 +77,7 @@ def run_postprocess(ctx, api):
             sys.exit(1)
         output = resp.items[0]
         output.data = result
-        api.put_user_data_key(workflow_key, output.key, output)
+        api.modify_user_data(workflow_key, output.key, output)
         logger.info("Stored result for %s", tag)
 
     sys.exit(ret)

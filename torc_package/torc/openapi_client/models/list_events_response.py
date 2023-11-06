@@ -25,9 +25,9 @@ try:
 except ImportError:
     from typing_extensions import Self
 
-class GetEventsResponse(BaseModel):
+class ListEventsResponse(BaseModel):
     """
-    GetEventsResponse
+    ListEventsResponse
     """ # noqa: E501
     items: Optional[List[Union[str, Any]]] = None
     skip: StrictInt
@@ -54,7 +54,7 @@ class GetEventsResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of GetEventsResponse from a JSON string"""
+        """Create an instance of ListEventsResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -77,7 +77,7 @@ class GetEventsResponse(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of GetEventsResponse from a dict"""
+        """Create an instance of ListEventsResponse from a dict"""
         if obj is None:
             return None
 

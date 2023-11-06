@@ -98,7 +98,7 @@ def list_results(
     mapping = None if exclude_job_names else map_job_keys_to_names(api, workflow_key)
     items = []
     results_by_job_key = defaultdict(list)
-    for item in iter_documents(api.get_results, workflow_key, **filters):
+    for item in iter_documents(api.list_results, workflow_key, **filters):
         row = {}
         if not exclude_job_names:
             row["job_name"] = mapping[item.job_key]

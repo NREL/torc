@@ -12,48 +12,55 @@ def test_api_nodes_by_key(create_workflow_cli):
     workflow_key, url, _ = create_workflow_cli
     api = make_api(url)
     names = {
-        "compute_node_stats": "hostname",
-        "compute_nodes": "hostname",
-        "events": "timestamp",
-        "files": "name",
-        "job_process_stats": "job_key",
-        "jobs": "name",
-        "local_schedulers": "name",
-        "resource_requirements": "name",
-        "results": "status",
-        "slurm_schedulers": "name",
-        "user_data": None,
+        "compute_node_stats": {"field": "hostname", "singular_remove_last_char": False},
+        "job_process_stats": {"field": "job_key", "singular_remove_last_char": False},
+        "resource_requirements": {"field": "name", "singular_remove_last_char": False},
+        "user_data": {"field": None, "singular_remove_last_char": False},
+        "compute_nodes": {"field": "hostname", "singular_remove_last_char": True},
+        "events": {"field": "timestamp", "singular_remove_last_char": True},
+        "files": {"field": "name", "singular_remove_last_char": True},
+        "jobs": {"field": "name", "singular_remove_last_char": True},
+        "local_schedulers": {"field": "name", "singular_remove_last_char": True},
+        "results": {"field": "status", "singular_remove_last_char": True},
+        "slurm_schedulers": {"field": "name", "singular_remove_last_char": True},
     }
 
-    for name, field in names.items():
-        results = getattr(api, f"get_{name}")(workflow_key)
+    for name, metadata in names.items():
+        singular = name[:-1] if metadata["singular_remove_last_char"] else name
+        list_all = getattr(api, f"list_{name}")
+        get_one = getattr(api, f"get_{singular}")
+        add_one = getattr(api, f"add_{singular}")
+        remove_one = getattr(api, f"remove_{singular}")
+        delete_all = getattr(api, f"delete_{name}")
+        modify_one = getattr(api, f"modify_{singular}")
+        results = list_all(workflow_key)
         if results.items:
             item = results.items[0]
             if not isinstance(item, dict):
                 item = item.to_dict()
             key = _get_key(item)
-            val = getattr(api, f"get_{name}_key")(workflow_key, key)
+            val = get_one(workflow_key, key)
             if not isinstance(val, dict):
                 val = val.to_dict()
             assert val == item
-            getattr(api, f"delete_{name}_key")(workflow_key, key)
+            remove_one(workflow_key, key)
             with pytest.raises(ApiException):
-                getattr(api, f"get_{name}_key")(workflow_key, key)
+                get_one(workflow_key, key)
             val = _fix_fields(name, remove_db_keys(val))
-            val2 = getattr(api, f"post_{name}")(workflow_key, val)
+            val2 = add_one(workflow_key, val)
             if not isinstance(val2, dict):
                 val2 = val2.to_dict()
             key = _get_key(val2)
-            field_to_change = field
+            field_to_change = metadata["field"]
             if field_to_change is None:
                 val2["test_val"] = "abc"
             else:
                 val2[field_to_change] = "abc"
 
-            getattr(api, f"put_{name}_key")(workflow_key, key, _fix_fields(name, val2))
+            modify_one(workflow_key, key, _fix_fields(name, val2))
 
-        getattr(api, f"delete_{name}")(workflow_key)
-        result = getattr(api, f"get_{name}")(workflow_key)
+        delete_all(workflow_key)
+        result = list_all(workflow_key)
         assert len(result.items) == 0
 
 
@@ -90,22 +97,22 @@ def test_api_edges(completed_workflow):
         "stores",
     ]
     for name in names:
-        result = api.get_edges_name(db.workflow.key, name)
+        result = api.list_edges(db.workflow.key, name)
         if result.items:
             item = result.items[0]
             if not isinstance(item, dict):
                 item = item.to_dict()
             key = _get_key(item)
-            val = api.get_edges_name_key(db.workflow.key, name, key)
+            val = api.get_edge(db.workflow.key, name, key)
             if not isinstance(val, dict):
                 val = val.to_dict()
             assert val == item
-            api.delete_edges_name_key(db.workflow.key, name, key)
+            api.remove_edge(db.workflow.key, name, key)
             with pytest.raises(ApiException):
-                val = api.get_edges_name_key(db.workflow.key, name, key)
+                val = api.get_edge(db.workflow.key, name, key)
 
-        api.delete_edges_name(db.workflow.key, name)
-        result = api.get_edges_name(db.workflow.key, name)
+        api.delete_edges(db.workflow.key, name)
+        result = api.list_edges(db.workflow.key, name)
         assert len(result.items) == 0
 
 
@@ -113,16 +120,16 @@ def test_api_workflow_status(completed_workflow):
     """Tests API commands to manage workflow status."""
     db, _, _ = completed_workflow
     api = db.api
-    status = api.get_workflows_key_status(db.workflow.key)
+    status = api.get_workflow_status(db.workflow.key)
     orig = status.run_id
     status.run_id += 1
-    api.put_workflows_key_status(db.workflow.key, status)
-    new_status = api.get_workflows_key_status(db.workflow.key)
+    api.modify_workflow_status(db.workflow.key, status)
+    new_status = api.get_workflow_status(db.workflow.key)
     assert new_status.run_id == orig + 1
-    api.post_workflows_key_reset_status(db.workflow.key)
-    api.post_workflows_key_reset_job_status(db.workflow.key)
-    api.post_workflows_key_reset_job_status(db.workflow.key, failed_only=True)
-    new_status = api.get_workflows_key_status(db.workflow.key)
+    api.reset_workflow_status(db.workflow.key)
+    api.reset_job_status(db.workflow.key)
+    api.reset_job_status(db.workflow.key, failed_only=True)
+    new_status = api.get_workflow_status(db.workflow.key)
     assert new_status.run_id == orig + 1
 
 

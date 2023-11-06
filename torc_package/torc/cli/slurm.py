@@ -140,7 +140,7 @@ def add_config(ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, w
     }
     if extra:
         config["extra"] = extra
-    scheduler = api.post_slurm_schedulers(workflow_key, SlurmSchedulersModel(name=name, **config))
+    scheduler = api.add_slurm_scheduler(workflow_key, SlurmSchedulersModel(name=name, **config))
     if output_format == "text":
         logger.info("Added Slurm configuration %s to the database", name)
     else:
@@ -201,7 +201,7 @@ def modify_config(ctx, api, slurm_config_key, **kwargs):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
-    scheduler = api.get_slurm_schedulers_key(workflow_key, slurm_config_key)
+    scheduler = api.get_slurm_scheduler(workflow_key, slurm_config_key)
     changed = False
     for param in (
         "name",
@@ -220,7 +220,7 @@ def modify_config(ctx, api, slurm_config_key, **kwargs):
             changed = True
 
     if changed:
-        scheduler = api.put_slurm_schedulers_key(workflow_key, slurm_config_key, scheduler)
+        scheduler = api.modify_slurm_scheduler(workflow_key, slurm_config_key, scheduler)
         if output_format == "text":
             logger.info("Modified Slurm configuration %s to the database", slurm_config_key)
         else:
@@ -238,7 +238,7 @@ def list_configs(ctx, api):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     table_title = f"Slurm configurations in workflow {workflow_key}"
-    items = (x.to_dict() for x in iter_documents(api.get_slurm_schedulers, workflow_key))
+    items = (x.to_dict() for x in iter_documents(api.list_slurm_schedulers, workflow_key))
     columns = list_model_fields(SlurmSchedulersModel)
     columns.remove("_rev")
     print_items(ctx, items, table_title, columns, "configs")
@@ -377,7 +377,7 @@ def schedule_slurm_nodes(
     hpc_type = HpcType("slurm")
     mgr = HpcManager(data, hpc_type, output)
     database_url = api.api_client.configuration.host
-    workflow_config = api.get_workflows_key_config(workflow_key)
+    workflow_config = api.get_workflow_config(workflow_key)
 
     runner_script = (
         f"torc -k {workflow_key} -u {database_url} --console-level=error hpc slurm run-jobs "
@@ -391,7 +391,7 @@ def schedule_slurm_nodes(
     job_ids = []
     node_keys = []
     for _ in range(num_hpc_jobs):
-        node = api.post_scheduled_compute_nodes(
+        node = api.add_scheduled_compute_node(
             workflow_key,
             ScheduledComputeNodesModel(scheduler_config_id=config.id, status="uninitialized"),
         )
@@ -405,16 +405,16 @@ def schedule_slurm_nodes(
                 start_one_worker_per_node=start_one_worker_per_node,
             )
         except Exception:
-            api.delete_scheduled_compute_nodes_key(workflow_key, node.key)
+            api.remove_scheduled_compute_node(workflow_key, node.key)
             raise
 
         node.scheduler_id = job_id
         node.status = "pending"
-        api.put_scheduled_compute_nodes_key(workflow_key, node.key, node)
+        api.modify_scheduled_compute_node(workflow_key, node.key, node)
         job_ids.append(job_id)
         node_keys.append(node.key)
 
-    api.post_events(
+    api.add_event(
         workflow_key,
         {
             "category": "scheduler",
@@ -434,9 +434,9 @@ def schedule_slurm_nodes(
 
 
 def _check_schedule_params(api, workflow_key):
-    ready_jobs = api.get_jobs(workflow_key, status="ready", limit=1)
+    ready_jobs = api.list_jobs(workflow_key, status="ready", limit=1)
     if not ready_jobs.items:
-        ready_jobs = api.get_jobs(workflow_key, status="scheduled", limit=1)
+        ready_jobs = api.list_jobs(workflow_key, status="scheduled", limit=1)
     if not ready_jobs.items:
         logger.error("No jobs are in the ready state. Did you run 'torc workflows start'?")
         sys.exit(1)
@@ -455,7 +455,7 @@ def _get_scheduler_config(ctx, api, workflow_key, scheduler_config_key):
         )
         config = prompt_user_for_document(
             "scheduler_config",
-            api.get_slurm_schedulers,
+            api.list_slurm_schedulers,
             workflow_key,
             auto_select_one_option=True,
             exclude_columns=("_id", "_rev"),
@@ -465,7 +465,7 @@ def _get_scheduler_config(ctx, api, workflow_key, scheduler_config_key):
             logger.error("No schedulers are stored")
             sys.exit(1)
     else:
-        config = api.get_slurm_schedulers_key(workflow_key, scheduler_config_key)
+        config = api.get_slurm_scheduler(workflow_key, scheduler_config_key)
 
     return config
 
@@ -527,7 +527,7 @@ def run_jobs(
     """Run workflow jobs on a Slurm compute node."""
     try:
         # NOTE: Ensure that this is the first API command that gets sent.
-        send_api_command(api.get_ping)
+        send_api_command(api.ping)
     except DatabaseOffline:
         wait_for_healthy_database(api, wait_for_healthy_database_minutes)
 
@@ -548,12 +548,12 @@ def run_jobs(
         "slurm_job_id": slurm_job_id,
         "hpc_type": HpcType.SLURM.value,
     }
-    config = send_api_command(api.get_workflows_key_config, workflow_key)
+    config = send_api_command(api.get_workflow_config, workflow_key)
     buffer = timedelta(seconds=config.compute_node_expiration_buffer_seconds)
     end_time = intf.get_job_end_time() - buffer
     node = None if is_subtask else _get_scheduled_compute_node(api, workflow_key, slurm_job_id)
 
-    workflow = api.get_workflows_key(workflow_key)
+    workflow = api.get_workflow(workflow_key)
     log_prefix = _get_torc_job_log_prefix(slurm_job_id, slurm_node_id, slurm_task_pid)
     my_logger.info(
         "Start workflow on compute node %s end_time=%s buffer=%s",
@@ -570,7 +570,7 @@ def run_jobs(
         if node.status != "active":
             node.status = "active"
             try:
-                node = api.put_scheduled_compute_nodes_key(workflow_key, node.key, node)
+                node = api.modify_scheduled_compute_node(workflow_key, node.key, node)
                 activated_slurm_job = True
             except ApiException:
                 # Another node sent the command first.
@@ -599,11 +599,11 @@ def run_jobs(
             # TODO: This is not very accurate. Other nodes in the allocation could still be active.
             # active. It would be better to do this from the caller of this command.
             node.status = "complete"
-            api.put_scheduled_compute_nodes_key(workflow_key, node.key, node)
+            api.modify_scheduled_compute_node(workflow_key, node.key, node)
 
 
 def _get_scheduled_compute_node(api, workflow_key, slurm_job_id):
-    nodes = api.get_scheduled_compute_nodes(workflow_key, scheduler_id=slurm_job_id).items
+    nodes = api.list_scheduled_compute_nodes(workflow_key, scheduler_id=slurm_job_id).items
     num_nodes = len(nodes)
     if num_nodes == 0:
         node = None

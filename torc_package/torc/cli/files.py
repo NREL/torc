@@ -70,7 +70,7 @@ def delete(ctx, api, file_keys):
         logger.warning("No file keys were passed")
     workflow_key = get_workflow_key_from_context(ctx, api)
     for key in file_keys:
-        api.delete_files_key(workflow_key, key)
+        api.remove_file(workflow_key, key)
         logger.info("Deleted workflow=%s file=%s", workflow_key, key)
 
 
@@ -82,8 +82,8 @@ def delete_all(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    for file in iter_documents(api.get_files, workflow_key):
-        api.delete_files_key(workflow_key, file.key)
+    for file in iter_documents(api.list_files, workflow_key):
+        api.remove_file(workflow_key, file.key)
         logger.info("Deleted file %s", file.key)
 
 
@@ -129,7 +129,7 @@ def list_files(ctx, api, filters, sort_by, reverse_sort):
         filters["sort_by"] = sort_by
         filters["reverse_sort"] = reverse_sort
     table_title = f"Files in workflow {workflow_key}"
-    items = (x.to_dict() for x in iter_documents(api.get_files, workflow_key, **filters))
+    items = (x.to_dict() for x in iter_documents(api.list_files, workflow_key, **filters))
     columns = list_model_fields(FilesModel)
     columns.remove("_id")
     columns.remove("_rev")

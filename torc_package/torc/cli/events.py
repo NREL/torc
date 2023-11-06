@@ -87,7 +87,7 @@ def list_events(ctx, api, after_datetime, after_timestamp_ms, filters, limit, sk
             logger.warning("Skip is ignored when a timestamp is set.")
         evts = iter_documents(api.get_events_after_timestamp, workflow_key, timestamp, **filters)
     else:
-        evts = iter_documents(api.get_events, workflow_key, **filters)
+        evts = iter_documents(api.list_events, workflow_key, **filters)
 
     data = []
     for event in evts:

@@ -30,4 +30,4 @@ result = UserDataModel(
     name="result",
     data={"affinity": list(affinity), "num_cpus": multiprocessing.cpu_count()},
 )
-api.post_user_data(workflow_key, result)
+api.add_user_data(workflow_key, result)

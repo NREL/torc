@@ -17,7 +17,7 @@ def main():
         sys.exit(1)
 
     api = make_api(config.database_url)
-    result = api.get_jobs_key_user_data_consumes(workflow_key, job_key)
+    result = api.list_job_user_data_consumes(workflow_key, job_key)
     resource_ud = None
     for item in result.items:
         if item.name == "resource":

@@ -20,17 +20,17 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictBool, StrictInt
-from torc.openapi_client.models.jobs_model import JobsModel
+from torc.openapi_client.models.files_model import FilesModel
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class GetJobsResponse(BaseModel):
+class ListFilesResponse(BaseModel):
     """
-    GetJobsResponse
+    ListFilesResponse
     """ # noqa: E501
-    items: Optional[List[JobsModel]] = None
+    items: Optional[List[FilesModel]] = None
     skip: StrictInt
     max_limit: StrictInt
     count: StrictInt
@@ -55,7 +55,7 @@ class GetJobsResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of GetJobsResponse from a JSON string"""
+        """Create an instance of ListFilesResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -85,7 +85,7 @@ class GetJobsResponse(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of GetJobsResponse from a dict"""
+        """Create an instance of ListFilesResponse from a dict"""
         if obj is None:
             return None
 
@@ -93,7 +93,7 @@ class GetJobsResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "items": [JobsModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
+            "items": [FilesModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
             "skip": obj.get("skip"),
             "max_limit": obj.get("max_limit"),
             "count": obj.get("count"),

@@ -134,7 +134,7 @@ def get_workflow_key_from_context(ctx, api):
         )
         doc = prompt_user_for_document(
             "workflow",
-            api.get_workflows,
+            api.list_workflows,
             exclude_columns=("_id", "_rev"),
             msg=msg,
             auto_select_one_option=True,

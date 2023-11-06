@@ -1,4 +1,4 @@
-# GetEventsResponse
+# ListEventsResponse
 
 
 ## Properties

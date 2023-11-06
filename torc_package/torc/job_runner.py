@@ -117,7 +117,7 @@ class JobRunner:
         # TODO: too many inputs and too complex. Needs refactoring.
         self._api = api
         self._workflow = workflow
-        self._run_id = send_api_command(api.get_workflows_key_status, workflow.key).run_id
+        self._run_id = send_api_command(api.get_workflow_status, workflow.key).run_id
         assert self._run_id > 0, self._run_id
         self._outstanding_jobs = {}
         self._pids = {}
@@ -156,7 +156,7 @@ class JobRunner:
         else:
             self._cpu_tracker = None
 
-        config = api.get_workflows_key_config(self._workflow.key)
+        config = api.get_workflow_config(self._workflow.key)
         self._config = config
         self._wait_for_new_jobs_seconds = config.compute_node_wait_for_new_jobs_seconds
         self._ignore_completion = config.compute_node_ignore_workflow_completion
@@ -165,11 +165,7 @@ class JobRunner:
         self._last_db_poll_time = 0
         self._compute_node = None
         self._stats = ComputeNodeResourceStatConfig(
-            **(
-                api.get_workflows_key_config(
-                    self._workflow.key
-                ).compute_node_resource_stats.to_dict()
-            )
+            **(api.get_workflow_config(self._workflow.key).compute_node_resource_stats.to_dict())
         )
         if is_subtask:
             logger.info("Disable overall compute node stats monitoring for a subtask.")
@@ -231,9 +227,7 @@ class JobRunner:
         if self._ignore_completion:
             logger.debug("Ignore workflow completions")
             return False
-        return send_api_command(
-            self._api.get_workflows_key_is_complete, self._workflow.key
-        ).is_complete
+        return send_api_command(self._api.is_workflow_complete, self._workflow.key).is_complete
 
     def _run_until_complete(self):
         os.environ["TORC_WORKFLOW_KEY"] = self._workflow.key
@@ -268,7 +262,7 @@ class JobRunner:
 
                 if num_completed > 0:
                     schedule_result = send_api_command(
-                        self._api.post_workflows_key_prepare_jobs_for_scheduling,
+                        self._api.prepare_jobs_for_scheduling,
                         self._workflow.key,
                     )
                     for scheduler_id in schedule_result.schedulers:
@@ -311,7 +305,7 @@ class JobRunner:
                     timeout_minutes=self._config.compute_node_wait_for_healthy_database_minutes,
                 )
 
-        result = send_api_command(self._api.get_workflows_key_is_complete, self._workflow.key)
+        result = send_api_command(self._api.is_workflow_complete, self._workflow.key)
         if result.is_canceled:
             logger.info("Detected a canceled workflow. Cancel all outstanding jobs and exit.")
             self._cancel_jobs(list(self._outstanding_jobs.values()))
@@ -351,7 +345,7 @@ class JobRunner:
             scheduler=scheduler or {},
         )
         self._compute_node = send_api_command(
-            self._api.post_compute_nodes,
+            self._api.add_compute_node,
             self._workflow.key,
             compute_node,
         )
@@ -363,7 +357,7 @@ class JobRunner:
             - datetime.strptime(self._compute_node.start_time, "%Y-%m-%d %H:%M:%S.%f").timestamp()
         )
         send_api_command(
-            self._api.put_compute_nodes_key,
+            self._api.modify_compute_node,
             self._workflow.key,
             self._compute_node.key,
             self._compute_node,
@@ -372,7 +366,7 @@ class JobRunner:
 
     def _complete_job(self, job, result, status):
         job = send_api_command(
-            self._api.post_jobs_key_complete_job_status_rev_run_id,
+            self._api.complete_job,
             self._workflow.key,
             job.id,
             status,
@@ -384,7 +378,7 @@ class JobRunner:
 
     def _decrement_resources(self, job):
         job_resources = send_api_command(
-            self._api.get_jobs_key_resource_requirements,
+            self._api.get_job_resource_requirements,
             self._workflow.key,
             job.key,
         )
@@ -398,7 +392,7 @@ class JobRunner:
 
     def _increment_resources(self, job):
         job_resources = send_api_command(
-            self._api.get_jobs_key_resource_requirements,
+            self._api.get_job_resource_requirements,
             self._workflow.key,
             job.key,
         )
@@ -425,7 +419,7 @@ class JobRunner:
 
     def _log_worker_start_event(self):
         send_api_command(
-            self._api.post_events,
+            self._api.add_event,
             self._workflow.key,
             {
                 "category": "worker",
@@ -439,7 +433,7 @@ class JobRunner:
 
     def _log_worker_stop_event(self):
         send_api_command(
-            self._api.post_events,
+            self._api.add_event,
             self._workflow.key,
             {
                 "category": "worker",
@@ -452,7 +446,7 @@ class JobRunner:
 
     def _log_worker_schedule_event(self, scheduler_id):
         send_api_command(
-            self._api.post_events,
+            self._api.add_event,
             self._workflow.key,
             {
                 "category": "worker",
@@ -466,7 +460,7 @@ class JobRunner:
 
     def _log_job_start_event(self, job_key: str, job_name: str):
         send_api_command(
-            self._api.post_events,
+            self._api.add_event,
             self._workflow.key,
             {
                 "category": "job",
@@ -481,7 +475,7 @@ class JobRunner:
 
     def _log_job_complete_event(self, job_key: str, job_name: str, status: str, return_code: int):
         send_api_command(
-            self._api.post_events,
+            self._api.add_event,
             self._workflow.key,
             {
                 "category": "job",
@@ -519,7 +513,7 @@ class JobRunner:
             job.wait_for_completion(status)
             assert job.is_complete()
             job.db_job = send_api_command(
-                self._api.get_jobs_key,
+                self._api.get_job,
                 self._workflow.key,
                 job.key,
             )
@@ -565,7 +559,7 @@ class JobRunner:
         # The database changes db_job._rev on every update.
         # This reassigns job.db_job in order to stay current.
         job.db_job = send_api_command(
-            self._api.put_jobs_key_manage_status_change_status_rev_run_id,
+            self._api.manage_status_change,
             self._workflow.key,
             job.key,
             JobStatus.SUBMITTED.value,
@@ -576,7 +570,7 @@ class JobRunner:
         if self._stats.process:
             self._pids[job.key] = job.pid
         send_api_command(
-            self._api.post_edges_name,
+            self._api.add_edge,
             self._workflow.key,
             "executed",
             EdgesNameModel(
@@ -588,7 +582,7 @@ class JobRunner:
         self._log_job_start_event(job.key, job.db_job.name)
 
     def _run_ready_jobs(self):
-        run_id = send_api_command(self._api.get_workflows_key_status, self._workflow.key).run_id
+        run_id = send_api_command(self._api.get_workflow_status, self._workflow.key).run_id
         if run_id != self._run_id:
             if self._outstanding_jobs:
                 num = len(self._outstanding_jobs)
@@ -606,7 +600,7 @@ class JobRunner:
         if self._max_parallel_jobs is not None:
             kwargs["limit"] = self._max_parallel_jobs
         ready_jobs = send_api_command(
-            self._api.post_workflows_key_prepare_jobs_for_submission,
+            self._api.prepare_jobs_for_submission,
             self._workflow.key,
             self._resources,
             sort_method=self._config.prepare_jobs_sort_method,
@@ -680,7 +674,7 @@ class JobRunner:
                 stats.append(ComputeNodeStats(**x))
             if stats:
                 send_api_command(
-                    self._api.post_compute_node_stats,
+                    self._api.add_compute_node_stats,
                     self._workflow.key,
                     ComputeNodeStatsModel(
                         hostname=self._hostname,
@@ -696,7 +690,7 @@ class JobRunner:
 
     def _post_compute_node_stats(self, results: ComputeNodeResourceStatResults):
         res = send_api_command(
-            self._api.post_compute_node_stats,
+            self._api.add_compute_node_stats,
             self._workflow.key,
             ComputeNodeStatsModel(
                 hostname=self._hostname,
@@ -708,7 +702,7 @@ class JobRunner:
             ),
         )
         send_api_command(
-            self._api.post_edges_name,
+            self._api.add_edge,
             self._workflow.key,
             "node_used",
             EdgesNameModel(
@@ -722,7 +716,7 @@ class JobRunner:
 
     def _post_job_process_stats(self, result: ProcessStatResults):
         res = send_api_command(
-            self._api.post_job_process_stats,
+            self._api.add_job_process_stats,
             self._workflow.key,
             JobProcessStatsModel(
                 avg_cpu_percent=result.average["cpu_percent"],
@@ -736,7 +730,7 @@ class JobRunner:
             ),
         )
         send_api_command(
-            self._api.post_edges_name,
+            self._api.add_edge,
             self._workflow.key,
             "process_used",
             EdgesNameModel(
@@ -747,7 +741,7 @@ class JobRunner:
 
     def _update_file_info(self, job):
         for file in iter_documents(
-            self._api.get_files_produced_by_job_key,
+            self._api.list_files_produced_by_job,
             self._workflow.key,
             job.key,
         ):
@@ -762,7 +756,7 @@ class JobRunner:
             # file.file_hash = compute_file_hash(path)
             file.st_mtime = path.stat().st_mtime
             send_api_command(
-                self._api.put_files_key,
+                self._api.modify_file,
                 self._workflow.key,
                 file.key,
                 file,

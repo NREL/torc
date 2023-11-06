@@ -91,9 +91,7 @@ def _join_by_edge(
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
     func = (
-        api.post_workflows_key_join_by_outbound_edge_collection_edge
-        if outbound
-        else api.post_workflows_key_join_by_inbound_edge_collection_edge
+        api.join_collections_by_outbound_edge if outbound else api.join_collections_by_inbound_edge
     )
     iterable = iter_documents(func, workflow_key, collection, edge, filters, **kwargs)
     base_exclude = ["_id", "_rev", "_oldRev"]
@@ -342,7 +340,7 @@ def list_collections(ctx, api, raw):
     check_database_url(api)
     output_format = get_output_format_from_context(ctx)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    results = api.get_workflows_key_collection_names(workflow_key)
+    results = api.list_collection_names(workflow_key)
     if not raw:
         for i, name in enumerate(results.names):
             results.names[i] = name.split("__")[0]

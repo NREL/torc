@@ -41,14 +41,14 @@ def test_cancel_workflow(cancelable_workflow, tmp_path):
             ],
             check=True,
         )
-        status = api.get_workflows_key_status(workflow_key)
+        status = api.get_workflow_status(workflow_key)
         assert status.is_canceled
-        result = api.get_workflows_key_is_complete(workflow_key)
+        result = api.is_workflow_complete(workflow_key)
         assert result.is_complete
         pipe.communicate()
         assert pipe.returncode == 0
-        for job in iter_documents(api.get_jobs, workflow_key):
+        for job in iter_documents(api.list_jobs, workflow_key):
             assert job.status == "canceled"
-        for result in iter_documents(api.get_results, workflow_key):
+        for result in iter_documents(api.list_results, workflow_key):
             assert result.return_code != 0
             assert result.status == "canceled"

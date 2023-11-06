@@ -52,16 +52,16 @@ def sqlite(api, workflow_keys, filename, force):
     workflow_statuses = []
     tables = set()
     if workflow_keys:
-        selected_workflows = (api.get_workflows_key(x) for x in workflow_keys)
+        selected_workflows = (api.get_workflow(x) for x in workflow_keys)
     else:
-        selected_workflows = iter_documents(api.get_workflows)
+        selected_workflows = iter_documents(api.list_workflows)
     for workflow in selected_workflows:
-        config = api.get_workflows_key_config(workflow.key)
+        config = api.get_workflow_config(workflow.key)
         config_as_dict = config.model_dump()
         config_as_dict["compute_node_resource_stats"] = json.dumps(
             config_as_dict["compute_node_resource_stats"]
         )
-        status = api.get_workflows_key_status(workflow.key)
+        status = api.get_workflow_status(workflow.key)
         status_as_dict = status.model_dump()
         status_as_dict["auto_tune_status"] = json.dumps(status_as_dict["auto_tune_status"])
         if not workflows:
@@ -72,7 +72,7 @@ def sqlite(api, workflow_keys, filename, force):
         workflow_configs.append(tuple(config_as_dict.values()))
         workflow_statuses.append(tuple(status_as_dict.values()))
 
-        for name in api.get_workflows_key_collection_names(workflow.key).names:
+        for name in api.list_collection_names(workflow.key).names:
             basename = name.split("__")[0]
             func = _get_db_documents_func(api, basename)
 
@@ -165,30 +165,30 @@ def _get_type_from_schema(properties: dict):
 
 
 _DB_ACCESSOR_FUNCS = {
-    "blocks": "get_edges_name",
-    "consumes": "get_edges_name",
-    "executed": "get_edges_name",
-    "compute_node_stats": "get_compute_node_stats",
-    "compute_nodes": "get_compute_nodes",
-    "events": "get_events",
-    "files": "get_files",
-    "aws_schedulers": "get_aws_schedulers",
-    "local_schedulers": "get_local_schedulers",
-    "slurm_schedulers": "get_slurm_schedulers",
-    "job_process_stats": "get_job_process_stats",
-    "jobs": "get_jobs",
-    "needs": "get_edges_name",
-    "node_used": "get_edges_name",
-    "process_used": "get_edges_name",
-    "produces": "get_edges_name",
-    "requires": "get_edges_name",
-    "resource_requirements": "get_resource_requirements",
-    "results": "get_results",
-    "returned": "get_edges_name",
-    "scheduled_bys": "get_edges_name",
-    "scheduled_compute_nodes": "get_scheduled_compute_nodes",
-    "stores": "get_edges_name",
-    "user_data": "get_user_data",
+    "blocks": "list_edges",
+    "consumes": "list_edges",
+    "executed": "list_edges",
+    "compute_node_stats": "list_compute_node_stats",
+    "compute_nodes": "list_compute_nodes",
+    "events": "list_events",
+    "files": "list_files",
+    "aws_schedulers": "list_aws_schedulers",
+    "local_schedulers": "list_local_schedulers",
+    "slurm_schedulers": "list_slurm_schedulers",
+    "job_process_stats": "list_job_process_stats",
+    "jobs": "list_jobs",
+    "needs": "list_edges",
+    "node_used": "list_edges",
+    "process_used": "list_edges",
+    "produces": "list_edges",
+    "requires": "list_edges",
+    "resource_requirements": "list_resource_requirements",
+    "results": "list_results",
+    "returned": "list_edges",
+    "scheduled_bys": "list_edges",
+    "scheduled_compute_nodes": "list_scheduled_compute_nodes",
+    "stores": "list_edges",
+    "user_data": "list_user_data",
 }
 
 

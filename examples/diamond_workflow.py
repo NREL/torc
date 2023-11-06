@@ -37,12 +37,12 @@ def create_workflow(api: DefaultApi) -> WorkflowsModel:
         name="diamond_workflow",
         description="Example diamond workflow",
     )
-    return api.post_workflows(workflow)
+    return api.add_workflow(workflow)
 
 
 def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
     """Creates a workflow with implicit job dependencies declared through files."""
-    config = api.get_workflows_key_config(workflow.key)
+    config = api.get_workflow_config(workflow.key)
     config.compute_node_resource_stats = ComputeNodeResourceStatsModel(
         cpu=True,
         memory=True,
@@ -50,30 +50,30 @@ def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
         interval=5,
         monitor_type="aggregation",
     )
-    api.put_workflows_key_config(workflow.key, config)
+    api.modify_workflow_config(workflow.key, config)
 
     inputs_file = Path("inputs.json")
     inputs_file.write_text(json.dumps({"val": 5}), encoding="utf-8")
 
-    inputs = api.post_files(workflow.key, FilesModel(name="inputs", path=str(inputs_file)))
-    f1 = api.post_files(workflow.key, FilesModel(name="file1", path="f1.json"))
-    f2 = api.post_files(workflow.key, FilesModel(name="file2", path="f2.json"))
-    f3 = api.post_files(workflow.key, FilesModel(name="file3", path="f3.json"))
-    f4 = api.post_files(workflow.key, FilesModel(name="file4", path="f4.json"))
+    inputs = api.add_file(workflow.key, FilesModel(name="inputs", path=str(inputs_file)))
+    f1 = api.add_file(workflow.key, FilesModel(name="file1", path="f1.json"))
+    f2 = api.add_file(workflow.key, FilesModel(name="file2", path="f2.json"))
+    f3 = api.add_file(workflow.key, FilesModel(name="file3", path="f3.json"))
+    f4 = api.add_file(workflow.key, FilesModel(name="file4", path="f4.json"))
 
-    small = api.post_resource_requirements(
+    small = api.add_resource_requirements(
         workflow.key,
         ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT1H"),
     )
-    medium = api.post_resource_requirements(
+    medium = api.add_resource_requirements(
         workflow.key,
         ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"),
     )
-    large = api.post_resource_requirements(
+    large = api.add_resource_requirements(
         workflow.key,
         ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H"),
     )
-    api.post_slurm_schedulers(
+    api.add_slurm_scheduler(
         workflow.key,
         SlurmSchedulersModel(
             name="short",
@@ -133,7 +133,7 @@ def main():
     try:
         build_workflow(api, workflow)
     except Exception:
-        api.delete_workflows_key(workflow.key)
+        api.remove_workflow(workflow.key)
         raise
 
 

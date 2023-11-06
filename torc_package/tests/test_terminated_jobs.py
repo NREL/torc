@@ -39,12 +39,12 @@ def test_terminated_jobs(cancelable_workflow, tmp_path):
         if not done:
             pipe.kill()
         assert done
-        result = api.get_workflows_key_is_complete(workflow_key)
+        result = api.is_workflow_complete(workflow_key)
         assert result.is_complete
         pipe.communicate()
         assert pipe.returncode == 0
-        for job in iter_documents(api.get_jobs, workflow_key):
+        for job in iter_documents(api.list_jobs, workflow_key):
             assert job.status == "terminated"
-        for result in iter_documents(api.get_results, workflow_key):
+        for result in iter_documents(api.list_results, workflow_key):
             assert result.return_code == 0
             assert result.status == "terminated"
