@@ -28,12 +28,12 @@ One way to approach this problem is the following:
 - Generate an ``openapi.yaml`` with your changes.
 - Make a textual diff, edit it, and then add it to the official ``openapi.yaml``.
 
-Be sure to follow existing conventions:
+Follow these conventions:
 
 - Use ``model`` instead of ``body``.
 - Replace odd-looking strings, like ``workflows_workflow_jobs`` with ``jobs``.
 - Ensure that that are no names with ``inline``.
-- Use these terms:
+- Use these terms for ``operationId`` in ``openapi.yaml``:
 
   - ``list_<collection>``: Return all documents from a collection. Example: ``list_jobs``
   - ``get_<collection_singular>``: Return one document from a collection. Example: ``get_job``.
