@@ -101,7 +101,7 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
         nodes = json.loads(result.stdout)["compute_nodes"]
         assert len(nodes) == 2
 
-        results = api.get_results(key).items
+        results = api.list_results(key).items
         assert len(results) == 4
         for result in results:
             assert result.return_code == 0
@@ -121,7 +121,7 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
 
         start_events = []
         complete_events = []
-        for event in iter_documents(api.get_events, key):
+        for event in iter_documents(api.list_events, key):
             if event.get("category") == "job" and event.get("type") in ("start", "complete"):
                 timestamp = datetime.strptime(event["timestamp"], "%Y-%m-%dT%H:%M:%S.%fZ")
                 item = {
@@ -156,7 +156,7 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
         assert sqlite_files
         _wait_for_compute_nodes(api, key)
     finally:
-        api.delete_workflows_key(key)
+        api.remove_workflow(key)
 
 
 def test_cpu_affinity_workflow(setup_api, slurm_account):  # pylint: disable=redefined-outer-name
@@ -194,7 +194,7 @@ def test_cpu_affinity_workflow(setup_api, slurm_account):  # pylint: disable=red
         _check_cpu_affinity_results(api, key)
         _wait_for_compute_nodes(api, key)
     finally:
-        api.delete_workflows_key(key)
+        api.remove_workflow(key)
 
 
 def test_slurm_cpu_bind_workflow(setup_api, slurm_account):  # pylint: disable=redefined-outer-name
@@ -224,7 +224,7 @@ srun -c9 -n4 --cpu-bind=mask_cpu:0x1ff,0x3fe00,0x7fc0000,0xff8000000 \\
         _check_cpu_affinity_results(api, key)
         _wait_for_compute_nodes(api, key)
     finally:
-        api.delete_workflows_key(key)
+        api.remove_workflow(key)
 
 
 def _create_cpu_affinity_workflow(output_dir, slurm_account):
@@ -241,14 +241,14 @@ def _create_cpu_affinity_workflow(output_dir, slurm_account):
 
 
 def _check_cpu_affinity_results(api, key):
-    results = api.get_results(key).items
+    results = api.list_results(key).items
     assert len(results) == 4
     for result in results:
         assert result.return_code == 0
     # Eagle value
     num_cpus = None
     total_cpu_affinity = set()
-    for ud in api.get_user_data(key).items:
+    for ud in api.list_user_data(key).items:
         if num_cpus is None:
             num_cpus = ud.data["num_cpus"]
         else:
@@ -283,7 +283,7 @@ def _fix_mem_requirement(spec_file, index, mem):
 
 def _get_scheduler_by_name(api, workflow_key):
     slurm_configs = [
-        x for x in iter_documents(api.get_slurm_schedulers, workflow_key) if x.name == "debug"
+        x for x in iter_documents(api.list_slurm_schedulers, workflow_key) if x.name == "debug"
     ]
     assert slurm_configs
     return slurm_configs[0]
@@ -293,7 +293,7 @@ def _wait_for_workflow_complete(api, key, timeout=600):
     timeout = time.time() + timeout
     done = True
     while time.time() < timeout:
-        response = api.get_workflows_key_is_complete(key)
+        response = api.is_workflow_complete(key)
         if response.is_complete:
             done = True
             break
@@ -302,7 +302,7 @@ def _wait_for_workflow_complete(api, key, timeout=600):
 
 
 def _wait_for_compute_nodes(api, key):
-    slurm_job_ids = {x.scheduler["slurm_job_id"] for x in api.get_compute_nodes(key).items}
+    slurm_job_ids = {x.scheduler["slurm_job_id"] for x in api.list_compute_nodes(key).items}
     intf = SlurmInterface()
     timeout = time.time() + 300
     while time.time() < timeout and slurm_job_ids:

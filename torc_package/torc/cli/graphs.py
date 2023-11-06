@@ -66,7 +66,7 @@ def plot(ctx, api, names, keep_dot_file, output):
     output.mkdir(exist_ok=True)
     workflow_key = get_workflow_key_from_context(ctx, api)
     for name in names:
-        response = api.get_workflows_key_dot_graph_name(workflow_key, name)
+        response = api.get_dot_graph(workflow_key, name)
         filename = name + ".dot"
         dot_file = output / filename
         dot_file.write_text(response.graph, encoding="utf-8")

@@ -90,7 +90,7 @@ def add(ctx, api, cancel_on_blocking_job_failure, command, key, name):
         key=key,
         name=name,
     )
-    job = api.post_jobs(workflow_key, job)
+    job = api.add_job(workflow_key, job)
     if output_format == "text":
         logger.info("Added job with key=%s", job.key)
     else:
@@ -114,9 +114,9 @@ def list_user_data(ctx, api, job_key, stores):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     if stores:
-        method = api.get_jobs_key_user_data_stores
+        method = api.list_job_user_data_stores
     else:
-        method = api.get_jobs_key_user_data_consumes
+        method = api.list_job_user_data_consumes
     resp = method(workflow_key, job_key)
     items = []
     for item in resp.items:
@@ -142,7 +142,7 @@ def delete(ctx, api, job_keys):
     msg = f"This command will delete {len(job_keys)} jobs in workflow {workflow_key}."
     confirm_change(ctx, msg)
     for key in job_keys:
-        api.delete_jobs_key(workflow_key, key)
+        api.remove_job(workflow_key, key)
         logger.info("Deleted workflow=%s job=%s", workflow_key, key)
 
 
@@ -154,11 +154,11 @@ def delete_all(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    job_keys = [x.key for x in iter_documents(api.get_jobs, workflow_key)]
+    job_keys = [x.key for x in iter_documents(api.list_jobs, workflow_key)]
     msg = f"This command will delete the {len(job_keys)} jobs in workflow {workflow_key}."
     confirm_change(ctx, msg)
     for key in job_keys:
-        api.delete_jobs_key(workflow_key, key)
+        api.remove_job(workflow_key, key)
         logger.info("Deleted job %s", key)
 
 
@@ -182,10 +182,10 @@ def disable(ctx, api, job_keys):
     confirm_change(ctx, msg)
     count = 0
     for key in job_keys:
-        job = api.get_jobs_key(workflow_key, key)
+        job = api.get_job(workflow_key, key)
         if job.status != "disabled":
             job.status = "disabled"
-            api.put_jobs_key(workflow_key, key, job)
+            api.modify_job(workflow_key, key, job)
             count += 1
             logger.info("Set job status of job key=%s name=%s to 'disabled.'", job.key, job.name)
 
@@ -244,7 +244,7 @@ def list_jobs(ctx, api, filters, exclude, limit, skip, sort_by, reverse_sort):
     if sort_by is not None:
         filters["sort_by"] = sort_by
         filters["reverse_sort"] = reverse_sort
-    items = (x.to_dict() for x in iter_documents(api.get_jobs, workflow_key, **filters))
+    items = (x.to_dict() for x in iter_documents(api.list_jobs, workflow_key, **filters))
     exclude.update(
         {
             "_id",
@@ -309,7 +309,7 @@ def assign_resource_requirements(ctx, api, resource_requirements_key, job_keys):
     output_format = get_output_format_from_context(ctx)
     edges = []
     for job_key in job_keys:
-        edge = api.put_jobs_key_resource_requirements_rr_key(
+        edge = api.modify_job_resource_requirements(
             workflow_key, job_key, resource_requirements_key
         )
         edges.append(edge.to_dict())
@@ -341,15 +341,15 @@ def reset_status(ctx, api, job_keys):
     )
     confirm_change(ctx, msg)
     count = 0
-    run_id = api.get_workflows_key_status(workflow_key).run_id
+    run_id = api.get_workflow_status(workflow_key).run_id
     for key in job_keys:
-        job = api.get_jobs_key(workflow_key, key)
+        job = api.get_job(workflow_key, key)
         if job.status != JobStatus.UNINITIALIZED.value:
             match job.status:
                 case JobStatus.UNINITIALIZED.value:
                     pass
                 case JobStatus.DONE.value | JobStatus.CANCELED.value | JobStatus.TERMINATED.value:
-                    api.put_jobs_key_manage_status_change_status_rev_run_id(
+                    api.manage_status_change(
                         workflow_key,
                         job.key,
                         JobStatus.UNINITIALIZED.value,
@@ -358,7 +358,7 @@ def reset_status(ctx, api, job_keys):
                     )
                 case _:
                     job.status = JobStatus.UNINITIALIZED.value
-                    api.put_jobs_key(workflow_key, key, job)
+                    api.modify_job(workflow_key, key, job)
             count += 1
             logger.info("Reset job status of job key=%s name=%s", job.key, job.name)
 
@@ -426,7 +426,7 @@ def run(
     """Run workflow jobs on the current system."""
     try:
         # NOTE: Ensure that this is the first API command that gets sent.
-        api.get_ping()
+        api.ping()
     except DatabaseOffline:
         wait_for_healthy_database(api, wait_for_healthy_database_minutes)
 
@@ -437,7 +437,7 @@ def run(
     log_file = output / f"worker_{hostname}_{log_suffix}.log"
     my_logger = setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
     my_logger.info(get_cli_string())
-    workflow = api.get_workflows_key(workflow_key)
+    workflow = api.get_workflow(workflow_key)
     runner = JobRunner(
         api,
         workflow,

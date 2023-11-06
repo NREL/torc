@@ -26,20 +26,20 @@ def create_workflow(api: DefaultApi) -> WorkflowsModel:
         name="manual_job_dependencies",
         description="Demo creation of a workflow with job dependencies specified manually.",
     )
-    return api.post_workflows(workflow)
+    return api.add_workflow(workflow)
 
 
 def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
     """Builds the workflow."""
-    small = api.post_resource_requirements(
+    small = api.add_resource_requirements(
         workflow.key,
         ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT45M"),
     )
-    medium = api.post_resource_requirements(
+    medium = api.add_resource_requirements(
         workflow.key,
         ResourceRequirementsModel(name="medium", num_cpus=4, memory="10g", runtime="P0DT3H"),
     )
-    api.post_slurm_schedulers(
+    api.add_slurm_scheduler(
         workflow.key,
         SlurmSchedulersModel(
             name="short",
@@ -51,7 +51,7 @@ def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
 
     blocking_jobs = []
     for i in range(1, 4):
-        job = api.post_job_with_edges(
+        job = api.add_job_with_edges(
             workflow.key,
             JobWithEdgesModel(
                 job=JobsModel(name=f"job{i}", command="echo test"),
@@ -60,7 +60,7 @@ def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
         )
         blocking_jobs.append(job.id)
 
-    api.post_job_with_edges(
+    api.add_job_with_edges(
         workflow.key,
         JobWithEdgesModel(
             job=JobsModel(name="postprocess", command="echo test"),
@@ -79,7 +79,7 @@ def main():
         build_workflow(api, workflow)
     except Exception:
         logger.exception("Failed to build workflow")
-        api.delete_workflows_key(workflow.key)
+        api.remove_workflow(workflow.key)
         raise
 
 

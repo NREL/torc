@@ -33,6 +33,15 @@ Be sure to follow existing conventions:
 - Use ``model`` instead of ``body``.
 - Replace odd-looking strings, like ``workflows_workflow_jobs`` with ``jobs``.
 - Ensure that that are no names with ``inline``.
+- Use these terms:
+
+  - ``list_<collection>``: Return all documents from a collection. Example: ``list_jobs``
+  - ``get_<collection_singular>``: Return one document from a collection. Example: ``get_job``.
+      There can be singular/plural ambiguity with some collections. ``get_resource_requirements``
+      returns one resource-requirements document.
+  - ``modify_<collection_singular>``: Modify one document. Example: ``modify_job``
+  - ``remove_<collection_singular>``: Remove one document and return it. Example: ``remove_job``
+  - ``delete_<collection>``: Delete all documents in the collection. Example: ``delete_jobs``
 
 How to generate openapi.yaml
 ============================

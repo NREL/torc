@@ -106,7 +106,7 @@ def create(ctx, api, update_rc_with_key, description, key, name, user):
         user=user,
     )
     output_format = get_output_format_from_context(ctx)
-    workflow = api.post_workflows(workflow)
+    workflow = api.add_workflow(workflow)
     if output_format == "text":
         logger.info("Created a workflow with key=%s", workflow.key)
     else:
@@ -172,14 +172,14 @@ def create_from_commands_file(
         name=name,
         user=user,
     )
-    workflow = api.post_workflows(workflow)
+    workflow = api.add_workflow(workflow)
     if output_format == "text":
         logger.info("Created a workflow from %s with key=%s", filename, workflow.key)
     else:
         print(json.dumps({"filename": filename, "key": workflow.key}))
     for i, command in enumerate(commands, start=1):
         name = str(i)
-        api.post_jobs(workflow.key, JobsModel(name=name, command=command))
+        api.add_job(workflow.key, JobsModel(name=name, command=command))
     if update_rc_with_key:
         _update_torc_rc(api, workflow)
 
@@ -247,14 +247,14 @@ def modify(ctx, api, description, name, user):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    workflow = api.get_workflows_key(workflow_key)
+    workflow = api.get_workflow(workflow_key)
     if description is not None:
         workflow.description = description
     if name is not None:
         workflow.name = name
     if user is not None:
         workflow.user = user
-    workflow = api.put_workflows_key(workflow_key, workflow)
+    workflow = api.modify_workflow(workflow_key, workflow)
     logger.info("Updated workflow %s", workflow.key)
 
 
@@ -281,7 +281,7 @@ def delete_by_user(ctx, api, user):
     """Delete all workflows for a user."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    keys = [x.key for x in iter_documents(api.get_workflows, user=user)]
+    keys = [x.key for x in iter_documents(api.list_workflows, user=user)]
     _delete_workflows_with_warning(ctx, api, keys)
 
 
@@ -292,12 +292,12 @@ def delete_all(ctx, api):
     """Delete all workflows."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    keys = [x.key for x in iter_documents(api.get_workflows)]
+    keys = [x.key for x in iter_documents(api.list_workflows)]
     _delete_workflows_with_warning(ctx, api, keys)
 
 
 def _delete_workflows_with_warning(ctx, api, keys):
-    items = (api.get_workflows_key(x).to_dict() for x in keys)
+    items = (api.get_workflow(x).to_dict() for x in keys)
     columns = list_model_fields(WorkflowsModel)
     columns.remove("_id")
     columns.remove("_rev")
@@ -311,7 +311,7 @@ def _delete_workflows_with_warning(ctx, api, keys):
     msg = "This command will delete the workflows above. Continue?"
     confirm_change(ctx, msg)
     for key in keys:
-        api.delete_workflows_key(key)
+        api.remove_workflow(key)
         logger.info("Deleted workflow %s", key)
 
 
@@ -326,7 +326,7 @@ def list_scheduler_configs(ctx, api):
     workflow_key = get_workflow_key_from_context(ctx, api)
     items = []
     for scheduler in ("aws_schedulers", "local_schedulers", "slurm_schedulers"):
-        method = getattr(api, f"get_{scheduler}")
+        method = getattr(api, f"list_{scheduler}")
         for doc in iter_documents(method, workflow_key):
             items.append(doc.id)
 
@@ -378,7 +378,7 @@ def list_workflows(ctx, api, filters, sort_by, reverse_sort):
     if sort_by is not None:
         filters["sort_by"] = sort_by
         filters["reverse_sort"] = reverse_sort
-    items = (x.to_dict() for x in iter_documents(api.get_workflows, **filters))
+    items = (x.to_dict() for x in iter_documents(api.list_workflows, **filters))
     columns = list_model_fields(WorkflowsModel)
     columns.remove("_id")
     columns.remove("_rev")
@@ -398,7 +398,7 @@ def process_auto_tune_resource_requirements_results(ctx, api):
     """Process the results of the first round of auto-tuning resource requirements."""
     setup_cli_logging(ctx, __name__)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    api.post_workflows_key_process_auto_tune_resource_requirements_results(workflow_key)
+    api.process_auto_tune_resource_requirements_results(workflow_key)
     url = api.api_client.configuration.host
     rr_cmd = f"torc -k {workflow_key} -u {url} resource-requirements list"
     events_cmd = f"torc -k {workflow_key} -u {url} events list -f category=resource_requirements"
@@ -435,9 +435,9 @@ def recommend_nodes(ctx, api, num_cpus, scheduler_config_id):
     output_format = get_output_format_from_context(ctx)
     workflow_key = get_workflow_key_from_context(ctx, api)
     if scheduler_config_id is None:
-        reqs = api.get_workflows_key_ready_job_requirements(workflow_key)
+        reqs = api.get_ready_job_requirements(workflow_key)
     else:
-        reqs = api.get_workflows_key_ready_job_requirements(
+        reqs = api.get_ready_job_requirements(
             workflow_key, scheduler_config_id=scheduler_config_id
         )
     if reqs.num_jobs == 0:
@@ -475,7 +475,7 @@ def reset_status(ctx, api, workflow_key, failed_only):
     """Reset the status of the workflow and all jobs."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    workflow = api.get_workflows_key(workflow_key)
+    workflow = api.get_workflow(workflow_key)
     msg = f"""This command will reset the status of this workflow:
     key: {workflow_key}
     user: {workflow.user}
@@ -514,7 +514,7 @@ def restart(ctx, api, ignore_missing_data, only_uninitialized):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     _exit_if_jobs_are_running(api, workflow_key)
-    workflow = api.get_workflows_key(workflow_key)
+    workflow = api.get_workflow(workflow_key)
     types = "uninitialized" if only_uninitialized else "failed/incomplete"
     msg = f"""This command will restart this workflow and reset {types} job statuses.
     key: {workflow_key}
@@ -559,9 +559,9 @@ def start(ctx, api, auto_tune_resource_requirements, ignore_missing_data):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     _exit_if_jobs_are_running(api, workflow_key)
-    done_jobs = api.get_jobs(workflow_key, status="done", limit=1).items
+    done_jobs = api.list_jobs(workflow_key, status="done", limit=1).items
     if done_jobs:
-        workflow = api.get_workflows_key(workflow_key)
+        workflow = api.get_workflow(workflow_key)
         msg = f"""This workflow has one or more jobs with a status of 'done.' This command will
 reset all job statuses to 'uninitialized' and then 'ready' or 'blocked.'
     key: {workflow_key}
@@ -599,7 +599,7 @@ def create_workflow_from_json_file(api, filename: Path, user=None):
             logger.info("Overriding user=%s with %s", data["user"], user)
         data["user"] = user
     spec = WorkflowSpecificationsModel(**data)
-    return api.post_workflow_specifications(spec)
+    return api.add_workflow_specification(spec)
 
 
 def start_workflow(
@@ -611,7 +611,7 @@ def start_workflow(
         auto_tune_resource_requirements=auto_tune_resource_requirements,
         ignore_missing_data=ignore_missing_data,
     )
-    api.post_events(
+    api.add_event(
         workflow_key,
         {
             "category": "workflow",
@@ -627,7 +627,7 @@ def restart_workflow(api, workflow_key, only_uninitialized=False, ignore_missing
     """Restarts the workflow."""
     mgr = WorkflowManager(api, workflow_key)
     mgr.restart(ignore_missing_data=ignore_missing_data, only_uninitialized=only_uninitialized)
-    api.post_events(
+    api.add_event(
         workflow_key,
         {
             "category": "workflow",
@@ -641,9 +641,9 @@ def restart_workflow(api, workflow_key, only_uninitialized=False, ignore_missing
 
 def reset_workflow_status(api, workflow_key):
     """Resets the status of the workflow."""
-    api.post_workflows_key_reset_status(workflow_key)
+    api.reset_workflow_status(workflow_key)
     logger.info("Reset workflow status")
-    api.post_events(
+    api.add_event(
         workflow_key,
         {
             "category": "workflow",
@@ -656,9 +656,9 @@ def reset_workflow_status(api, workflow_key):
 
 def reset_workflow_job_status(api, workflow_key, failed_only=False):
     """Resets the status of the workflow jobs."""
-    api.post_workflows_key_reset_job_status(workflow_key, failed_only=failed_only)
+    api.reset_job_status(workflow_key, failed_only=failed_only)
     logger.info("Reset job status, failed_only=%s", failed_only)
-    api.post_events(
+    api.add_event(
         workflow_key,
         {
             "category": "workflow",
@@ -672,7 +672,7 @@ def reset_workflow_job_status(api, workflow_key, failed_only=False):
 def cancel_workflow(api, workflow_key):
     """Cancels the workflow."""
     # TODO: Handling different scheduler types needs to be at a lower level.
-    for job in api.get_scheduled_compute_nodes(workflow_key).items:
+    for job in api.list_scheduled_compute_nodes(workflow_key).items:
         if (
             job.status != "complete"
             and job.scheduler_config_id.split("/")[0].split("__")[0] == "slurm_schedulers"
@@ -682,11 +682,11 @@ def cancel_workflow(api, workflow_key):
             return_code = intf.cancel_job(job.scheduler_id)
             if return_code == 0:
                 job.status = "complete"
-                api.put_scheduled_compute_nodes_key(workflow_key, job.key, job)
+                api.modify_scheduled_compute_node(workflow_key, job.key, job)
             # else: Ignore all return codes and try to cancel all jobs.
-    api.put_workflows_key_cancel(workflow_key)
+    api.cancel_workflow(workflow_key)
     logger.info("Canceled workflow %s", workflow_key)
-    api.post_events(
+    api.add_event(
         workflow_key,
         {
             "category": "workflow",
@@ -699,8 +699,8 @@ def cancel_workflow(api, workflow_key):
 
 def has_running_jobs(api, workflow_key) -> bool:
     """Returns True if jobs are running."""
-    submitted = api.get_jobs(workflow_key, status="submitted", limit=1)
-    sub_pend = api.get_jobs(workflow_key, status="submitted_pending", limit=1)
+    submitted = api.list_jobs(workflow_key, status="submitted", limit=1)
+    sub_pend = api.list_jobs(workflow_key, status="submitted_pending", limit=1)
     return len(submitted.items) > 0 or len(sub_pend.items) > 0
 
 
@@ -728,7 +728,7 @@ def show(ctx, api, sanitize):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    data = api.get_workflow_specifications_key(workflow_key).to_dict()
+    data = api.get_workflow_specification(workflow_key).to_dict()
     if sanitize:
         sanitize_workflow(data)
     print(json.dumps(data, indent=2))
@@ -772,7 +772,7 @@ def set_compute_node_parameters(
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    config = api.get_workflows_key_config(workflow_key)
+    config = api.get_workflow_config(workflow_key)
     changed = False
     if (
         expiration_buffer is not None
@@ -805,7 +805,7 @@ def set_compute_node_parameters(
         changed = True
 
     if changed:
-        config = api.put_workflows_key_config(workflow_key, config)
+        config = api.modify_workflow_config(workflow_key, config)
         print(json.dumps(config.to_dict(), indent=2))
     else:
         logger.warning("No parameters were changed")
@@ -819,7 +819,7 @@ def show_config(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    config = api.get_workflows_key_config(workflow_key)
+    config = api.get_workflow_config(workflow_key)
     print(json.dumps(config.to_dict(), indent=2))
 
 
@@ -831,7 +831,7 @@ def show_status(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    status = api.get_workflows_key_status(workflow_key)
+    status = api.get_workflow_status(workflow_key)
     print(json.dumps(status.to_dict(), indent=2))
 
 
@@ -842,7 +842,7 @@ def example(ctx, api):
     """Show the example workflow."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    data = api.get_workflow_specifications_example().to_dict()
+    data = api.get_workflow_specification_example().to_dict()
     sanitize_workflow(data)
     print(json.dumps(data, indent=2))
 
@@ -854,7 +854,7 @@ def template(ctx, api):
     """Show the workflow template."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    data = api.get_workflow_specifications_template().to_dict()
+    data = api.get_workflow_specification_template().to_dict()
     data = remove_db_keys(data)
     data["config"] = remove_db_keys(data["config"])
     data.pop("key", None)

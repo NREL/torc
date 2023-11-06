@@ -300,12 +300,12 @@ def test_create_workflow_from_commands_file(db_api, tmp_path):
         ]
         result = _run_and_convert_output_from_json(cmd)
         key = result["key"]
-        jobs = api.get_jobs(key).items
+        jobs = api.list_jobs(key).items
         assert len(jobs) == 5
         assert jobs[0].command == "echo hello"
     finally:
         if key is not None:
-            api.delete_workflows_key(key)
+            api.remove_workflow(key)
 
 
 def test_create_empty_workflow(db_api):
@@ -316,11 +316,11 @@ def test_create_empty_workflow(db_api):
         cmd = ["-u", url, "-F", "json", "workflows", "create"]
         result = _run_and_convert_output_from_json(cmd)
         key = result["key"]
-        jobs = api.get_jobs(key).items
+        jobs = api.list_jobs(key).items
         assert len(jobs) == 0
     finally:
         if key is not None:
-            api.delete_workflows_key(key)
+            api.remove_workflow(key)
 
 
 def test_workflow_example(db_api):

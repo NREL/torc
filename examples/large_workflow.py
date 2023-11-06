@@ -28,12 +28,12 @@ def create_workflow(api: DefaultApi) -> WorkflowsModel:
         name="large_workflow",
         description="Demo creation of a large workflow directly through the API.",
     )
-    return api.post_workflows(workflow)
+    return api.add_workflow(workflow)
 
 
 def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
     """Builds the workflow."""
-    config = api.get_workflows_key_config(workflow.key)
+    config = api.get_workflow_config(workflow.key)
     config.compute_node_resource_stats = ComputeNodeResourceStatsModel(
         cpu=True,
         memory=True,
@@ -42,13 +42,13 @@ def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
         monitor_type="periodic",
         make_plots=True,
     )
-    api.put_workflows_key_config(workflow.key, config)
+    api.modify_workflow_config(workflow.key, config)
 
-    resource_requirements = api.post_resource_requirements(
+    resource_requirements = api.add_resource_requirements(
         workflow.key,
         ResourceRequirementsModel(name="medium", num_cpus=8, memory="16g", runtime="P0DT2H"),
     )
-    scheduler = api.post_slurm_schedulers(
+    scheduler = api.add_slurm_scheduler(
         workflow.key,
         SlurmSchedulersModel(
             name="short",
@@ -84,7 +84,7 @@ def main():
         build_workflow(api, workflow)
     except Exception:
         logger.exception("Failed to build workflow")
-        api.delete_workflows_key(workflow.key)
+        api.remove_workflow(workflow.key)
         raise
 
 

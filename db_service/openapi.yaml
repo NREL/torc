@@ -14,7 +14,7 @@ paths:
       summary: Retrieve all AWS compute node configuration documents
       description: Retrieve all documents from the "aws_schedulers" collection for
         one workflow.
-      operationId: get_aws_schedulers
+      operationId: list_aws_schedulers
       parameters:
       - name: workflow
         in: path
@@ -89,7 +89,7 @@ paths:
       summary: Store a AWS compute node configuration.
       description: Store a AWS compute node configuration in the "aws_schedulers"
         collection.
-      operationId: post_aws_schedulers
+      operationId: add_aws_scheduler
       parameters:
       - name: workflow
         in: path
@@ -162,7 +162,7 @@ paths:
       tags: []
       summary: Retrieve the AWS compute node configuration for a key.
       description: Retrieve the document from the "aws_schedulers" collection by key.
-      operationId: get_aws_schedulers_key
+      operationId: get_aws_scheduler
       parameters:
       - name: workflow
         in: path
@@ -198,7 +198,7 @@ paths:
       tags: []
       summary: Update AWS compute node configuration
       description: Update a document in the "aws_schedulers" collection.
-      operationId: put_aws_schedulers_key
+      operationId: modify_aws_scheduler
       parameters:
       - name: workflow
         in: path
@@ -242,7 +242,7 @@ paths:
       tags: []
       summary: Delete a document of type AWS compute node configuration
       description: Deletes a document from the "aws_schedulers" collection by key.
-      operationId: delete_aws_schedulers_key
+      operationId: remove_aws_scheduler
       parameters:
       - name: workflow
         in: path
@@ -287,7 +287,7 @@ paths:
       summary: Retrieve all compute node documents
       description: Retrieve all documents from the "compute_nodes" collection for
         one workflow.
-      operationId: get_compute_nodes
+      operationId: list_compute_nodes
       parameters:
       - name: workflow
         in: path
@@ -368,7 +368,7 @@ paths:
       tags: []
       summary: Store a compute node.
       description: Store a compute node in the "compute_nodes" collection.
-      operationId: post_compute_nodes
+      operationId: add_compute_node
       parameters:
       - name: workflow
         in: path
@@ -441,7 +441,7 @@ paths:
       tags: []
       summary: Retrieve the compute node for a key.
       description: Retrieve the document from the "compute_nodes" collection by key.
-      operationId: get_compute_nodes_key
+      operationId: get_compute_node
       parameters:
       - name: workflow
         in: path
@@ -477,7 +477,7 @@ paths:
       tags: []
       summary: Update compute node
       description: Update a document in the "compute_nodes" collection.
-      operationId: put_compute_nodes_key
+      operationId: modify_compute_node
       parameters:
       - name: workflow
         in: path
@@ -521,7 +521,7 @@ paths:
       tags: []
       summary: Delete a document of type compute node
       description: Deletes a document from the "compute_nodes" collection by key.
-      operationId: delete_compute_nodes_key
+      operationId: remove_compute_node
       parameters:
       - name: workflow
         in: path
@@ -566,7 +566,7 @@ paths:
       summary: Retrieve all compute node statistics documents
       description: Retrieve all documents from the "compute_node_stats" collection
         for one workflow.
-      operationId: get_compute_node_stats
+      operationId: list_compute_node_stats
       parameters:
       - name: workflow
         in: path
@@ -628,7 +628,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/get_compute_node_stats_response'
+                $ref: '#/components/schemas/list_compute_node_stats_response'
         '500':
           description: Default error response.
           content:
@@ -640,7 +640,7 @@ paths:
       tags: []
       summary: Store a compute node statistics.
       description: Store a compute node statistics in the "compute_node_stats" collection.
-      operationId: post_compute_node_stats
+      operationId: add_compute_node_stats
       parameters:
       - name: workflow
         in: path
@@ -714,7 +714,7 @@ paths:
       summary: Retrieve the compute node statistics for a key.
       description: Retrieve the document from the "compute_node_stats" collection
         by key.
-      operationId: get_compute_node_stats_key
+      operationId: get_compute_node_stats
       parameters:
       - name: workflow
         in: path
@@ -750,7 +750,7 @@ paths:
       tags: []
       summary: Update compute node statistics
       description: Update a document in the "compute_node_stats" collection.
-      operationId: put_compute_node_stats_key
+      operationId: modify_compute_node_stats
       parameters:
       - name: workflow
         in: path
@@ -795,7 +795,7 @@ paths:
       summary: Delete a document of type compute node statistics
       description: Deletes a document from the "compute_node_stats" collection by
         key.
-      operationId: delete_compute_node_stats_key
+      operationId: remove_compute_node_stats
       parameters:
       - name: workflow
         in: path
@@ -839,7 +839,7 @@ paths:
       tags: []
       summary: Retrieve all event documents
       description: Retrieve all documents from the "events" collection for one workflow.
-      operationId: get_events
+      operationId: list_events
       parameters:
       - name: workflow
         in: path
@@ -901,7 +901,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/get_events_response'
+                $ref: '#/components/schemas/list_events_response'
         '500':
           description: Default error response.
           content:
@@ -913,7 +913,7 @@ paths:
       tags: []
       summary: Store a event.
       description: Store a event in the "events" collection.
-      operationId: post_events
+      operationId: add_event
       parameters:
       - name: workflow
         in: path
@@ -985,7 +985,7 @@ paths:
       tags: []
       summary: Retrieve the event for a key.
       description: Retrieve the document from the "events" collection by key.
-      operationId: get_events_key
+      operationId: get_event
       parameters:
       - name: workflow
         in: path
@@ -1021,7 +1021,7 @@ paths:
       tags: []
       summary: Update event
       description: Update a document in the "events" collection.
-      operationId: put_events_key
+      operationId: modify_event
       parameters:
       - name: workflow
         in: path
@@ -1065,7 +1065,7 @@ paths:
       tags: []
       summary: Delete a document of type event
       description: Deletes a document from the "events" collection by key.
-      operationId: delete_events_key
+      operationId: remove_event
       parameters:
       - name: workflow
         in: path
@@ -1109,7 +1109,7 @@ paths:
       tags: []
       summary: Retrieve all file documents
       description: Retrieve all documents from the "files" collection for one workflow.
-      operationId: get_files
+      operationId: list_files
       parameters:
       - name: workflow
         in: path
@@ -1178,7 +1178,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/get_files_response'
+                $ref: '#/components/schemas/list_files_response'
         '500':
           description: Default error response.
           content:
@@ -1190,7 +1190,7 @@ paths:
       tags: []
       summary: Store a file.
       description: Store a file in the "files" collection.
-      operationId: post_files
+      operationId: add_file
       parameters:
       - name: workflow
         in: path
@@ -1262,7 +1262,7 @@ paths:
       tags: []
       summary: Retrieve the file for a key.
       description: Retrieve the document from the "files" collection by key.
-      operationId: get_files_key
+      operationId: get_file
       parameters:
       - name: workflow
         in: path
@@ -1298,7 +1298,7 @@ paths:
       tags: []
       summary: Update file
       description: Update a document in the "files" collection.
-      operationId: put_files_key
+      operationId: modify_file
       parameters:
       - name: workflow
         in: path
@@ -1342,7 +1342,7 @@ paths:
       tags: []
       summary: Delete a document of type file
       description: Deletes a document from the "files" collection by key.
-      operationId: delete_files_key
+      operationId: remove_file
       parameters:
       - name: workflow
         in: path
@@ -1386,7 +1386,7 @@ paths:
       tags: []
       summary: Retrieve all job documents
       description: Retrieve all documents from the "jobs" collection for one workflow.
-      operationId: get_jobs
+      operationId: list_jobs
       parameters:
       - name: workflow
         in: path
@@ -1476,7 +1476,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/get_jobs_response'
+                $ref: '#/components/schemas/list_jobs_response'
         '500':
           description: Default error response.
           content:
@@ -1488,7 +1488,7 @@ paths:
       tags: []
       summary: Store a job.
       description: Store a job in the "jobs" collection.
-      operationId: post_jobs
+      operationId: add_job
       parameters:
       - name: workflow
         in: path
@@ -1560,7 +1560,7 @@ paths:
       tags: []
       summary: Retrieve the job for a key.
       description: Retrieve the document from the "jobs" collection by key.
-      operationId: get_jobs_key
+      operationId: get_job
       parameters:
       - name: workflow
         in: path
@@ -1596,7 +1596,7 @@ paths:
       tags: []
       summary: Update job
       description: Update a document in the "jobs" collection.
-      operationId: put_jobs_key
+      operationId: modify_job
       parameters:
       - name: workflow
         in: path
@@ -1640,7 +1640,7 @@ paths:
       tags: []
       summary: Delete a document of type job
       description: Deletes a document from the "jobs" collection by key.
-      operationId: delete_jobs_key
+      operationId: remove_job
       parameters:
       - name: workflow
         in: path
@@ -1685,7 +1685,7 @@ paths:
       summary: Retrieve all job process statistics documents
       description: Retrieve all documents from the "job_process_stats" collection
         for one workflow.
-      operationId: get_job_process_stats
+      operationId: list_job_process_stats
       parameters:
       - name: workflow
         in: path
@@ -1754,7 +1754,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/get_job_process_stats_response'
+                $ref: '#/components/schemas/list_job_process_stats_response'
         '500':
           description: Default error response.
           content:
@@ -1766,7 +1766,7 @@ paths:
       tags: []
       summary: Store a job process statistics.
       description: Store a job process statistics in the "job_process_stats" collection.
-      operationId: post_job_process_stats
+      operationId: add_job_process_stats
       parameters:
       - name: workflow
         in: path
@@ -1840,7 +1840,7 @@ paths:
       summary: Retrieve the job process statistics for a key.
       description: Retrieve the document from the "job_process_stats" collection by
         key.
-      operationId: get_job_process_stats_key
+      operationId: get_job_process_stats
       parameters:
       - name: workflow
         in: path
@@ -1876,7 +1876,7 @@ paths:
       tags: []
       summary: Update job process statistics
       description: Update a document in the "job_process_stats" collection.
-      operationId: put_job_process_stats_key
+      operationId: modify_job_process_stats
       parameters:
       - name: workflow
         in: path
@@ -1920,7 +1920,7 @@ paths:
       tags: []
       summary: Delete a document of type job process statistics
       description: Deletes a document from the "job_process_stats" collection by key.
-      operationId: delete_job_process_stats_key
+      operationId: remove_job_process_stats
       parameters:
       - name: workflow
         in: path
@@ -1965,7 +1965,7 @@ paths:
       summary: Retrieve all local compute node configuration documents
       description: Retrieve all documents from the "local_schedulers" collection for
         one workflow.
-      operationId: get_local_schedulers
+      operationId: list_local_schedulers
       parameters:
       - name: workflow
         in: path
@@ -2034,7 +2034,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/get_local_schedulers_response'
+                $ref: '#/components/schemas/list_local_schedulers_response'
         '500':
           description: Default error response.
           content:
@@ -2047,7 +2047,7 @@ paths:
       summary: Store a local compute node configuration.
       description: Store a local compute node configuration in the "local_schedulers"
         collection.
-      operationId: post_local_schedulers
+      operationId: add_local_scheduler
       parameters:
       - name: workflow
         in: path
@@ -2122,7 +2122,7 @@ paths:
       summary: Retrieve the local compute node configuration for a key.
       description: Retrieve the document from the "local_schedulers" collection by
         key.
-      operationId: get_local_schedulers_key
+      operationId: get_local_scheduler
       parameters:
       - name: workflow
         in: path
@@ -2158,7 +2158,7 @@ paths:
       tags: []
       summary: Update local compute node configuration
       description: Update a document in the "local_schedulers" collection.
-      operationId: put_local_schedulers_key
+      operationId: modify_local_scheduler
       parameters:
       - name: workflow
         in: path
@@ -2202,7 +2202,7 @@ paths:
       tags: []
       summary: Delete a document of type local compute node configuration
       description: Deletes a document from the "local_schedulers" collection by key.
-      operationId: delete_local_schedulers_key
+      operationId: remove_local_scheduler
       parameters:
       - name: workflow
         in: path
@@ -2247,7 +2247,7 @@ paths:
       summary: Retrieve all resource requirements documents
       description: Retrieve all documents from the "resource_requirements" collection
         for one workflow.
-      operationId: get_resource_requirements
+      operationId: list_resource_requirements
       parameters:
       - name: workflow
         in: path
@@ -2356,7 +2356,7 @@ paths:
       tags: []
       summary: Store a resource requirements.
       description: Store a resource requirements in the "resource_requirements" collection.
-      operationId: post_resource_requirements
+      operationId: add_resource_requirements
       parameters:
       - name: workflow
         in: path
@@ -2430,7 +2430,7 @@ paths:
       summary: Retrieve the resource requirements for a key.
       description: Retrieve the document from the "resource_requirements" collection
         by key.
-      operationId: get_resource_requirements_key
+      operationId: get_resource_requirements
       parameters:
       - name: workflow
         in: path
@@ -2466,7 +2466,7 @@ paths:
       tags: []
       summary: Update resource requirements
       description: Update a document in the "resource_requirements" collection.
-      operationId: put_resource_requirements_key
+      operationId: modify_resource_requirements
       parameters:
       - name: workflow
         in: path
@@ -2511,7 +2511,7 @@ paths:
       summary: Delete a document of type resource requirements
       description: Deletes a document from the "resource_requirements" collection
         by key.
-      operationId: delete_resource_requirements_key
+      operationId: remove_resource_requirements
       parameters:
       - name: workflow
         in: path
@@ -2555,7 +2555,7 @@ paths:
       tags: []
       summary: Retrieve all result documents
       description: Retrieve all documents from the "results" collection for one workflow.
-      operationId: get_results
+      operationId: list_results
       parameters:
       - name: workflow
         in: path
@@ -2650,7 +2650,7 @@ paths:
       tags: []
       summary: Store a result.
       description: Store a result in the "results" collection.
-      operationId: post_results
+      operationId: add_result
       parameters:
       - name: workflow
         in: path
@@ -2722,7 +2722,7 @@ paths:
       tags: []
       summary: Retrieve the result for a key.
       description: Retrieve the document from the "results" collection by key.
-      operationId: get_results_key
+      operationId: get_result
       parameters:
       - name: workflow
         in: path
@@ -2758,7 +2758,7 @@ paths:
       tags: []
       summary: Update result
       description: Update a document in the "results" collection.
-      operationId: put_results_key
+      operationId: modify_result
       parameters:
       - name: workflow
         in: path
@@ -2802,7 +2802,7 @@ paths:
       tags: []
       summary: Delete a document of type result
       description: Deletes a document from the "results" collection by key.
-      operationId: delete_results_key
+      operationId: remove_result
       parameters:
       - name: workflow
         in: path
@@ -2847,7 +2847,7 @@ paths:
       summary: Retrieve all scheduled compute node documents
       description: Retrieve all documents from the "scheduled_compute_nodes" collection
         for one workflow.
-      operationId: get_scheduled_compute_nodes
+      operationId: list_scheduled_compute_nodes
       parameters:
       - name: workflow
         in: path
@@ -2936,7 +2936,7 @@ paths:
       summary: Store a scheduled compute node.
       description: Store a scheduled compute node in the "scheduled_compute_nodes"
         collection.
-      operationId: post_scheduled_compute_nodes
+      operationId: add_scheduled_compute_node
       parameters:
       - name: workflow
         in: path
@@ -3010,7 +3010,7 @@ paths:
       summary: Retrieve the scheduled compute node for a key.
       description: Retrieve the document from the "scheduled_compute_nodes" collection
         by key.
-      operationId: get_scheduled_compute_nodes_key
+      operationId: get_scheduled_compute_node
       parameters:
       - name: workflow
         in: path
@@ -3046,7 +3046,7 @@ paths:
       tags: []
       summary: Update scheduled compute node
       description: Update a document in the "scheduled_compute_nodes" collection.
-      operationId: put_scheduled_compute_nodes_key
+      operationId: modify_scheduled_compute_node
       parameters:
       - name: workflow
         in: path
@@ -3091,7 +3091,7 @@ paths:
       summary: Delete a document of type scheduled compute node
       description: Deletes a document from the "scheduled_compute_nodes" collection
         by key.
-      operationId: delete_scheduled_compute_nodes_key
+      operationId: remove_scheduled_compute_node
       parameters:
       - name: workflow
         in: path
@@ -3136,7 +3136,7 @@ paths:
       summary: Retrieve all Slurm compute node configuration documents
       description: Retrieve all documents from the "slurm_schedulers" collection for
         one workflow.
-      operationId: get_slurm_schedulers
+      operationId: list_slurm_schedulers
       parameters:
       - name: workflow
         in: path
@@ -3267,7 +3267,7 @@ paths:
       summary: Store a Slurm compute node configuration.
       description: Store a Slurm compute node configuration in the "slurm_schedulers"
         collection.
-      operationId: post_slurm_schedulers
+      operationId: add_slurm_scheduler
       parameters:
       - name: workflow
         in: path
@@ -3342,7 +3342,7 @@ paths:
       summary: Retrieve the Slurm compute node configuration for a key.
       description: Retrieve the document from the "slurm_schedulers" collection by
         key.
-      operationId: get_slurm_schedulers_key
+      operationId: get_slurm_scheduler
       parameters:
       - name: workflow
         in: path
@@ -3378,7 +3378,7 @@ paths:
       tags: []
       summary: Update Slurm compute node configuration
       description: Update a document in the "slurm_schedulers" collection.
-      operationId: put_slurm_schedulers_key
+      operationId: modify_slurm_scheduler
       parameters:
       - name: workflow
         in: path
@@ -3422,7 +3422,7 @@ paths:
       tags: []
       summary: Delete a document of type Slurm compute node configuration
       description: Deletes a document from the "slurm_schedulers" collection by key.
-      operationId: delete_slurm_schedulers_key
+      operationId: remove_slurm_scheduler
       parameters:
       - name: workflow
         in: path
@@ -3467,7 +3467,7 @@ paths:
       summary: Retrieve all user data documents
       description: Retrieve all documents from the "user_data" collection for one
         workflow.
-      operationId: get_user_data
+      operationId: list_user_data
       parameters:
       - name: workflow
         in: path
@@ -3548,7 +3548,7 @@ paths:
       tags: []
       summary: Store a user data.
       description: Store a user data in the "user_data" collection.
-      operationId: post_user_data
+      operationId: add_user_data
       parameters:
       - name: workflow
         in: path
@@ -3620,7 +3620,7 @@ paths:
       tags: []
       summary: Retrieve the user data for a key.
       description: Retrieve the document from the "user_data" collection by key.
-      operationId: get_user_data_key
+      operationId: get_user_data
       parameters:
       - name: workflow
         in: path
@@ -3656,7 +3656,7 @@ paths:
       tags: []
       summary: Update user data
       description: Update a document in the "user_data" collection.
-      operationId: put_user_data_key
+      operationId: modify_user_data
       parameters:
       - name: workflow
         in: path
@@ -3700,7 +3700,7 @@ paths:
       tags: []
       summary: Delete a document of type user data
       description: Deletes a document from the "user_data" collection by key.
-      operationId: delete_user_data_key
+      operationId: remove_user_data
       parameters:
       - name: workflow
         in: path
@@ -3744,7 +3744,7 @@ paths:
       tags: []
       summary: Retrieve all edges from the designated collection.
       description: Retrieve all edges from the designated collection.
-      operationId: get_edges_name
+      operationId: list_edges
       parameters:
       - name: workflow
         in: path
@@ -3796,7 +3796,7 @@ paths:
       tags: []
       summary: Store an edge between two vertexes.
       description: Store an edge between two vertexes in the designated collection.
-      operationId: post_edges_name
+      operationId: add_edge
       parameters:
       - name: workflow
         in: path
@@ -3840,7 +3840,7 @@ paths:
       tags: []
       summary: Delete all edges from the designated collection
       description: Deletes all edges from the designated collection.
-      operationId: delete_edges_name
+      operationId: delete_edges
       parameters:
       - name: workflow
         in: path
@@ -3884,7 +3884,7 @@ paths:
       tags: []
       summary: Retrieve an edge
       description: Retrieves an edge from the designated collection by key.
-      operationId: get_edges_name_key
+      operationId: get_edge
       parameters:
       - name: workflow
         in: path
@@ -3928,7 +3928,7 @@ paths:
       tags: []
       summary: Delete an edge
       description: Deletes an edge from the designated collection by key.
-      operationId: delete_edges_name_key
+      operationId: remove_edge
       parameters:
       - name: workflow
         in: path
@@ -3980,7 +3980,7 @@ paths:
       tags: []
       summary: Retrieve files produced by a job
       description: Retrieves files from the "files" collection produced by a job.
-      operationId: get_files_produced_by_job_key
+      operationId: list_files_produced_by_job
       parameters:
       - name: workflow
         in: path
@@ -4033,7 +4033,7 @@ paths:
       tags: []
       summary: Retrieve all job definitions
       description: Retrieves all job definitions. Limit output with skip and limit.
-      operationId: get_job_specifications
+      operationId: list_job_specifications
       parameters:
       - name: workflow
         in: path
@@ -4077,7 +4077,7 @@ paths:
       tags: []
       summary: Store a job and create edges.
       description: Store a job in the "jobs" collection and create edges.
-      operationId: post_job_specifications
+      operationId: add_job_specification
       parameters:
       - name: workflow
         in: path
@@ -4114,7 +4114,7 @@ paths:
       tags: []
       summary: Retrieve a job
       description: Retrieves a job from the "jobs" collection by key.
-      operationId: get_job_specifications_key
+      operationId: get_job_specification
       parameters:
       - name: workflow
         in: path
@@ -4151,7 +4151,7 @@ paths:
       tags: []
       summary: Add a job with edge definitions.
       description: Add a job with edge definitions.
-      operationId: post_job_with_edges
+      operationId: add_job_with_edges
       parameters:
       - name: workflow
         in: path
@@ -4188,7 +4188,7 @@ paths:
       summary: Add jobs in bulk with edge definitions.
       description: Add jobs in bulk with edge definitions. Recommended max job count
         of 10,000.
-      operationId: post_bulk_jobs_with_edges
+      operationId: add_bulk_job_with_edges
       parameters:
       - name: workflow
         in: path
@@ -4224,7 +4224,7 @@ paths:
       tags: []
       summary: Retrieve all job keys for a workflow.
       description: Retrieves all job keys from the "jobs" collection for a workflow.
-      operationId: get_job_keys
+      operationId: list_job_keys
       parameters:
       - name: workflow
         in: path
@@ -4253,7 +4253,7 @@ paths:
       tags: []
       summary: Retrieve all jobs with a specific status
       description: Retrieves all jobs from the "jobs" collection with a specific status.
-      operationId: get_jobs_find_by_status_status
+      operationId: list_jobs_by_status
       parameters:
       - name: workflow
         in: path
@@ -4306,7 +4306,7 @@ paths:
       tags: []
       summary: Retrieve all jobs that need a file
       description: Retrieves all jobs connected to a file by the needs edge.
-      operationId: get_jobs_find_by_needs_file_key
+      operationId: list_jobs_by_needs_file
       parameters:
       - name: workflow
         in: path
@@ -4359,7 +4359,7 @@ paths:
       tags: []
       summary: Retrieve the resource requirements for a job.
       description: Retrieve the resource requirements for a job by its key.
-      operationId: get_jobs_key_resource_requirements
+      operationId: get_job_resource_requirements
       parameters:
       - name: workflow
         in: path
@@ -4397,7 +4397,7 @@ paths:
       summary: Set the resource requirements for a job.
       description: Set the resource requirements for a job, replacing any current
         value.
-      operationId: put_jobs_key_resource_requirements_rr_key
+      operationId: modify_job_resource_requirements
       parameters:
       - name: workflow
         in: path
@@ -4448,7 +4448,7 @@ paths:
       tags: []
       summary: Retrieve the job process stats for a job.
       description: Retrieve the job process stats for a job by its key.
-      operationId: get_jobs_key_process_stats
+      operationId: get_process_stats_for_job
       parameters:
       - name: workflow
         in: path
@@ -4487,7 +4487,7 @@ paths:
       tags: []
       summary: Complete a job and add a result.
       description: Complete a job, connect it to a result, and manage side effects.
-      operationId: post_jobs_key_complete_job_status_rev_run_id
+      operationId: complete_job
       parameters:
       - name: workflow
         in: path
@@ -4556,7 +4556,7 @@ paths:
       tags: []
       summary: Change the status of a job and manage side effects.
       description: Change the status of a job and manage side effects.
-      operationId: put_jobs_key_manage_status_change_status_rev_run_id
+      operationId: manage_status_change
       parameters:
       - name: workflow
         in: path
@@ -4624,7 +4624,7 @@ paths:
       tags: []
       summary: Store user data for a job.
       description: Store user data for a job and connect the two vertexes.
-      operationId: post_jobs_key_user_data
+      operationId: add_job_user_data
       parameters:
       - name: workflow
         in: path
@@ -4669,7 +4669,7 @@ paths:
       tags: []
       summary: Retrieve all user data for a job.
       description: Retrieve all user data for a job.
-      operationId: get_jobs_key_user_data_stores
+      operationId: list_job_user_data_stores
       parameters:
       - name: workflow
         in: path
@@ -4706,7 +4706,7 @@ paths:
       tags: []
       summary: Retrieve all user data consumed by a job.
       description: Retrieve all user data consumed by a job.
-      operationId: get_jobs_key_user_data_consumes
+      operationId: list_job_user_data_consumes
       parameters:
       - name: workflow
         in: path
@@ -4744,7 +4744,7 @@ paths:
       summary: Retrieve the latest result for a job
       description: Retrieve the latest result for a job. Throws an error if no result
         is stored.
-      operationId: get_results_find_by_job_key
+      operationId: get_latest_job_result
       parameters:
       - name: workflow
         in: path
@@ -4781,7 +4781,7 @@ paths:
       tags: []
       summary: Store a workflow.
       description: Store a workflow.
-      operationId: post_workflow_specifications
+      operationId: add_workflow_specification
       requestBody:
         description: New workflow
         content:
@@ -4809,7 +4809,7 @@ paths:
       tags: []
       summary: Retrieve the current workflow
       description: Retrieves the current workflow in JSON format.
-      operationId: get_workflow_specifications_key
+      operationId: get_workflow_specification
       parameters:
       - name: key
         in: path
@@ -4838,7 +4838,7 @@ paths:
       tags: []
       summary: Retrieve an example workflow specification
       description: Retrieves an example workflow specification in JSON format.
-      operationId: get_workflow_specifications_example
+      operationId: get_workflow_specification_example
       responses:
         '200':
           description: Example workflow
@@ -4858,7 +4858,7 @@ paths:
       tags: []
       summary: Retrieve the workflow specification template
       description: Retrieve the workflow specification template in JSON format.
-      operationId: get_workflow_specifications_template
+      operationId: get_workflow_specification_template
       responses:
         '200':
           description: Workflow template
@@ -4878,7 +4878,7 @@ paths:
       tags: []
       summary: Check if the service is running.
       description: Check if the service is running.
-      operationId: get_ping
+      operationId: ping
       responses:
         '200':
           description: Message
@@ -4918,7 +4918,7 @@ paths:
       tags: []
       summary: Retrieve all workflows
       description: Retrieves all documents from the "workflows" collection.
-      operationId: get_workflows
+      operationId: list_workflows
       parameters:
       - name: skip
         in: query
@@ -4991,7 +4991,7 @@ paths:
       tags: []
       summary: Store a workflow.
       description: Store a workflow in the "workflows" collection.
-      operationId: post_workflows
+      operationId: add_workflow
       requestBody:
         description: Collection of jobs and dependent resources.
         content:
@@ -5019,7 +5019,7 @@ paths:
       tags: []
       summary: Retrieve the workflow for an key.
       description: Retrieve the document for a key from the "workflows" collection.
-      operationId: get_workflows_key
+      operationId: get_workflow
       parameters:
       - name: key
         in: path
@@ -5047,7 +5047,7 @@ paths:
       tags: []
       summary: Update workflow
       description: Update a document in the "workflows" collection.
-      operationId: put_workflows_key
+      operationId: modify_workflow
       parameters:
       - name: key
         in: path
@@ -5083,7 +5083,7 @@ paths:
       tags: []
       summary: Delete a workflow
       description: Deletes a document from the "workflows" collection by key.
-      operationId: delete_workflows_key
+      operationId: remove_workflow
       parameters:
       - name: key
         in: path
@@ -5119,7 +5119,7 @@ paths:
       tags: []
       summary: Report whether the workflow is complete
       description: Reports true if all jobs in the workflow are complete.
-      operationId: get_workflows_key_is_complete
+      operationId: is_workflow_complete
       parameters:
       - name: key
         in: path
@@ -5148,7 +5148,7 @@ paths:
       tags: []
       summary: Return the resource requirements for ready jobs.
       description: Return the resource requirements for jobs with a status of ready.
-      operationId: get_workflows_key_ready_job_requirements
+      operationId: get_ready_job_requirements
       parameters:
       - name: key
         in: path
@@ -5188,7 +5188,7 @@ paths:
       tags: []
       summary: Initialize job relationships.
       description: Initialize job relationships based on file and user_data relationships.
-      operationId: post_workflows_key_initialize_jobs
+      operationId: initialize_jobs
       parameters:
       - name: key
         in: path
@@ -5242,7 +5242,7 @@ paths:
       tags: []
       summary: Check for changed job inputs and update status accordingly.
       description: Check for changed job inputs and update status accordingly.
-      operationId: post_workflows_key_process_changed_job_inputs
+      operationId: process_changed_job_inputs
       parameters:
       - name: key
         in: path
@@ -5278,7 +5278,7 @@ paths:
       tags: []
       summary: List missing user data that should exist.
       description: List missing user data that should exist.
-      operationId: get_workflows_key_missing_user_data
+      operationId: list_missing_user_data
       parameters:
       - name: key
         in: path
@@ -5307,7 +5307,7 @@ paths:
       tags: []
       summary: List files that must exist.
       description: List files that must exist.
-      operationId: get_workflows_key_required_existing_files
+      operationId: list_required_existing_files
       parameters:
       - name: key
         in: path
@@ -5337,7 +5337,7 @@ paths:
       summary: Return ready jobs, accounting for resource requirements.
       description: Return jobs that are ready for submission and meet worker resource
         Sets status to submitted_pending.
-      operationId: post_workflows_key_prepare_jobs_for_submission
+      operationId: prepare_jobs_for_submission
       parameters:
       - name: key
         in: path
@@ -5395,7 +5395,7 @@ paths:
       summary: Return user-requested number of ready jobs.
       description: Return user-requested number of jobs that are ready for submission.
         Sets status to submitted_pending.
-      operationId: post_workflows_key_prepare_next_jobs_for_submission
+      operationId: prepare_next_jobs_for_submission
       parameters:
       - name: key
         in: path
@@ -5440,7 +5440,7 @@ paths:
       summary: Return scheduler IDs that need to be activated.
       description: Return scheduler IDs that need to be activated. Sets job status
         to scheduled.
-      operationId: post_workflows_key_prepare_jobs_for_scheduling
+      operationId: prepare_jobs_for_scheduling
       parameters:
       - name: key
         in: path
@@ -5476,7 +5476,7 @@ paths:
       tags: []
       summary: Enable workflow for auto-tuning resource requirements.
       description: Enable workflow for auto-tuning resource requirements.
-      operationId: post_workflows_key_auto_tune_resource_requirements
+      operationId: auto_tune_resource_requirements
       parameters:
       - name: key
         in: path
@@ -5512,7 +5512,7 @@ paths:
       tags: []
       summary: Process the results of auto-tuning resource requirements.
       description: Process the results of auto-tuning resource requirements.
-      operationId: post_workflows_key_process_auto_tune_resource_requirements_results
+      operationId: process_auto_tune_resource_requirements_results
       parameters:
       - name: key
         in: path
@@ -5548,7 +5548,7 @@ paths:
       tags: []
       summary: Returns the workflow config.
       description: Returns the workflow config.
-      operationId: get_workflows_key_config
+      operationId: get_workflow_config
       parameters:
       - name: key
         in: path
@@ -5576,7 +5576,7 @@ paths:
       tags: []
       summary: Updates the workflow config.
       description: Updates the workflow config.
-      operationId: put_workflows_key_config
+      operationId: modify_workflow_config
       parameters:
       - name: key
         in: path
@@ -5614,7 +5614,7 @@ paths:
       summary: Cancel workflow.
       description: Cancel workflow. Workers will detect the status change and cancel
         jobs.
-      operationId: put_workflows_key_cancel
+      operationId: cancel_workflow
       parameters:
       - name: key
         in: path
@@ -5650,7 +5650,7 @@ paths:
       tags: []
       summary: Reset worklow status.
       description: Reset workflow status.
-      operationId: post_workflows_key_reset_status
+      operationId: reset_workflow_status
       parameters:
       - name: key
         in: path
@@ -5686,7 +5686,7 @@ paths:
       tags: []
       summary: Reset job status.
       description: Reset status for jobs to uninitialized.
-      operationId: post_workflows_key_reset_job_status
+      operationId: reset_job_status
       parameters:
       - name: key
         in: path
@@ -5731,7 +5731,7 @@ paths:
       tags: []
       summary: Reports the workflow status.
       description: Reports the workflow status.
-      operationId: get_workflows_key_status
+      operationId: get_workflow_status
       parameters:
       - name: key
         in: path
@@ -5759,7 +5759,7 @@ paths:
       tags: []
       summary: Reports the workflow status.
       description: Reports the workflow status.
-      operationId: put_workflows_key_status
+      operationId: modify_workflow_status
       parameters:
       - name: key
         in: path
@@ -5796,7 +5796,7 @@ paths:
       tags: []
       summary: Retrieve all collection names for one workflow.
       description: Retrieve all collection names for one workflow.
-      operationId: get_workflows_key_collection_names
+      operationId: list_collection_names
       parameters:
       - name: key
         in: path
@@ -5825,7 +5825,7 @@ paths:
       tags: []
       summary: Retrieve a joined table of two collections.
       description: Retrieve a table of the collections joined by an inbound edge.
-      operationId: post_workflows_key_join_by_inbound_edge_collection_edge
+      operationId: join_collections_by_inbound_edge
       parameters:
       - name: key
         in: path
@@ -5908,7 +5908,7 @@ paths:
       tags: []
       summary: Retrieve a joined table of two collections.
       description: Retrieve a table of the collections joined by an outbound edge.
-      operationId: post_workflows_key_join_by_outbound_edge_collection_edge
+      operationId: join_collections_by_outbound_edge
       parameters:
       - name: key
         in: path
@@ -6071,7 +6071,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/get_events_response'
+                $ref: '#/components/schemas/list_events_response'
         '500':
           description: Default error response.
           content:
@@ -6084,7 +6084,7 @@ paths:
       tags: []
       summary: Build a string for a DOT graph.
       description: Build a string for a DOT graph.
-      operationId: get_workflows_key_dot_graph_name
+      operationId: get_dot_graph
       parameters:
       - name: key
         in: path
@@ -6777,7 +6777,7 @@ components:
           type: integer
         has_more:
           type: boolean
-    get_compute_node_stats_response:
+    list_compute_node_stats_response:
       required:
       - count
       - has_more
@@ -6800,7 +6800,7 @@ components:
           type: integer
         has_more:
           type: boolean
-    get_events_response: &id004
+    list_events_response: &id004
       required:
       - count
       - has_more
@@ -6824,7 +6824,7 @@ components:
           type: integer
         has_more:
           type: boolean
-    get_files_response: &id001
+    list_files_response: &id001
       required:
       - count
       - has_more
@@ -6847,7 +6847,7 @@ components:
           type: integer
         has_more:
           type: boolean
-    get_jobs_response: &id002
+    list_jobs_response: &id002
       required:
       - count
       - has_more
@@ -6870,7 +6870,7 @@ components:
           type: integer
         has_more:
           type: boolean
-    get_job_process_stats_response:
+    list_job_process_stats_response:
       required:
       - count
       - has_more
@@ -6893,7 +6893,7 @@ components:
           type: integer
         has_more:
           type: boolean
-    get_local_schedulers_response:
+    list_local_schedulers_response:
       required:
       - count
       - has_more

@@ -62,14 +62,14 @@ SLEEP_JOB = Path("tests") / "scripts" / "sleep.py"
 def pytest_sessionstart(session):
     """Records existing workflows."""
     api = _initialize_api()
-    session.torc_workflow_keys = {x.key for x in iter_documents(api.get_workflows)}
+    session.torc_workflow_keys = {x.key for x in iter_documents(api.list_workflows)}
 
 
 def pytest_sessionfinish(session, exitstatus):  # pylint: disable=unused-argument
     """Deletes any workflows created by the tests."""
     api = _initialize_api()
-    for key in {x.key for x in iter_documents(api.get_workflows)} - session.torc_workflow_keys:
-        api.delete_workflows_key(key)
+    for key in {x.key for x in iter_documents(api.list_workflows)} - session.torc_workflow_keys:
+        api.remove_workflow(key)
 
 
 @pytest.fixture
@@ -145,12 +145,12 @@ def diamond_workflow(tmp_path):
     )
 
     spec = builder.build()
-    workflow = api.post_workflow_specifications(spec)
+    workflow = api.add_workflow_specification(spec)
     db = DatabaseInterface(api, workflow)
-    api.post_workflows_key_initialize_jobs(workflow.key)
+    api.initialize_jobs(workflow.key)
     scheduler = db.get_document("local_schedulers", "test")
     yield db, scheduler.id, output_dir
-    api.delete_workflows_key(workflow.key)
+    api.remove_workflow(workflow.key)
 
 
 @pytest.fixture
@@ -213,12 +213,12 @@ def diamond_workflow_user_data(tmp_path):
     )
 
     spec = builder.build()
-    workflow = api.post_workflow_specifications(spec)
+    workflow = api.add_workflow_specification(spec)
     db = DatabaseInterface(api, workflow)
-    api.post_workflows_key_initialize_jobs(workflow.key)
+    api.initialize_jobs(workflow.key)
     scheduler = db.get_document("local_schedulers", "test")
     yield db, scheduler.id, output_dir
-    api.delete_workflows_key(workflow.key)
+    api.remove_workflow(workflow.key)
 
 
 @pytest.fixture
@@ -240,11 +240,11 @@ def workflow_with_ephemeral_resource():
     )
 
     spec = builder.build()
-    workflow = api.post_workflow_specifications(spec)
+    workflow = api.add_workflow_specification(spec)
     db = DatabaseInterface(api, workflow)
-    api.post_workflows_key_initialize_jobs(workflow.key)
+    api.initialize_jobs(workflow.key)
     yield db
-    api.delete_workflows_key(workflow.key)
+    api.remove_workflow(workflow.key)
 
 
 @pytest.fixture
@@ -252,8 +252,8 @@ def independent_job_workflow(num_jobs):
     """Creates a workflow out of independent jobs."""
     api = _initialize_api()
 
-    workflow = api.post_workflows(WorkflowsModel(user="test", name="test"))
-    small = api.post_resource_requirements(
+    workflow = api.add_workflow(WorkflowsModel(user="test", name="test"))
+    small = api.add_resource_requirements(
         workflow.key,
         ResourceRequirementsModel(
             name="small",
@@ -271,12 +271,12 @@ def independent_job_workflow(num_jobs):
             ),
             resource_requirements=small.id,
         )
-        api.post_job_with_edges(workflow.key, job)
+        api.add_job_with_edges(workflow.key, job)
 
     db = DatabaseInterface(api, workflow)
-    api.post_workflows_key_initialize_jobs(workflow.key)
+    api.initialize_jobs(workflow.key)
     yield db, num_jobs
-    api.delete_workflows_key(workflow.key)
+    api.remove_workflow(workflow.key)
 
 
 def _initialize_api():
@@ -309,11 +309,11 @@ def workflow_with_cancel(tmp_path, cancel_on_blocking_job_failure):
     )
 
     spec = WorkflowSpecificationsModel(jobs=[job1, job2])
-    workflow = api.post_workflow_specifications(spec)
+    workflow = api.add_workflow_specification(spec)
     db = DatabaseInterface(api, workflow)
-    api.post_workflows_key_initialize_jobs(workflow.key)
+    api.initialize_jobs(workflow.key)
     yield db, tmp_path, cancel_on_blocking_job_failure
-    api.delete_workflows_key(workflow.key)
+    api.remove_workflow(workflow.key)
 
 
 @pytest.fixture
@@ -321,13 +321,13 @@ def completed_workflow(diamond_workflow):
     """Fakes a completed diamond workflow."""
     db, scheduler_config_id, output_dir = diamond_workflow
     api = db.api
-    for file in api.get_files(db.workflow.key).items:
+    for file in api.list_files(db.workflow.key).items:
         path = Path(file.path)
         if not path.exists():
             path.touch()
     mgr = WorkflowManager(api, db.workflow.key)
     mgr.start()
-    workflow_status = api.get_workflows_key_status(db.workflow.key)
+    workflow_status = api.get_workflow_status(db.workflow.key)
 
     for name in ("preprocess", "work1", "work2", "postprocess"):
         # Completing a job this way will cause blocked jobs to change status and revision,
@@ -342,7 +342,7 @@ def completed_workflow(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.post_jobs_key_complete_job_status_rev_run_id(
+        job = api.complete_job(
             db.workflow.key, job.key, status, job.rev, workflow_status.run_id, result
         )
 
@@ -369,17 +369,15 @@ def incomplete_workflow(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.post_jobs_key_complete_job_status_rev_run_id(
-            db.workflow.key, job.id, status, job.rev, 1, result
-        )
+        job = api.complete_job(db.workflow.key, job.id, status, job.rev, 1, result)
 
-        for file in api.get_files_produced_by_job_key(db.workflow.key, job.key).items:
+        for file in api.list_files_produced_by_job(db.workflow.key, job.key).items:
             path = Path(file.path)
             if not path.exists():
                 path.touch()
                 # file.file_hash = compute_file_hash(path)
                 file.st_mtime = path.stat().st_mtime
-                api.put_files_key(db.workflow.key, file.key, file)
+                api.modify_file(db.workflow.key, file.key, file)
 
     assert db.get_document("jobs", "preprocess").status == "done"
     assert db.get_document("jobs", "work1").status == "done"
@@ -458,11 +456,11 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
         ),
     )
 
-    workflow = api.post_workflow_specifications(spec)
+    workflow = api.add_workflow_specification(spec)
     db = DatabaseInterface(api, workflow)
-    api.post_workflows_key_initialize_jobs(workflow.key)
+    api.initialize_jobs(workflow.key)
     yield db, output_dir, monitor_type
-    api.delete_workflows_key(workflow.key)
+    api.remove_workflow(workflow.key)
 
 
 @pytest.fixture
@@ -495,14 +493,14 @@ def cancelable_workflow(tmp_path):
         schedulers=WorkflowSpecificationsSchedulers(local_schedulers=[scheduler]),
     )
 
-    workflow = api.post_workflow_specifications(spec)
+    workflow = api.add_workflow_specification(spec)
     db = DatabaseInterface(api, workflow)
     scheduler = db.get_document("local_schedulers", "test")
-    api.post_workflows_key_initialize_jobs(workflow.key)
+    api.initialize_jobs(workflow.key)
     mgr = WorkflowManager(api, db.workflow.key)
     mgr.start()
     yield db, scheduler.id, output_dir
-    api.delete_workflows_key(workflow.key)
+    api.remove_workflow(workflow.key)
 
 
 @pytest.fixture()
@@ -534,7 +532,7 @@ def mapped_function_workflow(tmp_path):
     api = _initialize_api()
     output_dir = tmp_path / "output"
     output_dir.mkdir()
-    workflow = api.post_workflows(WorkflowsModel(user="test", name="test_workflow"))
+    workflow = api.add_workflow(WorkflowsModel(user="test", name="test_workflow"))
     params = [{"val": i} for i in range(5)]
     map_function_to_jobs(
         api,
@@ -547,7 +545,7 @@ def mapped_function_workflow(tmp_path):
     )
     db = DatabaseInterface(api, workflow)
     yield db, output_dir
-    api.delete_workflows_key(workflow.key)
+    api.remove_workflow(workflow.key)
 
 
 @pytest.fixture
@@ -563,12 +561,12 @@ def job_requirement_uniform():
         builder.add_job(name=f"job{i}", command="noop", resource_requirements=short.name)
 
     spec = builder.build(user=getpass.getuser(), name="test")
-    workflow = api.post_workflow_specifications(spec)
+    workflow = api.add_workflow_specification(spec)
     db = DatabaseInterface(api, workflow)
     mgr = WorkflowManager(api, db.workflow.key)
     mgr.start()
     yield db
-    api.delete_workflows_key(workflow.key)
+    api.remove_workflow(workflow.key)
 
 
 @pytest.fixture
@@ -587,12 +585,12 @@ def job_requirement_runtime():
     builder.add_job(name="medium_job", command="noop", resource_requirements=medium.name)
 
     spec = builder.build(user=getpass.getuser(), name="test")
-    workflow = api.post_workflow_specifications(spec)
+    workflow = api.add_workflow_specification(spec)
     db = DatabaseInterface(api, workflow)
     mgr = WorkflowManager(api, db.workflow.key)
     mgr.start()
     yield db
-    api.delete_workflows_key(workflow.key)
+    api.remove_workflow(workflow.key)
 
 
 @pytest.fixture
@@ -650,12 +648,12 @@ def job_requirement_variations():
     builder.add_job(name="long_job", command="noop", resource_requirements=long.name)
 
     spec = builder.build(user=getpass.getuser(), name="test")
-    workflow = api.post_workflow_specifications(spec)
+    workflow = api.add_workflow_specification(spec)
     db = DatabaseInterface(api, workflow)
     mgr = WorkflowManager(api, db.workflow.key)
     mgr.start()
     yield db
-    api.delete_workflows_key(workflow.key)
+    api.remove_workflow(workflow.key)
 
 
 @pytest.fixture

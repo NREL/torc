@@ -55,13 +55,13 @@ def results(ctx, api, job_keys, output: Path, run_id):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    workflow = api.get_workflows_key(workflow_key)
+    workflow = api.get_workflow(workflow_key)
     run_ids = set(run_id)
 
     if job_keys:
-        jobs = [api.get_jobs_key(workflow_key, x) for x in job_keys]
+        jobs = [api.get_job(workflow_key, x) for x in job_keys]
     else:
-        jobs = list(iter_documents(api.get_jobs, workflow_key))
+        jobs = list(iter_documents(api.list_jobs, workflow_key))
     jobs.sort(key=lambda x: int(x.key))
 
     job_key_to_name = {}
@@ -73,10 +73,10 @@ def results(ctx, api, job_keys, output: Path, run_id):
         if run_ids:
             for rid in run_ids:
                 filters["run_id"] = rid
-                for result in iter_documents(api.get_results, workflow_key, **filters):
+                for result in iter_documents(api.list_results, workflow_key, **filters):
                     results_by_job[job.key].append(result)
         else:
-            for result in iter_documents(api.get_results, workflow_key, **filters):
+            for result in iter_documents(api.list_results, workflow_key, **filters):
                 results_by_job[job.key].append(result)
 
     lookup_by_job_and_run_id = {}
@@ -96,7 +96,7 @@ def results(ctx, api, job_keys, output: Path, run_id):
         report["jobs"].append(job_details)
 
     for item in iter_documents(
-        api.post_workflows_key_join_by_outbound_edge_collection_edge,
+        api.join_collections_by_outbound_edge,
         workflow_key,
         "compute_nodes",
         "executed",

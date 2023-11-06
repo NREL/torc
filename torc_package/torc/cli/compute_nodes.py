@@ -36,7 +36,9 @@ def list_compute_nodes(ctx, api):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     nodes = {
-        "compute_nodes": [x.to_dict() for x in iter_documents(api.get_compute_nodes, workflow_key)]
+        "compute_nodes": [
+            x.to_dict() for x in iter_documents(api.list_compute_nodes, workflow_key)
+        ]
     }
     # This data can't easily be printed in table.
     print(json.dumps(nodes, indent=2))

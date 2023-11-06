@@ -20,17 +20,17 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictBool, StrictInt
-from torc.openapi_client.models.local_schedulers_model import LocalSchedulersModel
+from torc.openapi_client.models.compute_node_stats_model import ComputeNodeStatsModel
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class GetLocalSchedulersResponse(BaseModel):
+class ListComputeNodeStatsResponse(BaseModel):
     """
-    GetLocalSchedulersResponse
+    ListComputeNodeStatsResponse
     """ # noqa: E501
-    items: Optional[List[LocalSchedulersModel]] = None
+    items: Optional[List[ComputeNodeStatsModel]] = None
     skip: StrictInt
     max_limit: StrictInt
     count: StrictInt
@@ -55,7 +55,7 @@ class GetLocalSchedulersResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of GetLocalSchedulersResponse from a JSON string"""
+        """Create an instance of ListComputeNodeStatsResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -85,7 +85,7 @@ class GetLocalSchedulersResponse(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of GetLocalSchedulersResponse from a dict"""
+        """Create an instance of ListComputeNodeStatsResponse from a dict"""
         if obj is None:
             return None
 
@@ -93,7 +93,7 @@ class GetLocalSchedulersResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "items": [LocalSchedulersModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
+            "items": [ComputeNodeStatsModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
             "skip": obj.get("skip"),
             "max_limit": obj.get("max_limit"),
             "count": obj.get("count"),

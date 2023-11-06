@@ -89,11 +89,11 @@ def add(ctx, api, name, num_cpus, memory, runtime, num_nodes, apply_to_all_jobs)
         runtime=runtime,
         num_nodes=num_nodes,
     )
-    rr = api.post_resource_requirements(workflow_key, rr)
+    rr = api.add_resource_requirements(workflow_key, rr)
     edges = []
     if apply_to_all_jobs:
-        for job in iter_documents(api.get_jobs, workflow_key):
-            edge = api.put_jobs_key_resource_requirements_rr_key(workflow_key, job.key, rr.key)
+        for job in iter_documents(api.list_jobs, workflow_key):
+            edge = api.modify_job_resource_requirements(workflow_key, job.key, rr.key)
             edges.append(edge.to_dict())
 
     if output_format == "text":
@@ -144,7 +144,7 @@ def modify(ctx, api, resource_requirements_key, **kwargs):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
-    rr = api.get_resource_requirements_key(workflow_key, resource_requirements_key)
+    rr = api.get_resource_requirements(workflow_key, resource_requirements_key)
     changed = False
     for param in ("name", "num_cpus", "memory", "runtime", "num_nodes"):
         val = kwargs[param]
@@ -153,7 +153,7 @@ def modify(ctx, api, resource_requirements_key, **kwargs):
             changed = True
 
     if changed:
-        rr = api.put_resource_requirements_key(workflow_key, resource_requirements_key, rr)
+        rr = api.modify_resource_requirements(workflow_key, resource_requirements_key, rr)
         if output_format == "text":
             logger.info(
                 "Modified resource requirements key = %s",
@@ -177,7 +177,7 @@ def delete(ctx, api, resource_requirement_keys):
         logger.warning("No resource requirement keys were passed")
     workflow_key = get_workflow_key_from_context(ctx, api)
     for key in resource_requirement_keys:
-        api.delete_resource_requirements_key(workflow_key, key)
+        api.remove_resource_requirements(workflow_key, key)
         logger.info("Deleted workflow=%s resource_requirements=%s", workflow_key, key)
 
 
@@ -189,8 +189,8 @@ def delete_all(ctx, api):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    for resource_requirement in iter_documents(api.get_resource_requirements, workflow_key):
-        api.delete_resource_requirements_key(workflow_key, resource_requirement.key)
+    for resource_requirement in iter_documents(api.list_resource_requirements, workflow_key):
+        api.remove_resource_requirements(workflow_key, resource_requirement.key)
         logger.info("Deleted resource_requirement %s", resource_requirement.key)
 
 
@@ -252,7 +252,8 @@ def list_resource_requirements(ctx, api, filters, limit, skip, sort_by, reverse_
         filters["sort_by"] = sort_by
         filters["reverse_sort"] = reverse_sort
     items = (
-        x.to_dict() for x in iter_documents(api.get_resource_requirements, workflow_key, **filters)
+        x.to_dict()
+        for x in iter_documents(api.list_resource_requirements, workflow_key, **filters)
     )
 
     columns = list_model_fields(ResourceRequirementsModel)

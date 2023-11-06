@@ -52,7 +52,7 @@ def wait_for_healthy_database(api: DefaultApi, timeout_minutes=20, poll_seconds=
     end = time.time() + timeout_minutes * 60
     while time.time() < end:
         try:
-            send_api_command(api.get_ping)
+            send_api_command(api.ping)
             logger.info("The database is healthy again.")
             return
         except DatabaseOffline:
@@ -93,7 +93,7 @@ def iter_documents(func, *args, skip=0, **kwargs):
 def map_job_keys_to_names(api: DefaultApi, workflow_key, filters=None) -> dict[str, str]:
     """Return a mapping of job key to name."""
     filters = filters or {}
-    return {x.key: x.name for x in iter_documents(api.get_jobs, workflow_key, **filters)}
+    return {x.key: x.name for x in iter_documents(api.list_jobs, workflow_key, **filters)}
 
 
 _DATABASE_KEYS = {"_id", "_key", "_rev", "_oldRev", "id", "key", "rev"}
@@ -168,14 +168,14 @@ def add_jobs(
         batch.append(job)
         if len(batch) > max_transfer_size:
             res = send_api_command(
-                api.post_bulk_jobs_with_edges, workflow_key, BulkJobsWithEdgesModel(jobs=batch)
+                api.add_bulk_job_with_edges, workflow_key, BulkJobsWithEdgesModel(jobs=batch)
             )
             added_jobs += res.items
             batch.clear()
 
     if batch:
         res = send_api_command(
-            api.post_bulk_jobs_with_edges, workflow_key, BulkJobsWithEdgesModel(jobs=batch)
+            api.add_bulk_job_with_edges, workflow_key, BulkJobsWithEdgesModel(jobs=batch)
         )
         added_jobs += res.items
 
@@ -245,10 +245,10 @@ def map_function_to_jobs(
         if module_directory is not None:
             data["module_directory"] = module_directory
         job_name = f"{name_prefix}{i}"
-        input_ud = api.post_user_data(
+        input_ud = api.add_user_data(
             workflow_key, UserDataModel(name=f"input_{job_name}", data=data)
         )
-        output_ud = api.post_user_data(
+        output_ud = api.add_user_data(
             workflow_key, UserDataModel(name=f"output_{job_name}", data=data)
         )
         output_data_ids.append(output_ud.id)
@@ -272,10 +272,10 @@ def map_function_to_jobs(
         }
         if module_directory is not None:
             data["module_directory"] = module_directory
-        input_ud = api.post_user_data(
+        input_ud = api.add_user_data(
             workflow_key, UserDataModel(name="input_postprocess", data=data)
         )
-        output_ud = api.post_user_data(
+        output_ud = api.add_user_data(
             workflow_key, UserDataModel(name="postprocess_result", data=data)
         )
         jobs.append(

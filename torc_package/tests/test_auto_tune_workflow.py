@@ -37,7 +37,7 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     mgr.start(auto_tune_resource_requirements=True)
 
     # TODO: this will change when the manager can schedule nodes
-    auto_tune_status = api.get_workflows_key_status(db.workflow.key).auto_tune_status
+    auto_tune_status = api.get_workflow_status(db.workflow.key).auto_tune_status
     auto_tune_job_keys = set(auto_tune_status.job_keys)
     assert auto_tune_job_keys == {
         db.get_document_key("jobs", "job_small1"),
@@ -46,11 +46,11 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     }
     num_enabled = 0
     groups = set()
-    for job in iter_documents(api.get_jobs, db.workflow.key):
+    for job in iter_documents(api.list_jobs, db.workflow.key):
         if job.key in auto_tune_job_keys:
             assert job.status == "ready"
             num_enabled += 1
-            rr = api.get_jobs_key_resource_requirements(db.workflow.key, job.key)
+            rr = api.get_job_resource_requirements(db.workflow.key, job.key)
             assert rr.name not in groups
             groups.add(rr.name)
         else:
@@ -71,10 +71,10 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
         job_completion_poll_interval=0.1,
     )
     runner.run_worker()
-    assert api.get_workflows_key_is_complete(db.workflow.key)
+    assert api.is_workflow_complete(db.workflow.key)
 
     stats_by_key = {
-        x: api.get_jobs_key_process_stats(db.workflow.key, x)[0] for x in auto_tune_job_keys
+        x: api.get_process_stats_for_job(db.workflow.key, x)[0] for x in auto_tune_job_keys
     }
     assert (
         stats_by_key[db.get_document_key("jobs", "job_small1")].max_rss
@@ -85,14 +85,14 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
         < stats_by_key[db.get_document_key("jobs", "job_large1")].max_rss
     )
 
-    api.post_workflows_key_process_auto_tune_resource_requirements_results(db.workflow.key)
-    small = api.get_resource_requirements_key(
+    api.process_auto_tune_resource_requirements_results(db.workflow.key)
+    small = api.get_resource_requirements(
         db.workflow.key, db.get_document_key("resource_requirements", "small")
     )
-    medium = api.get_resource_requirements_key(
+    medium = api.get_resource_requirements(
         db.workflow.key, db.get_document_key("resource_requirements", "medium")
     )
-    large = api.get_resource_requirements_key(
+    large = api.get_resource_requirements(
         db.workflow.key, db.get_document_key("resource_requirements", "large")
     )
     for rr in (small, medium, large):
@@ -101,7 +101,7 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
         assert rr.num_cpus in range(1, multiprocessing.cpu_count() + 1)
         assert rr.memory.lower() == "1g"
 
-    for job in api.get_jobs(db.workflow.key).items:
+    for job in api.list_jobs(db.workflow.key).items:
         if job.key in auto_tune_job_keys:
             assert job.status == "done"
         else:
@@ -109,7 +109,7 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
 
     mgr.restart()
 
-    for job in iter_documents(api.get_jobs, db.workflow.key):
+    for job in iter_documents(api.list_jobs, db.workflow.key):
         if job.key in auto_tune_job_keys:
             assert job.status == "done"
         else:
@@ -123,7 +123,7 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
         job_completion_poll_interval=1,
     )
     runner.run_worker()
-    assert api.get_workflows_key_is_complete(db.workflow.key).is_complete
+    assert api.is_workflow_complete(db.workflow.key).is_complete
 
     df = make_job_process_stats_dataframe(api, db.workflow.key)
     assert isinstance(df, pl.DataFrame)
