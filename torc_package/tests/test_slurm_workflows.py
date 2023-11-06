@@ -123,7 +123,7 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
         complete_events = []
         for event in iter_documents(api.list_events, key):
             if event.get("category") == "job" and event.get("type") in ("start", "complete"):
-                timestamp = datetime.strptime(event["timestamp"], "%Y-%m-%dT%H:%M:%S.%fZ")
+                timestamp = event["timestamp"]
                 item = {
                     "key": int(event["job_key"]),
                     "timestamp": timestamp,
