@@ -4,7 +4,7 @@ Declare Job Dependencies Manually
 In some workflows it may be more convenient to declare dependencies between jobs manually rather
 than through files or user data. This tutorial will teach you how to do that.
 
-Suppose the workflow has 3 work jobs and one postprocessing job. The postprocessing job should
+Suppose the workflow has three work jobs and one postprocessing job. The postprocessing job should
 only be run once all work jobs complete successfully.
 
 The ``examples`` directory in this repository has an example that creates the job
@@ -24,4 +24,4 @@ with the CLI command ``torc workflows create-from-json-file
 examples/manual_job_dependencies.json5``. You can run the Python and Julia workflows by running the
 commands through Python or Julia, e.g., ``python examples/manual_job_dependencies.py``.
 
-The rest of the steps would be identical to the other tutorials.
+The rest of the steps are identical to the other tutorials.

@@ -11,7 +11,7 @@ from torc.openapi_client import ApiClient, DefaultApi
 from torc.openapi_client.configuration import Configuration
 from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
 from torc.openapi_client.rest import ApiException
-from torc.openapi_client.models.bulk_jobs_with_edges_model import BulkJobsWithEdgesModel
+from torc.openapi_client.models.jobs_with_edges_model import JobsWithEdgesModel
 from torc.openapi_client.models.jobs_model import JobsModel
 from torc.openapi_client.models.user_data_model import UserDataModel
 from torc.common import timer_stats_collector, check_function
@@ -168,14 +168,14 @@ def add_jobs(
         batch.append(job)
         if len(batch) > max_transfer_size:
             res = send_api_command(
-                api.add_bulk_job_with_edges, workflow_key, BulkJobsWithEdgesModel(jobs=batch)
+                api.add_jobs_with_edges, workflow_key, JobsWithEdgesModel(jobs=batch)
             )
             added_jobs += res.items
             batch.clear()
 
     if batch:
         res = send_api_command(
-            api.add_bulk_job_with_edges, workflow_key, BulkJobsWithEdgesModel(jobs=batch)
+            api.add_jobs_with_edges, workflow_key, JobsWithEdgesModel(jobs=batch)
         )
         added_jobs += res.items
 

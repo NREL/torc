@@ -54,7 +54,7 @@ const SLEEP = joinpath(BASE_DIR, "..", "..", "torc_package", "tests", "scripts",
     )
 
     spec = build!(builder)
-    workflow, response = APIClient.post_workflow_specifications(api, spec)
+    workflow, response = APIClient.add_workflow_specification(api, spec)
     @test response.status == 200
     if response.status != 200
         error("test cannot continue")
@@ -66,13 +66,13 @@ const SLEEP = joinpath(BASE_DIR, "..", "..", "torc_package", "tests", "scripts",
         @test result.exitcode == 0
         result = run(`torc -u $url -k $(workflow._key) jobs run -p 1 -o $output_dir`)
         @test result.exitcode == 0
-        results, response = APIClient.get_results(api, workflow._key)
+        results, response = APIClient.list_results(api, workflow._key)
         @test response.status == 200
         for result in results.items
             @test result.return_code == 0
         end
     finally
         rm(output_dir, recursive = true)
-        APIClient.delete_workflows_key(api, workflow._key)
+        APIClient.remove_workflow(api, workflow._key)
     end
 end

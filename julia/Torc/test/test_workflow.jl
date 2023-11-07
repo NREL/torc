@@ -4,7 +4,7 @@ const SLEEP = joinpath(BASE_DIR, "..", "..", "torc_package", "tests", "scripts",
 function create_workflow(api)
     return send_api_command(
         api,
-        APIClient.post_workflows,
+        APIClient.add_workflow,
         APIClient.WorkflowsModel(
             user = "user",
             name = "diamond_workflow",
@@ -16,7 +16,7 @@ end
 function build_workflow(api, workflow)
     small = send_api_command(
         api,
-        APIClient.post_resource_requirements,
+        APIClient.add_resource_requirements,
         workflow._key,
         APIClient.ResourceRequirementsModel(
             name="small",
@@ -27,7 +27,7 @@ function build_workflow(api, workflow)
     )
     medium = send_api_command(
         api,
-        APIClient.post_resource_requirements,
+        APIClient.add_resource_requirements,
         workflow._key,
         APIClient.ResourceRequirementsModel(
             name="medium",
@@ -38,7 +38,7 @@ function build_workflow(api, workflow)
     )
     large = send_api_command(
         api,
-        APIClient.post_resource_requirements,
+        APIClient.add_resource_requirements,
         workflow._key,
         APIClient.ResourceRequirementsModel(
             name="large",
@@ -49,7 +49,7 @@ function build_workflow(api, workflow)
     )
     ud1 = send_api_command(
         api,
-        APIClient.post_user_data,
+        APIClient.add_user_data,
         workflow._key,
         APIClient.UserDataModel(
             name = "my_val1",
@@ -59,7 +59,7 @@ function build_workflow(api, workflow)
     )
     ud2 = send_api_command(
         api,
-        APIClient.post_user_data,
+        APIClient.add_user_data,
         workflow._key,
         APIClient.UserDataModel(
             name = "my_val2",
@@ -114,13 +114,13 @@ end
         @test result.exitcode == 0
         result = run(`torc -u $url -k $(workflow._key) jobs run -p 1 -o $output_dir`)
         @test result.exitcode == 0
-        results, response = APIClient.get_results(api, workflow._key)
+        results, response = APIClient.list_results(api, workflow._key)
         @test response.status == 200
         for result in results.items
             @test result.return_code == 0
         end
     finally
         rm(output_dir, recursive = true)
-        APIClient.delete_workflows_key(api, workflow._key)
+        APIClient.remove_workflow(api, workflow._key)
     end
 end

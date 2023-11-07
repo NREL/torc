@@ -21,7 +21,6 @@ Documentation is also embedded in Julia which can be used with a Julia specific 
 Class | Method
 ------------ | -------------
 *DefaultApi* | [**add_aws_scheduler**](docs/DefaultApi.md#add_aws_scheduler)<br/>**POST** /workflows/{workflow}/aws_schedulers<br/>Store a AWS compute node configuration.
-*DefaultApi* | [**add_bulk_job_with_edges**](docs/DefaultApi.md#add_bulk_job_with_edges)<br/>**POST** /workflows/{workflow}/bulk_jobs_with_edges<br/>Add jobs in bulk with edge definitions.
 *DefaultApi* | [**add_compute_node**](docs/DefaultApi.md#add_compute_node)<br/>**POST** /workflows/{workflow}/compute_nodes<br/>Store a compute node.
 *DefaultApi* | [**add_compute_node_stats**](docs/DefaultApi.md#add_compute_node_stats)<br/>**POST** /workflows/{workflow}/compute_node_stats<br/>Store a compute node statistics.
 *DefaultApi* | [**add_edge**](docs/DefaultApi.md#add_edge)<br/>**POST** /workflows/{workflow}/edges/{name}<br/>Store an edge between two vertexes.
@@ -32,6 +31,7 @@ Class | Method
 *DefaultApi* | [**add_job_specification**](docs/DefaultApi.md#add_job_specification)<br/>**POST** /workflows/{workflow}/job_specifications<br/>Store a job and create edges.
 *DefaultApi* | [**add_job_user_data**](docs/DefaultApi.md#add_job_user_data)<br/>**POST** /workflows/{workflow}/jobs/{key}/user_data<br/>Store user data for a job.
 *DefaultApi* | [**add_job_with_edges**](docs/DefaultApi.md#add_job_with_edges)<br/>**POST** /workflows/{workflow}/job_with_edges<br/>Add a job with edge definitions.
+*DefaultApi* | [**add_jobs_with_edges**](docs/DefaultApi.md#add_jobs_with_edges)<br/>**POST** /workflows/{workflow}/bulk_jobs_with_edges<br/>Add jobs in bulk with edge definitions.
 *DefaultApi* | [**add_local_scheduler**](docs/DefaultApi.md#add_local_scheduler)<br/>**POST** /workflows/{workflow}/local_schedulers<br/>Store a local compute node configuration.
 *DefaultApi* | [**add_resource_requirements**](docs/DefaultApi.md#add_resource_requirements)<br/>**POST** /workflows/{workflow}/resource_requirements<br/>Store a resource requirements.
 *DefaultApi* | [**add_result**](docs/DefaultApi.md#add_result)<br/>**POST** /workflows/{workflow}/results<br/>Store a result.
@@ -160,9 +160,9 @@ Class | Method
 
 ## Models
 
+ - [AddJobsWithEdgesResponse](docs/AddJobsWithEdgesResponse.md)
  - [AutoTuneStatus](docs/AutoTuneStatus.md)
  - [AwsSchedulersModel](docs/AwsSchedulersModel.md)
- - [BulkJobsWithEdgesModel](docs/BulkJobsWithEdgesModel.md)
  - [ComputeNodeResourceStatsModel](docs/ComputeNodeResourceStatsModel.md)
  - [ComputeNodeStats](docs/ComputeNodeStats.md)
  - [ComputeNodeStatsModel](docs/ComputeNodeStatsModel.md)
@@ -171,46 +171,46 @@ Class | Method
  - [DefaultErrorResponse](docs/DefaultErrorResponse.md)
  - [EdgesNameModel](docs/EdgesNameModel.md)
  - [FilesModel](docs/FilesModel.md)
- - [GetAwsSchedulersResponse](docs/GetAwsSchedulersResponse.md)
- - [GetComputeNodesResponse](docs/GetComputeNodesResponse.md)
- - [GetEdgesNameResponse](docs/GetEdgesNameResponse.md)
- - [GetFilesProducedByJobKeyResponse](docs/GetFilesProducedByJobKeyResponse.md)
- - [GetJobSpecificationsResponse](docs/GetJobSpecificationsResponse.md)
- - [GetJobsFindByNeedsFileKeyResponse](docs/GetJobsFindByNeedsFileKeyResponse.md)
- - [GetJobsFindByStatusStatusResponse](docs/GetJobsFindByStatusStatusResponse.md)
- - [GetJobsKeyUserDataConsumesResponse](docs/GetJobsKeyUserDataConsumesResponse.md)
- - [GetJobsKeyUserDataStoresResponse](docs/GetJobsKeyUserDataStoresResponse.md)
- - [GetResourceRequirementsResponse](docs/GetResourceRequirementsResponse.md)
- - [GetResultsResponse](docs/GetResultsResponse.md)
- - [GetScheduledComputeNodesResponse](docs/GetScheduledComputeNodesResponse.md)
- - [GetSlurmSchedulersResponse](docs/GetSlurmSchedulersResponse.md)
- - [GetUserDataResponse](docs/GetUserDataResponse.md)
- - [GetWorkflowsKeyCollectionNamesResponse](docs/GetWorkflowsKeyCollectionNamesResponse.md)
- - [GetWorkflowsKeyDotGraphNameResponse](docs/GetWorkflowsKeyDotGraphNameResponse.md)
- - [GetWorkflowsKeyIsCompleteResponse](docs/GetWorkflowsKeyIsCompleteResponse.md)
- - [GetWorkflowsKeyMissingUserDataResponse](docs/GetWorkflowsKeyMissingUserDataResponse.md)
- - [GetWorkflowsKeyReadyJobRequirementsResponse](docs/GetWorkflowsKeyReadyJobRequirementsResponse.md)
- - [GetWorkflowsKeyRequiredExistingFilesResponse](docs/GetWorkflowsKeyRequiredExistingFilesResponse.md)
- - [GetWorkflowsResponse](docs/GetWorkflowsResponse.md)
+ - [GetDotGraphResponse](docs/GetDotGraphResponse.md)
+ - [GetReadyJobRequirementsResponse](docs/GetReadyJobRequirementsResponse.md)
+ - [IsCompleteResponse](docs/IsCompleteResponse.md)
  - [JobProcessStatsModel](docs/JobProcessStatsModel.md)
  - [JobSpecificationsModel](docs/JobSpecificationsModel.md)
  - [JobWithEdgesModel](docs/JobWithEdgesModel.md)
  - [JobsInternal](docs/JobsInternal.md)
  - [JobsModel](docs/JobsModel.md)
+ - [JobsWithEdgesModel](docs/JobsWithEdgesModel.md)
+ - [JoinByInboundEdgeCollectionEdgeResponse](docs/JoinByInboundEdgeCollectionEdgeResponse.md)
+ - [JoinByOutboundEdgeCollectionEdgeResponse](docs/JoinByOutboundEdgeCollectionEdgeResponse.md)
+ - [ListAwsSchedulersResponse](docs/ListAwsSchedulersResponse.md)
+ - [ListCollectionNamesResponse](docs/ListCollectionNamesResponse.md)
  - [ListComputeNodeStatsResponse](docs/ListComputeNodeStatsResponse.md)
+ - [ListComputeNodesResponse](docs/ListComputeNodesResponse.md)
+ - [ListEdgesResponse](docs/ListEdgesResponse.md)
  - [ListEventsResponse](docs/ListEventsResponse.md)
+ - [ListFilesProducedByJob](docs/ListFilesProducedByJob.md)
  - [ListFilesResponse](docs/ListFilesResponse.md)
  - [ListJobProcessStatsResponse](docs/ListJobProcessStatsResponse.md)
+ - [ListJobSpecificationsResponse](docs/ListJobSpecificationsResponse.md)
+ - [ListJobUserDataConsumesResponse](docs/ListJobUserDataConsumesResponse.md)
+ - [ListJobUserDataStoresResponse](docs/ListJobUserDataStoresResponse.md)
+ - [ListJobsByNeedsFileResponse](docs/ListJobsByNeedsFileResponse.md)
+ - [ListJobsByStatusResponse](docs/ListJobsByStatusResponse.md)
  - [ListJobsResponse](docs/ListJobsResponse.md)
  - [ListLocalSchedulersResponse](docs/ListLocalSchedulersResponse.md)
+ - [ListMissingUserDataResponse](docs/ListMissingUserDataResponse.md)
+ - [ListRequiredExistingFilesResponse](docs/ListRequiredExistingFilesResponse.md)
+ - [ListResourceRequirementsResponse](docs/ListResourceRequirementsResponse.md)
+ - [ListResultsResponse](docs/ListResultsResponse.md)
+ - [ListScheduledComputeNodesResponse](docs/ListScheduledComputeNodesResponse.md)
+ - [ListSlurmSchedulersResponse](docs/ListSlurmSchedulersResponse.md)
+ - [ListUserDataResponse](docs/ListUserDataResponse.md)
+ - [ListWorkflowsResponse](docs/ListWorkflowsResponse.md)
  - [LocalSchedulersModel](docs/LocalSchedulersModel.md)
- - [PostBulkJobsWithEdgesResponse](docs/PostBulkJobsWithEdgesResponse.md)
- - [PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse](docs/PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse.md)
- - [PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse](docs/PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse.md)
- - [PostWorkflowsKeyPrepareJobsForSchedulingResponse](docs/PostWorkflowsKeyPrepareJobsForSchedulingResponse.md)
- - [PostWorkflowsKeyPrepareJobsForSubmissionResponse](docs/PostWorkflowsKeyPrepareJobsForSubmissionResponse.md)
- - [PostWorkflowsKeyPrepareNextJobsForSubmissionResponse](docs/PostWorkflowsKeyPrepareNextJobsForSubmissionResponse.md)
- - [PostWorkflowsKeyProcessChangedJobInputsResponse](docs/PostWorkflowsKeyProcessChangedJobInputsResponse.md)
+ - [PrepareJobsForSchedulingResponse](docs/PrepareJobsForSchedulingResponse.md)
+ - [PrepareJobsForSubmissionResponse](docs/PrepareJobsForSubmissionResponse.md)
+ - [PrepareNextJobsForSubmissionResponse](docs/PrepareNextJobsForSubmissionResponse.md)
+ - [ProcessChangedJobInputsResponse](docs/ProcessChangedJobInputsResponse.md)
  - [ResourceRequirementsModel](docs/ResourceRequirementsModel.md)
  - [ResultsModel](docs/ResultsModel.md)
  - [ScheduledComputeNodesModel](docs/ScheduledComputeNodesModel.md)

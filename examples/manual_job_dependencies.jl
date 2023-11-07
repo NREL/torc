@@ -6,7 +6,7 @@ const TORC_SERVICE_URL = "http://localhost:8529/_db/test-workflows/torc-service"
 function create_workflow(api)
     return send_api_command(
         api,
-        APIClient.post_workflows,
+        APIClient.add_workflow,
         APIClient.WorkflowsModel(
             name="manual_job_dependencies",
             description="Demo creation of a workflow with job dependencies specified manually.",
@@ -17,7 +17,7 @@ end
 function build_workflow(api, workflow)
     small = send_api_command(
         api,
-        APIClient.post_resource_requirements,
+        APIClient.add_resource_requirements,
         workflow._key,
         APIClient.ResourceRequirementsModel(
             name="small",
@@ -28,7 +28,7 @@ function build_workflow(api, workflow)
     )
     medium = send_api_command(
         api,
-        APIClient.post_resource_requirements,
+        APIClient.add_resource_requirements,
         workflow._key,
         APIClient.ResourceRequirementsModel(
             name="small", num_cpus=1, memory="1g", runtime="P0DT45M"
@@ -36,7 +36,7 @@ function build_workflow(api, workflow)
     )
     send_api_command(
         api,
-        APIClient.post_slurm_schedulers,
+        APIClient.add_slurm_schedulers,
         workflow._key,
         APIClient.SlurmSchedulersModel(
             name="short",
@@ -50,7 +50,7 @@ function build_workflow(api, workflow)
     for i in 1:3
         job = send_api_command(
             api,
-            APIClient.post_job_with_edges,
+            APIClient.add_job_with_edges,
             workflow._key,
             APIClient.JobWithEdgesModel(
                 job=APIClient.JobsModel(
@@ -64,7 +64,7 @@ function build_workflow(api, workflow)
 
     send_api_command(
         api,
-        APIClient.post_job_with_edges,
+        APIClient.add_job_with_edges,
         workflow._key,
         APIClient.JobWithEdgesModel(
             job=APIClient.JobsModel(
@@ -85,7 +85,7 @@ function main()
     try
         build_workflow(api, workflow)
     catch e
-        APIClient.delete_workflows_key(api, workflow._key)
+        APIClient.remove_workflow(api, workflow._key)
         rethrow()
     end
 end

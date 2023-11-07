@@ -51,7 +51,7 @@ def add(ctx, api, name, path):
         name=name,
         path=path,
     )
-    file = api.post_files_workflow(file, workflow_key)
+    file = api.add_file(workflow_key, file)
     if output_format == "text":
         logger.info("Added file with key=%s", file.key)
     else:

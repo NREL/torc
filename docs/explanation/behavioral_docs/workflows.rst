@@ -102,7 +102,7 @@ What happens
   user data objects exist.
 - The torc client application records the last-modified timestamp of existing input files and
   records those in the database.
-- The torc client application calls ``post_workflows_key_initialize_jobs``. The database service
+- The torc client application calls ``initialize_jobs``. The database service
   does the following:
 
   - Clears any user_data objects defined as ephemeral.
@@ -130,7 +130,7 @@ Complete a job
 ==============
 The torc worker application manages job completions. When a user job finishes the application
 creates a results object with the return code and execution time, and passes that to the database
-service through the call ``post_jobs_key_complete_job_status_rev``. The service
+service through the call ``complete_job``. The service
 does the following:
 
 - Stores the result in the database and connects the job to that result with a ``returned`` edge.

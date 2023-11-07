@@ -29,52 +29,52 @@ from pydantic import StrictBool, StrictFloat, StrictInt, StrictStr, field_valida
 
 from typing import Any, Dict, List, Optional, Union
 
+from torc.openapi_client.models.add_jobs_with_edges_response import AddJobsWithEdgesResponse
 from torc.openapi_client.models.aws_schedulers_model import AwsSchedulersModel
-from torc.openapi_client.models.bulk_jobs_with_edges_model import BulkJobsWithEdgesModel
 from torc.openapi_client.models.compute_node_stats_model import ComputeNodeStatsModel
 from torc.openapi_client.models.compute_nodes_model import ComputeNodesModel
 from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
 from torc.openapi_client.models.edges_name_model import EdgesNameModel
 from torc.openapi_client.models.files_model import FilesModel
-from torc.openapi_client.models.get_aws_schedulers_response import GetAwsSchedulersResponse
-from torc.openapi_client.models.get_compute_nodes_response import GetComputeNodesResponse
-from torc.openapi_client.models.get_edges_name_response import GetEdgesNameResponse
-from torc.openapi_client.models.get_files_produced_by_job_key_response import GetFilesProducedByJobKeyResponse
-from torc.openapi_client.models.get_job_specifications_response import GetJobSpecificationsResponse
-from torc.openapi_client.models.get_jobs_find_by_needs_file_key_response import GetJobsFindByNeedsFileKeyResponse
-from torc.openapi_client.models.get_jobs_find_by_status_status_response import GetJobsFindByStatusStatusResponse
-from torc.openapi_client.models.get_jobs_key_user_data_consumes_response import GetJobsKeyUserDataConsumesResponse
-from torc.openapi_client.models.get_jobs_key_user_data_stores_response import GetJobsKeyUserDataStoresResponse
-from torc.openapi_client.models.get_resource_requirements_response import GetResourceRequirementsResponse
-from torc.openapi_client.models.get_results_response import GetResultsResponse
-from torc.openapi_client.models.get_scheduled_compute_nodes_response import GetScheduledComputeNodesResponse
-from torc.openapi_client.models.get_slurm_schedulers_response import GetSlurmSchedulersResponse
-from torc.openapi_client.models.get_user_data_response import GetUserDataResponse
-from torc.openapi_client.models.get_workflows_key_collection_names_response import GetWorkflowsKeyCollectionNamesResponse
-from torc.openapi_client.models.get_workflows_key_dot_graph_name_response import GetWorkflowsKeyDotGraphNameResponse
-from torc.openapi_client.models.get_workflows_key_is_complete_response import GetWorkflowsKeyIsCompleteResponse
-from torc.openapi_client.models.get_workflows_key_missing_user_data_response import GetWorkflowsKeyMissingUserDataResponse
-from torc.openapi_client.models.get_workflows_key_ready_job_requirements_response import GetWorkflowsKeyReadyJobRequirementsResponse
-from torc.openapi_client.models.get_workflows_key_required_existing_files_response import GetWorkflowsKeyRequiredExistingFilesResponse
-from torc.openapi_client.models.get_workflows_response import GetWorkflowsResponse
+from torc.openapi_client.models.get_dot_graph_response import GetDotGraphResponse
+from torc.openapi_client.models.get_ready_job_requirements_response import GetReadyJobRequirementsResponse
+from torc.openapi_client.models.is_complete_response import IsCompleteResponse
 from torc.openapi_client.models.job_process_stats_model import JobProcessStatsModel
 from torc.openapi_client.models.job_specifications_model import JobSpecificationsModel
 from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
 from torc.openapi_client.models.jobs_model import JobsModel
+from torc.openapi_client.models.jobs_with_edges_model import JobsWithEdgesModel
+from torc.openapi_client.models.join_by_inbound_edge_collection_edge_response import JoinByInboundEdgeCollectionEdgeResponse
+from torc.openapi_client.models.join_by_outbound_edge_collection_edge_response import JoinByOutboundEdgeCollectionEdgeResponse
+from torc.openapi_client.models.list_aws_schedulers_response import ListAwsSchedulersResponse
+from torc.openapi_client.models.list_collection_names_response import ListCollectionNamesResponse
 from torc.openapi_client.models.list_compute_node_stats_response import ListComputeNodeStatsResponse
+from torc.openapi_client.models.list_compute_nodes_response import ListComputeNodesResponse
+from torc.openapi_client.models.list_edges_response import ListEdgesResponse
 from torc.openapi_client.models.list_events_response import ListEventsResponse
+from torc.openapi_client.models.list_files_produced_by_job import ListFilesProducedByJob
 from torc.openapi_client.models.list_files_response import ListFilesResponse
 from torc.openapi_client.models.list_job_process_stats_response import ListJobProcessStatsResponse
+from torc.openapi_client.models.list_job_specifications_response import ListJobSpecificationsResponse
+from torc.openapi_client.models.list_job_user_data_consumes_response import ListJobUserDataConsumesResponse
+from torc.openapi_client.models.list_job_user_data_stores_response import ListJobUserDataStoresResponse
+from torc.openapi_client.models.list_jobs_by_needs_file_response import ListJobsByNeedsFileResponse
+from torc.openapi_client.models.list_jobs_by_status_response import ListJobsByStatusResponse
 from torc.openapi_client.models.list_jobs_response import ListJobsResponse
 from torc.openapi_client.models.list_local_schedulers_response import ListLocalSchedulersResponse
+from torc.openapi_client.models.list_missing_user_data_response import ListMissingUserDataResponse
+from torc.openapi_client.models.list_required_existing_files_response import ListRequiredExistingFilesResponse
+from torc.openapi_client.models.list_resource_requirements_response import ListResourceRequirementsResponse
+from torc.openapi_client.models.list_results_response import ListResultsResponse
+from torc.openapi_client.models.list_scheduled_compute_nodes_response import ListScheduledComputeNodesResponse
+from torc.openapi_client.models.list_slurm_schedulers_response import ListSlurmSchedulersResponse
+from torc.openapi_client.models.list_user_data_response import ListUserDataResponse
+from torc.openapi_client.models.list_workflows_response import ListWorkflowsResponse
 from torc.openapi_client.models.local_schedulers_model import LocalSchedulersModel
-from torc.openapi_client.models.post_bulk_jobs_with_edges_response import PostBulkJobsWithEdgesResponse
-from torc.openapi_client.models.post_workflows_key_join_by_inbound_edge_collection_edge_response import PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse
-from torc.openapi_client.models.post_workflows_key_join_by_outbound_edge_collection_edge_response import PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse
-from torc.openapi_client.models.post_workflows_key_prepare_jobs_for_scheduling_response import PostWorkflowsKeyPrepareJobsForSchedulingResponse
-from torc.openapi_client.models.post_workflows_key_prepare_jobs_for_submission_response import PostWorkflowsKeyPrepareJobsForSubmissionResponse
-from torc.openapi_client.models.post_workflows_key_prepare_next_jobs_for_submission_response import PostWorkflowsKeyPrepareNextJobsForSubmissionResponse
-from torc.openapi_client.models.post_workflows_key_process_changed_job_inputs_response import PostWorkflowsKeyProcessChangedJobInputsResponse
+from torc.openapi_client.models.prepare_jobs_for_scheduling_response import PrepareJobsForSchedulingResponse
+from torc.openapi_client.models.prepare_jobs_for_submission_response import PrepareJobsForSubmissionResponse
+from torc.openapi_client.models.prepare_next_jobs_for_submission_response import PrepareNextJobsForSubmissionResponse
+from torc.openapi_client.models.process_changed_job_inputs_response import ProcessChangedJobInputsResponse
 from torc.openapi_client.models.resource_requirements_model import ResourceRequirementsModel
 from torc.openapi_client.models.results_model import ResultsModel
 from torc.openapi_client.models.scheduled_compute_nodes_model import ScheduledComputeNodesModel
@@ -380,298 +380,6 @@ class DefaultApi:
         return self.api_client.param_serialize(
             method='POST',
             resource_path='/workflows/{workflow}/aws_schedulers',
-            path_params=_path_params,
-            query_params=_query_params,
-            header_params=_header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            auth_settings=_auth_settings,
-            collection_formats=_collection_formats,
-            _host=_host,
-            _request_auth=_request_auth
-        )
-
-
-
-
-    @validate_call
-    def add_bulk_job_with_edges(
-        self,
-        workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: BulkJobsWithEdgesModel,
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> PostBulkJobsWithEdgesResponse:
-        """Add jobs in bulk with edge definitions.
-
-        Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: (required)
-        :type body: BulkJobsWithEdgesModel
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._add_bulk_job_with_edges_serialize(
-            workflow=workflow,
-            body=body,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostBulkJobsWithEdgesResponse",
-            '500': "DefaultErrorResponse"
-            
-        }
-        response_data = self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        response_data.read()
-        return self.api_client.response_deserialize(
-            response_data=response_data,
-            response_types_map=_response_types_map,
-        ).data
-
-
-    @validate_call
-    def add_bulk_job_with_edges_with_http_info(
-        self,
-        workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: BulkJobsWithEdgesModel,
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[PostBulkJobsWithEdgesResponse]:
-        """Add jobs in bulk with edge definitions.
-
-        Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: (required)
-        :type body: BulkJobsWithEdgesModel
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._add_bulk_job_with_edges_serialize(
-            workflow=workflow,
-            body=body,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostBulkJobsWithEdgesResponse",
-            '500': "DefaultErrorResponse"
-            
-        }
-        response_data = self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        response_data.read()
-        return self.api_client.response_deserialize(
-            response_data=response_data,
-            response_types_map=_response_types_map,
-        )
-
-
-    @validate_call
-    def add_bulk_job_with_edges_without_preload_content(
-        self,
-        workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: BulkJobsWithEdgesModel,
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> RESTResponseType:
-        """Add jobs in bulk with edge definitions.
-
-        Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: (required)
-        :type body: BulkJobsWithEdgesModel
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._add_bulk_job_with_edges_serialize(
-            workflow=workflow,
-            body=body,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostBulkJobsWithEdgesResponse",
-            '500': "DefaultErrorResponse"
-            
-        }
-        response_data = self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        return response_data.response
-
-
-    def _add_bulk_job_with_edges_serialize(
-        self,
-        workflow,
-        body,
-        _request_auth,
-        _content_type,
-        _headers,
-        _host_index,
-    ) -> Tuple:
-
-        _host = None
-
-        _collection_formats: Dict[str, str] = {
-            
-        }
-
-        _path_params: Dict[str, str] = {}
-        _query_params: List[Tuple[str, str]] = []
-        _header_params: Dict[str, Optional[str]] = _headers or {}
-        _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
-        _body_params: Optional[bytes] = None
-
-        # process the path parameters
-        if workflow is not None:
-            _path_params['workflow'] = workflow
-        # process the query parameters
-        # process the header parameters
-        # process the form parameters
-        # process the body parameter
-        if body is not None:
-            _body_params = body
-
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
-
-        # set the HTTP header `Content-Type`
-        if _content_type:
-            _header_params['Content-Type'] = _content_type
-        else:
-            _default_content_type = (
-                self.api_client.select_header_content_type(
-                    [
-                        'application/json'
-                    ]
-                )
-            )
-            if _default_content_type is not None:
-                _header_params['Content-Type'] = _default_content_type
-
-        # authentication setting
-        _auth_settings: List[str] = [
-        ]
-
-        return self.api_client.param_serialize(
-            method='POST',
-            resource_path='/workflows/{workflow}/bulk_jobs_with_edges',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -3622,6 +3330,298 @@ class DefaultApi:
         return self.api_client.param_serialize(
             method='POST',
             resource_path='/workflows/{workflow}/job_with_edges',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def add_jobs_with_edges(
+        self,
+        workflow: Annotated[StrictStr, Field(description="Workflow key")],
+        body: JobsWithEdgesModel,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> AddJobsWithEdgesResponse:
+        """Add jobs in bulk with edge definitions.
+
+        Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param body: (required)
+        :type body: JobsWithEdgesModel
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._add_jobs_with_edges_serialize(
+            workflow=workflow,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AddJobsWithEdgesResponse",
+            '500': "DefaultErrorResponse"
+            
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def add_jobs_with_edges_with_http_info(
+        self,
+        workflow: Annotated[StrictStr, Field(description="Workflow key")],
+        body: JobsWithEdgesModel,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[AddJobsWithEdgesResponse]:
+        """Add jobs in bulk with edge definitions.
+
+        Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param body: (required)
+        :type body: JobsWithEdgesModel
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._add_jobs_with_edges_serialize(
+            workflow=workflow,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AddJobsWithEdgesResponse",
+            '500': "DefaultErrorResponse"
+            
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def add_jobs_with_edges_without_preload_content(
+        self,
+        workflow: Annotated[StrictStr, Field(description="Workflow key")],
+        body: JobsWithEdgesModel,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Add jobs in bulk with edge definitions.
+
+        Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
+
+        :param workflow: Workflow key (required)
+        :type workflow: str
+        :param body: (required)
+        :type body: JobsWithEdgesModel
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._add_jobs_with_edges_serialize(
+            workflow=workflow,
+            body=body,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "AddJobsWithEdgesResponse",
+            '500': "DefaultErrorResponse"
+            
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _add_jobs_with_edges_serialize(
+        self,
+        workflow,
+        body,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> Tuple:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+            
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[str, str] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        if workflow is not None:
+            _path_params['workflow'] = workflow
+        # process the query parameters
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+        if body is not None:
+            _body_params = body
+
+
+        # set the HTTP header `Accept`
+        _header_params['Accept'] = self.api_client.select_header_accept(
+            [
+                'application/json'
+            ]
+        )
+
+        # set the HTTP header `Content-Type`
+        if _content_type:
+            _header_params['Content-Type'] = _content_type
+        else:
+            _default_content_type = (
+                self.api_client.select_header_content_type(
+                    [
+                        'application/json'
+                    ]
+                )
+            )
+            if _default_content_type is not None:
+                _header_params['Content-Type'] = _default_content_type
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='POST',
+            resource_path='/workflows/{workflow}/bulk_jobs_with_edges',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -11836,7 +11836,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetWorkflowsKeyDotGraphNameResponse:
+    ) -> GetDotGraphResponse:
         """Build a string for a DOT graph.
 
         Build a string for a DOT graph.
@@ -11877,7 +11877,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyDotGraphNameResponse",
+            '200': "GetDotGraphResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -11909,7 +11909,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetWorkflowsKeyDotGraphNameResponse]:
+    ) -> ApiResponse[GetDotGraphResponse]:
         """Build a string for a DOT graph.
 
         Build a string for a DOT graph.
@@ -11950,7 +11950,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyDotGraphNameResponse",
+            '200': "GetDotGraphResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -12023,7 +12023,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyDotGraphNameResponse",
+            '200': "GetDotGraphResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -15514,7 +15514,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetWorkflowsKeyReadyJobRequirementsResponse:
+    ) -> GetReadyJobRequirementsResponse:
         """Return the resource requirements for ready jobs.
 
         Return the resource requirements for jobs with a status of ready.
@@ -15555,7 +15555,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyReadyJobRequirementsResponse",
+            '200': "GetReadyJobRequirementsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -15587,7 +15587,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetWorkflowsKeyReadyJobRequirementsResponse]:
+    ) -> ApiResponse[GetReadyJobRequirementsResponse]:
         """Return the resource requirements for ready jobs.
 
         Return the resource requirements for jobs with a status of ready.
@@ -15628,7 +15628,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyReadyJobRequirementsResponse",
+            '200': "GetReadyJobRequirementsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -15701,7 +15701,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyReadyJobRequirementsResponse",
+            '200': "GetReadyJobRequirementsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -19318,7 +19318,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetWorkflowsKeyIsCompleteResponse:
+    ) -> IsCompleteResponse:
         """Report whether the workflow is complete
 
         Reports true if all jobs in the workflow are complete.
@@ -19356,7 +19356,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyIsCompleteResponse",
+            '200': "IsCompleteResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -19387,7 +19387,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetWorkflowsKeyIsCompleteResponse]:
+    ) -> ApiResponse[IsCompleteResponse]:
         """Report whether the workflow is complete
 
         Reports true if all jobs in the workflow are complete.
@@ -19425,7 +19425,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyIsCompleteResponse",
+            '200': "IsCompleteResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -19494,7 +19494,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyIsCompleteResponse",
+            '200': "IsCompleteResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -19589,7 +19589,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse:
+    ) -> JoinByInboundEdgeCollectionEdgeResponse:
         """Retrieve a joined table of two collections.
 
         Retrieve a table of the collections joined by an inbound edge.
@@ -19648,7 +19648,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse",
+            '200': "JoinByInboundEdgeCollectionEdgeResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -19686,7 +19686,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse]:
+    ) -> ApiResponse[JoinByInboundEdgeCollectionEdgeResponse]:
         """Retrieve a joined table of two collections.
 
         Retrieve a table of the collections joined by an inbound edge.
@@ -19745,7 +19745,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse",
+            '200': "JoinByInboundEdgeCollectionEdgeResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -19842,7 +19842,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse",
+            '200': "JoinByInboundEdgeCollectionEdgeResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -19979,7 +19979,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse:
+    ) -> JoinByOutboundEdgeCollectionEdgeResponse:
         """Retrieve a joined table of two collections.
 
         Retrieve a table of the collections joined by an outbound edge.
@@ -20038,7 +20038,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse",
+            '200': "JoinByOutboundEdgeCollectionEdgeResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -20076,7 +20076,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse]:
+    ) -> ApiResponse[JoinByOutboundEdgeCollectionEdgeResponse]:
         """Retrieve a joined table of two collections.
 
         Retrieve a table of the collections joined by an outbound edge.
@@ -20135,7 +20135,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse",
+            '200': "JoinByOutboundEdgeCollectionEdgeResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -20232,7 +20232,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse",
+            '200': "JoinByOutboundEdgeCollectionEdgeResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -20368,7 +20368,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetAwsSchedulersResponse:
+    ) -> ListAwsSchedulersResponse:
         """Retrieve all AWS compute node configuration documents
 
         Retrieve all documents from the \"aws_schedulers\" collection for one workflow.
@@ -20424,7 +20424,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAwsSchedulersResponse",
+            '200': "ListAwsSchedulersResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -20461,7 +20461,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetAwsSchedulersResponse]:
+    ) -> ApiResponse[ListAwsSchedulersResponse]:
         """Retrieve all AWS compute node configuration documents
 
         Retrieve all documents from the \"aws_schedulers\" collection for one workflow.
@@ -20517,7 +20517,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAwsSchedulersResponse",
+            '200': "ListAwsSchedulersResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -20610,7 +20610,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetAwsSchedulersResponse",
+            '200': "ListAwsSchedulersResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -20728,7 +20728,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetWorkflowsKeyCollectionNamesResponse:
+    ) -> ListCollectionNamesResponse:
         """Retrieve all collection names for one workflow.
 
         Retrieve all collection names for one workflow.
@@ -20766,7 +20766,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyCollectionNamesResponse",
+            '200': "ListCollectionNamesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -20797,7 +20797,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetWorkflowsKeyCollectionNamesResponse]:
+    ) -> ApiResponse[ListCollectionNamesResponse]:
         """Retrieve all collection names for one workflow.
 
         Retrieve all collection names for one workflow.
@@ -20835,7 +20835,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyCollectionNamesResponse",
+            '200': "ListCollectionNamesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -20904,7 +20904,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyCollectionNamesResponse",
+            '200': "ListCollectionNamesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -21365,7 +21365,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetComputeNodesResponse:
+    ) -> ListComputeNodesResponse:
         """Retrieve all compute node documents
 
         Retrieve all documents from the \"compute_nodes\" collection for one workflow.
@@ -21424,7 +21424,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetComputeNodesResponse",
+            '200': "ListComputeNodesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -21462,7 +21462,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetComputeNodesResponse]:
+    ) -> ApiResponse[ListComputeNodesResponse]:
         """Retrieve all compute node documents
 
         Retrieve all documents from the \"compute_nodes\" collection for one workflow.
@@ -21521,7 +21521,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetComputeNodesResponse",
+            '200': "ListComputeNodesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -21618,7 +21618,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetComputeNodesResponse",
+            '200': "ListComputeNodesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -21744,7 +21744,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetEdgesNameResponse:
+    ) -> ListEdgesResponse:
         """Retrieve all edges from the designated collection.
 
         Retrieve all edges from the designated collection.
@@ -21791,7 +21791,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetEdgesNameResponse",
+            '200': "ListEdgesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -21825,7 +21825,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetEdgesNameResponse]:
+    ) -> ApiResponse[ListEdgesResponse]:
         """Retrieve all edges from the designated collection.
 
         Retrieve all edges from the designated collection.
@@ -21872,7 +21872,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetEdgesNameResponse",
+            '200': "ListEdgesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -21953,7 +21953,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetEdgesNameResponse",
+            '200': "ListEdgesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -22806,7 +22806,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetFilesProducedByJobKeyResponse:
+    ) -> ListFilesProducedByJob:
         """Retrieve files produced by a job
 
         Retrieves files from the \"files\" collection produced by a job.
@@ -22853,7 +22853,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetFilesProducedByJobKeyResponse",
+            '200': "ListFilesProducedByJob",
             '500': "DefaultErrorResponse"
             
         }
@@ -22887,7 +22887,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetFilesProducedByJobKeyResponse]:
+    ) -> ApiResponse[ListFilesProducedByJob]:
         """Retrieve files produced by a job
 
         Retrieves files from the \"files\" collection produced by a job.
@@ -22934,7 +22934,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetFilesProducedByJobKeyResponse",
+            '200': "ListFilesProducedByJob",
             '500': "DefaultErrorResponse"
             
         }
@@ -23015,7 +23015,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetFilesProducedByJobKeyResponse",
+            '200': "ListFilesProducedByJob",
             '500': "DefaultErrorResponse"
             
         }
@@ -23765,7 +23765,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetJobSpecificationsResponse:
+    ) -> ListJobSpecificationsResponse:
         """Retrieve all job definitions
 
         Retrieves all job definitions. Limit output with skip and limit.
@@ -23809,7 +23809,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetJobSpecificationsResponse",
+            '200': "ListJobSpecificationsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -23842,7 +23842,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetJobSpecificationsResponse]:
+    ) -> ApiResponse[ListJobSpecificationsResponse]:
         """Retrieve all job definitions
 
         Retrieves all job definitions. Limit output with skip and limit.
@@ -23886,7 +23886,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetJobSpecificationsResponse",
+            '200': "ListJobSpecificationsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -23963,7 +23963,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetJobSpecificationsResponse",
+            '200': "ListJobSpecificationsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -24062,7 +24062,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetJobsKeyUserDataConsumesResponse:
+    ) -> ListJobUserDataConsumesResponse:
         """Retrieve all user data consumed by a job.
 
         Retrieve all user data consumed by a job.
@@ -24103,7 +24103,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetJobsKeyUserDataConsumesResponse",
+            '200': "ListJobUserDataConsumesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -24135,7 +24135,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetJobsKeyUserDataConsumesResponse]:
+    ) -> ApiResponse[ListJobUserDataConsumesResponse]:
         """Retrieve all user data consumed by a job.
 
         Retrieve all user data consumed by a job.
@@ -24176,7 +24176,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetJobsKeyUserDataConsumesResponse",
+            '200': "ListJobUserDataConsumesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -24249,7 +24249,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetJobsKeyUserDataConsumesResponse",
+            '200': "ListJobUserDataConsumesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -24341,7 +24341,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetJobsKeyUserDataStoresResponse:
+    ) -> ListJobUserDataStoresResponse:
         """Retrieve all user data for a job.
 
         Retrieve all user data for a job.
@@ -24382,7 +24382,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetJobsKeyUserDataStoresResponse",
+            '200': "ListJobUserDataStoresResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -24414,7 +24414,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetJobsKeyUserDataStoresResponse]:
+    ) -> ApiResponse[ListJobUserDataStoresResponse]:
         """Retrieve all user data for a job.
 
         Retrieve all user data for a job.
@@ -24455,7 +24455,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetJobsKeyUserDataStoresResponse",
+            '200': "ListJobUserDataStoresResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -24528,7 +24528,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetJobsKeyUserDataStoresResponse",
+            '200': "ListJobUserDataStoresResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -25056,7 +25056,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetJobsFindByNeedsFileKeyResponse:
+    ) -> ListJobsByNeedsFileResponse:
         """Retrieve all jobs that need a file
 
         Retrieves all jobs connected to a file by the needs edge.
@@ -25103,7 +25103,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetJobsFindByNeedsFileKeyResponse",
+            '200': "ListJobsByNeedsFileResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -25137,7 +25137,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetJobsFindByNeedsFileKeyResponse]:
+    ) -> ApiResponse[ListJobsByNeedsFileResponse]:
         """Retrieve all jobs that need a file
 
         Retrieves all jobs connected to a file by the needs edge.
@@ -25184,7 +25184,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetJobsFindByNeedsFileKeyResponse",
+            '200': "ListJobsByNeedsFileResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -25265,7 +25265,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetJobsFindByNeedsFileKeyResponse",
+            '200': "ListJobsByNeedsFileResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -25369,7 +25369,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetJobsFindByStatusStatusResponse:
+    ) -> ListJobsByStatusResponse:
         """Retrieve all jobs with a specific status
 
         Retrieves all jobs from the \"jobs\" collection with a specific status.
@@ -25416,7 +25416,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetJobsFindByStatusStatusResponse",
+            '200': "ListJobsByStatusResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -25450,7 +25450,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetJobsFindByStatusStatusResponse]:
+    ) -> ApiResponse[ListJobsByStatusResponse]:
         """Retrieve all jobs with a specific status
 
         Retrieves all jobs from the \"jobs\" collection with a specific status.
@@ -25497,7 +25497,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetJobsFindByStatusStatusResponse",
+            '200': "ListJobsByStatusResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -25578,7 +25578,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetJobsFindByStatusStatusResponse",
+            '200': "ListJobsByStatusResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -26062,7 +26062,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetWorkflowsKeyMissingUserDataResponse:
+    ) -> ListMissingUserDataResponse:
         """List missing user data that should exist.
 
         List missing user data that should exist.
@@ -26100,7 +26100,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyMissingUserDataResponse",
+            '200': "ListMissingUserDataResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -26131,7 +26131,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetWorkflowsKeyMissingUserDataResponse]:
+    ) -> ApiResponse[ListMissingUserDataResponse]:
         """List missing user data that should exist.
 
         List missing user data that should exist.
@@ -26169,7 +26169,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyMissingUserDataResponse",
+            '200': "ListMissingUserDataResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -26238,7 +26238,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyMissingUserDataResponse",
+            '200': "ListMissingUserDataResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -26326,7 +26326,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetWorkflowsKeyRequiredExistingFilesResponse:
+    ) -> ListRequiredExistingFilesResponse:
         """List files that must exist.
 
         List files that must exist.
@@ -26364,7 +26364,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyRequiredExistingFilesResponse",
+            '200': "ListRequiredExistingFilesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -26395,7 +26395,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetWorkflowsKeyRequiredExistingFilesResponse]:
+    ) -> ApiResponse[ListRequiredExistingFilesResponse]:
         """List files that must exist.
 
         List files that must exist.
@@ -26433,7 +26433,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyRequiredExistingFilesResponse",
+            '200': "ListRequiredExistingFilesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -26502,7 +26502,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsKeyRequiredExistingFilesResponse",
+            '200': "ListRequiredExistingFilesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -26601,7 +26601,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetResourceRequirementsResponse:
+    ) -> ListResourceRequirementsResponse:
         """Retrieve all resource requirements documents
 
         Retrieve all documents from the \"resource_requirements\" collection for one workflow.
@@ -26672,7 +26672,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetResourceRequirementsResponse",
+            '200': "ListResourceRequirementsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -26714,7 +26714,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetResourceRequirementsResponse]:
+    ) -> ApiResponse[ListResourceRequirementsResponse]:
         """Retrieve all resource requirements documents
 
         Retrieve all documents from the \"resource_requirements\" collection for one workflow.
@@ -26785,7 +26785,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetResourceRequirementsResponse",
+            '200': "ListResourceRequirementsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -26898,7 +26898,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetResourceRequirementsResponse",
+            '200': "ListResourceRequirementsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -27050,7 +27050,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetResultsResponse:
+    ) -> ListResultsResponse:
         """Retrieve all result documents
 
         Retrieve all documents from the \"results\" collection for one workflow.
@@ -27115,7 +27115,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetResultsResponse",
+            '200': "ListResultsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -27155,7 +27155,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetResultsResponse]:
+    ) -> ApiResponse[ListResultsResponse]:
         """Retrieve all result documents
 
         Retrieve all documents from the \"results\" collection for one workflow.
@@ -27220,7 +27220,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetResultsResponse",
+            '200': "ListResultsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -27325,7 +27325,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetResultsResponse",
+            '200': "ListResultsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -27466,7 +27466,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetScheduledComputeNodesResponse:
+    ) -> ListScheduledComputeNodesResponse:
         """Retrieve all scheduled compute node documents
 
         Retrieve all documents from the \"scheduled_compute_nodes\" collection for one workflow.
@@ -27528,7 +27528,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetScheduledComputeNodesResponse",
+            '200': "ListScheduledComputeNodesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -27567,7 +27567,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetScheduledComputeNodesResponse]:
+    ) -> ApiResponse[ListScheduledComputeNodesResponse]:
         """Retrieve all scheduled compute node documents
 
         Retrieve all documents from the \"scheduled_compute_nodes\" collection for one workflow.
@@ -27629,7 +27629,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetScheduledComputeNodesResponse",
+            '200': "ListScheduledComputeNodesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -27730,7 +27730,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetScheduledComputeNodesResponse",
+            '200': "ListScheduledComputeNodesResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -27872,7 +27872,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetSlurmSchedulersResponse:
+    ) -> ListSlurmSchedulersResponse:
         """Retrieve all Slurm compute node configuration documents
 
         Retrieve all documents from the \"slurm_schedulers\" collection for one workflow.
@@ -27952,7 +27952,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetSlurmSchedulersResponse",
+            '200': "ListSlurmSchedulersResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -27997,7 +27997,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetSlurmSchedulersResponse]:
+    ) -> ApiResponse[ListSlurmSchedulersResponse]:
         """Retrieve all Slurm compute node configuration documents
 
         Retrieve all documents from the \"slurm_schedulers\" collection for one workflow.
@@ -28077,7 +28077,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetSlurmSchedulersResponse",
+            '200': "ListSlurmSchedulersResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -28202,7 +28202,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetSlurmSchedulersResponse",
+            '200': "ListSlurmSchedulersResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -28367,7 +28367,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetUserDataResponse:
+    ) -> ListUserDataResponse:
         """Retrieve all user data documents
 
         Retrieve all documents from the \"user_data\" collection for one workflow.
@@ -28426,7 +28426,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetUserDataResponse",
+            '200': "ListUserDataResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -28464,7 +28464,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetUserDataResponse]:
+    ) -> ApiResponse[ListUserDataResponse]:
         """Retrieve all user data documents
 
         Retrieve all documents from the \"user_data\" collection for one workflow.
@@ -28523,7 +28523,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetUserDataResponse",
+            '200': "ListUserDataResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -28620,7 +28620,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetUserDataResponse",
+            '200': "ListUserDataResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -28749,7 +28749,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> GetWorkflowsResponse:
+    ) -> ListWorkflowsResponse:
         """Retrieve all workflows
 
         Retrieves all documents from the \"workflows\" collection.
@@ -28805,7 +28805,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsResponse",
+            '200': "ListWorkflowsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -28842,7 +28842,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[GetWorkflowsResponse]:
+    ) -> ApiResponse[ListWorkflowsResponse]:
         """Retrieve all workflows
 
         Retrieves all documents from the \"workflows\" collection.
@@ -28898,7 +28898,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsResponse",
+            '200': "ListWorkflowsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -28991,7 +28991,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "GetWorkflowsResponse",
+            '200': "ListWorkflowsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -34902,7 +34902,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> PostWorkflowsKeyPrepareJobsForSchedulingResponse:
+    ) -> PrepareJobsForSchedulingResponse:
         """Return scheduler IDs that need to be activated.
 
         Return scheduler IDs that need to be activated. Sets job status to scheduled.
@@ -34943,7 +34943,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyPrepareJobsForSchedulingResponse",
+            '200': "PrepareJobsForSchedulingResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -34975,7 +34975,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[PostWorkflowsKeyPrepareJobsForSchedulingResponse]:
+    ) -> ApiResponse[PrepareJobsForSchedulingResponse]:
         """Return scheduler IDs that need to be activated.
 
         Return scheduler IDs that need to be activated. Sets job status to scheduled.
@@ -35016,7 +35016,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyPrepareJobsForSchedulingResponse",
+            '200': "PrepareJobsForSchedulingResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -35089,7 +35089,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyPrepareJobsForSchedulingResponse",
+            '200': "PrepareJobsForSchedulingResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -35196,7 +35196,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> PostWorkflowsKeyPrepareJobsForSubmissionResponse:
+    ) -> PrepareJobsForSubmissionResponse:
         """Return ready jobs, accounting for resource requirements.
 
         Return jobs that are ready for submission and meet worker resource Sets status to submitted_pending.
@@ -35243,7 +35243,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyPrepareJobsForSubmissionResponse",
+            '200': "PrepareJobsForSubmissionResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -35277,7 +35277,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[PostWorkflowsKeyPrepareJobsForSubmissionResponse]:
+    ) -> ApiResponse[PrepareJobsForSubmissionResponse]:
         """Return ready jobs, accounting for resource requirements.
 
         Return jobs that are ready for submission and meet worker resource Sets status to submitted_pending.
@@ -35324,7 +35324,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyPrepareJobsForSubmissionResponse",
+            '200': "PrepareJobsForSubmissionResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -35405,7 +35405,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyPrepareJobsForSubmissionResponse",
+            '200': "PrepareJobsForSubmissionResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -35521,7 +35521,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> PostWorkflowsKeyPrepareNextJobsForSubmissionResponse:
+    ) -> PrepareNextJobsForSubmissionResponse:
         """Return user-requested number of ready jobs.
 
         Return user-requested number of jobs that are ready for submission. Sets status to submitted_pending.
@@ -35565,7 +35565,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyPrepareNextJobsForSubmissionResponse",
+            '200': "PrepareNextJobsForSubmissionResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -35598,7 +35598,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[PostWorkflowsKeyPrepareNextJobsForSubmissionResponse]:
+    ) -> ApiResponse[PrepareNextJobsForSubmissionResponse]:
         """Return user-requested number of ready jobs.
 
         Return user-requested number of jobs that are ready for submission. Sets status to submitted_pending.
@@ -35642,7 +35642,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyPrepareNextJobsForSubmissionResponse",
+            '200': "PrepareNextJobsForSubmissionResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -35719,7 +35719,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyPrepareNextJobsForSubmissionResponse",
+            '200': "PrepareNextJobsForSubmissionResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -36121,7 +36121,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> PostWorkflowsKeyProcessChangedJobInputsResponse:
+    ) -> ProcessChangedJobInputsResponse:
         """Check for changed job inputs and update status accordingly.
 
         Check for changed job inputs and update status accordingly.
@@ -36162,7 +36162,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyProcessChangedJobInputsResponse",
+            '200': "ProcessChangedJobInputsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -36194,7 +36194,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[PostWorkflowsKeyProcessChangedJobInputsResponse]:
+    ) -> ApiResponse[ProcessChangedJobInputsResponse]:
         """Check for changed job inputs and update status accordingly.
 
         Check for changed job inputs and update status accordingly.
@@ -36235,7 +36235,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyProcessChangedJobInputsResponse",
+            '200': "ProcessChangedJobInputsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -36308,7 +36308,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PostWorkflowsKeyProcessChangedJobInputsResponse",
+            '200': "ProcessChangedJobInputsResponse",
             '500': "DefaultErrorResponse"
             
         }

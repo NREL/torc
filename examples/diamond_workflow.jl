@@ -9,7 +9,7 @@ const WORK = joinpath("tests", "scripts", "work.py")
 function create_workflow(api)
     return send_api_command(
         api,
-        APIClient.post_workflows,
+        APIClient.add_workflow,
         APIClient.WorkflowsModel(
             user = "user",
             name = "diamond_workflow",
@@ -25,7 +25,7 @@ function build_workflow(api, workflow)
         write(io, "{\"val\": 5}")
     end
 
-    config = send_api_command(api, APIClient.get_workflows_key_config, workflow._key)
+    config = send_api_command(api, APIClient.get_workflow_config, workflow._key)
     config.compute_node_resource_stats = APIClient.ComputeNodeResourceStatsModel(
         cpu=true,
         memory=true,
@@ -33,42 +33,42 @@ function build_workflow(api, workflow)
         interval=5,
         monitor_type="aggregation",
     )
-    send_api_command(api, APIClient.put_workflows_key_config, workflow._key, config)
+    send_api_command(api, APIClient.modify_workflow_config, workflow._key, config)
 
     inputs = send_api_command(
         api,
-        APIClient.post_files,
+        APIClient.add_file,
         workflow._key,
         APIClient.FilesModel(name="inputs", path=inputs_file),
     )
     f1 = send_api_command(
         api,
-        APIClient.post_files,
+        APIClient.add_file,
         workflow._key,
         APIClient.FilesModel(name="files1", path=joinpath(output_dir, "f1.json")),
     )
     f2 = send_api_command(
         api,
-        APIClient.post_files,
+        APIClient.add_file,
         workflow._key,
         APIClient.FilesModel(name="files2", path=joinpath(output_dir, "f2.json")),
     )
     f3 = send_api_command(
         api,
-        APIClient.post_files,
+        APIClient.add_file,
         workflow._key,
         APIClient.FilesModel(name="files3", path=joinpath(output_dir, "f3.json")),
     )
     f4 = send_api_command(
         api,
-        APIClient.post_files,
+        APIClient.add_file,
         workflow._key,
         APIClient.FilesModel(name="files4", path=joinpath(output_dir, "f4.json")),
     )
 
     small = send_api_command(
         api,
-        APIClient.post_resource_requirements,
+        APIClient.add_resource_requirements,
         workflow._key,
         APIClient.ResourceRequirementsModel(
             name="small",
@@ -79,7 +79,7 @@ function build_workflow(api, workflow)
     )
     medium = send_api_command(
         api,
-        APIClient.post_resource_requirements,
+        APIClient.add_resource_requirements,
         workflow._key,
         APIClient.ResourceRequirementsModel(
             name="medium",
@@ -90,7 +90,7 @@ function build_workflow(api, workflow)
     )
     large = send_api_command(
         api,
-        APIClient.post_resource_requirements,
+        APIClient.add_resource_requirements,
         workflow._key,
         APIClient.ResourceRequirementsModel(
             name="large",
@@ -102,7 +102,7 @@ function build_workflow(api, workflow)
 
     send_api_command(
         api,
-        APIClient.post_slurm_schedulers,
+        APIClient.add_slurm_schedulers,
         workflow._key,
         APIClient.SlurmSchedulersModel(
             name="debug",
@@ -163,7 +163,7 @@ function main()
     try
         build_workflow(api, workflow)
     catch e
-        APIClient.delete_workflows_key(api, workflow._key)
+        APIClient.remove_workflow(api, workflow._key)
         rethrow()
     end
 end

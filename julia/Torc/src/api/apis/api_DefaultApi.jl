@@ -44,39 +44,6 @@ function add_aws_scheduler(_api::DefaultApi, response_stream::Channel, workflow:
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
-const _returntypes_add_bulk_job_with_edges_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => PostBulkJobsWithEdgesResponse,
-    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
-)
-
-function _oacinternal_add_bulk_job_with_edges(_api::DefaultApi, workflow::String, body::BulkJobsWithEdgesModel; _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_add_bulk_job_with_edges_DefaultApi, "/workflows/{workflow}/bulk_jobs_with_edges", [], body)
-    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
-    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
-    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
-    return _ctx
-end
-
-@doc raw"""Add jobs in bulk with edge definitions.
-
-Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
-
-Params:
-- workflow::String (required)
-- body::BulkJobsWithEdgesModel (required)
-
-Return: PostBulkJobsWithEdgesResponse, OpenAPI.Clients.ApiResponse
-"""
-function add_bulk_job_with_edges(_api::DefaultApi, workflow::String, body::BulkJobsWithEdgesModel; _mediaType=nothing)
-    _ctx = _oacinternal_add_bulk_job_with_edges(_api, workflow, body; _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx)
-end
-
-function add_bulk_job_with_edges(_api::DefaultApi, response_stream::Channel, workflow::String, body::BulkJobsWithEdgesModel; _mediaType=nothing)
-    _ctx = _oacinternal_add_bulk_job_with_edges(_api, workflow, body; _mediaType=_mediaType)
-    return OpenAPI.Clients.exec(_ctx, response_stream)
-end
-
 const _returntypes_add_compute_node_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ComputeNodesModel,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
@@ -408,6 +375,39 @@ end
 
 function add_job_with_edges(_api::DefaultApi, response_stream::Channel, workflow::String, body::JobWithEdgesModel; _mediaType=nothing)
     _ctx = _oacinternal_add_job_with_edges(_api, workflow, body; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
+const _returntypes_add_jobs_with_edges_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => AddJobsWithEdgesResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_add_jobs_with_edges(_api::DefaultApi, workflow::String, body::JobsWithEdgesModel; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_add_jobs_with_edges_DefaultApi, "/workflows/{workflow}/bulk_jobs_with_edges", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Add jobs in bulk with edge definitions.
+
+Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
+
+Params:
+- workflow::String (required)
+- body::JobsWithEdgesModel (required)
+
+Return: AddJobsWithEdgesResponse, OpenAPI.Clients.ApiResponse
+"""
+function add_jobs_with_edges(_api::DefaultApi, workflow::String, body::JobsWithEdgesModel; _mediaType=nothing)
+    _ctx = _oacinternal_add_jobs_with_edges(_api, workflow, body; _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function add_jobs_with_edges(_api::DefaultApi, response_stream::Channel, workflow::String, body::JobsWithEdgesModel; _mediaType=nothing)
+    _ctx = _oacinternal_add_jobs_with_edges(_api, workflow, body; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -1345,7 +1345,7 @@ function get_compute_node_stats(_api::DefaultApi, response_stream::Channel, work
 end
 
 const _returntypes_get_dot_graph_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetWorkflowsKeyDotGraphNameResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => GetDotGraphResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1366,7 +1366,7 @@ Params:
 - key::String (required)
 - name::String (required)
 
-Return: GetWorkflowsKeyDotGraphNameResponse, OpenAPI.Clients.ApiResponse
+Return: GetDotGraphResponse, OpenAPI.Clients.ApiResponse
 """
 function get_dot_graph(_api::DefaultApi, key::String, name::String; _mediaType=nothing)
     _ctx = _oacinternal_get_dot_graph(_api, key, name; _mediaType=_mediaType)
@@ -1793,7 +1793,7 @@ function get_process_stats_for_job(_api::DefaultApi, response_stream::Channel, w
 end
 
 const _returntypes_get_ready_job_requirements_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetWorkflowsKeyReadyJobRequirementsResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => GetReadyJobRequirementsResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -1814,7 +1814,7 @@ Params:
 - key::String (required)
 - scheduler_config_id::String
 
-Return: GetWorkflowsKeyReadyJobRequirementsResponse, OpenAPI.Clients.ApiResponse
+Return: GetReadyJobRequirementsResponse, OpenAPI.Clients.ApiResponse
 """
 function get_ready_job_requirements(_api::DefaultApi, key::String; scheduler_config_id=nothing, _mediaType=nothing)
     _ctx = _oacinternal_get_ready_job_requirements(_api, key; scheduler_config_id=scheduler_config_id, _mediaType=_mediaType)
@@ -2252,7 +2252,7 @@ function initialize_jobs(_api::DefaultApi, response_stream::Channel, key::String
 end
 
 const _returntypes_is_workflow_complete_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetWorkflowsKeyIsCompleteResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => IsCompleteResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2271,7 +2271,7 @@ Reports true if all jobs in the workflow are complete.
 Params:
 - key::String (required)
 
-Return: GetWorkflowsKeyIsCompleteResponse, OpenAPI.Clients.ApiResponse
+Return: IsCompleteResponse, OpenAPI.Clients.ApiResponse
 """
 function is_workflow_complete(_api::DefaultApi, key::String; _mediaType=nothing)
     _ctx = _oacinternal_is_workflow_complete(_api, key; _mediaType=_mediaType)
@@ -2284,7 +2284,7 @@ function is_workflow_complete(_api::DefaultApi, response_stream::Channel, key::S
 end
 
 const _returntypes_join_collections_by_inbound_edge_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => JoinByInboundEdgeCollectionEdgeResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2316,7 +2316,7 @@ Params:
 - skip::Float64
 - limit::Float64
 
-Return: PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse, OpenAPI.Clients.ApiResponse
+Return: JoinByInboundEdgeCollectionEdgeResponse, OpenAPI.Clients.ApiResponse
 """
 function join_collections_by_inbound_edge(_api::DefaultApi, key::String, collection::String, edge::String, body::Any; collection_key=nothing, collection_name=nothing, skip=nothing, limit=nothing, _mediaType=nothing)
     _ctx = _oacinternal_join_collections_by_inbound_edge(_api, key, collection, edge, body; collection_key=collection_key, collection_name=collection_name, skip=skip, limit=limit, _mediaType=_mediaType)
@@ -2329,7 +2329,7 @@ function join_collections_by_inbound_edge(_api::DefaultApi, response_stream::Cha
 end
 
 const _returntypes_join_collections_by_outbound_edge_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => JoinByOutboundEdgeCollectionEdgeResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2361,7 +2361,7 @@ Params:
 - skip::Float64
 - limit::Float64
 
-Return: PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse, OpenAPI.Clients.ApiResponse
+Return: JoinByOutboundEdgeCollectionEdgeResponse, OpenAPI.Clients.ApiResponse
 """
 function join_collections_by_outbound_edge(_api::DefaultApi, key::String, collection::String, edge::String, body::Any; collection_key=nothing, collection_name=nothing, skip=nothing, limit=nothing, _mediaType=nothing)
     _ctx = _oacinternal_join_collections_by_outbound_edge(_api, key, collection, edge, body; collection_key=collection_key, collection_name=collection_name, skip=skip, limit=limit, _mediaType=_mediaType)
@@ -2374,7 +2374,7 @@ function join_collections_by_outbound_edge(_api::DefaultApi, response_stream::Ch
 end
 
 const _returntypes_list_aws_schedulers_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetAwsSchedulersResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListAwsSchedulersResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2405,7 +2405,7 @@ Params:
 - key::String
 - name::String
 
-Return: GetAwsSchedulersResponse, OpenAPI.Clients.ApiResponse
+Return: ListAwsSchedulersResponse, OpenAPI.Clients.ApiResponse
 """
 function list_aws_schedulers(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, _mediaType=nothing)
     _ctx = _oacinternal_list_aws_schedulers(_api, workflow; skip=skip, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, key=key, name=name, _mediaType=_mediaType)
@@ -2418,7 +2418,7 @@ function list_aws_schedulers(_api::DefaultApi, response_stream::Channel, workflo
 end
 
 const _returntypes_list_collection_names_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetWorkflowsKeyCollectionNamesResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListCollectionNamesResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2437,7 +2437,7 @@ Retrieve all collection names for one workflow.
 Params:
 - key::String (required)
 
-Return: GetWorkflowsKeyCollectionNamesResponse, OpenAPI.Clients.ApiResponse
+Return: ListCollectionNamesResponse, OpenAPI.Clients.ApiResponse
 """
 function list_collection_names(_api::DefaultApi, key::String; _mediaType=nothing)
     _ctx = _oacinternal_list_collection_names(_api, key; _mediaType=_mediaType)
@@ -2494,7 +2494,7 @@ function list_compute_node_stats(_api::DefaultApi, response_stream::Channel, wor
 end
 
 const _returntypes_list_compute_nodes_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetComputeNodesResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListComputeNodesResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2527,7 +2527,7 @@ Params:
 - hostname::String
 - is_active::Bool
 
-Return: GetComputeNodesResponse, OpenAPI.Clients.ApiResponse
+Return: ListComputeNodesResponse, OpenAPI.Clients.ApiResponse
 """
 function list_compute_nodes(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, hostname=nothing, is_active=nothing, _mediaType=nothing)
     _ctx = _oacinternal_list_compute_nodes(_api, workflow; skip=skip, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, key=key, hostname=hostname, is_active=is_active, _mediaType=_mediaType)
@@ -2540,7 +2540,7 @@ function list_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow
 end
 
 const _returntypes_list_edges_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetEdgesNameResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListEdgesResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2565,7 +2565,7 @@ Params:
 - skip::Float64
 - limit::Float64
 
-Return: GetEdgesNameResponse, OpenAPI.Clients.ApiResponse
+Return: ListEdgesResponse, OpenAPI.Clients.ApiResponse
 """
 function list_edges(_api::DefaultApi, workflow::String, name::String; skip=nothing, limit=nothing, _mediaType=nothing)
     _ctx = _oacinternal_list_edges(_api, workflow, name; skip=skip, limit=limit, _mediaType=_mediaType)
@@ -2668,7 +2668,7 @@ function list_files(_api::DefaultApi, response_stream::Channel, workflow::String
 end
 
 const _returntypes_list_files_produced_by_job_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetFilesProducedByJobKeyResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListFilesProducedByJob,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2693,7 +2693,7 @@ Params:
 - skip::Float64
 - limit::Float64
 
-Return: GetFilesProducedByJobKeyResponse, OpenAPI.Clients.ApiResponse
+Return: ListFilesProducedByJob, OpenAPI.Clients.ApiResponse
 """
 function list_files_produced_by_job(_api::DefaultApi, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing)
     _ctx = _oacinternal_list_files_produced_by_job(_api, workflow, key; skip=skip, limit=limit, _mediaType=_mediaType)
@@ -2784,7 +2784,7 @@ function list_job_process_stats(_api::DefaultApi, response_stream::Channel, work
 end
 
 const _returntypes_list_job_specifications_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetJobSpecificationsResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListJobSpecificationsResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2807,7 +2807,7 @@ Params:
 - skip::Float64
 - limit::Float64
 
-Return: GetJobSpecificationsResponse, OpenAPI.Clients.ApiResponse
+Return: ListJobSpecificationsResponse, OpenAPI.Clients.ApiResponse
 """
 function list_job_specifications(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, _mediaType=nothing)
     _ctx = _oacinternal_list_job_specifications(_api, workflow; skip=skip, limit=limit, _mediaType=_mediaType)
@@ -2820,7 +2820,7 @@ function list_job_specifications(_api::DefaultApi, response_stream::Channel, wor
 end
 
 const _returntypes_list_job_user_data_consumes_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetJobsKeyUserDataConsumesResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListJobUserDataConsumesResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2841,7 +2841,7 @@ Params:
 - workflow::String (required)
 - key::String (required)
 
-Return: GetJobsKeyUserDataConsumesResponse, OpenAPI.Clients.ApiResponse
+Return: ListJobUserDataConsumesResponse, OpenAPI.Clients.ApiResponse
 """
 function list_job_user_data_consumes(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
     _ctx = _oacinternal_list_job_user_data_consumes(_api, workflow, key; _mediaType=_mediaType)
@@ -2854,7 +2854,7 @@ function list_job_user_data_consumes(_api::DefaultApi, response_stream::Channel,
 end
 
 const _returntypes_list_job_user_data_stores_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetJobsKeyUserDataStoresResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListJobUserDataStoresResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2875,7 +2875,7 @@ Params:
 - workflow::String (required)
 - key::String (required)
 
-Return: GetJobsKeyUserDataStoresResponse, OpenAPI.Clients.ApiResponse
+Return: ListJobUserDataStoresResponse, OpenAPI.Clients.ApiResponse
 """
 function list_job_user_data_stores(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing)
     _ctx = _oacinternal_list_job_user_data_stores(_api, workflow, key; _mediaType=_mediaType)
@@ -2940,7 +2940,7 @@ function list_jobs(_api::DefaultApi, response_stream::Channel, workflow::String;
 end
 
 const _returntypes_list_jobs_by_needs_file_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetJobsFindByNeedsFileKeyResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListJobsByNeedsFileResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -2965,7 +2965,7 @@ Params:
 - skip::Float64
 - limit::Float64
 
-Return: GetJobsFindByNeedsFileKeyResponse, OpenAPI.Clients.ApiResponse
+Return: ListJobsByNeedsFileResponse, OpenAPI.Clients.ApiResponse
 """
 function list_jobs_by_needs_file(_api::DefaultApi, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing)
     _ctx = _oacinternal_list_jobs_by_needs_file(_api, workflow, key; skip=skip, limit=limit, _mediaType=_mediaType)
@@ -2978,7 +2978,7 @@ function list_jobs_by_needs_file(_api::DefaultApi, response_stream::Channel, wor
 end
 
 const _returntypes_list_jobs_by_status_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetJobsFindByStatusStatusResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListJobsByStatusResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3003,7 +3003,7 @@ Params:
 - skip::Float64
 - limit::Float64
 
-Return: GetJobsFindByStatusStatusResponse, OpenAPI.Clients.ApiResponse
+Return: ListJobsByStatusResponse, OpenAPI.Clients.ApiResponse
 """
 function list_jobs_by_status(_api::DefaultApi, workflow::String, status::String; skip=nothing, limit=nothing, _mediaType=nothing)
     _ctx = _oacinternal_list_jobs_by_status(_api, workflow, status; skip=skip, limit=limit, _mediaType=_mediaType)
@@ -3062,7 +3062,7 @@ function list_local_schedulers(_api::DefaultApi, response_stream::Channel, workf
 end
 
 const _returntypes_list_missing_user_data_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetWorkflowsKeyMissingUserDataResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListMissingUserDataResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3081,7 +3081,7 @@ List missing user data that should exist.
 Params:
 - key::String (required)
 
-Return: GetWorkflowsKeyMissingUserDataResponse, OpenAPI.Clients.ApiResponse
+Return: ListMissingUserDataResponse, OpenAPI.Clients.ApiResponse
 """
 function list_missing_user_data(_api::DefaultApi, key::String; _mediaType=nothing)
     _ctx = _oacinternal_list_missing_user_data(_api, key; _mediaType=_mediaType)
@@ -3094,7 +3094,7 @@ function list_missing_user_data(_api::DefaultApi, response_stream::Channel, key:
 end
 
 const _returntypes_list_required_existing_files_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetWorkflowsKeyRequiredExistingFilesResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListRequiredExistingFilesResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3113,7 +3113,7 @@ List files that must exist.
 Params:
 - key::String (required)
 
-Return: GetWorkflowsKeyRequiredExistingFilesResponse, OpenAPI.Clients.ApiResponse
+Return: ListRequiredExistingFilesResponse, OpenAPI.Clients.ApiResponse
 """
 function list_required_existing_files(_api::DefaultApi, key::String; _mediaType=nothing)
     _ctx = _oacinternal_list_required_existing_files(_api, key; _mediaType=_mediaType)
@@ -3126,7 +3126,7 @@ function list_required_existing_files(_api::DefaultApi, response_stream::Channel
 end
 
 const _returntypes_list_resource_requirements_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetResourceRequirementsResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListResourceRequirementsResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3167,7 +3167,7 @@ Params:
 - num_nodes::Int64
 - runtime::String
 
-Return: GetResourceRequirementsResponse, OpenAPI.Clients.ApiResponse
+Return: ListResourceRequirementsResponse, OpenAPI.Clients.ApiResponse
 """
 function list_resource_requirements(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, memory=nothing, num_cpus=nothing, num_gpus=nothing, num_nodes=nothing, runtime=nothing, _mediaType=nothing)
     _ctx = _oacinternal_list_resource_requirements(_api, workflow; skip=skip, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, key=key, name=name, memory=memory, num_cpus=num_cpus, num_gpus=num_gpus, num_nodes=num_nodes, runtime=runtime, _mediaType=_mediaType)
@@ -3180,7 +3180,7 @@ function list_resource_requirements(_api::DefaultApi, response_stream::Channel, 
 end
 
 const _returntypes_list_results_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetResultsResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListResultsResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3217,7 +3217,7 @@ Params:
 - return_code::Int64
 - status::String
 
-Return: GetResultsResponse, OpenAPI.Clients.ApiResponse
+Return: ListResultsResponse, OpenAPI.Clients.ApiResponse
 """
 function list_results(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, job_key=nothing, run_id=nothing, return_code=nothing, status=nothing, _mediaType=nothing)
     _ctx = _oacinternal_list_results(_api, workflow; skip=skip, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, key=key, job_key=job_key, run_id=run_id, return_code=return_code, status=status, _mediaType=_mediaType)
@@ -3230,7 +3230,7 @@ function list_results(_api::DefaultApi, response_stream::Channel, workflow::Stri
 end
 
 const _returntypes_list_scheduled_compute_nodes_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetScheduledComputeNodesResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListScheduledComputeNodesResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3265,7 +3265,7 @@ Params:
 - scheduler_config_id::String
 - status::String
 
-Return: GetScheduledComputeNodesResponse, OpenAPI.Clients.ApiResponse
+Return: ListScheduledComputeNodesResponse, OpenAPI.Clients.ApiResponse
 """
 function list_scheduled_compute_nodes(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, scheduler_id=nothing, scheduler_config_id=nothing, status=nothing, _mediaType=nothing)
     _ctx = _oacinternal_list_scheduled_compute_nodes(_api, workflow; skip=skip, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, key=key, scheduler_id=scheduler_id, scheduler_config_id=scheduler_config_id, status=status, _mediaType=_mediaType)
@@ -3278,7 +3278,7 @@ function list_scheduled_compute_nodes(_api::DefaultApi, response_stream::Channel
 end
 
 const _returntypes_list_slurm_schedulers_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetSlurmSchedulersResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListSlurmSchedulersResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3325,7 +3325,7 @@ Params:
 - tmp::String
 - walltime::String
 
-Return: GetSlurmSchedulersResponse, OpenAPI.Clients.ApiResponse
+Return: ListSlurmSchedulersResponse, OpenAPI.Clients.ApiResponse
 """
 function list_slurm_schedulers(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, account=nothing, gres=nothing, mem=nothing, nodes=nothing, partition=nothing, qos=nothing, tmp=nothing, walltime=nothing, _mediaType=nothing)
     _ctx = _oacinternal_list_slurm_schedulers(_api, workflow; skip=skip, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, key=key, name=name, account=account, gres=gres, mem=mem, nodes=nodes, partition=partition, qos=qos, tmp=tmp, walltime=walltime, _mediaType=_mediaType)
@@ -3338,7 +3338,7 @@ function list_slurm_schedulers(_api::DefaultApi, response_stream::Channel, workf
 end
 
 const _returntypes_list_user_data_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetUserDataResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListUserDataResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3371,7 +3371,7 @@ Params:
 - name::String
 - is_ephemeral::Bool
 
-Return: GetUserDataResponse, OpenAPI.Clients.ApiResponse
+Return: ListUserDataResponse, OpenAPI.Clients.ApiResponse
 """
 function list_user_data(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, is_ephemeral=nothing, _mediaType=nothing)
     _ctx = _oacinternal_list_user_data(_api, workflow; skip=skip, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, key=key, name=name, is_ephemeral=is_ephemeral, _mediaType=_mediaType)
@@ -3384,7 +3384,7 @@ function list_user_data(_api::DefaultApi, response_stream::Channel, workflow::St
 end
 
 const _returntypes_list_workflows_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => GetWorkflowsResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListWorkflowsResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -3415,7 +3415,7 @@ Params:
 - user::String
 - description::String
 
-Return: GetWorkflowsResponse, OpenAPI.Clients.ApiResponse
+Return: ListWorkflowsResponse, OpenAPI.Clients.ApiResponse
 """
 function list_workflows(_api::DefaultApi; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing)
     _ctx = _oacinternal_list_workflows(_api; skip=skip, sort_by=sort_by, reverse_sort=reverse_sort, limit=limit, name=name, user=user, description=description, _mediaType=_mediaType)
@@ -4090,7 +4090,7 @@ function ping(_api::DefaultApi, response_stream::Channel; _mediaType=nothing)
 end
 
 const _returntypes_prepare_jobs_for_scheduling_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => PostWorkflowsKeyPrepareJobsForSchedulingResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => PrepareJobsForSchedulingResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -4110,7 +4110,7 @@ Params:
 - key::String (required)
 - body::Any
 
-Return: PostWorkflowsKeyPrepareJobsForSchedulingResponse, OpenAPI.Clients.ApiResponse
+Return: PrepareJobsForSchedulingResponse, OpenAPI.Clients.ApiResponse
 """
 function prepare_jobs_for_scheduling(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing)
     _ctx = _oacinternal_prepare_jobs_for_scheduling(_api, key; body=body, _mediaType=_mediaType)
@@ -4123,7 +4123,7 @@ function prepare_jobs_for_scheduling(_api::DefaultApi, response_stream::Channel,
 end
 
 const _returntypes_prepare_jobs_for_submission_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => PostWorkflowsKeyPrepareJobsForSubmissionResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => PrepareJobsForSubmissionResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -4147,7 +4147,7 @@ Params:
 - sort_method::String
 - limit::Float64
 
-Return: PostWorkflowsKeyPrepareJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse
+Return: PrepareJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse
 """
 function prepare_jobs_for_submission(_api::DefaultApi, key::String, body::ComputeNodesResources; sort_method=nothing, limit=nothing, _mediaType=nothing)
     _ctx = _oacinternal_prepare_jobs_for_submission(_api, key, body; sort_method=sort_method, limit=limit, _mediaType=_mediaType)
@@ -4160,7 +4160,7 @@ function prepare_jobs_for_submission(_api::DefaultApi, response_stream::Channel,
 end
 
 const _returntypes_prepare_next_jobs_for_submission_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => PostWorkflowsKeyPrepareNextJobsForSubmissionResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => PrepareNextJobsForSubmissionResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -4182,7 +4182,7 @@ Params:
 - limit::Float64
 - body::Any
 
-Return: PostWorkflowsKeyPrepareNextJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse
+Return: PrepareNextJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse
 """
 function prepare_next_jobs_for_submission(_api::DefaultApi, key::String; limit=nothing, body=nothing, _mediaType=nothing)
     _ctx = _oacinternal_prepare_next_jobs_for_submission(_api, key; limit=limit, body=body, _mediaType=_mediaType)
@@ -4228,7 +4228,7 @@ function process_auto_tune_resource_requirements_results(_api::DefaultApi, respo
 end
 
 const _returntypes_process_changed_job_inputs_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => PostWorkflowsKeyProcessChangedJobInputsResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ProcessChangedJobInputsResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -4248,7 +4248,7 @@ Params:
 - key::String (required)
 - body::Any
 
-Return: PostWorkflowsKeyProcessChangedJobInputsResponse, OpenAPI.Clients.ApiResponse
+Return: ProcessChangedJobInputsResponse, OpenAPI.Clients.ApiResponse
 """
 function process_changed_job_inputs(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing)
     _ctx = _oacinternal_process_changed_job_inputs(_api, key; body=body, _mediaType=_mediaType)
@@ -4854,7 +4854,6 @@ function reset_workflow_status(_api::DefaultApi, response_stream::Channel, key::
 end
 
 export add_aws_scheduler
-export add_bulk_job_with_edges
 export add_compute_node
 export add_compute_node_stats
 export add_edge
@@ -4865,6 +4864,7 @@ export add_job_process_stats
 export add_job_specification
 export add_job_user_data
 export add_job_with_edges
+export add_jobs_with_edges
 export add_local_scheduler
 export add_resource_requirements
 export add_result

@@ -773,4 +773,4 @@ def _get_job_keys_by_event(events, type_):
 #    config.compute_node_resource_stats = WorkflowsconfigkeyComputeNodeResourceStats(
 #        cpu=False, memory=False, disk=False, network=False, process=False
 #    )
-#    api.put_workflow_config(config)
+#    api.modify_workflow_config(config)

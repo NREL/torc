@@ -95,7 +95,7 @@ application on compute nodes. Here are some example settings:
 
     api = make_api("http://localhost:8529/_db/test-workflows/torc-service")
     workflow = WorkflowsModel(user="user", name="my_workflow")
-    config = api.get_workflows_key_config(workflow.key)
+    config = api.get_workflow_config(workflow.key)
     config.compute_node_resource_stats = ComputeNodeResourceStatsModel(
         cpu=True,
         memory=True,
@@ -104,7 +104,7 @@ application on compute nodes. Here are some example settings:
         monitor_type="aggregation",
     )
     config.compute_node_ignore_workflow_completion = False
-    api.put_workflows_key_config(workflow.key, config)
+    api.modify_workflow_config(workflow.key, config)
 
 
    .. code-tab:: jl
@@ -115,7 +115,7 @@ application on compute nodes. Here are some example settings:
     api = make_api("http://localhost:8529/_db/test-workflows/torc-service")
     workflow = send_api_command(
         api,
-        APIClient.post_workflows,
+        APIClient.add_workflow,
         APIClient.WorkflowsModel(user = "user", name = "my_workflow")
     )
     config = send_api_command(api, APIClient.get_workflows_key_config, workflow._key)

@@ -53,7 +53,7 @@ If you enable compute node scheduling for a job that is initially blocked, as di
   to ``ready``. This is normal; however, in this case there should not be any compute node that has
   sufficient resources to run the job.
 - When a torc worker application finishes its work it sends the API command
-  ``post_workflows_key_prepare_jobs_for_scheduling``. The database service searches for all jobs
+  ``prepare_jobs_for_scheduling``. The database service searches for all jobs
   that have a ``ready`` status and ``needs_compute_node_schedule`` set to ``true``. It returns a
   list of all those jobs' scheduler IDs. It also changes the status of each job to ``scheduled``.
 - The torc worker application then runs the scheduler command with those IDs (e.g., ``torc hpc

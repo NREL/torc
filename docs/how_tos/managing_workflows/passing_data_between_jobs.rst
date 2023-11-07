@@ -62,16 +62,16 @@ it to the database.
 
 .. code-block:: python
 
-    result = api.get_jobs_key_user_data_stores(workflow_key, job_key)
+    result = api.list_job_user_data_stores(workflow_key, job_key)
     output_data1 = result.items[0]
     output_data1.data = {"result": 1.2}
-    api.put_user_data_key(workflow_key, output_data1.key, spark_ud)
+    api.add_user_data(workflow_key, output_data1.key, spark_ud)
 
 Here is code in ``work2.py`` to read the data from the database.
 
 .. code-block:: python
 
-    result = api.get_jobs_key_user_data_consumes(workflow_key, job_key)
+    result = api.list_job_user_data_consumes(workflow_key, job_key)
     output_data1 = result.items[0]
 
 Here is a comparable example with a CLI command that joins the job and user_data collections and

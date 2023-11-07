@@ -5,7 +5,6 @@ All URIs are relative to *http://localhost/_db/test-workflows/torc-service*
 Method | HTTP request | Description
 ------------- | ------------- | -------------
 [**add_aws_scheduler**](DefaultApi.md#add_aws_scheduler) | **POST** /workflows/{workflow}/aws_schedulers | Store a AWS compute node configuration.
-[**add_bulk_job_with_edges**](DefaultApi.md#add_bulk_job_with_edges) | **POST** /workflows/{workflow}/bulk_jobs_with_edges | Add jobs in bulk with edge definitions.
 [**add_compute_node**](DefaultApi.md#add_compute_node) | **POST** /workflows/{workflow}/compute_nodes | Store a compute node.
 [**add_compute_node_stats**](DefaultApi.md#add_compute_node_stats) | **POST** /workflows/{workflow}/compute_node_stats | Store a compute node statistics.
 [**add_edge**](DefaultApi.md#add_edge) | **POST** /workflows/{workflow}/edges/{name} | Store an edge between two vertexes.
@@ -16,6 +15,7 @@ Method | HTTP request | Description
 [**add_job_specification**](DefaultApi.md#add_job_specification) | **POST** /workflows/{workflow}/job_specifications | Store a job and create edges.
 [**add_job_user_data**](DefaultApi.md#add_job_user_data) | **POST** /workflows/{workflow}/jobs/{key}/user_data | Store user data for a job.
 [**add_job_with_edges**](DefaultApi.md#add_job_with_edges) | **POST** /workflows/{workflow}/job_with_edges | Add a job with edge definitions.
+[**add_jobs_with_edges**](DefaultApi.md#add_jobs_with_edges) | **POST** /workflows/{workflow}/bulk_jobs_with_edges | Add jobs in bulk with edge definitions.
 [**add_local_scheduler**](DefaultApi.md#add_local_scheduler) | **POST** /workflows/{workflow}/local_schedulers | Store a local compute node configuration.
 [**add_resource_requirements**](DefaultApi.md#add_resource_requirements) | **POST** /workflows/{workflow}/resource_requirements | Store a resource requirements.
 [**add_result**](DefaultApi.md#add_result) | **POST** /workflows/{workflow}/results | Store a result.
@@ -161,37 +161,6 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**AwsSchedulersModel**](AwsSchedulersModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-# **add_bulk_job_with_edges**
-> add_bulk_job_with_edges(_api::DefaultApi, workflow::String, body::BulkJobsWithEdgesModel; _mediaType=nothing) -> PostBulkJobsWithEdgesResponse, OpenAPI.Clients.ApiResponse <br/>
-> add_bulk_job_with_edges(_api::DefaultApi, response_stream::Channel, workflow::String, body::BulkJobsWithEdgesModel; _mediaType=nothing) -> Channel{ PostBulkJobsWithEdgesResponse }, OpenAPI.Clients.ApiResponse
-
-Add jobs in bulk with edge definitions.
-
-Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
-
-### Required Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**BulkJobsWithEdgesModel**](BulkJobsWithEdgesModel.md)|  | 
-
-### Return type
-
-[**PostBulkJobsWithEdgesResponse**](PostBulkJobsWithEdgesResponse.md)
 
 ### Authorization
 
@@ -504,6 +473,37 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**JobsModel**](JobsModel.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **add_jobs_with_edges**
+> add_jobs_with_edges(_api::DefaultApi, workflow::String, body::JobsWithEdgesModel; _mediaType=nothing) -> AddJobsWithEdgesResponse, OpenAPI.Clients.ApiResponse <br/>
+> add_jobs_with_edges(_api::DefaultApi, response_stream::Channel, workflow::String, body::JobsWithEdgesModel; _mediaType=nothing) -> Channel{ AddJobsWithEdgesResponse }, OpenAPI.Clients.ApiResponse
+
+Add jobs in bulk with edge definitions.
+
+Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**workflow** | **String**| Workflow key | [default to nothing]
+**body** | [**JobsWithEdgesModel**](JobsWithEdgesModel.md)|  | 
+
+### Return type
+
+[**AddJobsWithEdgesResponse**](AddJobsWithEdgesResponse.md)
 
 ### Authorization
 
@@ -1468,8 +1468,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_dot_graph**
-> get_dot_graph(_api::DefaultApi, key::String, name::String; _mediaType=nothing) -> GetWorkflowsKeyDotGraphNameResponse, OpenAPI.Clients.ApiResponse <br/>
-> get_dot_graph(_api::DefaultApi, response_stream::Channel, key::String, name::String; _mediaType=nothing) -> Channel{ GetWorkflowsKeyDotGraphNameResponse }, OpenAPI.Clients.ApiResponse
+> get_dot_graph(_api::DefaultApi, key::String, name::String; _mediaType=nothing) -> GetDotGraphResponse, OpenAPI.Clients.ApiResponse <br/>
+> get_dot_graph(_api::DefaultApi, response_stream::Channel, key::String, name::String; _mediaType=nothing) -> Channel{ GetDotGraphResponse }, OpenAPI.Clients.ApiResponse
 
 Build a string for a DOT graph.
 
@@ -1485,7 +1485,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetWorkflowsKeyDotGraphNameResponse**](GetWorkflowsKeyDotGraphNameResponse.md)
+[**GetDotGraphResponse**](GetDotGraphResponse.md)
 
 ### Authorization
 
@@ -1879,8 +1879,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_ready_job_requirements**
-> get_ready_job_requirements(_api::DefaultApi, key::String; scheduler_config_id=nothing, _mediaType=nothing) -> GetWorkflowsKeyReadyJobRequirementsResponse, OpenAPI.Clients.ApiResponse <br/>
-> get_ready_job_requirements(_api::DefaultApi, response_stream::Channel, key::String; scheduler_config_id=nothing, _mediaType=nothing) -> Channel{ GetWorkflowsKeyReadyJobRequirementsResponse }, OpenAPI.Clients.ApiResponse
+> get_ready_job_requirements(_api::DefaultApi, key::String; scheduler_config_id=nothing, _mediaType=nothing) -> GetReadyJobRequirementsResponse, OpenAPI.Clients.ApiResponse <br/>
+> get_ready_job_requirements(_api::DefaultApi, response_stream::Channel, key::String; scheduler_config_id=nothing, _mediaType=nothing) -> Channel{ GetReadyJobRequirementsResponse }, OpenAPI.Clients.ApiResponse
 
 Return the resource requirements for ready jobs.
 
@@ -1901,7 +1901,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetWorkflowsKeyReadyJobRequirementsResponse**](GetWorkflowsKeyReadyJobRequirementsResponse.md)
+[**GetReadyJobRequirementsResponse**](GetReadyJobRequirementsResponse.md)
 
 ### Authorization
 
@@ -2306,8 +2306,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **is_workflow_complete**
-> is_workflow_complete(_api::DefaultApi, key::String; _mediaType=nothing) -> GetWorkflowsKeyIsCompleteResponse, OpenAPI.Clients.ApiResponse <br/>
-> is_workflow_complete(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ GetWorkflowsKeyIsCompleteResponse }, OpenAPI.Clients.ApiResponse
+> is_workflow_complete(_api::DefaultApi, key::String; _mediaType=nothing) -> IsCompleteResponse, OpenAPI.Clients.ApiResponse <br/>
+> is_workflow_complete(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ IsCompleteResponse }, OpenAPI.Clients.ApiResponse
 
 Report whether the workflow is complete
 
@@ -2322,7 +2322,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetWorkflowsKeyIsCompleteResponse**](GetWorkflowsKeyIsCompleteResponse.md)
+[**IsCompleteResponse**](IsCompleteResponse.md)
 
 ### Authorization
 
@@ -2336,8 +2336,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **join_collections_by_inbound_edge**
-> join_collections_by_inbound_edge(_api::DefaultApi, key::String, collection::String, edge::String, body::Any; collection_key=nothing, collection_name=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse, OpenAPI.Clients.ApiResponse <br/>
-> join_collections_by_inbound_edge(_api::DefaultApi, response_stream::Channel, key::String, collection::String, edge::String, body::Any; collection_key=nothing, collection_name=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse }, OpenAPI.Clients.ApiResponse
+> join_collections_by_inbound_edge(_api::DefaultApi, key::String, collection::String, edge::String, body::Any; collection_key=nothing, collection_name=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> JoinByInboundEdgeCollectionEdgeResponse, OpenAPI.Clients.ApiResponse <br/>
+> join_collections_by_inbound_edge(_api::DefaultApi, response_stream::Channel, key::String, collection::String, edge::String, body::Any; collection_key=nothing, collection_name=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ JoinByInboundEdgeCollectionEdgeResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve a joined table of two collections.
 
@@ -2364,7 +2364,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse**](PostWorkflowsKeyJoinByInboundEdgeCollectionEdgeResponse.md)
+[**JoinByInboundEdgeCollectionEdgeResponse**](JoinByInboundEdgeCollectionEdgeResponse.md)
 
 ### Authorization
 
@@ -2378,8 +2378,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **join_collections_by_outbound_edge**
-> join_collections_by_outbound_edge(_api::DefaultApi, key::String, collection::String, edge::String, body::Any; collection_key=nothing, collection_name=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse, OpenAPI.Clients.ApiResponse <br/>
-> join_collections_by_outbound_edge(_api::DefaultApi, response_stream::Channel, key::String, collection::String, edge::String, body::Any; collection_key=nothing, collection_name=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse }, OpenAPI.Clients.ApiResponse
+> join_collections_by_outbound_edge(_api::DefaultApi, key::String, collection::String, edge::String, body::Any; collection_key=nothing, collection_name=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> JoinByOutboundEdgeCollectionEdgeResponse, OpenAPI.Clients.ApiResponse <br/>
+> join_collections_by_outbound_edge(_api::DefaultApi, response_stream::Channel, key::String, collection::String, edge::String, body::Any; collection_key=nothing, collection_name=nothing, skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ JoinByOutboundEdgeCollectionEdgeResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve a joined table of two collections.
 
@@ -2406,7 +2406,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse**](PostWorkflowsKeyJoinByOutboundEdgeCollectionEdgeResponse.md)
+[**JoinByOutboundEdgeCollectionEdgeResponse**](JoinByOutboundEdgeCollectionEdgeResponse.md)
 
 ### Authorization
 
@@ -2420,8 +2420,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_aws_schedulers**
-> list_aws_schedulers(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, _mediaType=nothing) -> GetAwsSchedulersResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_aws_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, _mediaType=nothing) -> Channel{ GetAwsSchedulersResponse }, OpenAPI.Clients.ApiResponse
+> list_aws_schedulers(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, _mediaType=nothing) -> ListAwsSchedulersResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_aws_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, _mediaType=nothing) -> Channel{ ListAwsSchedulersResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all AWS compute node configuration documents
 
@@ -2447,7 +2447,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetAwsSchedulersResponse**](GetAwsSchedulersResponse.md)
+[**ListAwsSchedulersResponse**](ListAwsSchedulersResponse.md)
 
 ### Authorization
 
@@ -2461,8 +2461,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_collection_names**
-> list_collection_names(_api::DefaultApi, key::String; _mediaType=nothing) -> GetWorkflowsKeyCollectionNamesResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_collection_names(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ GetWorkflowsKeyCollectionNamesResponse }, OpenAPI.Clients.ApiResponse
+> list_collection_names(_api::DefaultApi, key::String; _mediaType=nothing) -> ListCollectionNamesResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_collection_names(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ ListCollectionNamesResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all collection names for one workflow.
 
@@ -2477,7 +2477,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetWorkflowsKeyCollectionNamesResponse**](GetWorkflowsKeyCollectionNamesResponse.md)
+[**ListCollectionNamesResponse**](ListCollectionNamesResponse.md)
 
 ### Authorization
 
@@ -2532,8 +2532,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_compute_nodes**
-> list_compute_nodes(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, hostname=nothing, is_active=nothing, _mediaType=nothing) -> GetComputeNodesResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, hostname=nothing, is_active=nothing, _mediaType=nothing) -> Channel{ GetComputeNodesResponse }, OpenAPI.Clients.ApiResponse
+> list_compute_nodes(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, hostname=nothing, is_active=nothing, _mediaType=nothing) -> ListComputeNodesResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, hostname=nothing, is_active=nothing, _mediaType=nothing) -> Channel{ ListComputeNodesResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all compute node documents
 
@@ -2560,7 +2560,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetComputeNodesResponse**](GetComputeNodesResponse.md)
+[**ListComputeNodesResponse**](ListComputeNodesResponse.md)
 
 ### Authorization
 
@@ -2574,8 +2574,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_edges**
-> list_edges(_api::DefaultApi, workflow::String, name::String; skip=nothing, limit=nothing, _mediaType=nothing) -> GetEdgesNameResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_edges(_api::DefaultApi, response_stream::Channel, workflow::String, name::String; skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ GetEdgesNameResponse }, OpenAPI.Clients.ApiResponse
+> list_edges(_api::DefaultApi, workflow::String, name::String; skip=nothing, limit=nothing, _mediaType=nothing) -> ListEdgesResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_edges(_api::DefaultApi, response_stream::Channel, workflow::String, name::String; skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ ListEdgesResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all edges from the designated collection.
 
@@ -2598,7 +2598,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetEdgesNameResponse**](GetEdgesNameResponse.md)
+[**ListEdgesResponse**](ListEdgesResponse.md)
 
 ### Authorization
 
@@ -2695,8 +2695,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_files_produced_by_job**
-> list_files_produced_by_job(_api::DefaultApi, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing) -> GetFilesProducedByJobKeyResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_files_produced_by_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ GetFilesProducedByJobKeyResponse }, OpenAPI.Clients.ApiResponse
+> list_files_produced_by_job(_api::DefaultApi, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing) -> ListFilesProducedByJob, OpenAPI.Clients.ApiResponse <br/>
+> list_files_produced_by_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ ListFilesProducedByJob }, OpenAPI.Clients.ApiResponse
 
 Retrieve files produced by a job
 
@@ -2719,7 +2719,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetFilesProducedByJobKeyResponse**](GetFilesProducedByJobKeyResponse.md)
+[**ListFilesProducedByJob**](ListFilesProducedByJob.md)
 
 ### Authorization
 
@@ -2805,8 +2805,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_job_specifications**
-> list_job_specifications(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, _mediaType=nothing) -> GetJobSpecificationsResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_job_specifications(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ GetJobSpecificationsResponse }, OpenAPI.Clients.ApiResponse
+> list_job_specifications(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, _mediaType=nothing) -> ListJobSpecificationsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_job_specifications(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ ListJobSpecificationsResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all job definitions
 
@@ -2828,7 +2828,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetJobSpecificationsResponse**](GetJobSpecificationsResponse.md)
+[**ListJobSpecificationsResponse**](ListJobSpecificationsResponse.md)
 
 ### Authorization
 
@@ -2842,8 +2842,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_job_user_data_consumes**
-> list_job_user_data_consumes(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> GetJobsKeyUserDataConsumesResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_job_user_data_consumes(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ GetJobsKeyUserDataConsumesResponse }, OpenAPI.Clients.ApiResponse
+> list_job_user_data_consumes(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> ListJobUserDataConsumesResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_job_user_data_consumes(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ ListJobUserDataConsumesResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all user data consumed by a job.
 
@@ -2859,7 +2859,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetJobsKeyUserDataConsumesResponse**](GetJobsKeyUserDataConsumesResponse.md)
+[**ListJobUserDataConsumesResponse**](ListJobUserDataConsumesResponse.md)
 
 ### Authorization
 
@@ -2873,8 +2873,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_job_user_data_stores**
-> list_job_user_data_stores(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> GetJobsKeyUserDataStoresResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_job_user_data_stores(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ GetJobsKeyUserDataStoresResponse }, OpenAPI.Clients.ApiResponse
+> list_job_user_data_stores(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> ListJobUserDataStoresResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_job_user_data_stores(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ ListJobUserDataStoresResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all user data for a job.
 
@@ -2890,7 +2890,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetJobsKeyUserDataStoresResponse**](GetJobsKeyUserDataStoresResponse.md)
+[**ListJobUserDataStoresResponse**](ListJobUserDataStoresResponse.md)
 
 ### Authorization
 
@@ -2949,8 +2949,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_jobs_by_needs_file**
-> list_jobs_by_needs_file(_api::DefaultApi, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing) -> GetJobsFindByNeedsFileKeyResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_jobs_by_needs_file(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ GetJobsFindByNeedsFileKeyResponse }, OpenAPI.Clients.ApiResponse
+> list_jobs_by_needs_file(_api::DefaultApi, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing) -> ListJobsByNeedsFileResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_jobs_by_needs_file(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ ListJobsByNeedsFileResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all jobs that need a file
 
@@ -2973,7 +2973,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetJobsFindByNeedsFileKeyResponse**](GetJobsFindByNeedsFileKeyResponse.md)
+[**ListJobsByNeedsFileResponse**](ListJobsByNeedsFileResponse.md)
 
 ### Authorization
 
@@ -2987,8 +2987,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_jobs_by_status**
-> list_jobs_by_status(_api::DefaultApi, workflow::String, status::String; skip=nothing, limit=nothing, _mediaType=nothing) -> GetJobsFindByStatusStatusResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_jobs_by_status(_api::DefaultApi, response_stream::Channel, workflow::String, status::String; skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ GetJobsFindByStatusStatusResponse }, OpenAPI.Clients.ApiResponse
+> list_jobs_by_status(_api::DefaultApi, workflow::String, status::String; skip=nothing, limit=nothing, _mediaType=nothing) -> ListJobsByStatusResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_jobs_by_status(_api::DefaultApi, response_stream::Channel, workflow::String, status::String; skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ ListJobsByStatusResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all jobs with a specific status
 
@@ -3011,7 +3011,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetJobsFindByStatusStatusResponse**](GetJobsFindByStatusStatusResponse.md)
+[**ListJobsByStatusResponse**](ListJobsByStatusResponse.md)
 
 ### Authorization
 
@@ -3067,8 +3067,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_missing_user_data**
-> list_missing_user_data(_api::DefaultApi, key::String; _mediaType=nothing) -> GetWorkflowsKeyMissingUserDataResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_missing_user_data(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ GetWorkflowsKeyMissingUserDataResponse }, OpenAPI.Clients.ApiResponse
+> list_missing_user_data(_api::DefaultApi, key::String; _mediaType=nothing) -> ListMissingUserDataResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_missing_user_data(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ ListMissingUserDataResponse }, OpenAPI.Clients.ApiResponse
 
 List missing user data that should exist.
 
@@ -3083,7 +3083,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetWorkflowsKeyMissingUserDataResponse**](GetWorkflowsKeyMissingUserDataResponse.md)
+[**ListMissingUserDataResponse**](ListMissingUserDataResponse.md)
 
 ### Authorization
 
@@ -3097,8 +3097,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_required_existing_files**
-> list_required_existing_files(_api::DefaultApi, key::String; _mediaType=nothing) -> GetWorkflowsKeyRequiredExistingFilesResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_required_existing_files(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ GetWorkflowsKeyRequiredExistingFilesResponse }, OpenAPI.Clients.ApiResponse
+> list_required_existing_files(_api::DefaultApi, key::String; _mediaType=nothing) -> ListRequiredExistingFilesResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_required_existing_files(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ ListRequiredExistingFilesResponse }, OpenAPI.Clients.ApiResponse
 
 List files that must exist.
 
@@ -3113,7 +3113,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetWorkflowsKeyRequiredExistingFilesResponse**](GetWorkflowsKeyRequiredExistingFilesResponse.md)
+[**ListRequiredExistingFilesResponse**](ListRequiredExistingFilesResponse.md)
 
 ### Authorization
 
@@ -3127,8 +3127,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_resource_requirements**
-> list_resource_requirements(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, memory=nothing, num_cpus=nothing, num_gpus=nothing, num_nodes=nothing, runtime=nothing, _mediaType=nothing) -> GetResourceRequirementsResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_resource_requirements(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, memory=nothing, num_cpus=nothing, num_gpus=nothing, num_nodes=nothing, runtime=nothing, _mediaType=nothing) -> Channel{ GetResourceRequirementsResponse }, OpenAPI.Clients.ApiResponse
+> list_resource_requirements(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, memory=nothing, num_cpus=nothing, num_gpus=nothing, num_nodes=nothing, runtime=nothing, _mediaType=nothing) -> ListResourceRequirementsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_resource_requirements(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, memory=nothing, num_cpus=nothing, num_gpus=nothing, num_nodes=nothing, runtime=nothing, _mediaType=nothing) -> Channel{ ListResourceRequirementsResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all resource requirements documents
 
@@ -3159,7 +3159,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetResourceRequirementsResponse**](GetResourceRequirementsResponse.md)
+[**ListResourceRequirementsResponse**](ListResourceRequirementsResponse.md)
 
 ### Authorization
 
@@ -3173,8 +3173,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_results**
-> list_results(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, job_key=nothing, run_id=nothing, return_code=nothing, status=nothing, _mediaType=nothing) -> GetResultsResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_results(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, job_key=nothing, run_id=nothing, return_code=nothing, status=nothing, _mediaType=nothing) -> Channel{ GetResultsResponse }, OpenAPI.Clients.ApiResponse
+> list_results(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, job_key=nothing, run_id=nothing, return_code=nothing, status=nothing, _mediaType=nothing) -> ListResultsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_results(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, job_key=nothing, run_id=nothing, return_code=nothing, status=nothing, _mediaType=nothing) -> Channel{ ListResultsResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all result documents
 
@@ -3203,7 +3203,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetResultsResponse**](GetResultsResponse.md)
+[**ListResultsResponse**](ListResultsResponse.md)
 
 ### Authorization
 
@@ -3217,8 +3217,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_scheduled_compute_nodes**
-> list_scheduled_compute_nodes(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, scheduler_id=nothing, scheduler_config_id=nothing, status=nothing, _mediaType=nothing) -> GetScheduledComputeNodesResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_scheduled_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, scheduler_id=nothing, scheduler_config_id=nothing, status=nothing, _mediaType=nothing) -> Channel{ GetScheduledComputeNodesResponse }, OpenAPI.Clients.ApiResponse
+> list_scheduled_compute_nodes(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, scheduler_id=nothing, scheduler_config_id=nothing, status=nothing, _mediaType=nothing) -> ListScheduledComputeNodesResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_scheduled_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, scheduler_id=nothing, scheduler_config_id=nothing, status=nothing, _mediaType=nothing) -> Channel{ ListScheduledComputeNodesResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all scheduled compute node documents
 
@@ -3246,7 +3246,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetScheduledComputeNodesResponse**](GetScheduledComputeNodesResponse.md)
+[**ListScheduledComputeNodesResponse**](ListScheduledComputeNodesResponse.md)
 
 ### Authorization
 
@@ -3260,8 +3260,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_slurm_schedulers**
-> list_slurm_schedulers(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, account=nothing, gres=nothing, mem=nothing, nodes=nothing, partition=nothing, qos=nothing, tmp=nothing, walltime=nothing, _mediaType=nothing) -> GetSlurmSchedulersResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_slurm_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, account=nothing, gres=nothing, mem=nothing, nodes=nothing, partition=nothing, qos=nothing, tmp=nothing, walltime=nothing, _mediaType=nothing) -> Channel{ GetSlurmSchedulersResponse }, OpenAPI.Clients.ApiResponse
+> list_slurm_schedulers(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, account=nothing, gres=nothing, mem=nothing, nodes=nothing, partition=nothing, qos=nothing, tmp=nothing, walltime=nothing, _mediaType=nothing) -> ListSlurmSchedulersResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_slurm_schedulers(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, account=nothing, gres=nothing, mem=nothing, nodes=nothing, partition=nothing, qos=nothing, tmp=nothing, walltime=nothing, _mediaType=nothing) -> Channel{ ListSlurmSchedulersResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all Slurm compute node configuration documents
 
@@ -3295,7 +3295,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetSlurmSchedulersResponse**](GetSlurmSchedulersResponse.md)
+[**ListSlurmSchedulersResponse**](ListSlurmSchedulersResponse.md)
 
 ### Authorization
 
@@ -3309,8 +3309,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_user_data**
-> list_user_data(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, is_ephemeral=nothing, _mediaType=nothing) -> GetUserDataResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_user_data(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, is_ephemeral=nothing, _mediaType=nothing) -> Channel{ GetUserDataResponse }, OpenAPI.Clients.ApiResponse
+> list_user_data(_api::DefaultApi, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, is_ephemeral=nothing, _mediaType=nothing) -> ListUserDataResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_user_data(_api::DefaultApi, response_stream::Channel, workflow::String; skip=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, key=nothing, name=nothing, is_ephemeral=nothing, _mediaType=nothing) -> Channel{ ListUserDataResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all user data documents
 
@@ -3337,7 +3337,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetUserDataResponse**](GetUserDataResponse.md)
+[**ListUserDataResponse**](ListUserDataResponse.md)
 
 ### Authorization
 
@@ -3351,8 +3351,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_workflows**
-> list_workflows(_api::DefaultApi; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing) -> GetWorkflowsResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_workflows(_api::DefaultApi, response_stream::Channel; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing) -> Channel{ GetWorkflowsResponse }, OpenAPI.Clients.ApiResponse
+> list_workflows(_api::DefaultApi; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing) -> ListWorkflowsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_workflows(_api::DefaultApi, response_stream::Channel; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing) -> Channel{ ListWorkflowsResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all workflows
 
@@ -3378,7 +3378,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**GetWorkflowsResponse**](GetWorkflowsResponse.md)
+[**ListWorkflowsResponse**](ListWorkflowsResponse.md)
 
 ### Authorization
 
@@ -4005,8 +4005,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **prepare_jobs_for_scheduling**
-> prepare_jobs_for_scheduling(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing) -> PostWorkflowsKeyPrepareJobsForSchedulingResponse, OpenAPI.Clients.ApiResponse <br/>
-> prepare_jobs_for_scheduling(_api::DefaultApi, response_stream::Channel, key::String; body=nothing, _mediaType=nothing) -> Channel{ PostWorkflowsKeyPrepareJobsForSchedulingResponse }, OpenAPI.Clients.ApiResponse
+> prepare_jobs_for_scheduling(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing) -> PrepareJobsForSchedulingResponse, OpenAPI.Clients.ApiResponse <br/>
+> prepare_jobs_for_scheduling(_api::DefaultApi, response_stream::Channel, key::String; body=nothing, _mediaType=nothing) -> Channel{ PrepareJobsForSchedulingResponse }, OpenAPI.Clients.ApiResponse
 
 Return scheduler IDs that need to be activated.
 
@@ -4027,7 +4027,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**PostWorkflowsKeyPrepareJobsForSchedulingResponse**](PostWorkflowsKeyPrepareJobsForSchedulingResponse.md)
+[**PrepareJobsForSchedulingResponse**](PrepareJobsForSchedulingResponse.md)
 
 ### Authorization
 
@@ -4041,8 +4041,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **prepare_jobs_for_submission**
-> prepare_jobs_for_submission(_api::DefaultApi, key::String, body::ComputeNodesResources; sort_method=nothing, limit=nothing, _mediaType=nothing) -> PostWorkflowsKeyPrepareJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse <br/>
-> prepare_jobs_for_submission(_api::DefaultApi, response_stream::Channel, key::String, body::ComputeNodesResources; sort_method=nothing, limit=nothing, _mediaType=nothing) -> Channel{ PostWorkflowsKeyPrepareJobsForSubmissionResponse }, OpenAPI.Clients.ApiResponse
+> prepare_jobs_for_submission(_api::DefaultApi, key::String, body::ComputeNodesResources; sort_method=nothing, limit=nothing, _mediaType=nothing) -> PrepareJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse <br/>
+> prepare_jobs_for_submission(_api::DefaultApi, response_stream::Channel, key::String, body::ComputeNodesResources; sort_method=nothing, limit=nothing, _mediaType=nothing) -> Channel{ PrepareJobsForSubmissionResponse }, OpenAPI.Clients.ApiResponse
 
 Return ready jobs, accounting for resource requirements.
 
@@ -4065,7 +4065,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**PostWorkflowsKeyPrepareJobsForSubmissionResponse**](PostWorkflowsKeyPrepareJobsForSubmissionResponse.md)
+[**PrepareJobsForSubmissionResponse**](PrepareJobsForSubmissionResponse.md)
 
 ### Authorization
 
@@ -4079,8 +4079,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **prepare_next_jobs_for_submission**
-> prepare_next_jobs_for_submission(_api::DefaultApi, key::String; limit=nothing, body=nothing, _mediaType=nothing) -> PostWorkflowsKeyPrepareNextJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse <br/>
-> prepare_next_jobs_for_submission(_api::DefaultApi, response_stream::Channel, key::String; limit=nothing, body=nothing, _mediaType=nothing) -> Channel{ PostWorkflowsKeyPrepareNextJobsForSubmissionResponse }, OpenAPI.Clients.ApiResponse
+> prepare_next_jobs_for_submission(_api::DefaultApi, key::String; limit=nothing, body=nothing, _mediaType=nothing) -> PrepareNextJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse <br/>
+> prepare_next_jobs_for_submission(_api::DefaultApi, response_stream::Channel, key::String; limit=nothing, body=nothing, _mediaType=nothing) -> Channel{ PrepareNextJobsForSubmissionResponse }, OpenAPI.Clients.ApiResponse
 
 Return user-requested number of ready jobs.
 
@@ -4102,7 +4102,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**PostWorkflowsKeyPrepareNextJobsForSubmissionResponse**](PostWorkflowsKeyPrepareNextJobsForSubmissionResponse.md)
+[**PrepareNextJobsForSubmissionResponse**](PrepareNextJobsForSubmissionResponse.md)
 
 ### Authorization
 
@@ -4152,8 +4152,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **process_changed_job_inputs**
-> process_changed_job_inputs(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing) -> PostWorkflowsKeyProcessChangedJobInputsResponse, OpenAPI.Clients.ApiResponse <br/>
-> process_changed_job_inputs(_api::DefaultApi, response_stream::Channel, key::String; body=nothing, _mediaType=nothing) -> Channel{ PostWorkflowsKeyProcessChangedJobInputsResponse }, OpenAPI.Clients.ApiResponse
+> process_changed_job_inputs(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing) -> ProcessChangedJobInputsResponse, OpenAPI.Clients.ApiResponse <br/>
+> process_changed_job_inputs(_api::DefaultApi, response_stream::Channel, key::String; body=nothing, _mediaType=nothing) -> Channel{ ProcessChangedJobInputsResponse }, OpenAPI.Clients.ApiResponse
 
 Check for changed job inputs and update status accordingly.
 
@@ -4174,7 +4174,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**PostWorkflowsKeyProcessChangedJobInputsResponse**](PostWorkflowsKeyProcessChangedJobInputsResponse.md)
+[**ProcessChangedJobInputsResponse**](ProcessChangedJobInputsResponse.md)
 
 ### Authorization
 

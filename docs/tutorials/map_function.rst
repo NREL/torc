@@ -112,7 +112,7 @@ Build the workflow
         name="my_workflow",
         description="My workflow",
     )
-    rr = api.post_resource_requirements(
+    rr = api.add_resource_requirements(
         workflow.key,
         ResourceRequirementsModel(name="medium", num_cpus=4, memory="20g", runtime="P0DT1H"),
     )
@@ -126,7 +126,7 @@ Build the workflow
         # Note that this is optional.
         postprocess_func="postprocess",
     )
-    scheduler = api.post_slurm_schedulers(
+    scheduler = api.add_slurm_scheduler(
         workflow.key,
         SlurmSchedulersModel(
             name="short",
@@ -136,7 +136,7 @@ Build the workflow
         ),
     )
     # This is optional, but can be useful to look at actual resource utilization.
-    config = api.get_workflows_key_config(workflow.key)
+    config = api.get_workflow_config(workflow.key)
     config.compute_node_resource_stats = ComputeNodeResourceStatsModel(
         cpu=True,
         memory=True,
@@ -145,7 +145,7 @@ Build the workflow
         monitor_type="periodic",
         make_plots=True,
     )
-    api.put_workflows_key_config(workflow.key, config)
+    api.modify_workflow_config(workflow.key, config)
     print(f"Created workflow with key {workflow.key} {len(jobs)} jobs.")
 
 .. note:: Refer to :ref:`python-client-api-reference` for complete API documentation.
