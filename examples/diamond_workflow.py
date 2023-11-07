@@ -2,6 +2,7 @@
 
 import getpass
 import json
+import sys
 from pathlib import Path
 
 from torc.api import make_api, add_jobs
@@ -17,8 +18,8 @@ from torc.openapi_client.models.jobs_model import JobsModel
 from torc.openapi_client.models.resource_requirements_model import (
     ResourceRequirementsModel,
 )
-
 from torc.openapi_client.models.slurm_schedulers_model import SlurmSchedulersModel
+from torc.torc_rc import TorcRuntimeConfig
 
 
 TORC_SERVICE_URL = "http://localhost:8529/_db/test-workflows/torc-service"
@@ -128,7 +129,14 @@ def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
 
 def main():
     """Entry point"""
-    api = make_api(TORC_SERVICE_URL)
+    config = TorcRuntimeConfig.load()
+    if config.database_url is None:
+        logger.error(
+            "There is no torc config file or the database URL is not defined. "
+            "Please fix the config file or define the URL in this script."
+        )
+        sys.exit(1)
+    api = make_api(config.database_url)
     workflow = create_workflow(api)
     try:
         build_workflow(api, workflow)
