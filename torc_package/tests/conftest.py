@@ -18,11 +18,10 @@ from torc.openapi_client.models.workflow_specifications_schedulers import (
 from torc.openapi_client.models.local_schedulers_model import (
     LocalSchedulersModel,
 )
-from torc.openapi_client.models.jobs_model import JobsModel
+from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.job_specifications_model import (
     JobSpecificationsModel,
 )
-from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
 from torc.openapi_client.models.resource_requirements_model import (
     ResourceRequirementsModel,
 )
@@ -264,14 +263,12 @@ def independent_job_workflow(num_jobs):
     )
 
     for i in range(num_jobs):
-        job = JobWithEdgesModel(
-            job=JobsModel(
-                name=str(i),
-                command="echo hello",
-            ),
+        job = JobModel(
+            name=str(i),
+            command="echo hello",
             resource_requirements=small.id,
         )
-        api.add_job_with_edges(workflow.key, job)
+        api.add_job(workflow.key, job)
 
     db = DatabaseInterface(api, workflow)
     api.initialize_jobs(workflow.key)

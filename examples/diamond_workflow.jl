@@ -114,41 +114,34 @@ function build_workflow(api, workflow)
     )
 
     jobs = [
-        APIClient.JobWithEdgesModel(
-            job=APIClient.JobsModel(
-                name="preprocess",
-                command="python $PREPROCESS -i $(inputs.path) -o $(f1.path)",
-            ),
+        APIClient.JobModel(
+            name="preprocess",
+            command="python $PREPROCESS -i $(inputs.path) -o $(f1.path)",
             input_files=[inputs._id],
             output_files=[f1._id],
             resource_requirements=small._id,
         ),
-        APIClient.JobWithEdgesModel(
-            job=APIClient.JobsModel(
-                name="work1",
-                command="python $WORK -i $(f1.path) -o $(f2.path)",
-            ),
+        APIClient.JobModel(
+            name="work1",
+            command="python $WORK -i $(f1.path) -o $(f2.path)",
             input_files=[f1._id],
             output_files=[f2._id],
             resource_requirements=medium._id,
         ),
-        APIClient.JobWithEdgesModel(
-            job=APIClient.JobsModel(
-                name="work2",
-                command="python $WORK -i $(f1.path) -o $(f3.path)",
-            ),
+        APIClient.JobModel(
+            name="work2",
+            command="python $WORK -i $(f1.path) -o $(f3.path)",
             input_files=[f1._id],
             output_files=[f3._id],
             resource_requirements=large._id,
         ),
-        APIClient.JobWithEdgesModel(
-            job=APIClient.JobsModel(
-                name="postprocess",
-                command="python $POSTPROCESS -i $(f2.path) -i $(f3.path) -o $(f4.path)",
-            ),
+        APIClient.JobModel(
+            name="postprocess",
+            command="python $POSTPROCESS -i $(f2.path) -i $(f3.path) -o $(f4.path)",
             input_files=[f2._id, f3._id],
             output_files=[f4._id],
             resource_requirements=small._id,
+            ),
         ),
     ]
     add_jobs(api, workflow._key, jobs)

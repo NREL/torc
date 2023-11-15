@@ -9,9 +9,8 @@ from torc.openapi_client.api import DefaultApi
 from torc.openapi_client.models.compute_node_resource_stats_model import (
     ComputeNodeResourceStatsModel,
 )
-from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
 from torc.openapi_client.models.workflows_model import WorkflowsModel
-from torc.openapi_client.models.jobs_model import JobsModel
+from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.resource_requirements_model import (
     ResourceRequirementsModel,
 )
@@ -59,11 +58,9 @@ def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
     )
 
     jobs = (
-        JobWithEdgesModel(
-            job=JobsModel(
-                name=f"job{i}",
-                command=f"python my_script.py {i}",
-            ),
+        JobModel(
+            name=f"job{i}",
+            command=f"python my_script.py {i}",
             resource_requirements=resource_requirements.id,
             scheduler=scheduler.id,
         )

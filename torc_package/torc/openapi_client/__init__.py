@@ -31,7 +31,7 @@ from torc.openapi_client.exceptions import ApiAttributeError
 from torc.openapi_client.exceptions import ApiException
 
 # import models into sdk package
-from torc.openapi_client.models.add_jobs_with_edges_response import AddJobsWithEdgesResponse
+from torc.openapi_client.models.add_jobs_response import AddJobsResponse
 from torc.openapi_client.models.auto_tune_status import AutoTuneStatus
 from torc.openapi_client.models.aws_schedulers_model import AwsSchedulersModel
 from torc.openapi_client.models.compute_node_resource_stats_model import ComputeNodeResourceStatsModel
@@ -45,12 +45,11 @@ from torc.openapi_client.models.files_model import FilesModel
 from torc.openapi_client.models.get_dot_graph_response import GetDotGraphResponse
 from torc.openapi_client.models.get_ready_job_requirements_response import GetReadyJobRequirementsResponse
 from torc.openapi_client.models.is_complete_response import IsCompleteResponse
+from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.job_process_stats_model import JobProcessStatsModel
 from torc.openapi_client.models.job_specifications_model import JobSpecificationsModel
-from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
 from torc.openapi_client.models.jobs_internal import JobsInternal
 from torc.openapi_client.models.jobs_model import JobsModel
-from torc.openapi_client.models.jobs_with_edges_model import JobsWithEdgesModel
 from torc.openapi_client.models.join_by_inbound_edge_collection_edge_response import JoinByInboundEdgeCollectionEdgeResponse
 from torc.openapi_client.models.join_by_outbound_edge_collection_edge_response import JoinByOutboundEdgeCollectionEdgeResponse
 from torc.openapi_client.models.list_aws_schedulers_response import ListAwsSchedulersResponse

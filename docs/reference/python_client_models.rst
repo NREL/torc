@@ -31,6 +31,9 @@ OpenAPI Client Models
 .. autoclass:: torc.openapi_client.models.files_model.FilesModel
    :members:
 
+.. autoclass:: torc.openapi_client.models.job_model.JobModel
+   :members:
+
 .. autoclass:: torc.openapi_client.models.jobs_model.JobsModel
    :members:
 

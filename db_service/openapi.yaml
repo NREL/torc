@@ -1503,7 +1503,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/jobs_model'
+              $ref: '#/components/schemas/job_model'
         required: true
       responses:
         '200':
@@ -1511,7 +1511,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/jobs_model'
+                $ref: '#/components/schemas/job_model'
         '500':
           description: Default error response.
           content:
@@ -1584,7 +1584,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/jobs_model'
+                $ref: '#/components/schemas/job_model'
         '500':
           description: Default error response.
           content:
@@ -1619,7 +1619,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/jobs_model'
+              $ref: '#/components/schemas/job_model'
         required: true
       responses:
         '200':
@@ -1627,7 +1627,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/jobs_model'
+                $ref: '#/components/schemas/job_model'
         '500':
           description: Default error response.
           content:
@@ -1670,7 +1670,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/jobs_model'
+                $ref: '#/components/schemas/job_model'
         '500':
           description: Default error response.
           content:
@@ -4073,42 +4073,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/default_error_response'
       security: []
-    post:
-      tags: []
-      summary: Store a job and create edges.
-      description: Store a job in the "jobs" collection and create edges.
-      operationId: add_job_specification
-      parameters:
-      - name: workflow
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        description: job definition to store in the collection.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/job_specifications_model'
-        required: true
-      responses:
-        '200':
-          description: job stored in the collection.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/job_specifications_model'
-        '500':
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/default_error_response'
-      security: []
-      x-codegen-request-body-name: body
   /workflows/{workflow}/job_specifications/{key}:
     get:
       tags: []
@@ -4146,12 +4110,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/default_error_response'
       security: []
-  /workflows/{workflow}/job_with_edges:
+  /workflows/{workflow}/bulk_jobs:
     post:
       tags: []
-      summary: Add a job with edge definitions.
-      description: Add a job with edge definitions.
-      operationId: add_job_with_edges
+      summary: Add jobs in bulk.
+      description: Add jobs in bulk. Recommended max job count of 10,000.
+      operationId: add_jobs
       parameters:
       - name: workflow
         in: path
@@ -4165,7 +4129,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/job_with_edges_model'
+              $ref: '#/components/schemas/jobs_model'
         required: true
       responses:
         '200':
@@ -4173,44 +4137,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/jobs_model'
-        '500':
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/default_error_response'
-      security: []
-      x-codegen-request-body-name: body
-  /workflows/{workflow}/bulk_jobs_with_edges:
-    post:
-      tags: []
-      summary: Add jobs in bulk with edge definitions.
-      description: Add jobs in bulk with edge definitions. Recommended max job count
-        of 10,000.
-      operationId: add_jobs_with_edges
-      parameters:
-      - name: workflow
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/jobs_with_edges_model'
-        required: true
-      responses:
-        '200':
-          description: HTTP 200 OK.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/add_jobs_with_edges_response'
+                $ref: '#/components/schemas/add_jobs_response'
         '500':
           description: Default error response.
           content:
@@ -4542,7 +4469,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/jobs_model'
+                $ref: '#/components/schemas/job_model'
         '500':
           description: Default error response.
           content:
@@ -4610,7 +4537,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/jobs_model'
+                $ref: '#/components/schemas/job_model'
         '500':
           description: Default error response.
           content:
@@ -6118,7 +6045,7 @@ paths:
       security: []
 components:
   schemas:
-    jobs_with_edges_model:
+    jobs_model:
       required:
       - jobs
       type: object
@@ -6126,7 +6053,7 @@ components:
         jobs:
           type: array
           items:
-            $ref: '#/components/schemas/job_with_edges_model'
+            $ref: '#/components/schemas/job_model'
     workflow_status_model:
       required:
       - auto_tune_status
@@ -6261,37 +6188,6 @@ components:
           type: string
         _rev:
           type: string
-    job_with_edges_model:
-      required:
-      - job
-      type: object
-      properties:
-        job:
-          $ref: '#/components/schemas/jobs_model'
-        resource_requirements:
-          type: string
-        scheduler:
-          type: string
-        input_files:
-          type: array
-          items:
-            type: string
-        output_files:
-          type: array
-          items:
-            type: string
-        input_user_data:
-          type: array
-          items:
-            type: string
-        output_user_data:
-          type: array
-          items:
-            type: string
-        blocked_by:
-          type: array
-          items:
-            type: string
     default_error_response:
       required:
       - error
@@ -6342,7 +6238,7 @@ components:
           type: string
         _rev:
           type: string
-    jobs_model:
+    job_model:
       required:
       - command
       type: object
@@ -6364,6 +6260,30 @@ components:
         supports_termination:
           type: boolean
           default: false
+        blocked_by:
+          type: array
+          items:
+            type: string
+        input_files:
+          type: array
+          items:
+            type: string
+        output_files:
+          type: array
+          items:
+            type: string
+        input_user_data:
+          type: array
+          items:
+            type: string
+        output_user_data:
+          type: array
+          items:
+            type: string
+        resource_requirements:
+          type: string
+        scheduler:
+          type: string
         internal:
           $ref: '#/components/schemas/jobs_internal'
         _key:
@@ -6747,13 +6667,13 @@ components:
           type: integer
         has_more:
           type: boolean
-    add_jobs_with_edges_response:
+    add_jobs_response:
       type: object
       properties:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/jobs_model'
+            $ref: '#/components/schemas/job_model'
     list_compute_nodes_response:
       required:
       - count
@@ -6859,7 +6779,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/jobs_model'
+            $ref: '#/components/schemas/job_model'
         skip:
           type: integer
         max_limit:
@@ -7167,7 +7087,7 @@ components:
         jobs:
           type: array
           items:
-            $ref: '#/components/schemas/jobs_model'
+            $ref: '#/components/schemas/job_model'
         reason:
           type: string
     prepare_next_jobs_for_submission_response:
@@ -7176,7 +7096,7 @@ components:
         jobs:
           type: array
           items:
-            $ref: '#/components/schemas/jobs_model'
+            $ref: '#/components/schemas/job_model'
     prepare_jobs_for_scheduling_response:
       type: object
       properties:

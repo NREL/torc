@@ -29,7 +29,7 @@ from pydantic import StrictBool, StrictFloat, StrictInt, StrictStr, field_valida
 
 from typing import Any, Dict, List, Optional, Union
 
-from torc.openapi_client.models.add_jobs_with_edges_response import AddJobsWithEdgesResponse
+from torc.openapi_client.models.add_jobs_response import AddJobsResponse
 from torc.openapi_client.models.aws_schedulers_model import AwsSchedulersModel
 from torc.openapi_client.models.compute_node_stats_model import ComputeNodeStatsModel
 from torc.openapi_client.models.compute_nodes_model import ComputeNodesModel
@@ -39,11 +39,10 @@ from torc.openapi_client.models.files_model import FilesModel
 from torc.openapi_client.models.get_dot_graph_response import GetDotGraphResponse
 from torc.openapi_client.models.get_ready_job_requirements_response import GetReadyJobRequirementsResponse
 from torc.openapi_client.models.is_complete_response import IsCompleteResponse
+from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.job_process_stats_model import JobProcessStatsModel
 from torc.openapi_client.models.job_specifications_model import JobSpecificationsModel
-from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
 from torc.openapi_client.models.jobs_model import JobsModel
-from torc.openapi_client.models.jobs_with_edges_model import JobsWithEdgesModel
 from torc.openapi_client.models.join_by_inbound_edge_collection_edge_response import JoinByInboundEdgeCollectionEdgeResponse
 from torc.openapi_client.models.join_by_outbound_edge_collection_edge_response import JoinByOutboundEdgeCollectionEdgeResponse
 from torc.openapi_client.models.list_aws_schedulers_response import ListAwsSchedulersResponse
@@ -1874,7 +1873,7 @@ class DefaultApi:
     def add_job(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[JobsModel, Field(description="job.")],
+        body: Annotated[JobModel, Field(description="job.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1887,7 +1886,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> JobsModel:
+    ) -> JobModel:
         """Store a job.
 
         Store a job in the \"jobs\" collection.
@@ -1895,7 +1894,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: job. (required)
-        :type body: JobsModel
+        :type body: JobModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1928,7 +1927,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -1947,7 +1946,7 @@ class DefaultApi:
     def add_job_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[JobsModel, Field(description="job.")],
+        body: Annotated[JobModel, Field(description="job.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1960,7 +1959,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[JobsModel]:
+    ) -> ApiResponse[JobModel]:
         """Store a job.
 
         Store a job in the \"jobs\" collection.
@@ -1968,7 +1967,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: job. (required)
-        :type body: JobsModel
+        :type body: JobModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2001,7 +2000,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -2020,7 +2019,7 @@ class DefaultApi:
     def add_job_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[JobsModel, Field(description="job.")],
+        body: Annotated[JobModel, Field(description="job.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -2041,7 +2040,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: job. (required)
-        :type body: JobsModel
+        :type body: JobModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -2074,7 +2073,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -2455,298 +2454,6 @@ class DefaultApi:
 
 
     @validate_call
-    def add_job_specification(
-        self,
-        workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[JobSpecificationsModel, Field(description="job definition to store in the collection.")],
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> JobSpecificationsModel:
-        """Store a job and create edges.
-
-        Store a job in the \"jobs\" collection and create edges.
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: job definition to store in the collection. (required)
-        :type body: JobSpecificationsModel
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._add_job_specification_serialize(
-            workflow=workflow,
-            body=body,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobSpecificationsModel",
-            '500': "DefaultErrorResponse"
-            
-        }
-        response_data = self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        response_data.read()
-        return self.api_client.response_deserialize(
-            response_data=response_data,
-            response_types_map=_response_types_map,
-        ).data
-
-
-    @validate_call
-    def add_job_specification_with_http_info(
-        self,
-        workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[JobSpecificationsModel, Field(description="job definition to store in the collection.")],
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[JobSpecificationsModel]:
-        """Store a job and create edges.
-
-        Store a job in the \"jobs\" collection and create edges.
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: job definition to store in the collection. (required)
-        :type body: JobSpecificationsModel
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._add_job_specification_serialize(
-            workflow=workflow,
-            body=body,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobSpecificationsModel",
-            '500': "DefaultErrorResponse"
-            
-        }
-        response_data = self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        response_data.read()
-        return self.api_client.response_deserialize(
-            response_data=response_data,
-            response_types_map=_response_types_map,
-        )
-
-
-    @validate_call
-    def add_job_specification_without_preload_content(
-        self,
-        workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[JobSpecificationsModel, Field(description="job definition to store in the collection.")],
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> RESTResponseType:
-        """Store a job and create edges.
-
-        Store a job in the \"jobs\" collection and create edges.
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: job definition to store in the collection. (required)
-        :type body: JobSpecificationsModel
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._add_job_specification_serialize(
-            workflow=workflow,
-            body=body,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobSpecificationsModel",
-            '500': "DefaultErrorResponse"
-            
-        }
-        response_data = self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        return response_data.response
-
-
-    def _add_job_specification_serialize(
-        self,
-        workflow,
-        body,
-        _request_auth,
-        _content_type,
-        _headers,
-        _host_index,
-    ) -> Tuple:
-
-        _host = None
-
-        _collection_formats: Dict[str, str] = {
-            
-        }
-
-        _path_params: Dict[str, str] = {}
-        _query_params: List[Tuple[str, str]] = []
-        _header_params: Dict[str, Optional[str]] = _headers or {}
-        _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
-        _body_params: Optional[bytes] = None
-
-        # process the path parameters
-        if workflow is not None:
-            _path_params['workflow'] = workflow
-        # process the query parameters
-        # process the header parameters
-        # process the form parameters
-        # process the body parameter
-        if body is not None:
-            _body_params = body
-
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
-
-        # set the HTTP header `Content-Type`
-        if _content_type:
-            _header_params['Content-Type'] = _content_type
-        else:
-            _default_content_type = (
-                self.api_client.select_header_content_type(
-                    [
-                        'application/json'
-                    ]
-                )
-            )
-            if _default_content_type is not None:
-                _header_params['Content-Type'] = _default_content_type
-
-        # authentication setting
-        _auth_settings: List[str] = [
-        ]
-
-        return self.api_client.param_serialize(
-            method='POST',
-            resource_path='/workflows/{workflow}/job_specifications',
-            path_params=_path_params,
-            query_params=_query_params,
-            header_params=_header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            auth_settings=_auth_settings,
-            collection_formats=_collection_formats,
-            _host=_host,
-            _request_auth=_request_auth
-        )
-
-
-
-
-    @validate_call
     def add_job_user_data(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
@@ -3054,10 +2761,10 @@ class DefaultApi:
 
 
     @validate_call
-    def add_job_with_edges(
+    def add_jobs(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: JobWithEdgesModel,
+        body: JobsModel,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3070,15 +2777,15 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> JobsModel:
-        """Add a job with edge definitions.
+    ) -> AddJobsResponse:
+        """Add jobs in bulk.
 
-        Add a job with edge definitions.
+        Add jobs in bulk. Recommended max job count of 10,000.
 
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: (required)
-        :type body: JobWithEdgesModel
+        :type body: JobsModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3101,7 +2808,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._add_job_with_edges_serialize(
+        _param = self._add_jobs_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -3111,7 +2818,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "AddJobsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -3127,10 +2834,10 @@ class DefaultApi:
 
 
     @validate_call
-    def add_job_with_edges_with_http_info(
+    def add_jobs_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: JobWithEdgesModel,
+        body: JobsModel,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3143,15 +2850,15 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[JobsModel]:
-        """Add a job with edge definitions.
+    ) -> ApiResponse[AddJobsResponse]:
+        """Add jobs in bulk.
 
-        Add a job with edge definitions.
+        Add jobs in bulk. Recommended max job count of 10,000.
 
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: (required)
-        :type body: JobWithEdgesModel
+        :type body: JobsModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3174,7 +2881,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._add_job_with_edges_serialize(
+        _param = self._add_jobs_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -3184,7 +2891,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "AddJobsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -3200,10 +2907,10 @@ class DefaultApi:
 
 
     @validate_call
-    def add_job_with_edges_without_preload_content(
+    def add_jobs_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: JobWithEdgesModel,
+        body: JobsModel,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3217,14 +2924,14 @@ class DefaultApi:
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
     ) -> RESTResponseType:
-        """Add a job with edge definitions.
+        """Add jobs in bulk.
 
-        Add a job with edge definitions.
+        Add jobs in bulk. Recommended max job count of 10,000.
 
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: (required)
-        :type body: JobWithEdgesModel
+        :type body: JobsModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3247,7 +2954,7 @@ class DefaultApi:
         :return: Returns the result object.
         """ # noqa: E501
 
-        _param = self._add_job_with_edges_serialize(
+        _param = self._add_jobs_serialize(
             workflow=workflow,
             body=body,
             _request_auth=_request_auth,
@@ -3257,7 +2964,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "AddJobsResponse",
             '500': "DefaultErrorResponse"
             
         }
@@ -3268,7 +2975,7 @@ class DefaultApi:
         return response_data.response
 
 
-    def _add_job_with_edges_serialize(
+    def _add_jobs_serialize(
         self,
         workflow,
         body,
@@ -3329,299 +3036,7 @@ class DefaultApi:
 
         return self.api_client.param_serialize(
             method='POST',
-            resource_path='/workflows/{workflow}/job_with_edges',
-            path_params=_path_params,
-            query_params=_query_params,
-            header_params=_header_params,
-            body=_body_params,
-            post_params=_form_params,
-            files=_files,
-            auth_settings=_auth_settings,
-            collection_formats=_collection_formats,
-            _host=_host,
-            _request_auth=_request_auth
-        )
-
-
-
-
-    @validate_call
-    def add_jobs_with_edges(
-        self,
-        workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: JobsWithEdgesModel,
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> AddJobsWithEdgesResponse:
-        """Add jobs in bulk with edge definitions.
-
-        Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: (required)
-        :type body: JobsWithEdgesModel
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._add_jobs_with_edges_serialize(
-            workflow=workflow,
-            body=body,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AddJobsWithEdgesResponse",
-            '500': "DefaultErrorResponse"
-            
-        }
-        response_data = self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        response_data.read()
-        return self.api_client.response_deserialize(
-            response_data=response_data,
-            response_types_map=_response_types_map,
-        ).data
-
-
-    @validate_call
-    def add_jobs_with_edges_with_http_info(
-        self,
-        workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: JobsWithEdgesModel,
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[AddJobsWithEdgesResponse]:
-        """Add jobs in bulk with edge definitions.
-
-        Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: (required)
-        :type body: JobsWithEdgesModel
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._add_jobs_with_edges_serialize(
-            workflow=workflow,
-            body=body,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AddJobsWithEdgesResponse",
-            '500': "DefaultErrorResponse"
-            
-        }
-        response_data = self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        response_data.read()
-        return self.api_client.response_deserialize(
-            response_data=response_data,
-            response_types_map=_response_types_map,
-        )
-
-
-    @validate_call
-    def add_jobs_with_edges_without_preload_content(
-        self,
-        workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: JobsWithEdgesModel,
-        _request_timeout: Union[
-            None,
-            Annotated[StrictFloat, Field(gt=0)],
-            Tuple[
-                Annotated[StrictFloat, Field(gt=0)],
-                Annotated[StrictFloat, Field(gt=0)]
-            ]
-        ] = None,
-        _request_auth: Optional[Dict[StrictStr, Any]] = None,
-        _content_type: Optional[StrictStr] = None,
-        _headers: Optional[Dict[StrictStr, Any]] = None,
-        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> RESTResponseType:
-        """Add jobs in bulk with edge definitions.
-
-        Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
-
-        :param workflow: Workflow key (required)
-        :type workflow: str
-        :param body: (required)
-        :type body: JobsWithEdgesModel
-        :param _request_timeout: timeout setting for this request. If one
-                                 number provided, it will be total request
-                                 timeout. It can also be a pair (tuple) of
-                                 (connection, read) timeouts.
-        :type _request_timeout: int, tuple(int, int), optional
-        :param _request_auth: set to override the auth_settings for an a single
-                              request; this effectively ignores the
-                              authentication in the spec for a single request.
-        :type _request_auth: dict, optional
-        :param _content_type: force content-type for the request.
-        :type _content_type: str, Optional
-        :param _headers: set to override the headers for a single
-                         request; this effectively ignores the headers
-                         in the spec for a single request.
-        :type _headers: dict, optional
-        :param _host_index: set to override the host_index for a single
-                            request; this effectively ignores the host_index
-                            in the spec for a single request.
-        :type _host_index: int, optional
-        :return: Returns the result object.
-        """ # noqa: E501
-
-        _param = self._add_jobs_with_edges_serialize(
-            workflow=workflow,
-            body=body,
-            _request_auth=_request_auth,
-            _content_type=_content_type,
-            _headers=_headers,
-            _host_index=_host_index
-        )
-
-        _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AddJobsWithEdgesResponse",
-            '500': "DefaultErrorResponse"
-            
-        }
-        response_data = self.api_client.call_api(
-            *_param,
-            _request_timeout=_request_timeout
-        )
-        return response_data.response
-
-
-    def _add_jobs_with_edges_serialize(
-        self,
-        workflow,
-        body,
-        _request_auth,
-        _content_type,
-        _headers,
-        _host_index,
-    ) -> Tuple:
-
-        _host = None
-
-        _collection_formats: Dict[str, str] = {
-            
-        }
-
-        _path_params: Dict[str, str] = {}
-        _query_params: List[Tuple[str, str]] = []
-        _header_params: Dict[str, Optional[str]] = _headers or {}
-        _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
-        _body_params: Optional[bytes] = None
-
-        # process the path parameters
-        if workflow is not None:
-            _path_params['workflow'] = workflow
-        # process the query parameters
-        # process the header parameters
-        # process the form parameters
-        # process the body parameter
-        if body is not None:
-            _body_params = body
-
-
-        # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
-
-        # set the HTTP header `Content-Type`
-        if _content_type:
-            _header_params['Content-Type'] = _content_type
-        else:
-            _default_content_type = (
-                self.api_client.select_header_content_type(
-                    [
-                        'application/json'
-                    ]
-                )
-            )
-            if _default_content_type is not None:
-                _header_params['Content-Type'] = _default_content_type
-
-        # authentication setting
-        _auth_settings: List[str] = [
-        ]
-
-        return self.api_client.param_serialize(
-            method='POST',
-            resource_path='/workflows/{workflow}/bulk_jobs_with_edges',
+            resource_path='/workflows/{workflow}/bulk_jobs',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,
@@ -6548,7 +5963,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> JobsModel:
+    ) -> JobModel:
         """Complete a job and add a result.
 
         Complete a job, connect it to a result, and manage side effects.
@@ -6601,7 +6016,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -6637,7 +6052,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[JobsModel]:
+    ) -> ApiResponse[JobModel]:
         """Complete a job and add a result.
 
         Complete a job, connect it to a result, and manage side effects.
@@ -6690,7 +6105,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -6779,7 +6194,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -13297,7 +12712,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> JobsModel:
+    ) -> JobModel:
         """Retrieve the job for a key.
 
         Retrieve the document from the \"jobs\" collection by key.
@@ -13338,7 +12753,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -13370,7 +12785,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[JobsModel]:
+    ) -> ApiResponse[JobModel]:
         """Retrieve the job for a key.
 
         Retrieve the document from the \"jobs\" collection by key.
@@ -13411,7 +12826,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -13484,7 +12899,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -29116,7 +28531,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> JobsModel:
+    ) -> JobModel:
         """Change the status of a job and manage side effects.
 
         Change the status of a job and manage side effects.
@@ -29169,7 +28584,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -29205,7 +28620,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[JobsModel]:
+    ) -> ApiResponse[JobModel]:
         """Change the status of a job and manage side effects.
 
         Change the status of a job and manage side effects.
@@ -29258,7 +28673,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -29347,7 +28762,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -30987,7 +30402,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the job.")],
-        body: Annotated[JobsModel, Field(description="job to update in the collection.")],
+        body: Annotated[JobModel, Field(description="job to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -31000,7 +30415,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> JobsModel:
+    ) -> JobModel:
         """Update job
 
         Update a document in the \"jobs\" collection.
@@ -31010,7 +30425,7 @@ class DefaultApi:
         :param key: key of the job. (required)
         :type key: str
         :param body: job to update in the collection. (required)
-        :type body: JobsModel
+        :type body: JobModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -31044,7 +30459,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -31064,7 +30479,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the job.")],
-        body: Annotated[JobsModel, Field(description="job to update in the collection.")],
+        body: Annotated[JobModel, Field(description="job to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -31077,7 +30492,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[JobsModel]:
+    ) -> ApiResponse[JobModel]:
         """Update job
 
         Update a document in the \"jobs\" collection.
@@ -31087,7 +30502,7 @@ class DefaultApi:
         :param key: key of the job. (required)
         :type key: str
         :param body: job to update in the collection. (required)
-        :type body: JobsModel
+        :type body: JobModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -31121,7 +30536,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -31141,7 +30556,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the job.")],
-        body: Annotated[JobsModel, Field(description="job to update in the collection.")],
+        body: Annotated[JobModel, Field(description="job to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -31164,7 +30579,7 @@ class DefaultApi:
         :param key: key of the job. (required)
         :type key: str
         :param body: job to update in the collection. (required)
-        :type body: JobsModel
+        :type body: JobModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -31198,7 +30613,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -38271,7 +37686,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> JobsModel:
+    ) -> JobModel:
         """Delete a document of type job
 
         Deletes a document from the \"jobs\" collection by key.
@@ -38315,7 +37730,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -38348,7 +37763,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[JobsModel]:
+    ) -> ApiResponse[JobModel]:
         """Delete a document of type job
 
         Deletes a document from the \"jobs\" collection by key.
@@ -38392,7 +37807,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -38469,7 +37884,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobsModel",
+            '200': "JobModel",
             '500': "DefaultErrorResponse"
             
         }

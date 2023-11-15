@@ -96,7 +96,7 @@ Build the workflow
 
     from torc.api import make_api, map_function_to_jobs
     from torc.openapi_client.models.workflows_model import WorkflowsModel
-    from torc.openapi_client.models.jobs_model import JobsModel
+    from torc.openapi_client.models.job_model import JobModel
     from torc.openapi_client.models.resource_requirements_model import (
         ResourceRequirementsModel,
     )

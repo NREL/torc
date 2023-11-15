@@ -12,9 +12,8 @@ from torc.openapi_client.models.compute_node_resource_stats_model import (
 )
 from torc.openapi_client.api import DefaultApi
 from torc.openapi_client.models.files_model import FilesModel
-from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
+from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.workflows_model import WorkflowsModel
-from torc.openapi_client.models.jobs_model import JobsModel
 from torc.openapi_client.models.resource_requirements_model import (
     ResourceRequirementsModel,
 )
@@ -85,38 +84,30 @@ def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
     )
 
     jobs = [
-        JobWithEdgesModel(
-            job=JobsModel(
-                name="preprocess",
-                command=f"python {PREPROCESS} -i {inputs.path} -o {f1.path}",
-            ),
+        JobModel(
+            name="preprocess",
+            command=f"python {PREPROCESS} -i {inputs.path} -o {f1.path}",
             input_files=[inputs.id],
             output_files=[f1.id],
             resource_requirements=small.id,
         ),
-        JobWithEdgesModel(
-            job=JobsModel(
-                name="work1",
-                command=f"python {WORK} -i {f1.path} -o {f2.path}",
-            ),
+        JobModel(
+            name="work1",
+            command=f"python {WORK} -i {f1.path} -o {f2.path}",
             input_files=[f1.id],
             output_files=[f2.id],
             resource_requirements=medium.id,
         ),
-        JobWithEdgesModel(
-            job=JobsModel(
-                name="work2",
-                command=f"python {WORK} -i {f1.path} -o {f3.path}",
-            ),
+        JobModel(
+            name="work2",
+            command=f"python {WORK} -i {f1.path} -o {f3.path}",
             input_files=[f1.id],
             output_files=[f3.id],
             resource_requirements=large.id,
         ),
-        JobWithEdgesModel(
-            job=JobsModel(
-                name="postprocess",
-                command=f"python {POSTPROCESS} -i {f2.path} -i {f3.path} -o {f4.path}",
-            ),
+        JobModel(
+            name="postprocess",
+            command=f"python {POSTPROCESS} -i {f2.path} -i {f3.path} -o {f4.path}",
             input_files=[f2.id, f3.id],
             output_files=[f4.id],
             resource_requirements=small.id,

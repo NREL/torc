@@ -68,34 +68,26 @@ function build_workflow(api, workflow)
         )
     )
     jobs = [
-        APIClient.JobWithEdgesModel(
-            job=APIClient.JobsModel(
-                name = "sleep1",
-                command = "python $SLEEP 1",
-            ),
+        APIClient.JobModel(
+            name = "sleep1",
+            command = "python $SLEEP 1",
             resource_requirements = small._id,
         ),
-        APIClient.JobWithEdgesModel(
-            job=APIClient.JobsModel(
-                name = "sleep2",
-                command = "python $SLEEP 1",
-            ),
+        APIClient.JobModel(
+            name = "sleep2",
+            command = "python $SLEEP 1",
             input_user_data = [ud1._id],
             resource_requirements = medium._id,
         ),
-        APIClient.JobWithEdgesModel(
-            job=APIClient.JobsModel(
-                name = "sleep2",
-                command = "python $SLEEP 1",
-            ),
+        APIClient.JobModel(
+            name = "sleep2",
+            command = "python $SLEEP 1",
             input_user_data = [ud1._id],
             resource_requirements = medium._id,
         ),
-        APIClient.JobWithEdgesModel(
-            job=APIClient.JobsModel(
-                name = "sleep3",
-                command = "python $SLEEP 1",
-            ),
+        APIClient.JobModel(
+            name = "sleep3",
+            command = "python $SLEEP 1",
             input_user_data = [ud2._id],
             resource_requirements = large._id,
         ),

@@ -4,7 +4,7 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**items** | [**Vector{JobsModel}**](JobsModel.md) |  | [optional] [default to nothing]
+**items** | [**Vector{JobModel}**](JobModel.md) |  | [optional] [default to nothing]
 **skip** | **Int64** |  | [default to nothing]
 **max_limit** | **Int64** |  | [default to nothing]
 **count** | **Int64** |  | [default to nothing]

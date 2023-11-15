@@ -18,10 +18,9 @@ import re  # noqa: F401
 import json
 
 
-from typing import Any, ClassVar, Dict, List, Optional
-from pydantic import BaseModel, StrictBool, StrictStr
-from pydantic import Field
-from torc.openapi_client.models.jobs_internal import JobsInternal
+from typing import Any, ClassVar, Dict, List
+from pydantic import BaseModel
+from torc.openapi_client.models.job_model import JobModel
 try:
     from typing import Self
 except ImportError:
@@ -31,18 +30,8 @@ class JobsModel(BaseModel):
     """
     JobsModel
     """ # noqa: E501
-    name: Optional[StrictStr] = None
-    command: StrictStr
-    invocation_script: Optional[StrictStr] = None
-    status: Optional[StrictStr] = None
-    needs_compute_node_schedule: Optional[StrictBool] = False
-    cancel_on_blocking_job_failure: Optional[StrictBool] = True
-    supports_termination: Optional[StrictBool] = False
-    internal: Optional[JobsInternal] = None
-    key: Optional[StrictStr] = Field(default=None, alias="_key")
-    id: Optional[StrictStr] = Field(default=None, alias="_id")
-    rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = ["name", "command", "invocation_script", "status", "needs_compute_node_schedule", "cancel_on_blocking_job_failure", "supports_termination", "internal", "_key", "_id", "_rev"]
+    jobs: List[JobModel]
+    __properties: ClassVar[List[str]] = ["jobs"]
 
     model_config = {
         "populate_by_name": True,
@@ -80,9 +69,13 @@ class JobsModel(BaseModel):
             },
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of internal
-        if self.internal:
-            _dict['internal'] = self.internal.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of each item in jobs (list)
+        _items = []
+        if self.jobs:
+            for _item in self.jobs:
+                if _item:
+                    _items.append(_item.to_dict())
+            _dict['jobs'] = _items
         return _dict
 
     @classmethod
@@ -95,17 +88,7 @@ class JobsModel(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "name": obj.get("name"),
-            "command": obj.get("command"),
-            "invocation_script": obj.get("invocation_script"),
-            "status": obj.get("status"),
-            "needs_compute_node_schedule": obj.get("needs_compute_node_schedule") if obj.get("needs_compute_node_schedule") is not None else False,
-            "cancel_on_blocking_job_failure": obj.get("cancel_on_blocking_job_failure") if obj.get("cancel_on_blocking_job_failure") is not None else True,
-            "supports_termination": obj.get("supports_termination") if obj.get("supports_termination") is not None else False,
-            "internal": JobsInternal.from_dict(obj.get("internal")) if obj.get("internal") is not None else None,
-            "_key": obj.get("_key"),
-            "_id": obj.get("_id"),
-            "_rev": obj.get("_rev")
+            "jobs": [JobModel.from_dict(_item) for _item in obj.get("jobs")] if obj.get("jobs") is not None else None
         })
         return _obj
 

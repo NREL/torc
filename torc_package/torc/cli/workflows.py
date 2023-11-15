@@ -9,7 +9,7 @@ from pathlib import Path
 
 import click
 import json5
-from torc.openapi_client.models.jobs_model import JobsModel
+from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.workflows_model import WorkflowsModel
 from torc.openapi_client.models.workflow_specifications_model import (
     WorkflowSpecificationsModel,
@@ -179,7 +179,7 @@ def create_from_commands_file(
         print(json.dumps({"filename": filename, "key": workflow.key}))
     for i, command in enumerate(commands, start=1):
         name = str(i)
-        api.add_job(workflow.key, JobsModel(name=name, command=command))
+        api.add_job(workflow.key, JobModel(name=name, command=command))
     if update_rc_with_key:
         _update_torc_rc(api, workflow)
 

@@ -5,65 +5,25 @@
 @doc raw"""jobs_model
 
     JobsModel(;
-        name=nothing,
-        command=nothing,
-        invocation_script=nothing,
-        status=nothing,
-        needs_compute_node_schedule=false,
-        cancel_on_blocking_job_failure=true,
-        supports_termination=false,
-        internal=nothing,
-        _key=nothing,
-        _id=nothing,
-        _rev=nothing,
+        jobs=nothing,
     )
 
-    - name::String
-    - command::String
-    - invocation_script::String
-    - status::String
-    - needs_compute_node_schedule::Bool
-    - cancel_on_blocking_job_failure::Bool
-    - supports_termination::Bool
-    - internal::JobsInternal
-    - _key::String
-    - _id::String
-    - _rev::String
+    - jobs::Vector{JobModel}
 """
 Base.@kwdef mutable struct JobsModel <: OpenAPI.APIModel
-    name::Union{Nothing, String} = nothing
-    command::Union{Nothing, String} = nothing
-    invocation_script::Union{Nothing, String} = nothing
-    status::Union{Nothing, String} = nothing
-    needs_compute_node_schedule::Union{Nothing, Bool} = false
-    cancel_on_blocking_job_failure::Union{Nothing, Bool} = true
-    supports_termination::Union{Nothing, Bool} = false
-    internal = nothing # spec type: Union{ Nothing, JobsInternal }
-    _key::Union{Nothing, String} = nothing
-    _id::Union{Nothing, String} = nothing
-    _rev::Union{Nothing, String} = nothing
+    jobs::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{JobModel} }
 
-    function JobsModel(name, command, invocation_script, status, needs_compute_node_schedule, cancel_on_blocking_job_failure, supports_termination, internal, _key, _id, _rev, )
-        OpenAPI.validate_property(JobsModel, Symbol("name"), name)
-        OpenAPI.validate_property(JobsModel, Symbol("command"), command)
-        OpenAPI.validate_property(JobsModel, Symbol("invocation_script"), invocation_script)
-        OpenAPI.validate_property(JobsModel, Symbol("status"), status)
-        OpenAPI.validate_property(JobsModel, Symbol("needs_compute_node_schedule"), needs_compute_node_schedule)
-        OpenAPI.validate_property(JobsModel, Symbol("cancel_on_blocking_job_failure"), cancel_on_blocking_job_failure)
-        OpenAPI.validate_property(JobsModel, Symbol("supports_termination"), supports_termination)
-        OpenAPI.validate_property(JobsModel, Symbol("internal"), internal)
-        OpenAPI.validate_property(JobsModel, Symbol("_key"), _key)
-        OpenAPI.validate_property(JobsModel, Symbol("_id"), _id)
-        OpenAPI.validate_property(JobsModel, Symbol("_rev"), _rev)
-        return new(name, command, invocation_script, status, needs_compute_node_schedule, cancel_on_blocking_job_failure, supports_termination, internal, _key, _id, _rev, )
+    function JobsModel(jobs, )
+        OpenAPI.validate_property(JobsModel, Symbol("jobs"), jobs)
+        return new(jobs, )
     end
 end # type JobsModel
 
-const _property_types_JobsModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("command")=>"String", Symbol("invocation_script")=>"String", Symbol("status")=>"String", Symbol("needs_compute_node_schedule")=>"Bool", Symbol("cancel_on_blocking_job_failure")=>"Bool", Symbol("supports_termination")=>"Bool", Symbol("internal")=>"JobsInternal", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
+const _property_types_JobsModel = Dict{Symbol,String}(Symbol("jobs")=>"Vector{JobModel}", )
 OpenAPI.property_type(::Type{ JobsModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_JobsModel[name]))}
 
 function check_required(o::JobsModel)
-    o.command === nothing && (return false)
+    o.jobs === nothing && (return false)
     true
 end
 

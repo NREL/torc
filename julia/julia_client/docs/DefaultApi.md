@@ -12,10 +12,8 @@ Method | HTTP request | Description
 [**add_file**](DefaultApi.md#add_file) | **POST** /workflows/{workflow}/files | Store a file.
 [**add_job**](DefaultApi.md#add_job) | **POST** /workflows/{workflow}/jobs | Store a job.
 [**add_job_process_stats**](DefaultApi.md#add_job_process_stats) | **POST** /workflows/{workflow}/job_process_stats | Store a job process statistics.
-[**add_job_specification**](DefaultApi.md#add_job_specification) | **POST** /workflows/{workflow}/job_specifications | Store a job and create edges.
 [**add_job_user_data**](DefaultApi.md#add_job_user_data) | **POST** /workflows/{workflow}/jobs/{key}/user_data | Store user data for a job.
-[**add_job_with_edges**](DefaultApi.md#add_job_with_edges) | **POST** /workflows/{workflow}/job_with_edges | Add a job with edge definitions.
-[**add_jobs_with_edges**](DefaultApi.md#add_jobs_with_edges) | **POST** /workflows/{workflow}/bulk_jobs_with_edges | Add jobs in bulk with edge definitions.
+[**add_jobs**](DefaultApi.md#add_jobs) | **POST** /workflows/{workflow}/bulk_jobs | Add jobs in bulk.
 [**add_local_scheduler**](DefaultApi.md#add_local_scheduler) | **POST** /workflows/{workflow}/local_schedulers | Store a local compute node configuration.
 [**add_resource_requirements**](DefaultApi.md#add_resource_requirements) | **POST** /workflows/{workflow}/resource_requirements | Store a resource requirements.
 [**add_result**](DefaultApi.md#add_result) | **POST** /workflows/{workflow}/results | Store a result.
@@ -330,8 +328,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **add_job**
-> add_job(_api::DefaultApi, workflow::String, body::JobsModel; _mediaType=nothing) -> JobsModel, OpenAPI.Clients.ApiResponse <br/>
-> add_job(_api::DefaultApi, response_stream::Channel, workflow::String, body::JobsModel; _mediaType=nothing) -> Channel{ JobsModel }, OpenAPI.Clients.ApiResponse
+> add_job(_api::DefaultApi, workflow::String, body::JobModel; _mediaType=nothing) -> JobModel, OpenAPI.Clients.ApiResponse <br/>
+> add_job(_api::DefaultApi, response_stream::Channel, workflow::String, body::JobModel; _mediaType=nothing) -> Channel{ JobModel }, OpenAPI.Clients.ApiResponse
 
 Store a job.
 
@@ -343,11 +341,11 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**JobsModel**](JobsModel.md)| job. | 
+**body** | [**JobModel**](JobModel.md)| job. | 
 
 ### Return type
 
-[**JobsModel**](JobsModel.md)
+[**JobModel**](JobModel.md)
 
 ### Authorization
 
@@ -379,37 +377,6 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**JobProcessStatsModel**](JobProcessStatsModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-# **add_job_specification**
-> add_job_specification(_api::DefaultApi, workflow::String, body::JobSpecificationsModel; _mediaType=nothing) -> JobSpecificationsModel, OpenAPI.Clients.ApiResponse <br/>
-> add_job_specification(_api::DefaultApi, response_stream::Channel, workflow::String, body::JobSpecificationsModel; _mediaType=nothing) -> Channel{ JobSpecificationsModel }, OpenAPI.Clients.ApiResponse
-
-Store a job and create edges.
-
-Store a job in the \"jobs\" collection and create edges.
-
-### Required Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**JobSpecificationsModel**](JobSpecificationsModel.md)| job definition to store in the collection. | 
-
-### Return type
-
-[**JobSpecificationsModel**](JobSpecificationsModel.md)
 
 ### Authorization
 
@@ -454,44 +421,13 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
-# **add_job_with_edges**
-> add_job_with_edges(_api::DefaultApi, workflow::String, body::JobWithEdgesModel; _mediaType=nothing) -> JobsModel, OpenAPI.Clients.ApiResponse <br/>
-> add_job_with_edges(_api::DefaultApi, response_stream::Channel, workflow::String, body::JobWithEdgesModel; _mediaType=nothing) -> Channel{ JobsModel }, OpenAPI.Clients.ApiResponse
+# **add_jobs**
+> add_jobs(_api::DefaultApi, workflow::String, body::JobsModel; _mediaType=nothing) -> AddJobsResponse, OpenAPI.Clients.ApiResponse <br/>
+> add_jobs(_api::DefaultApi, response_stream::Channel, workflow::String, body::JobsModel; _mediaType=nothing) -> Channel{ AddJobsResponse }, OpenAPI.Clients.ApiResponse
 
-Add a job with edge definitions.
+Add jobs in bulk.
 
-Add a job with edge definitions.
-
-### Required Parameters
-
-Name | Type | Description  | Notes
-------------- | ------------- | ------------- | -------------
- **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**JobWithEdgesModel**](JobWithEdgesModel.md)|  | 
-
-### Return type
-
-[**JobsModel**](JobsModel.md)
-
-### Authorization
-
-No authorization required
-
-### HTTP request headers
-
- - **Content-Type**: application/json
- - **Accept**: application/json
-
-[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
-
-# **add_jobs_with_edges**
-> add_jobs_with_edges(_api::DefaultApi, workflow::String, body::JobsWithEdgesModel; _mediaType=nothing) -> AddJobsWithEdgesResponse, OpenAPI.Clients.ApiResponse <br/>
-> add_jobs_with_edges(_api::DefaultApi, response_stream::Channel, workflow::String, body::JobsWithEdgesModel; _mediaType=nothing) -> Channel{ AddJobsWithEdgesResponse }, OpenAPI.Clients.ApiResponse
-
-Add jobs in bulk with edge definitions.
-
-Add jobs in bulk with edge definitions. Recommended max job count of 10,000.
+Add jobs in bulk. Recommended max job count of 10,000.
 
 ### Required Parameters
 
@@ -499,11 +435,11 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**JobsWithEdgesModel**](JobsWithEdgesModel.md)|  | 
+**body** | [**JobsModel**](JobsModel.md)|  | 
 
 ### Return type
 
-[**AddJobsWithEdgesResponse**](AddJobsWithEdgesResponse.md)
+[**AddJobsResponse**](AddJobsResponse.md)
 
 ### Authorization
 
@@ -835,8 +771,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **complete_job**
-> complete_job(_api::DefaultApi, workflow::String, key::String, status::String, rev::String, run_id::Int64, body::ResultsModel; _mediaType=nothing) -> JobsModel, OpenAPI.Clients.ApiResponse <br/>
-> complete_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, status::String, rev::String, run_id::Int64, body::ResultsModel; _mediaType=nothing) -> Channel{ JobsModel }, OpenAPI.Clients.ApiResponse
+> complete_job(_api::DefaultApi, workflow::String, key::String, status::String, rev::String, run_id::Int64, body::ResultsModel; _mediaType=nothing) -> JobModel, OpenAPI.Clients.ApiResponse <br/>
+> complete_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, status::String, rev::String, run_id::Int64, body::ResultsModel; _mediaType=nothing) -> Channel{ JobModel }, OpenAPI.Clients.ApiResponse
 
 Complete a job and add a result.
 
@@ -856,7 +792,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**JobsModel**](JobsModel.md)
+[**JobModel**](JobModel.md)
 
 ### Authorization
 
@@ -1632,8 +1568,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_job**
-> get_job(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> JobsModel, OpenAPI.Clients.ApiResponse <br/>
-> get_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ JobsModel }, OpenAPI.Clients.ApiResponse
+> get_job(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> JobModel, OpenAPI.Clients.ApiResponse <br/>
+> get_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ JobModel }, OpenAPI.Clients.ApiResponse
 
 Retrieve the job for a key.
 
@@ -1649,7 +1585,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**JobsModel**](JobsModel.md)
+[**JobModel**](JobModel.md)
 
 ### Authorization
 
@@ -3392,8 +3328,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **manage_status_change**
-> manage_status_change(_api::DefaultApi, workflow::String, key::String, status::String, rev::String, run_id::Int64; body=nothing, _mediaType=nothing) -> JobsModel, OpenAPI.Clients.ApiResponse <br/>
-> manage_status_change(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, status::String, rev::String, run_id::Int64; body=nothing, _mediaType=nothing) -> Channel{ JobsModel }, OpenAPI.Clients.ApiResponse
+> manage_status_change(_api::DefaultApi, workflow::String, key::String, status::String, rev::String, run_id::Int64; body=nothing, _mediaType=nothing) -> JobModel, OpenAPI.Clients.ApiResponse <br/>
+> manage_status_change(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, status::String, rev::String, run_id::Int64; body=nothing, _mediaType=nothing) -> Channel{ JobModel }, OpenAPI.Clients.ApiResponse
 
 Change the status of a job and manage side effects.
 
@@ -3418,7 +3354,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**JobsModel**](JobsModel.md)
+[**JobModel**](JobModel.md)
 
 ### Authorization
 
@@ -3592,8 +3528,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **modify_job**
-> modify_job(_api::DefaultApi, workflow::String, key::String, body::JobsModel; _mediaType=nothing) -> JobsModel, OpenAPI.Clients.ApiResponse <br/>
-> modify_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, body::JobsModel; _mediaType=nothing) -> Channel{ JobsModel }, OpenAPI.Clients.ApiResponse
+> modify_job(_api::DefaultApi, workflow::String, key::String, body::JobModel; _mediaType=nothing) -> JobModel, OpenAPI.Clients.ApiResponse <br/>
+> modify_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, body::JobModel; _mediaType=nothing) -> Channel{ JobModel }, OpenAPI.Clients.ApiResponse
 
 Update job
 
@@ -3606,11 +3542,11 @@ Name | Type | Description  | Notes
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key. | [default to nothing]
 **key** | **String**| key of the job. | [default to nothing]
-**body** | [**JobsModel**](JobsModel.md)| job to update in the collection. | 
+**body** | [**JobModel**](JobModel.md)| job to update in the collection. | 
 
 ### Return type
 
-[**JobsModel**](JobsModel.md)
+[**JobModel**](JobModel.md)
 
 ### Authorization
 
@@ -4411,8 +4347,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **remove_job**
-> remove_job(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> JobsModel, OpenAPI.Clients.ApiResponse <br/>
-> remove_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ JobsModel }, OpenAPI.Clients.ApiResponse
+> remove_job(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> JobModel, OpenAPI.Clients.ApiResponse <br/>
+> remove_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ JobModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type job
 
@@ -4434,7 +4370,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**JobsModel**](JobsModel.md)
+[**JobModel**](JobModel.md)
 
 ### Authorization
 

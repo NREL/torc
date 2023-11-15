@@ -9,11 +9,11 @@
         reason=nothing,
     )
 
-    - jobs::Vector{JobsModel}
+    - jobs::Vector{JobModel}
     - reason::String
 """
 Base.@kwdef mutable struct PrepareJobsForSubmissionResponse <: OpenAPI.APIModel
-    jobs::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{JobsModel} }
+    jobs::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{JobModel} }
     reason::Union{Nothing, String} = nothing
 
     function PrepareJobsForSubmissionResponse(jobs, reason, )
@@ -23,7 +23,7 @@ Base.@kwdef mutable struct PrepareJobsForSubmissionResponse <: OpenAPI.APIModel
     end
 end # type PrepareJobsForSubmissionResponse
 
-const _property_types_PrepareJobsForSubmissionResponse = Dict{Symbol,String}(Symbol("jobs")=>"Vector{JobsModel}", Symbol("reason")=>"String", )
+const _property_types_PrepareJobsForSubmissionResponse = Dict{Symbol,String}(Symbol("jobs")=>"Vector{JobModel}", Symbol("reason")=>"String", )
 OpenAPI.property_type(::Type{ PrepareJobsForSubmissionResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_PrepareJobsForSubmissionResponse[name]))}
 
 function check_required(o::PrepareJobsForSubmissionResponse)

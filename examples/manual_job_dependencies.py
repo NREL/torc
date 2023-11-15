@@ -7,8 +7,7 @@ from torc.api import make_api
 from torc.loggers import setup_logging
 from torc.openapi_client.api import DefaultApi
 from torc.openapi_client.models.workflows_model import WorkflowsModel
-from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
-from torc.openapi_client.models.jobs_model import JobsModel
+from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.resource_requirements_model import (
     ResourceRequirementsModel,
 )
@@ -51,19 +50,21 @@ def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
 
     blocking_jobs = []
     for i in range(1, 4):
-        job = api.add_job_with_edges(
+        job = api.add_job(
             workflow.key,
-            JobWithEdgesModel(
-                job=JobsModel(name=f"job{i}", command="echo test"),
+            JobModel(
+                name=f"job{i}",
+                command="echo test",
                 resource_requirements=medium.id,
             ),
         )
         blocking_jobs.append(job.id)
 
-    api.add_job_with_edges(
+    api.add_job(
         workflow.key,
-        JobWithEdgesModel(
-            job=JobsModel(name="postprocess", command="echo test"),
+        JobModel(
+            name="postprocess",
+            command="echo test",
             resource_requirements=small.id,
             blocked_by=blocking_jobs,
         ),

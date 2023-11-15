@@ -7,7 +7,7 @@ from pathlib import Path
 
 import click
 
-from torc.openapi_client.models.jobs_model import JobsModel
+from torc.openapi_client.models.job_model import JobModel
 from torc.api import iter_documents, list_model_fields, wait_for_healthy_database
 from torc.common import JobStatus
 from torc.exceptions import DatabaseOffline
@@ -84,7 +84,7 @@ def add(ctx, api, cancel_on_blocking_job_failure, command, key, name):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
-    job = JobsModel(
+    job = JobModel(
         cancel_on_blocking_job_failure=cancel_on_blocking_job_failure,
         command=command,
         key=key,
@@ -255,7 +255,7 @@ def list_jobs(ctx, api, filters, exclude, limit, skip, sort_by, reverse_sort):
             "supports_termination",
         }
     )
-    columns = [x for x in list_model_fields(JobsModel) if x not in exclude]
+    columns = [x for x in list_model_fields(JobModel) if x not in exclude]
     table_title = f"Jobs in workflow {workflow_key}"
     print_items(
         ctx,

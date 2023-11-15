@@ -19,26 +19,19 @@ import json
 
 
 from typing import Any, ClassVar, Dict, List, Optional
-from pydantic import BaseModel, StrictStr
-from torc.openapi_client.models.jobs_model import JobsModel
+from pydantic import BaseModel
+from torc.openapi_client.models.job_model import JobModel
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class JobWithEdgesModel(BaseModel):
+class AddJobsResponse(BaseModel):
     """
-    JobWithEdgesModel
+    AddJobsResponse
     """ # noqa: E501
-    job: JobsModel
-    resource_requirements: Optional[StrictStr] = None
-    scheduler: Optional[StrictStr] = None
-    input_files: Optional[List[StrictStr]] = None
-    output_files: Optional[List[StrictStr]] = None
-    input_user_data: Optional[List[StrictStr]] = None
-    output_user_data: Optional[List[StrictStr]] = None
-    blocked_by: Optional[List[StrictStr]] = None
-    __properties: ClassVar[List[str]] = ["job", "resource_requirements", "scheduler", "input_files", "output_files", "input_user_data", "output_user_data", "blocked_by"]
+    items: Optional[List[JobModel]] = None
+    __properties: ClassVar[List[str]] = ["items"]
 
     model_config = {
         "populate_by_name": True,
@@ -57,7 +50,7 @@ class JobWithEdgesModel(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of JobWithEdgesModel from a JSON string"""
+        """Create an instance of AddJobsResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -76,14 +69,18 @@ class JobWithEdgesModel(BaseModel):
             },
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of job
-        if self.job:
-            _dict['job'] = self.job.to_dict()
+        # override the default output from pydantic by calling `to_dict()` of each item in items (list)
+        _items = []
+        if self.items:
+            for _item in self.items:
+                if _item:
+                    _items.append(_item.to_dict())
+            _dict['items'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of JobWithEdgesModel from a dict"""
+        """Create an instance of AddJobsResponse from a dict"""
         if obj is None:
             return None
 
@@ -91,14 +88,7 @@ class JobWithEdgesModel(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "job": JobsModel.from_dict(obj.get("job")) if obj.get("job") is not None else None,
-            "resource_requirements": obj.get("resource_requirements"),
-            "scheduler": obj.get("scheduler"),
-            "input_files": obj.get("input_files"),
-            "output_files": obj.get("output_files"),
-            "input_user_data": obj.get("input_user_data"),
-            "output_user_data": obj.get("output_user_data"),
-            "blocked_by": obj.get("blocked_by")
+            "items": [JobModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None
         })
         return _obj
 

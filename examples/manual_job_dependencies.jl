@@ -50,27 +50,24 @@ function build_workflow(api, workflow)
     for i in 1:3
         job = send_api_command(
             api,
-            APIClient.add_job_with_edges,
+            APIClient.add_job,
             workflow._key,
-            APIClient.JobWithEdgesModel(
-                job=APIClient.JobsModel(
-                    name="job$(i)",
-                    command="echo hello",
-                ),
+            APIClient.JobModel(
+                name="job$(i)",
+                command="echo hello",
                 resource_requirements=medium._id,
-               ))
+               )
+            )
         push!(blocking_jobs, job._id)
     end
 
     send_api_command(
         api,
-        APIClient.add_job_with_edges,
+        APIClient.add_job,
         workflow._key,
-        APIClient.JobWithEdgesModel(
-            job=APIClient.JobsModel(
-                name="postprocess",
-                command="echo hello",
-            ),
+        job=APIClient.JobsModel(
+            name="postprocess",
+            command="echo hello",
             resource_requirements=small._id,
             blocked_by = blocking_jobs,
        ))

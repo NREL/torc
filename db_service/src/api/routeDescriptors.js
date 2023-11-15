@@ -101,7 +101,7 @@ const ROUTE_DESCRIPTORS = [
     name: 'job',
     description: 'Job',
     collection: 'jobs',
-    customPost: documents.addJob,
+    excludePost: true,
     schema: schemas.job,
     batchSchema: schemas.batchJobs,
     filterFields: [
