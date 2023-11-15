@@ -3,9 +3,9 @@
 import getpass
 import warnings
 
-from torc.openapi_client.models.files_model import FilesModel
-from torc.openapi_client.models.job_specifications_model import (
-    JobSpecificationsModel,
+from torc.openapi_client.models.file_model import FileModel
+from torc.openapi_client.models.job_specification_model import (
+    JobSpecificationModel,
 )
 from torc.openapi_client.models.compute_node_resource_stats_model import (
     ComputeNodeResourceStatsModel,
@@ -14,17 +14,17 @@ from torc.openapi_client.models.workflow_config_model import WorkflowConfigModel
 from torc.openapi_client.models.resource_requirements_model import (
     ResourceRequirementsModel,
 )
-from torc.openapi_client.models.workflow_specifications_model import (
-    WorkflowSpecificationsModel,
+from torc.openapi_client.models.workflow_specification_model import (
+    WorkflowSpecificationModel,
 )
-from torc.openapi_client.models.aws_schedulers_model import (
-    AwsSchedulersModel,
+from torc.openapi_client.models.aws_scheduler_model import (
+    AwsSchedulerModel,
 )
-from torc.openapi_client.models.local_schedulers_model import (
-    LocalSchedulersModel,
+from torc.openapi_client.models.local_scheduler_model import (
+    LocalSchedulerModel,
 )
-from torc.openapi_client.models.slurm_schedulers_model import (
-    SlurmSchedulersModel,
+from torc.openapi_client.models.slurm_scheduler_model import (
+    SlurmSchedulerModel,
 )
 from torc.openapi_client.models.workflow_specifications_schedulers import (
     WorkflowSpecificationsSchedulers,
@@ -55,14 +55,14 @@ class WorkflowBuilder:
         self._compute_node_wait_for_healthy_database = None
         self._prepare_jobs_sort_method = "gpus_runtime_memory"
 
-    def add_file(self, *args, **kwargs) -> FilesModel:
+    def add_file(self, *args, **kwargs) -> FileModel:
         """Add a file and return it."""
-        self._files.append(FilesModel(*args, **kwargs))
+        self._files.append(FileModel(*args, **kwargs))
         return self._files[-1]
 
-    def add_job(self, *args, **kwargs) -> JobSpecificationsModel:
+    def add_job(self, *args, **kwargs) -> JobSpecificationModel:
         """Add a job and return it."""
-        self._jobs.append(JobSpecificationsModel(*args, **kwargs))
+        self._jobs.append(JobSpecificationModel(*args, **kwargs))
         return self._jobs[-1]
 
     def map_function_to_jobs(
@@ -76,7 +76,7 @@ class WorkflowBuilder:
         scheduler=None,
         start_index=0,
         name_prefix="",
-    ) -> list[JobSpecificationsModel]:
+    ) -> list[JobSpecificationModel]:
         """Add a job that will call func for each item in params.
 
         Parameters
@@ -105,7 +105,7 @@ class WorkflowBuilder:
 
         Returns
         -------
-        list[JobSpecificationsModel]
+        list[JobSpecificationModel]
         """
         jobs = []
         output_data_names = []
@@ -158,19 +158,19 @@ class WorkflowBuilder:
         self._resource_requirements.append(ResourceRequirementsModel(*args, **kwargs))
         return self._resource_requirements[-1]
 
-    def add_aws_scheduler(self, *args, **kwargs) -> AwsSchedulersModel:
+    def add_aws_scheduler(self, *args, **kwargs) -> AwsSchedulerModel:
         """Add a slurm_scheduler and return it."""
-        self._aws_schedulers.append(AwsSchedulersModel(*args, **kwargs))
+        self._aws_schedulers.append(AwsSchedulerModel(*args, **kwargs))
         return self._aws_schedulers[-1]
 
-    def add_local_scheduler(self, *args, **kwargs) -> LocalSchedulersModel:
+    def add_local_scheduler(self, *args, **kwargs) -> LocalSchedulerModel:
         """Add a slurm_scheduler and return it."""
-        self._local_schedulers.append(LocalSchedulersModel(*args, **kwargs))
+        self._local_schedulers.append(LocalSchedulerModel(*args, **kwargs))
         return self._local_schedulers[-1]
 
-    def add_slurm_scheduler(self, *args, **kwargs) -> SlurmSchedulersModel:
+    def add_slurm_scheduler(self, *args, **kwargs) -> SlurmSchedulerModel:
         """Add a slurm_scheduler and return it."""
-        self._slurm_schedulers.append(SlurmSchedulersModel(*args, **kwargs))
+        self._slurm_schedulers.append(SlurmSchedulerModel(*args, **kwargs))
         return self._slurm_schedulers[-1]
 
     def add_user_data(self, *args, **kwargs) -> UserDataModel:
@@ -273,12 +273,12 @@ class WorkflowBuilder:
         self._prepare_jobs_sort_method = val
 
     @property
-    def files(self) -> list[FilesModel]:
+    def files(self) -> list[FileModel]:
         """Return a reference to the files list."""
         return self._files
 
     @property
-    def jobs(self) -> list[JobSpecificationsModel]:
+    def jobs(self) -> list[JobSpecificationModel]:
         """Return a reference to the jobs list."""
         return self._jobs
 
@@ -292,7 +292,7 @@ class WorkflowBuilder:
         """Return a reference to the resource requirements list."""
         return self._resource_monitor_config
 
-    def build(self, *args, **kwargs) -> WorkflowSpecificationsModel:
+    def build(self, *args, **kwargs) -> WorkflowSpecificationModel:
         """Build a workflow specification from the stored parameters."""
         config = WorkflowConfigModel(
             compute_node_resource_stats=self._resource_monitor_config,
@@ -304,7 +304,7 @@ class WorkflowBuilder:
         )
         if not kwargs.get("user"):
             kwargs["user"] = getpass.getuser()
-        return WorkflowSpecificationsModel(
+        return WorkflowSpecificationModel(
             *args,
             config=config,
             files=self._files or None,

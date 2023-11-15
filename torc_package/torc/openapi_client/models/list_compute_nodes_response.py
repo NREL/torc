@@ -20,7 +20,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictBool, StrictInt
-from torc.openapi_client.models.compute_nodes_model import ComputeNodesModel
+from torc.openapi_client.models.compute_node_model import ComputeNodeModel
 try:
     from typing import Self
 except ImportError:
@@ -30,7 +30,7 @@ class ListComputeNodesResponse(BaseModel):
     """
     ListComputeNodesResponse
     """ # noqa: E501
-    items: Optional[List[ComputeNodesModel]] = None
+    items: Optional[List[ComputeNodeModel]] = None
     skip: StrictInt
     max_limit: StrictInt
     count: StrictInt
@@ -93,7 +93,7 @@ class ListComputeNodesResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "items": [ComputeNodesModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
+            "items": [ComputeNodeModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
             "skip": obj.get("skip"),
             "max_limit": obj.get("max_limit"),
             "count": obj.get("count"),

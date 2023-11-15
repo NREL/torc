@@ -20,7 +20,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictBool, StrictInt
-from torc.openapi_client.models.slurm_schedulers_model import SlurmSchedulersModel
+from torc.openapi_client.models.slurm_scheduler_model import SlurmSchedulerModel
 try:
     from typing import Self
 except ImportError:
@@ -30,7 +30,7 @@ class ListSlurmSchedulersResponse(BaseModel):
     """
     ListSlurmSchedulersResponse
     """ # noqa: E501
-    items: Optional[List[SlurmSchedulersModel]] = None
+    items: Optional[List[SlurmSchedulerModel]] = None
     skip: StrictInt
     max_limit: StrictInt
     count: StrictInt
@@ -93,7 +93,7 @@ class ListSlurmSchedulersResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "items": [SlurmSchedulersModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
+            "items": [SlurmSchedulerModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
             "skip": obj.get("skip"),
             "max_limit": obj.get("max_limit"),
             "count": obj.get("count"),

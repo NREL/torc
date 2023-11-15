@@ -20,35 +20,16 @@ function addFile(doc, workflow) {
 }
 
 /**
- * Add a job document to the database.
- * @param {Object} doc
- * @param {Object} workflow
- * @return {Object}
- */
-function addJob(doc, workflow) {
-  if (doc.status == null) {
-    doc.status = JobStatus.Uninitialized;
-  }
-  return addWorkflowDocument(doc, 'jobs', workflow, false, true);
-}
-
-/**
  * Add a job from its specification to the database and create edges.
  * @param {Object} jobSpec
  * @param {Object} workflow
  * @return {Object}
  */
 function addJobSpecification(jobSpec, workflow) {
-  const blocksCollection = config.getWorkflowCollection(workflow, 'blocks');
   const filesCollection = config.getWorkflowCollection(workflow, 'files');
   const jobsCollection = config.getWorkflowCollection(workflow, 'jobs');
-  const needsCollection = config.getWorkflowCollection(workflow, 'needs');
-  const producesCollection = config.getWorkflowCollection(workflow, 'produces');
-  const requiresCollection = config.getWorkflowCollection(workflow, 'requires');
-  const consumesCollection = config.getWorkflowCollection(workflow, 'consumes');
   const rrCollection = config.getWorkflowCollection(workflow, 'resource_requirements');
   const scheduledBysCollection = config.getWorkflowCollection(workflow, 'scheduled_bys');
-  const storesCollection = config.getWorkflowCollection(workflow, 'stores');
   const userDataCollection = config.getWorkflowCollection(workflow, 'user_data');
 
   let schedulerConfigId = null;
@@ -83,56 +64,56 @@ function addJobSpecification(jobSpec, workflow) {
     cancel_on_blocking_job_failure: jobSpec.cancel_on_blocking_job_failure,
     needs_compute_node_schedule: jobSpec.needs_compute_node_schedule,
     supports_termination: jobSpec.supports_termination,
+    blocked_by: [],
+    input_files: [],
+    output_files: [],
+    input_user_data: [],
+    output_user_data: [],
+    resource_requirements: null,
+    scheduler: null,
     internal: schemas.jobInternal.validate({}).value,
   };
   if (jobSpec.key != null) {
     newJob._key = jobSpec._key;
   }
-  const job = addJob(newJob, workflow);
+
   for (const fileName of jobSpec.input_files) {
     const file = getDocumentByUniqueFilter(filesCollection, {name: fileName});
-    const edge = {_from: job._id, _to: file._id};
-    needsCollection.save(edge);
+    newJob.input_files.push(file._id);
   }
   for (const fileName of jobSpec.output_files) {
     const file = getDocumentByUniqueFilter(filesCollection, {name: fileName});
-    const edge = {_from: job._id, _to: file._id};
-    producesCollection.save(edge);
+    newJob.output_files.push(file._id);
   }
   for (const jobName of jobSpec.blocked_by) {
     const blockingJob = getDocumentByUniqueFilter(jobsCollection, {name: jobName});
-    const edge = {_from: blockingJob._id, _to: job._id};
-    blocksCollection.save(edge);
+    newJob.blocked_by.push(blockingJob._id);
   }
   for (const name of jobSpec.input_user_data) {
     const userData = getDocumentByUniqueFilter(userDataCollection, {name: name});
-    const edge = {_from: job._id, _to: userData._id};
-    consumesCollection.save(edge);
+    newJob.input_user_data.push(userData._id);
   }
   for (const name of jobSpec.output_user_data) {
     const userData = getDocumentByUniqueFilter(userDataCollection, {name: name});
-    const edge = {_from: job._id, _to: userData._id};
-    storesCollection.save(edge);
+    newJob.output_user_data.push(userData._id);
   }
   if (jobSpec.resource_requirements != null) {
     const rr = getDocumentByUniqueFilter(rrCollection, {name: jobSpec.resource_requirements});
-    const edge = {_from: job._id, _to: rr._id};
-    requiresCollection.save(edge);
+    newJob.resource_requirements = rr._id;
   }
   if (schedulerConfigId != null) {
-    const edge = {_from: job._id, _to: schedulerConfigId};
-    scheduledBysCollection.save(edge);
+    newJob.scheduler = schedulerConfigId;
   }
-  return job;
+  return addJob(newJob, workflow);
 }
 
 /**
  * Add a job with its edge definitions.
- * @param {schemas.jobWithEdges} job
+ * @param {schemas.job} job
  * @param {Object} workflow
  * @return {string}
  */
-function addJobWithEdges(job, workflow) {
+function addJob(job, workflow) {
   const blocksCollection = config.getWorkflowCollection(workflow, 'blocks');
   const needsCollection = config.getWorkflowCollection(workflow, 'needs');
   const producesCollection = config.getWorkflowCollection(workflow, 'produces');
@@ -141,7 +122,18 @@ function addJobWithEdges(job, workflow) {
   const scheduledBysCollection = config.getWorkflowCollection(workflow, 'scheduled_bys');
   const storesCollection = config.getWorkflowCollection(workflow, 'stores');
 
-  const addedJob = addJob(job.job, workflow);
+  if (job.status == null) {
+    job.status = JobStatus.Uninitialized;
+  }
+  const dbJob = JSON.parse(JSON.stringify(job));
+  const toRemove = [
+    'blocked_by', 'input_files', 'output_files', 'input_user_data', 'output_user_data',
+    'resource_requirements', 'scheduler',
+  ];
+  for (const field of toRemove) {
+    delete dbJob[field];
+  }
+  const addedJob = addWorkflowDocument(dbJob, 'jobs', workflow, false, true);
   const jobId = addedJob._id;
 
   if (job.resource_requirements != null) {
@@ -177,10 +169,10 @@ function addJobWithEdges(job, workflow) {
  * @param {Object} workflow
  * @return {Array}
  */
-function bulkAddJobsWithEdges(jobs, workflow) {
+function addJobs(jobs, workflow) {
   const addedJobs = [];
   for (const job of jobs) {
-    addedJobs.push(addJobWithEdges(job, workflow));
+    addedJobs.push(addJob(job, workflow));
   }
   return addedJobs;
 }
@@ -497,10 +489,9 @@ function updateWorkflowDocument(workflow, documentType, doc) {
 
 module.exports = {
   addFile,
-  addJob,
   addJobSpecification,
-  addJobWithEdges,
-  bulkAddJobsWithEdges,
+  addJob,
+  addJobs,
   addResourceRequirements,
   addResult,
   addScheduler,

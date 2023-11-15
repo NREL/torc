@@ -87,14 +87,14 @@ application on compute nodes. Here are some example settings:
 
    .. code-tab:: py
 
-    from torc.openapi_client.models.workflows_model import WorkflowsModel
+    from torc.openapi_client.models.workflow_model import WorkflowModel
     from torc.openapi_client.models.compute_node_resource_stats_model import (
         ComputeNodeResourceStatsModel,
     )
     from torc.api import make_api
 
     api = make_api("http://localhost:8529/_db/test-workflows/torc-service")
-    workflow = WorkflowsModel(user="user", name="my_workflow")
+    workflow = WorkflowModel(user="user", name="my_workflow")
     config = api.get_workflow_config(workflow.key)
     config.compute_node_resource_stats = ComputeNodeResourceStatsModel(
         cpu=True,
@@ -116,7 +116,7 @@ application on compute nodes. Here are some example settings:
     workflow = send_api_command(
         api,
         APIClient.add_workflow,
-        APIClient.WorkflowsModel(user = "user", name = "my_workflow")
+        APIClient.WorkflowModel(user = "user", name = "my_workflow")
     )
     config = send_api_command(api, APIClient.get_workflows_key_config, workflow._key)
     config.compute_node_resource_stats = APIClient.ComputeNodeResourceStatsModel(

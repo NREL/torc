@@ -12,7 +12,9 @@ const documents = require('../documents');
  * @param {Object} descriptor
  */
 function addRouterMethods(router, descriptor) {
-  addPostMethod(router, descriptor);
+  if (!('excludePost' in descriptor && descriptor['excludePost'])) {
+    addPostMethod(router, descriptor);
+  }
   addPutMethod(router, descriptor);
   addGetOneMethod(router, descriptor);
   addGetAllMethod(router, descriptor);

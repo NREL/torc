@@ -10,30 +10,28 @@ const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
 module.exports = router;
 
-router.post('workflows/:workflow/job_with_edges', function(req, res) {
+router.post('workflows/:workflow/jobs', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const workflow = documents.getWorkflow(workflowKey, res);
-  const job = documents.addJobWithEdges(req.body, workflow);
+  const job = documents.addJob(req.body, workflow);
   res.send(job);
 })
     .pathParam('workflow', joi.string().required(), 'Workflow key')
-    .body(schemas.jobWithEdgeIds)
+    .body(schemas.job)
     .response(schemas.jobsResponse)
-    .summary('Add a job with edge definitions.')
-    .description('Add a job with edge definitions.');
+    .summary('Store a job in the database.')
+    .description('Store a job in the database.');
 
-router.post('workflows/:workflow/bulk_jobs_with_edges', function(req, res) {
+router.post('workflows/:workflow/bulk_jobs', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const workflow = documents.getWorkflow(workflowKey, res);
-  const jobs = req.body.jobs;
-  const jobMeta = documents.bulkAddJobsWithEdges(jobs, workflow);
-  res.send({items: jobMeta});
+  res.send({items: documents.addJobs(req.body.jobs, workflow)});
 })
     .pathParam('workflow', joi.string().required(), 'Workflow key')
-    .body(schemas.jobsWithEdgeIds)
+    .body(schemas.jobs)
     .response(schemas.jobsResponse)
-    .summary('Add jobs in bulk with edge definitions.')
-    .description('Add jobs in bulk with edge definitions. Recommended max job count of 10,000.');
+    .summary('Store jobs in bulk in the database.')
+    .description('Store jobs in bulk in the database. Recommended max job count of 10,000.');
 
 router.get('workflows/:workflow/job_keys', function(req, res) {
   const workflowKey = req.pathParams.workflow;
@@ -277,8 +275,8 @@ router.get('/workflows/:workflow/jobs/:key/user_data_stores', function(req, res)
     .pathParam('workflow', joi.string().required(), 'Workflow key')
     .pathParam('key', joi.string().required(), 'Job key')
     .response(schemas.batchUserData, 'All user data stored for the job.')
-    .summary('Retrieve all user data for a job.')
-    .description('Retrieve all user data for a job.');
+    .summary('Retrieve all user data stored for a job.')
+    .description('Retrieve all user data stored for a job.');
 
 router.get('/workflows/:workflow/jobs/:key/user_data_consumes', function(req, res) {
   const workflowKey = req.pathParams.workflow;

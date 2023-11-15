@@ -3,6 +3,7 @@
 
 
 @doc raw"""job_process_stats_model
+Data model for stats collected by torc for each job process
 
     JobProcessStatsModel(;
         job_key=nothing,
@@ -18,14 +19,14 @@
         _rev=nothing,
     )
 
-    - job_key::String
-    - run_id::Int64
-    - avg_cpu_percent::Float64
-    - max_cpu_percent::Float64
-    - avg_rss::Float64
-    - max_rss::Float64
-    - num_samples::Int64
-    - timestamp::String
+    - job_key::String : Database identifier for the job
+    - run_id::Int64 : Workflow run identifier
+    - avg_cpu_percent::Float64 : Average CPU utilization of the process
+    - max_cpu_percent::Float64 : Maximium CPU utilization of the process
+    - avg_rss::Float64 : Average memory consumption of the process
+    - max_rss::Float64 : Maximum memory consumption of the process
+    - num_samples::Int64 : Number of samples taken by torc
+    - timestamp::String : Time the stats were recorded in the database
     - _key::String
     - _id::String
     - _rev::String

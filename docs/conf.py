@@ -31,6 +31,7 @@ extensions = [
     "sphinx_copybutton",
     "sphinx_click",
     "sphinxcontrib.openapi",
+    "sphinxcontrib.autodoc_pydantic",
     "sphinx_tabs.tabs",
 ]
 

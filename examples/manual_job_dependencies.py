@@ -6,22 +6,21 @@ import sys
 from torc.api import make_api
 from torc.loggers import setup_logging
 from torc.openapi_client.api import DefaultApi
-from torc.openapi_client.models.workflows_model import WorkflowsModel
-from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
-from torc.openapi_client.models.jobs_model import JobsModel
+from torc.openapi_client.models.workflow_model import WorkflowModel
+from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.resource_requirements_model import (
     ResourceRequirementsModel,
 )
-from torc.openapi_client.models.slurm_schedulers_model import SlurmSchedulersModel
+from torc.openapi_client.models.slurm_scheduler_model import SlurmSchedulerModel
 from torc.torc_rc import TorcRuntimeConfig
 
 
 logger = setup_logging(__name__)
 
 
-def create_workflow(api: DefaultApi) -> WorkflowsModel:
+def create_workflow(api: DefaultApi) -> WorkflowModel:
     """Creates a workflow."""
-    workflow = WorkflowsModel(
+    workflow = WorkflowModel(
         user=getpass.getuser(),
         name="manual_job_dependencies",
         description="Demo creation of a workflow with job dependencies specified manually.",
@@ -29,7 +28,7 @@ def create_workflow(api: DefaultApi) -> WorkflowsModel:
     return api.add_workflow(workflow)
 
 
-def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
+def build_workflow(api: DefaultApi, workflow: WorkflowModel):
     """Builds the workflow."""
     small = api.add_resource_requirements(
         workflow.key,
@@ -41,7 +40,7 @@ def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
     )
     api.add_slurm_scheduler(
         workflow.key,
-        SlurmSchedulersModel(
+        SlurmSchedulerModel(
             name="short",
             account="my_account",
             nodes=1,
@@ -51,19 +50,21 @@ def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
 
     blocking_jobs = []
     for i in range(1, 4):
-        job = api.add_job_with_edges(
+        job = api.add_job(
             workflow.key,
-            JobWithEdgesModel(
-                job=JobsModel(name=f"job{i}", command="echo test"),
+            JobModel(
+                name=f"job{i}",
+                command="echo test",
                 resource_requirements=medium.id,
             ),
         )
         blocking_jobs.append(job.id)
 
-    api.add_job_with_edges(
+    api.add_job(
         workflow.key,
-        JobWithEdgesModel(
-            job=JobsModel(name="postprocess", command="echo test"),
+        JobModel(
+            name="postprocess",
+            command="echo test",
             resource_requirements=small.id,
             blocked_by=blocking_jobs,
         ),

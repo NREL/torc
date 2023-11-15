@@ -15,23 +15,22 @@ from torc.openapi_client.configuration import Configuration
 from torc.openapi_client.models.workflow_specifications_schedulers import (
     WorkflowSpecificationsSchedulers,
 )
-from torc.openapi_client.models.local_schedulers_model import (
-    LocalSchedulersModel,
+from torc.openapi_client.models.local_scheduler_model import (
+    LocalSchedulerModel,
 )
-from torc.openapi_client.models.jobs_model import JobsModel
-from torc.openapi_client.models.job_specifications_model import (
-    JobSpecificationsModel,
+from torc.openapi_client.models.job_model import JobModel
+from torc.openapi_client.models.job_specification_model import (
+    JobSpecificationModel,
 )
-from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
 from torc.openapi_client.models.resource_requirements_model import (
     ResourceRequirementsModel,
 )
-from torc.openapi_client.models.workflows_model import WorkflowsModel
-from torc.openapi_client.models.workflow_specifications_model import (
-    WorkflowSpecificationsModel,
+from torc.openapi_client.models.workflow_model import WorkflowModel
+from torc.openapi_client.models.workflow_specification_model import (
+    WorkflowSpecificationModel,
 )
 from torc.openapi_client.models.workflow_config_model import WorkflowConfigModel
-from torc.openapi_client.models.results_model import ResultsModel
+from torc.openapi_client.models.result_model import ResultModel
 from torc.openapi_client.models.compute_node_resource_stats_model import (
     ComputeNodeResourceStatsModel,
 )
@@ -252,7 +251,7 @@ def independent_job_workflow(num_jobs):
     """Creates a workflow out of independent jobs."""
     api = _initialize_api()
 
-    workflow = api.add_workflow(WorkflowsModel(user="test", name="test"))
+    workflow = api.add_workflow(WorkflowModel(user="test", name="test"))
     small = api.add_resource_requirements(
         workflow.key,
         ResourceRequirementsModel(
@@ -264,14 +263,12 @@ def independent_job_workflow(num_jobs):
     )
 
     for i in range(num_jobs):
-        job = JobWithEdgesModel(
-            job=JobsModel(
-                name=str(i),
-                command="echo hello",
-            ),
+        job = JobModel(
+            name=str(i),
+            command="echo hello",
             resource_requirements=small.id,
         )
-        api.add_job_with_edges(workflow.key, job)
+        api.add_job(workflow.key, job)
 
     db = DatabaseInterface(api, workflow)
     api.initialize_jobs(workflow.key)
@@ -297,18 +294,18 @@ def _initialize_api():
 def workflow_with_cancel(tmp_path, cancel_on_blocking_job_failure):
     """Creates a diamond workflow out of 4 jobs."""
     api = _initialize_api()
-    job1 = JobSpecificationsModel(
+    job1 = JobSpecificationModel(
         name="job1",
         command=f"python {INVALID}",
     )
-    job2 = JobSpecificationsModel(
+    job2 = JobSpecificationModel(
         name="job2",
         command=f"python {NOOP}",
         blocked_by=["job1"],
         cancel_on_blocking_job_failure=cancel_on_blocking_job_failure,
     )
 
-    spec = WorkflowSpecificationsModel(jobs=[job1, job2])
+    spec = WorkflowSpecificationModel(jobs=[job1, job2])
     workflow = api.add_workflow_specification(spec)
     db = DatabaseInterface(api, workflow)
     api.initialize_jobs(workflow.key)
@@ -334,7 +331,7 @@ def completed_workflow(diamond_workflow):
         # so we need to update each time.
         job = db.get_document("jobs", name)
         status = "done"
-        result = ResultsModel(
+        result = ResultModel(
             job_key=job.key,
             run_id=workflow_status.run_id,
             return_code=0,
@@ -361,7 +358,7 @@ def incomplete_workflow(diamond_workflow):
     for name in ("preprocess", "work1"):
         job = db.get_document("jobs", name)
         status = "done"
-        result = ResultsModel(
+        result = ResultModel(
             job_key=job.key,
             run_id=1,
             return_code=0,
@@ -417,7 +414,7 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
 
     num_jobs_per_category = 3
     small_jobs = [
-        JobSpecificationsModel(
+        JobSpecificationModel(
             name=f"job_small{i}",
             command=f"python {RC_JOB} -i {i} -c small",
             resource_requirements=small.name,
@@ -425,7 +422,7 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
         for i in range(1, num_jobs_per_category + 1)
     ]
     medium_jobs = [
-        JobSpecificationsModel(
+        JobSpecificationModel(
             name=f"job_medium{i}",
             command=f"python {RC_JOB} -i {i} -c medium",
             resource_requirements=medium.name,
@@ -433,7 +430,7 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
         for i in range(1, num_jobs_per_category + 1)
     ]
     large_jobs = [
-        JobSpecificationsModel(
+        JobSpecificationModel(
             name=f"job_large{i}",
             command=f"python {RC_JOB} -i {i} -c large",
             resource_requirements=large.name,
@@ -441,7 +438,7 @@ def multi_resource_requirement_workflow(tmp_path, monitor_type):
         for i in range(1, num_jobs_per_category + 1)
     ]
 
-    spec = WorkflowSpecificationsModel(
+    spec = WorkflowSpecificationModel(
         jobs=small_jobs + medium_jobs + large_jobs,
         resource_requirements=[small, medium, large],
         config=WorkflowConfigModel(
@@ -471,15 +468,15 @@ def cancelable_workflow(tmp_path):
     output_dir.mkdir()
 
     small = ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT1S")
-    scheduler = LocalSchedulersModel(name="test")
+    scheduler = LocalSchedulerModel(name="test")
     jobs = [
-        JobSpecificationsModel(
+        JobSpecificationModel(
             name="job1",
             command=f"python {SLEEP_JOB} 1000",
             resource_requirements="small",
             supports_termination=True,
         ),
-        JobSpecificationsModel(
+        JobSpecificationModel(
             name="job2",
             command=f"python {SLEEP_JOB} 1000",
             resource_requirements="small",
@@ -487,7 +484,7 @@ def cancelable_workflow(tmp_path):
         ),
     ]
 
-    spec = WorkflowSpecificationsModel(
+    spec = WorkflowSpecificationModel(
         jobs=jobs,
         resource_requirements=[small],
         schedulers=WorkflowSpecificationsSchedulers(local_schedulers=[scheduler]),
@@ -532,7 +529,7 @@ def mapped_function_workflow(tmp_path):
     api = _initialize_api()
     output_dir = tmp_path / "output"
     output_dir.mkdir()
-    workflow = api.add_workflow(WorkflowsModel(user="test", name="test_workflow"))
+    workflow = api.add_workflow(WorkflowModel(user="test", name="test_workflow"))
     params = [{"val": i} for i in range(5)]
     map_function_to_jobs(
         api,

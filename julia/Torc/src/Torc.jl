@@ -32,7 +32,7 @@ function add_jobs(api::APIClient.DefaultApi, workflow_key::String, jobs, max_tra
     for job in jobs
         push!(batch, job)
         if length(batch) > max_transfer_size
-            res = send_api_command(api, APIClient.add_jobs_with_edges, workflow_key, APIClient.JobsWithEdgesModel(jobs=batch))
+            res = send_api_command(api, APIClient.add_jobs, workflow_key, APIClient.JobsModel(jobs=batch))
             added_jobs = vcat(added_jobs, res.items)
             added_jobs += res.items
             empty!(batch)
@@ -40,7 +40,7 @@ function add_jobs(api::APIClient.DefaultApi, workflow_key::String, jobs, max_tra
     end
 
     if length(batch) > 0
-        res = send_api_command(api, APIClient.add_jobs_with_edges, workflow_key, APIClient.JobsWithEdgesModel(jobs=batch))
+        res = send_api_command(api, APIClient.add_jobs, workflow_key, APIClient.JobsModel(jobs=batch))
         added_jobs = vcat(added_jobs, res.items)
     end
 
@@ -49,9 +49,9 @@ end
 
 export make_api
 export send_api_command
-export add_jobs
 export WorkflowBuilder
 export add_file!
+export add_jobs
 export add_job!
 export add_aws_scheduler!
 export add_local_scheduler!

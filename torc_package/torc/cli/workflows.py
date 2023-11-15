@@ -9,10 +9,10 @@ from pathlib import Path
 
 import click
 import json5
-from torc.openapi_client.models.jobs_model import JobsModel
-from torc.openapi_client.models.workflows_model import WorkflowsModel
-from torc.openapi_client.models.workflow_specifications_model import (
-    WorkflowSpecificationsModel,
+from torc.openapi_client.models.job_model import JobModel
+from torc.openapi_client.models.workflow_model import WorkflowModel
+from torc.openapi_client.models.workflow_specification_model import (
+    WorkflowSpecificationModel,
 )
 
 from torc.api import remove_db_keys, sanitize_workflow, iter_documents, list_model_fields
@@ -99,7 +99,7 @@ def create(ctx, api, update_rc_with_key, description, key, name, user):
     """Create a new workflow."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    workflow = WorkflowsModel(
+    workflow = WorkflowModel(
         description=description,
         key=key,
         name=name,
@@ -166,7 +166,7 @@ def create_from_commands_file(
             line = line.strip()
             if line:
                 commands.append(line)
-    workflow = WorkflowsModel(
+    workflow = WorkflowModel(
         description=description,
         key=key,
         name=name,
@@ -179,7 +179,7 @@ def create_from_commands_file(
         print(json.dumps({"filename": filename, "key": workflow.key}))
     for i, command in enumerate(commands, start=1):
         name = str(i)
-        api.add_job(workflow.key, JobsModel(name=name, command=command))
+        api.add_job(workflow.key, JobModel(name=name, command=command))
     if update_rc_with_key:
         _update_torc_rc(api, workflow)
 
@@ -298,7 +298,7 @@ def delete_all(ctx, api):
 
 def _delete_workflows_with_warning(ctx, api, keys):
     items = (api.get_workflow(x).to_dict() for x in keys)
-    columns = list_model_fields(WorkflowsModel)
+    columns = list_model_fields(WorkflowModel)
     columns.remove("_id")
     columns.remove("_rev")
     print_items(
@@ -379,7 +379,7 @@ def list_workflows(ctx, api, filters, sort_by, reverse_sort):
         filters["sort_by"] = sort_by
         filters["reverse_sort"] = reverse_sort
     items = (x.to_dict() for x in iter_documents(api.list_workflows, **filters))
-    columns = list_model_fields(WorkflowsModel)
+    columns = list_model_fields(WorkflowModel)
     columns.remove("_id")
     columns.remove("_rev")
     print_items(
@@ -598,7 +598,7 @@ def create_workflow_from_json_file(api, filename: Path, user=None):
         if "user" in data:
             logger.info("Overriding user=%s with %s", data["user"], user)
         data["user"] = user
-    spec = WorkflowSpecificationsModel(**data)
+    spec = WorkflowSpecificationModel(**data)
     return api.add_workflow_specification(spec)
 
 

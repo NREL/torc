@@ -4,7 +4,7 @@ import json
 import logging
 
 import click
-from torc.openapi_client.models.files_model import FilesModel
+from torc.openapi_client.models.file_model import FileModel
 
 from torc.api import iter_documents, list_model_fields
 from .common import (
@@ -47,7 +47,7 @@ def add(ctx, api, name, path):
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
-    file = FilesModel(
+    file = FileModel(
         name=name,
         path=path,
     )
@@ -130,7 +130,7 @@ def list_files(ctx, api, filters, sort_by, reverse_sort):
         filters["reverse_sort"] = reverse_sort
     table_title = f"Files in workflow {workflow_key}"
     items = (x.to_dict() for x in iter_documents(api.list_files, workflow_key, **filters))
-    columns = list_model_fields(FilesModel)
+    columns = list_model_fields(FileModel)
     columns.remove("_id")
     columns.remove("_rev")
     print_items(ctx, items, table_title, columns, "files")

@@ -104,7 +104,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/aws_schedulers_model'
+              $ref: '#/components/schemas/aws_scheduler_model'
         required: true
       responses:
         '200':
@@ -112,7 +112,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/aws_schedulers_model'
+                $ref: '#/components/schemas/aws_scheduler_model'
         '500':
           description: Default error response.
           content:
@@ -186,7 +186,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/aws_schedulers_model'
+                $ref: '#/components/schemas/aws_scheduler_model'
         '500':
           description: Default error response.
           content:
@@ -221,7 +221,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/aws_schedulers_model'
+              $ref: '#/components/schemas/aws_scheduler_model'
         required: true
       responses:
         '200':
@@ -229,7 +229,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/aws_schedulers_model'
+                $ref: '#/components/schemas/aws_scheduler_model'
         '500':
           description: Default error response.
           content:
@@ -272,7 +272,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/aws_schedulers_model'
+                $ref: '#/components/schemas/aws_scheduler_model'
         '500':
           description: Default error response.
           content:
@@ -383,7 +383,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/compute_nodes_model'
+              $ref: '#/components/schemas/compute_node_model'
         required: true
       responses:
         '200':
@@ -391,7 +391,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/compute_nodes_model'
+                $ref: '#/components/schemas/compute_node_model'
         '500':
           description: Default error response.
           content:
@@ -465,7 +465,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/compute_nodes_model'
+                $ref: '#/components/schemas/compute_node_model'
         '500':
           description: Default error response.
           content:
@@ -500,7 +500,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/compute_nodes_model'
+              $ref: '#/components/schemas/compute_node_model'
         required: true
       responses:
         '200':
@@ -508,7 +508,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/compute_nodes_model'
+                $ref: '#/components/schemas/compute_node_model'
         '500':
           description: Default error response.
           content:
@@ -551,7 +551,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/compute_nodes_model'
+                $ref: '#/components/schemas/compute_node_model'
         '500':
           description: Default error response.
           content:
@@ -1205,7 +1205,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/files_model'
+              $ref: '#/components/schemas/file_model'
         required: true
       responses:
         '200':
@@ -1213,7 +1213,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/files_model'
+                $ref: '#/components/schemas/file_model'
         '500':
           description: Default error response.
           content:
@@ -1286,7 +1286,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/files_model'
+                $ref: '#/components/schemas/file_model'
         '500':
           description: Default error response.
           content:
@@ -1321,7 +1321,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/files_model'
+              $ref: '#/components/schemas/file_model'
         required: true
       responses:
         '200':
@@ -1329,7 +1329,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/files_model'
+                $ref: '#/components/schemas/file_model'
         '500':
           description: Default error response.
           content:
@@ -1372,7 +1372,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/files_model'
+                $ref: '#/components/schemas/file_model'
         '500':
           description: Default error response.
           content:
@@ -1503,7 +1503,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/jobs_model'
+              $ref: '#/components/schemas/job_model'
         required: true
       responses:
         '200':
@@ -1511,7 +1511,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/jobs_model'
+                $ref: '#/components/schemas/job_model'
         '500':
           description: Default error response.
           content:
@@ -1584,7 +1584,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/jobs_model'
+                $ref: '#/components/schemas/job_model'
         '500':
           description: Default error response.
           content:
@@ -1619,7 +1619,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/jobs_model'
+              $ref: '#/components/schemas/job_model'
         required: true
       responses:
         '200':
@@ -1627,7 +1627,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/jobs_model'
+                $ref: '#/components/schemas/job_model'
         '500':
           description: Default error response.
           content:
@@ -1670,7 +1670,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/jobs_model'
+                $ref: '#/components/schemas/job_model'
         '500':
           description: Default error response.
           content:
@@ -2062,7 +2062,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/local_schedulers_model'
+              $ref: '#/components/schemas/local_scheduler_model'
         required: true
       responses:
         '200':
@@ -2070,7 +2070,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/local_schedulers_model'
+                $ref: '#/components/schemas/local_scheduler_model'
         '500':
           description: Default error response.
           content:
@@ -2146,7 +2146,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/local_schedulers_model'
+                $ref: '#/components/schemas/local_scheduler_model'
         '500':
           description: Default error response.
           content:
@@ -2181,7 +2181,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/local_schedulers_model'
+              $ref: '#/components/schemas/local_scheduler_model'
         required: true
       responses:
         '200':
@@ -2189,7 +2189,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/local_schedulers_model'
+                $ref: '#/components/schemas/local_scheduler_model'
         '500':
           description: Default error response.
           content:
@@ -2232,7 +2232,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/local_schedulers_model'
+                $ref: '#/components/schemas/local_scheduler_model'
         '500':
           description: Default error response.
           content:
@@ -2665,7 +2665,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/results_model'
+              $ref: '#/components/schemas/result_model'
         required: true
       responses:
         '200':
@@ -2673,7 +2673,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/results_model'
+                $ref: '#/components/schemas/result_model'
         '500':
           description: Default error response.
           content:
@@ -2746,7 +2746,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/results_model'
+                $ref: '#/components/schemas/result_model'
         '500':
           description: Default error response.
           content:
@@ -2781,7 +2781,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/results_model'
+              $ref: '#/components/schemas/result_model'
         required: true
       responses:
         '200':
@@ -2789,7 +2789,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/results_model'
+                $ref: '#/components/schemas/result_model'
         '500':
           description: Default error response.
           content:
@@ -2832,7 +2832,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/results_model'
+                $ref: '#/components/schemas/result_model'
         '500':
           description: Default error response.
           content:
@@ -3282,7 +3282,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/slurm_schedulers_model'
+              $ref: '#/components/schemas/slurm_scheduler_model'
         required: true
       responses:
         '200':
@@ -3290,7 +3290,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/slurm_schedulers_model'
+                $ref: '#/components/schemas/slurm_scheduler_model'
         '500':
           description: Default error response.
           content:
@@ -3366,7 +3366,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/slurm_schedulers_model'
+                $ref: '#/components/schemas/slurm_scheduler_model'
         '500':
           description: Default error response.
           content:
@@ -3401,7 +3401,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/slurm_schedulers_model'
+              $ref: '#/components/schemas/slurm_scheduler_model'
         required: true
       responses:
         '200':
@@ -3409,7 +3409,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/slurm_schedulers_model'
+                $ref: '#/components/schemas/slurm_scheduler_model'
         '500':
           description: Default error response.
           content:
@@ -3452,7 +3452,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/slurm_schedulers_model'
+                $ref: '#/components/schemas/slurm_scheduler_model'
         '500':
           description: Default error response.
           content:
@@ -3819,7 +3819,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/edges_name_model'
+              $ref: '#/components/schemas/edge_model'
         required: true
       responses:
         '200':
@@ -3827,7 +3827,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/edges_name_model'
+                $ref: '#/components/schemas/edge_model'
         '500':
           description: Default error response.
           content:
@@ -3916,7 +3916,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/edges_name_model'
+                $ref: '#/components/schemas/edge_model'
         '500':
           description: Default error response.
           content:
@@ -3966,7 +3966,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/edges_name_model'
+                $ref: '#/components/schemas/edge_model'
         '500':
           description: Default error response.
           content:
@@ -4073,42 +4073,6 @@ paths:
               schema:
                 $ref: '#/components/schemas/default_error_response'
       security: []
-    post:
-      tags: []
-      summary: Store a job and create edges.
-      description: Store a job in the "jobs" collection and create edges.
-      operationId: add_job_specification
-      parameters:
-      - name: workflow
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        description: job definition to store in the collection.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/job_specifications_model'
-        required: true
-      responses:
-        '200':
-          description: job stored in the collection.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/job_specifications_model'
-        '500':
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/default_error_response'
-      security: []
-      x-codegen-request-body-name: body
   /workflows/{workflow}/job_specifications/{key}:
     get:
       tags: []
@@ -4138,7 +4102,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/job_specifications_model'
+                $ref: '#/components/schemas/job_specification_model'
         '500':
           description: Default error response.
           content:
@@ -4146,12 +4110,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/default_error_response'
       security: []
-  /workflows/{workflow}/job_with_edges:
+  /workflows/{workflow}/bulk_jobs:
     post:
       tags: []
-      summary: Add a job with edge definitions.
-      description: Add a job with edge definitions.
-      operationId: add_job_with_edges
+      summary: Add jobs in bulk.
+      description: Add jobs in bulk. Recommended max job count of 10,000.
+      operationId: add_jobs
       parameters:
       - name: workflow
         in: path
@@ -4165,7 +4129,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/job_with_edges_model'
+              $ref: '#/components/schemas/jobs_model'
         required: true
       responses:
         '200':
@@ -4173,44 +4137,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/jobs_model'
-        '500':
-          description: Default error response.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/default_error_response'
-      security: []
-      x-codegen-request-body-name: body
-  /workflows/{workflow}/bulk_jobs_with_edges:
-    post:
-      tags: []
-      summary: Add jobs in bulk with edge definitions.
-      description: Add jobs in bulk with edge definitions. Recommended max job count
-        of 10,000.
-      operationId: add_jobs_with_edges
-      parameters:
-      - name: workflow
-        in: path
-        description: Workflow key
-        required: true
-        style: simple
-        explode: false
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/jobs_with_edges_model'
-        required: true
-      responses:
-        '200':
-          description: HTTP 200 OK.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/add_jobs_with_edges_response'
+                $ref: '#/components/schemas/add_jobs_response'
         '500':
           description: Default error response.
           content:
@@ -4434,7 +4361,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/edges_name_model'
+                $ref: '#/components/schemas/edge_model'
         '500':
           description: Default error response.
           content:
@@ -4534,7 +4461,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/results_model'
+              $ref: '#/components/schemas/result_model'
         required: true
       responses:
         '200':
@@ -4542,7 +4469,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/jobs_model'
+                $ref: '#/components/schemas/job_model'
         '500':
           description: Default error response.
           content:
@@ -4610,7 +4537,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/jobs_model'
+                $ref: '#/components/schemas/job_model'
         '500':
           description: Default error response.
           content:
@@ -4768,7 +4695,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/results_model'
+                $ref: '#/components/schemas/result_model'
         '500':
           description: Default error response.
           content:
@@ -4787,7 +4714,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflow_specifications_model'
+              $ref: '#/components/schemas/workflow_specification_model'
         required: true
       responses:
         '200':
@@ -4795,7 +4722,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflows_model'
+                $ref: '#/components/schemas/workflow_model'
         '500':
           description: Default error response.
           content:
@@ -4825,7 +4752,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_specifications_model'
+                $ref: '#/components/schemas/workflow_specification_model'
         '500':
           description: Default error response.
           content:
@@ -4845,7 +4772,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_specifications_model'
+                $ref: '#/components/schemas/workflow_specification_model'
         '500':
           description: Default error response.
           content:
@@ -4865,7 +4792,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflow_specifications_model'
+                $ref: '#/components/schemas/workflow_specification_model'
         '500':
           description: Default error response.
           content:
@@ -4997,7 +4924,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflows_model'
+              $ref: '#/components/schemas/workflow_model'
         required: true
       responses:
         '200':
@@ -5005,7 +4932,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflows_model'
+                $ref: '#/components/schemas/workflow_model'
         '500':
           description: Default error response.
           content:
@@ -5035,7 +4962,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflows_model'
+                $ref: '#/components/schemas/workflow_model'
         '500':
           description: Default error response.
           content:
@@ -5062,7 +4989,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/workflows_model'
+              $ref: '#/components/schemas/workflow_model'
         required: true
       responses:
         '200':
@@ -5070,7 +4997,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflows_model'
+                $ref: '#/components/schemas/workflow_model'
         '500':
           description: Default error response.
           content:
@@ -5105,7 +5032,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/workflows_model'
+                $ref: '#/components/schemas/workflow_model'
         '500':
           description: Default error response.
           content:
@@ -6118,16 +6045,19 @@ paths:
       security: []
 components:
   schemas:
-    jobs_with_edges_model:
+    jobs_model:
+      description: Data model for a batch of jobs
       required:
       - jobs
       type: object
       properties:
         jobs:
           type: array
+          description: Jobs in the batch
           items:
-            $ref: '#/components/schemas/job_with_edges_model'
+            $ref: '#/components/schemas/job_model'
     workflow_status_model:
+      description: Data model for a workflow
       required:
       - auto_tune_status
       - is_canceled
@@ -6147,21 +6077,23 @@ components:
         _rev:
           type: string
     workflow_specifications_schedulers:
+      description: Data model for all schedulers in the workflow
       type: object
       properties:
         aws_schedulers:
           type: array
           items:
-            $ref: '#/components/schemas/aws_schedulers_model'
+            $ref: '#/components/schemas/aws_scheduler_model'
         local_schedulers:
           type: array
           items:
-            $ref: '#/components/schemas/local_schedulers_model'
+            $ref: '#/components/schemas/local_scheduler_model'
         slurm_schedulers:
           type: array
           items:
-            $ref: '#/components/schemas/slurm_schedulers_model'
+            $ref: '#/components/schemas/slurm_scheduler_model'
     job_process_stats_model:
+      description: Data model for stats collected by torc for each job process
       required:
       - avg_cpu_percent
       - avg_rss
@@ -6174,21 +6106,29 @@ components:
       type: object
       properties:
         job_key:
+          description: Database identifier for the job
           type: string
         run_id:
           type: integer
+          description: Workflow run identifier
         avg_cpu_percent:
           type: number
+          description: Average CPU utilization of the process
         max_cpu_percent:
           type: number
+          description: Maximium CPU utilization of the process
         avg_rss:
           type: number
+          description: Average memory consumption of the process
         max_rss:
           type: number
+          description: Maximum memory consumption of the process
         num_samples:
           type: integer
+          description: Number of samples taken by torc
         timestamp:
           type: string
+          description: Time the stats were recorded in the database
         _key:
           type: string
         _id:
@@ -6202,13 +6142,25 @@ components:
           $ref: '#/components/schemas/compute_node_resource_stats_model'
         compute_node_expiration_buffer_seconds:
           type: number
+          description: Inform all compute nodes to shut down this number of seconds before the
+            expiration time. This allows torc to send SIGTERM to all job processes and set all
+            statuses to terminated. Increase the time in cases where the job processes handle
+            SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the
+            time given to jobs. If not set, take the database's default value of 30 seconds.
         compute_node_wait_for_new_jobs_seconds:
           type: number
+          description: Inform all compute nodes to wait for new jobs for this time period before
+            exiting. Does not apply if the workflow is complete.
         compute_node_ignore_workflow_completion:
           type: boolean
           default: false
+          description: Inform all compute nodes to ignore workflow completions and hold onto
+            allocations indefinitely. Useful for debugging failed jobs and possibly dynamic
+            workflows where jobs get added after starting.
         compute_node_wait_for_healthy_database_minutes:
           type: number
+          description: Inform all compute nodes to wait this number of minutes if the database
+            becomes unresponsive.
         prepare_jobs_sort_method:
           type: string
           enum:
@@ -6216,13 +6168,15 @@ components:
           - gpus_memory_runtime
           - none
           default: gpus_runtime_memory
+          description: Inform all compute nodes to use this sort method when calling the
+            prepare_jobs_for_submission command.
         _key:
           type: string
         _id:
           type: string
         _rev:
           type: string
-    results_model:
+    result_model:
       required:
       - completion_time
       - exec_time_minutes
@@ -6234,23 +6188,32 @@ components:
       properties:
         job_key:
           type: string
+          description: Database key for the job tied to this result
         run_id:
           type: integer
+          description: ID of the workflow run. Incremements on every start and restart.
         return_code:
           type: integer
+          description: Code returned by the job. Zero is success; non-zero is a failure.
         exec_time_minutes:
           type: number
+          description: Job execution time in minutes
         completion_time:
           type: string
+          description: Timestamp of when the job completed.
         status:
           type: string
+          description: Status of the job; managed by torc.
         _key:
           type: string
+          description: Unique database identifier for the result. Does not include collection name.
         _id:
           type: string
+          description: Unique database identifier for the result. Includes collection name and _key.
         _rev:
           type: string
-    aws_schedulers_model:
+          description: Database revision of the result
+    aws_scheduler_model:
       type: object
       properties:
         name:
@@ -6261,37 +6224,6 @@ components:
           type: string
         _rev:
           type: string
-    job_with_edges_model:
-      required:
-      - job
-      type: object
-      properties:
-        job:
-          $ref: '#/components/schemas/jobs_model'
-        resource_requirements:
-          type: string
-        scheduler:
-          type: string
-        input_files:
-          type: array
-          items:
-            type: string
-        output_files:
-          type: array
-          items:
-            type: string
-        input_user_data:
-          type: array
-          items:
-            type: string
-        output_user_data:
-          type: array
-          items:
-            type: string
-        blocked_by:
-          type: array
-          items:
-            type: string
     default_error_response:
       required:
       - error
@@ -6305,7 +6237,7 @@ components:
           type: string
         code:
           type: integer
-    edges_name_model:
+    edge_model:
       required:
       - _from
       - _to
@@ -6313,10 +6245,13 @@ components:
       properties:
         _from:
           type: string
+          description: Database ID of the 'from' document
         _to:
           type: string
+          description: Database ID of the 'to' document
         data:
           type: object
+          description: User-defined data
           properties: {}
         _key:
           type: string
@@ -6342,37 +6277,81 @@ components:
           type: string
         _rev:
           type: string
-    jobs_model:
+    job_model:
       required:
       - command
       type: object
       properties:
         name:
           type: string
+          description: Name of the job; no requirements on uniqueness
         command:
           type: string
+          description: CLI command to execute. Will not be executed in a shell and so must not
+            include shell characters.
         invocation_script:
           type: string
+          description: Wrapper script for command in case the environment needs customization.
         status:
           type: string
+          description: Status of job; managed by torc.
         needs_compute_node_schedule:
           type: boolean
           default: false
+          description: Informs torc to schedule a compute node to start this job.
         cancel_on_blocking_job_failure:
           type: boolean
           default: true
+          description: Cancel this job if any of its blocking jobs fails.
         supports_termination:
           type: boolean
           default: false
+          description: Informs torc that the job can be terminated gracefully before a wall-time
+            timeout.
+        blocked_by:
+          type: array
+          items:
+            type: string
+          description: Database IDs of jobs that block this job
+        input_files:
+          type: array
+          items:
+            type: string
+          description: Database IDs of files that this job needs
+        output_files:
+          type: array
+          items:
+            type: string
+          description: Database IDs of files that this job produces
+        input_user_data:
+          type: array
+          items:
+            type: string
+          description: Database IDs of user-data objects that this job needs
+        output_user_data:
+          type: array
+          items:
+            type: string
+          description: Database IDs of user-data objects that this job produces
+        resource_requirements:
+          type: string
+          description: Optional database ID of resources required by this job
+        scheduler:
+          type: string
+          description: Optional database ID of scheduler needed by this job
         internal:
           $ref: '#/components/schemas/jobs_internal'
         _key:
           type: string
+          description: Unique database identifier for the job. Does not include collection name.
         _id:
           type: string
+          description: Unique database identifier for the job. Includes collection name and _key.
         _rev:
           type: string
-    slurm_schedulers_model:
+          description: Database revision of the job
+    slurm_scheduler_model:
+      description: Data model for Slurm scheduler
       required:
       - account
       - nodes
@@ -6380,27 +6359,38 @@ components:
       properties:
         name:
           type: string
+          description: Name of the scheduler
         account:
           type: string
+          description: Slurm account ID
         gres:
           type: string
+          description: Generic resource requirement
         mem:
           type: string
+          description: Compute node memory requirement
         nodes:
           type: integer
+          description: Number of nodes for the Slurm allocation
         ntasks_per_node:
           type: integer
+          description: Number of tasks to invoke on each node
         partition:
           type: string
+          description: Compute node partition; likely not necessary because Slurm should optimize it.
         qos:
           type: string
           default: normal
+          description: Priority of Slurm job
         tmp:
           type: string
+          description: Compute node local storage size requirement
         walltime:
           type: string
+          description: Slurm runtime requirement, e.g., 04:00:00
         extra:
           type: string
+          description: Extra Slurm parameters that torc will append to the sbatch command
         _key:
           type: string
         _id:
@@ -6459,7 +6449,7 @@ components:
           type: integer
         job_key:
           type: string
-    local_schedulers_model:
+    local_scheduler_model:
       type: object
       properties:
         name:
@@ -6475,24 +6465,28 @@ components:
           type: string
         _rev:
           type: string
-    workflows_model:
+    workflow_model:
       type: object
       properties:
         name:
           type: string
+          description: Name of the workflow
         user:
           type: string
+          description: User that created the workflow
         description:
           type: string
+          description: Description of the workflow
         timestamp:
           type: string
+          description: Timestamp of workflow creation
         _key:
           type: string
         _id:
           type: string
         _rev:
           type: string
-    compute_nodes_model:
+    compute_node_model:
       required:
       - hostname
       - pid
@@ -6547,10 +6541,14 @@ components:
         is_ephemeral:
           type: boolean
           default: false
+          description: The data will only exist for the duration of one run. Torc will clear it
+            before starting new runs.
         name:
           type: string
+          description: Name of the data object
         data:
           type: object
+          description: User-defined data
           properties: {}
         _key:
           type: string
@@ -6563,118 +6561,159 @@ components:
       properties:
         name:
           type: string
+          description: Name of the resource requirements
         num_cpus:
           type: integer
+          description: Number of CPUs required by a job
         num_gpus:
           type: integer
+          description: Number of GPUs required by a job
         num_nodes:
           type: integer
+          description: Number of nodes required by a job
         memory:
           type: string
           default: 1m
+          description: Amount of memory required by a job, e.g., 20g
         runtime:
           type: string
           default: P0DT1M
+          description: Maximum runtime for a job
         _key:
           type: string
         _id:
           type: string
         _rev:
           type: string
-    files_model:
+    file_model:
+      description: Data model for files needed or produced by jobs. Can be data or code.
       required:
       - path
       type: object
       properties:
         name:
           type: string
+          description: User-defined name of the file (not necessarily the filename)
         path:
           type: string
+          description: Path to the file; can be relative to the execution directory.
         st_mtime:
           type: number
+          description: Timestamp of when the file was last modified
         _key:
           type: string
+          description: Unique database identifier for the file. Does not include collection name.
         _id:
           type: string
+          description: Unique database identifier for the file. Includes collection name and _key.
         _rev:
           type: string
-    workflow_specifications_model:
+          description: Database revision of the file
+    workflow_specification_model:
       type: object
       properties:
         name:
           type: string
+          description: Name of the workflow
         key:
           type: string
+          description: Optional key to use as the database identifier. If set, it must be unique in
+            the database. It is recommended to let the database create the identifier.
         user:
           type: string
+          description: User that created the workflow
         description:
           type: string
+          description: Timestamp of workflow creation
         jobs:
           type: array
           items:
-            $ref: '#/components/schemas/job_specifications_model'
+            $ref: '#/components/schemas/job_specification_model'
+          description: Jobs in the workflow. Each job name must be unique.
         files:
           type: array
           items:
-            $ref: '#/components/schemas/files_model'
+            $ref: '#/components/schemas/file_model'
+          description: Files in the workflow. Each file name must be unique.
         user_data:
           type: array
           items:
             $ref: '#/components/schemas/user_data_model'
+          description: User data in the workflow. Each name must be unique.
         resource_requirements:
           type: array
           items:
             $ref: '#/components/schemas/resource_requirements_model'
+          description: Resource requirements in the workflow. Each name must be unique.
         schedulers:
           $ref: '#/components/schemas/workflow_specifications_schedulers'
+          description: Schedulers in the workflow. Each name must be unique.
         config:
           $ref: '#/components/schemas/workflow_config_model'
-    job_specifications_model:
+          description: Workflow configuration
+    job_specification_model:
       required:
       - command
       type: object
       properties:
         name:
           type: string
+          description: Name of the job; must be unique within the workflow specification.
         key:
           type: string
+          description: Optional database identifier for the job. If set, must be unique. It is
+            recommended to let the database create the identifier.
         command:
           type: string
+          description: CLI command to execute. Will not be executed in a shell and so must not
+            include shell characters.
         invocation_script:
           type: string
+          description: Wrapper script for command in case the environment needs customization.
         cancel_on_blocking_job_failure:
           type: boolean
           default: true
+          description: Cancel this job if any of its blocking jobs fails.
         supports_termination:
           type: boolean
           default: false
+          description: Informs torc that the job can be terminated gracefully before a wall-time
+            timeout.
         scheduler:
           type: string
+          description: Optional name of scheduler needed by this job
         needs_compute_node_schedule:
           type: boolean
           default: false
+          description: Informs torc to schedule a compute node to start this job.
         input_user_data:
           type: array
           items:
             type: string
+          description: Names of user-data objects that this job needs
         output_user_data:
           type: array
           items:
             type: string
+          description: Names of user-data objects that this job produces
         resource_requirements:
           type: string
+          description: Optional name of resources required by this job
         input_files:
           type: array
           items:
             type: string
+          description: Names of files that this job needs
         output_files:
           type: array
           items:
             type: string
+          description: Names of files that this job produces
         blocked_by:
           type: array
           items:
             type: string
+          description: Names of jobs that block this job
     jobs_internal:
       type: object
       properties:
@@ -6736,7 +6775,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/aws_schedulers_model'
+            $ref: '#/components/schemas/aws_scheduler_model'
         skip:
           type: integer
         max_limit:
@@ -6747,13 +6786,13 @@ components:
           type: integer
         has_more:
           type: boolean
-    add_jobs_with_edges_response:
+    add_jobs_response:
       type: object
       properties:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/jobs_model'
+            $ref: '#/components/schemas/job_model'
     list_compute_nodes_response:
       required:
       - count
@@ -6766,7 +6805,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/compute_nodes_model'
+            $ref: '#/components/schemas/compute_node_model'
         skip:
           type: integer
         max_limit:
@@ -6836,7 +6875,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/files_model'
+            $ref: '#/components/schemas/file_model'
         skip:
           type: integer
         max_limit:
@@ -6859,7 +6898,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/jobs_model'
+            $ref: '#/components/schemas/job_model'
         skip:
           type: integer
         max_limit:
@@ -6905,7 +6944,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/local_schedulers_model'
+            $ref: '#/components/schemas/local_scheduler_model'
         skip:
           type: integer
         max_limit:
@@ -6951,7 +6990,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/results_model'
+            $ref: '#/components/schemas/result_model'
         skip:
           type: integer
         max_limit:
@@ -6997,7 +7036,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/slurm_schedulers_model'
+            $ref: '#/components/schemas/slurm_scheduler_model'
         skip:
           type: integer
         max_limit:
@@ -7043,7 +7082,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/edges_name_model'
+            $ref: '#/components/schemas/edge_model'
         skip:
           type: integer
         max_limit:
@@ -7067,7 +7106,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/job_specifications_model'
+            $ref: '#/components/schemas/job_specification_model'
         skip:
           type: integer
         max_limit:
@@ -7094,7 +7133,7 @@ components:
         items:
           type: array
           items:
-            $ref: '#/components/schemas/workflows_model'
+            $ref: '#/components/schemas/workflow_model'
         skip:
           type: integer
         max_limit:
@@ -7167,7 +7206,7 @@ components:
         jobs:
           type: array
           items:
-            $ref: '#/components/schemas/jobs_model'
+            $ref: '#/components/schemas/job_model'
         reason:
           type: string
     prepare_next_jobs_for_submission_response:
@@ -7176,7 +7215,7 @@ components:
         jobs:
           type: array
           items:
-            $ref: '#/components/schemas/jobs_model'
+            $ref: '#/components/schemas/job_model'
     prepare_jobs_for_scheduling_response:
       type: object
       properties:

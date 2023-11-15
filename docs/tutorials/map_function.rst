@@ -95,8 +95,8 @@ Build the workflow
     import getpass
 
     from torc.api import make_api, map_function_to_jobs
-    from torc.openapi_client.models.workflows_model import WorkflowsModel
-    from torc.openapi_client.models.jobs_model import JobsModel
+    from torc.openapi_client.models.workflow_model import WorkflowModel
+    from torc.openapi_client.models.job_model import JobModel
     from torc.openapi_client.models.resource_requirements_model import (
         ResourceRequirementsModel,
     )
@@ -107,7 +107,7 @@ Build the workflow
         {"input1": 4, "input2": 5, "input3": 6},
         {"input1": 7, "input2": 8, "input3": 9},
     ]
-    workflow = WorkflowsModel(
+    workflow = WorkflowModel(
         user=getpass.getuser(),
         name="my_workflow",
         description="My workflow",
@@ -128,7 +128,7 @@ Build the workflow
     )
     scheduler = api.add_slurm_scheduler(
         workflow.key,
-        SlurmSchedulersModel(
+        SlurmSchedulerModel(
             name="short",
             account="my_account",
             mem="180224",

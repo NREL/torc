@@ -10,22 +10,6 @@ const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
 module.exports = router;
 
-router.post('/workflows/:workflow/job_specifications', function(req, res) {
-  const workflowKey = req.pathParams.workflow;
-  const workflow = documents.getWorkflow(workflowKey, res);
-  try {
-    const doc = documents.addJobSpecification(req.body, workflow);
-    res.send(doc);
-  } catch (e) {
-    utils.handleArangoApiErrors(e, res, `Post job_specifications workflowKey=${workflowKey}`);
-  }
-})
-    .pathParam('workflow', joi.string().required(), 'Workflow key')
-    .body(schemas.jobSpecification, 'job definition to store in the collection.')
-    .response(schemas.job, 'job stored in the collection.')
-    .summary('Store a job and create edges.')
-    .description('Store a job in the "jobs" collection and create edges.');
-
 router.get('/workflows/:workflow/job_specifications/:key', function(req, res) {
   const workflowKey = req.pathParams.workflow;
   const key = req.pathParams.key;

@@ -28,10 +28,8 @@ Class | Method
 *DefaultApi* | [**add_file**](docs/DefaultApi.md#add_file)<br/>**POST** /workflows/{workflow}/files<br/>Store a file.
 *DefaultApi* | [**add_job**](docs/DefaultApi.md#add_job)<br/>**POST** /workflows/{workflow}/jobs<br/>Store a job.
 *DefaultApi* | [**add_job_process_stats**](docs/DefaultApi.md#add_job_process_stats)<br/>**POST** /workflows/{workflow}/job_process_stats<br/>Store a job process statistics.
-*DefaultApi* | [**add_job_specification**](docs/DefaultApi.md#add_job_specification)<br/>**POST** /workflows/{workflow}/job_specifications<br/>Store a job and create edges.
 *DefaultApi* | [**add_job_user_data**](docs/DefaultApi.md#add_job_user_data)<br/>**POST** /workflows/{workflow}/jobs/{key}/user_data<br/>Store user data for a job.
-*DefaultApi* | [**add_job_with_edges**](docs/DefaultApi.md#add_job_with_edges)<br/>**POST** /workflows/{workflow}/job_with_edges<br/>Add a job with edge definitions.
-*DefaultApi* | [**add_jobs_with_edges**](docs/DefaultApi.md#add_jobs_with_edges)<br/>**POST** /workflows/{workflow}/bulk_jobs_with_edges<br/>Add jobs in bulk with edge definitions.
+*DefaultApi* | [**add_jobs**](docs/DefaultApi.md#add_jobs)<br/>**POST** /workflows/{workflow}/bulk_jobs<br/>Add jobs in bulk.
 *DefaultApi* | [**add_local_scheduler**](docs/DefaultApi.md#add_local_scheduler)<br/>**POST** /workflows/{workflow}/local_schedulers<br/>Store a local compute node configuration.
 *DefaultApi* | [**add_resource_requirements**](docs/DefaultApi.md#add_resource_requirements)<br/>**POST** /workflows/{workflow}/resource_requirements<br/>Store a resource requirements.
 *DefaultApi* | [**add_result**](docs/DefaultApi.md#add_result)<br/>**POST** /workflows/{workflow}/results<br/>Store a result.
@@ -160,26 +158,25 @@ Class | Method
 
 ## Models
 
- - [AddJobsWithEdgesResponse](docs/AddJobsWithEdgesResponse.md)
+ - [AddJobsResponse](docs/AddJobsResponse.md)
  - [AutoTuneStatus](docs/AutoTuneStatus.md)
- - [AwsSchedulersModel](docs/AwsSchedulersModel.md)
+ - [AwsSchedulerModel](docs/AwsSchedulerModel.md)
+ - [ComputeNodeModel](docs/ComputeNodeModel.md)
  - [ComputeNodeResourceStatsModel](docs/ComputeNodeResourceStatsModel.md)
  - [ComputeNodeStats](docs/ComputeNodeStats.md)
  - [ComputeNodeStatsModel](docs/ComputeNodeStatsModel.md)
- - [ComputeNodesModel](docs/ComputeNodesModel.md)
  - [ComputeNodesResources](docs/ComputeNodesResources.md)
  - [DefaultErrorResponse](docs/DefaultErrorResponse.md)
- - [EdgesNameModel](docs/EdgesNameModel.md)
- - [FilesModel](docs/FilesModel.md)
+ - [EdgeModel](docs/EdgeModel.md)
+ - [FileModel](docs/FileModel.md)
  - [GetDotGraphResponse](docs/GetDotGraphResponse.md)
  - [GetReadyJobRequirementsResponse](docs/GetReadyJobRequirementsResponse.md)
  - [IsCompleteResponse](docs/IsCompleteResponse.md)
+ - [JobModel](docs/JobModel.md)
  - [JobProcessStatsModel](docs/JobProcessStatsModel.md)
- - [JobSpecificationsModel](docs/JobSpecificationsModel.md)
- - [JobWithEdgesModel](docs/JobWithEdgesModel.md)
+ - [JobSpecificationModel](docs/JobSpecificationModel.md)
  - [JobsInternal](docs/JobsInternal.md)
  - [JobsModel](docs/JobsModel.md)
- - [JobsWithEdgesModel](docs/JobsWithEdgesModel.md)
  - [JoinByInboundEdgeCollectionEdgeResponse](docs/JoinByInboundEdgeCollectionEdgeResponse.md)
  - [JoinByOutboundEdgeCollectionEdgeResponse](docs/JoinByOutboundEdgeCollectionEdgeResponse.md)
  - [ListAwsSchedulersResponse](docs/ListAwsSchedulersResponse.md)
@@ -206,21 +203,21 @@ Class | Method
  - [ListSlurmSchedulersResponse](docs/ListSlurmSchedulersResponse.md)
  - [ListUserDataResponse](docs/ListUserDataResponse.md)
  - [ListWorkflowsResponse](docs/ListWorkflowsResponse.md)
- - [LocalSchedulersModel](docs/LocalSchedulersModel.md)
+ - [LocalSchedulerModel](docs/LocalSchedulerModel.md)
  - [PrepareJobsForSchedulingResponse](docs/PrepareJobsForSchedulingResponse.md)
  - [PrepareJobsForSubmissionResponse](docs/PrepareJobsForSubmissionResponse.md)
  - [PrepareNextJobsForSubmissionResponse](docs/PrepareNextJobsForSubmissionResponse.md)
  - [ProcessChangedJobInputsResponse](docs/ProcessChangedJobInputsResponse.md)
  - [ResourceRequirementsModel](docs/ResourceRequirementsModel.md)
- - [ResultsModel](docs/ResultsModel.md)
+ - [ResultModel](docs/ResultModel.md)
  - [ScheduledComputeNodesModel](docs/ScheduledComputeNodesModel.md)
- - [SlurmSchedulersModel](docs/SlurmSchedulersModel.md)
+ - [SlurmSchedulerModel](docs/SlurmSchedulerModel.md)
  - [UserDataModel](docs/UserDataModel.md)
  - [WorkflowConfigModel](docs/WorkflowConfigModel.md)
- - [WorkflowSpecificationsModel](docs/WorkflowSpecificationsModel.md)
+ - [WorkflowModel](docs/WorkflowModel.md)
+ - [WorkflowSpecificationModel](docs/WorkflowSpecificationModel.md)
  - [WorkflowSpecificationsSchedulers](docs/WorkflowSpecificationsSchedulers.md)
  - [WorkflowStatusModel](docs/WorkflowStatusModel.md)
- - [WorkflowsModel](docs/WorkflowsModel.md)
 
 
 <a id="authorization"></a>

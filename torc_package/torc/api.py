@@ -9,9 +9,8 @@ from resource_monitor.timing.timer_stats import Timer
 
 from torc.openapi_client import ApiClient, DefaultApi
 from torc.openapi_client.configuration import Configuration
-from torc.openapi_client.models.job_with_edges_model import JobWithEdgesModel
 from torc.openapi_client.rest import ApiException
-from torc.openapi_client.models.jobs_with_edges_model import JobsWithEdgesModel
+from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.jobs_model import JobsModel
 from torc.openapi_client.models.user_data_model import UserDataModel
 from torc.common import timer_stats_collector, check_function
@@ -143,9 +142,7 @@ def send_api_command(func, *args, raise_on_error=True, **kwargs):
             return None
 
 
-def add_jobs(
-    api: DefaultApi, workflow_key: str, jobs, max_transfer_size=10_000
-) -> list[JobsModel]:
+def add_jobs(api: DefaultApi, workflow_key: str, jobs, max_transfer_size=10_000) -> list[JobModel]:
     """Add an iterable of jobs to the workflow.
 
     Parameters
@@ -153,7 +150,7 @@ def add_jobs(
     api : DefaultApi
     workflow_key : str
     jobs : list
-        Any iterable of JobWithEdges
+        Any iterable of JobModel
     max_transfer_size : int
         Maximum number of jobs to add per API call. 10,000 is recommended.
 
@@ -167,16 +164,12 @@ def add_jobs(
     for job in jobs:
         batch.append(job)
         if len(batch) > max_transfer_size:
-            res = send_api_command(
-                api.add_jobs_with_edges, workflow_key, JobsWithEdgesModel(jobs=batch)
-            )
+            res = send_api_command(api.add_jobs, workflow_key, JobsModel(jobs=batch))
             added_jobs += res.items
             batch.clear()
 
     if batch:
-        res = send_api_command(
-            api.add_jobs_with_edges, workflow_key, JobsWithEdgesModel(jobs=batch)
-        )
+        res = send_api_command(api.add_jobs, workflow_key, JobsModel(jobs=batch))
         added_jobs += res.items
 
     return added_jobs
@@ -200,7 +193,7 @@ def map_function_to_jobs(
     scheduler=None,
     start_index=0,
     name_prefix="",
-) -> list[JobsModel]:
+) -> list[JobModel]:
     """Add a job that will call func for each item in params.
 
     Parameters
@@ -252,11 +245,9 @@ def map_function_to_jobs(
             workflow_key, UserDataModel(name=f"output_{job_name}", data=data)
         )
         output_data_ids.append(output_ud.id)
-        job = JobWithEdgesModel(
-            job=JobsModel(
-                name=job_name,
-                command="torc jobs run-function",
-            ),
+        job = JobModel(
+            name=job_name,
+            command="torc jobs run-function",
             input_user_data=[input_ud.id],
             output_user_data=[output_ud.id],
             resource_requirements=resource_requirements,
@@ -279,11 +270,9 @@ def map_function_to_jobs(
             workflow_key, UserDataModel(name="postprocess_result", data=data)
         )
         jobs.append(
-            JobWithEdgesModel(
-                job=JobsModel(
-                    name="postprocess",
-                    command="torc jobs run-postprocess",
-                ),
+            JobModel(
+                name="postprocess",
+                command="torc jobs run-postprocess",
                 input_user_data=[input_ud.id] + output_data_ids,
                 output_user_data=[output_ud.id],
                 resource_requirements=resource_requirements,
@@ -295,7 +284,7 @@ def map_function_to_jobs(
 
 
 def sanitize_workflow(data: dict):
-    """Sanitize a WorkflowSpecificationsModel dictionary in place so that it can be loaded into
+    """Sanitize a WorkflowSpecificationModel dictionary in place so that it can be loaded into
     the database.
     """
     for item in itertools.chain(

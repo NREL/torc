@@ -20,7 +20,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
-from torc.openapi_client.models.jobs_model import JobsModel
+from torc.openapi_client.models.job_model import JobModel
 try:
     from typing import Self
 except ImportError:
@@ -30,7 +30,7 @@ class PrepareJobsForSubmissionResponse(BaseModel):
     """
     PrepareJobsForSubmissionResponse
     """ # noqa: E501
-    jobs: Optional[List[JobsModel]] = None
+    jobs: Optional[List[JobModel]] = None
     reason: Optional[StrictStr] = None
     __properties: ClassVar[List[str]] = ["jobs", "reason"]
 
@@ -89,7 +89,7 @@ class PrepareJobsForSubmissionResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "jobs": [JobsModel.from_dict(_item) for _item in obj.get("jobs")] if obj.get("jobs") is not None else None,
+            "jobs": [JobModel.from_dict(_item) for _item in obj.get("jobs")] if obj.get("jobs") is not None else None,
             "reason": obj.get("reason")
         })
         return _obj

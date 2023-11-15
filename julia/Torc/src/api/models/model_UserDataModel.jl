@@ -13,9 +13,9 @@
         _rev=nothing,
     )
 
-    - is_ephemeral::Bool
-    - name::String
-    - data::Any
+    - is_ephemeral::Bool : The data will only exist for the duration of one run. Torc will clear it before starting new runs.
+    - name::String : Name of the data object
+    - data::Any : User-defined data
     - _key::String
     - _id::String
     - _rev::String

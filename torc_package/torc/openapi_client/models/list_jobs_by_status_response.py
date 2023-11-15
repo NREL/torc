@@ -20,7 +20,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictBool, StrictInt
-from torc.openapi_client.models.jobs_model import JobsModel
+from torc.openapi_client.models.job_model import JobModel
 try:
     from typing import Self
 except ImportError:
@@ -30,7 +30,7 @@ class ListJobsByStatusResponse(BaseModel):
     """
     ListJobsByStatusResponse
     """ # noqa: E501
-    items: Optional[List[JobsModel]] = None
+    items: Optional[List[JobModel]] = None
     skip: StrictInt
     max_limit: StrictInt
     count: StrictInt
@@ -93,7 +93,7 @@ class ListJobsByStatusResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "items": [JobsModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
+            "items": [JobModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
             "skip": obj.get("skip"),
             "max_limit": obj.get("max_limit"),
             "count": obj.get("count"),

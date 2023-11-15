@@ -29,7 +29,7 @@ except ImportError:
 
 class WorkflowStatusModel(BaseModel):
     """
-    WorkflowStatusModel
+    Data model for a workflow
     """ # noqa: E501
     is_canceled: StrictBool
     run_id: StrictInt

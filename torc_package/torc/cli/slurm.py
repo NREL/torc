@@ -8,8 +8,8 @@ from datetime import timedelta
 from pathlib import Path
 
 import click
-from torc.openapi_client.models.slurm_schedulers_model import (
-    SlurmSchedulersModel,
+from torc.openapi_client.models.slurm_scheduler_model import (
+    SlurmSchedulerModel,
 )
 from torc.openapi_client.models.scheduled_compute_nodes_model import (
     ScheduledComputeNodesModel,
@@ -140,7 +140,7 @@ def add_config(ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, w
     }
     if extra:
         config["extra"] = extra
-    scheduler = api.add_slurm_scheduler(workflow_key, SlurmSchedulersModel(name=name, **config))
+    scheduler = api.add_slurm_scheduler(workflow_key, SlurmSchedulerModel(name=name, **config))
     if output_format == "text":
         logger.info("Added Slurm configuration %s to the database", name)
     else:
@@ -239,7 +239,7 @@ def list_configs(ctx, api):
     workflow_key = get_workflow_key_from_context(ctx, api)
     table_title = f"Slurm configurations in workflow {workflow_key}"
     items = (x.to_dict() for x in iter_documents(api.list_slurm_schedulers, workflow_key))
-    columns = list_model_fields(SlurmSchedulersModel)
+    columns = list_model_fields(SlurmSchedulerModel)
     columns.remove("_rev")
     print_items(ctx, items, table_title, columns, "configs")
 

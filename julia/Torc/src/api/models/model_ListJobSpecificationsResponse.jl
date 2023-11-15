@@ -13,7 +13,7 @@
         has_more=nothing,
     )
 
-    - items::Vector{JobSpecificationsModel}
+    - items::Vector{JobSpecificationModel}
     - skip::Int64
     - max_limit::Int64
     - count::Int64
@@ -21,7 +21,7 @@
     - has_more::Bool
 """
 Base.@kwdef mutable struct ListJobSpecificationsResponse <: OpenAPI.APIModel
-    items::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{JobSpecificationsModel} }
+    items::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{JobSpecificationModel} }
     skip::Union{Nothing, Int64} = nothing
     max_limit::Union{Nothing, Int64} = nothing
     count::Union{Nothing, Int64} = nothing
@@ -39,7 +39,7 @@ Base.@kwdef mutable struct ListJobSpecificationsResponse <: OpenAPI.APIModel
     end
 end # type ListJobSpecificationsResponse
 
-const _property_types_ListJobSpecificationsResponse = Dict{Symbol,String}(Symbol("items")=>"Vector{JobSpecificationsModel}", Symbol("skip")=>"Int64", Symbol("max_limit")=>"Int64", Symbol("count")=>"Int64", Symbol("total_count")=>"Int64", Symbol("has_more")=>"Bool", )
+const _property_types_ListJobSpecificationsResponse = Dict{Symbol,String}(Symbol("items")=>"Vector{JobSpecificationModel}", Symbol("skip")=>"Int64", Symbol("max_limit")=>"Int64", Symbol("count")=>"Int64", Symbol("total_count")=>"Int64", Symbol("has_more")=>"Bool", )
 OpenAPI.property_type(::Type{ ListJobSpecificationsResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ListJobSpecificationsResponse[name]))}
 
 function check_required(o::ListJobSpecificationsResponse)

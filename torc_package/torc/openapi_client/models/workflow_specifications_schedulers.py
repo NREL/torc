@@ -20,9 +20,9 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel
-from torc.openapi_client.models.aws_schedulers_model import AwsSchedulersModel
-from torc.openapi_client.models.local_schedulers_model import LocalSchedulersModel
-from torc.openapi_client.models.slurm_schedulers_model import SlurmSchedulersModel
+from torc.openapi_client.models.aws_scheduler_model import AwsSchedulerModel
+from torc.openapi_client.models.local_scheduler_model import LocalSchedulerModel
+from torc.openapi_client.models.slurm_scheduler_model import SlurmSchedulerModel
 try:
     from typing import Self
 except ImportError:
@@ -30,11 +30,11 @@ except ImportError:
 
 class WorkflowSpecificationsSchedulers(BaseModel):
     """
-    WorkflowSpecificationsSchedulers
+    Data model for all schedulers in the workflow
     """ # noqa: E501
-    aws_schedulers: Optional[List[AwsSchedulersModel]] = None
-    local_schedulers: Optional[List[LocalSchedulersModel]] = None
-    slurm_schedulers: Optional[List[SlurmSchedulersModel]] = None
+    aws_schedulers: Optional[List[AwsSchedulerModel]] = None
+    local_schedulers: Optional[List[LocalSchedulerModel]] = None
+    slurm_schedulers: Optional[List[SlurmSchedulerModel]] = None
     __properties: ClassVar[List[str]] = ["aws_schedulers", "local_schedulers", "slurm_schedulers"]
 
     model_config = {
@@ -106,9 +106,9 @@ class WorkflowSpecificationsSchedulers(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "aws_schedulers": [AwsSchedulersModel.from_dict(_item) for _item in obj.get("aws_schedulers")] if obj.get("aws_schedulers") is not None else None,
-            "local_schedulers": [LocalSchedulersModel.from_dict(_item) for _item in obj.get("local_schedulers")] if obj.get("local_schedulers") is not None else None,
-            "slurm_schedulers": [SlurmSchedulersModel.from_dict(_item) for _item in obj.get("slurm_schedulers")] if obj.get("slurm_schedulers") is not None else None
+            "aws_schedulers": [AwsSchedulerModel.from_dict(_item) for _item in obj.get("aws_schedulers")] if obj.get("aws_schedulers") is not None else None,
+            "local_schedulers": [LocalSchedulerModel.from_dict(_item) for _item in obj.get("local_schedulers")] if obj.get("local_schedulers") is not None else None,
+            "slurm_schedulers": [SlurmSchedulerModel.from_dict(_item) for _item in obj.get("slurm_schedulers")] if obj.get("slurm_schedulers") is not None else None
         })
         return _obj
 

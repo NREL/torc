@@ -90,6 +90,13 @@ const job = joi.object().required().keys({
   needs_compute_node_schedule: joi.boolean().default(false),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   supports_termination: joi.boolean().default(false),
+  resource_requirements: joi.string().optional(),
+  scheduler: joi.string().optional(),
+  input_files: joi.array().items(joi.string()).default([]),
+  output_files: joi.array().items(joi.string()).default([]),
+  input_user_data: joi.array().items(joi.string()).default([]),
+  output_user_data: joi.array().items(joi.string()).default([]),
+  blocked_by: joi.array().items(joi.string()).default([]),
   // This only exists to all prepareJobsForSubmission to take less time to find
   // jobs with exclusive access.
   internal: jobInternal.optional().default(jobInternal.validate({}).value),
@@ -97,6 +104,10 @@ const job = joi.object().required().keys({
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),
+});
+
+const jobs = joi.object().required().keys({
+  jobs: joi.array().items(job).required(),
 });
 
 const jobsResponse = joi.object().required().keys({
@@ -134,21 +145,6 @@ const jobProcessStats = joi.object().required().keys({
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),
-});
-
-const jobWithEdgeIds = joi.object().required().keys({
-  job: job.required(),
-  resource_requirements: joi.string().optional(),
-  scheduler: joi.string().optional(),
-  input_files: joi.array().items(joi.string()).default([]),
-  output_files: joi.array().items(joi.string()).default([]),
-  input_user_data: joi.array().items(joi.string()).default([]),
-  output_user_data: joi.array().items(joi.string()).default([]),
-  blocked_by: joi.array().items(joi.string()).default([]),
-});
-
-const jobsWithEdgeIds = joi.object().required().keys({
-  jobs: joi.array().items(jobWithEdgeIds).required(),
 });
 
 const listItemsResponse = joi.object().required().keys({
@@ -494,12 +490,11 @@ module.exports = {
   file,
   isComplete,
   job,
+  jobs,
   jobsResponse,
   jobInternal,
   jobProcessStats,
   jobSpecification,
-  jobWithEdgeIds,
-  jobsWithEdgeIds,
   listItemsResponse,
   localScheduler,
   missingUserDataResponse,
