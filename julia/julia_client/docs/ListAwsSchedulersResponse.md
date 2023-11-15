@@ -4,7 +4,7 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**items** | [**Vector{AwsSchedulersModel}**](AwsSchedulersModel.md) |  | [optional] [default to nothing]
+**items** | [**Vector{AwsSchedulerModel}**](AwsSchedulerModel.md) |  | [optional] [default to nothing]
 **skip** | **Int64** |  | [default to nothing]
 **max_limit** | **Int64** |  | [default to nothing]
 **count** | **Int64** |  | [default to nothing]

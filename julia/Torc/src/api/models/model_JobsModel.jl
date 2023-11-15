@@ -3,12 +3,13 @@
 
 
 @doc raw"""jobs_model
+Data model for a batch of jobs
 
     JobsModel(;
         jobs=nothing,
     )
 
-    - jobs::Vector{JobModel}
+    - jobs::Vector{JobModel} : Jobs in the batch
 """
 Base.@kwdef mutable struct JobsModel <: OpenAPI.APIModel
     jobs::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{JobModel} }

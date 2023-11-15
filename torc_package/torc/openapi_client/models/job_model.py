@@ -31,24 +31,24 @@ class JobModel(BaseModel):
     """
     JobModel
     """ # noqa: E501
-    name: Optional[StrictStr] = None
-    command: StrictStr
-    invocation_script: Optional[StrictStr] = None
-    status: Optional[StrictStr] = None
-    needs_compute_node_schedule: Optional[StrictBool] = False
-    cancel_on_blocking_job_failure: Optional[StrictBool] = True
-    supports_termination: Optional[StrictBool] = False
-    blocked_by: Optional[List[StrictStr]] = None
-    input_files: Optional[List[StrictStr]] = None
-    output_files: Optional[List[StrictStr]] = None
-    input_user_data: Optional[List[StrictStr]] = None
-    output_user_data: Optional[List[StrictStr]] = None
-    resource_requirements: Optional[StrictStr] = None
-    scheduler: Optional[StrictStr] = None
+    name: Optional[StrictStr] = Field(default=None, description="Name of the job; no requirements on uniqueness")
+    command: StrictStr = Field(description="CLI command to execute. Will not be executed in a shell and so must not include shell characters.")
+    invocation_script: Optional[StrictStr] = Field(default=None, description="Wrapper script for command in case the environment needs customization.")
+    status: Optional[StrictStr] = Field(default=None, description="Status of job; managed by torc.")
+    needs_compute_node_schedule: Optional[StrictBool] = Field(default=False, description="Informs torc to schedule a compute node to start this job.")
+    cancel_on_blocking_job_failure: Optional[StrictBool] = Field(default=True, description="Cancel this job if any of its blocking jobs fails.")
+    supports_termination: Optional[StrictBool] = Field(default=False, description="Informs torc that the job can be terminated gracefully before a wall-time timeout.")
+    blocked_by: Optional[List[StrictStr]] = Field(default=None, description="Database IDs of jobs that block this job")
+    input_files: Optional[List[StrictStr]] = Field(default=None, description="Database IDs of files that this job needs")
+    output_files: Optional[List[StrictStr]] = Field(default=None, description="Database IDs of files that this job produces")
+    input_user_data: Optional[List[StrictStr]] = Field(default=None, description="Database IDs of user-data objects that this job needs")
+    output_user_data: Optional[List[StrictStr]] = Field(default=None, description="Database IDs of user-data objects that this job produces")
+    resource_requirements: Optional[StrictStr] = Field(default=None, description="Optional database ID of resources required by this job")
+    scheduler: Optional[StrictStr] = Field(default=None, description="Optional database ID of scheduler needed by this job")
     internal: Optional[JobsInternal] = None
-    key: Optional[StrictStr] = Field(default=None, alias="_key")
-    id: Optional[StrictStr] = Field(default=None, alias="_id")
-    rev: Optional[StrictStr] = Field(default=None, alias="_rev")
+    key: Optional[StrictStr] = Field(default=None, description="Unique database identifier for the job. Does not include collection name.", alias="_key")
+    id: Optional[StrictStr] = Field(default=None, description="Unique database identifier for the job. Includes collection name and _key.", alias="_id")
+    rev: Optional[StrictStr] = Field(default=None, description="Database revision of the job", alias="_rev")
     __properties: ClassVar[List[str]] = ["name", "command", "invocation_script", "status", "needs_compute_node_schedule", "cancel_on_blocking_job_failure", "supports_termination", "blocked_by", "input_files", "output_files", "input_user_data", "output_user_data", "resource_requirements", "scheduler", "internal", "_key", "_id", "_rev"]
 
     model_config = {

@@ -11,13 +11,13 @@ from torc.openapi_client.models.compute_node_resource_stats_model import (
     ComputeNodeResourceStatsModel,
 )
 from torc.openapi_client.api import DefaultApi
-from torc.openapi_client.models.files_model import FilesModel
+from torc.openapi_client.models.file_model import FileModel
 from torc.openapi_client.models.job_model import JobModel
-from torc.openapi_client.models.workflows_model import WorkflowsModel
+from torc.openapi_client.models.workflow_model import WorkflowModel
 from torc.openapi_client.models.resource_requirements_model import (
     ResourceRequirementsModel,
 )
-from torc.openapi_client.models.slurm_schedulers_model import SlurmSchedulersModel
+from torc.openapi_client.models.slurm_scheduler_model import SlurmSchedulerModel
 from torc.torc_rc import TorcRuntimeConfig
 
 
@@ -30,9 +30,9 @@ WORK = Path("tests") / "worker" / "scripts" / "work.py"
 logger = setup_logging(__name__)
 
 
-def create_workflow(api: DefaultApi) -> WorkflowsModel:
+def create_workflow(api: DefaultApi) -> WorkflowModel:
     """Create the workflow"""
-    workflow = WorkflowsModel(
+    workflow = WorkflowModel(
         user=getpass.getuser(),
         name="diamond_workflow",
         description="Example diamond workflow",
@@ -40,7 +40,7 @@ def create_workflow(api: DefaultApi) -> WorkflowsModel:
     return api.add_workflow(workflow)
 
 
-def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
+def build_workflow(api: DefaultApi, workflow: WorkflowModel):
     """Creates a workflow with implicit job dependencies declared through files."""
     config = api.get_workflow_config(workflow.key)
     config.compute_node_resource_stats = ComputeNodeResourceStatsModel(
@@ -55,11 +55,11 @@ def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
     inputs_file = Path("inputs.json")
     inputs_file.write_text(json.dumps({"val": 5}), encoding="utf-8")
 
-    inputs = api.add_file(workflow.key, FilesModel(name="inputs", path=str(inputs_file)))
-    f1 = api.add_file(workflow.key, FilesModel(name="file1", path="f1.json"))
-    f2 = api.add_file(workflow.key, FilesModel(name="file2", path="f2.json"))
-    f3 = api.add_file(workflow.key, FilesModel(name="file3", path="f3.json"))
-    f4 = api.add_file(workflow.key, FilesModel(name="file4", path="f4.json"))
+    inputs = api.add_file(workflow.key, FileModel(name="inputs", path=str(inputs_file)))
+    f1 = api.add_file(workflow.key, FileModel(name="file1", path="f1.json"))
+    f2 = api.add_file(workflow.key, FileModel(name="file2", path="f2.json"))
+    f3 = api.add_file(workflow.key, FileModel(name="file3", path="f3.json"))
+    f4 = api.add_file(workflow.key, FileModel(name="file4", path="f4.json"))
 
     small = api.add_resource_requirements(
         workflow.key,
@@ -75,7 +75,7 @@ def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
     )
     api.add_slurm_scheduler(
         workflow.key,
-        SlurmSchedulersModel(
+        SlurmSchedulerModel(
             name="short",
             account="my_account",
             nodes=1,

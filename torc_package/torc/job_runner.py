@@ -28,8 +28,8 @@ from resource_monitor.models import (
 from resource_monitor.resource_monitor import run_monitor_async
 from resource_monitor.timing.timer_stats import Timer
 from torc.openapi_client import DefaultApi
-from torc.openapi_client.models.compute_nodes_model import (
-    ComputeNodesModel,
+from torc.openapi_client.models.compute_node_model import (
+    ComputeNodeModel,
 )
 from torc.openapi_client.models.compute_node_stats_model import (
     ComputeNodeStatsModel,
@@ -40,11 +40,11 @@ from torc.openapi_client.models.compute_nodes_resources import (
 from torc.openapi_client.models.compute_node_stats import (
     ComputeNodeStats,
 )
-from torc.openapi_client.models.edges_name_model import EdgesNameModel
+from torc.openapi_client.models.edge_model import EdgeModel
 from torc.openapi_client.models.job_process_stats_model import (
     JobProcessStatsModel,
 )
-from torc.openapi_client.models.workflows_model import WorkflowsModel
+from torc.openapi_client.models.workflow_model import WorkflowModel
 
 import torc
 from torc.api import send_api_command, iter_documents, wait_for_healthy_database
@@ -68,7 +68,7 @@ class JobRunner:
     def __init__(
         self,
         api: DefaultApi,
-        workflow: WorkflowsModel,
+        workflow: WorkflowModel,
         output_dir: Path,
         job_completion_poll_interval=JOB_COMPLETION_POLL_INTERVAL,
         max_parallel_jobs=None,
@@ -336,7 +336,7 @@ class JobRunner:
             logger.error("Failed to schedule compute nodes: %s", ret)
 
     def _create_compute_node(self, scheduler):
-        compute_node = ComputeNodesModel(
+        compute_node = ComputeNodeModel(
             hostname=self._hostname,
             pid=os.getpid(),
             start_time=str(datetime.now()),
@@ -573,7 +573,7 @@ class JobRunner:
             self._api.add_edge,
             self._workflow.key,
             "executed",
-            EdgesNameModel(
+            EdgeModel(
                 _from=self._compute_node.id,
                 to=job.db_job.id,
                 data={"run_id": self._run_id},
@@ -705,7 +705,7 @@ class JobRunner:
             self._api.add_edge,
             self._workflow.key,
             "node_used",
-            EdgesNameModel(
+            EdgeModel(
                 _from=self._compute_node.id,
                 to=res.id,
             ),
@@ -733,7 +733,7 @@ class JobRunner:
             self._api.add_edge,
             self._workflow.key,
             "process_used",
-            EdgesNameModel(
+            EdgeModel(
                 _from=f"jobs__{self._workflow.key}/{result.process_key}",
                 to=res.id,
             ),

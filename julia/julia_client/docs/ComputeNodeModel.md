@@ -1,4 +1,4 @@
-# ComputeNodesModel
+# ComputeNodeModel
 
 
 ## Properties

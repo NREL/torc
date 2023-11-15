@@ -30,9 +30,9 @@ class UserDataModel(BaseModel):
     """
     UserDataModel
     """ # noqa: E501
-    is_ephemeral: Optional[StrictBool] = False
-    name: Optional[StrictStr] = None
-    data: Optional[Union[str, Any]] = None
+    is_ephemeral: Optional[StrictBool] = Field(default=False, description="The data will only exist for the duration of one run. Torc will clear it before starting new runs.")
+    name: Optional[StrictStr] = Field(default=None, description="Name of the data object")
+    data: Optional[Union[str, Any]] = Field(default=None, description="User-defined data")
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")

@@ -5,7 +5,7 @@ function create_workflow(api)
     return send_api_command(
         api,
         APIClient.add_workflow,
-        APIClient.WorkflowsModel(
+        APIClient.WorkflowModel(
             user = "user",
             name = "diamond_workflow",
             description = "Example diamond workflow",

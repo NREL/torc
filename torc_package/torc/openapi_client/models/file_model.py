@@ -18,25 +18,25 @@ import re  # noqa: F401
 import json
 
 
-from typing import Any, ClassVar, Dict, List, Optional
-from pydantic import BaseModel, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional, Union
+from pydantic import BaseModel, StrictFloat, StrictInt, StrictStr
 from pydantic import Field
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class LocalSchedulersModel(BaseModel):
+class FileModel(BaseModel):
     """
-    LocalSchedulersModel
+    Data model for files needed or produced by jobs. Can be data or code.
     """ # noqa: E501
-    name: Optional[StrictStr] = 'default'
-    memory: Optional[StrictStr] = None
-    num_cpus: Optional[StrictInt] = None
-    key: Optional[StrictStr] = Field(default=None, alias="_key")
-    id: Optional[StrictStr] = Field(default=None, alias="_id")
-    rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = ["name", "memory", "num_cpus", "_key", "_id", "_rev"]
+    name: Optional[StrictStr] = Field(default=None, description="User-defined name of the file (not necessarily the filename)")
+    path: StrictStr = Field(description="Path to the file; can be relative to the execution directory.")
+    st_mtime: Optional[Union[StrictFloat, StrictInt]] = Field(default=None, description="Timestamp of when the file was last modified")
+    key: Optional[StrictStr] = Field(default=None, description="Unique database identifier for the file. Does not include collection name.", alias="_key")
+    id: Optional[StrictStr] = Field(default=None, description="Unique database identifier for the file. Includes collection name and _key.", alias="_id")
+    rev: Optional[StrictStr] = Field(default=None, description="Database revision of the file", alias="_rev")
+    __properties: ClassVar[List[str]] = ["name", "path", "st_mtime", "_key", "_id", "_rev"]
 
     model_config = {
         "populate_by_name": True,
@@ -55,7 +55,7 @@ class LocalSchedulersModel(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of LocalSchedulersModel from a JSON string"""
+        """Create an instance of FileModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -78,7 +78,7 @@ class LocalSchedulersModel(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of LocalSchedulersModel from a dict"""
+        """Create an instance of FileModel from a dict"""
         if obj is None:
             return None
 
@@ -86,9 +86,9 @@ class LocalSchedulersModel(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "name": obj.get("name") if obj.get("name") is not None else 'default',
-            "memory": obj.get("memory"),
-            "num_cpus": obj.get("num_cpus"),
+            "name": obj.get("name"),
+            "path": obj.get("path"),
+            "st_mtime": obj.get("st_mtime"),
             "_key": obj.get("_key"),
             "_id": obj.get("_id"),
             "_rev": obj.get("_rev")

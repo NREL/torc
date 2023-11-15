@@ -20,6 +20,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List
 from pydantic import BaseModel
+from pydantic import Field
 from torc.openapi_client.models.job_model import JobModel
 try:
     from typing import Self
@@ -28,9 +29,9 @@ except ImportError:
 
 class JobsModel(BaseModel):
     """
-    JobsModel
+    Data model for a batch of jobs
     """ # noqa: E501
-    jobs: List[JobModel]
+    jobs: List[JobModel] = Field(description="Jobs in the batch")
     __properties: ClassVar[List[str]] = ["jobs"]
 
     model_config = {

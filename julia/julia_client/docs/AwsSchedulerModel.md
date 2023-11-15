@@ -1,12 +1,10 @@
-# EdgesNameModel
+# AwsSchedulerModel
 
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**_from** | **String** |  | [default to nothing]
-**_to** | **String** |  | [default to nothing]
-**data** | **Any** |  | [optional] [default to nothing]
+**name** | **String** |  | [optional] [default to nothing]
 **_key** | **String** |  | [optional] [default to nothing]
 **_id** | **String** |  | [optional] [default to nothing]
 **_rev** | **String** |  | [optional] [default to nothing]

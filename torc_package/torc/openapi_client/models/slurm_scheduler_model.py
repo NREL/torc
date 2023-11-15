@@ -18,30 +18,33 @@ import re  # noqa: F401
 import json
 
 
-from typing import Any, ClassVar, Dict, List, Optional, Union
-from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, StrictInt, StrictStr
 from pydantic import Field
-from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class ComputeNodesModel(BaseModel):
+class SlurmSchedulerModel(BaseModel):
     """
-    ComputeNodesModel
+    Data model for Slurm scheduler
     """ # noqa: E501
-    hostname: StrictStr
-    pid: StrictInt
-    start_time: StrictStr
-    duration_seconds: Optional[Union[StrictFloat, StrictInt]] = None
-    is_active: Optional[StrictBool] = None
-    resources: ComputeNodesResources
-    scheduler: Optional[Union[str, Any]] = None
+    name: Optional[StrictStr] = Field(default=None, description="Name of the scheduler")
+    account: StrictStr = Field(description="Slurm account ID")
+    gres: Optional[StrictStr] = Field(default=None, description="Generic resource requirement")
+    mem: Optional[StrictStr] = Field(default=None, description="Compute node memory requirement")
+    nodes: StrictInt = Field(description="Number of nodes for the Slurm allocation")
+    ntasks_per_node: Optional[StrictInt] = Field(default=None, description="Number of tasks to invoke on each node")
+    partition: Optional[StrictStr] = Field(default=None, description="Compute node partition; likely not necessary because Slurm should optimize it.")
+    qos: Optional[StrictStr] = Field(default='normal', description="Priority of Slurm job")
+    tmp: Optional[StrictStr] = Field(default=None, description="Compute node local storage size requirement")
+    walltime: Optional[StrictStr] = Field(default=None, description="Slurm runtime requirement, e.g., 04:00:00")
+    extra: Optional[StrictStr] = Field(default=None, description="Extra Slurm parameters that torc will append to the sbatch command")
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = ["hostname", "pid", "start_time", "duration_seconds", "is_active", "resources", "scheduler", "_key", "_id", "_rev"]
+    __properties: ClassVar[List[str]] = ["name", "account", "gres", "mem", "nodes", "ntasks_per_node", "partition", "qos", "tmp", "walltime", "extra", "_key", "_id", "_rev"]
 
     model_config = {
         "populate_by_name": True,
@@ -60,7 +63,7 @@ class ComputeNodesModel(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of ComputeNodesModel from a JSON string"""
+        """Create an instance of SlurmSchedulerModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -79,14 +82,11 @@ class ComputeNodesModel(BaseModel):
             },
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of resources
-        if self.resources:
-            _dict['resources'] = self.resources.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of ComputeNodesModel from a dict"""
+        """Create an instance of SlurmSchedulerModel from a dict"""
         if obj is None:
             return None
 
@@ -94,13 +94,17 @@ class ComputeNodesModel(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "hostname": obj.get("hostname"),
-            "pid": obj.get("pid"),
-            "start_time": obj.get("start_time"),
-            "duration_seconds": obj.get("duration_seconds"),
-            "is_active": obj.get("is_active"),
-            "resources": ComputeNodesResources.from_dict(obj.get("resources")) if obj.get("resources") is not None else None,
-            "scheduler": obj.get("scheduler"),
+            "name": obj.get("name"),
+            "account": obj.get("account"),
+            "gres": obj.get("gres"),
+            "mem": obj.get("mem"),
+            "nodes": obj.get("nodes"),
+            "ntasks_per_node": obj.get("ntasks_per_node"),
+            "partition": obj.get("partition"),
+            "qos": obj.get("qos") if obj.get("qos") is not None else 'normal',
+            "tmp": obj.get("tmp"),
+            "walltime": obj.get("walltime"),
+            "extra": obj.get("extra"),
             "_key": obj.get("_key"),
             "_id": obj.get("_id"),
             "_rev": obj.get("_rev")

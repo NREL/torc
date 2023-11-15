@@ -18,33 +18,28 @@ import re  # noqa: F401
 import json
 
 
-from typing import Any, ClassVar, Dict, List, Optional
-from pydantic import BaseModel, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional, Union
+from pydantic import BaseModel, StrictFloat, StrictInt, StrictStr
 from pydantic import Field
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class SlurmSchedulersModel(BaseModel):
+class ResultModel(BaseModel):
     """
-    SlurmSchedulersModel
+    ResultModel
     """ # noqa: E501
-    name: Optional[StrictStr] = None
-    account: StrictStr
-    gres: Optional[StrictStr] = None
-    mem: Optional[StrictStr] = None
-    nodes: StrictInt
-    ntasks_per_node: Optional[StrictInt] = None
-    partition: Optional[StrictStr] = None
-    qos: Optional[StrictStr] = 'normal'
-    tmp: Optional[StrictStr] = None
-    walltime: Optional[StrictStr] = None
-    extra: Optional[StrictStr] = None
-    key: Optional[StrictStr] = Field(default=None, alias="_key")
-    id: Optional[StrictStr] = Field(default=None, alias="_id")
-    rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = ["name", "account", "gres", "mem", "nodes", "ntasks_per_node", "partition", "qos", "tmp", "walltime", "extra", "_key", "_id", "_rev"]
+    job_key: StrictStr = Field(description="Database key for the job tied to this result")
+    run_id: StrictInt = Field(description="ID of the workflow run. Incremements on every start and restart.")
+    return_code: StrictInt = Field(description="Code returned by the job. Zero is success; non-zero is a failure.")
+    exec_time_minutes: Union[StrictFloat, StrictInt] = Field(description="Job execution time in minutes")
+    completion_time: StrictStr = Field(description="Timestamp of when the job completed.")
+    status: StrictStr = Field(description="Status of the job; managed by torc.")
+    key: Optional[StrictStr] = Field(default=None, description="Unique database identifier for the result. Does not include collection name.", alias="_key")
+    id: Optional[StrictStr] = Field(default=None, description="Unique database identifier for the result. Includes collection name and _key.", alias="_id")
+    rev: Optional[StrictStr] = Field(default=None, description="Database revision of the result", alias="_rev")
+    __properties: ClassVar[List[str]] = ["job_key", "run_id", "return_code", "exec_time_minutes", "completion_time", "status", "_key", "_id", "_rev"]
 
     model_config = {
         "populate_by_name": True,
@@ -63,7 +58,7 @@ class SlurmSchedulersModel(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of SlurmSchedulersModel from a JSON string"""
+        """Create an instance of ResultModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -86,7 +81,7 @@ class SlurmSchedulersModel(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of SlurmSchedulersModel from a dict"""
+        """Create an instance of ResultModel from a dict"""
         if obj is None:
             return None
 
@@ -94,17 +89,12 @@ class SlurmSchedulersModel(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "name": obj.get("name"),
-            "account": obj.get("account"),
-            "gres": obj.get("gres"),
-            "mem": obj.get("mem"),
-            "nodes": obj.get("nodes"),
-            "ntasks_per_node": obj.get("ntasks_per_node"),
-            "partition": obj.get("partition"),
-            "qos": obj.get("qos") if obj.get("qos") is not None else 'normal',
-            "tmp": obj.get("tmp"),
-            "walltime": obj.get("walltime"),
-            "extra": obj.get("extra"),
+            "job_key": obj.get("job_key"),
+            "run_id": obj.get("run_id"),
+            "return_code": obj.get("return_code"),
+            "exec_time_minutes": obj.get("exec_time_minutes"),
+            "completion_time": obj.get("completion_time"),
+            "status": obj.get("status"),
             "_key": obj.get("_key"),
             "_id": obj.get("_id"),
             "_rev": obj.get("_rev")

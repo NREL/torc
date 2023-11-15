@@ -26,18 +26,15 @@ try:
 except ImportError:
     from typing_extensions import Self
 
-class WorkflowsModel(BaseModel):
+class AwsSchedulerModel(BaseModel):
     """
-    WorkflowsModel
+    AwsSchedulerModel
     """ # noqa: E501
     name: Optional[StrictStr] = None
-    user: Optional[StrictStr] = None
-    description: Optional[StrictStr] = None
-    timestamp: Optional[StrictStr] = None
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = ["name", "user", "description", "timestamp", "_key", "_id", "_rev"]
+    __properties: ClassVar[List[str]] = ["name", "_key", "_id", "_rev"]
 
     model_config = {
         "populate_by_name": True,
@@ -56,7 +53,7 @@ class WorkflowsModel(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of WorkflowsModel from a JSON string"""
+        """Create an instance of AwsSchedulerModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -79,7 +76,7 @@ class WorkflowsModel(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of WorkflowsModel from a dict"""
+        """Create an instance of AwsSchedulerModel from a dict"""
         if obj is None:
             return None
 
@@ -88,9 +85,6 @@ class WorkflowsModel(BaseModel):
 
         _obj = cls.model_validate({
             "name": obj.get("name"),
-            "user": obj.get("user"),
-            "description": obj.get("description"),
-            "timestamp": obj.get("timestamp"),
             "_key": obj.get("_key"),
             "_id": obj.get("_id"),
             "_rev": obj.get("_rev")

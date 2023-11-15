@@ -5,7 +5,7 @@ from collections import defaultdict
 
 import click
 
-from torc.openapi_client.models.results_model import ResultsModel
+from torc.openapi_client.models.result_model import ResultModel
 from torc.api import iter_documents, map_job_keys_to_names, list_model_fields
 from .common import (
     check_database_url,
@@ -113,7 +113,7 @@ def list_results(
             job_results.sort(key=lambda x: x["run_id"])
             items.append(job_results[-1])
 
-    columns = list_model_fields(ResultsModel)
+    columns = list_model_fields(ResultModel)
     if not exclude_job_names:
         assert columns[0] == "job_key", columns
         columns.insert(1, "job_name")

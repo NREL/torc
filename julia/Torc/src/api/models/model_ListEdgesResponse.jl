@@ -13,7 +13,7 @@
         has_more=nothing,
     )
 
-    - items::Vector{EdgesNameModel}
+    - items::Vector{EdgeModel}
     - skip::Int64
     - max_limit::Int64
     - count::Int64
@@ -21,7 +21,7 @@
     - has_more::Bool
 """
 Base.@kwdef mutable struct ListEdgesResponse <: OpenAPI.APIModel
-    items::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{EdgesNameModel} }
+    items::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{EdgeModel} }
     skip::Union{Nothing, Int64} = nothing
     max_limit::Union{Nothing, Int64} = nothing
     count::Union{Nothing, Int64} = nothing
@@ -39,7 +39,7 @@ Base.@kwdef mutable struct ListEdgesResponse <: OpenAPI.APIModel
     end
 end # type ListEdgesResponse
 
-const _property_types_ListEdgesResponse = Dict{Symbol,String}(Symbol("items")=>"Vector{EdgesNameModel}", Symbol("skip")=>"Int64", Symbol("max_limit")=>"Int64", Symbol("count")=>"Int64", Symbol("total_count")=>"Int64", Symbol("has_more")=>"Bool", )
+const _property_types_ListEdgesResponse = Dict{Symbol,String}(Symbol("items")=>"Vector{EdgeModel}", Symbol("skip")=>"Int64", Symbol("max_limit")=>"Int64", Symbol("count")=>"Int64", Symbol("total_count")=>"Int64", Symbol("has_more")=>"Bool", )
 OpenAPI.property_type(::Type{ ListEdgesResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ListEdgesResponse[name]))}
 
 function check_required(o::ListEdgesResponse)

@@ -20,8 +20,9 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictStr
-from torc.openapi_client.models.files_model import FilesModel
-from torc.openapi_client.models.job_specifications_model import JobSpecificationsModel
+from pydantic import Field
+from torc.openapi_client.models.file_model import FileModel
+from torc.openapi_client.models.job_specification_model import JobSpecificationModel
 from torc.openapi_client.models.resource_requirements_model import ResourceRequirementsModel
 from torc.openapi_client.models.user_data_model import UserDataModel
 from torc.openapi_client.models.workflow_config_model import WorkflowConfigModel
@@ -31,18 +32,18 @@ try:
 except ImportError:
     from typing_extensions import Self
 
-class WorkflowSpecificationsModel(BaseModel):
+class WorkflowSpecificationModel(BaseModel):
     """
-    WorkflowSpecificationsModel
+    WorkflowSpecificationModel
     """ # noqa: E501
-    name: Optional[StrictStr] = None
-    key: Optional[StrictStr] = None
-    user: Optional[StrictStr] = None
-    description: Optional[StrictStr] = None
-    jobs: Optional[List[JobSpecificationsModel]] = None
-    files: Optional[List[FilesModel]] = None
-    user_data: Optional[List[UserDataModel]] = None
-    resource_requirements: Optional[List[ResourceRequirementsModel]] = None
+    name: Optional[StrictStr] = Field(default=None, description="Name of the workflow")
+    key: Optional[StrictStr] = Field(default=None, description="Optional key to use as the database identifier. If set, it must be unique in the database. It is recommended to let the database create the identifier.")
+    user: Optional[StrictStr] = Field(default=None, description="User that created the workflow")
+    description: Optional[StrictStr] = Field(default=None, description="Timestamp of workflow creation")
+    jobs: Optional[List[JobSpecificationModel]] = Field(default=None, description="Jobs in the workflow. Each job name must be unique.")
+    files: Optional[List[FileModel]] = Field(default=None, description="Files in the workflow. Each file name must be unique.")
+    user_data: Optional[List[UserDataModel]] = Field(default=None, description="User data in the workflow. Each name must be unique.")
+    resource_requirements: Optional[List[ResourceRequirementsModel]] = Field(default=None, description="Resource requirements in the workflow. Each name must be unique.")
     schedulers: Optional[WorkflowSpecificationsSchedulers] = None
     config: Optional[WorkflowConfigModel] = None
     __properties: ClassVar[List[str]] = ["name", "key", "user", "description", "jobs", "files", "user_data", "resource_requirements", "schedulers", "config"]
@@ -64,7 +65,7 @@ class WorkflowSpecificationsModel(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of WorkflowSpecificationsModel from a JSON string"""
+        """Create an instance of WorkflowSpecificationModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -121,7 +122,7 @@ class WorkflowSpecificationsModel(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of WorkflowSpecificationsModel from a dict"""
+        """Create an instance of WorkflowSpecificationModel from a dict"""
         if obj is None:
             return None
 
@@ -133,8 +134,8 @@ class WorkflowSpecificationsModel(BaseModel):
             "key": obj.get("key"),
             "user": obj.get("user"),
             "description": obj.get("description"),
-            "jobs": [JobSpecificationsModel.from_dict(_item) for _item in obj.get("jobs")] if obj.get("jobs") is not None else None,
-            "files": [FilesModel.from_dict(_item) for _item in obj.get("files")] if obj.get("files") is not None else None,
+            "jobs": [JobSpecificationModel.from_dict(_item) for _item in obj.get("jobs")] if obj.get("jobs") is not None else None,
+            "files": [FileModel.from_dict(_item) for _item in obj.get("files")] if obj.get("files") is not None else None,
             "user_data": [UserDataModel.from_dict(_item) for _item in obj.get("user_data")] if obj.get("user_data") is not None else None,
             "resource_requirements": [ResourceRequirementsModel.from_dict(_item) for _item in obj.get("resource_requirements")] if obj.get("resource_requirements") is not None else None,
             "schedulers": WorkflowSpecificationsSchedulers.from_dict(obj.get("schedulers")) if obj.get("schedulers") is not None else None,

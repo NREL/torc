@@ -30,12 +30,12 @@ class ResourceRequirementsModel(BaseModel):
     """
     ResourceRequirementsModel
     """ # noqa: E501
-    name: Optional[StrictStr] = None
-    num_cpus: Optional[StrictInt] = None
-    num_gpus: Optional[StrictInt] = None
-    num_nodes: Optional[StrictInt] = None
-    memory: Optional[StrictStr] = '1m'
-    runtime: Optional[StrictStr] = 'P0DT1M'
+    name: Optional[StrictStr] = Field(default=None, description="Name of the resource requirements")
+    num_cpus: Optional[StrictInt] = Field(default=None, description="Number of CPUs required by a job")
+    num_gpus: Optional[StrictInt] = Field(default=None, description="Number of GPUs required by a job")
+    num_nodes: Optional[StrictInt] = Field(default=None, description="Number of nodes required by a job")
+    memory: Optional[StrictStr] = Field(default='1m', description="Amount of memory required by a job, e.g., 20g")
+    runtime: Optional[StrictStr] = Field(default='P0DT1M', description="Maximum runtime for a job")
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")

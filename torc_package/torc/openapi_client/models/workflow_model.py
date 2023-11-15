@@ -18,28 +18,26 @@ import re  # noqa: F401
 import json
 
 
-from typing import Any, ClassVar, Dict, List, Optional, Union
-from pydantic import BaseModel, StrictFloat, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, StrictStr
 from pydantic import Field
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class ResultsModel(BaseModel):
+class WorkflowModel(BaseModel):
     """
-    ResultsModel
+    WorkflowModel
     """ # noqa: E501
-    job_key: StrictStr
-    run_id: StrictInt
-    return_code: StrictInt
-    exec_time_minutes: Union[StrictFloat, StrictInt]
-    completion_time: StrictStr
-    status: StrictStr
+    name: Optional[StrictStr] = Field(default=None, description="Name of the workflow")
+    user: Optional[StrictStr] = Field(default=None, description="User that created the workflow")
+    description: Optional[StrictStr] = Field(default=None, description="Description of the workflow")
+    timestamp: Optional[StrictStr] = Field(default=None, description="Timestamp of workflow creation")
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = ["job_key", "run_id", "return_code", "exec_time_minutes", "completion_time", "status", "_key", "_id", "_rev"]
+    __properties: ClassVar[List[str]] = ["name", "user", "description", "timestamp", "_key", "_id", "_rev"]
 
     model_config = {
         "populate_by_name": True,
@@ -58,7 +56,7 @@ class ResultsModel(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of ResultsModel from a JSON string"""
+        """Create an instance of WorkflowModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -81,7 +79,7 @@ class ResultsModel(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of ResultsModel from a dict"""
+        """Create an instance of WorkflowModel from a dict"""
         if obj is None:
             return None
 
@@ -89,12 +87,10 @@ class ResultsModel(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "job_key": obj.get("job_key"),
-            "run_id": obj.get("run_id"),
-            "return_code": obj.get("return_code"),
-            "exec_time_minutes": obj.get("exec_time_minutes"),
-            "completion_time": obj.get("completion_time"),
-            "status": obj.get("status"),
+            "name": obj.get("name"),
+            "user": obj.get("user"),
+            "description": obj.get("description"),
+            "timestamp": obj.get("timestamp"),
             "_key": obj.get("_key"),
             "_id": obj.get("_id"),
             "_rev": obj.get("_rev")

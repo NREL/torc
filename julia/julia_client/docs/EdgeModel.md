@@ -1,15 +1,12 @@
-# ResultsModel
+# EdgeModel
 
 
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**job_key** | **String** |  | [default to nothing]
-**run_id** | **Int64** |  | [default to nothing]
-**return_code** | **Int64** |  | [default to nothing]
-**exec_time_minutes** | **Float64** |  | [default to nothing]
-**completion_time** | **String** |  | [default to nothing]
-**status** | **String** |  | [default to nothing]
+**_from** | **String** | Database ID of the &#39;from&#39; document | [default to nothing]
+**_to** | **String** | Database ID of the &#39;to&#39; document | [default to nothing]
+**data** | **Any** | User-defined data | [optional] [default to nothing]
 **_key** | **String** |  | [optional] [default to nothing]
 **_id** | **String** |  | [optional] [default to nothing]
 **_rev** | **String** |  | [optional] [default to nothing]

@@ -20,7 +20,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictBool, StrictInt
-from torc.openapi_client.models.workflows_model import WorkflowsModel
+from torc.openapi_client.models.workflow_model import WorkflowModel
 try:
     from typing import Self
 except ImportError:
@@ -30,7 +30,7 @@ class ListWorkflowsResponse(BaseModel):
     """
     ListWorkflowsResponse
     """ # noqa: E501
-    items: Optional[List[WorkflowsModel]] = None
+    items: Optional[List[WorkflowModel]] = None
     skip: StrictInt
     max_limit: StrictInt
     count: StrictInt
@@ -93,7 +93,7 @@ class ListWorkflowsResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "items": [WorkflowsModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
+            "items": [WorkflowModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
             "skip": obj.get("skip"),
             "max_limit": obj.get("max_limit"),
             "count": obj.get("count"),

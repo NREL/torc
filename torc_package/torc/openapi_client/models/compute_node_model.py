@@ -18,23 +18,30 @@ import re  # noqa: F401
 import json
 
 
-from typing import Any, ClassVar, Dict, List, Optional
-from pydantic import BaseModel, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional, Union
+from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr
 from pydantic import Field
+from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class AwsSchedulersModel(BaseModel):
+class ComputeNodeModel(BaseModel):
     """
-    AwsSchedulersModel
+    ComputeNodeModel
     """ # noqa: E501
-    name: Optional[StrictStr] = None
+    hostname: StrictStr
+    pid: StrictInt
+    start_time: StrictStr
+    duration_seconds: Optional[Union[StrictFloat, StrictInt]] = None
+    is_active: Optional[StrictBool] = None
+    resources: ComputeNodesResources
+    scheduler: Optional[Union[str, Any]] = None
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = ["name", "_key", "_id", "_rev"]
+    __properties: ClassVar[List[str]] = ["hostname", "pid", "start_time", "duration_seconds", "is_active", "resources", "scheduler", "_key", "_id", "_rev"]
 
     model_config = {
         "populate_by_name": True,
@@ -53,7 +60,7 @@ class AwsSchedulersModel(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of AwsSchedulersModel from a JSON string"""
+        """Create an instance of ComputeNodeModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -72,11 +79,14 @@ class AwsSchedulersModel(BaseModel):
             },
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of resources
+        if self.resources:
+            _dict['resources'] = self.resources.to_dict()
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of AwsSchedulersModel from a dict"""
+        """Create an instance of ComputeNodeModel from a dict"""
         if obj is None:
             return None
 
@@ -84,7 +94,13 @@ class AwsSchedulersModel(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "name": obj.get("name"),
+            "hostname": obj.get("hostname"),
+            "pid": obj.get("pid"),
+            "start_time": obj.get("start_time"),
+            "duration_seconds": obj.get("duration_seconds"),
+            "is_active": obj.get("is_active"),
+            "resources": ComputeNodesResources.from_dict(obj.get("resources")) if obj.get("resources") is not None else None,
+            "scheduler": obj.get("scheduler"),
             "_key": obj.get("_key"),
             "_id": obj.get("_id"),
             "_rev": obj.get("_rev")

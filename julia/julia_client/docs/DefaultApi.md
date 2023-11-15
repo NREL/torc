@@ -141,8 +141,8 @@ Method | HTTP request | Description
 
 
 # **add_aws_scheduler**
-> add_aws_scheduler(_api::DefaultApi, workflow::String, body::AwsSchedulersModel; _mediaType=nothing) -> AwsSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
-> add_aws_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, body::AwsSchedulersModel; _mediaType=nothing) -> Channel{ AwsSchedulersModel }, OpenAPI.Clients.ApiResponse
+> add_aws_scheduler(_api::DefaultApi, workflow::String, body::AwsSchedulerModel; _mediaType=nothing) -> AwsSchedulerModel, OpenAPI.Clients.ApiResponse <br/>
+> add_aws_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, body::AwsSchedulerModel; _mediaType=nothing) -> Channel{ AwsSchedulerModel }, OpenAPI.Clients.ApiResponse
 
 Store a AWS compute node configuration.
 
@@ -154,11 +154,11 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**AwsSchedulersModel**](AwsSchedulersModel.md)| AWS compute node configuration. | 
+**body** | [**AwsSchedulerModel**](AwsSchedulerModel.md)| AWS compute node configuration. | 
 
 ### Return type
 
-[**AwsSchedulersModel**](AwsSchedulersModel.md)
+[**AwsSchedulerModel**](AwsSchedulerModel.md)
 
 ### Authorization
 
@@ -172,8 +172,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **add_compute_node**
-> add_compute_node(_api::DefaultApi, workflow::String, body::ComputeNodesModel; _mediaType=nothing) -> ComputeNodesModel, OpenAPI.Clients.ApiResponse <br/>
-> add_compute_node(_api::DefaultApi, response_stream::Channel, workflow::String, body::ComputeNodesModel; _mediaType=nothing) -> Channel{ ComputeNodesModel }, OpenAPI.Clients.ApiResponse
+> add_compute_node(_api::DefaultApi, workflow::String, body::ComputeNodeModel; _mediaType=nothing) -> ComputeNodeModel, OpenAPI.Clients.ApiResponse <br/>
+> add_compute_node(_api::DefaultApi, response_stream::Channel, workflow::String, body::ComputeNodeModel; _mediaType=nothing) -> Channel{ ComputeNodeModel }, OpenAPI.Clients.ApiResponse
 
 Store a compute node.
 
@@ -185,11 +185,11 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**ComputeNodesModel**](ComputeNodesModel.md)| compute node. | 
+**body** | [**ComputeNodeModel**](ComputeNodeModel.md)| compute node. | 
 
 ### Return type
 
-[**ComputeNodesModel**](ComputeNodesModel.md)
+[**ComputeNodeModel**](ComputeNodeModel.md)
 
 ### Authorization
 
@@ -234,8 +234,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **add_edge**
-> add_edge(_api::DefaultApi, workflow::String, name::String, body::EdgesNameModel; _mediaType=nothing) -> EdgesNameModel, OpenAPI.Clients.ApiResponse <br/>
-> add_edge(_api::DefaultApi, response_stream::Channel, workflow::String, name::String, body::EdgesNameModel; _mediaType=nothing) -> Channel{ EdgesNameModel }, OpenAPI.Clients.ApiResponse
+> add_edge(_api::DefaultApi, workflow::String, name::String, body::EdgeModel; _mediaType=nothing) -> EdgeModel, OpenAPI.Clients.ApiResponse <br/>
+> add_edge(_api::DefaultApi, response_stream::Channel, workflow::String, name::String, body::EdgeModel; _mediaType=nothing) -> Channel{ EdgeModel }, OpenAPI.Clients.ApiResponse
 
 Store an edge between two vertexes.
 
@@ -248,11 +248,11 @@ Name | Type | Description  | Notes
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key | [default to nothing]
 **name** | **String**| Edge name | [default to nothing]
-**body** | [**EdgesNameModel**](EdgesNameModel.md)| Relationship between two vertexes | 
+**body** | [**EdgeModel**](EdgeModel.md)| Relationship between two vertexes | 
 
 ### Return type
 
-[**EdgesNameModel**](EdgesNameModel.md)
+[**EdgeModel**](EdgeModel.md)
 
 ### Authorization
 
@@ -297,8 +297,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **add_file**
-> add_file(_api::DefaultApi, workflow::String, body::FilesModel; _mediaType=nothing) -> FilesModel, OpenAPI.Clients.ApiResponse <br/>
-> add_file(_api::DefaultApi, response_stream::Channel, workflow::String, body::FilesModel; _mediaType=nothing) -> Channel{ FilesModel }, OpenAPI.Clients.ApiResponse
+> add_file(_api::DefaultApi, workflow::String, body::FileModel; _mediaType=nothing) -> FileModel, OpenAPI.Clients.ApiResponse <br/>
+> add_file(_api::DefaultApi, response_stream::Channel, workflow::String, body::FileModel; _mediaType=nothing) -> Channel{ FileModel }, OpenAPI.Clients.ApiResponse
 
 Store a file.
 
@@ -310,11 +310,11 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**FilesModel**](FilesModel.md)| file. | 
+**body** | [**FileModel**](FileModel.md)| file. | 
 
 ### Return type
 
-[**FilesModel**](FilesModel.md)
+[**FileModel**](FileModel.md)
 
 ### Authorization
 
@@ -453,8 +453,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **add_local_scheduler**
-> add_local_scheduler(_api::DefaultApi, workflow::String, body::LocalSchedulersModel; _mediaType=nothing) -> LocalSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
-> add_local_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, body::LocalSchedulersModel; _mediaType=nothing) -> Channel{ LocalSchedulersModel }, OpenAPI.Clients.ApiResponse
+> add_local_scheduler(_api::DefaultApi, workflow::String, body::LocalSchedulerModel; _mediaType=nothing) -> LocalSchedulerModel, OpenAPI.Clients.ApiResponse <br/>
+> add_local_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, body::LocalSchedulerModel; _mediaType=nothing) -> Channel{ LocalSchedulerModel }, OpenAPI.Clients.ApiResponse
 
 Store a local compute node configuration.
 
@@ -466,11 +466,11 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**LocalSchedulersModel**](LocalSchedulersModel.md)| local compute node configuration. | 
+**body** | [**LocalSchedulerModel**](LocalSchedulerModel.md)| local compute node configuration. | 
 
 ### Return type
 
-[**LocalSchedulersModel**](LocalSchedulersModel.md)
+[**LocalSchedulerModel**](LocalSchedulerModel.md)
 
 ### Authorization
 
@@ -515,8 +515,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **add_result**
-> add_result(_api::DefaultApi, workflow::String, body::ResultsModel; _mediaType=nothing) -> ResultsModel, OpenAPI.Clients.ApiResponse <br/>
-> add_result(_api::DefaultApi, response_stream::Channel, workflow::String, body::ResultsModel; _mediaType=nothing) -> Channel{ ResultsModel }, OpenAPI.Clients.ApiResponse
+> add_result(_api::DefaultApi, workflow::String, body::ResultModel; _mediaType=nothing) -> ResultModel, OpenAPI.Clients.ApiResponse <br/>
+> add_result(_api::DefaultApi, response_stream::Channel, workflow::String, body::ResultModel; _mediaType=nothing) -> Channel{ ResultModel }, OpenAPI.Clients.ApiResponse
 
 Store a result.
 
@@ -528,11 +528,11 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**ResultsModel**](ResultsModel.md)| result. | 
+**body** | [**ResultModel**](ResultModel.md)| result. | 
 
 ### Return type
 
-[**ResultsModel**](ResultsModel.md)
+[**ResultModel**](ResultModel.md)
 
 ### Authorization
 
@@ -577,8 +577,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **add_slurm_scheduler**
-> add_slurm_scheduler(_api::DefaultApi, workflow::String, body::SlurmSchedulersModel; _mediaType=nothing) -> SlurmSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
-> add_slurm_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, body::SlurmSchedulersModel; _mediaType=nothing) -> Channel{ SlurmSchedulersModel }, OpenAPI.Clients.ApiResponse
+> add_slurm_scheduler(_api::DefaultApi, workflow::String, body::SlurmSchedulerModel; _mediaType=nothing) -> SlurmSchedulerModel, OpenAPI.Clients.ApiResponse <br/>
+> add_slurm_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, body::SlurmSchedulerModel; _mediaType=nothing) -> Channel{ SlurmSchedulerModel }, OpenAPI.Clients.ApiResponse
 
 Store a Slurm compute node configuration.
 
@@ -590,11 +590,11 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**SlurmSchedulersModel**](SlurmSchedulersModel.md)| Slurm compute node configuration. | 
+**body** | [**SlurmSchedulerModel**](SlurmSchedulerModel.md)| Slurm compute node configuration. | 
 
 ### Return type
 
-[**SlurmSchedulersModel**](SlurmSchedulersModel.md)
+[**SlurmSchedulerModel**](SlurmSchedulerModel.md)
 
 ### Authorization
 
@@ -639,8 +639,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **add_workflow**
-> add_workflow(_api::DefaultApi, body::WorkflowsModel; _mediaType=nothing) -> WorkflowsModel, OpenAPI.Clients.ApiResponse <br/>
-> add_workflow(_api::DefaultApi, response_stream::Channel, body::WorkflowsModel; _mediaType=nothing) -> Channel{ WorkflowsModel }, OpenAPI.Clients.ApiResponse
+> add_workflow(_api::DefaultApi, body::WorkflowModel; _mediaType=nothing) -> WorkflowModel, OpenAPI.Clients.ApiResponse <br/>
+> add_workflow(_api::DefaultApi, response_stream::Channel, body::WorkflowModel; _mediaType=nothing) -> Channel{ WorkflowModel }, OpenAPI.Clients.ApiResponse
 
 Store a workflow.
 
@@ -651,11 +651,11 @@ Store a workflow in the \"workflows\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**body** | [**WorkflowsModel**](WorkflowsModel.md)| Collection of jobs and dependent resources. | 
+**body** | [**WorkflowModel**](WorkflowModel.md)| Collection of jobs and dependent resources. | 
 
 ### Return type
 
-[**WorkflowsModel**](WorkflowsModel.md)
+[**WorkflowModel**](WorkflowModel.md)
 
 ### Authorization
 
@@ -669,8 +669,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **add_workflow_specification**
-> add_workflow_specification(_api::DefaultApi, body::WorkflowSpecificationsModel; _mediaType=nothing) -> WorkflowsModel, OpenAPI.Clients.ApiResponse <br/>
-> add_workflow_specification(_api::DefaultApi, response_stream::Channel, body::WorkflowSpecificationsModel; _mediaType=nothing) -> Channel{ WorkflowsModel }, OpenAPI.Clients.ApiResponse
+> add_workflow_specification(_api::DefaultApi, body::WorkflowSpecificationModel; _mediaType=nothing) -> WorkflowModel, OpenAPI.Clients.ApiResponse <br/>
+> add_workflow_specification(_api::DefaultApi, response_stream::Channel, body::WorkflowSpecificationModel; _mediaType=nothing) -> Channel{ WorkflowModel }, OpenAPI.Clients.ApiResponse
 
 Store a workflow.
 
@@ -681,11 +681,11 @@ Store a workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**body** | [**WorkflowSpecificationsModel**](WorkflowSpecificationsModel.md)| New workflow | 
+**body** | [**WorkflowSpecificationModel**](WorkflowSpecificationModel.md)| New workflow | 
 
 ### Return type
 
-[**WorkflowsModel**](WorkflowsModel.md)
+[**WorkflowModel**](WorkflowModel.md)
 
 ### Authorization
 
@@ -771,8 +771,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **complete_job**
-> complete_job(_api::DefaultApi, workflow::String, key::String, status::String, rev::String, run_id::Int64, body::ResultsModel; _mediaType=nothing) -> JobModel, OpenAPI.Clients.ApiResponse <br/>
-> complete_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, status::String, rev::String, run_id::Int64, body::ResultsModel; _mediaType=nothing) -> Channel{ JobModel }, OpenAPI.Clients.ApiResponse
+> complete_job(_api::DefaultApi, workflow::String, key::String, status::String, rev::String, run_id::Int64, body::ResultModel; _mediaType=nothing) -> JobModel, OpenAPI.Clients.ApiResponse <br/>
+> complete_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, status::String, rev::String, run_id::Int64, body::ResultModel; _mediaType=nothing) -> Channel{ JobModel }, OpenAPI.Clients.ApiResponse
 
 Complete a job and add a result.
 
@@ -788,7 +788,7 @@ Name | Type | Description  | Notes
 **status** | **String**| New job status. | [default to nothing]
 **rev** | **String**| Current job revision. | [default to nothing]
 **run_id** | **Int64**| Current job run ID | [default to nothing]
-**body** | [**ResultsModel**](ResultsModel.md)| Result of the job. | 
+**body** | [**ResultModel**](ResultModel.md)| Result of the job. | 
 
 ### Return type
 
@@ -1311,8 +1311,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_aws_scheduler**
-> get_aws_scheduler(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> AwsSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
-> get_aws_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ AwsSchedulersModel }, OpenAPI.Clients.ApiResponse
+> get_aws_scheduler(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> AwsSchedulerModel, OpenAPI.Clients.ApiResponse <br/>
+> get_aws_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ AwsSchedulerModel }, OpenAPI.Clients.ApiResponse
 
 Retrieve the AWS compute node configuration for a key.
 
@@ -1328,7 +1328,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**AwsSchedulersModel**](AwsSchedulersModel.md)
+[**AwsSchedulerModel**](AwsSchedulerModel.md)
 
 ### Authorization
 
@@ -1342,8 +1342,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_compute_node**
-> get_compute_node(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> ComputeNodesModel, OpenAPI.Clients.ApiResponse <br/>
-> get_compute_node(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ ComputeNodesModel }, OpenAPI.Clients.ApiResponse
+> get_compute_node(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> ComputeNodeModel, OpenAPI.Clients.ApiResponse <br/>
+> get_compute_node(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ ComputeNodeModel }, OpenAPI.Clients.ApiResponse
 
 Retrieve the compute node for a key.
 
@@ -1359,7 +1359,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**ComputeNodesModel**](ComputeNodesModel.md)
+[**ComputeNodeModel**](ComputeNodeModel.md)
 
 ### Authorization
 
@@ -1435,8 +1435,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_edge**
-> get_edge(_api::DefaultApi, workflow::String, name::String, key::String; _mediaType=nothing) -> EdgesNameModel, OpenAPI.Clients.ApiResponse <br/>
-> get_edge(_api::DefaultApi, response_stream::Channel, workflow::String, name::String, key::String; _mediaType=nothing) -> Channel{ EdgesNameModel }, OpenAPI.Clients.ApiResponse
+> get_edge(_api::DefaultApi, workflow::String, name::String, key::String; _mediaType=nothing) -> EdgeModel, OpenAPI.Clients.ApiResponse <br/>
+> get_edge(_api::DefaultApi, response_stream::Channel, workflow::String, name::String, key::String; _mediaType=nothing) -> Channel{ EdgeModel }, OpenAPI.Clients.ApiResponse
 
 Retrieve an edge
 
@@ -1453,7 +1453,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**EdgesNameModel**](EdgesNameModel.md)
+[**EdgeModel**](EdgeModel.md)
 
 ### Authorization
 
@@ -1537,8 +1537,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_file**
-> get_file(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> FilesModel, OpenAPI.Clients.ApiResponse <br/>
-> get_file(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ FilesModel }, OpenAPI.Clients.ApiResponse
+> get_file(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> FileModel, OpenAPI.Clients.ApiResponse <br/>
+> get_file(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ FileModel }, OpenAPI.Clients.ApiResponse
 
 Retrieve the file for a key.
 
@@ -1554,7 +1554,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**FilesModel**](FilesModel.md)
+[**FileModel**](FileModel.md)
 
 ### Authorization
 
@@ -1661,8 +1661,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_job_specification**
-> get_job_specification(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> JobSpecificationsModel, OpenAPI.Clients.ApiResponse <br/>
-> get_job_specification(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ JobSpecificationsModel }, OpenAPI.Clients.ApiResponse
+> get_job_specification(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> JobSpecificationModel, OpenAPI.Clients.ApiResponse <br/>
+> get_job_specification(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ JobSpecificationModel }, OpenAPI.Clients.ApiResponse
 
 Retrieve a job
 
@@ -1678,7 +1678,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**JobSpecificationsModel**](JobSpecificationsModel.md)
+[**JobSpecificationModel**](JobSpecificationModel.md)
 
 ### Authorization
 
@@ -1722,8 +1722,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_latest_job_result**
-> get_latest_job_result(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> ResultsModel, OpenAPI.Clients.ApiResponse <br/>
-> get_latest_job_result(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ ResultsModel }, OpenAPI.Clients.ApiResponse
+> get_latest_job_result(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> ResultModel, OpenAPI.Clients.ApiResponse <br/>
+> get_latest_job_result(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ ResultModel }, OpenAPI.Clients.ApiResponse
 
 Retrieve the latest result for a job
 
@@ -1739,7 +1739,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**ResultsModel**](ResultsModel.md)
+[**ResultModel**](ResultModel.md)
 
 ### Authorization
 
@@ -1753,8 +1753,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_local_scheduler**
-> get_local_scheduler(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> LocalSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
-> get_local_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ LocalSchedulersModel }, OpenAPI.Clients.ApiResponse
+> get_local_scheduler(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> LocalSchedulerModel, OpenAPI.Clients.ApiResponse <br/>
+> get_local_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ LocalSchedulerModel }, OpenAPI.Clients.ApiResponse
 
 Retrieve the local compute node configuration for a key.
 
@@ -1770,7 +1770,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**LocalSchedulersModel**](LocalSchedulersModel.md)
+[**LocalSchedulerModel**](LocalSchedulerModel.md)
 
 ### Authorization
 
@@ -1882,8 +1882,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_result**
-> get_result(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> ResultsModel, OpenAPI.Clients.ApiResponse <br/>
-> get_result(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ ResultsModel }, OpenAPI.Clients.ApiResponse
+> get_result(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> ResultModel, OpenAPI.Clients.ApiResponse <br/>
+> get_result(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ ResultModel }, OpenAPI.Clients.ApiResponse
 
 Retrieve the result for a key.
 
@@ -1899,7 +1899,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**ResultsModel**](ResultsModel.md)
+[**ResultModel**](ResultModel.md)
 
 ### Authorization
 
@@ -1944,8 +1944,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_slurm_scheduler**
-> get_slurm_scheduler(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> SlurmSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
-> get_slurm_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ SlurmSchedulersModel }, OpenAPI.Clients.ApiResponse
+> get_slurm_scheduler(_api::DefaultApi, workflow::String, key::String; _mediaType=nothing) -> SlurmSchedulerModel, OpenAPI.Clients.ApiResponse <br/>
+> get_slurm_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; _mediaType=nothing) -> Channel{ SlurmSchedulerModel }, OpenAPI.Clients.ApiResponse
 
 Retrieve the Slurm compute node configuration for a key.
 
@@ -1961,7 +1961,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**SlurmSchedulersModel**](SlurmSchedulersModel.md)
+[**SlurmSchedulerModel**](SlurmSchedulerModel.md)
 
 ### Authorization
 
@@ -2032,8 +2032,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_workflow**
-> get_workflow(_api::DefaultApi, key::String; _mediaType=nothing) -> WorkflowsModel, OpenAPI.Clients.ApiResponse <br/>
-> get_workflow(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ WorkflowsModel }, OpenAPI.Clients.ApiResponse
+> get_workflow(_api::DefaultApi, key::String; _mediaType=nothing) -> WorkflowModel, OpenAPI.Clients.ApiResponse <br/>
+> get_workflow(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ WorkflowModel }, OpenAPI.Clients.ApiResponse
 
 Retrieve the workflow for an key.
 
@@ -2048,7 +2048,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**WorkflowsModel**](WorkflowsModel.md)
+[**WorkflowModel**](WorkflowModel.md)
 
 ### Authorization
 
@@ -2092,8 +2092,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_workflow_specification**
-> get_workflow_specification(_api::DefaultApi, key::String; _mediaType=nothing) -> WorkflowSpecificationsModel, OpenAPI.Clients.ApiResponse <br/>
-> get_workflow_specification(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ WorkflowSpecificationsModel }, OpenAPI.Clients.ApiResponse
+> get_workflow_specification(_api::DefaultApi, key::String; _mediaType=nothing) -> WorkflowSpecificationModel, OpenAPI.Clients.ApiResponse <br/>
+> get_workflow_specification(_api::DefaultApi, response_stream::Channel, key::String; _mediaType=nothing) -> Channel{ WorkflowSpecificationModel }, OpenAPI.Clients.ApiResponse
 
 Retrieve the current workflow
 
@@ -2108,7 +2108,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**WorkflowSpecificationsModel**](WorkflowSpecificationsModel.md)
+[**WorkflowSpecificationModel**](WorkflowSpecificationModel.md)
 
 ### Authorization
 
@@ -2122,8 +2122,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_workflow_specification_example**
-> get_workflow_specification_example(_api::DefaultApi; _mediaType=nothing) -> WorkflowSpecificationsModel, OpenAPI.Clients.ApiResponse <br/>
-> get_workflow_specification_example(_api::DefaultApi, response_stream::Channel; _mediaType=nothing) -> Channel{ WorkflowSpecificationsModel }, OpenAPI.Clients.ApiResponse
+> get_workflow_specification_example(_api::DefaultApi; _mediaType=nothing) -> WorkflowSpecificationModel, OpenAPI.Clients.ApiResponse <br/>
+> get_workflow_specification_example(_api::DefaultApi, response_stream::Channel; _mediaType=nothing) -> Channel{ WorkflowSpecificationModel }, OpenAPI.Clients.ApiResponse
 
 Retrieve an example workflow specification
 
@@ -2134,7 +2134,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**WorkflowSpecificationsModel**](WorkflowSpecificationsModel.md)
+[**WorkflowSpecificationModel**](WorkflowSpecificationModel.md)
 
 ### Authorization
 
@@ -2148,8 +2148,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **get_workflow_specification_template**
-> get_workflow_specification_template(_api::DefaultApi; _mediaType=nothing) -> WorkflowSpecificationsModel, OpenAPI.Clients.ApiResponse <br/>
-> get_workflow_specification_template(_api::DefaultApi, response_stream::Channel; _mediaType=nothing) -> Channel{ WorkflowSpecificationsModel }, OpenAPI.Clients.ApiResponse
+> get_workflow_specification_template(_api::DefaultApi; _mediaType=nothing) -> WorkflowSpecificationModel, OpenAPI.Clients.ApiResponse <br/>
+> get_workflow_specification_template(_api::DefaultApi, response_stream::Channel; _mediaType=nothing) -> Channel{ WorkflowSpecificationModel }, OpenAPI.Clients.ApiResponse
 
 Retrieve the workflow specification template
 
@@ -2160,7 +2160,7 @@ This endpoint does not need any parameter.
 
 ### Return type
 
-[**WorkflowSpecificationsModel**](WorkflowSpecificationsModel.md)
+[**WorkflowSpecificationModel**](WorkflowSpecificationModel.md)
 
 ### Authorization
 
@@ -3368,8 +3368,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **modify_aws_scheduler**
-> modify_aws_scheduler(_api::DefaultApi, workflow::String, key::String, body::AwsSchedulersModel; _mediaType=nothing) -> AwsSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
-> modify_aws_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, body::AwsSchedulersModel; _mediaType=nothing) -> Channel{ AwsSchedulersModel }, OpenAPI.Clients.ApiResponse
+> modify_aws_scheduler(_api::DefaultApi, workflow::String, key::String, body::AwsSchedulerModel; _mediaType=nothing) -> AwsSchedulerModel, OpenAPI.Clients.ApiResponse <br/>
+> modify_aws_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, body::AwsSchedulerModel; _mediaType=nothing) -> Channel{ AwsSchedulerModel }, OpenAPI.Clients.ApiResponse
 
 Update AWS compute node configuration
 
@@ -3382,11 +3382,11 @@ Name | Type | Description  | Notes
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key. | [default to nothing]
 **key** | **String**| key of the AWS compute node configuration. | [default to nothing]
-**body** | [**AwsSchedulersModel**](AwsSchedulersModel.md)| AWS compute node configuration to update in the collection. | 
+**body** | [**AwsSchedulerModel**](AwsSchedulerModel.md)| AWS compute node configuration to update in the collection. | 
 
 ### Return type
 
-[**AwsSchedulersModel**](AwsSchedulersModel.md)
+[**AwsSchedulerModel**](AwsSchedulerModel.md)
 
 ### Authorization
 
@@ -3400,8 +3400,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **modify_compute_node**
-> modify_compute_node(_api::DefaultApi, workflow::String, key::String, body::ComputeNodesModel; _mediaType=nothing) -> ComputeNodesModel, OpenAPI.Clients.ApiResponse <br/>
-> modify_compute_node(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, body::ComputeNodesModel; _mediaType=nothing) -> Channel{ ComputeNodesModel }, OpenAPI.Clients.ApiResponse
+> modify_compute_node(_api::DefaultApi, workflow::String, key::String, body::ComputeNodeModel; _mediaType=nothing) -> ComputeNodeModel, OpenAPI.Clients.ApiResponse <br/>
+> modify_compute_node(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, body::ComputeNodeModel; _mediaType=nothing) -> Channel{ ComputeNodeModel }, OpenAPI.Clients.ApiResponse
 
 Update compute node
 
@@ -3414,11 +3414,11 @@ Name | Type | Description  | Notes
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key. | [default to nothing]
 **key** | **String**| key of the compute node. | [default to nothing]
-**body** | [**ComputeNodesModel**](ComputeNodesModel.md)| compute node to update in the collection. | 
+**body** | [**ComputeNodeModel**](ComputeNodeModel.md)| compute node to update in the collection. | 
 
 ### Return type
 
-[**ComputeNodesModel**](ComputeNodesModel.md)
+[**ComputeNodeModel**](ComputeNodeModel.md)
 
 ### Authorization
 
@@ -3496,8 +3496,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **modify_file**
-> modify_file(_api::DefaultApi, workflow::String, key::String, body::FilesModel; _mediaType=nothing) -> FilesModel, OpenAPI.Clients.ApiResponse <br/>
-> modify_file(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, body::FilesModel; _mediaType=nothing) -> Channel{ FilesModel }, OpenAPI.Clients.ApiResponse
+> modify_file(_api::DefaultApi, workflow::String, key::String, body::FileModel; _mediaType=nothing) -> FileModel, OpenAPI.Clients.ApiResponse <br/>
+> modify_file(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, body::FileModel; _mediaType=nothing) -> Channel{ FileModel }, OpenAPI.Clients.ApiResponse
 
 Update file
 
@@ -3510,11 +3510,11 @@ Name | Type | Description  | Notes
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key. | [default to nothing]
 **key** | **String**| key of the file. | [default to nothing]
-**body** | [**FilesModel**](FilesModel.md)| file to update in the collection. | 
+**body** | [**FileModel**](FileModel.md)| file to update in the collection. | 
 
 ### Return type
 
-[**FilesModel**](FilesModel.md)
+[**FileModel**](FileModel.md)
 
 ### Authorization
 
@@ -3592,8 +3592,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **modify_job_resource_requirements**
-> modify_job_resource_requirements(_api::DefaultApi, workflow::String, key::String, rr_key::String; body=nothing, _mediaType=nothing) -> EdgesNameModel, OpenAPI.Clients.ApiResponse <br/>
-> modify_job_resource_requirements(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, rr_key::String; body=nothing, _mediaType=nothing) -> Channel{ EdgesNameModel }, OpenAPI.Clients.ApiResponse
+> modify_job_resource_requirements(_api::DefaultApi, workflow::String, key::String, rr_key::String; body=nothing, _mediaType=nothing) -> EdgeModel, OpenAPI.Clients.ApiResponse <br/>
+> modify_job_resource_requirements(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, rr_key::String; body=nothing, _mediaType=nothing) -> Channel{ EdgeModel }, OpenAPI.Clients.ApiResponse
 
 Set the resource requirements for a job.
 
@@ -3616,7 +3616,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**EdgesNameModel**](EdgesNameModel.md)
+[**EdgeModel**](EdgeModel.md)
 
 ### Authorization
 
@@ -3630,8 +3630,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **modify_local_scheduler**
-> modify_local_scheduler(_api::DefaultApi, workflow::String, key::String, body::LocalSchedulersModel; _mediaType=nothing) -> LocalSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
-> modify_local_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, body::LocalSchedulersModel; _mediaType=nothing) -> Channel{ LocalSchedulersModel }, OpenAPI.Clients.ApiResponse
+> modify_local_scheduler(_api::DefaultApi, workflow::String, key::String, body::LocalSchedulerModel; _mediaType=nothing) -> LocalSchedulerModel, OpenAPI.Clients.ApiResponse <br/>
+> modify_local_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, body::LocalSchedulerModel; _mediaType=nothing) -> Channel{ LocalSchedulerModel }, OpenAPI.Clients.ApiResponse
 
 Update local compute node configuration
 
@@ -3644,11 +3644,11 @@ Name | Type | Description  | Notes
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key. | [default to nothing]
 **key** | **String**| key of the local compute node configuration. | [default to nothing]
-**body** | [**LocalSchedulersModel**](LocalSchedulersModel.md)| local compute node configuration to update in the collection. | 
+**body** | [**LocalSchedulerModel**](LocalSchedulerModel.md)| local compute node configuration to update in the collection. | 
 
 ### Return type
 
-[**LocalSchedulersModel**](LocalSchedulersModel.md)
+[**LocalSchedulerModel**](LocalSchedulerModel.md)
 
 ### Authorization
 
@@ -3694,8 +3694,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **modify_result**
-> modify_result(_api::DefaultApi, workflow::String, key::String, body::ResultsModel; _mediaType=nothing) -> ResultsModel, OpenAPI.Clients.ApiResponse <br/>
-> modify_result(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, body::ResultsModel; _mediaType=nothing) -> Channel{ ResultsModel }, OpenAPI.Clients.ApiResponse
+> modify_result(_api::DefaultApi, workflow::String, key::String, body::ResultModel; _mediaType=nothing) -> ResultModel, OpenAPI.Clients.ApiResponse <br/>
+> modify_result(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, body::ResultModel; _mediaType=nothing) -> Channel{ ResultModel }, OpenAPI.Clients.ApiResponse
 
 Update result
 
@@ -3708,11 +3708,11 @@ Name | Type | Description  | Notes
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key. | [default to nothing]
 **key** | **String**| key of the result. | [default to nothing]
-**body** | [**ResultsModel**](ResultsModel.md)| result to update in the collection. | 
+**body** | [**ResultModel**](ResultModel.md)| result to update in the collection. | 
 
 ### Return type
 
-[**ResultsModel**](ResultsModel.md)
+[**ResultModel**](ResultModel.md)
 
 ### Authorization
 
@@ -3758,8 +3758,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **modify_slurm_scheduler**
-> modify_slurm_scheduler(_api::DefaultApi, workflow::String, key::String, body::SlurmSchedulersModel; _mediaType=nothing) -> SlurmSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
-> modify_slurm_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, body::SlurmSchedulersModel; _mediaType=nothing) -> Channel{ SlurmSchedulersModel }, OpenAPI.Clients.ApiResponse
+> modify_slurm_scheduler(_api::DefaultApi, workflow::String, key::String, body::SlurmSchedulerModel; _mediaType=nothing) -> SlurmSchedulerModel, OpenAPI.Clients.ApiResponse <br/>
+> modify_slurm_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, body::SlurmSchedulerModel; _mediaType=nothing) -> Channel{ SlurmSchedulerModel }, OpenAPI.Clients.ApiResponse
 
 Update Slurm compute node configuration
 
@@ -3772,11 +3772,11 @@ Name | Type | Description  | Notes
  **_api** | **DefaultApi** | API context | 
 **workflow** | **String**| Workflow key. | [default to nothing]
 **key** | **String**| key of the Slurm compute node configuration. | [default to nothing]
-**body** | [**SlurmSchedulersModel**](SlurmSchedulersModel.md)| Slurm compute node configuration to update in the collection. | 
+**body** | [**SlurmSchedulerModel**](SlurmSchedulerModel.md)| Slurm compute node configuration to update in the collection. | 
 
 ### Return type
 
-[**SlurmSchedulersModel**](SlurmSchedulersModel.md)
+[**SlurmSchedulerModel**](SlurmSchedulerModel.md)
 
 ### Authorization
 
@@ -3822,8 +3822,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **modify_workflow**
-> modify_workflow(_api::DefaultApi, key::String, body::WorkflowsModel; _mediaType=nothing) -> WorkflowsModel, OpenAPI.Clients.ApiResponse <br/>
-> modify_workflow(_api::DefaultApi, response_stream::Channel, key::String, body::WorkflowsModel; _mediaType=nothing) -> Channel{ WorkflowsModel }, OpenAPI.Clients.ApiResponse
+> modify_workflow(_api::DefaultApi, key::String, body::WorkflowModel; _mediaType=nothing) -> WorkflowModel, OpenAPI.Clients.ApiResponse <br/>
+> modify_workflow(_api::DefaultApi, response_stream::Channel, key::String, body::WorkflowModel; _mediaType=nothing) -> Channel{ WorkflowModel }, OpenAPI.Clients.ApiResponse
 
 Update workflow
 
@@ -3835,11 +3835,11 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
 **key** | **String**| Key of the workflow. | [default to nothing]
-**body** | [**WorkflowsModel**](WorkflowsModel.md)| workflow to update in the collection. | 
+**body** | [**WorkflowModel**](WorkflowModel.md)| workflow to update in the collection. | 
 
 ### Return type
 
-[**WorkflowsModel**](WorkflowsModel.md)
+[**WorkflowModel**](WorkflowModel.md)
 
 ### Authorization
 
@@ -4124,8 +4124,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **remove_aws_scheduler**
-> remove_aws_scheduler(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> AwsSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
-> remove_aws_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ AwsSchedulersModel }, OpenAPI.Clients.ApiResponse
+> remove_aws_scheduler(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> AwsSchedulerModel, OpenAPI.Clients.ApiResponse <br/>
+> remove_aws_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ AwsSchedulerModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type AWS compute node configuration
 
@@ -4147,7 +4147,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**AwsSchedulersModel**](AwsSchedulersModel.md)
+[**AwsSchedulerModel**](AwsSchedulerModel.md)
 
 ### Authorization
 
@@ -4161,8 +4161,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **remove_compute_node**
-> remove_compute_node(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> ComputeNodesModel, OpenAPI.Clients.ApiResponse <br/>
-> remove_compute_node(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ ComputeNodesModel }, OpenAPI.Clients.ApiResponse
+> remove_compute_node(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> ComputeNodeModel, OpenAPI.Clients.ApiResponse <br/>
+> remove_compute_node(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ ComputeNodeModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type compute node
 
@@ -4184,7 +4184,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**ComputeNodesModel**](ComputeNodesModel.md)
+[**ComputeNodeModel**](ComputeNodeModel.md)
 
 ### Authorization
 
@@ -4235,8 +4235,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **remove_edge**
-> remove_edge(_api::DefaultApi, workflow::String, name::String, key::String; body=nothing, _mediaType=nothing) -> EdgesNameModel, OpenAPI.Clients.ApiResponse <br/>
-> remove_edge(_api::DefaultApi, response_stream::Channel, workflow::String, name::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ EdgesNameModel }, OpenAPI.Clients.ApiResponse
+> remove_edge(_api::DefaultApi, workflow::String, name::String, key::String; body=nothing, _mediaType=nothing) -> EdgeModel, OpenAPI.Clients.ApiResponse <br/>
+> remove_edge(_api::DefaultApi, response_stream::Channel, workflow::String, name::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ EdgeModel }, OpenAPI.Clients.ApiResponse
 
 Delete an edge
 
@@ -4259,7 +4259,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**EdgesNameModel**](EdgesNameModel.md)
+[**EdgeModel**](EdgeModel.md)
 
 ### Authorization
 
@@ -4310,8 +4310,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **remove_file**
-> remove_file(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> FilesModel, OpenAPI.Clients.ApiResponse <br/>
-> remove_file(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ FilesModel }, OpenAPI.Clients.ApiResponse
+> remove_file(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> FileModel, OpenAPI.Clients.ApiResponse <br/>
+> remove_file(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ FileModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type file
 
@@ -4333,7 +4333,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**FilesModel**](FilesModel.md)
+[**FileModel**](FileModel.md)
 
 ### Authorization
 
@@ -4421,8 +4421,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **remove_local_scheduler**
-> remove_local_scheduler(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> LocalSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
-> remove_local_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ LocalSchedulersModel }, OpenAPI.Clients.ApiResponse
+> remove_local_scheduler(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> LocalSchedulerModel, OpenAPI.Clients.ApiResponse <br/>
+> remove_local_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ LocalSchedulerModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type local compute node configuration
 
@@ -4444,7 +4444,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**LocalSchedulersModel**](LocalSchedulersModel.md)
+[**LocalSchedulerModel**](LocalSchedulerModel.md)
 
 ### Authorization
 
@@ -4495,8 +4495,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **remove_result**
-> remove_result(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> ResultsModel, OpenAPI.Clients.ApiResponse <br/>
-> remove_result(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ ResultsModel }, OpenAPI.Clients.ApiResponse
+> remove_result(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> ResultModel, OpenAPI.Clients.ApiResponse <br/>
+> remove_result(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ ResultModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type result
 
@@ -4518,7 +4518,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**ResultsModel**](ResultsModel.md)
+[**ResultModel**](ResultModel.md)
 
 ### Authorization
 
@@ -4569,8 +4569,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **remove_slurm_scheduler**
-> remove_slurm_scheduler(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> SlurmSchedulersModel, OpenAPI.Clients.ApiResponse <br/>
-> remove_slurm_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ SlurmSchedulersModel }, OpenAPI.Clients.ApiResponse
+> remove_slurm_scheduler(_api::DefaultApi, workflow::String, key::String; body=nothing, _mediaType=nothing) -> SlurmSchedulerModel, OpenAPI.Clients.ApiResponse <br/>
+> remove_slurm_scheduler(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; body=nothing, _mediaType=nothing) -> Channel{ SlurmSchedulerModel }, OpenAPI.Clients.ApiResponse
 
 Delete a document of type Slurm compute node configuration
 
@@ -4592,7 +4592,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**SlurmSchedulersModel**](SlurmSchedulersModel.md)
+[**SlurmSchedulerModel**](SlurmSchedulerModel.md)
 
 ### Authorization
 
@@ -4643,8 +4643,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **remove_workflow**
-> remove_workflow(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing) -> WorkflowsModel, OpenAPI.Clients.ApiResponse <br/>
-> remove_workflow(_api::DefaultApi, response_stream::Channel, key::String; body=nothing, _mediaType=nothing) -> Channel{ WorkflowsModel }, OpenAPI.Clients.ApiResponse
+> remove_workflow(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing) -> WorkflowModel, OpenAPI.Clients.ApiResponse <br/>
+> remove_workflow(_api::DefaultApi, response_stream::Channel, key::String; body=nothing, _mediaType=nothing) -> Channel{ WorkflowModel }, OpenAPI.Clients.ApiResponse
 
 Delete a workflow
 
@@ -4665,7 +4665,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**WorkflowsModel**](WorkflowsModel.md)
+[**WorkflowModel**](WorkflowModel.md)
 
 ### Authorization
 

@@ -15,7 +15,7 @@ from torc.openapi_client.models.compute_nodes_resources import (
 from torc.openapi_client.models.user_data_model import (
     UserDataModel,
 )
-from torc.openapi_client.models.results_model import ResultsModel
+from torc.openapi_client.models.result_model import ResultModel
 from torc.openapi_client.models.job_model import JobModel
 
 from torc.api import iter_documents, add_jobs
@@ -563,7 +563,7 @@ def test_restart_uninitialized(diamond_workflow):
     for name in ("preprocess", "work1", "work2"):
         job = db.get_document("jobs", name)
         status = "done"
-        result = ResultsModel(
+        result = ResultModel(
             job_key=job.key,
             run_id=1,
             return_code=0,
@@ -743,7 +743,7 @@ def test_add_bulk_jobs(diamond_workflow):
 def _fake_complete_job(api, workflow_key, job):
     job = api.modify_job(workflow_key, job.key, job)
     status = "done"
-    result = ResultsModel(
+    result = ResultModel(
         job_key=job.key,
         run_id=1,
         return_code=0,

@@ -3,6 +3,7 @@
 
 
 @doc raw"""workflow_status_model
+Data model for a workflow
 
     WorkflowStatusModel(;
         is_canceled=nothing,

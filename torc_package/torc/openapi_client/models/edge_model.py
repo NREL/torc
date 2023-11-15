@@ -26,13 +26,13 @@ try:
 except ImportError:
     from typing_extensions import Self
 
-class EdgesNameModel(BaseModel):
+class EdgeModel(BaseModel):
     """
-    EdgesNameModel
+    EdgeModel
     """ # noqa: E501
-    var_from: StrictStr = Field(alias="_from")
-    to: StrictStr = Field(alias="_to")
-    data: Optional[Union[str, Any]] = None
+    var_from: StrictStr = Field(description="Database ID of the 'from' document", alias="_from")
+    to: StrictStr = Field(description="Database ID of the 'to' document", alias="_to")
+    data: Optional[Union[str, Any]] = Field(default=None, description="User-defined data")
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
@@ -55,7 +55,7 @@ class EdgesNameModel(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of EdgesNameModel from a JSON string"""
+        """Create an instance of EdgeModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -78,7 +78,7 @@ class EdgesNameModel(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of EdgesNameModel from a dict"""
+        """Create an instance of EdgeModel from a dict"""
         if obj is None:
             return None
 

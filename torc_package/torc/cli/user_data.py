@@ -8,7 +8,7 @@ import json5
 from torc.openapi_client.models.user_data_model import (
     UserDataModel,
 )
-from torc.openapi_client.models.edges_name_model import EdgesNameModel
+from torc.openapi_client.models.edge_model import EdgeModel
 
 from torc.api import iter_documents
 from .common import (
@@ -87,7 +87,7 @@ def add(ctx, api, data, ephemeral, name, stores, consumes):
         stores_edge = api.add_edge(
             workflow_key,
             "stores",
-            EdgesNameModel(
+            EdgeModel(
                 _from=stored_by_job.id,
                 to=ud.id,
             ),
@@ -98,7 +98,7 @@ def add(ctx, api, data, ephemeral, name, stores, consumes):
             consumes_edge = api.add_edge(
                 workflow_key,
                 "consumes",
-                EdgesNameModel(
+                EdgeModel(
                     _from=consumed_by_job.id,
                     to=ud.id,
                 ),

@@ -2,12 +2,12 @@
 Helper struct to build a workflow dynamically
 """
 mutable struct WorkflowBuilder
-    files::Vector{APIClient.FilesModel}
-    jobs::Vector{APIClient.JobSpecificationsModel}
+    files::Vector{APIClient.FileModel}
+    jobs::Vector{APIClient.JobSpecificationModel}
     resource_requirements::Vector{APIClient.ResourceRequirementsModel}
-    aws_schedulers::Vector{APIClient.AwsSchedulersModel}
-    local_schedulers::Vector{APIClient.LocalSchedulersModel}
-    slurm_schedulers::Vector{APIClient.SlurmSchedulersModel}
+    aws_schedulers::Vector{APIClient.AwsSchedulerModel}
+    local_schedulers::Vector{APIClient.LocalSchedulerModel}
+    slurm_schedulers::Vector{APIClient.SlurmSchedulerModel}
     user_data::Vector{APIClient.UserDataModel}
     resource_monitor_config::Union{
         Nothing,
@@ -22,12 +22,12 @@ end
 
 function WorkflowBuilder()
     WorkflowBuilder(
-        Vector{APIClient.FilesModel}(),
-        Vector{APIClient.JobSpecificationsModel}(),
+        Vector{APIClient.FileModel}(),
+        Vector{APIClient.JobSpecificationModel}(),
         Vector{APIClient.ResourceRequirementsModel}(),
-        Vector{APIClient.AwsSchedulersModel}(),
-        Vector{APIClient.LocalSchedulersModel}(),
-        Vector{APIClient.SlurmSchedulersModel}(),
+        Vector{APIClient.AwsSchedulerModel}(),
+        Vector{APIClient.LocalSchedulerModel}(),
+        Vector{APIClient.SlurmSchedulerModel}(),
         Vector{APIClient.UserDataModel}(),
         APIClient.ComputeNodeResourceStatsModel(),
         0,
@@ -42,7 +42,7 @@ end
 Add a file and return it.
 """
 function add_file!(builder::WorkflowBuilder, args...; kwargs...)
-    push!(builder.files, APIClient.FilesModel(args...; kwargs...))
+    push!(builder.files, APIClient.FileModel(args...; kwargs...))
     return builder.files[end]
 end
 
@@ -50,7 +50,7 @@ end
 Add a job and return it.
 """
 function add_job!(builder::WorkflowBuilder, args...; kwargs...)
-    push!(builder.jobs, APIClient.JobSpecificationsModel(args...; kwargs...))
+    push!(builder.jobs, APIClient.JobSpecificationModel(args...; kwargs...))
     return builder.jobs[end]
 end
 
@@ -69,7 +69,7 @@ end
 Add an AWS scheduler and return it.
 """
 function add_aws_scheduler!(builder::WorkflowBuilder, args...; kwargs...)
-    push!(builder.aws_schedulers, APIClient.AwsSchedulersModel(args...; kwargs...))
+    push!(builder.aws_schedulers, APIClient.AwsSchedulerModel(args...; kwargs...))
     return builder.aws_schedulers[end]
 end
 
@@ -79,7 +79,7 @@ Add a local scheduler and return it.
 function add_local_scheduler!(builder::WorkflowBuilder, args...; kwargs...)
     push!(
         builder.local_schedulers,
-        APIClient.LocalSchedulersModel(args...; kwargs...),
+        APIClient.LocalSchedulerModel(args...; kwargs...),
     )
     return builder.local_schedulers[end]
 end
@@ -90,7 +90,7 @@ Add a local scheduler and return it.
 function add_slurm_scheduler!(builder::WorkflowBuilder, args...; kwargs...)
     push!(
         builder.slurm_schedulers,
-        APIClient.SlurmSchedulersModel(args...; kwargs...),
+        APIClient.SlurmSchedulerModel(args...; kwargs...),
     )
     return builder.slurm_schedulers[end]
 end
@@ -166,7 +166,7 @@ function build!(builder::WorkflowBuilder, args...; kwargs...)
         compute_node_ignore_workflow_completion = builder.compute_node_ignore_workflow_completion,
         compute_node_expiration_buffer_seconds = builder.compute_node_expiration_buffer_seconds,
     )
-    return APIClient.WorkflowSpecificationsModel(
+    return APIClient.WorkflowSpecificationModel(
         args...;
         config = config,
         files = isempty(builder.files) ? nothing : builder.files,

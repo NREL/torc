@@ -63,6 +63,7 @@ dev = [
     "sphinx",
     "sphinx-click",
     "sphinxcontrib-openapi",
+    "autodoc_pydantic~=2.0",
     "sphinx-copybutton",
     "sphinx-tabs~=3.4",
     "textual-dev",

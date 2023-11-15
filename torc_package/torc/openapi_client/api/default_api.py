@@ -30,18 +30,18 @@ from pydantic import StrictBool, StrictFloat, StrictInt, StrictStr, field_valida
 from typing import Any, Dict, List, Optional, Union
 
 from torc.openapi_client.models.add_jobs_response import AddJobsResponse
-from torc.openapi_client.models.aws_schedulers_model import AwsSchedulersModel
+from torc.openapi_client.models.aws_scheduler_model import AwsSchedulerModel
+from torc.openapi_client.models.compute_node_model import ComputeNodeModel
 from torc.openapi_client.models.compute_node_stats_model import ComputeNodeStatsModel
-from torc.openapi_client.models.compute_nodes_model import ComputeNodesModel
 from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
-from torc.openapi_client.models.edges_name_model import EdgesNameModel
-from torc.openapi_client.models.files_model import FilesModel
+from torc.openapi_client.models.edge_model import EdgeModel
+from torc.openapi_client.models.file_model import FileModel
 from torc.openapi_client.models.get_dot_graph_response import GetDotGraphResponse
 from torc.openapi_client.models.get_ready_job_requirements_response import GetReadyJobRequirementsResponse
 from torc.openapi_client.models.is_complete_response import IsCompleteResponse
 from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.job_process_stats_model import JobProcessStatsModel
-from torc.openapi_client.models.job_specifications_model import JobSpecificationsModel
+from torc.openapi_client.models.job_specification_model import JobSpecificationModel
 from torc.openapi_client.models.jobs_model import JobsModel
 from torc.openapi_client.models.join_by_inbound_edge_collection_edge_response import JoinByInboundEdgeCollectionEdgeResponse
 from torc.openapi_client.models.join_by_outbound_edge_collection_edge_response import JoinByOutboundEdgeCollectionEdgeResponse
@@ -69,20 +69,20 @@ from torc.openapi_client.models.list_scheduled_compute_nodes_response import Lis
 from torc.openapi_client.models.list_slurm_schedulers_response import ListSlurmSchedulersResponse
 from torc.openapi_client.models.list_user_data_response import ListUserDataResponse
 from torc.openapi_client.models.list_workflows_response import ListWorkflowsResponse
-from torc.openapi_client.models.local_schedulers_model import LocalSchedulersModel
+from torc.openapi_client.models.local_scheduler_model import LocalSchedulerModel
 from torc.openapi_client.models.prepare_jobs_for_scheduling_response import PrepareJobsForSchedulingResponse
 from torc.openapi_client.models.prepare_jobs_for_submission_response import PrepareJobsForSubmissionResponse
 from torc.openapi_client.models.prepare_next_jobs_for_submission_response import PrepareNextJobsForSubmissionResponse
 from torc.openapi_client.models.process_changed_job_inputs_response import ProcessChangedJobInputsResponse
 from torc.openapi_client.models.resource_requirements_model import ResourceRequirementsModel
-from torc.openapi_client.models.results_model import ResultsModel
+from torc.openapi_client.models.result_model import ResultModel
 from torc.openapi_client.models.scheduled_compute_nodes_model import ScheduledComputeNodesModel
-from torc.openapi_client.models.slurm_schedulers_model import SlurmSchedulersModel
+from torc.openapi_client.models.slurm_scheduler_model import SlurmSchedulerModel
 from torc.openapi_client.models.user_data_model import UserDataModel
 from torc.openapi_client.models.workflow_config_model import WorkflowConfigModel
-from torc.openapi_client.models.workflow_specifications_model import WorkflowSpecificationsModel
+from torc.openapi_client.models.workflow_model import WorkflowModel
+from torc.openapi_client.models.workflow_specification_model import WorkflowSpecificationModel
 from torc.openapi_client.models.workflow_status_model import WorkflowStatusModel
-from torc.openapi_client.models.workflows_model import WorkflowsModel
 
 from torc.openapi_client.api_client import ApiClient
 from torc.openapi_client.api_response import ApiResponse
@@ -106,7 +106,7 @@ class DefaultApi:
     def add_aws_scheduler(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[AwsSchedulersModel, Field(description="AWS compute node configuration.")],
+        body: Annotated[AwsSchedulerModel, Field(description="AWS compute node configuration.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -119,7 +119,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> AwsSchedulersModel:
+    ) -> AwsSchedulerModel:
         """Store a AWS compute node configuration.
 
         Store a AWS compute node configuration in the \"aws_schedulers\" collection.
@@ -127,7 +127,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: AWS compute node configuration. (required)
-        :type body: AwsSchedulersModel
+        :type body: AwsSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -160,7 +160,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AwsSchedulersModel",
+            '200': "AwsSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -179,7 +179,7 @@ class DefaultApi:
     def add_aws_scheduler_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[AwsSchedulersModel, Field(description="AWS compute node configuration.")],
+        body: Annotated[AwsSchedulerModel, Field(description="AWS compute node configuration.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -192,7 +192,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[AwsSchedulersModel]:
+    ) -> ApiResponse[AwsSchedulerModel]:
         """Store a AWS compute node configuration.
 
         Store a AWS compute node configuration in the \"aws_schedulers\" collection.
@@ -200,7 +200,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: AWS compute node configuration. (required)
-        :type body: AwsSchedulersModel
+        :type body: AwsSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -233,7 +233,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AwsSchedulersModel",
+            '200': "AwsSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -252,7 +252,7 @@ class DefaultApi:
     def add_aws_scheduler_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[AwsSchedulersModel, Field(description="AWS compute node configuration.")],
+        body: Annotated[AwsSchedulerModel, Field(description="AWS compute node configuration.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -273,7 +273,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: AWS compute node configuration. (required)
-        :type body: AwsSchedulersModel
+        :type body: AwsSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -306,7 +306,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AwsSchedulersModel",
+            '200': "AwsSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -398,7 +398,7 @@ class DefaultApi:
     def add_compute_node(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[ComputeNodesModel, Field(description="compute node.")],
+        body: Annotated[ComputeNodeModel, Field(description="compute node.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -411,7 +411,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ComputeNodesModel:
+    ) -> ComputeNodeModel:
         """Store a compute node.
 
         Store a compute node in the \"compute_nodes\" collection.
@@ -419,7 +419,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: compute node. (required)
-        :type body: ComputeNodesModel
+        :type body: ComputeNodeModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -452,7 +452,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ComputeNodesModel",
+            '200': "ComputeNodeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -471,7 +471,7 @@ class DefaultApi:
     def add_compute_node_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[ComputeNodesModel, Field(description="compute node.")],
+        body: Annotated[ComputeNodeModel, Field(description="compute node.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -484,7 +484,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ComputeNodesModel]:
+    ) -> ApiResponse[ComputeNodeModel]:
         """Store a compute node.
 
         Store a compute node in the \"compute_nodes\" collection.
@@ -492,7 +492,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: compute node. (required)
-        :type body: ComputeNodesModel
+        :type body: ComputeNodeModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -525,7 +525,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ComputeNodesModel",
+            '200': "ComputeNodeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -544,7 +544,7 @@ class DefaultApi:
     def add_compute_node_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[ComputeNodesModel, Field(description="compute node.")],
+        body: Annotated[ComputeNodeModel, Field(description="compute node.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -565,7 +565,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: compute node. (required)
-        :type body: ComputeNodesModel
+        :type body: ComputeNodeModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -598,7 +598,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ComputeNodesModel",
+            '200': "ComputeNodeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -983,7 +983,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         name: Annotated[StrictStr, Field(description="Edge name")],
-        body: Annotated[EdgesNameModel, Field(description="Relationship between two vertexes")],
+        body: Annotated[EdgeModel, Field(description="Relationship between two vertexes")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -996,7 +996,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> EdgesNameModel:
+    ) -> EdgeModel:
         """Store an edge between two vertexes.
 
         Store an edge between two vertexes in the designated collection.
@@ -1006,7 +1006,7 @@ class DefaultApi:
         :param name: Edge name (required)
         :type name: str
         :param body: Relationship between two vertexes (required)
-        :type body: EdgesNameModel
+        :type body: EdgeModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1040,7 +1040,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "EdgesNameModel",
+            '200': "EdgeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -1060,7 +1060,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         name: Annotated[StrictStr, Field(description="Edge name")],
-        body: Annotated[EdgesNameModel, Field(description="Relationship between two vertexes")],
+        body: Annotated[EdgeModel, Field(description="Relationship between two vertexes")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1073,7 +1073,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[EdgesNameModel]:
+    ) -> ApiResponse[EdgeModel]:
         """Store an edge between two vertexes.
 
         Store an edge between two vertexes in the designated collection.
@@ -1083,7 +1083,7 @@ class DefaultApi:
         :param name: Edge name (required)
         :type name: str
         :param body: Relationship between two vertexes (required)
-        :type body: EdgesNameModel
+        :type body: EdgeModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1117,7 +1117,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "EdgesNameModel",
+            '200': "EdgeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -1137,7 +1137,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
         name: Annotated[StrictStr, Field(description="Edge name")],
-        body: Annotated[EdgesNameModel, Field(description="Relationship between two vertexes")],
+        body: Annotated[EdgeModel, Field(description="Relationship between two vertexes")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1160,7 +1160,7 @@ class DefaultApi:
         :param name: Edge name (required)
         :type name: str
         :param body: Relationship between two vertexes (required)
-        :type body: EdgesNameModel
+        :type body: EdgeModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1194,7 +1194,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "EdgesNameModel",
+            '200': "EdgeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -1581,7 +1581,7 @@ class DefaultApi:
     def add_file(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[FilesModel, Field(description="file.")],
+        body: Annotated[FileModel, Field(description="file.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1594,7 +1594,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> FilesModel:
+    ) -> FileModel:
         """Store a file.
 
         Store a file in the \"files\" collection.
@@ -1602,7 +1602,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: file. (required)
-        :type body: FilesModel
+        :type body: FileModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1635,7 +1635,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "FilesModel",
+            '200': "FileModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -1654,7 +1654,7 @@ class DefaultApi:
     def add_file_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[FilesModel, Field(description="file.")],
+        body: Annotated[FileModel, Field(description="file.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1667,7 +1667,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[FilesModel]:
+    ) -> ApiResponse[FileModel]:
         """Store a file.
 
         Store a file in the \"files\" collection.
@@ -1675,7 +1675,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: file. (required)
-        :type body: FilesModel
+        :type body: FileModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1708,7 +1708,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "FilesModel",
+            '200': "FileModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -1727,7 +1727,7 @@ class DefaultApi:
     def add_file_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[FilesModel, Field(description="file.")],
+        body: Annotated[FileModel, Field(description="file.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -1748,7 +1748,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: file. (required)
-        :type body: FilesModel
+        :type body: FileModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -1781,7 +1781,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "FilesModel",
+            '200': "FileModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -3056,7 +3056,7 @@ class DefaultApi:
     def add_local_scheduler(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[LocalSchedulersModel, Field(description="local compute node configuration.")],
+        body: Annotated[LocalSchedulerModel, Field(description="local compute node configuration.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3069,7 +3069,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> LocalSchedulersModel:
+    ) -> LocalSchedulerModel:
         """Store a local compute node configuration.
 
         Store a local compute node configuration in the \"local_schedulers\" collection.
@@ -3077,7 +3077,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: local compute node configuration. (required)
-        :type body: LocalSchedulersModel
+        :type body: LocalSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3110,7 +3110,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LocalSchedulersModel",
+            '200': "LocalSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -3129,7 +3129,7 @@ class DefaultApi:
     def add_local_scheduler_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[LocalSchedulersModel, Field(description="local compute node configuration.")],
+        body: Annotated[LocalSchedulerModel, Field(description="local compute node configuration.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3142,7 +3142,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[LocalSchedulersModel]:
+    ) -> ApiResponse[LocalSchedulerModel]:
         """Store a local compute node configuration.
 
         Store a local compute node configuration in the \"local_schedulers\" collection.
@@ -3150,7 +3150,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: local compute node configuration. (required)
-        :type body: LocalSchedulersModel
+        :type body: LocalSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3183,7 +3183,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LocalSchedulersModel",
+            '200': "LocalSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -3202,7 +3202,7 @@ class DefaultApi:
     def add_local_scheduler_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[LocalSchedulersModel, Field(description="local compute node configuration.")],
+        body: Annotated[LocalSchedulerModel, Field(description="local compute node configuration.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3223,7 +3223,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: local compute node configuration. (required)
-        :type body: LocalSchedulersModel
+        :type body: LocalSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3256,7 +3256,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LocalSchedulersModel",
+            '200': "LocalSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -3640,7 +3640,7 @@ class DefaultApi:
     def add_result(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[ResultsModel, Field(description="result.")],
+        body: Annotated[ResultModel, Field(description="result.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3653,7 +3653,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ResultsModel:
+    ) -> ResultModel:
         """Store a result.
 
         Store a result in the \"results\" collection.
@@ -3661,7 +3661,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: result. (required)
-        :type body: ResultsModel
+        :type body: ResultModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3694,7 +3694,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResultsModel",
+            '200': "ResultModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -3713,7 +3713,7 @@ class DefaultApi:
     def add_result_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[ResultsModel, Field(description="result.")],
+        body: Annotated[ResultModel, Field(description="result.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3726,7 +3726,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ResultsModel]:
+    ) -> ApiResponse[ResultModel]:
         """Store a result.
 
         Store a result in the \"results\" collection.
@@ -3734,7 +3734,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: result. (required)
-        :type body: ResultsModel
+        :type body: ResultModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3767,7 +3767,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResultsModel",
+            '200': "ResultModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -3786,7 +3786,7 @@ class DefaultApi:
     def add_result_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[ResultsModel, Field(description="result.")],
+        body: Annotated[ResultModel, Field(description="result.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -3807,7 +3807,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: result. (required)
-        :type body: ResultsModel
+        :type body: ResultModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -3840,7 +3840,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResultsModel",
+            '200': "ResultModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -4224,7 +4224,7 @@ class DefaultApi:
     def add_slurm_scheduler(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[SlurmSchedulersModel, Field(description="Slurm compute node configuration.")],
+        body: Annotated[SlurmSchedulerModel, Field(description="Slurm compute node configuration.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -4237,7 +4237,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> SlurmSchedulersModel:
+    ) -> SlurmSchedulerModel:
         """Store a Slurm compute node configuration.
 
         Store a Slurm compute node configuration in the \"slurm_schedulers\" collection.
@@ -4245,7 +4245,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: Slurm compute node configuration. (required)
-        :type body: SlurmSchedulersModel
+        :type body: SlurmSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -4278,7 +4278,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "SlurmSchedulersModel",
+            '200': "SlurmSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -4297,7 +4297,7 @@ class DefaultApi:
     def add_slurm_scheduler_with_http_info(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[SlurmSchedulersModel, Field(description="Slurm compute node configuration.")],
+        body: Annotated[SlurmSchedulerModel, Field(description="Slurm compute node configuration.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -4310,7 +4310,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[SlurmSchedulersModel]:
+    ) -> ApiResponse[SlurmSchedulerModel]:
         """Store a Slurm compute node configuration.
 
         Store a Slurm compute node configuration in the \"slurm_schedulers\" collection.
@@ -4318,7 +4318,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: Slurm compute node configuration. (required)
-        :type body: SlurmSchedulersModel
+        :type body: SlurmSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -4351,7 +4351,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "SlurmSchedulersModel",
+            '200': "SlurmSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -4370,7 +4370,7 @@ class DefaultApi:
     def add_slurm_scheduler_without_preload_content(
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key")],
-        body: Annotated[SlurmSchedulersModel, Field(description="Slurm compute node configuration.")],
+        body: Annotated[SlurmSchedulerModel, Field(description="Slurm compute node configuration.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -4391,7 +4391,7 @@ class DefaultApi:
         :param workflow: Workflow key (required)
         :type workflow: str
         :param body: Slurm compute node configuration. (required)
-        :type body: SlurmSchedulersModel
+        :type body: SlurmSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -4424,7 +4424,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "SlurmSchedulersModel",
+            '200': "SlurmSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -4807,7 +4807,7 @@ class DefaultApi:
     @validate_call
     def add_workflow(
         self,
-        body: Annotated[WorkflowsModel, Field(description="Collection of jobs and dependent resources.")],
+        body: Annotated[WorkflowModel, Field(description="Collection of jobs and dependent resources.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -4820,13 +4820,13 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> WorkflowsModel:
+    ) -> WorkflowModel:
         """Store a workflow.
 
         Store a workflow in the \"workflows\" collection.
 
         :param body: Collection of jobs and dependent resources. (required)
-        :type body: WorkflowsModel
+        :type body: WorkflowModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -4858,7 +4858,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
+            '200': "WorkflowModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -4876,7 +4876,7 @@ class DefaultApi:
     @validate_call
     def add_workflow_with_http_info(
         self,
-        body: Annotated[WorkflowsModel, Field(description="Collection of jobs and dependent resources.")],
+        body: Annotated[WorkflowModel, Field(description="Collection of jobs and dependent resources.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -4889,13 +4889,13 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[WorkflowsModel]:
+    ) -> ApiResponse[WorkflowModel]:
         """Store a workflow.
 
         Store a workflow in the \"workflows\" collection.
 
         :param body: Collection of jobs and dependent resources. (required)
-        :type body: WorkflowsModel
+        :type body: WorkflowModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -4927,7 +4927,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
+            '200': "WorkflowModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -4945,7 +4945,7 @@ class DefaultApi:
     @validate_call
     def add_workflow_without_preload_content(
         self,
-        body: Annotated[WorkflowsModel, Field(description="Collection of jobs and dependent resources.")],
+        body: Annotated[WorkflowModel, Field(description="Collection of jobs and dependent resources.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -4964,7 +4964,7 @@ class DefaultApi:
         Store a workflow in the \"workflows\" collection.
 
         :param body: Collection of jobs and dependent resources. (required)
-        :type body: WorkflowsModel
+        :type body: WorkflowModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -4996,7 +4996,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
+            '200': "WorkflowModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -5084,7 +5084,7 @@ class DefaultApi:
     @validate_call
     def add_workflow_specification(
         self,
-        body: Annotated[WorkflowSpecificationsModel, Field(description="New workflow")],
+        body: Annotated[WorkflowSpecificationModel, Field(description="New workflow")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -5097,13 +5097,13 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> WorkflowsModel:
+    ) -> WorkflowModel:
         """Store a workflow.
 
         Store a workflow.
 
         :param body: New workflow (required)
-        :type body: WorkflowSpecificationsModel
+        :type body: WorkflowSpecificationModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -5135,7 +5135,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
+            '200': "WorkflowModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -5153,7 +5153,7 @@ class DefaultApi:
     @validate_call
     def add_workflow_specification_with_http_info(
         self,
-        body: Annotated[WorkflowSpecificationsModel, Field(description="New workflow")],
+        body: Annotated[WorkflowSpecificationModel, Field(description="New workflow")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -5166,13 +5166,13 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[WorkflowsModel]:
+    ) -> ApiResponse[WorkflowModel]:
         """Store a workflow.
 
         Store a workflow.
 
         :param body: New workflow (required)
-        :type body: WorkflowSpecificationsModel
+        :type body: WorkflowSpecificationModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -5204,7 +5204,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
+            '200': "WorkflowModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -5222,7 +5222,7 @@ class DefaultApi:
     @validate_call
     def add_workflow_specification_without_preload_content(
         self,
-        body: Annotated[WorkflowSpecificationsModel, Field(description="New workflow")],
+        body: Annotated[WorkflowSpecificationModel, Field(description="New workflow")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -5241,7 +5241,7 @@ class DefaultApi:
         Store a workflow.
 
         :param body: New workflow (required)
-        :type body: WorkflowSpecificationsModel
+        :type body: WorkflowSpecificationModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -5273,7 +5273,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
+            '200': "WorkflowModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -5950,7 +5950,7 @@ class DefaultApi:
         status: Annotated[StrictStr, Field(description="New job status.")],
         rev: Annotated[StrictStr, Field(description="Current job revision.")],
         run_id: Annotated[StrictInt, Field(description="Current job run ID")],
-        body: Annotated[ResultsModel, Field(description="Result of the job.")],
+        body: Annotated[ResultModel, Field(description="Result of the job.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -5979,7 +5979,7 @@ class DefaultApi:
         :param run_id: Current job run ID (required)
         :type run_id: int
         :param body: Result of the job. (required)
-        :type body: ResultsModel
+        :type body: ResultModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -6039,7 +6039,7 @@ class DefaultApi:
         status: Annotated[StrictStr, Field(description="New job status.")],
         rev: Annotated[StrictStr, Field(description="Current job revision.")],
         run_id: Annotated[StrictInt, Field(description="Current job run ID")],
-        body: Annotated[ResultsModel, Field(description="Result of the job.")],
+        body: Annotated[ResultModel, Field(description="Result of the job.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -6068,7 +6068,7 @@ class DefaultApi:
         :param run_id: Current job run ID (required)
         :type run_id: int
         :param body: Result of the job. (required)
-        :type body: ResultsModel
+        :type body: ResultModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -6128,7 +6128,7 @@ class DefaultApi:
         status: Annotated[StrictStr, Field(description="New job status.")],
         rev: Annotated[StrictStr, Field(description="Current job revision.")],
         run_id: Annotated[StrictInt, Field(description="Current job run ID")],
-        body: Annotated[ResultsModel, Field(description="Result of the job.")],
+        body: Annotated[ResultModel, Field(description="Result of the job.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -6157,7 +6157,7 @@ class DefaultApi:
         :param run_id: Current job run ID (required)
         :type run_id: int
         :param body: Result of the job. (required)
-        :type body: ResultsModel
+        :type body: ResultModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -10414,7 +10414,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> AwsSchedulersModel:
+    ) -> AwsSchedulerModel:
         """Retrieve the AWS compute node configuration for a key.
 
         Retrieve the document from the \"aws_schedulers\" collection by key.
@@ -10455,7 +10455,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AwsSchedulersModel",
+            '200': "AwsSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -10487,7 +10487,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[AwsSchedulersModel]:
+    ) -> ApiResponse[AwsSchedulerModel]:
         """Retrieve the AWS compute node configuration for a key.
 
         Retrieve the document from the \"aws_schedulers\" collection by key.
@@ -10528,7 +10528,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AwsSchedulersModel",
+            '200': "AwsSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -10601,7 +10601,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AwsSchedulersModel",
+            '200': "AwsSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -10693,7 +10693,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ComputeNodesModel:
+    ) -> ComputeNodeModel:
         """Retrieve the compute node for a key.
 
         Retrieve the document from the \"compute_nodes\" collection by key.
@@ -10734,7 +10734,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ComputeNodesModel",
+            '200': "ComputeNodeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -10766,7 +10766,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ComputeNodesModel]:
+    ) -> ApiResponse[ComputeNodeModel]:
         """Retrieve the compute node for a key.
 
         Retrieve the document from the \"compute_nodes\" collection by key.
@@ -10807,7 +10807,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ComputeNodesModel",
+            '200': "ComputeNodeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -10880,7 +10880,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ComputeNodesModel",
+            '200': "ComputeNodeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -11531,7 +11531,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> EdgesNameModel:
+    ) -> EdgeModel:
         """Retrieve an edge
 
         Retrieves an edge from the designated collection by key.
@@ -11575,7 +11575,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "EdgesNameModel",
+            '200': "EdgeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -11608,7 +11608,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[EdgesNameModel]:
+    ) -> ApiResponse[EdgeModel]:
         """Retrieve an edge
 
         Retrieves an edge from the designated collection by key.
@@ -11652,7 +11652,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "EdgesNameModel",
+            '200': "EdgeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -11729,7 +11729,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "EdgesNameModel",
+            '200': "EdgeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -12433,7 +12433,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> FilesModel:
+    ) -> FileModel:
         """Retrieve the file for a key.
 
         Retrieve the document from the \"files\" collection by key.
@@ -12474,7 +12474,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "FilesModel",
+            '200': "FileModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -12506,7 +12506,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[FilesModel]:
+    ) -> ApiResponse[FileModel]:
         """Retrieve the file for a key.
 
         Retrieve the document from the \"files\" collection by key.
@@ -12547,7 +12547,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "FilesModel",
+            '200': "FileModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -12620,7 +12620,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "FilesModel",
+            '200': "FileModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -13549,7 +13549,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> JobSpecificationsModel:
+    ) -> JobSpecificationModel:
         """Retrieve a job
 
         Retrieves a job from the \"jobs\" collection by key.
@@ -13590,7 +13590,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobSpecificationsModel",
+            '200': "JobSpecificationModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -13622,7 +13622,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[JobSpecificationsModel]:
+    ) -> ApiResponse[JobSpecificationModel]:
         """Retrieve a job
 
         Retrieves a job from the \"jobs\" collection by key.
@@ -13663,7 +13663,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobSpecificationsModel",
+            '200': "JobSpecificationModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -13736,7 +13736,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "JobSpecificationsModel",
+            '200': "JobSpecificationModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -14092,7 +14092,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ResultsModel:
+    ) -> ResultModel:
         """Retrieve the latest result for a job
 
         Retrieve the latest result for a job. Throws an error if no result is stored.
@@ -14133,7 +14133,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResultsModel",
+            '200': "ResultModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -14165,7 +14165,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ResultsModel]:
+    ) -> ApiResponse[ResultModel]:
         """Retrieve the latest result for a job
 
         Retrieve the latest result for a job. Throws an error if no result is stored.
@@ -14206,7 +14206,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResultsModel",
+            '200': "ResultModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -14279,7 +14279,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResultsModel",
+            '200': "ResultModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -14371,7 +14371,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> LocalSchedulersModel:
+    ) -> LocalSchedulerModel:
         """Retrieve the local compute node configuration for a key.
 
         Retrieve the document from the \"local_schedulers\" collection by key.
@@ -14412,7 +14412,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LocalSchedulersModel",
+            '200': "LocalSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -14444,7 +14444,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[LocalSchedulersModel]:
+    ) -> ApiResponse[LocalSchedulerModel]:
         """Retrieve the local compute node configuration for a key.
 
         Retrieve the document from the \"local_schedulers\" collection by key.
@@ -14485,7 +14485,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LocalSchedulersModel",
+            '200': "LocalSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -14558,7 +14558,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LocalSchedulersModel",
+            '200': "LocalSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -15489,7 +15489,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ResultsModel:
+    ) -> ResultModel:
         """Retrieve the result for a key.
 
         Retrieve the document from the \"results\" collection by key.
@@ -15530,7 +15530,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResultsModel",
+            '200': "ResultModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -15562,7 +15562,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ResultsModel]:
+    ) -> ApiResponse[ResultModel]:
         """Retrieve the result for a key.
 
         Retrieve the document from the \"results\" collection by key.
@@ -15603,7 +15603,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResultsModel",
+            '200': "ResultModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -15676,7 +15676,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResultsModel",
+            '200': "ResultModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -16047,7 +16047,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> SlurmSchedulersModel:
+    ) -> SlurmSchedulerModel:
         """Retrieve the Slurm compute node configuration for a key.
 
         Retrieve the document from the \"slurm_schedulers\" collection by key.
@@ -16088,7 +16088,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "SlurmSchedulersModel",
+            '200': "SlurmSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -16120,7 +16120,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[SlurmSchedulersModel]:
+    ) -> ApiResponse[SlurmSchedulerModel]:
         """Retrieve the Slurm compute node configuration for a key.
 
         Retrieve the document from the \"slurm_schedulers\" collection by key.
@@ -16161,7 +16161,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "SlurmSchedulersModel",
+            '200': "SlurmSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -16234,7 +16234,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "SlurmSchedulersModel",
+            '200': "SlurmSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -16853,7 +16853,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> WorkflowsModel:
+    ) -> WorkflowModel:
         """Retrieve the workflow for an key.
 
         Retrieve the document for a key from the \"workflows\" collection.
@@ -16891,7 +16891,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
+            '200': "WorkflowModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -16922,7 +16922,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[WorkflowsModel]:
+    ) -> ApiResponse[WorkflowModel]:
         """Retrieve the workflow for an key.
 
         Retrieve the document for a key from the \"workflows\" collection.
@@ -16960,7 +16960,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
+            '200': "WorkflowModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -17029,7 +17029,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
+            '200': "WorkflowModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -17381,7 +17381,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> WorkflowSpecificationsModel:
+    ) -> WorkflowSpecificationModel:
         """Retrieve the current workflow
 
         Retrieves the current workflow in JSON format.
@@ -17419,7 +17419,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowSpecificationsModel",
+            '200': "WorkflowSpecificationModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -17450,7 +17450,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[WorkflowSpecificationsModel]:
+    ) -> ApiResponse[WorkflowSpecificationModel]:
         """Retrieve the current workflow
 
         Retrieves the current workflow in JSON format.
@@ -17488,7 +17488,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowSpecificationsModel",
+            '200': "WorkflowSpecificationModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -17557,7 +17557,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowSpecificationsModel",
+            '200': "WorkflowSpecificationModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -17644,7 +17644,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> WorkflowSpecificationsModel:
+    ) -> WorkflowSpecificationModel:
         """Retrieve an example workflow specification
 
         Retrieves an example workflow specification in JSON format.
@@ -17679,7 +17679,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowSpecificationsModel",
+            '200': "WorkflowSpecificationModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -17709,7 +17709,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[WorkflowSpecificationsModel]:
+    ) -> ApiResponse[WorkflowSpecificationModel]:
         """Retrieve an example workflow specification
 
         Retrieves an example workflow specification in JSON format.
@@ -17744,7 +17744,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowSpecificationsModel",
+            '200': "WorkflowSpecificationModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -17809,7 +17809,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowSpecificationsModel",
+            '200': "WorkflowSpecificationModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -17893,7 +17893,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> WorkflowSpecificationsModel:
+    ) -> WorkflowSpecificationModel:
         """Retrieve the workflow specification template
 
         Retrieve the workflow specification template in JSON format.
@@ -17928,7 +17928,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowSpecificationsModel",
+            '200': "WorkflowSpecificationModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -17958,7 +17958,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[WorkflowSpecificationsModel]:
+    ) -> ApiResponse[WorkflowSpecificationModel]:
         """Retrieve the workflow specification template
 
         Retrieve the workflow specification template in JSON format.
@@ -17993,7 +17993,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowSpecificationsModel",
+            '200': "WorkflowSpecificationModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -18058,7 +18058,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowSpecificationsModel",
+            '200': "WorkflowSpecificationModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -28867,7 +28867,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the AWS compute node configuration.")],
-        body: Annotated[AwsSchedulersModel, Field(description="AWS compute node configuration to update in the collection.")],
+        body: Annotated[AwsSchedulerModel, Field(description="AWS compute node configuration to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -28880,7 +28880,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> AwsSchedulersModel:
+    ) -> AwsSchedulerModel:
         """Update AWS compute node configuration
 
         Update a document in the \"aws_schedulers\" collection.
@@ -28890,7 +28890,7 @@ class DefaultApi:
         :param key: key of the AWS compute node configuration. (required)
         :type key: str
         :param body: AWS compute node configuration to update in the collection. (required)
-        :type body: AwsSchedulersModel
+        :type body: AwsSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -28924,7 +28924,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AwsSchedulersModel",
+            '200': "AwsSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -28944,7 +28944,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the AWS compute node configuration.")],
-        body: Annotated[AwsSchedulersModel, Field(description="AWS compute node configuration to update in the collection.")],
+        body: Annotated[AwsSchedulerModel, Field(description="AWS compute node configuration to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -28957,7 +28957,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[AwsSchedulersModel]:
+    ) -> ApiResponse[AwsSchedulerModel]:
         """Update AWS compute node configuration
 
         Update a document in the \"aws_schedulers\" collection.
@@ -28967,7 +28967,7 @@ class DefaultApi:
         :param key: key of the AWS compute node configuration. (required)
         :type key: str
         :param body: AWS compute node configuration to update in the collection. (required)
-        :type body: AwsSchedulersModel
+        :type body: AwsSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -29001,7 +29001,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AwsSchedulersModel",
+            '200': "AwsSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -29021,7 +29021,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the AWS compute node configuration.")],
-        body: Annotated[AwsSchedulersModel, Field(description="AWS compute node configuration to update in the collection.")],
+        body: Annotated[AwsSchedulerModel, Field(description="AWS compute node configuration to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -29044,7 +29044,7 @@ class DefaultApi:
         :param key: key of the AWS compute node configuration. (required)
         :type key: str
         :param body: AWS compute node configuration to update in the collection. (required)
-        :type body: AwsSchedulersModel
+        :type body: AwsSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -29078,7 +29078,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AwsSchedulersModel",
+            '200': "AwsSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -29174,7 +29174,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the compute node.")],
-        body: Annotated[ComputeNodesModel, Field(description="compute node to update in the collection.")],
+        body: Annotated[ComputeNodeModel, Field(description="compute node to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -29187,7 +29187,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ComputeNodesModel:
+    ) -> ComputeNodeModel:
         """Update compute node
 
         Update a document in the \"compute_nodes\" collection.
@@ -29197,7 +29197,7 @@ class DefaultApi:
         :param key: key of the compute node. (required)
         :type key: str
         :param body: compute node to update in the collection. (required)
-        :type body: ComputeNodesModel
+        :type body: ComputeNodeModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -29231,7 +29231,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ComputeNodesModel",
+            '200': "ComputeNodeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -29251,7 +29251,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the compute node.")],
-        body: Annotated[ComputeNodesModel, Field(description="compute node to update in the collection.")],
+        body: Annotated[ComputeNodeModel, Field(description="compute node to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -29264,7 +29264,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ComputeNodesModel]:
+    ) -> ApiResponse[ComputeNodeModel]:
         """Update compute node
 
         Update a document in the \"compute_nodes\" collection.
@@ -29274,7 +29274,7 @@ class DefaultApi:
         :param key: key of the compute node. (required)
         :type key: str
         :param body: compute node to update in the collection. (required)
-        :type body: ComputeNodesModel
+        :type body: ComputeNodeModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -29308,7 +29308,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ComputeNodesModel",
+            '200': "ComputeNodeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -29328,7 +29328,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the compute node.")],
-        body: Annotated[ComputeNodesModel, Field(description="compute node to update in the collection.")],
+        body: Annotated[ComputeNodeModel, Field(description="compute node to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -29351,7 +29351,7 @@ class DefaultApi:
         :param key: key of the compute node. (required)
         :type key: str
         :param body: compute node to update in the collection. (required)
-        :type body: ComputeNodesModel
+        :type body: ComputeNodeModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -29385,7 +29385,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ComputeNodesModel",
+            '200': "ComputeNodeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -30095,7 +30095,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the file.")],
-        body: Annotated[FilesModel, Field(description="file to update in the collection.")],
+        body: Annotated[FileModel, Field(description="file to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -30108,7 +30108,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> FilesModel:
+    ) -> FileModel:
         """Update file
 
         Update a document in the \"files\" collection.
@@ -30118,7 +30118,7 @@ class DefaultApi:
         :param key: key of the file. (required)
         :type key: str
         :param body: file to update in the collection. (required)
-        :type body: FilesModel
+        :type body: FileModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -30152,7 +30152,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "FilesModel",
+            '200': "FileModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -30172,7 +30172,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the file.")],
-        body: Annotated[FilesModel, Field(description="file to update in the collection.")],
+        body: Annotated[FileModel, Field(description="file to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -30185,7 +30185,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[FilesModel]:
+    ) -> ApiResponse[FileModel]:
         """Update file
 
         Update a document in the \"files\" collection.
@@ -30195,7 +30195,7 @@ class DefaultApi:
         :param key: key of the file. (required)
         :type key: str
         :param body: file to update in the collection. (required)
-        :type body: FilesModel
+        :type body: FileModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -30229,7 +30229,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "FilesModel",
+            '200': "FileModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -30249,7 +30249,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the file.")],
-        body: Annotated[FilesModel, Field(description="file to update in the collection.")],
+        body: Annotated[FileModel, Field(description="file to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -30272,7 +30272,7 @@ class DefaultApi:
         :param key: key of the file. (required)
         :type key: str
         :param body: file to update in the collection. (required)
-        :type body: FilesModel
+        :type body: FileModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -30306,7 +30306,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "FilesModel",
+            '200': "FileModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -31030,7 +31030,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> EdgesNameModel:
+    ) -> EdgeModel:
         """Set the resource requirements for a job.
 
         Set the resource requirements for a job, replacing any current value.
@@ -31077,7 +31077,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "EdgesNameModel",
+            '200': "EdgeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -31111,7 +31111,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[EdgesNameModel]:
+    ) -> ApiResponse[EdgeModel]:
         """Set the resource requirements for a job.
 
         Set the resource requirements for a job, replacing any current value.
@@ -31158,7 +31158,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "EdgesNameModel",
+            '200': "EdgeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -31239,7 +31239,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "EdgesNameModel",
+            '200': "EdgeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -31338,7 +31338,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the local compute node configuration.")],
-        body: Annotated[LocalSchedulersModel, Field(description="local compute node configuration to update in the collection.")],
+        body: Annotated[LocalSchedulerModel, Field(description="local compute node configuration to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -31351,7 +31351,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> LocalSchedulersModel:
+    ) -> LocalSchedulerModel:
         """Update local compute node configuration
 
         Update a document in the \"local_schedulers\" collection.
@@ -31361,7 +31361,7 @@ class DefaultApi:
         :param key: key of the local compute node configuration. (required)
         :type key: str
         :param body: local compute node configuration to update in the collection. (required)
-        :type body: LocalSchedulersModel
+        :type body: LocalSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -31395,7 +31395,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LocalSchedulersModel",
+            '200': "LocalSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -31415,7 +31415,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the local compute node configuration.")],
-        body: Annotated[LocalSchedulersModel, Field(description="local compute node configuration to update in the collection.")],
+        body: Annotated[LocalSchedulerModel, Field(description="local compute node configuration to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -31428,7 +31428,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[LocalSchedulersModel]:
+    ) -> ApiResponse[LocalSchedulerModel]:
         """Update local compute node configuration
 
         Update a document in the \"local_schedulers\" collection.
@@ -31438,7 +31438,7 @@ class DefaultApi:
         :param key: key of the local compute node configuration. (required)
         :type key: str
         :param body: local compute node configuration to update in the collection. (required)
-        :type body: LocalSchedulersModel
+        :type body: LocalSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -31472,7 +31472,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LocalSchedulersModel",
+            '200': "LocalSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -31492,7 +31492,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the local compute node configuration.")],
-        body: Annotated[LocalSchedulersModel, Field(description="local compute node configuration to update in the collection.")],
+        body: Annotated[LocalSchedulerModel, Field(description="local compute node configuration to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -31515,7 +31515,7 @@ class DefaultApi:
         :param key: key of the local compute node configuration. (required)
         :type key: str
         :param body: local compute node configuration to update in the collection. (required)
-        :type body: LocalSchedulersModel
+        :type body: LocalSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -31549,7 +31549,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LocalSchedulersModel",
+            '200': "LocalSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -31952,7 +31952,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the result.")],
-        body: Annotated[ResultsModel, Field(description="result to update in the collection.")],
+        body: Annotated[ResultModel, Field(description="result to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -31965,7 +31965,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ResultsModel:
+    ) -> ResultModel:
         """Update result
 
         Update a document in the \"results\" collection.
@@ -31975,7 +31975,7 @@ class DefaultApi:
         :param key: key of the result. (required)
         :type key: str
         :param body: result to update in the collection. (required)
-        :type body: ResultsModel
+        :type body: ResultModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -32009,7 +32009,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResultsModel",
+            '200': "ResultModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -32029,7 +32029,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the result.")],
-        body: Annotated[ResultsModel, Field(description="result to update in the collection.")],
+        body: Annotated[ResultModel, Field(description="result to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -32042,7 +32042,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ResultsModel]:
+    ) -> ApiResponse[ResultModel]:
         """Update result
 
         Update a document in the \"results\" collection.
@@ -32052,7 +32052,7 @@ class DefaultApi:
         :param key: key of the result. (required)
         :type key: str
         :param body: result to update in the collection. (required)
-        :type body: ResultsModel
+        :type body: ResultModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -32086,7 +32086,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResultsModel",
+            '200': "ResultModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -32106,7 +32106,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the result.")],
-        body: Annotated[ResultsModel, Field(description="result to update in the collection.")],
+        body: Annotated[ResultModel, Field(description="result to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -32129,7 +32129,7 @@ class DefaultApi:
         :param key: key of the result. (required)
         :type key: str
         :param body: result to update in the collection. (required)
-        :type body: ResultsModel
+        :type body: ResultModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -32163,7 +32163,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResultsModel",
+            '200': "ResultModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -32566,7 +32566,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the Slurm compute node configuration.")],
-        body: Annotated[SlurmSchedulersModel, Field(description="Slurm compute node configuration to update in the collection.")],
+        body: Annotated[SlurmSchedulerModel, Field(description="Slurm compute node configuration to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -32579,7 +32579,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> SlurmSchedulersModel:
+    ) -> SlurmSchedulerModel:
         """Update Slurm compute node configuration
 
         Update a document in the \"slurm_schedulers\" collection.
@@ -32589,7 +32589,7 @@ class DefaultApi:
         :param key: key of the Slurm compute node configuration. (required)
         :type key: str
         :param body: Slurm compute node configuration to update in the collection. (required)
-        :type body: SlurmSchedulersModel
+        :type body: SlurmSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -32623,7 +32623,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "SlurmSchedulersModel",
+            '200': "SlurmSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -32643,7 +32643,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the Slurm compute node configuration.")],
-        body: Annotated[SlurmSchedulersModel, Field(description="Slurm compute node configuration to update in the collection.")],
+        body: Annotated[SlurmSchedulerModel, Field(description="Slurm compute node configuration to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -32656,7 +32656,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[SlurmSchedulersModel]:
+    ) -> ApiResponse[SlurmSchedulerModel]:
         """Update Slurm compute node configuration
 
         Update a document in the \"slurm_schedulers\" collection.
@@ -32666,7 +32666,7 @@ class DefaultApi:
         :param key: key of the Slurm compute node configuration. (required)
         :type key: str
         :param body: Slurm compute node configuration to update in the collection. (required)
-        :type body: SlurmSchedulersModel
+        :type body: SlurmSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -32700,7 +32700,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "SlurmSchedulersModel",
+            '200': "SlurmSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -32720,7 +32720,7 @@ class DefaultApi:
         self,
         workflow: Annotated[StrictStr, Field(description="Workflow key.")],
         key: Annotated[StrictStr, Field(description="key of the Slurm compute node configuration.")],
-        body: Annotated[SlurmSchedulersModel, Field(description="Slurm compute node configuration to update in the collection.")],
+        body: Annotated[SlurmSchedulerModel, Field(description="Slurm compute node configuration to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -32743,7 +32743,7 @@ class DefaultApi:
         :param key: key of the Slurm compute node configuration. (required)
         :type key: str
         :param body: Slurm compute node configuration to update in the collection. (required)
-        :type body: SlurmSchedulersModel
+        :type body: SlurmSchedulerModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -32777,7 +32777,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "SlurmSchedulersModel",
+            '200': "SlurmSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -33179,7 +33179,7 @@ class DefaultApi:
     def modify_workflow(
         self,
         key: Annotated[StrictStr, Field(description="Key of the workflow.")],
-        body: Annotated[WorkflowsModel, Field(description="workflow to update in the collection.")],
+        body: Annotated[WorkflowModel, Field(description="workflow to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -33192,7 +33192,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> WorkflowsModel:
+    ) -> WorkflowModel:
         """Update workflow
 
         Update a document in the \"workflows\" collection.
@@ -33200,7 +33200,7 @@ class DefaultApi:
         :param key: Key of the workflow. (required)
         :type key: str
         :param body: workflow to update in the collection. (required)
-        :type body: WorkflowsModel
+        :type body: WorkflowModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -33233,7 +33233,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
+            '200': "WorkflowModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -33252,7 +33252,7 @@ class DefaultApi:
     def modify_workflow_with_http_info(
         self,
         key: Annotated[StrictStr, Field(description="Key of the workflow.")],
-        body: Annotated[WorkflowsModel, Field(description="workflow to update in the collection.")],
+        body: Annotated[WorkflowModel, Field(description="workflow to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -33265,7 +33265,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[WorkflowsModel]:
+    ) -> ApiResponse[WorkflowModel]:
         """Update workflow
 
         Update a document in the \"workflows\" collection.
@@ -33273,7 +33273,7 @@ class DefaultApi:
         :param key: Key of the workflow. (required)
         :type key: str
         :param body: workflow to update in the collection. (required)
-        :type body: WorkflowsModel
+        :type body: WorkflowModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -33306,7 +33306,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
+            '200': "WorkflowModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -33325,7 +33325,7 @@ class DefaultApi:
     def modify_workflow_without_preload_content(
         self,
         key: Annotated[StrictStr, Field(description="Key of the workflow.")],
-        body: Annotated[WorkflowsModel, Field(description="workflow to update in the collection.")],
+        body: Annotated[WorkflowModel, Field(description="workflow to update in the collection.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -33346,7 +33346,7 @@ class DefaultApi:
         :param key: Key of the workflow. (required)
         :type key: str
         :param body: workflow to update in the collection. (required)
-        :type body: WorkflowsModel
+        :type body: WorkflowModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -33379,7 +33379,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
+            '200': "WorkflowModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -35829,7 +35829,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> AwsSchedulersModel:
+    ) -> AwsSchedulerModel:
         """Delete a document of type AWS compute node configuration
 
         Deletes a document from the \"aws_schedulers\" collection by key.
@@ -35873,7 +35873,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AwsSchedulersModel",
+            '200': "AwsSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -35906,7 +35906,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[AwsSchedulersModel]:
+    ) -> ApiResponse[AwsSchedulerModel]:
         """Delete a document of type AWS compute node configuration
 
         Deletes a document from the \"aws_schedulers\" collection by key.
@@ -35950,7 +35950,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AwsSchedulersModel",
+            '200': "AwsSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -36027,7 +36027,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AwsSchedulersModel",
+            '200': "AwsSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -36136,7 +36136,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ComputeNodesModel:
+    ) -> ComputeNodeModel:
         """Delete a document of type compute node
 
         Deletes a document from the \"compute_nodes\" collection by key.
@@ -36180,7 +36180,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ComputeNodesModel",
+            '200': "ComputeNodeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -36213,7 +36213,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ComputeNodesModel]:
+    ) -> ApiResponse[ComputeNodeModel]:
         """Delete a document of type compute node
 
         Deletes a document from the \"compute_nodes\" collection by key.
@@ -36257,7 +36257,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ComputeNodesModel",
+            '200': "ComputeNodeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -36334,7 +36334,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ComputeNodesModel",
+            '200': "ComputeNodeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -36751,7 +36751,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> EdgesNameModel:
+    ) -> EdgeModel:
         """Delete an edge
 
         Deletes an edge from the designated collection by key.
@@ -36798,7 +36798,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "EdgesNameModel",
+            '200': "EdgeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -36832,7 +36832,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[EdgesNameModel]:
+    ) -> ApiResponse[EdgeModel]:
         """Delete an edge
 
         Deletes an edge from the designated collection by key.
@@ -36879,7 +36879,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "EdgesNameModel",
+            '200': "EdgeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -36960,7 +36960,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "EdgesNameModel",
+            '200': "EdgeModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -37379,7 +37379,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> FilesModel:
+    ) -> FileModel:
         """Delete a document of type file
 
         Deletes a document from the \"files\" collection by key.
@@ -37423,7 +37423,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "FilesModel",
+            '200': "FileModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -37456,7 +37456,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[FilesModel]:
+    ) -> ApiResponse[FileModel]:
         """Delete a document of type file
 
         Deletes a document from the \"files\" collection by key.
@@ -37500,7 +37500,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "FilesModel",
+            '200': "FileModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -37577,7 +37577,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "FilesModel",
+            '200': "FileModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -38300,7 +38300,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> LocalSchedulersModel:
+    ) -> LocalSchedulerModel:
         """Delete a document of type local compute node configuration
 
         Deletes a document from the \"local_schedulers\" collection by key.
@@ -38344,7 +38344,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LocalSchedulersModel",
+            '200': "LocalSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -38377,7 +38377,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[LocalSchedulersModel]:
+    ) -> ApiResponse[LocalSchedulerModel]:
         """Delete a document of type local compute node configuration
 
         Deletes a document from the \"local_schedulers\" collection by key.
@@ -38421,7 +38421,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LocalSchedulersModel",
+            '200': "LocalSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -38498,7 +38498,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "LocalSchedulersModel",
+            '200': "LocalSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -38914,7 +38914,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ResultsModel:
+    ) -> ResultModel:
         """Delete a document of type result
 
         Deletes a document from the \"results\" collection by key.
@@ -38958,7 +38958,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResultsModel",
+            '200': "ResultModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -38991,7 +38991,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[ResultsModel]:
+    ) -> ApiResponse[ResultModel]:
         """Delete a document of type result
 
         Deletes a document from the \"results\" collection by key.
@@ -39035,7 +39035,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResultsModel",
+            '200': "ResultModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -39112,7 +39112,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "ResultsModel",
+            '200': "ResultModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -39528,7 +39528,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> SlurmSchedulersModel:
+    ) -> SlurmSchedulerModel:
         """Delete a document of type Slurm compute node configuration
 
         Deletes a document from the \"slurm_schedulers\" collection by key.
@@ -39572,7 +39572,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "SlurmSchedulersModel",
+            '200': "SlurmSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -39605,7 +39605,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[SlurmSchedulersModel]:
+    ) -> ApiResponse[SlurmSchedulerModel]:
         """Delete a document of type Slurm compute node configuration
 
         Deletes a document from the \"slurm_schedulers\" collection by key.
@@ -39649,7 +39649,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "SlurmSchedulersModel",
+            '200': "SlurmSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -39726,7 +39726,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "SlurmSchedulersModel",
+            '200': "SlurmSchedulerModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -40141,7 +40141,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> WorkflowsModel:
+    ) -> WorkflowModel:
         """Delete a workflow
 
         Deletes a document from the \"workflows\" collection by key.
@@ -40182,7 +40182,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
+            '200': "WorkflowModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -40214,7 +40214,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[WorkflowsModel]:
+    ) -> ApiResponse[WorkflowModel]:
         """Delete a workflow
 
         Deletes a document from the \"workflows\" collection by key.
@@ -40255,7 +40255,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
+            '200': "WorkflowModel",
             '500': "DefaultErrorResponse"
             
         }
@@ -40328,7 +40328,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "WorkflowsModel",
+            '200': "WorkflowModel",
             '500': "DefaultErrorResponse"
             
         }

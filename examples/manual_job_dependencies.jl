@@ -7,7 +7,7 @@ function create_workflow(api)
     return send_api_command(
         api,
         APIClient.add_workflow,
-        APIClient.WorkflowsModel(
+        APIClient.WorkflowModel(
             name="manual_job_dependencies",
             description="Demo creation of a workflow with job dependencies specified manually.",
         ),
@@ -38,7 +38,7 @@ function build_workflow(api, workflow)
         api,
         APIClient.add_slurm_schedulers,
         workflow._key,
-        APIClient.SlurmSchedulersModel(
+        APIClient.SlurmSchedulerModel(
             name="short",
             account="my_account",
             nodes=1,
@@ -65,7 +65,7 @@ function build_workflow(api, workflow)
         api,
         APIClient.add_job,
         workflow._key,
-        job=APIClient.JobsModel(
+        job=APIClient.JobModel(
             name="postprocess",
             command="echo hello",
             resource_requirements=small._id,

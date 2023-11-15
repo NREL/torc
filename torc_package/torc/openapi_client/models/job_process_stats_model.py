@@ -28,16 +28,16 @@ except ImportError:
 
 class JobProcessStatsModel(BaseModel):
     """
-    JobProcessStatsModel
+    Data model for stats collected by torc for each job process
     """ # noqa: E501
-    job_key: StrictStr
-    run_id: StrictInt
-    avg_cpu_percent: Union[StrictFloat, StrictInt]
-    max_cpu_percent: Union[StrictFloat, StrictInt]
-    avg_rss: Union[StrictFloat, StrictInt]
-    max_rss: Union[StrictFloat, StrictInt]
-    num_samples: StrictInt
-    timestamp: StrictStr
+    job_key: StrictStr = Field(description="Database identifier for the job")
+    run_id: StrictInt = Field(description="Workflow run identifier")
+    avg_cpu_percent: Union[StrictFloat, StrictInt] = Field(description="Average CPU utilization of the process")
+    max_cpu_percent: Union[StrictFloat, StrictInt] = Field(description="Maximium CPU utilization of the process")
+    avg_rss: Union[StrictFloat, StrictInt] = Field(description="Average memory consumption of the process")
+    max_rss: Union[StrictFloat, StrictInt] = Field(description="Maximum memory consumption of the process")
+    num_samples: StrictInt = Field(description="Number of samples taken by torc")
+    timestamp: StrictStr = Field(description="Time the stats were recorded in the database")
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")

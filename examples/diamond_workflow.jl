@@ -10,7 +10,7 @@ function create_workflow(api)
     return send_api_command(
         api,
         APIClient.add_workflow,
-        APIClient.WorkflowsModel(
+        APIClient.WorkflowModel(
             user = "user",
             name = "diamond_workflow",
             description = "Example diamond workflow",
@@ -39,31 +39,31 @@ function build_workflow(api, workflow)
         api,
         APIClient.add_file,
         workflow._key,
-        APIClient.FilesModel(name="inputs", path=inputs_file),
+        APIClient.FileModel(name="inputs", path=inputs_file),
     )
     f1 = send_api_command(
         api,
         APIClient.add_file,
         workflow._key,
-        APIClient.FilesModel(name="files1", path=joinpath(output_dir, "f1.json")),
+        APIClient.FileModel(name="files1", path=joinpath(output_dir, "f1.json")),
     )
     f2 = send_api_command(
         api,
         APIClient.add_file,
         workflow._key,
-        APIClient.FilesModel(name="files2", path=joinpath(output_dir, "f2.json")),
+        APIClient.FileModel(name="files2", path=joinpath(output_dir, "f2.json")),
     )
     f3 = send_api_command(
         api,
         APIClient.add_file,
         workflow._key,
-        APIClient.FilesModel(name="files3", path=joinpath(output_dir, "f3.json")),
+        APIClient.FileModel(name="files3", path=joinpath(output_dir, "f3.json")),
     )
     f4 = send_api_command(
         api,
         APIClient.add_file,
         workflow._key,
-        APIClient.FilesModel(name="files4", path=joinpath(output_dir, "f4.json")),
+        APIClient.FileModel(name="files4", path=joinpath(output_dir, "f4.json")),
     )
 
     small = send_api_command(
@@ -104,7 +104,7 @@ function build_workflow(api, workflow)
         api,
         APIClient.add_slurm_schedulers,
         workflow._key,
-        APIClient.SlurmSchedulersModel(
+        APIClient.SlurmSchedulerModel(
             name="debug",
             account="my_account",
             nodes=1,

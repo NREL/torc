@@ -284,7 +284,7 @@ def map_function_to_jobs(
 
 
 def sanitize_workflow(data: dict):
-    """Sanitize a WorkflowSpecificationsModel dictionary in place so that it can be loaded into
+    """Sanitize a WorkflowSpecificationModel dictionary in place so that it can be loaded into
     the database.
     """
     for item in itertools.chain(

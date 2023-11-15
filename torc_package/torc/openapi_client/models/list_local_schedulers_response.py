@@ -20,7 +20,7 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictBool, StrictInt
-from torc.openapi_client.models.local_schedulers_model import LocalSchedulersModel
+from torc.openapi_client.models.local_scheduler_model import LocalSchedulerModel
 try:
     from typing import Self
 except ImportError:
@@ -30,7 +30,7 @@ class ListLocalSchedulersResponse(BaseModel):
     """
     ListLocalSchedulersResponse
     """ # noqa: E501
-    items: Optional[List[LocalSchedulersModel]] = None
+    items: Optional[List[LocalSchedulerModel]] = None
     skip: StrictInt
     max_limit: StrictInt
     count: StrictInt
@@ -93,7 +93,7 @@ class ListLocalSchedulersResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "items": [LocalSchedulersModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
+            "items": [LocalSchedulerModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
             "skip": obj.get("skip"),
             "max_limit": obj.get("max_limit"),
             "count": obj.get("count"),

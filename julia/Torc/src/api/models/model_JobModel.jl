@@ -25,24 +25,24 @@
         _rev=nothing,
     )
 
-    - name::String
-    - command::String
-    - invocation_script::String
-    - status::String
-    - needs_compute_node_schedule::Bool
-    - cancel_on_blocking_job_failure::Bool
-    - supports_termination::Bool
-    - blocked_by::Vector{String}
-    - input_files::Vector{String}
-    - output_files::Vector{String}
-    - input_user_data::Vector{String}
-    - output_user_data::Vector{String}
-    - resource_requirements::String
-    - scheduler::String
+    - name::String : Name of the job; no requirements on uniqueness
+    - command::String : CLI command to execute. Will not be executed in a shell and so must not include shell characters.
+    - invocation_script::String : Wrapper script for command in case the environment needs customization.
+    - status::String : Status of job; managed by torc.
+    - needs_compute_node_schedule::Bool : Informs torc to schedule a compute node to start this job.
+    - cancel_on_blocking_job_failure::Bool : Cancel this job if any of its blocking jobs fails.
+    - supports_termination::Bool : Informs torc that the job can be terminated gracefully before a wall-time timeout.
+    - blocked_by::Vector{String} : Database IDs of jobs that block this job
+    - input_files::Vector{String} : Database IDs of files that this job needs
+    - output_files::Vector{String} : Database IDs of files that this job produces
+    - input_user_data::Vector{String} : Database IDs of user-data objects that this job needs
+    - output_user_data::Vector{String} : Database IDs of user-data objects that this job produces
+    - resource_requirements::String : Optional database ID of resources required by this job
+    - scheduler::String : Optional database ID of scheduler needed by this job
     - internal::JobsInternal
-    - _key::String
-    - _id::String
-    - _rev::String
+    - _key::String : Unique database identifier for the job. Does not include collection name.
+    - _id::String : Unique database identifier for the job. Includes collection name and _key.
+    - _rev::String : Database revision of the job
 """
 Base.@kwdef mutable struct JobModel <: OpenAPI.APIModel
     name::Union{Nothing, String} = nothing

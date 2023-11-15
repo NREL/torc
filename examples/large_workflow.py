@@ -9,20 +9,20 @@ from torc.openapi_client.api import DefaultApi
 from torc.openapi_client.models.compute_node_resource_stats_model import (
     ComputeNodeResourceStatsModel,
 )
-from torc.openapi_client.models.workflows_model import WorkflowsModel
+from torc.openapi_client.models.workflow_model import WorkflowModel
 from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.resource_requirements_model import (
     ResourceRequirementsModel,
 )
-from torc.openapi_client.models.slurm_schedulers_model import SlurmSchedulersModel
+from torc.openapi_client.models.slurm_scheduler_model import SlurmSchedulerModel
 from torc.torc_rc import TorcRuntimeConfig
 
 logger = setup_logging(__name__)
 
 
-def create_workflow(api: DefaultApi) -> WorkflowsModel:
+def create_workflow(api: DefaultApi) -> WorkflowModel:
     """Creates a workflow directly through the API."""
-    workflow = WorkflowsModel(
+    workflow = WorkflowModel(
         user=getpass.getuser(),
         name="large_workflow",
         description="Demo creation of a large workflow directly through the API.",
@@ -30,7 +30,7 @@ def create_workflow(api: DefaultApi) -> WorkflowsModel:
     return api.add_workflow(workflow)
 
 
-def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
+def build_workflow(api: DefaultApi, workflow: WorkflowModel):
     """Builds the workflow."""
     config = api.get_workflow_config(workflow.key)
     config.compute_node_resource_stats = ComputeNodeResourceStatsModel(
@@ -49,7 +49,7 @@ def build_workflow(api: DefaultApi, workflow: WorkflowsModel):
     )
     scheduler = api.add_slurm_scheduler(
         workflow.key,
-        SlurmSchedulersModel(
+        SlurmSchedulerModel(
             name="short",
             account="my_account",
             nodes=1,

@@ -16,12 +16,12 @@
         _rev=nothing,
     )
 
-    - name::String
-    - num_cpus::Int64
-    - num_gpus::Int64
-    - num_nodes::Int64
-    - memory::String
-    - runtime::String
+    - name::String : Name of the resource requirements
+    - num_cpus::Int64 : Number of CPUs required by a job
+    - num_gpus::Int64 : Number of GPUs required by a job
+    - num_nodes::Int64 : Number of nodes required by a job
+    - memory::String : Amount of memory required by a job, e.g., 20g
+    - runtime::String : Maximum runtime for a job
     - _key::String
     - _id::String
     - _rev::String

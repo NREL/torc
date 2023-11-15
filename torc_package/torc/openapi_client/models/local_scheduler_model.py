@@ -18,25 +18,25 @@ import re  # noqa: F401
 import json
 
 
-from typing import Any, ClassVar, Dict, List, Optional, Union
-from pydantic import BaseModel, StrictFloat, StrictInt, StrictStr
+from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, StrictInt, StrictStr
 from pydantic import Field
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class FilesModel(BaseModel):
+class LocalSchedulerModel(BaseModel):
     """
-    FilesModel
+    LocalSchedulerModel
     """ # noqa: E501
-    name: Optional[StrictStr] = None
-    path: StrictStr
-    st_mtime: Optional[Union[StrictFloat, StrictInt]] = None
+    name: Optional[StrictStr] = 'default'
+    memory: Optional[StrictStr] = None
+    num_cpus: Optional[StrictInt] = None
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = ["name", "path", "st_mtime", "_key", "_id", "_rev"]
+    __properties: ClassVar[List[str]] = ["name", "memory", "num_cpus", "_key", "_id", "_rev"]
 
     model_config = {
         "populate_by_name": True,
@@ -55,7 +55,7 @@ class FilesModel(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of FilesModel from a JSON string"""
+        """Create an instance of LocalSchedulerModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -78,7 +78,7 @@ class FilesModel(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of FilesModel from a dict"""
+        """Create an instance of LocalSchedulerModel from a dict"""
         if obj is None:
             return None
 
@@ -86,9 +86,9 @@ class FilesModel(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "name": obj.get("name"),
-            "path": obj.get("path"),
-            "st_mtime": obj.get("st_mtime"),
+            "name": obj.get("name") if obj.get("name") is not None else 'default',
+            "memory": obj.get("memory"),
+            "num_cpus": obj.get("num_cpus"),
             "_key": obj.get("_key"),
             "_id": obj.get("_id"),
             "_rev": obj.get("_rev")

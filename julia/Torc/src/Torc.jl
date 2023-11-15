@@ -52,6 +52,7 @@ export send_api_command
 export WorkflowBuilder
 export add_file!
 export add_jobs
+export add_job!
 export add_aws_scheduler!
 export add_local_scheduler!
 export add_slurm_scheduler!

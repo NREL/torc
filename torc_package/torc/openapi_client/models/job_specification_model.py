@@ -20,29 +20,30 @@ import json
 
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictBool, StrictStr
+from pydantic import Field
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class JobSpecificationsModel(BaseModel):
+class JobSpecificationModel(BaseModel):
     """
-    JobSpecificationsModel
+    JobSpecificationModel
     """ # noqa: E501
-    name: Optional[StrictStr] = None
-    key: Optional[StrictStr] = None
-    command: StrictStr
-    invocation_script: Optional[StrictStr] = None
-    cancel_on_blocking_job_failure: Optional[StrictBool] = True
-    supports_termination: Optional[StrictBool] = False
-    scheduler: Optional[StrictStr] = None
-    needs_compute_node_schedule: Optional[StrictBool] = False
-    input_user_data: Optional[List[StrictStr]] = None
-    output_user_data: Optional[List[StrictStr]] = None
-    resource_requirements: Optional[StrictStr] = None
-    input_files: Optional[List[StrictStr]] = None
-    output_files: Optional[List[StrictStr]] = None
-    blocked_by: Optional[List[StrictStr]] = None
+    name: Optional[StrictStr] = Field(default=None, description="Name of the job; must be unique within the workflow specification.")
+    key: Optional[StrictStr] = Field(default=None, description="Optional database identifier for the job. If set, must be unique. It is recommended to let the database create the identifier.")
+    command: StrictStr = Field(description="CLI command to execute. Will not be executed in a shell and so must not include shell characters.")
+    invocation_script: Optional[StrictStr] = Field(default=None, description="Wrapper script for command in case the environment needs customization.")
+    cancel_on_blocking_job_failure: Optional[StrictBool] = Field(default=True, description="Cancel this job if any of its blocking jobs fails.")
+    supports_termination: Optional[StrictBool] = Field(default=False, description="Informs torc that the job can be terminated gracefully before a wall-time timeout.")
+    scheduler: Optional[StrictStr] = Field(default=None, description="Optional name of scheduler needed by this job")
+    needs_compute_node_schedule: Optional[StrictBool] = Field(default=False, description="Informs torc to schedule a compute node to start this job.")
+    input_user_data: Optional[List[StrictStr]] = Field(default=None, description="Names of user-data objects that this job needs")
+    output_user_data: Optional[List[StrictStr]] = Field(default=None, description="Names of user-data objects that this job produces")
+    resource_requirements: Optional[StrictStr] = Field(default=None, description="Optional name of resources required by this job")
+    input_files: Optional[List[StrictStr]] = Field(default=None, description="Names of files that this job needs")
+    output_files: Optional[List[StrictStr]] = Field(default=None, description="Names of files that this job produces")
+    blocked_by: Optional[List[StrictStr]] = Field(default=None, description="Names of jobs that block this job")
     __properties: ClassVar[List[str]] = ["name", "key", "command", "invocation_script", "cancel_on_blocking_job_failure", "supports_termination", "scheduler", "needs_compute_node_schedule", "input_user_data", "output_user_data", "resource_requirements", "input_files", "output_files", "blocked_by"]
 
     model_config = {
@@ -62,7 +63,7 @@ class JobSpecificationsModel(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of JobSpecificationsModel from a JSON string"""
+        """Create an instance of JobSpecificationModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -85,7 +86,7 @@ class JobSpecificationsModel(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of JobSpecificationsModel from a dict"""
+        """Create an instance of JobSpecificationModel from a dict"""
         if obj is None:
             return None
 
