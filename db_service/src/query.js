@@ -301,7 +301,6 @@ function getJobResourceRequirements(job, workflow) {
     }
     return res.value;
   } else if (cursor.count() > 1) {
-    // TODO: check at post
     throw new Error(
         'BUG: Only one resource requirement can be assigned to a job.',
     );
@@ -576,7 +575,7 @@ function listUserDataWithEphemeralData(workflow) {
  */
 function clearEphemeralUserData(workflow) {
   const collection = config.getWorkflowCollection(workflow, 'user_data');
-  // TODO: How to clear the data inside the query? It would be faster.
+  // TODO: Clear the data inside the query; it would be faster.
   // But we probably won't ever have many of these.
   const cursor = query`
     FOR doc in ${collection}
@@ -837,8 +836,7 @@ function isJobStatusComplete(status) {
  */
 function isWorkflowComplete(workflow) {
   // TODO: This function will be called a lot - by every compute node on some interval.
-  // May need to ensure that jobs or at least their status are always cached.
-  // Or track job completions, which could easily end up being wrong.
+  // Track how much time is spent here.
   const collection = config.getWorkflowCollection(workflow, 'jobs');
   const cursor = query({count: true})`
     FOR job in ${collection}

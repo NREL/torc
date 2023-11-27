@@ -9,8 +9,6 @@ const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
 module.exports = router;
 
-// TODO: Consider what to do when the full JSON payload is large. May hit transfer limits.
-
 router.post('/workflow_specifications', function(req, res) {
   const spec = req.body;
   const workflow = {
