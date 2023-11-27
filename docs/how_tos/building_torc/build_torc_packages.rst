@@ -5,9 +5,9 @@ Build Torc Packages
 ###################
 This page describes what developers should do to release new versions after making changes.
 
-1. Update the torc version in the files ``torc_package/torc/version.py`` and
-   ``db_service/config.json``, following guidance from http://semver.org. Also update this version
-   in ``docs/installation.rst`` (TODO: automate).
+1. Update the torc version in all files by running ``python scripts/update_version.py NEW_VERSION``
+   from the root of the repository. Choose the new version by following guidance from
+   http://semver.org.
 
 2. Rebuild the Python client installed inside torc by following the
    instructions at :ref:`generate-client-apis`.
