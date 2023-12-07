@@ -32,7 +32,7 @@ signal ``SIGTERM`` to each job process. If your job registers a signal handler f
 can gracefully shutdown such that a subsequent process can resume where it left off.
 
 Refer to this script for a Python example of handling ``SIGTERM``:
-https://github.nrel.gov/viz/wms/blob/main/torc_package/tests/scripts/sleep.py
+https://github.nrel.gov/viz/torc/blob/main/torc_package/tests/scripts/sleep.py
 
 .. note:: The torc worker application on compute nodes handles ``SIGTERM``. If you configure Slurm
    to terminate jobs at an earlier time than the torc setting, torc will respect it.

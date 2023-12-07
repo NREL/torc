@@ -14,7 +14,7 @@ Configure a workflow specification
 1. Dump the workflow template to a JSON file. Alternatively, dump the example specification to a
    file. You might prefer it because it includes object definitions, like jobs and files. Finally,
    you can copy/paste/modify this `example workflow file
-   <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.json5>`_
+   <https://github.nrel.gov/viz/torc/blob/main/examples/diamond_workflow.json5>`_
 
 .. code-block:: console
 
@@ -48,7 +48,7 @@ OpenAPI Clients
 Configure with the Python API
 -----------------------------
 You can build a workflow through the torc Python API. Refer to this `example Python script
-<https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py>`_ and the
+<https://github.nrel.gov/viz/torc/blob/main/examples/diamond_workflow.py>`_ and the
 :ref:`python-client-api-reference` .
 
 Note that if you don't have a CLI executable for your jobs and instead want torc to map a list of
@@ -58,7 +58,7 @@ the tutorial :ref:`map-function-tutorial` for more information.
 Configure with the Julia API
 ----------------------------
 You can build a workflow through the torc Julia API. Refer to this `example Julia script
-<https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.jl>`_.
+<https://github.nrel.gov/viz/torc/blob/main/examples/diamond_workflow.jl>`_.
 
 Compute node configuration options
 ==================================

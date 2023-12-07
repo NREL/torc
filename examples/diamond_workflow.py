@@ -23,9 +23,9 @@ from torc.torc_rc import TorcRuntimeConfig
 
 TORC_SERVICE_URL = "http://localhost:8529/_db/test-workflows/torc-service"
 TEST_WORKFLOW = "test_workflow"
-PREPROCESS = Path("tests") / "worker" / "scripts" / "preprocess.py"
-POSTPROCESS = Path("tests") / "worker" / "scripts" / "postprocess.py"
-WORK = Path("tests") / "worker" / "scripts" / "work.py"
+PREPROCESS = Path("tests") / "scripts" / "preprocess.py"
+POSTPROCESS = Path("tests") / "scripts" / "postprocess.py"
+WORK = Path("tests") / "scripts" / "work.py"
 
 logger = setup_logging(__name__)
 

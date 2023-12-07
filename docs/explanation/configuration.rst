@@ -24,7 +24,7 @@ This is the recommended process because the JSON file defines everything about t
 Refer to :ref:`open-api-client-models` for a definition of the data model.
 
 For a specific example, refer to this
-`file <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.json5>`_.
+`file <https://github.nrel.gov/viz/torc/blob/main/examples/diamond_workflow.json5>`_.
 
 .. note:: In that example torc determines the order of execution of jobs based on the job/file
    input/output relationships.
@@ -113,7 +113,7 @@ be required if your workflow exceeds the size that can be transferred in one HTT
 API calls
 =========
 Make your own API calls directly to the torc database service. Here is one
-`script example <https://github.nrel.gov/viz/wms/blob/main/examples/diamond_workflow.py>`_.
+`script example <https://github.nrel.gov/viz/torc/blob/main/examples/diamond_workflow.py>`_.
 
 Dependency graphs
 =================

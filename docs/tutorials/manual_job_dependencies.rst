@@ -15,9 +15,9 @@ send torc API calls to determine what failed.
 
 Examples:
 
-- `JSON5 <https://github.nrel.gov/viz/wms/blob/main/examples/manual_job_dependencies.json5>`_
-- `Python <https://github.nrel.gov/viz/wms/blob/main/examples/manual_job_dependencies.py>`_
-- `Julia <https://github.nrel.gov/viz/wms/blob/main/examples/manual_job_dependencies.jl>`_
+- `JSON5 <https://github.nrel.gov/viz/torc/blob/main/examples/manual_job_dependencies.json5>`_
+- `Python <https://github.nrel.gov/viz/torc/blob/main/examples/manual_job_dependencies.py>`_
+- `Julia <https://github.nrel.gov/viz/torc/blob/main/examples/manual_job_dependencies.jl>`_
 
 These examples will work on a local computer or HPC environment. You can create the JSON5 workflow
 with the CLI command ``torc workflows create-from-json-file

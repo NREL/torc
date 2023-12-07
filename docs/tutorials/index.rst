@@ -11,13 +11,13 @@ below.
 
 .. code-block:: console
 
-    $ git clone https://github.nrel.gov/viz/wms.git
+    $ git clone https://github.nrel.gov/viz/torc.git
 
 2. Change to the ``torc`` directory so that you have access to the torc test scripts.
 
 .. code-block:: console
 
-    $ cd wms/torc_package
+    $ cd torc/torc_package
 
 3. Create a torc runtime configuration file. We will use it shorten the commands that we type
    below. Change ``<hostname>`` and ``<database-name>`` to correct values for your database
