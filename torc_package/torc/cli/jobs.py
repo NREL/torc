@@ -253,6 +253,13 @@ def list_jobs(ctx, api, filters, exclude, limit, skip, sort_by, reverse_sort):
             "internal",
             "invocation_script",
             "supports_termination",
+            "input_files",
+            "output_files",
+            "input_user_data",
+            "output_user_data",
+            "blocked_by",
+            "resource_requirements",
+            "scheduler",
         }
     )
     columns = [x for x in list_model_fields(JobModel) if x not in exclude]
