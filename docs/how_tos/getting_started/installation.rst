@@ -29,7 +29,7 @@ Installation
 
 .. code-block:: console
 
-    $ pip install git+ssh://git@github.nrel.gov/viz/torc.git@v0.3.1#subdirectory=torc_package
+    $ pip install git+ssh://git@github.nrel.gov/viz/torc.git@v0.3.2#subdirectory=torc_package
 
 5. Optionally install the Julia client package.
 
@@ -37,7 +37,7 @@ Installation
 
     $ julia  # optionally specify an environment with --project
     $ using Pkg
-    $ Pkg.add(PackageSpec(url="git@github.nrel.gov:viz/torc.git", rev="v0.3.1", subdir="julia/Torc"))
+    $ Pkg.add(PackageSpec(url="git@github.nrel.gov:viz/torc.git", rev="v0.3.2", subdir="julia/Torc"))
 
 Note that you can also install the ``torc`` package from a clone of the repository. This will give
 you the latest code from the ``main`` branch.
