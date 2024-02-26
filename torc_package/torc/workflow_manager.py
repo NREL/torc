@@ -4,10 +4,13 @@ import getpass
 import logging
 import socket
 from pathlib import Path
+from typing import Any
 
 from torc.api import send_api_command, iter_documents
 from torc.common import JobStatus
 from torc.exceptions import InvalidWorkflow
+from torc.openapi_client.api import DefaultApi
+from torc.openapi_client.models.file_model import FileModel
 
 
 logger = logging.getLogger(__name__)
@@ -16,11 +19,11 @@ logger = logging.getLogger(__name__)
 class WorkflowManager:
     """Manages the workflow across nodes."""
 
-    def __init__(self, api, key):
+    def __init__(self, api: DefaultApi, key: str) -> None:
         self._api = api
         self._key = key
 
-    def restart(self, ignore_missing_data=False, only_uninitialized=False):
+    def restart(self, ignore_missing_data: bool = False, only_uninitialized: bool = False) -> None:
         """Restart the workflow.
 
         Parameters
@@ -48,7 +51,9 @@ class WorkflowManager:
             },
         )
 
-    def start(self, auto_tune_resource_requirements=False, ignore_missing_data=False):
+    def start(
+        self, auto_tune_resource_requirements: bool = False, ignore_missing_data: bool = False
+    ) -> None:
         """Start a workflow.
 
         Parameters
@@ -82,16 +87,16 @@ class WorkflowManager:
         )
         logger.info("Started workflow")
 
-    def _bump_run_id(self):
+    def _bump_run_id(self) -> None:
         status = send_api_command(self._api.get_workflow_status, self._key)
         status.run_id += 1
         send_api_command(self._api.modify_workflow_status, self._key, status)
 
-    def _check_workflow(self, ignore_missing_data=False):
+    def _check_workflow(self, ignore_missing_data: bool = False) -> None:
         self._check_workflow_user_data(ignore_missing_data)
         self._check_workflow_files(ignore_missing_data)
 
-    def _check_workflow_files(self, ignore_missing_data):
+    def _check_workflow_files(self, ignore_missing_data: bool) -> None:
         if ignore_missing_data:
             return
         result = send_api_command(self._api.list_required_existing_files, self._key)
@@ -100,7 +105,7 @@ class WorkflowManager:
             if not Path(file.path).exists():
                 raise InvalidWorkflow(f"File {key=} {file.path=} should exist but does not.")
 
-    def _check_workflow_user_data(self, ignore_missing_data):
+    def _check_workflow_user_data(self, ignore_missing_data: bool) -> None:
         if ignore_missing_data:
             return
         result = send_api_command(self._api.list_missing_user_data, self._key)
@@ -108,14 +113,14 @@ class WorkflowManager:
             msg = " ".join(result.user_data)
             raise InvalidWorkflow(f"User data keys are missing data: {msg}")
 
-    def _process_changed_files(self):
+    def _process_changed_files(self) -> None:
         for file in iter_documents(self._api.list_files, self._key):
             path = Path(file.path)
-            old = {
+            old: dict[str, Any] = {
                 "exists": file.st_mtime is not None,
                 "st_mtime": file.st_mtime,
             }
-            new = {
+            new: dict[str, Any] = {
                 "exists": path.exists(),
                 "st_mtime": None,
             }
@@ -134,7 +139,7 @@ class WorkflowManager:
                     logger.info("File %s was removed. Cleared file stats", file.name)
                 self._update_jobs_on_file_change(file)
 
-    def _initialize_files(self):
+    def _initialize_files(self) -> None:
         """Initialize the file stats in the database."""
         for file in iter_documents(self._api.list_files, self._key):
             path = Path(file.path)
@@ -147,7 +152,7 @@ class WorkflowManager:
                     file,
                 )
 
-    def _initialize_jobs(self, only_uninitialized=False):
+    def _initialize_jobs(self, only_uninitialized: bool = False) -> None:
         """Change all uninitialized jobs to ready or blocked."""
         send_api_command(
             self._api.initialize_jobs,
@@ -156,7 +161,9 @@ class WorkflowManager:
         )
         logger.info("Changed all uninitialized jobs to ready or blocked.")
 
-    def reinitialize_jobs(self, ignore_missing_data=False, only_uninitialized=False):
+    def reinitialize_jobs(
+        self, ignore_missing_data: bool = False, only_uninitialized: bool = False
+    ) -> None:
         """Reinitialize jobs. Account for jobs that are new or have been reset.
 
         Parameters
@@ -177,7 +184,7 @@ class WorkflowManager:
             )
         self._initialize_jobs(only_uninitialized=only_uninitialized)
 
-    def _update_jobs_if_output_files_are_missing(self):
+    def _update_jobs_if_output_files_are_missing(self) -> None:
         run_id = None
         for job in send_api_command(
             self._api.list_jobs_by_status,
@@ -209,7 +216,7 @@ class WorkflowManager:
                     )
                     break
 
-    def _update_jobs_on_file_change(self, file):
+    def _update_jobs_on_file_change(self, file: FileModel) -> None:
         run_id = send_api_command(self._api.get_workflow_status, self._key).run_id
         for job in iter_documents(
             self._api.list_jobs_by_needs_file,

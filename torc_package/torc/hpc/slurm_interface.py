@@ -5,6 +5,8 @@ import os
 import re
 import subprocess
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
 import psutil
 
@@ -30,7 +32,7 @@ class SlurmInterface(HpcInterface):
     }
     _REGEX_SBATCH_OUTPUT = re.compile(r"Submitted batch job (\d+)")
 
-    def cancel_job(self, job_id):
+    def cancel_job(self, job_id: str) -> int:
         result = subprocess.run(["scancel", job_id], check=False)
         if result.returncode != 0:
             logger.error("Failed to cancel Slurm job %s", job_id)
@@ -38,11 +40,11 @@ class SlurmInterface(HpcInterface):
             logger.info("Canceled Slurm job %s", job_id)
         return result.returncode
 
-    def get_status(self, job_id):
+    def get_status(self, job_id: str) -> HpcJobInfo:
         field_names = ("jobid", "name", "state")
         cmd = f"squeue -u {self.USER} --Format \"{','.join(field_names)}\" -h -j {job_id}"
 
-        output = {}
+        output: dict[str, Any] = {}
         # Transient failures could be costly. Retry for up to one minute.
         errors = ["Invalid job id specified"]
         ret = run_command(cmd, output, num_retries=6, retry_delay_s=10, error_strings=errors)
@@ -71,11 +73,11 @@ class SlurmInterface(HpcInterface):
         )
         return job_info
 
-    def get_statuses(self):
+    def get_statuses(self) -> dict[str, HpcJobStatus]:
         field_names = ("jobid", "state")
         cmd = f"squeue -u {self.USER} --Format \"{','.join(field_names)}\" -h"
 
-        output = {}
+        output: dict[str, Any] = {}
         # Transient failures could be costly. Retry for up to one minute.
         ret = run_command(cmd, output, num_retries=6, retry_delay_s=10)
         if ret != 0:
@@ -89,7 +91,7 @@ class SlurmInterface(HpcInterface):
 
         return self._get_statuses_from_output(output["stdout"])
 
-    def _get_statuses_from_output(self, output):
+    def _get_statuses_from_output(self, output: str) -> dict[str, HpcJobStatus]:
         logger.debug("squeue output:  [%s]", output)
         lines = output.split("\n")
         if not lines:
@@ -108,20 +110,31 @@ class SlurmInterface(HpcInterface):
 
         return statuses
 
-    def get_current_job_id(self):
+    def get_current_job_id(self) -> str:
         return os.environ["SLURM_JOB_ID"]
 
     def create_submission_script(
-        self, name, command, filename, path, config, start_one_worker_per_node=False
-    ):
+        self,
+        name: str,
+        command: str,
+        filename: str | Path,
+        path: str,
+        config: dict[str, str],
+        start_one_worker_per_node: bool = False,
+    ) -> None:
         text = self._create_submission_script_text(
             name, command, path, config, start_one_worker_per_node
         )
         create_script(filename, text)
 
     def _create_submission_script_text(
-        self, name, command, path, config, start_one_worker_per_node
-    ):
+        self,
+        name: str,
+        command: str,
+        path: str,
+        config: dict[str, Any],
+        start_one_worker_per_node: bool,
+    ) -> str:
         text = f"""#!/bin/bash
 #SBATCH --account={config['account']}
 #SBATCH --job-name={name}
@@ -147,13 +160,13 @@ class SlurmInterface(HpcInterface):
     def get_environment_variables(self) -> dict[str, str]:
         return {k: v for k, v in os.environ.items() if "SLURM" in k}
 
-    def get_job_end_time(self):
+    def get_job_end_time(self) -> datetime:
         cmd = ["squeue", "-j", self.get_current_job_id(), "--format='%20e'"]
         proc = subprocess.run(cmd, stdout=subprocess.PIPE, check=True)
         timestamp = proc.stdout.decode("utf-8").replace("'", "").strip().split("\n")[1].strip()
         return datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
 
-    def get_job_stats(self, job_id):
+    def get_job_stats(self, job_id: str) -> HpcJobStats:
         cmd = [
             "sacct",
             "-j",
@@ -179,7 +192,7 @@ class SlurmInterface(HpcInterface):
             raise
         try:
             if fields[4] == "Unknown":
-                end = fields[4]
+                end = None
             else:
                 end = datetime.strptime(fields[4], fmt)
         except ValueError:
@@ -197,39 +210,39 @@ class SlurmInterface(HpcInterface):
         )
         return stats
 
-    def get_local_scratch(self):
+    def get_local_scratch(self) -> str:
         return os.environ["LOCAL_SCRATCH"]
 
-    def get_node_id(self):
+    def get_node_id(self) -> str:
         return os.environ["SLURM_NODEID"]
 
     def get_task_pid(self) -> str:
         """Return the Slurm task PID."""
         return os.environ["SLURM_TASK_PID"]
 
-    def get_memory_gb(self):
+    def get_memory_gb(self) -> float:
         if os.environ.get("SLURM_CLUSTER_NAME", "") == "kestrel":
             # TODO: This may not be correct for shared nodes.
             return psutil.virtual_memory().total / (1024 * 1024 * 1024)
         return int(os.environ["SLURM_MEM_PER_NODE"]) / 1024
 
-    def get_num_nodes(self):
+    def get_num_nodes(self) -> int:
         return int(os.environ["SLURM_JOB_NUM_NODES"])
 
-    def get_num_cpus(self):
+    def get_num_cpus(self) -> int:
         return int(os.environ["SLURM_CPUS_ON_NODE"])
 
-    def get_num_cpus_per_task(self):
+    def get_num_cpus_per_task(self) -> int:
         """Return the number of CPUs allocated to one task."""
         return int(os.environ["SLURM_CPUS_PER_TASK"])
 
-    def get_num_gpus(self):
+    def get_num_gpus(self) -> int:
         num_gpus = 0
         if "SLURM_JOB_GPUS" in os.environ:
             num_gpus = len(os.environ["SLURM_JOB_GPUS"].split(","))
         return num_gpus
 
-    def list_active_nodes(self, job_id):
+    def list_active_nodes(self, job_id: str) -> list[str]:
         # It's possible that 500 characters won't be enough, even with the compact format.
         # Compare the node count against the result to make sure we got all nodes.
         # There should be a better way to get this.
@@ -252,9 +265,9 @@ class SlurmInterface(HpcInterface):
             raise Exception(f"Bug in parsing node names. {nodes=} {num_nodes=}")
         return nodes
 
-    def submit(self, filename):
-        job_id = None
-        output = {}
+    def submit(self, filename) -> tuple[int, str, str]:
+        job_id = ""
+        output: dict[str, Any] = {}
         # Transient failures could be costly. Retry for up to one minute.
         # TODO: Some errors are not transient. We could detect those and skip the retries.
         ret = run_command(f"sbatch {filename}", output, num_retries=6, retry_delay_s=10)

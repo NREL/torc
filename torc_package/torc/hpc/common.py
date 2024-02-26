@@ -1,10 +1,11 @@
 """Common definitions for HPC functionality"""
 
-from collections import namedtuple
 import enum
+from datetime import datetime
+from typing import NamedTuple, Optional
 
 
-class HpcJobStatus(enum.Enum):
+class HpcJobStatus(str, enum.Enum):
     """Represents the status of an HPC job."""
 
     UNKNOWN = "unknown"
@@ -14,10 +15,25 @@ class HpcJobStatus(enum.Enum):
     COMPLETE = "complete"
 
 
-HpcJobInfo = namedtuple("HpcJobInfo", "job_id, name, status")
-HpcJobStats = namedtuple(
-    "HpcJobStats", "hpc_job_id, name, start, end, state, account, partition, qos"
-)
+class HpcJobInfo(NamedTuple):
+    """Defines the status of a job submitted to the HPC."""
+
+    job_id: str
+    name: str
+    status: HpcJobStatus
+
+
+class HpcJobStats(NamedTuple):
+    """Defines the stats for an HPC job."""
+
+    hpc_job_id: str
+    name: str
+    start: datetime
+    end: Optional[datetime]
+    state: str
+    account: str
+    partition: str
+    qos: str
 
 
 class HpcType(enum.Enum):

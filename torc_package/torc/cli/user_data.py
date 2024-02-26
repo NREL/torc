@@ -4,12 +4,12 @@ import json
 import logging
 
 import click
-import json5
+import json5  # type: ignore
+
 from torc.openapi_client.models.user_data_model import (
     UserDataModel,
 )
 from torc.openapi_client.models.edge_model import EdgeModel
-
 from torc.api import iter_documents
 from .common import (
     check_database_url,

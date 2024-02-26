@@ -5,18 +5,21 @@ import logging
 import shutil
 import sys
 from pathlib import Path
+from typing import Any, Callable, Iterable, Optional
 
+import click
 from prettytable import PrettyTable
 
 from torc.api import iter_documents
 from torc.loggers import setup_logging
+from torc.openapi_client.api import DefaultApi
 from torc.torc_rc import TorcRuntimeConfig
 
 
 logger = logging.getLogger(__name__)
 
 
-def check_database_url(api):
+def check_database_url(api: DefaultApi) -> None:
     """Raises an exception if a database URL is not set."""
     if api is None:
         rc_path = TorcRuntimeConfig.path()
@@ -36,7 +39,7 @@ def check_database_url(api):
         sys.exit(1)
 
 
-def check_output_directory(path: Path, force: bool):
+def check_output_directory(path: Path, force: bool) -> None:
     """Ensures that the parameter path is an empty directory.
 
     Parameters
@@ -60,7 +63,7 @@ def check_output_directory(path: Path, force: bool):
     path.mkdir()
 
 
-def check_output_path(path: Path, force: bool):
+def check_output_path(path: Path, force: bool) -> None:
     """Ensures that the parameter path does not exist.
 
     Parameters
@@ -80,7 +83,7 @@ def check_output_path(path: Path, force: bool):
             sys.exit(1)
 
 
-def confirm_change(ctx, msg):
+def confirm_change(ctx: click.Context, msg: str) -> None:
     """If prompts are enabled (default), prompt the user to confirm the change."""
     if get_no_prompts_from_context(ctx):
         return
@@ -92,7 +95,7 @@ def confirm_change(ctx, msg):
         sys.exit(0)
 
 
-def get_log_level_from_str(level):
+def get_log_level_from_str(level: str) -> int:
     """Convert a log level string to logging type."""
     match level:
         case "debug":
@@ -111,17 +114,17 @@ def get_log_level_from_str(level):
             raise Exception(f"Unsupported level={level}")
 
 
-def get_no_prompts_from_context(ctx) -> bool:
+def get_no_prompts_from_context(ctx: click.Context) -> bool:
     """Get the workflow ID from a click context."""
     return ctx.find_root().params["no_prompts"]
 
 
-def get_output_format_from_context(ctx) -> str:
+def get_output_format_from_context(ctx: click.Context) -> str:
     """Get the workflow ID from a click context."""
     return ctx.find_root().params["output_format"]
 
 
-def get_workflow_key_from_context(ctx, api):
+def get_workflow_key_from_context(ctx: click.Context, api: DefaultApi) -> str:
     """Get the workflow ID from a click context."""
     params = ctx.find_root().params
     if params["workflow_key"] is None:
@@ -148,7 +151,15 @@ def get_workflow_key_from_context(ctx, api):
     return key
 
 
-def print_items(ctx, items, table_title, columns, json_key, indent=None, start_index=1):
+def print_items(
+    ctx: click.Context,
+    items: Iterable[dict[str, Any]],
+    table_title: str,
+    columns: Iterable[str],
+    json_key: str,
+    indent: Optional[int] = None,
+    start_index: int = 1,
+):
     """Print items in either a table or JSON format, based on what is set in ctx."""
     output_format = get_output_format_from_context(ctx)
     if output_format in ("text", "csv"):
@@ -167,12 +178,12 @@ def print_items(ctx, items, table_title, columns, json_key, indent=None, start_i
 
 
 def prompt_user_for_document(
-    doc_type,
-    getter_func,
+    doc_type: str,
+    getter_func: Callable,
     *args,
-    auto_select_one_option=False,
-    exclude_columns=None,
-    msg=None,
+    auto_select_one_option: bool = False,
+    exclude_columns: Optional[Iterable[str]] = None,
+    msg: Optional[str] = None,
     **kwargs,
 ):
     """Help a user select a document by printing a table of available documents.
@@ -199,10 +210,11 @@ def prompt_user_for_document(
     docs = []
     dicts = []
     index_to_doc = {}
+    _exclude_columns = exclude_columns or []
     for i, doc in enumerate(iter_documents(getter_func, *args, **kwargs), start=1):
         index_to_doc[i] = doc
         data = doc.to_dict()
-        for col in exclude_columns:
+        for col in _exclude_columns:
             data.pop(col, None)
         dicts.append(data)
         docs.append(doc)
@@ -245,7 +257,9 @@ def prompt_user_for_document(
     return doc
 
 
-def make_text_table(iterable, title, columns, start_index=1):
+def make_text_table(
+    iterable: Iterable[Any], title: str, columns: Iterable[str], start_index: int = 1
+):
     """Return a PrettyTable from an iterable.
 
     Parameters
@@ -274,14 +288,14 @@ def make_text_table(iterable, title, columns, start_index=1):
     return table
 
 
-def path_callback(*args) -> Path:
+def path_callback(*args: str) -> Path:
     """click callback to convert a string to a Path."""
     return Path(args[2])
 
 
-def parse_filters(filters) -> dict:
+def parse_filters(filters: tuple[str]) -> dict[str, Any]:
     """Parse filter options given on the command line."""
-    final = {}
+    final: dict[str, Any] = {}
     for flt in filters:
         fields = flt.split("=")
         if len(fields) != 2:
@@ -290,22 +304,19 @@ def parse_filters(filters) -> dict:
             raise Exception(msg)
         val = fields[1]
         val_as_int = _try_parse_int(val)
-        if val_as_int is not None:
-            val = val_as_int
-        final[fields[0]] = val
+        _val = val_as_int or val
+        final[fields[0]] = _val
 
     return final
 
 
 def _try_parse_int(val: str) -> int | None:
-    try:
-        val = int(val)
-        return val
-    except ValueError:
-        return None
+    return int(val) if val.isnumeric() else None
 
 
-def setup_cli_logging(ctx, name, filename=None, mode="w"):
+def setup_cli_logging(
+    ctx: click.Context, name: str, filename: Optional[Path] = None, mode: str = "w"
+):
     """Setup logging from a click context."""
     params = ctx.find_root().params
     return setup_logging(

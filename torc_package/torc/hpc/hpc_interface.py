@@ -3,6 +3,9 @@
 import abc
 import getpass
 from datetime import datetime
+from pathlib import Path
+
+from torc.hpc.common import HpcJobInfo, HpcJobStats, HpcJobStatus
 
 
 class HpcInterface(abc.ABC):
@@ -11,43 +14,28 @@ class HpcInterface(abc.ABC):
     USER = getpass.getuser()
 
     @abc.abstractmethod
-    def cancel_job(self, job_id):
-        """Cancel job.
-
-        Parameters
-        ----------
-        job_id : str
+    def cancel_job(self, job_id: str) -> int:
+        """Cancel the job.
 
         Returns
         -------
         int
-            return code
-
+            Return code of the job.
         """
 
     @abc.abstractmethod
-    def get_status(self, job_id):
+    def get_status(self, job_id: str) -> HpcJobInfo:
         """Check the status of a job.
         Handles transient errors for up to one minute.
-
-        Parameters
-        ----------
-        job_id : str
-            job ID
-
-        Returns
-        -------
-        HpcJobInfo
 
         Raises
         ------
         ExecutionError
             Raised if statuses cannot be retrieved.
-
         """
 
     @abc.abstractmethod
-    def get_statuses(self):
+    def get_statuses(self) -> dict[str, HpcJobStatus]:
         """Check the statuses of all user jobs.
         Handles transient errors for up to one minute.
 
@@ -65,34 +53,39 @@ class HpcInterface(abc.ABC):
 
     @abc.abstractmethod
     def create_submission_script(
-        self, name, command, filename, path, config, start_one_worker_per_node=False
-    ):
+        self,
+        name: str,
+        command: str,
+        filename: str | Path,
+        path: str,
+        config: dict[str, str],
+        start_one_worker_per_node: bool = False,
+    ) -> None:
         """Create the script to queue the jobs to the HPC.
 
         Parameters
         ----------
-        name : str
+        name
             job name
-        command : str
+        command
             CLI command to execute on HPC
-        filename : str
+        filename
             submission script filename
-        path : str
+        path
             path for stdout and stderr files
-        config : dict[str, str]
+        config
             Configuration parameters and values for the HPC scheduler
-        start_one_worker_per_node : bool
+        start_one_worker_per_node
             If True, start a torc worker on each compute node, defaults to False.
             The default behavior defers control of a multi-node job to the user job.
-
         """
 
     @abc.abstractmethod
-    def get_current_job_id(self):
+    def get_current_job_id(self) -> str:
         """Return the HPC job ID from the current job."""
 
     @abc.abstractmethod
-    def get_environment_variables(self) -> dict[str, dict]:
+    def get_environment_variables(self) -> dict[str, str]:
         """Return a dict of all relevant HPC environment variables."""
 
     @abc.abstractmethod
@@ -100,38 +93,20 @@ class HpcInterface(abc.ABC):
         """Return the end time for the current job."""
 
     @abc.abstractmethod
-    def get_job_stats(self, job_id):
-        """Get stats for job ID.
-
-        Returns
-        -------
-        HpcJobStats
-
-        """
+    def get_job_stats(self, job_id) -> HpcJobStats:
+        """Get stats for job ID."""
 
     @abc.abstractmethod
-    def get_local_scratch(self):
-        """Get path to local storage space.
-
-        Returns
-        -------
-        str
-
-        """
+    def get_local_scratch(self) -> str:
+        """Get path to local storage space."""
 
     @abc.abstractmethod
-    def get_memory_gb(self) -> int:
+    def get_memory_gb(self) -> float:
         """Return the memory available to a job in GiB."""
 
     @abc.abstractmethod
     def get_node_id(self) -> str:
-        """Return the node ID of the current system.
-
-        Returns
-        -------
-        str
-
-        """
+        """Return the node ID of the current system."""
 
     @abc.abstractmethod
     def get_num_cpus(self) -> int:
@@ -146,22 +121,13 @@ class HpcInterface(abc.ABC):
         """Return the number of compute nodes in the current job."""
 
     @abc.abstractmethod
-    def list_active_nodes(self, job_id):
-        """Return the nodes currently participating in the job. Order should be deterministic.
-
-        Parameters
-        ----------
-        job_id : str
-
-        Returns
-        -------
-        list
-            list of node hostnames
-
+    def list_active_nodes(self, job_id: str) -> list[str]:
+        """Return the node hostname currently participating in the job. Order should be
+        deterministic.
         """
 
     @abc.abstractmethod
-    def submit(self, filename):
+    def submit(self, filename) -> tuple[int, str, str]:
         """Submit the work to the HPC queue.
         Handles transient errors for up to one minute.
 
@@ -174,5 +140,4 @@ class HpcInterface(abc.ABC):
         -------
         tuple of int, str, str
             (return_code, job_id, stderr)
-
         """

@@ -7,6 +7,7 @@ import os
 import threading
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll, Grid, Container
@@ -82,8 +83,8 @@ class TorcManagementConsole(App):
         )
         self._db_url = ""
         self._db_name = ""
-        self._api: DefaultApi = None
-        self._event_monitor_timer = None
+        self._api: Optional[DefaultApi] = None
+        self._event_monitor_timer: Optional[threading.Timer] = None
 
         full_url = database_url or None
         if full_url is None:
@@ -136,6 +137,7 @@ class TorcManagementConsole(App):
                         with Grid(id="document_table_controls_grid"):
                             with RadioSet(id="table_options", disabled=True):
                                 for table_id, table in DATA_TABLES.items():
+                                    assert isinstance(table["name"], str)
                                     yield RadioButton(table["name"], id=table_id)
                             with RadioSet(id="sort_options", disabled=True):
                                 yield RadioButton("None", id="no_sorting", value=True)
@@ -271,12 +273,14 @@ class TorcManagementConsole(App):
         """Event handler when a DataTable header is selected."""
         self._clear_output_box()
         if event.data_table.id == "document_table":
+            assert event.column_key.value is not None
             self.query_one("#sort_column", Input).value = event.column_key.value
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         """Event handler when a DataTable row is selected."""
         self._clear_output_box()
         if event.data_table.id == "workflow_table":
+            assert event.row_key.value is not None
             self.query_one("#workflow_key", Input).value = event.row_key.value
             self.query_one("#table_options", RadioSet).disabled = False
             self.query_one("#sort_options", RadioSet).disabled = False
@@ -284,6 +288,7 @@ class TorcManagementConsole(App):
             self._populate_slurm_schedulers()
             self._set_workflow_widgets(True)
         elif event.data_table.id == "slurm_schedulers_table":
+            assert event.row_key.value is not None
             self.query_one("#slurm_scheduler_key", Input).value = event.row_key.value
 
     def on_button_pressed(self, event: Button.Pressed) -> None:

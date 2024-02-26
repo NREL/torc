@@ -3,25 +3,33 @@
 import logging
 import shutil
 import sqlite3
+from pathlib import Path
+from typing import Any, Iterable, Optional
 
 
 _TYPE_MAP = {int: "INTEGER", float: "REAL", str: "TEXT", bool: "INTEGER"}
 logger = logging.getLogger(__name__)
 
 
-def make_table(db_file, table, row, primary_key=None, types=None):
+def make_table(
+    db_file: Path,
+    table: str,
+    row: dict[str, Any],
+    primary_key: Optional[str] = None,
+    types: Optional[dict[str, Any]] = None,
+):
     """Create a table in the database based on the types in row.
 
     Parameters
     ----------
-    db_file : Path
+    db_file
         Database file. Create if it doesn't already exist.
-    table : str
-    row : dict
+    table
+    row
         Each key will be a column in the table. Define schema by the types of the values.
-    primary_key : str | None
+    primary_key
         Column name to define as the primary key
-    types: dict | None
+    types
         If a dict is passed, use it as a mapping of column to type.
         This is required if values can be null.
     """
@@ -44,7 +52,7 @@ def make_table(db_file, table, row, primary_key=None, types=None):
     logger.debug("Created table=%s in db_file=%s", table, db_file)
 
 
-def insert_rows(db_file, table, rows):
+def insert_rows(db_file: Path, table: str, rows: list[tuple]) -> None:
     """Insert a list of rows into the database table.
 
     Parameters
@@ -69,7 +77,7 @@ def insert_rows(db_file, table, rows):
         logger.debug("Inserted rows into table=%s in db_file=%s", table, db_file)
 
 
-def union_tables(dst_db_file, src_db_file, tables=None):
+def union_tables(dst_db_file: Path, src_db_file: Path, tables: Optional[list[str]] = None) -> None:
     """Write all rows from src_db_file to the end of dst_db_file. Single read, single write,
     no batching. If dst_db_file doesn't exist, copy src to dst.
 
@@ -86,8 +94,10 @@ def union_tables(dst_db_file, src_db_file, tables=None):
 
     with sqlite3.connect(src_db_file) as con_src:
         cur_src = con_src.cursor()
-        tables = tables or cur_src.execute("SELECT name FROM sqlite_master WHERE type='table'")
-        for table in tables:
+        _tables: Iterable[str] = tables or cur_src.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+        )
+        for table in _tables:
             if not _does_table_exist(cur_src, table):
                 continue
             rows = cur_src.execute(f"SELECT * FROM {table}").fetchall()

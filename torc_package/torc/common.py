@@ -4,6 +4,8 @@ import enum
 import importlib
 import os
 import sys
+from types import ModuleType
+from typing import Callable, Optional
 
 from pydantic import BaseModel, ConfigDict  # pylint: disable=no-name-in-module
 
@@ -32,7 +34,7 @@ class TorcBaseModel(BaseModel):
     )
 
 
-class JobStatus(enum.Enum):
+class JobStatus(str, enum.Enum):
     """Defines all job statuses."""
 
     # Keep in sync with the JobStatus definition in the torc-service.
@@ -49,14 +51,11 @@ class JobStatus(enum.Enum):
     DISABLED = "disabled"
 
 
-def check_function(module_name, func_name, module_directory=None):
+def check_function(
+    module_name: str, func_name: str, module_directory: Optional[str] = None
+) -> tuple[ModuleType, Callable]:
     """Check that func_name is importable from module name and returns the module and function
     references.
-
-    Returns
-    -------
-    tuple
-        module, func
     """
     cur_dir = os.getcwd()
     added_cur_dir = False

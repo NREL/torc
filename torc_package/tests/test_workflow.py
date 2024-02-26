@@ -656,7 +656,8 @@ def test_concurrent_submitters(independent_job_workflow, tmp_path):
     ]
     num_submitters = 16
     pipes = [
-        subprocess.Popen(cmd) for _ in range(num_submitters)  # pylint: disable=consider-using-with
+        subprocess.Popen(cmd)
+        for _ in range(num_submitters)  # pylint: disable=consider-using-with
     ]
     ret = 0
     timeout = time.time() + 120

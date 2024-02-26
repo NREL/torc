@@ -4,12 +4,16 @@ import json
 import logging
 from collections import defaultdict
 from pathlib import Path
+from typing import Any
 
 import click
 
 from torc.api import (
     iter_documents,
 )
+from torc.openapi_client.api.default_api import DefaultApi
+from torc.openapi_client.models.job_model import JobModel
+from torc.openapi_client.models.workflow_model import WorkflowModel
 from .common import (
     check_database_url,
     get_workflow_key_from_context,
@@ -64,36 +68,9 @@ def results(ctx, api, job_keys, output: Path, run_id):
         jobs = list(iter_documents(api.list_jobs, workflow_key))
     jobs.sort(key=lambda x: int(x.key))
 
-    job_key_to_name = {}
-    results_by_job = defaultdict(list)
-    report = {"workflow": workflow.model_dump(), "jobs": []}
-    for job in jobs:
-        job_key_to_name[job.key] = job.name
-        filters = {"job_key": job.key}
-        if run_ids:
-            for rid in run_ids:
-                filters["run_id"] = rid
-                for result in iter_documents(api.list_results, workflow_key, **filters):
-                    results_by_job[job.key].append(result)
-        else:
-            for result in iter_documents(api.list_results, workflow_key, **filters):
-                results_by_job[job.key].append(result)
-
-    lookup_by_job_and_run_id = {}
-    for key in results_by_job:
-        job_details = {"name": job_key_to_name[key], "key": key, "runs": []}
-        results_by_job[key].sort(key=lambda x: x.run_id)
-        for result in results_by_job[key]:
-            run_result = {
-                "run_id": result.run_id,
-                "return_code": result.return_code,
-                "status": result.status,
-                "completion_time": result.completion_time,
-                "exec_time_minutes": result.exec_time_minutes,
-            }
-            job_details["runs"].append(run_result)
-            lookup_by_job_and_run_id[(key, result.run_id)] = run_result
-        report["jobs"].append(job_details)
+    # TODO: refactor this logic into a class.
+    results_by_job, job_key_to_name = _build_results_by_job(api, workflow.key, jobs, run_ids)
+    report, lookup_by_job_and_run_id = _build_report(results_by_job, job_key_to_name, workflow)
 
     for item in iter_documents(
         api.join_collections_by_outbound_edge,
@@ -133,6 +110,48 @@ def results(ctx, api, job_keys, output: Path, run_id):
             )
 
     print(json.dumps(report, indent=2))
+
+
+def _build_results_by_job(
+    api: DefaultApi, workflow_key: str, jobs: list[JobModel], run_ids: set[int]
+):
+    job_key_to_name = {}
+    results_by_job = defaultdict(list)
+    for job in jobs:
+        job_key_to_name[job.key] = job.name
+        filters: dict[str, Any] = {"job_key": job.key}
+        if run_ids:
+            for rid in run_ids:
+                filters["run_id"] = rid
+                for result in iter_documents(api.list_results, workflow_key, **filters):
+                    results_by_job[job.key].append(result)
+        else:
+            for result in iter_documents(api.list_results, workflow_key, **filters):
+                results_by_job[job.key].append(result)
+    return results_by_job, job_key_to_name
+
+
+def _build_report(
+    results_by_job: dict[str, Any], job_key_to_name: dict[str, Any], workflow: WorkflowModel
+):
+    report = {"workflow": workflow.model_dump(), "jobs": []}
+    lookup_by_job_and_run_id = {}
+    for key in results_by_job:
+        job_details = {"name": job_key_to_name[key], "key": key, "runs": []}
+        results_by_job[key].sort(key=lambda x: x.run_id)
+        for result in results_by_job[key]:
+            run_result = {
+                "run_id": result.run_id,
+                "return_code": result.return_code,
+                "status": result.status,
+                "completion_time": result.completion_time,
+                "exec_time_minutes": result.exec_time_minutes,
+            }
+            job_details["runs"].append(run_result)
+            lookup_by_job_and_run_id[(key, result.run_id)] = run_result
+        report["jobs"].append(job_details)
+
+    return report, lookup_by_job_and_run_id
 
 
 reports.add_command(results)

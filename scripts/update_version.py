@@ -47,7 +47,9 @@ def update_version(files, new_version):
 
 
 def _get_cur_version():
-    lines = Path("torc_package/torc/__init__.py").read_text(encoding="utf-8").splitlines()
+    lines = (
+        Path("torc_package/torc/__init__.py").read_text(encoding="utf-8").splitlines()
+    )
     for line in lines:
         if line.startswith("__version__"):
             return line.split("=")[1].strip().replace('"', "").replace("'", "")
@@ -59,7 +61,9 @@ def _check_existing_counts(files, cur_version):
         with open(item["filename"], encoding="utf-8") as f:
             count = len(list(filter(lambda x: cur_version in x, f)))
             if count != item["count"]:
-                raise ValueError(f"Found unexpected count of instances of {cur_version=}: {item}")
+                raise ValueError(
+                    f"Found unexpected count of instances of {cur_version=}: {item}"
+                )
 
 
 def _update_version(files, cur_version, new_version):

@@ -299,7 +299,7 @@ class WorkflowBuilder:
             compute_node_wait_for_new_jobs_seconds=self._compute_node_wait_for_new_jobs_seconds,
             compute_node_ignore_workflow_completion=self._compute_node_ignore_workflow_completion,
             compute_node_expiration_buffer_seconds=self._compute_node_expiration_buffer_seconds,
-            compute_node_wait_for_healthy_database=self._compute_node_wait_for_healthy_database,
+            compute_node_wait_for_healthy_database_minutes=self._compute_node_wait_for_healthy_database,
             prepare_jobs_sort_method=self._prepare_jobs_sort_method,
         )
         if not kwargs.get("user"):

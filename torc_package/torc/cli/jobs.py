@@ -4,6 +4,7 @@ import json
 import logging
 import socket
 from pathlib import Path
+from typing import Any, Optional
 
 import click
 
@@ -12,6 +13,7 @@ from torc.api import iter_documents, list_model_fields, wait_for_healthy_databas
 from torc.common import JobStatus
 from torc.exceptions import DatabaseOffline
 from torc.job_runner import JobRunner, JOB_COMPLETION_POLL_INTERVAL
+from torc.openapi_client.api import DefaultApi
 from torc.resource_monitor_reports import iter_job_process_stats
 from torc.utils.run_command import get_cli_string
 from .common import (
@@ -77,7 +79,14 @@ def jobs():
 )
 @click.pass_obj
 @click.pass_context
-def add(ctx, api, cancel_on_blocking_job_failure, command, key, name):
+def add(
+    ctx: click.Context,
+    api: DefaultApi,
+    cancel_on_blocking_job_failure: bool,
+    command: str,
+    key: str,
+    name: str,
+) -> None:
     """Add a job to the workflow."""
     # TODO: This doesn't support lots of things like files and blocked_by.
     setup_cli_logging(ctx, __name__)
@@ -87,7 +96,7 @@ def add(ctx, api, cancel_on_blocking_job_failure, command, key, name):
     job = JobModel(
         cancel_on_blocking_job_failure=cancel_on_blocking_job_failure,
         command=command,
-        key=key,
+        _key=key,
         name=name,
     )
     job = api.add_job(workflow_key, job)
@@ -108,16 +117,14 @@ def add(ctx, api, cancel_on_blocking_job_failure, command, key, name):
 )
 @click.pass_obj
 @click.pass_context
-def list_user_data(ctx, api, job_key, stores):
+def list_user_data(ctx: click.Context, api: DefaultApi, job_key: str, stores: bool) -> None:
     """List all user data stored or consumed for a job."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    if stores:
-        method = api.list_job_user_data_stores
-    else:
-        method = api.list_job_user_data_consumes
+    method = api.list_job_user_data_stores if stores else api.list_job_user_data_consumes
     resp = method(workflow_key, job_key)
+    assert resp.items is not None
     items = []
     for item in resp.items:
         item = item.to_dict()
@@ -130,7 +137,7 @@ def list_user_data(ctx, api, job_key, stores):
 @click.argument("job_keys", nargs=-1)
 @click.pass_obj
 @click.pass_context
-def delete(ctx, api, job_keys):
+def delete(ctx: click.Context, api: DefaultApi, job_keys: tuple[str]) -> None:
     """Delete one or more jobs by key."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -149,7 +156,7 @@ def delete(ctx, api, job_keys):
 @click.command()
 @click.pass_obj
 @click.pass_context
-def delete_all(ctx, api):
+def delete_all(ctx: click.Context, api: DefaultApi) -> None:
     """Delete all jobs in the workflow."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -166,7 +173,7 @@ def delete_all(ctx, api):
 @click.argument("job_keys", nargs=-1)
 @click.pass_obj
 @click.pass_context
-def disable(ctx, api, job_keys):
+def disable(ctx: click.Context, api: DefaultApi, job_keys: tuple[str]) -> None:
     """Set the status of one or more jobs to disabled."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -222,7 +229,16 @@ def disable(ctx, api, job_keys):
 )
 @click.pass_obj
 @click.pass_context
-def list_jobs(ctx, api, filters, exclude, limit, skip, sort_by, reverse_sort):
+def list_jobs(
+    ctx: click.Context,
+    api: DefaultApi,
+    filters: tuple[str],
+    exclude: set[str],
+    limit: Optional[int],
+    skip: int,
+    sort_by: Optional[str],
+    reverse_sort: bool,
+) -> None:
     """List all jobs in a workflow.
 
     \b
@@ -237,14 +253,14 @@ def list_jobs(ctx, api, filters, exclude, limit, skip, sort_by, reverse_sort):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    filters = parse_filters(filters)
-    filters["skip"] = skip
+    _filters = parse_filters(filters)
+    _filters["skip"] = skip
     if limit is not None:
-        filters["limit"] = limit
+        _filters["limit"] = limit
     if sort_by is not None:
-        filters["sort_by"] = sort_by
-        filters["reverse_sort"] = reverse_sort
-    items = (x.to_dict() for x in iter_documents(api.list_jobs, workflow_key, **filters))
+        _filters["sort_by"] = sort_by
+        _filters["reverse_sort"] = reverse_sort
+    items = (x.to_dict() for x in iter_documents(api.list_jobs, workflow_key, **_filters))
     exclude.update(
         {
             "_id",
@@ -279,7 +295,9 @@ def list_jobs(ctx, api, filters, exclude, limit, skip, sort_by, reverse_sort):
 @click.option("-s", "--skip", default=0, type=int, help="Skip this number of jobs.")
 @click.pass_obj
 @click.pass_context
-def list_process_stats(ctx, api, limit, skip):
+def list_process_stats(
+    ctx: click.Context, api: DefaultApi, limit: Optional[int], skip: int
+) -> None:
     """List per-job process resource statistics from a workflow run.
 
     \b
@@ -306,7 +324,9 @@ def list_process_stats(ctx, api, limit, skip):
 @click.argument("job_keys", nargs=-1)
 @click.pass_obj
 @click.pass_context
-def assign_resource_requirements(ctx, api, resource_requirements_key, job_keys):
+def assign_resource_requirements(
+    ctx: click.Context, api: DefaultApi, resource_requirements_key: str, job_keys: tuple[str]
+) -> None:
     """Assign resource requirements to one or more jobs."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -314,7 +334,7 @@ def assign_resource_requirements(ctx, api, resource_requirements_key, job_keys):
         logger.warning("No job keys were passed")
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
-    edges = []
+    edges: list[dict[str, Any]] = []
     for job_key in job_keys:
         edge = api.modify_job_resource_requirements(
             workflow_key, job_key, resource_requirements_key
@@ -333,7 +353,7 @@ def assign_resource_requirements(ctx, api, resource_requirements_key, job_keys):
 @click.argument("job_keys", nargs=-1)
 @click.pass_obj
 @click.pass_context
-def reset_status(ctx, api, job_keys):
+def reset_status(ctx: click.Context, api: DefaultApi, job_keys: tuple[str]) -> None:
     """Reset the status of one or more jobs."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -352,6 +372,8 @@ def reset_status(ctx, api, job_keys):
     for key in job_keys:
         job = api.get_job(workflow_key, key)
         if job.status != JobStatus.UNINITIALIZED.value:
+            assert job.key is not None
+            assert job.rev is not None
             match job.status:
                 case JobStatus.UNINITIALIZED.value:
                     pass
@@ -420,15 +442,15 @@ def reset_status(ctx, api, job_keys):
 @click.pass_obj
 @click.pass_context
 def run(
-    ctx,
-    api,
-    cpu_affinity_cpus_per_job,
-    log_suffix,
-    max_parallel_jobs,
+    ctx: click.Context,
+    api: DefaultApi,
+    cpu_affinity_cpus_per_job: Optional[int],
+    log_suffix: str,
+    max_parallel_jobs: int,
     output: Path,
-    poll_interval,
-    time_limit,
-    wait_for_healthy_database_minutes,
+    poll_interval: int,
+    time_limit: str,
+    wait_for_healthy_database_minutes: int,
 ):
     """Run workflow jobs on the current system."""
     try:

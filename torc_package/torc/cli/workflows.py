@@ -6,6 +6,7 @@ import logging
 import math
 import sys
 from pathlib import Path
+from typing import Iterable, Optional
 
 import click
 import json5
@@ -18,6 +19,7 @@ from torc.openapi_client.models.workflow_specification_model import (
 from torc.api import remove_db_keys, sanitize_workflow, iter_documents, list_model_fields
 from torc.exceptions import InvalidWorkflow
 from torc.hpc.slurm_interface import SlurmInterface
+from torc.openapi_client.api import DefaultApi
 from torc.torc_rc import TorcRuntimeConfig
 from torc.workflow_manager import WorkflowManager
 from .common import (
@@ -43,7 +45,7 @@ def workflows():
 @click.argument("workflow_keys", nargs=-1)
 @click.pass_obj
 @click.pass_context
-def cancel(ctx, api, workflow_keys):
+def cancel(ctx, api: DefaultApi, workflow_keys: tuple[str]) -> None:
     """Cancel one or more workflows."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -95,13 +97,21 @@ def cancel(ctx, api, workflow_keys):
 )
 @click.pass_obj
 @click.pass_context
-def create(ctx, api, update_rc_with_key, description, key, name, user):
+def create(
+    ctx: click.Context,
+    api: DefaultApi,
+    update_rc_with_key: bool,
+    description: str,
+    key: str,
+    name: str,
+    user: str,
+) -> None:
     """Create a new workflow."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     workflow = WorkflowModel(
         description=description,
-        key=key,
+        _key=key,
         name=name,
         user=user,
     )
@@ -154,8 +164,15 @@ def create(ctx, api, update_rc_with_key, description, key, name, user):
 @click.pass_obj
 @click.pass_context
 def create_from_commands_file(
-    ctx, api, update_rc_with_key, filename, description, key, name, user
-):
+    ctx: click.Context,
+    api: DefaultApi,
+    update_rc_with_key: bool,
+    filename: Path,
+    description: str,
+    key: str,
+    name: str,
+    user: str,
+) -> None:
     """Create a workflow from a text file containing job CLI commands."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -168,11 +185,12 @@ def create_from_commands_file(
                 commands.append(line)
     workflow = WorkflowModel(
         description=description,
-        key=key,
+        _key=key,
         name=name,
         user=user,
     )
     workflow = api.add_workflow(workflow)
+    assert workflow.key is not None
     if output_format == "text":
         logger.info("Created a workflow from %s with key=%s", filename, workflow.key)
     else:
@@ -204,7 +222,9 @@ def create_from_commands_file(
 )
 @click.pass_obj
 @click.pass_context
-def create_from_json_file(ctx, api, filename, update_rc_with_key, user):
+def create_from_json_file(
+    ctx: click.Context, api: DefaultApi, filename: Path, update_rc_with_key: bool, user: str
+) -> None:
     """Create a workflow from a JSON/JSON5 file."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -242,7 +262,7 @@ def create_from_json_file(ctx, api, filename, update_rc_with_key, user):
 )
 @click.pass_obj
 @click.pass_context
-def modify(ctx, api, description, name, user):
+def modify(ctx: click.Context, api: DefaultApi, description: str, name: str, user: str) -> None:
     """Modify the workflow parameters."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -262,7 +282,7 @@ def modify(ctx, api, description, name, user):
 @click.argument("workflow_keys", nargs=-1)
 @click.pass_obj
 @click.pass_context
-def delete(ctx, api, workflow_keys):
+def delete(ctx: click.Context, api: DefaultApi, workflow_keys: tuple[str]):
     """Delete one or more workflows by key."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -277,7 +297,7 @@ def delete(ctx, api, workflow_keys):
 @click.argument("user")
 @click.pass_obj
 @click.pass_context
-def delete_by_user(ctx, api, user):
+def delete_by_user(ctx: click.Context, api: DefaultApi, user: str) -> None:
     """Delete all workflows for a user."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -288,7 +308,7 @@ def delete_by_user(ctx, api, user):
 @click.command()
 @click.pass_obj
 @click.pass_context
-def delete_all(ctx, api):
+def delete_all(ctx: click.Context, api: DefaultApi) -> None:
     """Delete all workflows."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -296,7 +316,9 @@ def delete_all(ctx, api):
     _delete_workflows_with_warning(ctx, api, keys)
 
 
-def _delete_workflows_with_warning(ctx, api, keys):
+def _delete_workflows_with_warning(
+    ctx: click.Context, api: DefaultApi, keys: Iterable[str]
+) -> None:
     items = (api.get_workflow(x).to_dict() for x in keys)
     columns = list_model_fields(WorkflowModel)
     columns.remove("_id")
@@ -318,7 +340,7 @@ def _delete_workflows_with_warning(ctx, api, keys):
 @click.command()
 @click.pass_obj
 @click.pass_context
-def list_scheduler_configs(ctx, api):
+def list_scheduler_configs(ctx: click.Context, api: DefaultApi) -> None:
     """List the scheduler configs in the database."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -360,7 +382,13 @@ def list_scheduler_configs(ctx, api):
 )
 @click.pass_obj
 @click.pass_context
-def list_workflows(ctx, api, filters, sort_by, reverse_sort):
+def list_workflows(
+    ctx: click.Context,
+    api: DefaultApi,
+    filters: tuple[str],
+    sort_by: Optional[str],
+    reverse_sort: bool,
+):
     """List all workflows.
 
     \b
@@ -374,11 +402,11 @@ def list_workflows(ctx, api, filters, sort_by, reverse_sort):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     table_title = "Workflows"
-    filters = parse_filters(filters)
+    _filters = parse_filters(filters)
     if sort_by is not None:
-        filters["sort_by"] = sort_by
-        filters["reverse_sort"] = reverse_sort
-    items = (x.to_dict() for x in iter_documents(api.list_workflows, **filters))
+        _filters["sort_by"] = sort_by
+        _filters["reverse_sort"] = reverse_sort
+    items = (x.to_dict() for x in iter_documents(api.list_workflows, **_filters))
     columns = list_model_fields(WorkflowModel)
     columns.remove("_id")
     columns.remove("_rev")
@@ -394,7 +422,7 @@ def list_workflows(ctx, api, filters, sort_by, reverse_sort):
 @click.command()
 @click.pass_obj
 @click.pass_context
-def process_auto_tune_resource_requirements_results(ctx, api):
+def process_auto_tune_resource_requirements_results(ctx: click.Context, api: DefaultApi) -> None:
     """Process the results of the first round of auto-tuning resource requirements."""
     setup_cli_logging(ctx, __name__)
     workflow_key = get_workflow_key_from_context(ctx, api)
@@ -428,7 +456,9 @@ def process_auto_tune_resource_requirements_results(ctx, api):
 )
 @click.pass_obj
 @click.pass_context
-def recommend_nodes(ctx, api, num_cpus, scheduler_config_id):
+def recommend_nodes(
+    ctx: click.Context, api: DefaultApi, num_cpus: int, scheduler_config_id: str
+) -> None:
     """Recommend compute nodes to schedule."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -471,7 +501,9 @@ def recommend_nodes(ctx, api, num_cpus, scheduler_config_id):
 )
 @click.pass_obj
 @click.pass_context
-def reset_status(ctx, api, workflow_key, failed_only):
+def reset_status(
+    ctx: click.Context, api: DefaultApi, workflow_key: str, failed_only: bool
+) -> None:
     """Reset the status of the workflow and all jobs."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -505,7 +537,9 @@ def reset_status(ctx, api, workflow_key, failed_only):
 )
 @click.pass_obj
 @click.pass_context
-def restart(ctx, api, ignore_missing_data, only_uninitialized):
+def restart(
+    ctx: click.Context, api: DefaultApi, ignore_missing_data: bool, only_uninitialized: bool
+) -> None:
     """Restart the workflow defined in the database specified by the URL. Resets all jobs with
     a status of canceled, submitted, submitted_pending, and terminated. Does not affect jobs with
     a status of done.
@@ -553,7 +587,12 @@ def restart(ctx, api, ignore_missing_data, only_uninitialized):
 )
 @click.pass_obj
 @click.pass_context
-def start(ctx, api, auto_tune_resource_requirements, ignore_missing_data):
+def start(
+    ctx: click.Context,
+    api: DefaultApi,
+    auto_tune_resource_requirements: bool,
+    ignore_missing_data: bool,
+) -> None:
     """Start the workflow defined in the database specified by the URL."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -586,7 +625,9 @@ reset all job statuses to 'uninitialized' and then 'ready' or 'blocked.'
 # The functions below exist apart from the CLI functions so that the TUI can call them.
 
 
-def create_workflow_from_json_file(api, filename: Path, user=None):
+def create_workflow_from_json_file(
+    api: DefaultApi, filename: Path, user: Optional[str] = None
+) -> WorkflowModel:
     """Create a workflow from a JSON/JSON5 file."""
     if user is None:
         user = getpass.getuser()
@@ -603,8 +644,11 @@ def create_workflow_from_json_file(api, filename: Path, user=None):
 
 
 def start_workflow(
-    api, workflow_key, auto_tune_resource_requirements=False, ignore_missing_data=False
-):
+    api: DefaultApi,
+    workflow_key: str,
+    auto_tune_resource_requirements: bool = False,
+    ignore_missing_data: bool = False,
+) -> None:
     """Starts the workflow."""
     mgr = WorkflowManager(api, workflow_key)
     mgr.start(
@@ -623,7 +667,12 @@ def start_workflow(
     # TODO: This could schedule nodes.
 
 
-def restart_workflow(api, workflow_key, only_uninitialized=False, ignore_missing_data=False):
+def restart_workflow(
+    api: DefaultApi,
+    workflow_key: str,
+    only_uninitialized: bool = False,
+    ignore_missing_data: bool = False,
+) -> None:
     """Restarts the workflow."""
     mgr = WorkflowManager(api, workflow_key)
     mgr.restart(ignore_missing_data=ignore_missing_data, only_uninitialized=only_uninitialized)
@@ -639,7 +688,7 @@ def restart_workflow(api, workflow_key, only_uninitialized=False, ignore_missing
     # TODO: This could schedule nodes.
 
 
-def reset_workflow_status(api, workflow_key):
+def reset_workflow_status(api: DefaultApi, workflow_key: str) -> None:
     """Resets the status of the workflow."""
     api.reset_workflow_status(workflow_key)
     logger.info("Reset workflow status")
@@ -654,7 +703,7 @@ def reset_workflow_status(api, workflow_key):
     )
 
 
-def reset_workflow_job_status(api, workflow_key, failed_only=False):
+def reset_workflow_job_status(api: DefaultApi, workflow_key: str, failed_only: bool = False):
     """Resets the status of the workflow jobs."""
     api.reset_job_status(workflow_key, failed_only=failed_only)
     logger.info("Reset job status, failed_only=%s", failed_only)
@@ -669,15 +718,18 @@ def reset_workflow_job_status(api, workflow_key, failed_only=False):
     )
 
 
-def cancel_workflow(api, workflow_key):
+def cancel_workflow(api: DefaultApi, workflow_key: str) -> None:
     """Cancels the workflow."""
     # TODO: Handling different scheduler types needs to be at a lower level.
-    for job in api.list_scheduled_compute_nodes(workflow_key).items:
+    items = api.list_scheduled_compute_nodes(workflow_key).items
+    assert items is not None
+    for job in items:
         if (
             job.status != "complete"
             and job.scheduler_config_id.split("/")[0].split("__")[0] == "slurm_schedulers"
             and job.scheduler_id is not None
         ):
+            assert job.key is not None
             intf = SlurmInterface()
             return_code = intf.cancel_job(job.scheduler_id)
             if return_code == 0:
@@ -697,14 +749,16 @@ def cancel_workflow(api, workflow_key):
     )
 
 
-def has_running_jobs(api, workflow_key) -> bool:
+def has_running_jobs(api: DefaultApi, workflow_key: str) -> bool:
     """Returns True if jobs are running."""
     submitted = api.list_jobs(workflow_key, status="submitted", limit=1)
+    assert submitted.items is not None
     sub_pend = api.list_jobs(workflow_key, status="submitted_pending", limit=1)
+    assert sub_pend.items is not None
     return len(submitted.items) > 0 or len(sub_pend.items) > 0
 
 
-def _exit_if_jobs_are_running(api, workflow_key):
+def _exit_if_jobs_are_running(api: DefaultApi, workflow_key: str) -> None:
     if has_running_jobs(api, workflow_key):
         logger.error(
             "This operation is not allowed on a workflow with 'submitted' jobs. Please allow "
@@ -723,7 +777,7 @@ def _exit_if_jobs_are_running(api, workflow_key):
 )
 @click.pass_obj
 @click.pass_context
-def show(ctx, api, sanitize):
+def show(ctx: click.Context, api: DefaultApi, sanitize: bool) -> None:
     """Show the workflow."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -765,8 +819,13 @@ def show(ctx, api, sanitize):
 @click.pass_obj
 @click.pass_context
 def set_compute_node_parameters(
-    ctx, api, expiration_buffer, wait_for_healthy_db, ignore_workflow_completion, wait_for_new_jobs
-):
+    ctx: click.Context,
+    api: DefaultApi,
+    expiration_buffer: int,
+    wait_for_healthy_db: bool,
+    ignore_workflow_completion: str,
+    wait_for_new_jobs: bool,
+) -> None:
     """Set parameters that control how the torc worker app behaves on compute nodes.
     Run 'torc workflows show-config' to see the current values."""
     setup_cli_logging(ctx, __name__)
@@ -814,7 +873,7 @@ def set_compute_node_parameters(
 @click.command()
 @click.pass_obj
 @click.pass_context
-def show_config(ctx, api):
+def show_config(ctx: click.Context, api: DefaultApi) -> None:
     """Show the workflow config."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -826,7 +885,7 @@ def show_config(ctx, api):
 @click.command(name="status")
 @click.pass_obj
 @click.pass_context
-def show_status(ctx, api):
+def show_status(ctx: click.Context, api: DefaultApi) -> None:
     """Show the workflow status."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -838,7 +897,7 @@ def show_status(ctx, api):
 @click.command()
 @click.pass_obj
 @click.pass_context
-def example(ctx, api):
+def example(ctx: click.Context, api: DefaultApi) -> None:
     """Show the example workflow."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -850,7 +909,7 @@ def example(ctx, api):
 @click.command()
 @click.pass_obj
 @click.pass_context
-def template(ctx, api):
+def template(ctx: click.Context, api: DefaultApi) -> None:
     """Show the workflow template."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -861,7 +920,7 @@ def template(ctx, api):
     print(json.dumps(data, indent=2))
 
 
-def _update_torc_rc(api, workflow):
+def _update_torc_rc(api: DefaultApi, workflow: WorkflowModel) -> None:
     config = TorcRuntimeConfig.load()
     config.workflow_key = workflow.key
     path = config.path()

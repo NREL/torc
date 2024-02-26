@@ -6,14 +6,16 @@ import logging
 import os
 import stat
 from pathlib import Path
+from types import ModuleType
+from typing import Any
 
-import json5
+import json5  # type: ignore
 
 
 logger = logging.getLogger(__name__)
 
 
-def create_script(filename, text, executable=True):
+def create_script(filename: str | Path, text: str, executable: bool = True) -> None:
     """Creates a script with the given text.
 
     Parameters
@@ -37,7 +39,7 @@ def create_script(filename, text, executable=True):
         path.chmod(curstat.st_mode | stat.S_IEXEC)
 
 
-def compute_file_hash(filename):
+def compute_file_hash(filename: str) -> str:
     """Compute a hash of the contents of a file.
 
     Parameters
@@ -52,24 +54,15 @@ def compute_file_hash(filename):
     return compute_hash(Path(filename).read_bytes())
 
 
-def compute_hash(text: str):
+def compute_hash(text: bytes) -> str:
     """Compute a hash of the input string."""
     hash_obj = hashlib.sha256()
     hash_obj.update(text)
     return hash_obj.hexdigest()
 
 
-def dump_data(data, filename, **kwargs):
-    """Dump data to the filename.
-    Supports JSON, JSON5, or custom via kwargs.
-
-    Parameters
-    ----------
-    data : dict
-        data to dump
-    filename : str
-        file to create or overwrite
-    """
+def dump_data(data: dict[str, Any], filename: str | Path, **kwargs) -> None:
+    """Dump data to the filename. Supports JSON, JSON5, or custom via kwargs."""
     mod = _get_module_from_extension(filename, **kwargs)
     with open(filename, "w", encoding="utf-8") as f_out:
         mod.dump(data, f_out, **kwargs)
@@ -77,18 +70,8 @@ def dump_data(data, filename, **kwargs):
     logger.debug("Dumped data to %s", filename)
 
 
-def load_data(filename, **kwargs):
-    """Load data from the file.
-    Supports JSON, JSON5, or custom via kwargs.
-
-    Parameters
-    ----------
-    filename : str
-
-    Returns
-    -------
-    dict
-    """
+def load_data(filename: str | Path, **kwargs) -> Any:
+    """Load data from the file. Supports JSON, JSON5, or custom via kwargs."""
     mod = _get_module_from_extension(filename, **kwargs)
     with open(filename, encoding="utf-8") as f_in:
         try:
@@ -101,7 +84,7 @@ def load_data(filename, **kwargs):
     return data
 
 
-def _get_module_from_extension(filename, **kwargs):
+def _get_module_from_extension(filename, **kwargs) -> ModuleType:
     ext = os.path.splitext(filename)[1].lower()
     if ext == ".json":
         mod = json
@@ -115,16 +98,8 @@ def _get_module_from_extension(filename, **kwargs):
     return mod
 
 
-def dump_line_delimited_json(data, filename, mode="w"):
-    """Dump a list of objects to the file as line-delimited JSON.
-
-    Parameters
-    ----------
-    data : list
-    filename : str
-    mode : str
-        Mode with which to open file, defaults to write.
-    """
+def dump_line_delimited_json(data: list[Any], filename: str | Path, mode: str = "w") -> None:
+    """Dump a list of objects to the file as line-delimited JSON."""
     with open(filename, mode, encoding="utf-8") as f_out:
         for obj in data:
             f_out.write(json.dumps(obj))
@@ -133,17 +108,8 @@ def dump_line_delimited_json(data, filename, mode="w"):
     logger.debug("Dumped data to %s", filename)
 
 
-def load_line_delimited_json(filename):
-    """Load data from the file that is stored as line-delimited JSON.
-
-    Parameters
-    ----------
-    filename : str
-
-    Returns
-    -------
-    dict
-    """
+def load_line_delimited_json(filename: str | Path) -> list[Any]:
+    """Load data from the file that is stored as line-delimited JSON."""
     objects = []
     with open(filename, encoding="utf-8") as f_in:
         for i, line in enumerate(f_in):
