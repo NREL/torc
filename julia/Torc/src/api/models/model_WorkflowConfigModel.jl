@@ -17,10 +17,10 @@
     )
 
     - compute_node_resource_stats::ComputeNodeResourceStatsModel
-    - compute_node_expiration_buffer_seconds::Float64 : Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database&#39;s default value of 30 seconds.
-    - compute_node_wait_for_new_jobs_seconds::Float64 : Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete.
+    - compute_node_expiration_buffer_seconds::Int64 : Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database&#39;s default value of 30 seconds.
+    - compute_node_wait_for_new_jobs_seconds::Int64 : Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete.
     - compute_node_ignore_workflow_completion::Bool : Inform all compute nodes to ignore workflow completions and hold onto allocations indefinitely. Useful for debugging failed jobs and possibly dynamic workflows where jobs get added after starting.
-    - compute_node_wait_for_healthy_database_minutes::Float64 : Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.
+    - compute_node_wait_for_healthy_database_minutes::Int64 : Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.
     - prepare_jobs_sort_method::String : Inform all compute nodes to use this sort method when calling the prepare_jobs_for_submission command.
     - _key::String
     - _id::String
@@ -28,10 +28,10 @@
 """
 Base.@kwdef mutable struct WorkflowConfigModel <: OpenAPI.APIModel
     compute_node_resource_stats = nothing # spec type: Union{ Nothing, ComputeNodeResourceStatsModel }
-    compute_node_expiration_buffer_seconds::Union{Nothing, Float64} = nothing
-    compute_node_wait_for_new_jobs_seconds::Union{Nothing, Float64} = nothing
+    compute_node_expiration_buffer_seconds::Union{Nothing, Int64} = nothing
+    compute_node_wait_for_new_jobs_seconds::Union{Nothing, Int64} = nothing
     compute_node_ignore_workflow_completion::Union{Nothing, Bool} = false
-    compute_node_wait_for_healthy_database_minutes::Union{Nothing, Float64} = nothing
+    compute_node_wait_for_healthy_database_minutes::Union{Nothing, Int64} = nothing
     prepare_jobs_sort_method::Union{Nothing, String} = "gpus_runtime_memory"
     _key::Union{Nothing, String} = nothing
     _id::Union{Nothing, String} = nothing
@@ -51,7 +51,7 @@ Base.@kwdef mutable struct WorkflowConfigModel <: OpenAPI.APIModel
     end
 end # type WorkflowConfigModel
 
-const _property_types_WorkflowConfigModel = Dict{Symbol,String}(Symbol("compute_node_resource_stats")=>"ComputeNodeResourceStatsModel", Symbol("compute_node_expiration_buffer_seconds")=>"Float64", Symbol("compute_node_wait_for_new_jobs_seconds")=>"Float64", Symbol("compute_node_ignore_workflow_completion")=>"Bool", Symbol("compute_node_wait_for_healthy_database_minutes")=>"Float64", Symbol("prepare_jobs_sort_method")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
+const _property_types_WorkflowConfigModel = Dict{Symbol,String}(Symbol("compute_node_resource_stats")=>"ComputeNodeResourceStatsModel", Symbol("compute_node_expiration_buffer_seconds")=>"Int64", Symbol("compute_node_wait_for_new_jobs_seconds")=>"Int64", Symbol("compute_node_ignore_workflow_completion")=>"Bool", Symbol("compute_node_wait_for_healthy_database_minutes")=>"Int64", Symbol("prepare_jobs_sort_method")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ WorkflowConfigModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_WorkflowConfigModel[name]))}
 
 function check_required(o::WorkflowConfigModel)
