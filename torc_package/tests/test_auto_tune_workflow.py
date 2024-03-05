@@ -74,7 +74,8 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     assert api.is_workflow_complete(db.workflow.key)
 
     stats_by_key = {
-        x: api.get_process_stats_for_job(db.workflow.key, x)[0] for x in auto_tune_job_keys
+        x: api.get_process_stats_for_job(db.workflow.key, x)[0]
+        for x in auto_tune_job_keys
     }
     assert (
         stats_by_key[db.get_document_key("jobs", "job_small1")].max_rss
@@ -134,8 +135,8 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
         assert isinstance(df, pl.DataFrame)
 
     stats_dir = output_dir / STATS_DIR
-    sqlite_files = [x for x in stats_dir.iterdir() if x.suffix == ".sqlite"]
-    html_files = [x for x in stats_dir.iterdir() if x.suffix == ".html"]
+    sqlite_files = list(stats_dir.rglob("*.sqlite"))
+    html_files = list(stats_dir.rglob("*.html"))
     if monitor_type == "periodic":
         assert sqlite_files
         for file in sqlite_files:
