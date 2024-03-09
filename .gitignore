@@ -137,3 +137,4 @@ db_service/julia_client
 docs/openapi.yaml
 julia/Torc/Manifest.toml
 julia/Torc/test/Manifest.toml
+.torc.json5
