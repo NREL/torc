@@ -20,18 +20,16 @@ classifiers = [
 ]
 dependencies = [
     "click",
-    "connectorx==0.3.2",
     "graphviz",
     "json5",
     "plotly",
-    "polars~=0.19.7",
+    "polars~=0.20.13",
     "psutil",
     "prettytable",
     "pyarrow",
-    "pydantic~=2.4.0",
+    "pydantic >= 2.4, < 3",
     "textual",
-    "resource_monitor @ git+https://github.nrel.gov/dthom/resource_monitor.git",
-    "resource_monitor~=0.1.6",
+    "resource_monitor @ git+https://github.nrel.gov/dthom/resource_monitor.git#0.1.8",
     # These are required by the openapi_client. Keep in sync with its setup.py.
     "python_dateutil>=2.5.3",
     "urllib3>=1.25.3,<2.1.0",

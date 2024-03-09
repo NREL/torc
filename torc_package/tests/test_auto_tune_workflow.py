@@ -5,10 +5,11 @@ import multiprocessing
 
 import polars as pl
 import pytest
+from resource_monitor.utils.sql import read_dataframe_from_table
+
 from torc.openapi_client.models.compute_nodes_resources import (
     ComputeNodesResources,
 )
-
 from torc.api import iter_documents
 from torc.common import STATS_DIR
 from torc.job_runner import JobRunner
@@ -74,8 +75,7 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     assert api.is_workflow_complete(db.workflow.key)
 
     stats_by_key = {
-        x: api.get_process_stats_for_job(db.workflow.key, x)[0]
-        for x in auto_tune_job_keys
+        x: api.get_process_stats_for_job(db.workflow.key, x)[0] for x in auto_tune_job_keys
     }
     assert (
         stats_by_key[db.get_document_key("jobs", "job_small1")].max_rss
@@ -140,11 +140,15 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     if monitor_type == "periodic":
         assert sqlite_files
         for file in sqlite_files:
+            # This code doesn't use read_database_uri because connectorx doesn't work on
+            # Python 3.12 or Eagle. It can be restored later.
             for table in ("cpu", "memory", "process"):
-                df = pl.read_database_uri(f"select * from {table}", f"sqlite://{file}")
+                df = read_dataframe_from_table(file, table)
+                # df = pl.read_database_uri(f"select * from {table}", f"sqlite://{file}")
                 assert len(df) > 0
             for table in ("disk", "network"):
-                df = pl.read_database_uri(f"select * from {table}", f"sqlite://{file}")
+                df = read_dataframe_from_table(file, table)
+                # df = pl.read_database_uri(f"select * from {table}", f"sqlite://{file}")
                 assert len(df) == 0
         assert len(html_files) == 3 * 2  # 2 JobRunner instances, cpu + memory + process
     else:
