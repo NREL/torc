@@ -42,6 +42,7 @@ from torc.cli.workflows import (
     reset_workflow_status,
     reset_workflow_job_status,
 )
+from torc.common import convert_timestamp
 from torc.torc_rc import TorcRuntimeConfig
 from torc.loggers import setup_logging
 
@@ -661,7 +662,7 @@ class TorcManagementConsole(App):
             return
         poll_interval = int(poll_interval_str)
 
-        timestamp = self._api.get_latest_event_timestamp(workflow_key)["key"]
+        timestamp = self._api.get_latest_event_timestamp(workflow_key)["timestamp"]
         self._event_monitor_timer = threading.Timer(
             poll_interval, self._run_monitor, (workflow_key, poll_interval, timestamp)
         )
@@ -676,6 +677,7 @@ class TorcManagementConsole(App):
             ):
                 event.pop("_id")
                 event.pop("_rev")
+                event["datetime"] = str(convert_timestamp(event["timestamp"]))
                 self.query_one("#event_log", RichLog).write(json.dumps(event, indent=2))
                 event_ = event
             if event_ is not None:
@@ -773,7 +775,7 @@ def build_event_table(table, table_id, api, workflow_key, **filters):
 
 def make_event(data: dict):
     """Make an event with only desired fields"""
-    event = {"timestamp": data["timestamp"]}
+    event = {"timestamp": str(convert_timestamp(data["timestamp"]))}
     for key in ("category", "type", "message"):
         event[key] = data.get(key, "")
     return tuple(event.values())
