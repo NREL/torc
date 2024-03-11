@@ -4,7 +4,7 @@ import logging
 import sys
 from pathlib import Path
 
-import json5
+import json5  # type: ignore
 
 from torc.common import TorcBaseModel
 from torc.utils.files import dump_data
@@ -26,7 +26,7 @@ class TorcRuntimeConfig(TorcBaseModel):
     timings: bool = False
 
     @classmethod
-    def load(cls, path=None):
+    def load(cls, path=None) -> "TorcRuntimeConfig":
         """Load the torc runtime config if it exists or one with default values."""
         if path is not None and not path.exists():
             raise FileNotFoundError(f"torc rc file {path} does not exist")
@@ -37,7 +37,7 @@ class TorcRuntimeConfig(TorcBaseModel):
             return cls(**data)
         return cls()
 
-    def dump(self, path=None):
+    def dump(self, path=None) -> None:
         """Dump the config to path.
 
         Parameters

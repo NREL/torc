@@ -31,8 +31,8 @@ class ComputeNodesResources(BaseModel):
     """ # noqa: E501
     num_cpus: StrictInt
     memory_gb: Union[StrictFloat, StrictInt]
-    num_gpus: Optional[StrictInt] = None
-    num_nodes: Optional[StrictInt] = None
+    num_gpus: StrictInt
+    num_nodes: StrictInt
     time_limit: Optional[StrictStr] = None
     scheduler_config_id: Optional[StrictStr] = None
     __properties: ClassVar[List[str]] = ["num_cpus", "memory_gb", "num_gpus", "num_nodes", "time_limit", "scheduler_config_id"]

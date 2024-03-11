@@ -1,7 +1,5 @@
 """pytest fixtures"""
 
-# pylint: disable=redefined-outer-name,duplicate-code
-
 import getpass
 import json
 import sys
@@ -64,7 +62,7 @@ def pytest_sessionstart(session):
     session.torc_workflow_keys = {x.key for x in iter_documents(api.list_workflows)}
 
 
-def pytest_sessionfinish(session, exitstatus):  # pylint: disable=unused-argument
+def pytest_sessionfinish(session, exitstatus):
     """Deletes any workflows created by the tests."""
     api = _initialize_api()
     for key in {x.key for x in iter_documents(api.list_workflows)} - session.torc_workflow_keys:

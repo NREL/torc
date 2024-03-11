@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-def events():  # pylint: disable=unused-argument
+def events():
     """Event commands"""
 
 

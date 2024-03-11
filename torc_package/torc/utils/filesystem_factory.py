@@ -1,15 +1,16 @@
 """Factory functions for filesystem paths, abstracts local vs cloud"""
 
 import logging
-import re
+
+# import re
 from pathlib import Path
 
 # import boto3
 # from s3path import S3Path, register_configuration_parameter
 
 logger = logging.getLogger(__name__)
-_s3_sessions = {}
-_REGEX_S3_PATH = re.compile(r"s3:\/\/(?P<bucket>[\w-]+)")
+# _s3_sessions = {}
+# _REGEX_S3_PATH = re.compile(r"s3:\/\/(?P<bucket>[\w-]+)")
 
 
 def make_path(path: str) -> Path:

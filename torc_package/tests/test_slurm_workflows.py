@@ -53,7 +53,7 @@ def setup_api():
             shutil.rmtree(path)
 
 
-def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-outer-name
+def test_slurm_workflow(setup_api, slurm_account):
     """Runs a slurm workflow"""
     api, output_dir, script_output_dir = setup_api
     assert slurm_account, f"{slurm_account=} must be set"
@@ -158,7 +158,7 @@ def test_slurm_workflow(setup_api, slurm_account):  # pylint: disable=redefined-
         api.remove_workflow(key)
 
 
-def test_cpu_affinity_workflow(setup_api, slurm_account):  # pylint: disable=redefined-outer-name
+def test_cpu_affinity_workflow(setup_api, slurm_account):
     """Runs a slurm workflow while setting CPU affinity."""
     api, output_dir, _ = setup_api
     key = _create_cpu_affinity_workflow(output_dir, slurm_account)
@@ -196,7 +196,7 @@ def test_cpu_affinity_workflow(setup_api, slurm_account):  # pylint: disable=red
         api.remove_workflow(key)
 
 
-def test_slurm_cpu_bind_workflow(setup_api, slurm_account):  # pylint: disable=redefined-outer-name
+def test_slurm_cpu_bind_workflow(setup_api, slurm_account):
     """Runs a slurm workflow while using the cpu-bind feature."""
     api, output_dir, _ = setup_api
     key = _create_cpu_affinity_workflow(output_dir, slurm_account)

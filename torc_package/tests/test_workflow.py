@@ -655,9 +655,7 @@ def test_concurrent_submitters(independent_job_workflow, tmp_path):
         str(tmp_path),
     ]
     num_submitters = 16
-    pipes = [
-        subprocess.Popen(cmd) for _ in range(num_submitters)  # pylint: disable=consider-using-with
-    ]
+    pipes = [subprocess.Popen(cmd) for _ in range(num_submitters)]
     ret = 0
     timeout = time.time() + 120
     is_successful = False
@@ -698,7 +696,7 @@ def test_map_functions(mapped_function_workflow):
     runner.run_worker()
 
     assert api.is_workflow_complete(db.workflow.key).is_complete
-    for i in range(5):
+    for i in range(1, 6):
         job_key = db.get_document_key("jobs", str(i))
         result = api.get_latest_job_result(db.workflow.key, job_key)
         assert result.return_code == 0

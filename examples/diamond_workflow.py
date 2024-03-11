@@ -63,15 +63,21 @@ def build_workflow(api: DefaultApi, workflow: WorkflowModel):
 
     small = api.add_resource_requirements(
         workflow.key,
-        ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT1H"),
+        ResourceRequirementsModel(
+            name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
+        ),
     )
     medium = api.add_resource_requirements(
         workflow.key,
-        ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"),
+        ResourceRequirementsModel(
+            name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
+        ),
     )
     large = api.add_resource_requirements(
         workflow.key,
-        ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H"),
+        ResourceRequirementsModel(
+            name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
+        ),
     )
     api.add_slurm_scheduler(
         workflow.key,

@@ -18,8 +18,8 @@ import re  # noqa: F401
 import json
 
 
-from typing import Any, ClassVar, Dict, List, Optional, Union
-from pydantic import BaseModel, StrictBool, StrictFloat, StrictInt, StrictStr, field_validator
+from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, StrictBool, StrictInt, StrictStr, field_validator
 from pydantic import Field
 from torc.openapi_client.models.compute_node_resource_stats_model import ComputeNodeResourceStatsModel
 try:
@@ -32,10 +32,10 @@ class WorkflowConfigModel(BaseModel):
     WorkflowConfigModel
     """ # noqa: E501
     compute_node_resource_stats: Optional[ComputeNodeResourceStatsModel] = None
-    compute_node_expiration_buffer_seconds: Optional[Union[StrictFloat, StrictInt]] = Field(default=None, description="Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database's default value of 30 seconds.")
-    compute_node_wait_for_new_jobs_seconds: Optional[Union[StrictFloat, StrictInt]] = Field(default=None, description="Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete.")
+    compute_node_expiration_buffer_seconds: Optional[StrictInt] = Field(default=None, description="Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database's default value of 30 seconds.")
+    compute_node_wait_for_new_jobs_seconds: Optional[StrictInt] = Field(default=None, description="Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete.")
     compute_node_ignore_workflow_completion: Optional[StrictBool] = Field(default=False, description="Inform all compute nodes to ignore workflow completions and hold onto allocations indefinitely. Useful for debugging failed jobs and possibly dynamic workflows where jobs get added after starting.")
-    compute_node_wait_for_healthy_database_minutes: Optional[Union[StrictFloat, StrictInt]] = Field(default=None, description="Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.")
+    compute_node_wait_for_healthy_database_minutes: Optional[StrictInt] = Field(default=None, description="Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.")
     prepare_jobs_sort_method: Optional[StrictStr] = Field(default='gpus_runtime_memory', description="Inform all compute nodes to use this sort method when calling the prepare_jobs_for_submission command.")
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")

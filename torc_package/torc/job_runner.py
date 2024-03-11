@@ -4,6 +4,8 @@ import json
 import logging
 import os
 import multiprocessing
+import multiprocessing.connection
+import multiprocessing.context
 import re
 import signal
 import shutil
@@ -13,9 +15,10 @@ import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Any, Iterable, Optional, Union
 
 import psutil
-from pydantic import BaseModel, ConfigDict  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, ConfigDict
 from resource_monitor.models import (
     ComputeNodeResourceStatConfig,
     ComputeNodeResourceStatResults,
@@ -41,6 +44,7 @@ from torc.openapi_client.models.compute_node_stats import (
     ComputeNodeStats,
 )
 from torc.openapi_client.models.edge_model import EdgeModel
+from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.job_process_stats_model import (
     JobProcessStatsModel,
 )
@@ -70,17 +74,17 @@ class JobRunner:
         api: DefaultApi,
         workflow: WorkflowModel,
         output_dir: Path,
-        job_completion_poll_interval=JOB_COMPLETION_POLL_INTERVAL,
-        max_parallel_jobs=None,
-        database_poll_interval=600,
-        time_limit=None,
-        end_time=None,
-        resources=None,
-        scheduler_config_id=None,
-        log_prefix=None,
-        cpu_affinity_cpus_per_job=None,
-        is_subtask=False,
-    ):
+        job_completion_poll_interval: float = JOB_COMPLETION_POLL_INTERVAL,
+        max_parallel_jobs: Optional[int] = None,
+        database_poll_interval: int = 600,
+        time_limit: Optional[str] = None,
+        end_time: Optional[datetime] = None,
+        resources: Optional[ComputeNodesResources] = None,
+        scheduler_config_id: Optional[str] = None,
+        log_prefix: Optional[str] = None,
+        cpu_affinity_cpus_per_job: Optional[int] = None,
+        is_subtask: bool = False,
+    ) -> None:
         """Constructs a JobRunner.
 
         Parameters
@@ -117,11 +121,12 @@ class JobRunner:
         # TODO: too many inputs and too complex. Needs refactoring.
         self._api = api
         self._workflow = workflow
+        assert isinstance(self._workflow.key, str)
         self._run_id = send_api_command(api.get_workflow_status, workflow.key).run_id
         assert self._run_id > 0, self._run_id
-        self._outstanding_jobs = {}
-        self._pids = {}
-        self._jobs_pending_process_stat_completion = []
+        self._outstanding_jobs: dict[str, AsyncCliCommand] = {}
+        self._pids: dict[str, int] = {}
+        self._jobs_pending_process_stat_completion: list[str] = []
         self._hostname = socket.gethostname()
         self._job_stdio_dir = output_dir / JOB_STDIO_DIR
         self._poll_interval = job_completion_poll_interval
@@ -129,8 +134,8 @@ class JobRunner:
         self._db_poll_interval = database_poll_interval
         self._output_dir = output_dir
         self._log_prefix = log_prefix
-        self._parent_monitor_conn = None
-        self._monitor_proc = None
+        self._parent_monitor_conn: Optional[multiprocessing.connection.Connection] = None
+        self._monitor_proc: Optional[multiprocessing.context.Process] = None
         self._end_time = end_time
         if time_limit is not None:
             self._end_time = datetime.now() + timedelta(seconds=_get_timeout(time_limit))
@@ -140,6 +145,7 @@ class JobRunner:
             self._scheduler_config_id = resources.scheduler_config_id
 
         self._orig_resources = resources or _get_system_resources()
+        self._cpu_tracker: Optional[CpuAffinityMaskTracker] = None
         if cpu_affinity_cpus_per_job is not None:
             if not hasattr(os, "sched_setaffinity"):
                 raise InvalidParameter("This platform does not support sched_setaffinity")
@@ -153,28 +159,27 @@ class JobRunner:
             num_masks = self._cpu_tracker.get_num_masks()
             if self._max_parallel_jobs is not None and self._max_parallel_jobs < num_masks:
                 raise InvalidParameter(f"{max_parallel_jobs=} cannot be less than {num_masks=}")
-        else:
-            self._cpu_tracker = None
 
         config = api.get_workflow_config(self._workflow.key)
+        assert config.compute_node_resource_stats is not None
+        assert config.compute_node_wait_for_new_jobs_seconds is not None
+        assert config.compute_node_wait_for_healthy_database_minutes is not None
         self._config = config
         self._wait_for_new_jobs_seconds = config.compute_node_wait_for_new_jobs_seconds
         self._ignore_completion = config.compute_node_ignore_workflow_completion
         self._orig_resources.scheduler_config_id = self._scheduler_config_id
         self._resources = ComputeNodesResources(**self._orig_resources.to_dict())
-        self._last_db_poll_time = 0
-        self._compute_node = None
-        self._stats = ComputeNodeResourceStatConfig(
-            **(api.get_workflow_config(self._workflow.key).compute_node_resource_stats.to_dict())
-        )
+        self._last_db_poll_time = 0.0
+        self._compute_node: Optional[ComputeNodeModel] = None
+        self._stats = ComputeNodeResourceStatConfig(**config.compute_node_resource_stats.to_dict())
         if is_subtask:
             logger.info("Disable overall compute node stats monitoring for a subtask.")
-            self._stats.disable_node_stats()
+            self._stats.disable_system_stats()
         self._stats_dir = output_dir / STATS_DIR
         self._job_stdio_dir.mkdir(exist_ok=True)
         self._stats_dir.mkdir(exist_ok=True)
 
-    def __del__(self):
+    def __del__(self) -> None:
         if self._outstanding_jobs:
             logger.warning(
                 "JobRunner destructed with outstanding jobs: %s",
@@ -183,25 +188,26 @@ class JobRunner:
         if self._parent_monitor_conn is not None or self._monitor_proc is not None:
             logger.warning("JobRunner destructed without stopping the resource monitor process.")
 
-    def run_worker(self, scheduler=None):
+    def run_worker(self, scheduler: Optional[dict[str, Any]] = None) -> None:
         """Run jobs from a worker process.
 
         Parameters
         ----------
-        scheduler : None | dict
+        scheduler
             Scheduler configuration parameters. Used only for logs and events.
-
         """
         signal.signal(signal.SIGTERM, _sigterm_handler)
         self._log_worker_start_event()
         self._create_compute_node(scheduler)
+        assert self._compute_node is not None
         logger.info(
-            "Run torc worker version=%s api_service_version=%s db=%s hostname=%s end_time=%s "
-            "compute_node_key=%s resources=%s config=%s",
+            "Run torc worker version=%s api_service_version=%s db=%s hostname=%s output_dir=%s "
+            "end_time=%s compute_node_key=%s resources=%s config=%s",
             torc.__version__,
             send_api_command(self._api.get_version)["version"],
             self._api.api_client.configuration.host,
             self._hostname,
+            self._output_dir,
             self._end_time,
             self._compute_node.key,
             str(self._resources).replace("\n", " "),
@@ -223,17 +229,19 @@ class JobRunner:
             self._complete_compute_node()
             self._log_worker_stop_event()
 
-    def _is_workflow_complete(self):
+    def _is_workflow_complete(self) -> bool:
         if self._ignore_completion:
             logger.debug("Ignore workflow completions")
             return False
         return send_api_command(self._api.is_workflow_complete, self._workflow.key).is_complete
 
-    def _run_until_complete(self):
+    def _run_until_complete(self) -> None:
+        assert isinstance(self._workflow.key, str)
+        assert self._config.compute_node_wait_for_healthy_database_minutes is not None
         os.environ["TORC_WORKFLOW_KEY"] = self._workflow.key
-        short_poll_interval = 3
-        last_job_poll_time = 0
+        last_job_poll_time = 0.0
         extra_wait_time_start = None
+        short_poll_interval = 3
         while (
             not _g_shutdown
             and not self._is_workflow_complete()
@@ -245,65 +253,19 @@ class JobRunner:
                 time.sleep(short_poll_interval)
                 continue
             last_job_poll_time = cur_time
-
             try:
-                num_completed = self._process_completions()
-                num_started = 0
-                reason_none_started = None
-                if (
-                    num_completed > 0
-                    or self._is_time_to_poll_database()
-                    or not self._outstanding_jobs
-                ) and (
-                    self._max_parallel_jobs is None
-                    or len(self._outstanding_jobs) < self._max_parallel_jobs
-                ):
-                    num_started, reason_none_started = self._run_ready_jobs()
-
-                if num_completed > 0:
-                    schedule_result = send_api_command(
-                        self._api.prepare_jobs_for_scheduling,
-                        self._workflow.key,
-                    )
-                    for scheduler_id in schedule_result.schedulers:
-                        self._schedule_compute_nodes(scheduler_id)
-
-                if not self._ignore_completion and num_started == 0 and not self._outstanding_jobs:
-                    if self._is_workflow_complete():
-                        logger.info("Workflow is complete.")
-                    elif self._wait_for_new_jobs_seconds > 0 and extra_wait_time_start is None:
-                        logger.info("Wait %ss for new jobs", self._wait_for_new_jobs_seconds)
-                        extra_wait_time_start = time.time()
-                    elif (
-                        self._wait_for_new_jobs_seconds > 0
-                        and time.time() - extra_wait_time_start < self._wait_for_new_jobs_seconds
-                    ):
-                        logger.debug(
-                            "Extra wait time remaining is %s seconds",
-                            self._wait_for_new_jobs_seconds
-                            - (time.time() - extra_wait_time_start),
-                        )
-                    else:
-                        logger.info(
-                            "No jobs are outstanding on this node and no new jobs are available. "
-                            "Reason no jobs started: %s",
-                            reason_none_started,
-                        )
-                        break
-
-                if num_started > 0:
-                    self._update_pids_to_monitor()
-                if num_completed > 0:
-                    self._handle_completed_process_stats()
-                    self._update_pids_to_monitor()
-
-                time.sleep(short_poll_interval)
+                is_done, extra_wait_time_start = self._run_process_completions(
+                    extra_wait_time_start
+                )
+                if is_done:
+                    break
             except DatabaseOffline:
                 logger.exception("Database offline error occurred in run loop.")
                 wait_for_healthy_database(
                     self._api,
                     timeout_minutes=self._config.compute_node_wait_for_healthy_database_minutes,
                 )
+            time.sleep(short_poll_interval)
 
         result = send_api_command(self._api.is_workflow_complete, self._workflow.key)
         if result.is_canceled:
@@ -315,13 +277,66 @@ class JobRunner:
         self._pids.clear()
         self._handle_completed_process_stats()
 
-    def _schedule_compute_nodes(self, scheduler_id):
+    def _run_process_completions(
+        self, extra_wait_time_start: float | None
+    ) -> tuple[bool, float | None]:
+        num_completed = self._process_completions()
+        num_started = 0
+        reason_none_started = None
+        if (
+            num_completed > 0 or self._is_time_to_poll_database() or not self._outstanding_jobs
+        ) and (
+            self._max_parallel_jobs is None
+            or len(self._outstanding_jobs) < self._max_parallel_jobs
+        ):
+            num_started, reason_none_started = self._run_ready_jobs()
+
+        if num_completed > 0:
+            schedule_result = send_api_command(
+                self._api.prepare_jobs_for_scheduling,
+                self._workflow.key,
+            )
+            for scheduler_id in schedule_result.schedulers:
+                self._schedule_compute_nodes(scheduler_id)
+
+        if not self._ignore_completion and num_started == 0 and not self._outstanding_jobs:
+            if self._is_workflow_complete():
+                logger.info("Workflow is complete.")
+            elif self._wait_for_new_jobs_seconds > 0 and extra_wait_time_start is None:
+                logger.info("Wait %ss for new jobs", self._wait_for_new_jobs_seconds)
+                extra_wait_time_start = time.time()
+            elif (
+                self._wait_for_new_jobs_seconds > 0
+                and extra_wait_time_start is not None
+                and time.time() - extra_wait_time_start < self._wait_for_new_jobs_seconds
+            ):
+                logger.debug(
+                    "Extra wait time remaining is %s seconds",
+                    self._wait_for_new_jobs_seconds - (time.time() - extra_wait_time_start),
+                )
+            else:
+                logger.info(
+                    "No jobs are outstanding on this node and no new jobs are available. "
+                    "Reason no jobs started: %s",
+                    reason_none_started,
+                )
+                return True, extra_wait_time_start
+
+        if num_started > 0:
+            self._update_pids_to_monitor()
+        if num_completed > 0:
+            self._handle_completed_process_stats()
+            self._update_pids_to_monitor()
+
+        return False, extra_wait_time_start
+
+    def _schedule_compute_nodes(self, scheduler_id) -> None:
         if scheduler_id.startswith("slurm_schedulers"):
             self._schedule_slurm_compute_nodes(scheduler_id)
         else:
             logger.error("Compute node scheduler %s is not supported", scheduler_id)
 
-    def _schedule_slurm_compute_nodes(self, scheduler_id):
+    def _schedule_slurm_compute_nodes(self, scheduler_id) -> None:
         key = scheduler_id.split("/")[1]
         cmd = (
             f"torc -k {self._workflow.key} -u {self._api.api_client.configuration.host} "
@@ -335,7 +350,7 @@ class JobRunner:
         else:
             logger.error("Failed to schedule compute nodes: %s", ret)
 
-    def _create_compute_node(self, scheduler):
+    def _create_compute_node(self, scheduler) -> None:
         compute_node = ComputeNodeModel(
             hostname=self._hostname,
             pid=os.getpid(),
@@ -350,7 +365,8 @@ class JobRunner:
             compute_node,
         )
 
-    def _complete_compute_node(self):
+    def _complete_compute_node(self) -> None:
+        assert self._compute_node is not None
         self._compute_node.is_active = False
         self._compute_node.duration_seconds = (
             time.time()
@@ -364,7 +380,7 @@ class JobRunner:
             raise_on_error=False,
         )
 
-    def _complete_job(self, job, result, status):
+    def _complete_job(self, job, result, status) -> JobModel:
         job = send_api_command(
             self._api.complete_job,
             self._workflow.key,
@@ -376,7 +392,7 @@ class JobRunner:
         )
         return job
 
-    def _decrement_resources(self, job):
+    def _decrement_resources(self, job: JobModel) -> None:
         job_resources = send_api_command(
             self._api.get_job_resource_requirements,
             self._workflow.key,
@@ -386,11 +402,11 @@ class JobRunner:
         self._resources.num_cpus -= job_resources.num_cpus
         self._resources.num_gpus -= job_resources.num_gpus
         self._resources.memory_gb -= job_memory_gb
-        assert self._resources.num_cpus >= 0.0, self._resources.num_cpus
-        assert self._resources.num_gpus >= 0.0, self._resources.num_gpus
+        assert self._resources.num_cpus >= 0, self._resources.num_cpus
+        assert self._resources.num_gpus >= 0, self._resources.num_gpus
         assert self._resources.memory_gb >= 0.0, self._resources.memory_gb
 
-    def _increment_resources(self, job):
+    def _increment_resources(self, job: JobModel) -> None:
         job_resources = send_api_command(
             self._api.get_job_resource_requirements,
             self._workflow.key,
@@ -406,7 +422,7 @@ class JobRunner:
             self._resources.memory_gb <= self._orig_resources.memory_gb
         ), self._resources.memory_gb
 
-    def _is_time_to_poll_database(self):
+    def _is_time_to_poll_database(self) -> bool:
         if (time.time() - self._db_poll_interval) < self._last_db_poll_time:
             return False
 
@@ -417,7 +433,7 @@ class JobRunner:
         # new jobs are ready to run.
         return self._resources.num_cpus > 0 and self._resources.memory_gb > 0
 
-    def _log_worker_start_event(self):
+    def _log_worker_start_event(self) -> None:
         send_api_command(
             self._api.add_event,
             self._workflow.key,
@@ -431,7 +447,7 @@ class JobRunner:
             raise_on_error=False,
         )
 
-    def _log_worker_stop_event(self):
+    def _log_worker_stop_event(self) -> None:
         send_api_command(
             self._api.add_event,
             self._workflow.key,
@@ -444,7 +460,7 @@ class JobRunner:
             raise_on_error=False,
         )
 
-    def _log_worker_schedule_event(self, scheduler_id):
+    def _log_worker_schedule_event(self, scheduler_id: str) -> None:
         send_api_command(
             self._api.add_event,
             self._workflow.key,
@@ -458,7 +474,7 @@ class JobRunner:
             raise_on_error=False,
         )
 
-    def _log_job_start_event(self, job_key: str, job_name: str):
+    def _log_job_start_event(self, job_key: str, job_name: str) -> None:
         send_api_command(
             self._api.add_event,
             self._workflow.key,
@@ -473,7 +489,9 @@ class JobRunner:
             raise_on_error=False,
         )
 
-    def _log_job_complete_event(self, job_key: str, job_name: str, status: str, return_code: int):
+    def _log_job_complete_event(
+        self, job_key: str, job_name: str, status: str, return_code: int
+    ) -> None:
         send_api_command(
             self._api.add_event,
             self._workflow.key,
@@ -490,19 +508,15 @@ class JobRunner:
             raise_on_error=False,
         )
 
-    def _process_completions(self):
-        done_jobs = []
-        for job in self._outstanding_jobs.values():
-            if job.is_complete():
-                done_jobs.append(job)
-
+    def _process_completions(self) -> int:
+        done_jobs = [x for x in self._outstanding_jobs.values() if x.is_complete()]
         for job in done_jobs:
             self._cleanup_job(job, JobStatus.DONE.value)
 
         logger.info("Found %s completions", len(done_jobs))
         return len(done_jobs)
 
-    def _cancel_jobs(self, jobs):
+    def _cancel_jobs(self, jobs: Iterable[AsyncCliCommand]) -> None:
         for job in jobs:
             # Note that the database API service changes job status to canceled.
             job.cancel()
@@ -519,7 +533,7 @@ class JobRunner:
             )
             self._cleanup_job(job, status)
 
-    def _terminate_jobs(self, jobs):
+    def _terminate_jobs(self, jobs: Iterable[AsyncCliCommand]) -> None:
         no_wait_for_exit_jobs = []
         wait_for_exit_jobs = []
         for job in jobs:
@@ -540,12 +554,13 @@ class JobRunner:
             job.force_complete(-15, status)
             self._cleanup_job(job, status)
 
-    def _cleanup_job(self, job: AsyncCliCommand, status):
+    def _cleanup_job(self, job: AsyncCliCommand, status: str) -> None:
         result = job.get_result(self._run_id)
 
         if result.return_code == 0:
             self._update_file_info(job)
 
+        assert job.db_job.name is not None
         self._log_job_complete_event(job.key, job.db_job.name, status, result.return_code)
         self._complete_job(job.db_job, result, status)
         self._outstanding_jobs.pop(job.key)
@@ -554,7 +569,13 @@ class JobRunner:
             self._jobs_pending_process_stat_completion.append(job.key)
             self._pids.pop(job.key)
 
-    def _run_job(self, job: AsyncCliCommand):
+    def _run_job(self, job: AsyncCliCommand) -> None:
+        assert self._compute_node is not None
+        assert self._compute_node.id is not None
+        job_id = job.db_job.id
+        job_name = job.db_job.name
+        assert job_id is not None
+        assert job_name is not None
         job.run(self._output_dir, self._run_id, log_prefix=self._log_prefix)
         # The database changes db_job._rev on every update.
         # This reassigns job.db_job in order to stay current.
@@ -575,27 +596,28 @@ class JobRunner:
             "executed",
             EdgeModel(
                 _from=self._compute_node.id,
-                to=job.db_job.id,
+                _to=job_id,
                 data={"run_id": self._run_id},
             ),
         )
-        self._log_job_start_event(job.key, job.db_job.name)
+        self._log_job_start_event(job.key, job_name)
 
-    def _run_ready_jobs(self):
+    def _run_ready_jobs(self) -> tuple[int, Union[str, None]]:
         run_id = send_api_command(self._api.get_workflow_status, self._workflow.key).run_id
         if run_id != self._run_id:
             if self._outstanding_jobs:
                 num = len(self._outstanding_jobs)
-                raise Exception(
+                msg = (
                     f"Detected a change in run_id while {num} jobs are outstanding: "
-                    "current={self._run_id} new={run_id}"
+                    f"current={self._run_id} new={run_id}"
                 )
+                raise Exception(msg)
             logger.info("Detected a change in run_id. current=%s new=%s", self._run_id, run_id)
             self._run_id = run_id
 
         reason_none_started = None
         if self._end_time is not None:
-            self._resources.time_limit = convert_end_time_to_duration_str(self._end_time)
+            self._resources.time_limit = _convert_end_time_to_duration_str(self._end_time)
         kwargs = {}
         if self._max_parallel_jobs is not None:
             kwargs["limit"] = self._max_parallel_jobs
@@ -622,7 +644,9 @@ class JobRunner:
         self._last_db_poll_time = time.time()
         return len(ready_jobs.jobs), reason_none_started
 
-    def _start_resource_monitor(self):
+    def _start_resource_monitor(self) -> None:
+        assert self._compute_node is not None
+        assert self._compute_node.key is not None
         self._parent_monitor_conn, child_conn = multiprocessing.Pipe()
         pids = self._pids if self._stats.process else None
         monitor_log_file = self._output_dir / f"monitor_{self._compute_node.key}.log"
@@ -637,7 +661,9 @@ class JobRunner:
         self._monitor_proc = multiprocessing.Process(target=run_monitor_async, args=args)
         self._monitor_proc.start()
 
-    def _stop_resource_monitor(self):
+    def _stop_resource_monitor(self) -> None:
+        assert self._parent_monitor_conn is not None
+        assert self._monitor_proc is not None
         self._parent_monitor_conn.send(ShutDownCommand(pids=self._pids))
         has_results = False
         for _ in range(30):
@@ -655,7 +681,8 @@ class JobRunner:
         self._parent_monitor_conn = None
         self._monitor_proc = None
 
-    def _handle_completed_process_stats(self):
+    def _handle_completed_process_stats(self) -> None:
+        assert self._parent_monitor_conn is not None
         if self._stats.process:
             self._parent_monitor_conn.send(
                 CompleteProcessesCommand(
@@ -684,11 +711,14 @@ class JobRunner:
                 )
             self._jobs_pending_process_stat_completion.clear()
 
-    def _update_pids_to_monitor(self):
+    def _update_pids_to_monitor(self) -> None:
+        assert self._parent_monitor_conn is not None
         if self._stats.process:
             self._parent_monitor_conn.send(UpdatePidsCommand(config=self._stats, pids=self._pids))
 
-    def _post_compute_node_stats(self, results: ComputeNodeResourceStatResults):
+    def _post_compute_node_stats(self, results: ComputeNodeResourceStatResults) -> None:
+        assert self._compute_node is not None
+        assert self._compute_node.id is not None
         res = send_api_command(
             self._api.add_compute_node_stats,
             self._workflow.key,
@@ -707,14 +737,14 @@ class JobRunner:
             "node_used",
             EdgeModel(
                 _from=self._compute_node.id,
-                to=res.id,
+                _to=res.id,
             ),
         )
 
         for result in results.results:
             assert result.resource_type != ResourceType.PROCESS, result
 
-    def _post_job_process_stats(self, result: ProcessStatResults):
+    def _post_job_process_stats(self, result: ProcessStatResults) -> None:
         res = send_api_command(
             self._api.add_job_process_stats,
             self._workflow.key,
@@ -735,11 +765,11 @@ class JobRunner:
             "process_used",
             EdgeModel(
                 _from=f"jobs__{self._workflow.key}/{result.process_key}",
-                to=res.id,
+                _to=res.id,
             ),
         )
 
-    def _update_file_info(self, job):
+    def _update_file_info(self, job: AsyncCliCommand) -> None:
         for file in iter_documents(
             self._api.list_files_produced_by_job,
             self._workflow.key,
@@ -763,7 +793,7 @@ class JobRunner:
             )
 
 
-def _get_system_resources():
+def _get_system_resources() -> ComputeNodesResources:
     return ComputeNodesResources(
         num_cpus=psutil.cpu_count(),
         memory_gb=psutil.virtual_memory().total / GiB,
@@ -773,32 +803,24 @@ def _get_system_resources():
     )
 
 
-def get_memory_gb(memory):
+def get_memory_gb(memory: str) -> float:
     """Converts a memory defined as a string to GiB.
 
     Parameters
     ----------
     memory : str
         Memory as string with units, such as '10g'
-
-    Returns
-    -------
-    int
     """
     return get_memory_in_bytes(memory) / GiB
 
 
-def get_memory_in_bytes(memory: str):
+def get_memory_in_bytes(memory: str) -> int:
     """Converts a memory defined as a string to bytes.
 
     Parameters
     ----------
     memory : str
         Memory as string with units, such as '10g'
-
-    Returns
-    -------
-    int
     """
     match = re.search(r"^([0-9]+)$", memory)
     if match is not None:
@@ -831,13 +853,13 @@ class _TimeLimitModel(BaseModel):
     time_limit: timedelta
 
 
-def convert_end_time_to_duration_str(end_time: datetime):
+def _convert_end_time_to_duration_str(end_time: datetime) -> str:
     """Convert an end time timestamp to an ISO 8601 duration string, relative to current time."""
     duration = end_time - datetime.now()
     return json.loads(_TimeLimitModel(time_limit=duration).model_dump_json())["time_limit"]
 
 
-def _get_timeout(time_limit):
+def _get_timeout(time_limit) -> int | float:
     return (
         sys.maxsize
         if time_limit is None
@@ -845,7 +867,7 @@ def _get_timeout(time_limit):
     )
 
 
-def _get_num_gpus():
+def _get_num_gpus() -> int:
     # Here is example output:
     # nvidia-smi --list-gpus
     # GPU 0: Tesla V100-PCIE-16GB (UUID: GPU-b96a6fce-c5a4-079e-d922-5e9d21b063ce)
@@ -866,7 +888,7 @@ def _get_num_gpus():
     return 0
 
 
-def _sigterm_handler(signum, frame):  # pylint: disable=unused-argument
-    global _g_shutdown  # pylint: disable=global-statement
+def _sigterm_handler(signum, frame) -> None:
+    global _g_shutdown
     logger.info("Detected SIGTERM. Terminate jobs and shutdown.")
     _g_shutdown = True

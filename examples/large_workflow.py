@@ -45,7 +45,9 @@ def build_workflow(api: DefaultApi, workflow: WorkflowModel):
 
     resource_requirements = api.add_resource_requirements(
         workflow.key,
-        ResourceRequirementsModel(name="medium", num_cpus=8, memory="16g", runtime="P0DT2H"),
+        ResourceRequirementsModel(
+            name="medium", num_cpus=8, memory="16g", runtime="P0DT2H"
+        ),
     )
     scheduler = api.add_slurm_scheduler(
         workflow.key,

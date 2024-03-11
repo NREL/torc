@@ -29,7 +29,6 @@ function addJobSpecification(jobSpec, workflow) {
   const filesCollection = config.getWorkflowCollection(workflow, 'files');
   const jobsCollection = config.getWorkflowCollection(workflow, 'jobs');
   const rrCollection = config.getWorkflowCollection(workflow, 'resource_requirements');
-  const scheduledBysCollection = config.getWorkflowCollection(workflow, 'scheduled_bys');
   const userDataCollection = config.getWorkflowCollection(workflow, 'user_data');
 
   let schedulerConfigId = null;

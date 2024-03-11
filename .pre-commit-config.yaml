@@ -7,28 +7,17 @@ repos:
       - id: check-added-large-files
         args: ["--maxkb=50000"]
 
-  - repo: https://github.com/psf/black
-    rev: 23.1.0 # Replace by any tag/version: https://github.com/psf/black/tags
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.1.8
     hooks:
-      - id: black
-        args: ["-l99"]
-        language: python
-  - repo: https://github.com/pycqa/flake8
-    rev: 6.0.0 # Use the sha / tag you want to point at
-    hooks:
-      - id: flake8 # works with .flake8 config
-        language: python
-  - repo: local
-    hooks:
-      - id: pylint
-        name: pylint
-        entry: pylint
-        language: system
-        types: [python]
-        args:
-          [
-            "-rn", # Only display messages
-            "-sn", # Don't display the score
-            "--disable=duplicate-code",
-          ]
+      - id: ruff
+        args: [ --fix ]
+      - id: ruff-format
+
+  #- repo: https://github.com/pre-commit/mirrors-mypy
+  #  rev: v1.8.0
+  #  hooks:
+  #  - id: mypy
+
+
 exclude: "(torc_package/torc/openapi_client/.*)|(julia/julia_client/.*)"

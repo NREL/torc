@@ -45,6 +45,8 @@ OpenAPI.property_type(::Type{ ComputeNodesResources }, name::Symbol) = Union{Not
 function check_required(o::ComputeNodesResources)
     o.num_cpus === nothing && (return false)
     o.memory_gb === nothing && (return false)
+    o.num_gpus === nothing && (return false)
+    o.num_nodes === nothing && (return false)
     true
 end
 

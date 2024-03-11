@@ -97,7 +97,7 @@ def cli(
     output_format,
     timings,
     database_url,
-):  # pylint: disable=unused-argument
+):
     """torc commands"""
     torc_config = TorcRuntimeConfig.load(path=torc_rc_file)
     for param in (
@@ -127,7 +127,7 @@ def cli(
 
 @cli.result_callback()
 @click.pass_obj
-def callback(api, *args, **kwargs):  # pylint: disable=unused-argument
+def callback(api, *args, **kwargs):
     """Log timer stats at exit."""
     if timer_stats_collector.is_enabled:
         timer_stats_collector.log_stats()

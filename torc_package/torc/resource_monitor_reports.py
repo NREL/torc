@@ -1,15 +1,19 @@
 """Generates tables of resource utilization statistics for reporting."""
 
 from collections import defaultdict
+from typing import Any, Generator
 
 import polars as pl
 from prettytable import PrettyTable
 
 from torc.api import iter_documents, remove_db_keys, send_api_command
 from torc.common import GiB
+from torc.openapi_client.api import DefaultApi
 
 
-def iter_compute_node_stats(api, workflow_key, exclude_process=False):
+def iter_compute_node_stats(
+    api: DefaultApi, workflow_key: str, exclude_process: bool = False
+) -> Generator[dict[str, Any], None, None]:
     """Return a generator over all compute node resource utilization stats.
 
     Parameters
@@ -18,10 +22,6 @@ def iter_compute_node_stats(api, workflow_key, exclude_process=False):
     workflow_key : str
     exclude_process : bool
         If True, exclude process stats.
-
-    Yields
-    ------
-    dict
     """
     for node_stats in iter_documents(api.list_compute_node_stats, workflow_key):
         hostname = node_stats.hostname
@@ -41,7 +41,9 @@ def iter_compute_node_stats(api, workflow_key, exclude_process=False):
                 yield row
 
 
-def iter_job_process_stats(api, workflow_key, **kwargs):
+def iter_job_process_stats(
+    api: DefaultApi, workflow_key: str, **kwargs
+) -> Generator[dict[str, Any], None, None]:
     """Return a generator over all job process resource utilization stats.
 
     Parameters
@@ -68,7 +70,7 @@ def iter_job_process_stats(api, workflow_key, **kwargs):
             }
 
 
-def list_job_process_stats(api, workflow_key, **kwargs) -> list[dict]:
+def list_job_process_stats(api: DefaultApi, workflow_key: str, **kwargs) -> list[dict[str, Any]]:
     """Return a list of all job process resource utilization stats.
 
     Parameters
@@ -83,7 +85,9 @@ def list_job_process_stats(api, workflow_key, **kwargs) -> list[dict]:
     return list(iter_job_process_stats(api, workflow_key, **kwargs))
 
 
-def make_compute_node_stats_dataframes(api, workflow_key) -> pl.DataFrame:
+def make_compute_node_stats_dataframes(
+    api: DefaultApi, workflow_key: str
+) -> dict[str, pl.DataFrame]:
     """Return a dict of DataFrame instances for each resource type."""
     by_resource_type = defaultdict(list)
     for stat in iter_compute_node_stats(api, workflow_key):
@@ -92,16 +96,18 @@ def make_compute_node_stats_dataframes(api, workflow_key) -> pl.DataFrame:
     return {k: pl.from_records(v) for k, v in by_resource_type.items()}
 
 
-def list_compute_node_stats(api, workflow_key, exclude_process=False) -> list[dict]:
+def list_compute_node_stats(
+    api: DefaultApi, workflow_key: str, exclude_process: bool = False
+) -> list[dict[str, Any]]:
     """Return a list of resource statistics."""
     return list(iter_compute_node_stats(api, workflow_key, exclude_process=exclude_process))
 
 
 def make_compute_node_stats_text_tables(
-    api, workflow_key, exclude_process=False
+    api: DefaultApi, workflow_key: str, exclude_process: bool = False
 ) -> dict[str, PrettyTable]:
     """Return a dict of PrettyTable instances for each resource type."""
-    by_resource_type = {}
+    by_resource_type: dict[str, PrettyTable] = {}
     for stat in iter_compute_node_stats(api, workflow_key, exclude_process=exclude_process):
         rtype = stat["resource_type"]
         if rtype in by_resource_type:
@@ -115,16 +121,6 @@ def make_compute_node_stats_text_tables(
     return by_resource_type
 
 
-def make_job_process_stats_dataframe(api, workflow_key) -> pl.DataFrame:
-    """Return a polars DataFrame containing job process stats.
-
-    Parameters
-    ----------
-    api : DefaultApi
-    workflow_key : str
-
-    Returns
-    -------
-    pl.DataFrame
-    """
+def make_job_process_stats_dataframe(api: DefaultApi, workflow_key: str) -> pl.DataFrame:
+    """Return a polars DataFrame containing job process stats."""
     return pl.from_records(tuple(iter_job_process_stats(api, workflow_key)))

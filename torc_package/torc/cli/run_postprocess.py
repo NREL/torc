@@ -62,7 +62,7 @@ def run_postprocess(ctx, api):
     try:
         result = func(results)
         logger.info("Completed %s", tag)
-    except Exception:  # pylint: disable=broad-exception-caught
+    except Exception:
         logger.exception("Failed to run %s", tag)
         ret = 1
 

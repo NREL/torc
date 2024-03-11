@@ -7,15 +7,10 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html
 -- Project information -----------------------------------------------------
 https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 """
-# pylint: skip-file
-# flake8: noqa
 
-from torc.openapi_client.api import default_api
-
-import torc
 
 project = "torc"
-copyright = "2023, NREL"  # pylint: disable=redefined-builtin
+copyright = "2023, NREL"
 author = "NREL"
 release = "0.1.0"
 

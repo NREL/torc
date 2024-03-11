@@ -58,7 +58,7 @@ def run_function(ctx, api):
     try:
         result = func(inputs["params"])
         logger.info("Completed %s", tag)
-    except Exception:  # pylint: disable=broad-exception-caught
+    except Exception:
         logger.exception("Failed to run %s", tag)
         ret = 1
 

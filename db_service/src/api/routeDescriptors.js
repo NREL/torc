@@ -1,7 +1,6 @@
 'use strict';
 const joi = require('joi');
 const schemas = require('./schemas');
-const documents = require('../documents');
 
 const ROUTE_DESCRIPTORS = [
   {

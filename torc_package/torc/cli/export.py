@@ -73,40 +73,7 @@ def sqlite(api, workflow_keys, filename, force):
         workflow_statuses.append(tuple(status_as_dict.values()))
 
         for name in api.list_collection_names(workflow.key).names:
-            basename = name.split("__")[0]
-            func = _get_db_documents_func(api, basename)
-
-            rows = []
-            args = (workflow.key, basename) if basename in _EDGES else (workflow.key,)
-            for item in iter_documents(func, *args):
-                # to_dict is problematic because it drops fields with None values.
-                # Not sure that we should be using pydantic directly.
-                # row = item if isinstance(item, dict) else item.to_dict()
-                row = item if isinstance(item, dict) else item.model_dump()
-                if "to" in row:
-                    # Swagger converts Arango's '_to' to 'to', but leaves '_from'.
-                    # Persist Arango names.
-                    row["_to"] = row.pop("to")
-                if basename in ("events", "user_data"):
-                    # Put variable, user-defined names in a 'data' column as JSON.
-                    data = {}
-                    db_keys = {"_id", "_rev", "_key"}
-                    for field in set(row.keys()).difference(db_keys):
-                        data[field] = row.pop(field)
-                    row["data"] = json.dumps(data)
-                elif basename == "jobs":
-                    row.pop("internal")
-                row["workflow_key"] = workflow.key
-                for key, val in row.items():
-                    if isinstance(val, (dict, list)):
-                        row[key] = json.dumps(val)
-                if basename not in tables:
-                    _make_sql_table(item, row, filename, basename)
-                    tables.add(basename)
-
-                rows.append(tuple(row.values()))
-            if rows:
-                insert_rows(filename, basename, rows)
+            _build_table(api, workflow.key, name, tables, filename)
 
     if workflows:
         insert_rows(filename, "workflows", workflows)
@@ -118,6 +85,45 @@ def sqlite(api, workflow_keys, filename, force):
         logger.info("Exported database to %s for workflow keys %s", filename, keys)
     else:
         logger.info("Exported database to %s for all workflows", filename)
+
+
+def _build_table(
+    api: DefaultApi, workflow_key: str, collection_name: str, tables: set[str], db_file: Path
+) -> None:
+    table_name = collection_name.split("__")[0]
+    func = _get_db_documents_func(api, table_name)
+
+    rows = []
+    args = (workflow_key, table_name) if table_name in _EDGES else (workflow_key,)
+    for item in iter_documents(func, *args):
+        # to_dict is problematic because it drops fields with None values.
+        # Not sure that we should be using pydantic directly.
+        # row = item if isinstance(item, dict) else item.to_dict()
+        row = item if isinstance(item, dict) else item.model_dump()
+        if "to" in row:
+            # Swagger converts Arango's '_to' to 'to', but leaves '_from'.
+            # Persist Arango names.
+            row["_to"] = row.pop("to")
+        if table_name in ("events", "user_data"):
+            # Put variable, user-defined names in a 'data' column as JSON.
+            data = {}
+            db_keys = {"_id", "_rev", "_key"}
+            for field in set(row.keys()).difference(db_keys):
+                data[field] = row.pop(field)
+            row["data"] = json.dumps(data)
+        elif table_name == "jobs":
+            row.pop("internal")
+        row["workflow_key"] = workflow_key
+        for key, val in row.items():
+            if isinstance(val, (dict, list)):
+                row[key] = json.dumps(val)
+        if table_name not in tables:
+            _make_sql_table(item, row, db_file, table_name)
+            tables.add(table_name)
+
+        rows.append(tuple(row.values()))
+    if rows:
+        insert_rows(db_file, table_name, rows)
 
 
 def _make_sql_table(item, row, filename, basename):

@@ -283,7 +283,7 @@ JOIN_COLLECTIONS = {
 
 
 @click.command()
-@click.argument("name", type=click.Choice(JOIN_COLLECTIONS.keys()))
+@click.argument("name", type=click.Choice(list(JOIN_COLLECTIONS.keys())))
 @click.option(
     "-f",
     "--filters",

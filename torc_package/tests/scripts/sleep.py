@@ -2,8 +2,6 @@
 
 """Test script to sleep."""
 
-# pylint: skip-file
-
 import signal
 import sys
 import time

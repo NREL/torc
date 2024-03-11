@@ -6,6 +6,8 @@ import shlex
 import subprocess
 import sys
 import time
+from pathlib import Path
+from typing import Any, Optional
 
 from torc.exceptions import ExecutionError
 
@@ -14,30 +16,30 @@ logger = logging.getLogger(__name__)
 
 
 def run_command(
-    cmd,
-    output=None,
-    cwd=None,
-    num_retries=0,
-    retry_delay_s=2.0,
-    error_strings=None,
+    cmd: str,
+    output: Optional[dict[str, Any]] = None,
+    cwd: Optional[str] = None,
+    num_retries: int = 0,
+    retry_delay_s: float = 2.0,
+    error_strings: Optional[list[str]] = None,
     **kwargs,
-):
+) -> int:
     """Runs a command as a subprocess.
 
     Parameters
     ----------
-    cmd : str
+    cmd
         command to run
-    output : dict, default=None
+    output
         If a dict is passed then return stdout and stderr as keys.
-    cwd : str, default=None
+    cwd
         Change the working directory to cwd before executing the process.
-    num_retries : int, default=0
+    num_retries
         Retry the command on failure this number of times.
         Return code and output are from the last command execution.
-    retry_delay_s : float, default=2.0
+    retry_delay_s
         Number of seconds to delay in between retries.
-    error_strings : None | str
+    error_strings
         Skip retries for these known error strings. Requires output to be set.
     kwargs
         Keyword arguments to forward to the subprocess module.
@@ -51,24 +53,21 @@ def run_command(
     long-running processes that output lots of text. In those cases consider
     running subprocess.Popen with stdout and/or stderr set to a pre-configured
     file descriptor.
-
     """
     if error_strings and output is None:
         raise ValueError("output must be set if error_strings are passed")
     if error_strings is None:
         error_strings = []
 
-    if not isinstance(cmd, str):
-        # Handle pathlib.Path.
-        cmd = str(cmd)
+    cmd = str(cmd) if isinstance(cmd, Path) else cmd
     logger.debug(cmd)
     # Disable posix if on Windows.
     command = shlex.split(cmd, posix="win" not in sys.platform)
     max_tries = num_retries + 1
     assert max_tries >= 1
-    ret = None
+    ret = 1
     for i in range(max_tries):
-        _output = {} if isinstance(output, dict) else None
+        _output: Optional[dict[str, Any]] = {} if isinstance(output, dict) else None
         ret = _run_command(command, _output, cwd, **kwargs)
         if ret != 0 and num_retries > 0:
             if _output:
@@ -86,26 +85,24 @@ def run_command(
                 logger.warning("Command [%s] failed on iteration %s: %s", cmd, i + 1, ret)
         if ret == 0 or i == max_tries - 1:
             if isinstance(output, dict):
+                assert _output is not None
                 output.update(_output)
             break
         time.sleep(retry_delay_s)
 
-    if ret != 0:
-        logger.debug("Command [%s] failed: %s", cmd, ret)
-        if output:
-            logger.debug(output["stderr"])
-
     return ret
 
 
-def _should_exit_early(std_err, error_strings):
+def _should_exit_early(std_err: str, error_strings: list[str]) -> bool:
     for err in error_strings:
         if err in std_err:
             return True
     return False
 
 
-def _run_command(command, output, cwd, **kwargs):
+def _run_command(
+    command: list[str], output: Optional[dict[str, Any]], cwd: Optional[str], **kwargs
+) -> int:
     if output is not None:
         result = subprocess.run(
             command,
@@ -123,21 +120,20 @@ def _run_command(command, output, cwd, **kwargs):
     return ret
 
 
-def check_run_command(*args, **kwargs):
+def check_run_command(*args, **kwargs) -> None:
     """Same as run_command except that it raises an exception on failure.
 
     Raises
     ------
     ExecutionError
         Raised if the command returns a non-zero return code.
-
     """
     ret = run_command(*args, **kwargs)
     if ret != 0:
         raise ExecutionError(f"command returned error code: {ret}")
 
 
-def get_cli_string():
+def get_cli_string() -> str:
     """Return the command-line arguments issued.
 
     Returns

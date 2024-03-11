@@ -7,6 +7,7 @@ import os
 import threading
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll, Grid, Container
@@ -82,8 +83,8 @@ class TorcManagementConsole(App):
         )
         self._db_url = ""
         self._db_name = ""
-        self._api: DefaultApi = None
-        self._event_monitor_timer = None
+        self._api: Optional[DefaultApi] = None
+        self._event_monitor_timer: Optional[threading.Timer] = None
 
         full_url = database_url or None
         if full_url is None:
@@ -136,6 +137,7 @@ class TorcManagementConsole(App):
                         with Grid(id="document_table_controls_grid"):
                             with RadioSet(id="table_options", disabled=True):
                                 for table_id, table in DATA_TABLES.items():
+                                    assert isinstance(table["name"], str)
                                     yield RadioButton(table["name"], id=table_id)
                             with RadioSet(id="sort_options", disabled=True):
                                 yield RadioButton("None", id="no_sorting", value=True)
@@ -259,7 +261,7 @@ class TorcManagementConsole(App):
         self.query_one(
             "#sort_column", Input
         ).tooltip = "Enter sort column or click on table header."
-        for table in self.query(DataTable):  # pylint: disable=not-an-iterable
+        for table in self.query(DataTable):
             table.zebra_stripes = True
             table.cursor_type = "row"
             table.show_row_labels = True
@@ -271,12 +273,14 @@ class TorcManagementConsole(App):
         """Event handler when a DataTable header is selected."""
         self._clear_output_box()
         if event.data_table.id == "document_table":
+            assert event.column_key.value is not None
             self.query_one("#sort_column", Input).value = event.column_key.value
 
     def on_data_table_row_selected(self, event: DataTable.RowSelected) -> None:
         """Event handler when a DataTable row is selected."""
         self._clear_output_box()
         if event.data_table.id == "workflow_table":
+            assert event.row_key.value is not None
             self.query_one("#workflow_key", Input).value = event.row_key.value
             self.query_one("#table_options", RadioSet).disabled = False
             self.query_one("#sort_options", RadioSet).disabled = False
@@ -284,6 +288,7 @@ class TorcManagementConsole(App):
             self._populate_slurm_schedulers()
             self._set_workflow_widgets(True)
         elif event.data_table.id == "slurm_schedulers_table":
+            assert event.row_key.value is not None
             self.query_one("#slurm_scheduler_key", Input).value = event.row_key.value
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -483,7 +488,7 @@ class TorcManagementConsole(App):
             mode = self.query_one("#sort_options", RadioSet).pressed_button.id
             if sort_column and mode != "no_sorting":
                 table.sort(sort_column, reverse=mode == "descending")
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception as exc:
             self._post_error_msg(str(exc))
 
     def _create_workflow(self):
@@ -535,7 +540,7 @@ class TorcManagementConsole(App):
             self._post_info_msg(
                 f"Started workflow {key}. Check the jobs table for ready jobs and schedule nodes."
             )
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception as exc:
             self._post_error_msg(f"Failed to start workflow: {exc}")
 
     def _restart_workflow(self):
@@ -555,7 +560,7 @@ class TorcManagementConsole(App):
             self._post_info_msg(
                 f"Restarted workflow {key}. Check the jobs table for ready jobs and schedule nodes.."
             )
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception as exc:
             self._post_error_msg(f"Failed to restart workflow: {exc}")
 
     def _reset_workflow(self):
@@ -571,7 +576,7 @@ class TorcManagementConsole(App):
             reset_workflow_status(self._api, key)
             reset_workflow_job_status(self._api, key)
             self._post_info_msg(f"Reset workflow {key}")
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception as exc:
             self._post_error_msg(f"Failed to reset workflow: {exc}")
 
     def _cancel_workflow(self):
@@ -586,7 +591,7 @@ class TorcManagementConsole(App):
         try:
             cancel_workflow(self._api, key)
             self._post_info_msg(f"Canceled workflow {key}")
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception as exc:
             self._post_error_msg(f"Failed to cancel workflow: {exc}")
 
     def _delete_workflow(self):
@@ -603,7 +608,7 @@ class TorcManagementConsole(App):
             logger.info("Deleted workflow %s", key)
             self._post_info_msg(f"Deleted workflow {key}")
             self._connect()
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception as exc:
             self._post_error_msg(f"Failed to delete workflow: {exc}")
 
     def _schedule_slurm_nodes(self):
@@ -644,7 +649,7 @@ class TorcManagementConsole(App):
             self._post_info_msg(
                 f"Scheduled {num_slurm_jobs} Slurm job(s) for workflow {workflow_key}"
             )
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception as exc:
             self._post_error_msg(f"Failed to schedule nodes: {exc}")
 
     def _start_event_monitor(self):
@@ -675,7 +680,7 @@ class TorcManagementConsole(App):
                 event_ = event
             if event_ is not None:
                 timestamp = event_["timestamp"]
-        except Exception as e:  # pylint: disable=broad-exception-caught
+        except Exception as e:
             self.query_one("#event_log", RichLog).write(f"failed to get events {e}")
 
         self._event_monitor_timer = threading.Timer(

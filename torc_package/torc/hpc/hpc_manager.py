@@ -4,7 +4,8 @@ import logging
 from pathlib import Path
 
 from torc.exceptions import ExecutionError
-from torc.hpc.common import HpcType
+from torc.hpc.common import HpcType, HpcJobStatus, HpcJobStats
+from torc.hpc.hpc_interface import HpcInterface
 from torc.hpc.slurm_interface import SlurmInterface
 
 
@@ -14,7 +15,7 @@ logger = logging.getLogger(__name__)
 class HpcManager:
     """Manages HPC job submission and monitoring."""
 
-    def __init__(self, config, hpc_type: HpcType, output):
+    def __init__(self, config: dict[str, str], hpc_type: HpcType, output) -> None:
         self._output = output
         self._config = config
         self._hpc_type = hpc_type
@@ -22,19 +23,8 @@ class HpcManager:
 
         logger.debug("Constructed HpcManager with output=%s", output)
 
-    def cancel_job(self, job_id):
-        """Cancel job.
-
-        Parameters
-        ----------
-        job_id : str
-
-        Returns
-        -------
-        int
-            return code
-
-        """
+    def cancel_job(self, job_id: str) -> int:
+        """Cancel the job."""
         ret = self._intf.cancel_job(job_id)
         if ret == 0:
             logger.info("Successfully cancelled job ID %s", job_id)
@@ -43,81 +33,38 @@ class HpcManager:
 
         return ret
 
-    def get_status(self, job_id=None):
-        """Return the status of a job by ID.
-
-        Parameters
-        ----------
-        job_id : str
-            job ID
-
-        Returns
-        -------
-        HpcJobStatus
-
-        """
+    def get_status(self, job_id: str) -> HpcJobStatus:
+        """Return the status of a job by ID."""
         info = self._intf.get_status(job_id=job_id)
         logger.debug("info=%s", info)
         return info.status
 
-    def get_statuses(self):
+    def get_statuses(self) -> dict[str, HpcJobStatus]:
         """Check the statuses of all user jobs.
 
         Returns
         -------
         dict
             key is job_id, value is HpcJobStatus
-
         """
         return self._intf.get_statuses()
 
-    def get_job_stats(self, job_id):
-        """Get stats for job ID.
-
-        Parameters
-        ----------
-        job_id : str
-
-        Returns
-        -------
-        HpcJobStats
-
-        """
+    def get_job_stats(self, job_id: str) -> HpcJobStats:
+        """Get stats for job ID."""
         return self._intf.get_job_stats(job_id)
 
-    def get_local_scratch(self):
-        """Get path to local storage space.
-
-        Returns
-        -------
-        str
-
-        """
+    def get_local_scratch(self) -> str:
+        """Get path to local storage space."""
         return self._intf.get_local_scratch()
 
     @property
-    def hpc_type(self):
-        """Return the type of HPC management system.
-
-        Returns
-        -------
-        HpcType
-
-        """
+    def hpc_type(self) -> HpcType:
+        """Return the type of HPC management system."""
         return self._hpc_type
 
-    def list_active_nodes(self, job_id):
-        """Return the nodes currently participating in the job. Order should be deterministic.
-
-        Parameters
-        ----------
-        job_id : str
-
-        Returns
-        -------
-        list
-            list of node hostnames
-
+    def list_active_nodes(self, job_id: str) -> list[str]:
+        """Return the node hostname currently participating in the job. Order should be
+        deterministic.
         """
         return self._intf.list_active_nodes(job_id)
 
@@ -126,22 +73,22 @@ class HpcManager:
         directory: Path,
         name: str,
         command: str,
-        keep_submission_script=False,
-        start_one_worker_per_node=False,
-    ):
+        keep_submission_script: bool = False,
+        start_one_worker_per_node: bool = False,
+    ) -> str:
         """Submits scripts to the queue for execution.
 
         Parameters
         ----------
-        directory : Path
+        directory
             directory to contain the submission script
-        name : str
+        name
             job name
-        command : str
+        command
             Command to execute.
-        keep_submission_script : bool
+        keep_submission_script
             Whether to keep the submission script, defaults to False.
-        start_one_worker_per_node : bool
+        start_one_worker_per_node
             If True, start a torc worker on each compute node, defaults to False.
             The default behavior defers control of a multi-node job to the user job.
 
@@ -174,10 +121,9 @@ class HpcManager:
         return job_id
 
     @staticmethod
-    def create_hpc_interface(hpc_type):
+    def create_hpc_interface(hpc_type: HpcType) -> HpcInterface:
         """Returns an HPC implementation instance appropriate for the current
         environment.
-
         """
         match hpc_type:
             case HpcType.SLURM:
