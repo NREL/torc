@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 @click.group()
 @click.pass_context
-def compute_nodes(ctx):  # pylint: disable=unused-argument
+def compute_nodes(ctx):
     """Compute node commands"""
     setup_cli_logging(ctx, __name__)
 

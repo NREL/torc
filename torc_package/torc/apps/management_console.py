@@ -261,7 +261,7 @@ class TorcManagementConsole(App):
         self.query_one(
             "#sort_column", Input
         ).tooltip = "Enter sort column or click on table header."
-        for table in self.query(DataTable):  # pylint: disable=not-an-iterable
+        for table in self.query(DataTable):
             table.zebra_stripes = True
             table.cursor_type = "row"
             table.show_row_labels = True
@@ -488,7 +488,7 @@ class TorcManagementConsole(App):
             mode = self.query_one("#sort_options", RadioSet).pressed_button.id
             if sort_column and mode != "no_sorting":
                 table.sort(sort_column, reverse=mode == "descending")
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception as exc:
             self._post_error_msg(str(exc))
 
     def _create_workflow(self):
@@ -540,7 +540,7 @@ class TorcManagementConsole(App):
             self._post_info_msg(
                 f"Started workflow {key}. Check the jobs table for ready jobs and schedule nodes."
             )
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception as exc:
             self._post_error_msg(f"Failed to start workflow: {exc}")
 
     def _restart_workflow(self):
@@ -560,7 +560,7 @@ class TorcManagementConsole(App):
             self._post_info_msg(
                 f"Restarted workflow {key}. Check the jobs table for ready jobs and schedule nodes.."
             )
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception as exc:
             self._post_error_msg(f"Failed to restart workflow: {exc}")
 
     def _reset_workflow(self):
@@ -576,7 +576,7 @@ class TorcManagementConsole(App):
             reset_workflow_status(self._api, key)
             reset_workflow_job_status(self._api, key)
             self._post_info_msg(f"Reset workflow {key}")
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception as exc:
             self._post_error_msg(f"Failed to reset workflow: {exc}")
 
     def _cancel_workflow(self):
@@ -591,7 +591,7 @@ class TorcManagementConsole(App):
         try:
             cancel_workflow(self._api, key)
             self._post_info_msg(f"Canceled workflow {key}")
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception as exc:
             self._post_error_msg(f"Failed to cancel workflow: {exc}")
 
     def _delete_workflow(self):
@@ -608,7 +608,7 @@ class TorcManagementConsole(App):
             logger.info("Deleted workflow %s", key)
             self._post_info_msg(f"Deleted workflow {key}")
             self._connect()
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception as exc:
             self._post_error_msg(f"Failed to delete workflow: {exc}")
 
     def _schedule_slurm_nodes(self):
@@ -649,7 +649,7 @@ class TorcManagementConsole(App):
             self._post_info_msg(
                 f"Scheduled {num_slurm_jobs} Slurm job(s) for workflow {workflow_key}"
             )
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception as exc:
             self._post_error_msg(f"Failed to schedule nodes: {exc}")
 
     def _start_event_monitor(self):
@@ -680,7 +680,7 @@ class TorcManagementConsole(App):
                 event_ = event
             if event_ is not None:
                 timestamp = event_["timestamp"]
-        except Exception as e:  # pylint: disable=broad-exception-caught
+        except Exception as e:
             self.query_one("#event_log", RichLog).write(f"failed to get events {e}")
 
         self._event_monitor_timer = threading.Timer(

@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Any, Iterable, Optional, Union
 
 import psutil
-from pydantic import BaseModel, ConfigDict  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, ConfigDict
 from resource_monitor.models import (
     ComputeNodeResourceStatConfig,
     ComputeNodeResourceStatResults,
@@ -888,7 +888,7 @@ def _get_num_gpus() -> int:
     return 0
 
 
-def _sigterm_handler(signum, frame) -> None:  # pylint: disable=unused-argument
-    global _g_shutdown  # pylint: disable=global-statement
+def _sigterm_handler(signum, frame) -> None:
+    global _g_shutdown
     logger.info("Detected SIGTERM. Terminate jobs and shutdown.")
     _g_shutdown = True

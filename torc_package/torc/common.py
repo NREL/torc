@@ -7,7 +7,7 @@ import sys
 from types import ModuleType
 from typing import Callable, Optional
 
-from pydantic import BaseModel, ConfigDict  # pylint: disable=no-name-in-module
+from pydantic import BaseModel, ConfigDict
 
 from resource_monitor.timing.timer_stats import TimerStatsCollector
 

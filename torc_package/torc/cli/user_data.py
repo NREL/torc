@@ -25,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 
 @click.group()
-def user_data():  # pylint: disable=unused-argument
+def user_data():
     """User data commands"""
 
 

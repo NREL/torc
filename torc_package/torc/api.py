@@ -133,7 +133,7 @@ def send_api_command(func, *args, raise_on_error=True, **kwargs) -> Any:
                 raise
             logger.info("Exception is ignored.")
             return None
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except Exception as exc:
             # This covers all connection errors. It is likely too risky to try to catch
             # all possible errors from the underlying libraries (OS, urllib3, etc).
             logger.exception("Failed to send API command %s", func.__name__)

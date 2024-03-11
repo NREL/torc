@@ -167,7 +167,6 @@ class AsyncCliCommand(AsyncJobBase):
         basename = f"{log_prefix}_{self.key}_{run_id}"
         stdout_filename = output_dir / JOB_STDIO_DIR / f"{basename}.o"
         stderr_filename = output_dir / JOB_STDIO_DIR / f"{basename}.e"
-        # pylint: disable=consider-using-with
         self._stdout_fp = open(stdout_filename, "w", encoding="utf-8")
         self._stderr_fp = open(stderr_filename, "w", encoding="utf-8")
         env = os.environ.copy()
@@ -182,10 +181,9 @@ class AsyncCliCommand(AsyncJobBase):
             if not hasattr(os, "sched_setaffinity"):
                 msg = f"This platform does not support sched_setaffinity: {sys.platform}."
                 raise NotImplementedError(msg)
-            os.sched_setaffinity(self._pipe.pid, mask)  # type: ignore # pylint: disable=no-member
+            os.sched_setaffinity(self._pipe.pid, mask)  # type: ignore
             logger.info("Set CPU affinity for job={self._key} to {mask=}")
 
-        # pylint: enable=consider-using-with
         self._is_running = True
 
     def _run_command(self, command, env):

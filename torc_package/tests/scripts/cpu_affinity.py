@@ -25,7 +25,7 @@ api = make_api(config.database_url)
 workflow_key = os.environ["TORC_WORKFLOW_KEY"]
 job_key = os.environ["TORC_JOB_KEY"]
 
-affinity = os.sched_getaffinity(os.getpid())  # pylint: disable=no-member
+affinity = os.sched_getaffinity(os.getpid())
 result = UserDataModel(
     name="result",
     data={"affinity": list(affinity), "num_cpus": multiprocessing.cpu_count()},
