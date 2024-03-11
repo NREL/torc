@@ -36,5 +36,6 @@ below.
    slurm_diamond_workflow
    manual_job_dependencies
    cpu_affinity_workflow
-   map_function
+   map_python_function
+   map_julia_function
    large_workflow

@@ -72,7 +72,7 @@ const SLEEP = joinpath(BASE_DIR, "..", "..", "torc_package", "tests", "scripts",
             @test result.return_code == 0
         end
     finally
-        rm(output_dir, recursive = true)
+        rm(output_dir; recursive = true)
         APIClient.remove_workflow(api, workflow._key)
     end
 end
