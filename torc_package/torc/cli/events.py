@@ -9,6 +9,7 @@ from datetime import datetime
 import click
 
 from torc.api import iter_documents
+from torc.common import convert_timestamp
 from .common import (
     check_database_url,
     get_output_format_from_context,
@@ -94,9 +95,7 @@ def list_events(ctx, api, after_datetime, after_timestamp_ms, filters, limit, sk
         # Leave _key
         event.pop("_id")
         event.pop("_rev")
-        event["datetime"] = datetime.fromtimestamp(event["timestamp"] / 1000).strftime(
-            "%Y-%m-%d %H:%M:%S.%f"
-        )
+        event["datetime"] = str(convert_timestamp(event["timestamp"]))
         data.append(event)
 
     print(json.dumps(data, indent=2))
@@ -150,7 +149,7 @@ def monitor(ctx, api, category, duration, poll_interval):
     latest_timestamp = api.get_latest_event_timestamp(workflow_key)["timestamp"]
     logger.info(
         "Monitoring for events occurring after timestamp=%s with poll_interval=%s",
-        latest_timestamp,
+        convert_timestamp(latest_timestamp),
         poll_interval,
     )
     filters = {}
@@ -163,6 +162,7 @@ def monitor(ctx, api, category, duration, poll_interval):
         ):
             event.pop("_id")
             event.pop("_rev")
+            event["datetime"] = str(convert_timestamp(event["timestamp"]))
             print(json.dumps(event, indent=2))
             event_ = event
         if event_ is not None:

@@ -53,12 +53,16 @@ You can build a workflow through the torc Python API. Refer to this `example Pyt
 
 Note that if you don't have a CLI executable for your jobs and instead want torc to map a list of
 input parameters across workers, you can call ``torc.api.map_function_to_jobs()``. Refer to
-the tutorial :ref:`map-function-tutorial` for more information.
+the tutorial :ref:`map-python-function-tutorial` for more information.
 
 Configure with the Julia API
 ----------------------------
 You can build a workflow through the torc Julia API. Refer to this `example Julia script
 <https://github.nrel.gov/viz/torc/blob/main/examples/diamond_workflow.jl>`_.
+
+Note that if you don't have a CLI executable for your jobs and instead want torc to map a list of
+input parameters across workers, you can call ``Torc.map_function_to_jobs()``. Refer to
+the tutorial :ref:`map-julia-function-tutorial` for more information.
 
 Compute node configuration options
 ==================================

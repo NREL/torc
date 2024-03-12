@@ -4,6 +4,7 @@ import enum
 import importlib
 import os
 import sys
+from datetime import datetime
 from types import ModuleType
 from typing import Callable, Optional
 
@@ -76,3 +77,8 @@ def check_function(
     if func is None:
         raise ValueError(f"function={func_name} is not defined in {module_name}")
     return module, func
+
+
+def convert_timestamp(timestamp: int) -> datetime:
+    """Convert the timestamp stored in the database to a datetime."""
+    return datetime.fromtimestamp(timestamp / 1000)

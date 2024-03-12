@@ -8,7 +8,7 @@ Aqua.test_unbound_args(Torc)
 Aqua.test_undefined_exports(Torc)
 Aqua.test_ambiguities(Torc)
 Aqua.test_stale_deps(Torc)
-Aqua.test_deps_compat(Torc, check_julia=false, ignore=[:Dates])
+Aqua.test_deps_compat(Torc; check_julia = false, ignore = [:Dates])
 
 """
 Copied @includetests from https://github.com/ssfrr/TestSetExtensions.jl.

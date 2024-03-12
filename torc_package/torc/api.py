@@ -194,7 +194,7 @@ def map_function_to_jobs(
     scheduler=None,
     start_index=1,
     name_prefix="",
-    blocking_jobs: Optional[list[str]] = None,
+    blocked_by: Optional[list[str]] = None,
 ) -> list[JobModel]:
     """Add a job that will call func for each item in params.
 
@@ -223,7 +223,7 @@ def map_function_to_jobs(
     name_prefix : str
         Prepend job names with this prefix; defaults to an empty string. Names will be the
         index converted to a string.
-    blocking_jobs : None | list[str]
+    blocked_by : None | list[str]
         Job IDs that should block all jobs created by this function.
 
     Returns
@@ -258,7 +258,7 @@ def map_function_to_jobs(
             output_user_data=[output_ud.id],
             resource_requirements=resource_requirements,
             scheduler=scheduler,
-            blocked_by=blocking_jobs,
+            blocked_by=blocked_by,
         )
         jobs.append(job)
 

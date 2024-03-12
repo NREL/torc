@@ -1,8 +1,8 @@
-.. _map-function-tutorial:
+.. _map-python-function-tutorial:
 
-#######################################
+######################################
 Map a Python function to compute nodes
-#######################################
+######################################
 This tutorial will teach you how to build a workflow from Python functions instead of CLI
 executables and run on it on an HPC with ``Slurm``.
 
@@ -20,8 +20,12 @@ Let's suppose that your code is in a module called ``simulation.py`` and looks s
         dict
             Result of the simulation.
         """
-        job_name = data["job_name"]
-        return {"inputs": data, "result": 5, "output_data_path": f"/projects/my-project/{job_name}"}
+        job_name = input_params["job_name"]
+        return {
+            "inputs": input_params,
+            "result": 5,
+            "output_data_path": f"/projects/my-project/{job_name}",
+        }
 
 
     def postprocess(results: list[dict]) -> dict:
@@ -336,9 +340,7 @@ parameters and jobs, and will restart only the affected jobs. Here's how to do t
 Other jobs
 ==========
 You could add "normal" jobs to the workflow as well. For example, you might have preprocessing and
-postprocessing work to do. You can add those jobs through the builder. You could also add multiple
-rounds of mapped functions.
-
-Inevitably, this will lead to ordering requirements. You could loop through all jobs in the builder
-and set the ``blocked_by`` attribute of each job. You could also define job-job relationships
-through files or user-data as discussed elsewhere in this documentation.
+postprocessing work to do. You can add those jobs through the API. You could also add multiple
+rounds of mapped functions. ``map_function_to_jobs`` provides a ``blocked_by`` parameter to specify
+ordering. You could also define job-job relationships through files or user-data as discussed
+elsewhere in this documentation.
