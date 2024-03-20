@@ -64,6 +64,15 @@ def build_workflow(api: DefaultApi, workflow: WorkflowModel):
         )
         blocking_jobs.append(job.id)
 
+    job = api.add_job(
+        workflow.key,
+        JobModel(
+            name="job5",
+            command="bash error.sh",
+            resource_requirements=small.id,
+        ),
+    )
+    blocking_jobs.append(job.id)
     api.add_job(
         workflow.key,
         JobModel(
