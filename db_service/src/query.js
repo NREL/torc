@@ -1512,6 +1512,7 @@ function updateBlockedJobsFromCompletion(job, workflow) {
       OUTBOUND ${job._id}
       GRAPH ${graphName}
       OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
+      FILTER v.status == ${JobStatus.Blocked}
       RETURN p.vertices[1]
   `;
   const workflowStatus = getWorkflowStatus(workflow);
@@ -1519,12 +1520,12 @@ function updateBlockedJobsFromCompletion(job, workflow) {
   // TODO: should other queries use bfs?
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
   for (const blockedJob of cursor) {
-    if (!isJobBlocked(blockedJob, workflow)) {
-      if (result.return_code != 0 && blockedJob.cancel_on_blocking_job_failure) {
-        blockedJob.status = JobStatus.Canceled;
-      } else {
-        blockedJob.status = JobStatus.Ready;
-      }
+    if (result.return_code != 0 && blockedJob.cancel_on_blocking_job_failure) {
+      blockedJob.status = JobStatus.Canceled;
+    } else if (!isJobBlocked(blockedJob, workflow)) {
+      blockedJob.status = JobStatus.Ready;
+    }
+    if (job.status != JobStatus.Blocked) {
       jobs.update(blockedJob, blockedJob, {mergeObjects: false});
     }
   }

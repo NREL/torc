@@ -272,11 +272,12 @@ def test_cancel_with_failed_job(workflow_with_cancel):
     )
     runner.run_worker()
     assert api.is_workflow_complete(db.workflow.key).is_complete
+    assert db.get_document("jobs", "bad_job").status == "done"
     assert db.get_document("jobs", "job1").status == "done"
-    result = api.get_latest_job_result(db.workflow.key, db.get_document_key("jobs", "job1"))
+    result = api.get_latest_job_result(db.workflow.key, db.get_document_key("jobs", "bad_job"))
     assert result.return_code == 1
     expected_status = "canceled" if cancel_on_blocking_job_failure else "done"
-    assert db.get_document("jobs", "job2").status == expected_status
+    assert db.get_document("jobs", "postprocess").status == expected_status
 
 
 def test_reset_job_status_all(completed_workflow):
