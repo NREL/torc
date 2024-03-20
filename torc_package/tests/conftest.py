@@ -290,20 +290,28 @@ def _initialize_api():
 
 @pytest.fixture
 def workflow_with_cancel(tmp_path, cancel_on_blocking_job_failure):
-    """Creates a diamond workflow out of 4 jobs."""
+    """Creates a workflow with a job that can be canceled by a blocked job."""
     api = _initialize_api()
+    bad_job = JobSpecificationModel(
+        name="bad_job",
+        command=f"python {INVALID}",
+    )
     job1 = JobSpecificationModel(
         name="job1",
-        command=f"python {INVALID}",
+        command=f"python {SLEEP_JOB} 1",
     )
     job2 = JobSpecificationModel(
         name="job2",
+        command=f"python {SLEEP_JOB} 1",
+    )
+    postprocess = JobSpecificationModel(
+        name="postprocess",
         command=f"python {NOOP}",
-        blocked_by=["job1"],
+        blocked_by=["bad_job", "job1", "job2"],
         cancel_on_blocking_job_failure=cancel_on_blocking_job_failure,
     )
 
-    spec = WorkflowSpecificationModel(jobs=[job1, job2])
+    spec = WorkflowSpecificationModel(jobs=[bad_job, job1, job2, postprocess])
     workflow = api.add_workflow_specification(spec)
     db = DatabaseInterface(api, workflow)
     api.initialize_jobs(workflow.key)
