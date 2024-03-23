@@ -26,7 +26,6 @@ dependencies = [
     "graphviz",
     "json5",
     "plotly",
-    "polars~=0.20.13",
     "psutil",
     "prettytable",
     "pyarrow",
