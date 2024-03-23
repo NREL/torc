@@ -304,7 +304,7 @@ def parse_filters(filters: tuple[str]) -> dict[str, Any]:
             raise Exception(msg)
         val = fields[1]
         val_as_int = _try_parse_int(val)
-        _val = val_as_int or val
+        _val = val if val_as_int is None else val_as_int
         final[fields[0]] = _val
 
     return final
