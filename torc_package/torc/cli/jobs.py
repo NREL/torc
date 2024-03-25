@@ -28,6 +28,7 @@ from .common import (
 )
 from .run_function import run_function
 from .run_postprocess import run_postprocess
+from .workflows import start_workflow
 
 
 logger = logging.getLogger(__name__)
@@ -453,6 +454,12 @@ def run(
     wait_for_healthy_database_minutes: int,
 ):
     """Run workflow jobs on the current system."""
+    output.mkdir(exist_ok=True)
+    hostname = socket.gethostname()
+    log_file = output / f"worker_{hostname}_{log_suffix}.log"
+    my_logger = setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
+    my_logger.info(get_cli_string())
+
     try:
         # NOTE: Ensure that this is the first API command that gets sent.
         api.ping()
@@ -460,12 +467,9 @@ def run(
         wait_for_healthy_database(api, wait_for_healthy_database_minutes)
 
     workflow_key = get_workflow_key_from_context(ctx, api)
-    output.mkdir(exist_ok=True)
-    hostname = socket.gethostname()
+    if all((x.status == "uninitialized" for x in iter_documents(api.list_jobs, workflow_key))):
+        start_workflow(api, workflow_key)
     check_database_url(api)
-    log_file = output / f"worker_{hostname}_{log_suffix}.log"
-    my_logger = setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
-    my_logger.info(get_cli_string())
     workflow = api.get_workflow(workflow_key)
     runner = JobRunner(
         api,
