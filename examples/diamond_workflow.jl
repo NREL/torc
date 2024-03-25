@@ -11,7 +11,7 @@ function create_workflow(api)
         api,
         APIClient.add_workflow,
         APIClient.WorkflowModel(
-            user = "user",
+            user = get_user(),
             name = "diamond_workflow",
             description = "Example diamond workflow",
         ),
@@ -102,7 +102,7 @@ function build_workflow(api, workflow)
 
     send_api_command(
         api,
-        APIClient.add_slurm_schedulers,
+        APIClient.add_slurm_scheduler,
         workflow._key,
         APIClient.SlurmSchedulerModel(
             name="debug",
@@ -141,7 +141,6 @@ function build_workflow(api, workflow)
             input_files=[f2._id, f3._id],
             output_files=[f4._id],
             resource_requirements=small._id,
-            ),
         ),
     ]
     add_jobs(api, workflow._key, jobs)

@@ -172,6 +172,13 @@ function map_function_to_jobs(
     return add_jobs(api, workflow_key, jobs)
 end
 
+"""
+Return the current user.
+"""
+function get_user()
+    return Sys.iswindows() ? get(ENV, "USERNAME", nothing) : get(ENV, "USER", nothing)
+end
+
 include("map_function.jl")
 
 export make_api
@@ -187,6 +194,7 @@ export add_resource_requirements!
 export add_user_data!
 export configure_resource_monitoring!
 export build!
+export get_user
 export map_function_to_jobs
 export process_mapped_function_cli_args
 
