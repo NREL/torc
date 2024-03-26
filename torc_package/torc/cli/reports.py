@@ -86,6 +86,9 @@ def results(ctx, api, job_keys, output: Path, run_id):
             continue
 
         scheduler = item["from"]["scheduler"]
+        if "slurm_job_id" not in scheduler:
+            logger.error("This command is only supported in Slurm environments.")
+            return
         slurm_job_id = scheduler["slurm_job_id"]
         env_vars = scheduler["environment_variables"]
         slurm_node_id = env_vars["SLURM_NODEID"]
