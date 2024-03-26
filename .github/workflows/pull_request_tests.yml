@@ -27,6 +27,8 @@ jobs:
         julia --project julia/Torc -e "import Pkg;Pkg.build()"
     - name: Setup ArangoDB
       uses: daniel-thom/arangodb-action@v1
+      with:
+        arangodb version: 3.11.7
     - name: Configure ArangoDB
       run: |
         apt-get update
