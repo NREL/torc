@@ -3,7 +3,6 @@
 from collections import defaultdict
 from typing import Any, Generator
 
-import polars as pl
 from prettytable import PrettyTable
 
 from torc.api import iter_documents, remove_db_keys, send_api_command
@@ -85,15 +84,24 @@ def list_job_process_stats(api: DefaultApi, workflow_key: str, **kwargs) -> list
     return list(iter_job_process_stats(api, workflow_key, **kwargs))
 
 
-def make_compute_node_stats_dataframes(
-    api: DefaultApi, workflow_key: str
-) -> dict[str, pl.DataFrame]:
-    """Return a dict of DataFrame instances for each resource type."""
+def make_compute_node_stats_records(api: DefaultApi, workflow_key: str) -> dict[str, list[dict]]:
+    """Return a dict of records for each resource type.
+
+    The returned value can be used to construct DataFrames, as in this example using Polars.
+
+    Examples
+    --------
+    >>> by_resource_type = make_compute_node_stats_records(api, "123456")
+    >>> dfs = {k: pl.from_records(v) for k, v in by_resource_type.items()}
+
+    Returns
+    ------
+    Keys are resource type names, such as cpu, memory, process; values are list of records.
+    """
     by_resource_type = defaultdict(list)
     for stat in iter_compute_node_stats(api, workflow_key):
         by_resource_type[stat["resource_type"]].append(stat)
-
-    return {k: pl.from_records(v) for k, v in by_resource_type.items()}
+    return by_resource_type
 
 
 def list_compute_node_stats(
@@ -121,6 +129,16 @@ def make_compute_node_stats_text_tables(
     return by_resource_type
 
 
-def make_job_process_stats_dataframe(api: DefaultApi, workflow_key: str) -> pl.DataFrame:
-    """Return a polars DataFrame containing job process stats."""
-    return pl.from_records(tuple(iter_job_process_stats(api, workflow_key)))
+def make_job_process_stats_records(
+    api: DefaultApi, workflow_key: str
+) -> tuple[dict[str, Any], ...]:
+    """Return a tuple of records containing job process stats.
+
+    The returned value can be used to construct a DataFrame, as in this example using Polars.
+
+    Examples
+    ----------
+    >>> records = make_job_process_stats_records(api, "123456")
+    >>> df = pl.from_records(records)
+    """
+    return tuple(iter_job_process_stats(api, workflow_key))

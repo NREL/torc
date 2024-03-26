@@ -513,7 +513,10 @@ class JobRunner:
         for job in done_jobs:
             self._cleanup_job(job, JobStatus.DONE.value)
 
-        logger.info("Found %s completions", len(done_jobs))
+        if done_jobs:
+            logger.info("Found %s completions", len(done_jobs))
+        else:
+            logger.debug("Found 0 completions")
         return len(done_jobs)
 
     def _cancel_jobs(self, jobs: Iterable[AsyncCliCommand]) -> None:

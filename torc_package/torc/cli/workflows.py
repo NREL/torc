@@ -499,10 +499,18 @@ def recommend_nodes(
     show_default=True,
     help="Only reset the status of failed jobs.",
 )
+@click.option(
+    "-r",
+    "--restart",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Send the 'workflows restart' command after resetting status.",
+)
 @click.pass_obj
 @click.pass_context
 def reset_status(
-    ctx: click.Context, api: DefaultApi, workflow_key: str, failed_only: bool
+    ctx: click.Context, api: DefaultApi, workflow_key: str, failed_only: bool, restart: bool
 ) -> None:
     """Reset the status of the workflow and all jobs."""
     setup_cli_logging(ctx, __name__)
@@ -514,9 +522,13 @@ def reset_status(
     name: {workflow.name}
     description: {workflow.description}
 """
+    if restart:
+        msg += "\nAfter resetting status this command will restart the workflow."
     confirm_change(ctx, msg)
     reset_workflow_status(api, workflow_key)
     reset_workflow_job_status(api, workflow_key, failed_only=failed_only)
+    if restart:
+        restart_workflow(api, workflow_key)
 
 
 @click.command()

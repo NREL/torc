@@ -4,9 +4,8 @@ import logging
 import multiprocessing
 from pathlib import Path
 
-import polars as pl
 import pytest
-from resource_monitor.utils.sql import read_dataframe_from_table
+from resource_monitor.utils.sql import read_table_as_dict
 
 from torc.openapi_client.api.default_api import DefaultApi
 from torc.openapi_client.models.compute_nodes_resources import (
@@ -17,8 +16,8 @@ from torc.common import STATS_DIR
 from torc.job_runner import JobRunner
 from torc.loggers import setup_logging
 from torc.resource_monitor_reports import (
-    make_job_process_stats_dataframe,
-    make_compute_node_stats_dataframes,
+    make_job_process_stats_records,
+    make_compute_node_stats_records,
 )
 from torc.tests.database_interface import DatabaseInterface
 from torc.workflow_manager import WorkflowManager
@@ -63,13 +62,11 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
 
     _run_second_iteration(db, resources, auto_tune_job_keys, output_dir)
 
-    df = make_job_process_stats_dataframe(api, db.workflow.key)
-    assert isinstance(df, pl.DataFrame)
-    assert len(df) == 9
+    data = make_job_process_stats_records(api, db.workflow.key)
+    assert len(data) == 9
 
-    dfs = make_compute_node_stats_dataframes(api, db.workflow.key)
-    for df in dfs.values():
-        assert isinstance(df, pl.DataFrame)
+    for val in make_compute_node_stats_records(api, db.workflow.key).values():
+        assert val
 
     stats_dir = output_dir / STATS_DIR
     sqlite_files = list(stats_dir.rglob("*.sqlite"))
@@ -77,18 +74,12 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
     if monitor_type == "periodic":
         assert sqlite_files
         for file in sqlite_files:
-            # Reading SQLite through Polars requires connectorx which currently
-            #   - doesn't support Python 3.12
-            #   - doesn't support Eagle's operating system.
-            # Read through Python's library until these are resolved.
             for table in ("cpu", "memory", "process"):
-                # df = pl.read_database_uri(f"select * from {table}", f"sqlite://{file}")
-                df = read_dataframe_from_table(file, table)
-                assert len(df) > 0
+                table = read_table_as_dict(file, table)
+                assert table
             for table in ("disk", "network"):
-                # df = pl.read_database_uri(f"select * from {table}", f"sqlite://{file}")
-                df = read_dataframe_from_table(file, table)
-                assert len(df) == 0
+                table = read_table_as_dict(file, table)
+                assert table
         assert len(html_files) == 3 * 2  # 2 JobRunner instances, cpu + memory + process
     else:
         assert not sqlite_files
