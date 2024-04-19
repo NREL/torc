@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import subprocess
+import tempfile
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -211,7 +212,10 @@ class SlurmInterface(HpcInterface):
         return stats
 
     def get_local_scratch(self) -> str:
-        return os.environ["LOCAL_SCRATCH"]
+        for key in ("LOCAL_SCRATCH", "TMPDIR"):
+            if key in os.environ:
+                return os.environ[key]
+        return tempfile.gettempdir()
 
     def get_node_id(self) -> str:
         return os.environ["SLURM_NODEID"]
