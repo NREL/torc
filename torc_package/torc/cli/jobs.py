@@ -427,6 +427,13 @@ def reset_status(ctx: click.Context, api: DefaultApi, job_keys: tuple[str]) -> N
     help="Poll interval for job completions",
 )
 @click.option(
+    "-s",
+    "--scheduler-config-id",
+    type=str,
+    default=None,
+    help="Only run jobs with this scheduler config id.",
+)
+@click.option(
     "-t",
     "--time-limit",
     help="Time limit ISO 8601 time duration format (like 'P0DT24H'), defaults to no limit.",
@@ -450,6 +457,7 @@ def run(
     max_parallel_jobs: int,
     output: Path,
     poll_interval: int,
+    scheduler_config_id: str,
     time_limit: str,
     wait_for_healthy_database_minutes: int,
 ):
@@ -478,6 +486,7 @@ def run(
         cpu_affinity_cpus_per_job=cpu_affinity_cpus_per_job,
         max_parallel_jobs=max_parallel_jobs,
         job_completion_poll_interval=poll_interval,
+        scheduler_config_id=scheduler_config_id,
         time_limit=time_limit,
     )
     try:
