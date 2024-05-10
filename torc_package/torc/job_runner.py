@@ -160,7 +160,7 @@ class JobRunner:
             if self._max_parallel_jobs is not None and self._max_parallel_jobs < num_masks:
                 raise InvalidParameter(f"{max_parallel_jobs=} cannot be less than {num_masks=}")
 
-        config = api.get_workflow_config(self._workflow.key)
+        config = send_api_command(api.get_workflow_config, self._workflow.key)
         assert config.compute_node_resource_stats is not None
         assert config.compute_node_wait_for_new_jobs_seconds is not None
         assert config.compute_node_wait_for_healthy_database_minutes is not None
@@ -351,13 +351,17 @@ class JobRunner:
             logger.error("Failed to schedule compute nodes: %s", ret)
 
     def _create_compute_node(self, scheduler) -> None:
+        logger.info("Compute node scheduler: %s", json.dumps(scheduler or {}))
         compute_node = ComputeNodeModel(
             hostname=self._hostname,
             pid=os.getpid(),
             start_time=str(datetime.now()),
             resources=self._orig_resources,
             is_active=True,
-            scheduler=scheduler or {},
+            scheduler={},
+            # This is disabled because the 2k payload is causing network timeouts on Kestrel.
+            # We are logging it above instead.
+            # scheduler=scheduler or {},
         )
         self._compute_node = send_api_command(
             self._api.add_compute_node,
@@ -635,6 +639,7 @@ class JobRunner:
             logger.info("%s jobs are ready for submission", len(ready_jobs.jobs))
         else:
             reason_none_started = ready_jobs.reason
+            logger.debug("No jobs are ready: %s", reason_none_started)
         for job in ready_jobs.jobs:
             self._run_job(
                 AsyncCliCommand(
