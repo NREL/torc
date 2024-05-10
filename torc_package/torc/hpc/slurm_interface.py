@@ -212,7 +212,7 @@ class SlurmInterface(HpcInterface):
         return stats
 
     def get_local_scratch(self) -> str:
-        for key in ("LOCAL_SCRATCH", "TMPDIR"):
+        for key in ("TMPDIR",):
             if key in os.environ:
                 return os.environ[key]
         return tempfile.gettempdir()
