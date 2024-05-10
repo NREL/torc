@@ -553,7 +553,7 @@ def run_jobs(
     end_time = intf.get_job_end_time() - buffer
     node = None if is_subtask else _get_scheduled_compute_node(api, workflow_key, slurm_job_id)
 
-    workflow = api.get_workflow(workflow_key)
+    workflow = send_api_command(api.get_workflow, workflow_key)
     log_prefix = _get_torc_job_log_prefix(slurm_job_id, slurm_node_id, slurm_task_pid)
     my_logger.info(
         "Start workflow on compute node %s end_time=%s buffer=%s",
@@ -570,7 +570,9 @@ def run_jobs(
         if node.status != "active":
             node.status = "active"
             try:
-                node = api.modify_scheduled_compute_node(workflow_key, node.key, node)
+                node = send_api_command(
+                    api.modify_scheduled_compute_node, workflow_key, node.key, node
+                )
                 activated_slurm_job = True
             except ApiException:
                 # Another node sent the command first.
@@ -599,11 +601,13 @@ def run_jobs(
             # TODO: This is not very accurate. Other nodes in the allocation could still be active.
             # active. It would be better to do this from the caller of this command.
             node.status = "complete"
-            api.modify_scheduled_compute_node(workflow_key, node.key, node)
+            send_api_command(api.modify_scheduled_compute_node, workflow_key, node.key, node)
 
 
 def _get_scheduled_compute_node(api, workflow_key, slurm_job_id):
-    nodes = api.list_scheduled_compute_nodes(workflow_key, scheduler_id=slurm_job_id).items
+    nodes = send_api_command(
+        api.list_scheduled_compute_nodes, workflow_key, scheduler_id=slurm_job_id
+    ).items
     num_nodes = len(nodes)
     if num_nodes == 0:
         node = None

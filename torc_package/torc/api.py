@@ -104,7 +104,7 @@ def remove_db_keys(data: dict) -> dict[str, Any]:
     return {x: data[x] for x in set(data) - _DATABASE_KEYS}
 
 
-def send_api_command(func, *args, raise_on_error=True, **kwargs) -> Any:
+def send_api_command(func, *args, raise_on_error=True, timeout=120, **kwargs) -> Any:
     """Send an API command while tracking time, if timer_stats_collector is enabled.
 
     Parameters
@@ -114,6 +114,8 @@ def send_api_command(func, *args, raise_on_error=True, **kwargs) -> Any:
     args : arguments to forward to func
     raise_on_error : bool
         Raise an exception if there is an error, defaults to True.
+    timeout : float
+        Timeout in seconds
     kwargs : keyword arguments to forward to func
 
     Raises
@@ -125,7 +127,8 @@ def send_api_command(func, *args, raise_on_error=True, **kwargs) -> Any:
     """
     with Timer(timer_stats_collector, func.__name__):
         try:
-            return func(*args, **kwargs)
+            logger.debug("Send API command %s", func.__name__)
+            return func(*args, _request_timeout=timeout, **kwargs)
         except ApiException:
             # This covers all errors reported by the server.
             logger.exception("Failed to send API command %s", func.__name__)
