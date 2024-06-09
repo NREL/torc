@@ -31,7 +31,7 @@ class WorkflowModel(BaseModel):
     WorkflowModel
     """ # noqa: E501
     name: Optional[StrictStr] = Field(default=None, description="Name of the workflow")
-    user: Optional[StrictStr] = Field(default=None, description="User that created the workflow")
+    user: StrictStr = Field(description="User that created the workflow")
     description: Optional[StrictStr] = Field(default=None, description="Description of the workflow")
     timestamp: Optional[StrictStr] = Field(default=None, description="Timestamp of workflow creation")
     key: Optional[StrictStr] = Field(default=None, alias="_key")

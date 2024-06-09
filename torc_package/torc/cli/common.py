@@ -124,6 +124,11 @@ def get_output_format_from_context(ctx: click.Context) -> str:
     return ctx.find_root().params["output_format"]
 
 
+def get_user_from_context(ctx: click.Context) -> str:
+    """Get the user from a click context."""
+    return ctx.find_root().params["user"]
+
+
 def get_workflow_key_from_context(ctx: click.Context, api: DefaultApi) -> str:
     """Get the workflow ID from a click context."""
     params = ctx.find_root().params
@@ -141,6 +146,7 @@ def get_workflow_key_from_context(ctx: click.Context, api: DefaultApi) -> str:
             exclude_columns=("_id", "_rev"),
             msg=msg,
             auto_select_one_option=True,
+            user=get_user_from_context(ctx),
         )
         if doc is None:
             logger.error("No workflows are stored")

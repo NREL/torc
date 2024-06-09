@@ -1,5 +1,6 @@
 """Tests the workflow CLI commands."""
 
+import getpass
 import json
 import shutil
 import socket
@@ -323,19 +324,24 @@ def test_create_empty_workflow(db_api):
             api.remove_workflow(key)
 
 
-def test_workflow_example(db_api):
-    """Tests the dump of the example workflow."""
-    _, url = db_api
-    cmd = ["-u", url, "-F", "json", "workflows", "example"]
+def test_multi_user_workflows(create_workflow_cli):
+    """Test workflow commands with multiple users."""
+    key, url, _ = create_workflow_cli
+    cmd_user1 = ["-u", url, "-U", getpass.getuser(), "-F", "json", "workflows", "list"]
+    result1_user1 = _run_and_convert_output_from_json(cmd_user1)
+    assert len(list(filter(lambda x: x["_key"] == key, result1_user1["workflows"]))) == 1
+    key2 = _create_workflow_example(url, "user2")
+    cmd_user2 = ["-u", url, "-U", "user2", "-F", "json", "workflows", "list"]
+    result_user2 = _run_and_convert_output_from_json(cmd_user2)
+    assert len(result_user2["workflows"]) == 1
+    assert result_user2["workflows"][0]["_key"] == key2
+    result2_user1 = _run_and_convert_output_from_json(cmd_user1)
+    assert len(result2_user1["workflows"]) == len(result1_user1["workflows"])
+
+    # There should only be one workflow for this user, and so no prompts should occur.
+    cmd = ["-u", url, "-U", "user2", "-F", "json", "jobs", "list"]
     result = _run_and_convert_output_from_json(cmd)
-    assert len(result["jobs"])
-    with tempfile.NamedTemporaryFile() as f:
-        f.close()
-        Path(f.name).write_text(json.dumps(result), encoding="utf-8")
-        cmd = ["-u", url, "workflows", "create-from-json-file", f.name]
-        runner = CliRunner(mix_stderr=False)
-        result = runner.invoke(cli, cmd)
-        assert result.exit_code == 0
+    assert result["jobs"]
 
 
 def test_workflow_template(db_api):
@@ -464,6 +470,19 @@ def _run_and_get_output(cmd):
 
 def _run_and_convert_output_from_json(cmd):
     return json.loads(_run_and_get_output(cmd))
+
+
+def _create_workflow_example(url, user=getpass.getuser()):
+    """Tests the dump of the example workflow."""
+    cmd = ["-u", url, "-F", "json", "workflows", "example"]
+    result = _run_and_convert_output_from_json(cmd)
+    assert len(result["jobs"])
+    with tempfile.NamedTemporaryFile() as f:
+        f.close()
+        Path(f.name).write_text(json.dumps(result), encoding="utf-8")
+        cmd = ["-u", url, "-U", user, "-F", "json", "workflows", "create-from-json-file", f.name]
+        result = _run_and_convert_output_from_json(cmd)
+        return result["key"]
 
 
 def _get_text_and_json_outputs(cmd):

@@ -5,7 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **name** | **String** | Name of the workflow | [optional] [default to nothing]
-**user** | **String** | User that created the workflow | [optional] [default to nothing]
+**user** | **String** | User that created the workflow | [default to nothing]
 **description** | **String** | Description of the workflow | [optional] [default to nothing]
 **timestamp** | **String** | Timestamp of workflow creation | [optional] [default to nothing]
 **_key** | **String** |  | [optional] [default to nothing]

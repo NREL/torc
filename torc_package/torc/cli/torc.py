@@ -1,5 +1,6 @@
 """Entry point for CLI commands"""
 
+import getpass
 import logging
 from pathlib import Path
 
@@ -77,6 +78,14 @@ logger = logging.getLogger(__name__)
     help="Enable tracking of function timings.",
 )
 @click.option(
+    "-U",
+    "--user",
+    default=getpass.getuser(),
+    show_default=True,
+    type=str,
+    help="Username",
+)
+@click.option(
     "-u",
     "--database-url",
     type=str,
@@ -96,6 +105,7 @@ def cli(
     no_prompts,
     output_format,
     timings,
+    user,
     database_url,
 ):
     """torc commands"""

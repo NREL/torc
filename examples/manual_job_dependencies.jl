@@ -73,7 +73,7 @@ function build_workflow(api, workflow)
             blocked_by = blocking_jobs,
        ))
 
-    @info "Created workflow $(workflow._key)"
+    @info "Created workflow $workflow"
     return
 end
 

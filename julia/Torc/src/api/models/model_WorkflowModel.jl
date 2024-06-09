@@ -47,6 +47,7 @@ const _property_types_WorkflowModel = Dict{Symbol,String}(Symbol("name")=>"Strin
 OpenAPI.property_type(::Type{ WorkflowModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_WorkflowModel[name]))}
 
 function check_required(o::WorkflowModel)
+    o.user === nothing && (return false)
     true
 end
 
