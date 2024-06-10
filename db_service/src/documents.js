@@ -496,6 +496,7 @@ module.exports = {
   addScheduler,
   addUserData,
   addWorkflow,
+  addWorkflowDocument,
   cancelWorkflow,
   computeJobInputHash,
   deleteWorkflow,

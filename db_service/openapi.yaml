@@ -4409,7 +4409,75 @@ paths:
               schema:
                 $ref: '#/components/schemas/default_error_response'
       security: []
-  /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}:
+  /workflows/{workflow}/jobs/{key}/start_job/{rev}/{run_id}/{compute_node_key}:
+    put:
+      tags: []
+      summary: Start a job.
+      description: Start a job and manage side effects.
+      operationId: start_job
+      parameters:
+      - name: workflow
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: key
+        in: path
+        description: Job key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: rev
+        in: path
+        description: Current job revision.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: run_id
+        in: path
+        description: Current job run ID
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      - name: compute_node_key
+        in: path
+        description: Compute node key that started the job
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        '200':
+          description: job updated in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/job_model'
+        '500':
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/default_error_response'
+      security: []
+      x-codegen-request-body-name: body
+  /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}/{compute_node_key}:
     post:
       tags: []
       summary: Complete a job and add a result.
@@ -4456,6 +4524,14 @@ paths:
         explode: false
         schema:
           type: integer
+      - name: compute_node_key
+        in: path
+        description: Compute node key that started the job
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
       requestBody:
         description: Result of the job.
         content:

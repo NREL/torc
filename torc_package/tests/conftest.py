@@ -2,17 +2,22 @@
 
 import getpass
 import json
+import os
 import sys
 from datetime import datetime
 from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+
+from torc.common import GiB
 from torc.openapi_client import ApiClient, DefaultApi
 from torc.openapi_client.configuration import Configuration
 from torc.openapi_client.models.workflow_specifications_schedulers import (
     WorkflowSpecificationsSchedulers,
 )
+from torc.openapi_client.models.compute_node_model import ComputeNodeModel
+from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
 from torc.openapi_client.models.local_scheduler_model import (
     LocalSchedulerModel,
 )
@@ -34,6 +39,7 @@ from torc.openapi_client.models.compute_node_resource_stats_model import (
 )
 from torc.api import iter_documents, map_function_to_jobs
 from torc.cli.torc import cli
+from torc.loggers import setup_logging
 from torc.torc_rc import TorcRuntimeConfig
 from torc.utils.files import load_data, dump_data
 from torc.workflow_builder import WorkflowBuilder
@@ -283,6 +289,7 @@ def _initialize_api():
         )
         sys.exit(1)
 
+    setup_logging("torc")
     configuration = Configuration()
     configuration.host = config.database_url
     return DefaultApi(ApiClient(configuration))
@@ -332,6 +339,7 @@ def completed_workflow(diamond_workflow):
     mgr.start()
     workflow_status = api.get_workflow_status(db.workflow.key)
 
+    compute_node = _create_compute_node(api, db.workflow.key)
     for name in ("preprocess", "work1", "work2", "postprocess"):
         # Completing a job this way will cause blocked jobs to change status and revision,
         # so we need to update each time.
@@ -346,7 +354,13 @@ def completed_workflow(diamond_workflow):
             status=status,
         )
         job = api.complete_job(
-            db.workflow.key, job.key, status, job.rev, workflow_status.run_id, result
+            db.workflow.key,
+            job.key,
+            status,
+            job.rev,
+            workflow_status.run_id,
+            compute_node.key,
+            result,
         )
 
     yield db, scheduler_config_id, output_dir
@@ -360,6 +374,7 @@ def incomplete_workflow(diamond_workflow):
     db, scheduler_config_id, output_dir = diamond_workflow
     api = db.api
     mgr = WorkflowManager(api, db.workflow.key)
+    compute_node = _create_compute_node(api, db.workflow.key)
     mgr.start()
     for name in ("preprocess", "work1"):
         job = db.get_document("jobs", name)
@@ -372,7 +387,9 @@ def incomplete_workflow(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.complete_job(db.workflow.key, job.id, status, job.rev, 1, result)
+        job = api.complete_job(
+            db.workflow.key, job.id, status, job.rev, 1, compute_node.key, result
+        )
 
         for file in api.list_files_produced_by_job(db.workflow.key, job.key).items:
             path = Path(file.path)
@@ -675,3 +692,23 @@ def pytest_addoption(parser):
 def slurm_account(pytestconfig):
     """Access the CLI parameter for slurm_account"""
     return pytestconfig.getoption("slurm_account")
+
+
+def _create_compute_node(api, workflow_key):
+    return api.add_compute_node(
+        workflow_key,
+        ComputeNodeModel(
+            hostname="localhost",
+            pid=os.getpid(),
+            start_time=str(datetime.now()),
+            resources=ComputeNodesResources(
+                num_cpus=4,
+                memory_gb=10 / GiB,
+                num_nodes=1,
+                time_limit=None,
+                num_gpus=0,
+            ),
+            is_active=True,
+            scheduler={},
+        ),
+    )

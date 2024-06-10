@@ -676,13 +676,14 @@ const _returntypes_complete_job_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
-function _oacinternal_complete_job(_api::DefaultApi, workflow::String, key::String, status::String, rev::String, run_id::Int64, body::ResultModel; _mediaType=nothing)
-    _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_complete_job_DefaultApi, "/workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}", [], body)
+function _oacinternal_complete_job(_api::DefaultApi, workflow::String, key::String, status::String, rev::String, run_id::Int64, compute_node_key::String, body::ResultModel; _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_complete_job_DefaultApi, "/workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}/{compute_node_key}", [], body)
     OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
     OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
     OpenAPI.Clients.set_param(_ctx.path, "status", status)  # type String
     OpenAPI.Clients.set_param(_ctx.path, "rev", rev)  # type String
     OpenAPI.Clients.set_param(_ctx.path, "run_id", run_id)  # type Int64
+    OpenAPI.Clients.set_param(_ctx.path, "compute_node_key", compute_node_key)  # type String
     OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
     OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
     return _ctx
@@ -698,17 +699,18 @@ Params:
 - status::String (required)
 - rev::String (required)
 - run_id::Int64 (required)
+- compute_node_key::String (required)
 - body::ResultModel (required)
 
 Return: JobModel, OpenAPI.Clients.ApiResponse
 """
-function complete_job(_api::DefaultApi, workflow::String, key::String, status::String, rev::String, run_id::Int64, body::ResultModel; _mediaType=nothing)
-    _ctx = _oacinternal_complete_job(_api, workflow, key, status, rev, run_id, body; _mediaType=_mediaType)
+function complete_job(_api::DefaultApi, workflow::String, key::String, status::String, rev::String, run_id::Int64, compute_node_key::String, body::ResultModel; _mediaType=nothing)
+    _ctx = _oacinternal_complete_job(_api, workflow, key, status, rev, run_id, compute_node_key, body; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx)
 end
 
-function complete_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, status::String, rev::String, run_id::Int64, body::ResultModel; _mediaType=nothing)
-    _ctx = _oacinternal_complete_job(_api, workflow, key, status, rev, run_id, body; _mediaType=_mediaType)
+function complete_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, status::String, rev::String, run_id::Int64, compute_node_key::String, body::ResultModel; _mediaType=nothing)
+    _ctx = _oacinternal_complete_job(_api, workflow, key, status, rev, run_id, compute_node_key, body; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
@@ -4787,6 +4789,47 @@ function reset_workflow_status(_api::DefaultApi, response_stream::Channel, key::
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
+const _returntypes_start_job_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => JobModel,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_start_job(_api::DefaultApi, workflow::String, key::String, rev::String, run_id::Int64, compute_node_key::String; body=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "PUT", _returntypes_start_job_DefaultApi, "/workflows/{workflow}/jobs/{key}/start_job/{rev}/{run_id}/{compute_node_key}", [], body)
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "rev", rev)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "run_id", run_id)  # type Int64
+    OpenAPI.Clients.set_param(_ctx.path, "compute_node_key", compute_node_key)  # type String
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Start a job.
+
+Start a job and manage side effects.
+
+Params:
+- workflow::String (required)
+- key::String (required)
+- rev::String (required)
+- run_id::Int64 (required)
+- compute_node_key::String (required)
+- body::Any
+
+Return: JobModel, OpenAPI.Clients.ApiResponse
+"""
+function start_job(_api::DefaultApi, workflow::String, key::String, rev::String, run_id::Int64, compute_node_key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_start_job(_api, workflow, key, rev, run_id, compute_node_key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function start_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, rev::String, run_id::Int64, compute_node_key::String; body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_start_job(_api, workflow, key, rev, run_id, compute_node_key; body=body, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
 export add_aws_scheduler
 export add_compute_node
 export add_compute_node_stats
@@ -4921,3 +4964,4 @@ export remove_user_data
 export remove_workflow
 export reset_job_status
 export reset_workflow_status
+export start_job

@@ -249,10 +249,6 @@ router.post('/workflows/:key/prepare_jobs_for_submission', function(req, res) {
       const jobs = query.prepareJobsForSubmission(
           workflow, resources, qp.sort_method, qp.limit, reason,
       );
-      const items = [];
-      for (const job of jobs) {
-        items.push(job);
-      }
       res.send({jobs: jobs, reason: reason.message});
     }
   } catch (e) {

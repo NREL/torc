@@ -1,6 +1,6 @@
 'use strict';
 const joi = require('joi');
-const {MAX_TRANSFER_RECORDS} = require('../defs');
+const {MAX_TRANSFER_RECORDS, JobStatus} = require('../defs');
 const config = require('../config');
 const documents = require('../documents');
 const utils = require('../utils');
@@ -157,7 +157,58 @@ router.get('/workflows/:workflow/jobs/:key/process_stats', function(req, res) {
     .summary('Retrieve the job process stats for a job.')
     .description('Retrieve the job process stats for a job by its key.');
 
-router.post('/workflows/:workflow/jobs/:key/complete_job/:status/:rev/:run_id',
+router.put('/workflows/:workflow/jobs/:key/start_job/:rev/:run_id/:compute_node_key',
+    function(req, res) {
+      const workflowKey = req.pathParams.workflow;
+      const key = req.pathParams.key;
+      const rev = req.pathParams.rev;
+      const runId = req.pathParams.run_id;
+      const workflow = documents.getWorkflow(workflowKey, res);
+      const job = documents.getWorkflowDocument(workflow, 'jobs', key, res);
+      const computeNode = documents.getWorkflowDocument(
+          workflow,
+          'compute_nodes',
+          req.pathParams.compute_node_key,
+      );
+      const executedCollection = config.getWorkflowCollection(workflow, 'executed');
+      if (job.status != JobStatus.SubmittedPending) {
+        res.throw(400, `job status must be ${JobStatus.SubmittedPending}: ${job.status}`);
+      }
+      if (job._rev != rev) {
+        res.throw(409, `Revision conflict for ${job._id}: _rev=${job._rev}`);
+      }
+
+      job.status = JobStatus.Submitted;
+      try {
+        const updatedJob = query.manageJobStatusChange(job, workflow, runId);
+        const edge = {_from: computeNode._id, _to: job._id};
+        executedCollection.save(edge);
+        const event = {
+          'timestamp': Date.now(),
+          'category': 'job',
+          'type': 'start',
+          'job_key': job._key,
+          'job_name': job.name,
+          'node_name': computeNode.hostname,
+          'message': `Started job ${job._key}`,
+        };
+        documents.addWorkflowDocument(event, 'events', workflow, false, false);
+        res.send(updatedJob);
+      } catch (e) {
+        utils.handleArangoApiErrors(e, res, `start_job key=${key}`);
+      }
+    })
+    .pathParam('workflow', joi.string().required(), 'Workflow key')
+    .pathParam('key', joi.string().required(), 'Job key')
+    .pathParam('rev', joi.string().required(), 'Current job revision.')
+    .pathParam('run_id', joi.number().integer().required(), 'Current job run ID')
+    .pathParam('compute_node_key', joi.string().required(), 'Compute node key')
+    .body(joi.object().optional(), '')
+    .response(schemas.job, 'Updated job.')
+    .summary('Start a job.')
+    .description('Start a job and manage side effects.');
+
+router.post('/workflows/:workflow/jobs/:key/complete_job/:status/:rev/:run_id/:compute_node_key',
     function(req, res) {
       const workflowKey = req.pathParams.workflow;
       const key = req.pathParams.key;
@@ -166,6 +217,11 @@ router.post('/workflows/:workflow/jobs/:key/complete_job/:status/:rev/:run_id',
       const runId = req.pathParams.run_id;
       const result = req.body;
       const workflow = documents.getWorkflow(workflowKey, res);
+      const computeNode = documents.getWorkflowDocument(
+          workflow,
+          'compute_nodes',
+          req.pathParams.compute_node_key,
+      );
       if (!query.isJobStatusComplete(status)) {
         res.throw(400, `status=${status} does not indicate completion`);
       }
@@ -184,6 +240,17 @@ router.post('/workflows/:workflow/jobs/:key/complete_job/:status/:rev/:run_id',
         const updatedJob = query.manageJobStatusChange(job, workflow, runId);
         updatedJob.internal.hash = documents.computeJobInputHash(updatedJob, workflow);
         documents.updateWorkflowDocument(workflow, 'jobs', updatedJob);
+        msg = `Completed job ${job._key} with status=${status} return_code=${result.return_code}`;
+        const event = {
+          'timestamp': Date.now(),
+          'category': 'job',
+          'type': 'complete',
+          'job_key': job._key,
+          'job_name': job.name,
+          'node_name': computeNode.hostname,
+          'message': msg,
+        };
+        documents.addWorkflowDocument(event, 'events', workflow, false, false);
         res.send(updatedJob);
       } catch (e) {
         utils.handleArangoApiErrors(e, res, `Complete job key=${key}`);
@@ -194,6 +261,7 @@ router.post('/workflows/:workflow/jobs/:key/complete_job/:status/:rev/:run_id',
     .pathParam('status', joi.string().required(), 'New job status.')
     .pathParam('rev', joi.string().required(), 'Current job revision.')
     .pathParam('run_id', joi.number().integer().required(), 'Current job run ID')
+    .pathParam('compute_node_key', joi.string().required(), 'Compute node key')
     .body(schemas.result, 'Result of the job.')
     .response(schemas.job, 'job completed in the collection.')
     .summary('Complete a job and add a result.')

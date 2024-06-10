@@ -31,23 +31,13 @@ from resource_monitor.models import (
 from resource_monitor.resource_monitor import run_monitor_async
 from resource_monitor.timing.timer_stats import Timer
 from torc.openapi_client import DefaultApi
-from torc.openapi_client.models.compute_node_model import (
-    ComputeNodeModel,
-)
-from torc.openapi_client.models.compute_node_stats_model import (
-    ComputeNodeStatsModel,
-)
-from torc.openapi_client.models.compute_nodes_resources import (
-    ComputeNodesResources,
-)
-from torc.openapi_client.models.compute_node_stats import (
-    ComputeNodeStats,
-)
+from torc.openapi_client.models.compute_node_model import ComputeNodeModel
+from torc.openapi_client.models.compute_node_stats_model import ComputeNodeStatsModel
+from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
+from torc.openapi_client.models.compute_node_stats import ComputeNodeStats
 from torc.openapi_client.models.edge_model import EdgeModel
 from torc.openapi_client.models.job_model import JobModel
-from torc.openapi_client.models.job_process_stats_model import (
-    JobProcessStatsModel,
-)
+from torc.openapi_client.models.job_process_stats_model import JobProcessStatsModel
 from torc.openapi_client.models.workflow_model import WorkflowModel
 
 import torc
@@ -358,10 +348,7 @@ class JobRunner:
             start_time=str(datetime.now()),
             resources=self._orig_resources,
             is_active=True,
-            scheduler={},
-            # This is disabled because the 2k payload is causing network timeouts on Kestrel.
-            # We are logging it above instead.
-            # scheduler=scheduler or {},
+            scheduler=scheduler or {},
         )
         self._compute_node = send_api_command(
             self._api.add_compute_node,
@@ -385,6 +372,7 @@ class JobRunner:
         )
 
     def _complete_job(self, job, result, status) -> JobModel:
+        assert self._compute_node is not None
         job = send_api_command(
             self._api.complete_job,
             self._workflow.key,
@@ -392,33 +380,32 @@ class JobRunner:
             status,
             job.rev,
             self._run_id,
+            self._compute_node.key,
             result,
         )
         return job
 
     def _decrement_resources(self, job: JobModel) -> None:
-        job_resources = send_api_command(
-            self._api.get_job_resource_requirements,
-            self._workflow.key,
-            job.key,
-        )
-        job_memory_gb = get_memory_gb(job_resources.memory)
-        self._resources.num_cpus -= job_resources.num_cpus
-        self._resources.num_gpus -= job_resources.num_gpus
+        assert job.internal is not None
+        assert job.internal.memory_bytes is not None
+        assert job.internal.num_cpus is not None
+        assert job.internal.num_gpus is not None
+        job_memory_gb = job.internal.memory_bytes / GiB
+        self._resources.num_cpus -= job.internal.num_cpus
+        self._resources.num_gpus -= job.internal.num_gpus
         self._resources.memory_gb -= job_memory_gb
         assert self._resources.num_cpus >= 0, self._resources.num_cpus
         assert self._resources.num_gpus >= 0, self._resources.num_gpus
         assert self._resources.memory_gb >= 0.0, self._resources.memory_gb
 
     def _increment_resources(self, job: JobModel) -> None:
-        job_resources = send_api_command(
-            self._api.get_job_resource_requirements,
-            self._workflow.key,
-            job.key,
-        )
-        job_memory_gb = get_memory_gb(job_resources.memory)
-        self._resources.num_cpus += job_resources.num_cpus
-        self._resources.num_gpus += job_resources.num_gpus
+        assert job.internal is not None
+        assert job.internal.memory_bytes is not None
+        assert job.internal.num_cpus is not None
+        assert job.internal.num_gpus is not None
+        job_memory_gb = job.internal.memory_bytes / GiB
+        self._resources.num_cpus += job.internal.num_cpus
+        self._resources.num_gpus += job.internal.num_gpus
         self._resources.memory_gb += job_memory_gb
         assert self._resources.num_cpus <= self._orig_resources.num_cpus, self._resources.num_cpus
         assert self._resources.num_gpus <= self._orig_resources.num_gpus, self._resources.num_gpus
@@ -474,40 +461,6 @@ class JobRunner:
                 "node_name": self._hostname,
                 "scheduler_id": scheduler_id,
                 "message": f"Scheduled compute node(s) for user with {scheduler_id=}",
-            },
-            raise_on_error=False,
-        )
-
-    def _log_job_start_event(self, job_key: str, job_name: str) -> None:
-        send_api_command(
-            self._api.add_event,
-            self._workflow.key,
-            {
-                "category": "job",
-                "type": "start",
-                "job_key": job_key,
-                "job_name": job_name,
-                "node_name": self._hostname,
-                "message": f"Started job {job_key}",
-            },
-            raise_on_error=False,
-        )
-
-    def _log_job_complete_event(
-        self, job_key: str, job_name: str, status: str, return_code: int
-    ) -> None:
-        send_api_command(
-            self._api.add_event,
-            self._workflow.key,
-            {
-                "category": "job",
-                "type": "complete",
-                "job_key": job_key,
-                "job_name": job_name,
-                "return_code": return_code,
-                "status": status,
-                "node_name": self._hostname,
-                "message": f"Completed job {job_key}",
             },
             raise_on_error=False,
         )
@@ -568,7 +521,6 @@ class JobRunner:
             self._update_file_info(job)
 
         assert job.db_job.name is not None
-        self._log_job_complete_event(job.key, job.db_job.name, status, result.return_code)
         self._complete_job(job.db_job, result, status)
         self._outstanding_jobs.pop(job.key)
         self._increment_resources(job.db_job)
@@ -587,27 +539,16 @@ class JobRunner:
         # The database changes db_job._rev on every update.
         # This reassigns job.db_job in order to stay current.
         job.db_job = send_api_command(
-            self._api.manage_status_change,
+            self._api.start_job,
             self._workflow.key,
             job.key,
-            JobStatus.SUBMITTED.value,
             job.db_job.rev,
             self._run_id,
+            self._compute_node.id,
         )
         self._outstanding_jobs[job.key] = job
         if self._stats.process:
             self._pids[job.key] = job.pid
-        send_api_command(
-            self._api.add_edge,
-            self._workflow.key,
-            "executed",
-            EdgeModel(
-                _from=self._compute_node.id,
-                _to=job_id,
-                data={"run_id": self._run_id},
-            ),
-        )
-        self._log_job_start_event(job.key, job_name)
 
     def _run_ready_jobs(self) -> tuple[int, Union[str, None]]:
         run_id = send_api_command(self._api.get_workflow_status, self._workflow.key).run_id
@@ -628,6 +569,10 @@ class JobRunner:
         kwargs = {}
         if self._max_parallel_jobs is not None:
             kwargs["limit"] = self._max_parallel_jobs
+        # TODO: If the database successfully processes this command but then the response
+        # does not get back to this client, the jobs will be stuck in "submitted_pending"
+        # until the user intervenes.
+        # It's an unlikely corner case that could be handled.
         ready_jobs = send_api_command(
             self._api.prepare_jobs_for_submission,
             self._workflow.key,
@@ -767,6 +712,8 @@ class JobRunner:
                 timestamp=str(datetime.now()),
             ),
         )
+        # TODO: We could remove one API command per job if we added this edge in a custom POST
+        # for the command above.
         send_api_command(
             self._api.add_edge,
             self._workflow.key,

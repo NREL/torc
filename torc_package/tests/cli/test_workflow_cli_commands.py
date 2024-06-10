@@ -2,6 +2,7 @@
 
 import getpass
 import json
+import os
 import shutil
 import socket
 import tempfile
@@ -339,6 +340,7 @@ def test_multi_user_workflows(create_workflow_cli):
     assert len(result2_user1["workflows"]) == len(result1_user1["workflows"])
 
     # There should only be one workflow for this user, and so no prompts should occur.
+    os.environ.pop("TORC_WORKFLOW_KEY", None)
     cmd = ["-u", url, "-U", "user2", "-F", "json", "jobs", "list"]
     result = _run_and_convert_output_from_json(cmd)
     assert result["jobs"]
