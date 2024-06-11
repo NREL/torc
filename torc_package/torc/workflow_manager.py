@@ -8,7 +8,7 @@ from typing import Any
 
 from torc.api import send_api_command, iter_documents
 from torc.common import JobStatus
-from torc.exceptions import InvalidWorkflow
+from torc.exceptions import InvalidWorkflow, TorcOperationNotAllowed
 from torc.openapi_client.api import DefaultApi
 from torc.openapi_client.models.file_model import FileModel
 
@@ -93,6 +93,10 @@ class WorkflowManager:
         send_api_command(self._api.modify_workflow_status, self._key, status)
 
     def _check_workflow(self, ignore_missing_data: bool = False) -> None:
+        workflow = send_api_command(self._api.get_workflow, self._key)
+        if workflow.is_archived:
+            raise TorcOperationNotAllowed("Not allowed on an archived workflow")
+
         self._check_workflow_user_data(ignore_missing_data)
         self._check_workflow_files(ignore_missing_data)
 

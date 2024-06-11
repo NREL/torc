@@ -9,6 +9,7 @@
         user=nothing,
         description=nothing,
         timestamp=nothing,
+        is_archived=false,
         _key=nothing,
         _id=nothing,
         _rev=nothing,
@@ -18,6 +19,7 @@
     - user::String : User that created the workflow
     - description::String : Description of the workflow
     - timestamp::String : Timestamp of workflow creation
+    - is_archived::Bool : Flag indicating whether the workflow has been archived
     - _key::String
     - _id::String
     - _rev::String
@@ -27,26 +29,29 @@ Base.@kwdef mutable struct WorkflowModel <: OpenAPI.APIModel
     user::Union{Nothing, String} = nothing
     description::Union{Nothing, String} = nothing
     timestamp::Union{Nothing, String} = nothing
+    is_archived::Union{Nothing, Bool} = false
     _key::Union{Nothing, String} = nothing
     _id::Union{Nothing, String} = nothing
     _rev::Union{Nothing, String} = nothing
 
-    function WorkflowModel(name, user, description, timestamp, _key, _id, _rev, )
+    function WorkflowModel(name, user, description, timestamp, is_archived, _key, _id, _rev, )
         OpenAPI.validate_property(WorkflowModel, Symbol("name"), name)
         OpenAPI.validate_property(WorkflowModel, Symbol("user"), user)
         OpenAPI.validate_property(WorkflowModel, Symbol("description"), description)
         OpenAPI.validate_property(WorkflowModel, Symbol("timestamp"), timestamp)
+        OpenAPI.validate_property(WorkflowModel, Symbol("is_archived"), is_archived)
         OpenAPI.validate_property(WorkflowModel, Symbol("_key"), _key)
         OpenAPI.validate_property(WorkflowModel, Symbol("_id"), _id)
         OpenAPI.validate_property(WorkflowModel, Symbol("_rev"), _rev)
-        return new(name, user, description, timestamp, _key, _id, _rev, )
+        return new(name, user, description, timestamp, is_archived, _key, _id, _rev, )
     end
 end # type WorkflowModel
 
-const _property_types_WorkflowModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("user")=>"String", Symbol("description")=>"String", Symbol("timestamp")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
+const _property_types_WorkflowModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("user")=>"String", Symbol("description")=>"String", Symbol("timestamp")=>"String", Symbol("is_archived")=>"Bool", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ WorkflowModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_WorkflowModel[name]))}
 
 function check_required(o::WorkflowModel)
+    o.user === nothing && (return false)
     true
 end
 

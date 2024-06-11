@@ -4,7 +4,7 @@ info:
   license:
     name: BSD 3-Clause
   title: torc
-  version: v0.3.6
+  version: v0.4.0
 servers:
 - url: /_db/test-workflows/torc-service
 paths:
@@ -4409,7 +4409,75 @@ paths:
               schema:
                 $ref: '#/components/schemas/default_error_response'
       security: []
-  /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}:
+  /workflows/{workflow}/jobs/{key}/start_job/{rev}/{run_id}/{compute_node_key}:
+    put:
+      tags: []
+      summary: Start a job.
+      description: Start a job and manage side effects.
+      operationId: start_job
+      parameters:
+      - name: workflow
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: key
+        in: path
+        description: Job key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: rev
+        in: path
+        description: Current job revision.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: run_id
+        in: path
+        description: Current job run ID
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: integer
+      - name: compute_node_key
+        in: path
+        description: Compute node key that started the job
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        '200':
+          description: job updated in the collection.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/job_model'
+        '500':
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/default_error_response'
+      security: []
+      x-codegen-request-body-name: body
+  /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}/{compute_node_key}:
     post:
       tags: []
       summary: Complete a job and add a result.
@@ -4456,6 +4524,14 @@ paths:
         explode: false
         schema:
           type: integer
+      - name: compute_node_key
+        in: path
+        description: Compute node key that started the job
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
       requestBody:
         description: Result of the job.
         content:
@@ -4900,6 +4976,13 @@ paths:
         explode: true
         schema:
           type: string
+      - name: is_archived
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
       responses:
         '200':
           description: HTTP 200 OK.
@@ -6146,7 +6229,7 @@ components:
             expiration time. This allows torc to send SIGTERM to all job processes and set all
             statuses to terminated. Increase the time in cases where the job processes handle
             SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the
-            time given to jobs. If not set, take the database's default value of 30 seconds.
+            time given to jobs. If not set, take the database's default value of 60 seconds.
         compute_node_wait_for_new_jobs_seconds:
           type: integer
           description: Inform all compute nodes to wait for new jobs for this time period before
@@ -6469,6 +6552,8 @@ components:
           type: string
     workflow_model:
       type: object
+      required:
+      - user
       properties:
         name:
           type: string
@@ -6482,6 +6567,10 @@ components:
         timestamp:
           type: string
           description: Timestamp of workflow creation
+        is_archived:
+          type: boolean
+          description: Flag indicating whether the workflow has been archived
+          default: false
         _key:
           type: string
         _id:

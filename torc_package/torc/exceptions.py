@@ -19,3 +19,7 @@ class InvalidWorkflow(TorcBaseException):
 
 class DatabaseOffline(TorcBaseException):
     """Raised if the database is inaccessible."""
+
+
+class TorcOperationNotAllowed(TorcBaseException):
+    """Raised if the operation is not allowed."""

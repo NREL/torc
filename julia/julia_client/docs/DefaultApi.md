@@ -24,7 +24,7 @@ Method | HTTP request | Description
 [**add_workflow_specification**](DefaultApi.md#add_workflow_specification) | **POST** /workflow_specifications | Store a workflow.
 [**auto_tune_resource_requirements**](DefaultApi.md#auto_tune_resource_requirements) | **POST** /workflows/{key}/auto_tune_resource_requirements | Enable workflow for auto-tuning resource requirements.
 [**cancel_workflow**](DefaultApi.md#cancel_workflow) | **PUT** /workflows/{key}/cancel | Cancel workflow.
-[**complete_job**](DefaultApi.md#complete_job) | **POST** /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id} | Complete a job and add a result.
+[**complete_job**](DefaultApi.md#complete_job) | **POST** /workflows/{workflow}/jobs/{key}/complete_job/{status}/{rev}/{run_id}/{compute_node_key} | Complete a job and add a result.
 [**delete_aws_schedulers**](DefaultApi.md#delete_aws_schedulers) | **DELETE** /workflows/{workflow}/aws_schedulers | Delete all documents of type AWS compute node configuration for a workflow
 [**delete_compute_node_stats**](DefaultApi.md#delete_compute_node_stats) | **DELETE** /workflows/{workflow}/compute_node_stats | Delete all documents of type compute node statistics for a workflow
 [**delete_compute_nodes**](DefaultApi.md#delete_compute_nodes) | **DELETE** /workflows/{workflow}/compute_nodes | Delete all documents of type compute node for a workflow
@@ -138,6 +138,7 @@ Method | HTTP request | Description
 [**remove_workflow**](DefaultApi.md#remove_workflow) | **DELETE** /workflows/{key} | Delete a workflow
 [**reset_job_status**](DefaultApi.md#reset_job_status) | **POST** /workflows/{key}/reset_job_status | Reset job status.
 [**reset_workflow_status**](DefaultApi.md#reset_workflow_status) | **POST** /workflows/{key}/reset_status | Reset worklow status.
+[**start_job**](DefaultApi.md#start_job) | **PUT** /workflows/{workflow}/jobs/{key}/start_job/{rev}/{run_id}/{compute_node_key} | Start a job.
 
 
 # **add_aws_scheduler**
@@ -771,8 +772,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **complete_job**
-> complete_job(_api::DefaultApi, workflow::String, key::String, status::String, rev::String, run_id::Int64, body::ResultModel; _mediaType=nothing) -> JobModel, OpenAPI.Clients.ApiResponse <br/>
-> complete_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, status::String, rev::String, run_id::Int64, body::ResultModel; _mediaType=nothing) -> Channel{ JobModel }, OpenAPI.Clients.ApiResponse
+> complete_job(_api::DefaultApi, workflow::String, key::String, status::String, rev::String, run_id::Int64, compute_node_key::String, body::ResultModel; _mediaType=nothing) -> JobModel, OpenAPI.Clients.ApiResponse <br/>
+> complete_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, status::String, rev::String, run_id::Int64, compute_node_key::String, body::ResultModel; _mediaType=nothing) -> Channel{ JobModel }, OpenAPI.Clients.ApiResponse
 
 Complete a job and add a result.
 
@@ -788,6 +789,7 @@ Name | Type | Description  | Notes
 **status** | **String**| New job status. | [default to nothing]
 **rev** | **String**| Current job revision. | [default to nothing]
 **run_id** | **Int64**| Current job run ID | [default to nothing]
+**compute_node_key** | **String**| Compute node key that started the job | [default to nothing]
 **body** | [**ResultModel**](ResultModel.md)| Result of the job. | 
 
 ### Return type
@@ -3287,8 +3289,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_workflows**
-> list_workflows(_api::DefaultApi; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing) -> ListWorkflowsResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_workflows(_api::DefaultApi, response_stream::Channel; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing) -> Channel{ ListWorkflowsResponse }, OpenAPI.Clients.ApiResponse
+> list_workflows(_api::DefaultApi; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, is_archived=nothing, _mediaType=nothing) -> ListWorkflowsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_workflows(_api::DefaultApi, response_stream::Channel; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, is_archived=nothing, _mediaType=nothing) -> Channel{ ListWorkflowsResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all workflows
 
@@ -3311,6 +3313,7 @@ Name | Type | Description  | Notes
  **name** | **String**|  | [default to nothing]
  **user** | **String**|  | [default to nothing]
  **description** | **String**|  | [default to nothing]
+ **is_archived** | **Bool**|  | [default to nothing]
 
 ### Return type
 
@@ -4739,6 +4742,46 @@ Name | Type | Description  | Notes
 ### Return type
 
 **Any**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **start_job**
+> start_job(_api::DefaultApi, workflow::String, key::String, rev::String, run_id::Int64, compute_node_key::String; body=nothing, _mediaType=nothing) -> JobModel, OpenAPI.Clients.ApiResponse <br/>
+> start_job(_api::DefaultApi, response_stream::Channel, workflow::String, key::String, rev::String, run_id::Int64, compute_node_key::String; body=nothing, _mediaType=nothing) -> Channel{ JobModel }, OpenAPI.Clients.ApiResponse
+
+Start a job.
+
+Start a job and manage side effects.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**workflow** | **String**| Workflow key | [default to nothing]
+**key** | **String**| Job key | [default to nothing]
+**rev** | **String**| Current job revision. | [default to nothing]
+**run_id** | **Int64**| Current job run ID | [default to nothing]
+**compute_node_key** | **String**| Compute node key that started the job | [default to nothing]
+
+### Optional Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **body** | **Any**|  | 
+
+### Return type
+
+[**JobModel**](JobModel.md)
 
 ### Authorization
 

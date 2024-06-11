@@ -30,3 +30,4 @@ tools to manage data directly in the database.
    passing_data_between_jobs
    plot_graphs
    backups
+   archive

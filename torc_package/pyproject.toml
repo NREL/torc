@@ -30,7 +30,7 @@ dependencies = [
     "prettytable >= 3.10, < 4",
     "pydantic >= 2.4, < 3",
     "textual~=0.54.0",
-    "resource_monitor @ git+https://github.nrel.gov/dthom/resource_monitor.git#0.2.0",
+    "resource_monitor @ git+https://github.nrel.gov/dthom/resource_monitor.git#0.2.1",
     # These are required by the openapi_client. Keep in sync with its setup.py.
     "python_dateutil>=2.5.3",
     "urllib3>=1.25.3,<2.1.0",

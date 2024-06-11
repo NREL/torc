@@ -222,7 +222,7 @@ const requiredExistingFilesResponse = joi.object().required().keys({
 const workflowConfig = joi.object().required().keys({
   compute_node_resource_stats: computeNodeResourceStatConfig.default(
       computeNodeResourceStatConfig.validate({}).value),
-  compute_node_expiration_buffer_seconds: joi.number().default(30),
+  compute_node_expiration_buffer_seconds: joi.number().default(60),
   compute_node_wait_for_new_jobs_seconds: joi.number().default(0),
   compute_node_ignore_workflow_completion: joi.boolean().default(false),
   compute_node_wait_for_healthy_database_minutes: joi.number().default(20),
@@ -278,6 +278,7 @@ const workflowSpecification = joi.object().required().keys({
   key: joi.string().optional(),
   user: joi.string().optional().default('').allow(null, ''),
   description: joi.string().optional().default('').allow(null, ''),
+  is_archived: joi.boolean().optional().default(false).allow(null),
   jobs: joi.array().items(jobSpecification).default([]),
   files: joi.array().items(file).default([]),
   user_data: joi.array().items(userData).default([]),
@@ -291,6 +292,7 @@ const workflow = joi.object().required().keys({
   user: joi.string().optional().default('').allow(null, ''),
   description: joi.string().optional().default('').allow(null, ''),
   timestamp: joi.string().optional().default('').allow(null, ''),
+  is_archived: joi.boolean().optional().default(false).allow(null),
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),

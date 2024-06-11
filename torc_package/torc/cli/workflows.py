@@ -27,6 +27,7 @@ from .common import (
     confirm_change,
     get_workflow_key_from_context,
     get_output_format_from_context,
+    get_user_from_context,
     setup_cli_logging,
     parse_filters,
     print_items,
@@ -87,14 +88,6 @@ def cancel(ctx, api: DefaultApi, workflow_keys: tuple[str]) -> None:
     type=str,
     help="Workflow name",
 )
-@click.option(
-    "-u",
-    "--user",
-    type=str,
-    default=getpass.getuser(),
-    show_default=True,
-    help="Username",
-)
 @click.pass_obj
 @click.pass_context
 def create(
@@ -104,7 +97,6 @@ def create(
     description: str,
     key: str,
     name: str,
-    user: str,
 ) -> None:
     """Create a new workflow."""
     setup_cli_logging(ctx, __name__)
@@ -113,7 +105,7 @@ def create(
         description=description,
         _key=key,
         name=name,
-        user=user,
+        user=get_user_from_context(ctx),
     )
     output_format = get_output_format_from_context(ctx)
     workflow = api.add_workflow(workflow)
@@ -153,14 +145,6 @@ def create(
     type=str,
     help="Workflow name",
 )
-@click.option(
-    "-u",
-    "--user",
-    type=str,
-    default=getpass.getuser(),
-    show_default=True,
-    help="Username",
-)
 @click.pass_obj
 @click.pass_context
 def create_from_commands_file(
@@ -171,7 +155,6 @@ def create_from_commands_file(
     description: str,
     key: str,
     name: str,
-    user: str,
 ) -> None:
     """Create a workflow from a text file containing job CLI commands."""
     setup_cli_logging(ctx, __name__)
@@ -187,7 +170,7 @@ def create_from_commands_file(
         description=description,
         _key=key,
         name=name,
-        user=user,
+        user=get_user_from_context(ctx),
     )
     workflow = api.add_workflow(workflow)
     assert workflow.key is not None
@@ -212,23 +195,15 @@ def create_from_commands_file(
     show_default=True,
     help="Update torc runtime config file with the created workflow key.",
 )
-@click.option(
-    "-u",
-    "--user",
-    type=str,
-    default=getpass.getuser(),
-    show_default=True,
-    help="Username",
-)
 @click.pass_obj
 @click.pass_context
 def create_from_json_file(
-    ctx: click.Context, api: DefaultApi, filename: Path, update_rc_with_key: bool, user: str
+    ctx: click.Context, api: DefaultApi, filename: Path, update_rc_with_key: bool
 ) -> None:
     """Create a workflow from a JSON/JSON5 file."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    workflow = create_workflow_from_json_file(api, filename, user=user)
+    workflow = create_workflow_from_json_file(api, filename, user=get_user_from_context(ctx))
 
     output_format = get_output_format_from_context(ctx)
     if output_format == "text":
@@ -240,6 +215,12 @@ def create_from_json_file(
 
 
 @click.command()
+@click.argument("workflow_key")
+@click.option(
+    "-a",
+    "--archive",
+    help="Set to 'true' to archive the workflow or 'false' to enable it.",
+)
 @click.option(
     "-d",
     "--description",
@@ -252,28 +233,30 @@ def create_from_json_file(
     type=str,
     help="Workflow name",
 )
-@click.option(
-    "-u",
-    "--user",
-    type=str,
-    default=getpass.getuser(),
-    show_default=True,
-    help="Username",
-)
 @click.pass_obj
 @click.pass_context
-def modify(ctx: click.Context, api: DefaultApi, description: str, name: str, user: str) -> None:
+def modify(
+    ctx: click.Context,
+    api: DefaultApi,
+    workflow_key: str,
+    archive: str,
+    description: str,
+    name: str,
+) -> None:
     """Modify the workflow parameters."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    workflow_key = get_workflow_key_from_context(ctx, api)
     workflow = api.get_workflow(workflow_key)
+    if archive is not None:
+        archive_lowered = archive.lower()
+        if archive_lowered not in ("true", "false"):
+            logger.error("--archive must be 'true' or 'false': %s", archive)
+        workflow.is_archived = True if archive_lowered == "true" else False
     if description is not None:
         workflow.description = description
     if name is not None:
         workflow.name = name
-    if user is not None:
-        workflow.user = user
+    workflow.user = get_user_from_context(ctx)
     workflow = api.modify_workflow(workflow_key, workflow)
     logger.info("Updated workflow %s", workflow.key)
 
@@ -294,32 +277,21 @@ def delete(ctx: click.Context, api: DefaultApi, workflow_keys: tuple[str]):
 
 
 @click.command()
-@click.argument("user")
-@click.pass_obj
-@click.pass_context
-def delete_by_user(ctx: click.Context, api: DefaultApi, user: str) -> None:
-    """Delete all workflows for a user."""
-    setup_cli_logging(ctx, __name__)
-    check_database_url(api)
-    keys = [x.key for x in iter_documents(api.list_workflows, user=user)]
-    _delete_workflows_with_warning(ctx, api, keys)
-
-
-@click.command()
 @click.pass_obj
 @click.pass_context
 def delete_all(ctx: click.Context, api: DefaultApi) -> None:
-    """Delete all workflows."""
+    """Delete all workflows stored by the user."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    keys = [x.key for x in iter_documents(api.list_workflows)]
+    user = get_user_from_context(ctx)
+    keys = [x.key for x in iter_documents(api.list_workflows, user=user)]
     _delete_workflows_with_warning(ctx, api, keys)
 
 
 def _delete_workflows_with_warning(
     ctx: click.Context, api: DefaultApi, keys: Iterable[str]
 ) -> None:
-    items = (api.get_workflow(x).to_dict() for x in keys)
+    items = [api.get_workflow(x).to_dict() for x in keys]
     columns = list_model_fields(WorkflowModel)
     columns.remove("_id")
     columns.remove("_rev")
@@ -332,7 +304,12 @@ def _delete_workflows_with_warning(
     )
     msg = "This command will delete the workflows above. Continue?"
     confirm_change(ctx, msg)
-    for key in keys:
+    current_user = get_user_from_context(ctx)
+    for i, key in enumerate(keys):
+        user = items[i]["user"]
+        if user != current_user:
+            msg = f"Workflow {key} was created by {user=}, not {current_user=}. Continue?"
+            confirm_change(ctx, msg)
         api.remove_workflow(key)
         logger.info("Deleted workflow %s", key)
 
@@ -362,6 +339,29 @@ def list_scheduler_configs(ctx: click.Context, api: DefaultApi) -> None:
 
 @click.command(name="list")
 @click.option(
+    "-A",
+    "--only-archived",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="List only workflows that have been archived.",
+)
+@click.option(
+    "-i",
+    "--include-archived",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Include archived workflows in the list.",
+)
+@click.option(
+    "-a",
+    "--all-users",
+    is_flag=True,
+    default=False,
+    help="List workflows for all users. Default is only for the current user.",
+)
+@click.option(
     "-f",
     "--filters",
     multiple=True,
@@ -385,27 +385,39 @@ def list_scheduler_configs(ctx: click.Context, api: DefaultApi) -> None:
 def list_workflows(
     ctx: click.Context,
     api: DefaultApi,
+    only_archived: bool,
+    include_archived: bool,
+    all_users: bool,
     filters: tuple[str],
     sort_by: Optional[str],
     reverse_sort: bool,
 ):
-    """List all workflows.
+    """List all workflows stored by the user.
 
     \b
-    1. List all workflows in a table.
+    1. List all workflows for the current user in a table.
        $ torc workflows list
-    2. List all workflows created by user jdoe.
-       $ torc workflows list -f user=jdoe
-    3. List all workflows in JSON format.
+    2. List all workflows in JSON format.
        $ torc -o json workflows list
+    3. List only archived workflows.
+       $ torc workflows list --only-archived
+    4. List all workflows for all users, including archived workflows.
+       $ torc workflows list --all-users --include-archived
     """
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     table_title = "Workflows"
+    if only_archived and include_archived:
+        logger.error("Only one of --only-archived and --include-archived can be set.")
+        sys.exit(1)
     _filters = parse_filters(filters)
     if sort_by is not None:
         _filters["sort_by"] = sort_by
         _filters["reverse_sort"] = reverse_sort
+    if not include_archived:
+        _filters["is_archived"] = only_archived
+    if not all_users:
+        _filters["user"] = get_user_from_context(ctx)
     items = (x.to_dict() for x in iter_documents(api.list_workflows, **_filters))
     columns = list_model_fields(WorkflowModel)
     columns.remove("_id")
@@ -638,12 +650,9 @@ reset all job statuses to 'uninitialized' and then 'ready' or 'blocked.'
 
 
 def create_workflow_from_json_file(
-    api: DefaultApi, filename: Path, user: Optional[str] = None
+    api: DefaultApi, filename: Path, user: str = getpass.getuser()
 ) -> WorkflowModel:
     """Create a workflow from a JSON/JSON5 file."""
-    if user is None:
-        user = getpass.getuser()
-
     method = json5.load if filename.suffix == ".json5" else json.load
     with open(filename, "r", encoding="utf-8") as f:
         data = sanitize_workflow(method(f))
@@ -949,7 +958,6 @@ workflows.add_command(create_from_commands_file)
 workflows.add_command(create_from_json_file)
 workflows.add_command(modify)
 workflows.add_command(delete)
-workflows.add_command(delete_by_user)
 workflows.add_command(delete_all)
 workflows.add_command(list_scheduler_configs)
 workflows.add_command(list_workflows)

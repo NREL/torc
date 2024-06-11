@@ -1117,6 +1117,7 @@ function manageJobStatusChange(job, workflow, runId) {
   } else if (isJobStatusComplete(oldStatus) && job.status == JobStatus.Uninitialized) {
     updateJobsFromCompletionReversal(job, workflow);
   }
+
   return job;
 }
 

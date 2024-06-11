@@ -2,6 +2,7 @@
 
 import json
 import logging
+import os
 import subprocess
 import time
 from datetime import datetime
@@ -9,15 +10,11 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
-from torc.openapi_client.models.compute_nodes_resources import (
-    ComputeNodesResources,
-)
-from torc.openapi_client.models.user_data_model import (
-    UserDataModel,
-)
+from torc.openapi_client.models.user_data_model import UserDataModel
+from torc.openapi_client.models.compute_node_model import ComputeNodeModel
+from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
 from torc.openapi_client.models.result_model import ResultModel
 from torc.openapi_client.models.job_model import JobModel
-
 from torc.api import iter_documents, add_jobs
 from torc.cli.torc import cli
 from torc.common import GiB
@@ -242,17 +239,18 @@ def test_prepare_next_jobs_for_submission(diamond_workflow):
     db = diamond_workflow[0]
     api = db.api
     mgr = WorkflowManager(api, db.workflow.key)
+    compute_node = _create_compute_node(api, db.workflow.key)
     mgr.start()
     result = api.prepare_next_jobs_for_submission(db.workflow.key, limit=5)
     assert len(result.jobs) == 1
-    _fake_complete_job(api, db.workflow.key, result.jobs[0])
+    _fake_complete_job(api, db.workflow.key, result.jobs[0], compute_node)
     result = api.prepare_next_jobs_for_submission(db.workflow.key, limit=5)
     assert len(result.jobs) == 2
     for job in result.jobs:
-        _fake_complete_job(api, db.workflow.key, job)
+        _fake_complete_job(api, db.workflow.key, job, compute_node)
     result = api.prepare_next_jobs_for_submission(db.workflow.key, limit=5)
     assert len(result.jobs) == 1
-    _fake_complete_job(api, db.workflow.key, result.jobs[0])
+    _fake_complete_job(api, db.workflow.key, result.jobs[0], compute_node)
     assert api.is_workflow_complete(db.workflow.key).is_complete
 
 
@@ -511,8 +509,9 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
     assert status.run_id == 2
 
     stage1_events = db.list_documents("events")
-    assert len(stage1_events) == 2
-    assert stage1_events[1].get("type", "") == "restart"
+    assert len(stage1_events) == 6  # 4 events for fake-completed jobs
+    stage1_events.sort(key=lambda x: x["type"])
+    assert stage1_events[4].get("type", "") == "restart"
 
     new_file = output_dir / missing_file
     new_file.write_text(json.dumps({"val": missing_file}))
@@ -532,21 +531,23 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
     work1 = db.get_document_key("jobs", "work1")
     work2 = db.get_document_key("jobs", "work2")
     postprocess = db.get_document_key("jobs", "postprocess")
+    expected_complete = [preprocess, work1, work2, postprocess]
     match missing_file:
         case "inputs.json":
-            expected = [preprocess, work1, work2, postprocess]
+            expected_start = [preprocess, work1, work2, postprocess]
         case "f1.json":
-            expected = [preprocess, work1, work2, postprocess]
+            expected_start = [preprocess, work1, work2, postprocess]
         case "f2.json":
-            expected = [work1, postprocess]
+            expected_start = [work1, postprocess]
         case "f3.json":
-            expected = [work2, postprocess]
+            expected_start = [work2, postprocess]
         case "f4.json":
-            expected = [postprocess]
+            expected_start = [postprocess]
         case _:
             assert False
-    assert sorted(expected) == _get_job_keys_by_event(stage2_events, "start")
-    assert sorted(expected) == _get_job_keys_by_event(stage2_events, "complete")
+    expected_complete += expected_start
+    assert sorted(expected_start) == _get_job_keys_by_event(stage2_events, "start")
+    assert sorted(expected_complete) == _get_job_keys_by_event(stage2_events, "complete")
 
     api.reset_workflow_status(db.workflow.key)
     api.reset_job_status(db.workflow.key)
@@ -560,6 +561,7 @@ def test_restart_uninitialized(diamond_workflow):
     db = diamond_workflow[0]
     api = db.api
     mgr = WorkflowManager(api, db.workflow.key)
+    compute_node = _create_compute_node(api, db.workflow.key)
     mgr.start()
     for name in ("preprocess", "work1", "work2"):
         job = db.get_document("jobs", name)
@@ -572,7 +574,9 @@ def test_restart_uninitialized(diamond_workflow):
             completion_time=str(datetime.now()),
             status=status,
         )
-        job = api.complete_job(db.workflow.key, job.id, status, job.rev, 1, result)
+        job = api.complete_job(
+            db.workflow.key, job.id, status, job.rev, 1, compute_node.key, result
+        )
 
         for file in api.list_files_produced_by_job(db.workflow.key, job.key).items:
             path = Path(file.path)
@@ -739,7 +743,7 @@ def test_add_bulk_jobs(diamond_workflow):
     assert len(final_job_keys) == len(initial_job_keys) + 50
 
 
-def _fake_complete_job(api, workflow_key, job):
+def _fake_complete_job(api, workflow_key, job, compute_node):
     job = api.modify_job(workflow_key, job.key, job)
     status = "done"
     result = ResultModel(
@@ -756,12 +760,33 @@ def _fake_complete_job(api, workflow_key, job):
         status,
         job.rev,
         1,
+        compute_node.key,
         result,
     )
 
 
 def _get_job_keys_by_event(events, type_):
     return sorted([x["job_key"] for x in events if x["category"] == "job" and x["type"] == type_])
+
+
+def _create_compute_node(api, workflow_key):
+    return api.add_compute_node(
+        workflow_key,
+        ComputeNodeModel(
+            hostname="localhost",
+            pid=os.getpid(),
+            start_time=str(datetime.now()),
+            resources=ComputeNodesResources(
+                num_cpus=4,
+                memory_gb=10 / GiB,
+                num_nodes=1,
+                time_limit=None,
+                num_gpus=0,
+            ),
+            is_active=True,
+            scheduler={},
+        ),
+    )
 
 
 # def _disable_resource_stats(api):

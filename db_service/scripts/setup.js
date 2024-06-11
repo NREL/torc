@@ -25,3 +25,12 @@ if (!graphModule._list().includes(graphName)) {
       ],
   );
 }
+
+// This can be removed when all databases have been upgraded.
+const workflows = db._collection('workflows');
+for (const doc of workflows.all()) {
+  if (doc.is_archived == null) {
+    doc.is_archived = false;
+    workflows.update(doc, doc);
+  }
+}
