@@ -19,7 +19,7 @@ If you would like to view the archived workflows, run this command:
 
    $ torc workflows list --only-archived
 
-If you would like to "un-archive" the workflow, run this command:
+If you would like to enable the workflow, run this command:
 
 .. code-block:: console
 

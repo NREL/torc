@@ -344,7 +344,15 @@ def list_scheduler_configs(ctx: click.Context, api: DefaultApi) -> None:
     is_flag=True,
     default=False,
     show_default=True,
-    help="List workflows that have been archived.",
+    help="List only workflows that have been archived.",
+)
+@click.option(
+    "-i",
+    "--include-archived",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Include archived workflows in the list.",
 )
 @click.option(
     "-a",
@@ -378,6 +386,7 @@ def list_workflows(
     ctx: click.Context,
     api: DefaultApi,
     only_archived: bool,
+    include_archived: bool,
     all_users: bool,
     filters: tuple[str],
     sort_by: Optional[str],
@@ -386,23 +395,27 @@ def list_workflows(
     """List all workflows stored by the user.
 
     \b
-    1. List all workflows in a table.
+    1. List all workflows for the current user in a table.
        $ torc workflows list
-    2. List all workflows created by user jdoe.
-       $ torc workflows list -f user=jdoe
-    3. List all workflows in JSON format.
+    2. List all workflows in JSON format.
        $ torc -o json workflows list
-    4. List only archived workflows.
+    3. List only archived workflows.
        $ torc workflows list --only-archived
+    4. List all workflows for all users, including archived workflows.
+       $ torc workflows list --all-users --include-archived
     """
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     table_title = "Workflows"
+    if only_archived and include_archived:
+        logger.error("Only one of --only-archived and --include-archived can be set.")
+        sys.exit(1)
     _filters = parse_filters(filters)
     if sort_by is not None:
         _filters["sort_by"] = sort_by
         _filters["reverse_sort"] = reverse_sort
-    _filters["is_archived"] = only_archived
+    if not include_archived:
+        _filters["is_archived"] = only_archived
     if not all_users:
         _filters["user"] = get_user_from_context(ctx)
     items = (x.to_dict() for x in iter_documents(api.list_workflows, **_filters))
