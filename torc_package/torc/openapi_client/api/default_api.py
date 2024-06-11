@@ -28167,6 +28167,7 @@ class DefaultApi:
         name: Optional[StrictStr] = None,
         user: Optional[StrictStr] = None,
         description: Optional[StrictStr] = None,
+        is_archived: Optional[StrictBool] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -28198,6 +28199,8 @@ class DefaultApi:
         :type user: str
         :param description:
         :type description: str
+        :param is_archived:
+        :type is_archived: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -28228,6 +28231,7 @@ class DefaultApi:
             name=name,
             user=user,
             description=description,
+            is_archived=is_archived,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -28260,6 +28264,7 @@ class DefaultApi:
         name: Optional[StrictStr] = None,
         user: Optional[StrictStr] = None,
         description: Optional[StrictStr] = None,
+        is_archived: Optional[StrictBool] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -28291,6 +28296,8 @@ class DefaultApi:
         :type user: str
         :param description:
         :type description: str
+        :param is_archived:
+        :type is_archived: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -28321,6 +28328,7 @@ class DefaultApi:
             name=name,
             user=user,
             description=description,
+            is_archived=is_archived,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -28353,6 +28361,7 @@ class DefaultApi:
         name: Optional[StrictStr] = None,
         user: Optional[StrictStr] = None,
         description: Optional[StrictStr] = None,
+        is_archived: Optional[StrictBool] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -28384,6 +28393,8 @@ class DefaultApi:
         :type user: str
         :param description:
         :type description: str
+        :param is_archived:
+        :type is_archived: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -28414,6 +28425,7 @@ class DefaultApi:
             name=name,
             user=user,
             description=description,
+            is_archived=is_archived,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -28441,6 +28453,7 @@ class DefaultApi:
         name,
         user,
         description,
+        is_archived,
         _request_auth,
         _content_type,
         _headers,
@@ -28489,6 +28502,10 @@ class DefaultApi:
         if description is not None:
             
             _query_params.append(('description', description))
+            
+        if is_archived is not None:
+            
+            _query_params.append(('is_archived', is_archived))
             
         # process the header parameters
         # process the form parameters

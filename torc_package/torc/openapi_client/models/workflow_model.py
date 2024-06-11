@@ -19,7 +19,7 @@ import json
 
 
 from typing import Any, ClassVar, Dict, List, Optional
-from pydantic import BaseModel, StrictStr
+from pydantic import BaseModel, StrictBool, StrictStr
 from pydantic import Field
 try:
     from typing import Self
@@ -34,10 +34,11 @@ class WorkflowModel(BaseModel):
     user: StrictStr = Field(description="User that created the workflow")
     description: Optional[StrictStr] = Field(default=None, description="Description of the workflow")
     timestamp: Optional[StrictStr] = Field(default=None, description="Timestamp of workflow creation")
+    is_archived: Optional[StrictBool] = Field(default=False, description="Flag indicating whether the workflow has been archived")
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = ["name", "user", "description", "timestamp", "_key", "_id", "_rev"]
+    __properties: ClassVar[List[str]] = ["name", "user", "description", "timestamp", "is_archived", "_key", "_id", "_rev"]
 
     model_config = {
         "populate_by_name": True,
@@ -91,6 +92,7 @@ class WorkflowModel(BaseModel):
             "user": obj.get("user"),
             "description": obj.get("description"),
             "timestamp": obj.get("timestamp"),
+            "is_archived": obj.get("is_archived") if obj.get("is_archived") is not None else False,
             "_key": obj.get("_key"),
             "_id": obj.get("_id"),
             "_rev": obj.get("_rev")

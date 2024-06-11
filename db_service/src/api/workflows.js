@@ -77,7 +77,7 @@ router.get('/workflows', function(req, res) {
     const qp = req.queryParams;
     const limit = utils.getItemsLimit(qp.limit);
     const example = {};
-    for (const filterField of ['description', 'name', 'user']) {
+    for (const filterField of ['description', 'name', 'user', 'is_archived']) {
       if (qp[filterField] != null) {
         example[filterField] = qp[filterField];
       }
@@ -110,6 +110,7 @@ router.get('/workflows', function(req, res) {
     .queryParam('name', joi.string())
     .queryParam('user', joi.string())
     .queryParam('description', joi.string())
+    .queryParam('is_archived', joi.boolean())
     .response(schemas.batchWorkflows)
     .summary('Retrieve all workflows')
     .description('Retrieves all documents from the "workflows" collection.');
@@ -166,6 +167,9 @@ router.get('/workflows/:key/ready_job_requirements', function(req, res) {
 router.post('/workflows/:key/initialize_jobs', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
+  if (workflow.is_archived) {
+    res.throw(400, `initialized_jobs is not supported on an archived workflow.`);
+  }
   try {
     if (req.clear_ephemeral_user_data) {
       query.clearEphemeralUserData(workflow);
@@ -403,6 +407,9 @@ router.put('/workflows/:key/cancel', function(req, res) {
 router.post('/workflows/:key/reset_status', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
+  if (workflow.is_archived) {
+    res.throw(400, `reset_status is not supported on an archived workflow.`);
+  }
   try {
     query.resetWorkflowStatus(workflow);
     res.send({message: `Reset workflow status`});
@@ -420,6 +427,9 @@ router.post('/workflows/:key/reset_job_status', function(req, res) {
   const key = req.pathParams.key;
   const failedOnly = req.queryParams.failed_only;
   const workflow = documents.getWorkflow(key, res);
+  if (workflow.is_archived) {
+    res.throw(400, `reset_job_status is not supported on an archived workflow.`);
+  }
   try {
     if (failedOnly) {
       query.resetFailedJobStatus(workflow);

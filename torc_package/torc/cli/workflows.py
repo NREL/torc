@@ -215,6 +215,12 @@ def create_from_json_file(
 
 
 @click.command()
+@click.argument("workflow_key")
+@click.option(
+    "-a",
+    "--archive",
+    help="Set to 'true' to archive the workflow or 'false' to enable it.",
+)
 @click.option(
     "-d",
     "--description",
@@ -229,12 +235,23 @@ def create_from_json_file(
 )
 @click.pass_obj
 @click.pass_context
-def modify(ctx: click.Context, api: DefaultApi, description: str, name: str) -> None:
+def modify(
+    ctx: click.Context,
+    api: DefaultApi,
+    workflow_key: str,
+    archive: str,
+    description: str,
+    name: str,
+) -> None:
     """Modify the workflow parameters."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    workflow_key = get_workflow_key_from_context(ctx, api)
     workflow = api.get_workflow(workflow_key)
+    if archive is not None:
+        archive_lowered = archive.lower()
+        if archive_lowered not in ("true", "false"):
+            logger.error("--archive must be 'true' or 'false': %s", archive)
+        workflow.is_archived = True if archive_lowered == "true" else False
     if description is not None:
         workflow.description = description
     if name is not None:
@@ -322,11 +339,18 @@ def list_scheduler_configs(ctx: click.Context, api: DefaultApi) -> None:
 
 @click.command(name="list")
 @click.option(
+    "-A",
+    "--only-archived",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="List workflows that have been archived.",
+)
+@click.option(
     "-a",
     "--all-users",
     is_flag=True,
     default=False,
-    show_default=True,
     help="List workflows for all users. Default is only for the current user.",
 )
 @click.option(
@@ -353,6 +377,7 @@ def list_scheduler_configs(ctx: click.Context, api: DefaultApi) -> None:
 def list_workflows(
     ctx: click.Context,
     api: DefaultApi,
+    only_archived: bool,
     all_users: bool,
     filters: tuple[str],
     sort_by: Optional[str],
@@ -367,6 +392,8 @@ def list_workflows(
        $ torc workflows list -f user=jdoe
     3. List all workflows in JSON format.
        $ torc -o json workflows list
+    4. List only archived workflows.
+       $ torc workflows list --only-archived
     """
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -375,6 +402,7 @@ def list_workflows(
     if sort_by is not None:
         _filters["sort_by"] = sort_by
         _filters["reverse_sort"] = reverse_sort
+    _filters["is_archived"] = only_archived
     if not all_users:
         _filters["user"] = get_user_from_context(ctx)
     items = (x.to_dict() for x in iter_documents(api.list_workflows, **_filters))

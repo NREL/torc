@@ -15,6 +15,7 @@ router.post('/workflow_specifications', function(req, res) {
     name: spec.name,
     user: spec.user,
     description: spec.description,
+    is_archived: spec.is_archived,
   };
   if (spec.key != null) {
     workflow._key = spec.key;
@@ -52,6 +53,7 @@ router.get('/workflow_specifications/:key', function(req, res) {
       name: workflow.name,
       description: workflow.description,
       user: workflow.user,
+      is_archived: workflow.is_archived,
       config: query.getWorkflowConfig(workflow),
       files: filesCollection.all().toArray(),
       jobs: jobs,

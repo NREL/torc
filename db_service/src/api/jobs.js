@@ -240,7 +240,6 @@ router.post('/workflows/:workflow/jobs/:key/complete_job/:status/:rev/:run_id/:c
         const updatedJob = query.manageJobStatusChange(job, workflow, runId);
         updatedJob.internal.hash = documents.computeJobInputHash(updatedJob, workflow);
         documents.updateWorkflowDocument(workflow, 'jobs', updatedJob);
-        msg = `Completed job ${job._key} with status=${status} return_code=${result.return_code}`;
         const event = {
           'timestamp': Date.now(),
           'category': 'job',
@@ -248,7 +247,8 @@ router.post('/workflows/:workflow/jobs/:key/complete_job/:status/:rev/:run_id/:c
           'job_key': job._key,
           'job_name': job.name,
           'node_name': computeNode.hostname,
-          'message': msg,
+          'message': `Completed job ${job._key} with status=${status} ` +
+              `return_code=${result.return_code}`,
         };
         documents.addWorkflowDocument(event, 'events', workflow, false, false);
         res.send(updatedJob);

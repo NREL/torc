@@ -147,6 +147,7 @@ def get_workflow_key_from_context(ctx: click.Context, api: DefaultApi) -> str:
             msg=msg,
             auto_select_one_option=True,
             user=get_user_from_context(ctx),
+            is_archived=False,
         )
         if doc is None:
             logger.error("No workflows are stored")

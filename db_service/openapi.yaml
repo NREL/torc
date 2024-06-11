@@ -4976,6 +4976,13 @@ paths:
         explode: true
         schema:
           type: string
+      - name: is_archived
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: boolean
       responses:
         '200':
           description: HTTP 200 OK.
@@ -6560,6 +6567,10 @@ components:
         timestamp:
           type: string
           description: Timestamp of workflow creation
+        is_archived:
+          type: boolean
+          description: Flag indicating whether the workflow has been archived
+          default: false
         _key:
           type: string
         _id:

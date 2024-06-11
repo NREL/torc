@@ -346,6 +346,32 @@ def test_multi_user_workflows(create_workflow_cli):
     assert result["jobs"]
 
 
+def test_archived_workflows(create_workflow_cli):
+    """Test workflow commands with multiple users."""
+    key, url, _ = create_workflow_cli
+
+    def found_my_workflow(cmd):
+        result = _run_and_convert_output_from_json(cmd)
+        my_workflows = list(filter(lambda x: x["_key"] == key, result["workflows"]))
+        return len(my_workflows) == 1
+
+    assert found_my_workflow(["-u", url, "-F", "json", "workflows", "list"])
+    assert not found_my_workflow(["-u", url, "-F", "json", "workflows", "list", "--only-archived"])
+
+    _run_and_get_output(["-u", url, "workflows", "modify", "--archive", "true", key])
+
+    assert not found_my_workflow(["-u", url, "-F", "json", "workflows", "list"])
+    assert found_my_workflow(["-u", url, "-F", "json", "workflows", "list", "--only-archived"])
+
+    runner = CliRunner(mix_stderr=False)
+    result = runner.invoke(cli, ["-k", key, "-u", url, "workflows", "start"])
+    assert result.exit_code != 0
+    assert "Not allowed on an archived workflow" in str(result.exception)
+
+    _run_and_get_output(["-u", url, "workflows", "modify", "--archive", "false", key])
+    assert found_my_workflow(["-u", url, "-F", "json", "workflows", "list"])
+
+
 def test_workflow_template(db_api):
     """Tests the dump of the workflow template."""
     _, url = db_api

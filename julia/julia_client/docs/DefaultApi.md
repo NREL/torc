@@ -3289,8 +3289,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **list_workflows**
-> list_workflows(_api::DefaultApi; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing) -> ListWorkflowsResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_workflows(_api::DefaultApi, response_stream::Channel; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, _mediaType=nothing) -> Channel{ ListWorkflowsResponse }, OpenAPI.Clients.ApiResponse
+> list_workflows(_api::DefaultApi; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, is_archived=nothing, _mediaType=nothing) -> ListWorkflowsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_workflows(_api::DefaultApi, response_stream::Channel; skip=nothing, sort_by=nothing, reverse_sort=nothing, limit=nothing, name=nothing, user=nothing, description=nothing, is_archived=nothing, _mediaType=nothing) -> Channel{ ListWorkflowsResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all workflows
 
@@ -3313,6 +3313,7 @@ Name | Type | Description  | Notes
  **name** | **String**|  | [default to nothing]
  **user** | **String**|  | [default to nothing]
  **description** | **String**|  | [default to nothing]
+ **is_archived** | **Bool**|  | [default to nothing]
 
 ### Return type
 
