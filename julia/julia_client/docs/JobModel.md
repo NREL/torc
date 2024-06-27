@@ -9,6 +9,7 @@ Name | Type | Description | Notes
 **invocation_script** | **String** | Wrapper script for command in case the environment needs customization. | [optional] [default to nothing]
 **status** | **String** | Status of job; managed by torc. | [optional] [default to nothing]
 **needs_compute_node_schedule** | **Bool** | Informs torc to schedule a compute node to start this job. | [optional] [default to false]
+**schedule_compute_nodes** | [***ComputeNodeScheduleParams**](ComputeNodeScheduleParams.md) |  | [optional] [default to nothing]
 **cancel_on_blocking_job_failure** | **Bool** | Cancel this job if any of its blocking jobs fails. | [optional] [default to true]
 **supports_termination** | **Bool** | Informs torc that the job can be terminated gracefully before a wall-time timeout. | [optional] [default to false]
 **blocked_by** | **Vector{String}** | Database IDs of jobs that block this job | [optional] [default to nothing]

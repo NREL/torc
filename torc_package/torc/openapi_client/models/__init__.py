@@ -19,6 +19,7 @@ from torc.openapi_client.models.auto_tune_status import AutoTuneStatus
 from torc.openapi_client.models.aws_scheduler_model import AwsSchedulerModel
 from torc.openapi_client.models.compute_node_model import ComputeNodeModel
 from torc.openapi_client.models.compute_node_resource_stats_model import ComputeNodeResourceStatsModel
+from torc.openapi_client.models.compute_node_schedule_params import ComputeNodeScheduleParams
 from torc.openapi_client.models.compute_node_stats import ComputeNodeStats
 from torc.openapi_client.models.compute_node_stats_model import ComputeNodeStatsModel
 from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources

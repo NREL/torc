@@ -315,12 +315,12 @@ router.post('/workflows/:key/prepare_jobs_for_scheduling', function(req, res) {
     .pathParam('key', joi.string().required(), 'Workflow key')
     .body(joi.object().optional(), '')
     .response(joi.object().required().keys({
-      schedulers: joi.array().items(joi.string()),
+      schedulers: joi.array().items(schemas.computeNodeScheduleParams),
     }),
     'Schedulers that need to be activated.',
     )
-    .summary('Return scheduler IDs that need to be activated.')
-    .description('Return scheduler IDs that need to be activated. Sets job status to scheduled.');
+    .summary('Return scheduler parameters that need to be activated.')
+    .description('Return scheduler parameters that need to be activated. Sets job status to scheduled.');
 
 router.post('/workflows/:key/auto_tune_resource_requirements', function(req, res) {
   const key = req.pathParams.key;

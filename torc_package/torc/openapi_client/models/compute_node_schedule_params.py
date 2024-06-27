@@ -18,20 +18,22 @@ import re  # noqa: F401
 import json
 
 
-from typing import Any, ClassVar, Dict, List
-from pydantic import BaseModel
-from torc.openapi_client.models.compute_node_schedule_params import ComputeNodeScheduleParams
+from typing import Any, ClassVar, Dict, List, Optional
+from pydantic import BaseModel, StrictBool, StrictInt, StrictStr
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class PrepareJobsForSchedulingResponse(BaseModel):
+class ComputeNodeScheduleParams(BaseModel):
     """
-    PrepareJobsForSchedulingResponse
+    ComputeNodeScheduleParams
     """ # noqa: E501
-    schedulers: List[ComputeNodeScheduleParams]
-    __properties: ClassVar[List[str]] = ["schedulers"]
+    max_parallel_jobs: Optional[StrictInt] = None
+    num_jobs: StrictInt
+    scheduler_id: StrictStr
+    start_one_worker_per_node: Optional[StrictBool] = False
+    __properties: ClassVar[List[str]] = ["max_parallel_jobs", "num_jobs", "scheduler_id", "start_one_worker_per_node"]
 
     model_config = {
         "populate_by_name": True,
@@ -50,7 +52,7 @@ class PrepareJobsForSchedulingResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of PrepareJobsForSchedulingResponse from a JSON string"""
+        """Create an instance of ComputeNodeScheduleParams from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -69,18 +71,11 @@ class PrepareJobsForSchedulingResponse(BaseModel):
             },
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in schedulers (list)
-        _items = []
-        if self.schedulers:
-            for _item in self.schedulers:
-                if _item:
-                    _items.append(_item.to_dict())
-            _dict['schedulers'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of PrepareJobsForSchedulingResponse from a dict"""
+        """Create an instance of ComputeNodeScheduleParams from a dict"""
         if obj is None:
             return None
 
@@ -88,7 +83,10 @@ class PrepareJobsForSchedulingResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "schedulers": [ComputeNodeScheduleParams.from_dict(_item) for _item in obj.get("schedulers")] if obj.get("schedulers") is not None else None
+            "max_parallel_jobs": obj.get("max_parallel_jobs"),
+            "num_jobs": obj.get("num_jobs"),
+            "scheduler_id": obj.get("scheduler_id"),
+            "start_one_worker_per_node": obj.get("start_one_worker_per_node") if obj.get("start_one_worker_per_node") is not None else False
         })
         return _obj
 

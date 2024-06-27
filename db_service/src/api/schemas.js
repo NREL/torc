@@ -72,6 +72,13 @@ const isComplete = joi.object().required().keys({
   is_complete: joi.boolean().required(),
 });
 
+const computeNodeScheduleParams = joi.object().required().keys({
+  max_parallel_jobs: joi.number().integer().optional().allow(null),
+  num_jobs: joi.number().integer().required(),
+  scheduler_id: joi.string().required(),
+  start_one_worker_per_node: joi.boolean().default(false),
+});
+
 const jobInternal = joi.object().required().keys({
   memory_bytes: joi.number().integer().default(0),
   num_cpus: joi.number().integer().default(0),
@@ -88,6 +95,7 @@ const job = joi.object().required().keys({
   invocation_script: joi.string().optional().allow(null),
   status: joi.string(),
   needs_compute_node_schedule: joi.boolean().default(false),
+  schedule_compute_nodes: computeNodeScheduleParams.optional().allow(null),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   supports_termination: joi.boolean().default(false),
   resource_requirements: joi.string().optional(),
@@ -125,6 +133,7 @@ const jobSpecification = joi.object().required().keys({
   scheduler: joi.string().optional().allow(null, ''),
   // If this is true, scheduler must be set.
   needs_compute_node_schedule: joi.boolean().default(false),
+  schedule_compute_nodes: computeNodeScheduleParams.optional().allow(null),
   input_user_data: joi.array().items(joi.string()).default([]),
   output_user_data: joi.array().items(joi.string()).default([]),
   resource_requirements: joi.string().optional(),
@@ -486,6 +495,7 @@ module.exports = {
   batchJobSpecifications,
   computeNode,
   computeNodeResourceStatConfig,
+  computeNodeScheduleParams,
   computeNodeStats,
   dotGraphResponse,
   edge,

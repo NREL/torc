@@ -21,6 +21,7 @@ import json
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictBool, StrictStr
 from pydantic import Field
+from torc.openapi_client.models.compute_node_schedule_params import ComputeNodeScheduleParams
 try:
     from typing import Self
 except ImportError:
@@ -38,13 +39,14 @@ class JobSpecificationModel(BaseModel):
     supports_termination: Optional[StrictBool] = Field(default=False, description="Informs torc that the job can be terminated gracefully before a wall-time timeout.")
     scheduler: Optional[StrictStr] = Field(default=None, description="Optional name of scheduler needed by this job")
     needs_compute_node_schedule: Optional[StrictBool] = Field(default=False, description="Informs torc to schedule a compute node to start this job.")
+    schedule_compute_nodes: Optional[ComputeNodeScheduleParams] = None
     input_user_data: Optional[List[StrictStr]] = Field(default=None, description="Names of user-data objects that this job needs")
     output_user_data: Optional[List[StrictStr]] = Field(default=None, description="Names of user-data objects that this job produces")
     resource_requirements: Optional[StrictStr] = Field(default=None, description="Optional name of resources required by this job")
     input_files: Optional[List[StrictStr]] = Field(default=None, description="Names of files that this job needs")
     output_files: Optional[List[StrictStr]] = Field(default=None, description="Names of files that this job produces")
     blocked_by: Optional[List[StrictStr]] = Field(default=None, description="Names of jobs that block this job")
-    __properties: ClassVar[List[str]] = ["name", "key", "command", "invocation_script", "cancel_on_blocking_job_failure", "supports_termination", "scheduler", "needs_compute_node_schedule", "input_user_data", "output_user_data", "resource_requirements", "input_files", "output_files", "blocked_by"]
+    __properties: ClassVar[List[str]] = ["name", "key", "command", "invocation_script", "cancel_on_blocking_job_failure", "supports_termination", "scheduler", "needs_compute_node_schedule", "schedule_compute_nodes", "input_user_data", "output_user_data", "resource_requirements", "input_files", "output_files", "blocked_by"]
 
     model_config = {
         "populate_by_name": True,
@@ -82,6 +84,9 @@ class JobSpecificationModel(BaseModel):
             },
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of schedule_compute_nodes
+        if self.schedule_compute_nodes:
+            _dict['schedule_compute_nodes'] = self.schedule_compute_nodes.to_dict()
         return _dict
 
     @classmethod
@@ -102,6 +107,7 @@ class JobSpecificationModel(BaseModel):
             "supports_termination": obj.get("supports_termination") if obj.get("supports_termination") is not None else False,
             "scheduler": obj.get("scheduler"),
             "needs_compute_node_schedule": obj.get("needs_compute_node_schedule") if obj.get("needs_compute_node_schedule") is not None else False,
+            "schedule_compute_nodes": ComputeNodeScheduleParams.from_dict(obj.get("schedule_compute_nodes")) if obj.get("schedule_compute_nodes") is not None else None,
             "input_user_data": obj.get("input_user_data"),
             "output_user_data": obj.get("output_user_data"),
             "resource_requirements": obj.get("resource_requirements"),

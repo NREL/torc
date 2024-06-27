@@ -158,7 +158,9 @@ def _get_type_from_schema(properties: dict):
                     continue
                 data_type = schema_type_to_python.get(item["type"], str)
             elif "$ref" in item:
-                raise NotImplementedError(f"Bug: $ref not supported: {item=}")
+                data_type = str
+                # All nested objects need to be serialized as JSON.
+                break
             elif not item:
                 continue
             else:

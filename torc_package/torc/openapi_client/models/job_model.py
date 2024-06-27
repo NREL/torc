@@ -21,6 +21,7 @@ import json
 from typing import Any, ClassVar, Dict, List, Optional
 from pydantic import BaseModel, StrictBool, StrictStr
 from pydantic import Field
+from torc.openapi_client.models.compute_node_schedule_params import ComputeNodeScheduleParams
 from torc.openapi_client.models.jobs_internal import JobsInternal
 try:
     from typing import Self
@@ -36,6 +37,7 @@ class JobModel(BaseModel):
     invocation_script: Optional[StrictStr] = Field(default=None, description="Wrapper script for command in case the environment needs customization.")
     status: Optional[StrictStr] = Field(default=None, description="Status of job; managed by torc.")
     needs_compute_node_schedule: Optional[StrictBool] = Field(default=False, description="Informs torc to schedule a compute node to start this job.")
+    schedule_compute_nodes: Optional[ComputeNodeScheduleParams] = None
     cancel_on_blocking_job_failure: Optional[StrictBool] = Field(default=True, description="Cancel this job if any of its blocking jobs fails.")
     supports_termination: Optional[StrictBool] = Field(default=False, description="Informs torc that the job can be terminated gracefully before a wall-time timeout.")
     blocked_by: Optional[List[StrictStr]] = Field(default=None, description="Database IDs of jobs that block this job")
@@ -49,7 +51,7 @@ class JobModel(BaseModel):
     key: Optional[StrictStr] = Field(default=None, description="Unique database identifier for the job. Does not include collection name.", alias="_key")
     id: Optional[StrictStr] = Field(default=None, description="Unique database identifier for the job. Includes collection name and _key.", alias="_id")
     rev: Optional[StrictStr] = Field(default=None, description="Database revision of the job", alias="_rev")
-    __properties: ClassVar[List[str]] = ["name", "command", "invocation_script", "status", "needs_compute_node_schedule", "cancel_on_blocking_job_failure", "supports_termination", "blocked_by", "input_files", "output_files", "input_user_data", "output_user_data", "resource_requirements", "scheduler", "internal", "_key", "_id", "_rev"]
+    __properties: ClassVar[List[str]] = ["name", "command", "invocation_script", "status", "needs_compute_node_schedule", "schedule_compute_nodes", "cancel_on_blocking_job_failure", "supports_termination", "blocked_by", "input_files", "output_files", "input_user_data", "output_user_data", "resource_requirements", "scheduler", "internal", "_key", "_id", "_rev"]
 
     model_config = {
         "populate_by_name": True,
@@ -87,6 +89,9 @@ class JobModel(BaseModel):
             },
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of schedule_compute_nodes
+        if self.schedule_compute_nodes:
+            _dict['schedule_compute_nodes'] = self.schedule_compute_nodes.to_dict()
         # override the default output from pydantic by calling `to_dict()` of internal
         if self.internal:
             _dict['internal'] = self.internal.to_dict()
@@ -107,6 +112,7 @@ class JobModel(BaseModel):
             "invocation_script": obj.get("invocation_script"),
             "status": obj.get("status"),
             "needs_compute_node_schedule": obj.get("needs_compute_node_schedule") if obj.get("needs_compute_node_schedule") is not None else False,
+            "schedule_compute_nodes": ComputeNodeScheduleParams.from_dict(obj.get("schedule_compute_nodes")) if obj.get("schedule_compute_nodes") is not None else None,
             "cancel_on_blocking_job_failure": obj.get("cancel_on_blocking_job_failure") if obj.get("cancel_on_blocking_job_failure") is not None else True,
             "supports_termination": obj.get("supports_termination") if obj.get("supports_termination") is not None else False,
             "blocked_by": obj.get("blocked_by"),

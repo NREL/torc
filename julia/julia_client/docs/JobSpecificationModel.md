@@ -12,6 +12,7 @@ Name | Type | Description | Notes
 **supports_termination** | **Bool** | Informs torc that the job can be terminated gracefully before a wall-time timeout. | [optional] [default to false]
 **scheduler** | **String** | Optional name of scheduler needed by this job | [optional] [default to nothing]
 **needs_compute_node_schedule** | **Bool** | Informs torc to schedule a compute node to start this job. | [optional] [default to false]
+**schedule_compute_nodes** | [***ComputeNodeScheduleParams**](ComputeNodeScheduleParams.md) |  | [optional] [default to nothing]
 **input_user_data** | **Vector{String}** | Names of user-data objects that this job needs | [optional] [default to nothing]
 **output_user_data** | **Vector{String}** | Names of user-data objects that this job produces | [optional] [default to nothing]
 **resource_requirements** | **String** | Optional name of resources required by this job | [optional] [default to nothing]

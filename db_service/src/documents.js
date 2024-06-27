@@ -62,6 +62,7 @@ function addJobSpecification(jobSpec, workflow) {
     invocation_script: jobSpec.invocation_script,
     cancel_on_blocking_job_failure: jobSpec.cancel_on_blocking_job_failure,
     needs_compute_node_schedule: jobSpec.needs_compute_node_schedule,
+    schedule_compute_nodes: jobSpec.schedule_compute_nodes,
     supports_termination: jobSpec.supports_termination,
     blocked_by: [],
     input_files: [],

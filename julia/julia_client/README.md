@@ -164,6 +164,7 @@ Class | Method
  - [AwsSchedulerModel](docs/AwsSchedulerModel.md)
  - [ComputeNodeModel](docs/ComputeNodeModel.md)
  - [ComputeNodeResourceStatsModel](docs/ComputeNodeResourceStatsModel.md)
+ - [ComputeNodeScheduleParams](docs/ComputeNodeScheduleParams.md)
  - [ComputeNodeStats](docs/ComputeNodeStats.md)
  - [ComputeNodeStatsModel](docs/ComputeNodeStatsModel.md)
  - [ComputeNodesResources](docs/ComputeNodesResources.md)

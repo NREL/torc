@@ -6382,6 +6382,8 @@ components:
           type: boolean
           default: false
           description: Informs torc to schedule a compute node to start this job.
+        schedule_compute_nodes:
+          $ref: '#/components/schemas/compute_node_schedule_params'
         cancel_on_blocking_job_failure:
           type: boolean
           default: true
@@ -6777,6 +6779,8 @@ components:
           type: boolean
           default: false
           description: Informs torc to schedule a compute node to start this job.
+        schedule_compute_nodes:
+          $ref: '#/components/schemas/compute_node_schedule_params'
         input_user_data:
           type: array
           items:
@@ -6854,6 +6858,21 @@ components:
           default: true
         interval:
           type: number
+    compute_node_schedule_params:
+      type: object
+      required:
+      - num_jobs
+      - scheduler_id
+      properties:
+        max_parallel_jobs:
+          type: integer
+        num_jobs:
+          type: integer
+        scheduler_id:
+          type: string
+        start_one_worker_per_node:
+          type: boolean
+          default: false
     list_aws_schedulers_response:
       required:
       - count
@@ -7309,11 +7328,13 @@ components:
             $ref: '#/components/schemas/job_model'
     prepare_jobs_for_scheduling_response:
       type: object
+      required:
+      - schedulers
       properties:
         schedulers:
           type: array
           items:
-            type: string
+            $ref: '#/components/schemas/compute_node_schedule_params'
     list_collection_names_response:
       type: object
       properties:
