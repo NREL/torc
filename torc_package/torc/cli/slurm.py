@@ -550,7 +550,7 @@ def run_jobs(
     }
     config = send_api_command(api.get_workflow_config, workflow_key)
     buffer = timedelta(seconds=config.compute_node_expiration_buffer_seconds)
-    end_time = intf.get_job_end_time() - buffer
+    end_time = intf.get_job_end_time() + buffer
     node = None if is_subtask else _get_scheduled_compute_node(api, workflow_key, slurm_job_id)
 
     workflow = send_api_command(api.get_workflow, workflow_key)
