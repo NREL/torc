@@ -12,7 +12,6 @@
         cancel_on_blocking_job_failure=true,
         supports_termination=false,
         scheduler=nothing,
-        needs_compute_node_schedule=false,
         schedule_compute_nodes=nothing,
         input_user_data=nothing,
         output_user_data=nothing,
@@ -29,7 +28,6 @@
     - cancel_on_blocking_job_failure::Bool : Cancel this job if any of its blocking jobs fails.
     - supports_termination::Bool : Informs torc that the job can be terminated gracefully before a wall-time timeout.
     - scheduler::String : Optional name of scheduler needed by this job
-    - needs_compute_node_schedule::Bool : Informs torc to schedule a compute node to start this job.
     - schedule_compute_nodes::ComputeNodeScheduleParams
     - input_user_data::Vector{String} : Names of user-data objects that this job needs
     - output_user_data::Vector{String} : Names of user-data objects that this job produces
@@ -46,7 +44,6 @@ Base.@kwdef mutable struct JobSpecificationModel <: OpenAPI.APIModel
     cancel_on_blocking_job_failure::Union{Nothing, Bool} = true
     supports_termination::Union{Nothing, Bool} = false
     scheduler::Union{Nothing, String} = nothing
-    needs_compute_node_schedule::Union{Nothing, Bool} = false
     schedule_compute_nodes = nothing # spec type: Union{ Nothing, ComputeNodeScheduleParams }
     input_user_data::Union{Nothing, Vector{String}} = nothing
     output_user_data::Union{Nothing, Vector{String}} = nothing
@@ -55,7 +52,7 @@ Base.@kwdef mutable struct JobSpecificationModel <: OpenAPI.APIModel
     output_files::Union{Nothing, Vector{String}} = nothing
     blocked_by::Union{Nothing, Vector{String}} = nothing
 
-    function JobSpecificationModel(name, key, command, invocation_script, cancel_on_blocking_job_failure, supports_termination, scheduler, needs_compute_node_schedule, schedule_compute_nodes, input_user_data, output_user_data, resource_requirements, input_files, output_files, blocked_by, )
+    function JobSpecificationModel(name, key, command, invocation_script, cancel_on_blocking_job_failure, supports_termination, scheduler, schedule_compute_nodes, input_user_data, output_user_data, resource_requirements, input_files, output_files, blocked_by, )
         OpenAPI.validate_property(JobSpecificationModel, Symbol("name"), name)
         OpenAPI.validate_property(JobSpecificationModel, Symbol("key"), key)
         OpenAPI.validate_property(JobSpecificationModel, Symbol("command"), command)
@@ -63,7 +60,6 @@ Base.@kwdef mutable struct JobSpecificationModel <: OpenAPI.APIModel
         OpenAPI.validate_property(JobSpecificationModel, Symbol("cancel_on_blocking_job_failure"), cancel_on_blocking_job_failure)
         OpenAPI.validate_property(JobSpecificationModel, Symbol("supports_termination"), supports_termination)
         OpenAPI.validate_property(JobSpecificationModel, Symbol("scheduler"), scheduler)
-        OpenAPI.validate_property(JobSpecificationModel, Symbol("needs_compute_node_schedule"), needs_compute_node_schedule)
         OpenAPI.validate_property(JobSpecificationModel, Symbol("schedule_compute_nodes"), schedule_compute_nodes)
         OpenAPI.validate_property(JobSpecificationModel, Symbol("input_user_data"), input_user_data)
         OpenAPI.validate_property(JobSpecificationModel, Symbol("output_user_data"), output_user_data)
@@ -71,11 +67,11 @@ Base.@kwdef mutable struct JobSpecificationModel <: OpenAPI.APIModel
         OpenAPI.validate_property(JobSpecificationModel, Symbol("input_files"), input_files)
         OpenAPI.validate_property(JobSpecificationModel, Symbol("output_files"), output_files)
         OpenAPI.validate_property(JobSpecificationModel, Symbol("blocked_by"), blocked_by)
-        return new(name, key, command, invocation_script, cancel_on_blocking_job_failure, supports_termination, scheduler, needs_compute_node_schedule, schedule_compute_nodes, input_user_data, output_user_data, resource_requirements, input_files, output_files, blocked_by, )
+        return new(name, key, command, invocation_script, cancel_on_blocking_job_failure, supports_termination, scheduler, schedule_compute_nodes, input_user_data, output_user_data, resource_requirements, input_files, output_files, blocked_by, )
     end
 end # type JobSpecificationModel
 
-const _property_types_JobSpecificationModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("key")=>"String", Symbol("command")=>"String", Symbol("invocation_script")=>"String", Symbol("cancel_on_blocking_job_failure")=>"Bool", Symbol("supports_termination")=>"Bool", Symbol("scheduler")=>"String", Symbol("needs_compute_node_schedule")=>"Bool", Symbol("schedule_compute_nodes")=>"ComputeNodeScheduleParams", Symbol("input_user_data")=>"Vector{String}", Symbol("output_user_data")=>"Vector{String}", Symbol("resource_requirements")=>"String", Symbol("input_files")=>"Vector{String}", Symbol("output_files")=>"Vector{String}", Symbol("blocked_by")=>"Vector{String}", )
+const _property_types_JobSpecificationModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("key")=>"String", Symbol("command")=>"String", Symbol("invocation_script")=>"String", Symbol("cancel_on_blocking_job_failure")=>"Bool", Symbol("supports_termination")=>"Bool", Symbol("scheduler")=>"String", Symbol("schedule_compute_nodes")=>"ComputeNodeScheduleParams", Symbol("input_user_data")=>"Vector{String}", Symbol("output_user_data")=>"Vector{String}", Symbol("resource_requirements")=>"String", Symbol("input_files")=>"Vector{String}", Symbol("output_files")=>"Vector{String}", Symbol("blocked_by")=>"Vector{String}", )
 OpenAPI.property_type(::Type{ JobSpecificationModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_JobSpecificationModel[name]))}
 
 function check_required(o::JobSpecificationModel)

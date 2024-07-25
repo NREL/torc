@@ -6378,10 +6378,6 @@ components:
         status:
           type: string
           description: Status of job; managed by torc.
-        needs_compute_node_schedule:
-          type: boolean
-          default: false
-          description: Informs torc to schedule a compute node to start this job.
         schedule_compute_nodes:
           $ref: '#/components/schemas/compute_node_schedule_params'
         cancel_on_blocking_job_failure:
@@ -6775,10 +6771,6 @@ components:
         scheduler:
           type: string
           description: Optional name of scheduler needed by this job
-        needs_compute_node_schedule:
-          type: boolean
-          default: false
-          description: Informs torc to schedule a compute node to start this job.
         schedule_compute_nodes:
           $ref: '#/components/schemas/compute_node_schedule_params'
         input_user_data:

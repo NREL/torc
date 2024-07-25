@@ -94,7 +94,6 @@ const job = joi.object().required().keys({
   command: joi.string().required(),
   invocation_script: joi.string().optional().allow(null),
   status: joi.string(),
-  needs_compute_node_schedule: joi.boolean().default(false),
   schedule_compute_nodes: computeNodeScheduleParams.optional().allow(null),
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   supports_termination: joi.boolean().default(false),
@@ -131,8 +130,6 @@ const jobSpecification = joi.object().required().keys({
   cancel_on_blocking_job_failure: joi.boolean().default(true),
   supports_termination: joi.boolean().default(false),
   scheduler: joi.string().optional().allow(null, ''),
-  // If this is true, scheduler must be set.
-  needs_compute_node_schedule: joi.boolean().default(false),
   schedule_compute_nodes: computeNodeScheduleParams.optional().allow(null),
   input_user_data: joi.array().items(joi.string()).default([]),
   output_user_data: joi.array().items(joi.string()).default([]),

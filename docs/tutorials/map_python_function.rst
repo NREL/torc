@@ -215,16 +215,16 @@ Build the workflow
 .. code-block:: console
 
     $ torc jobs list
-    +--------------------------------------------------------------------------------------------------+
-    |                                     Jobs in workflow 3141686                                     |
-    +-------+-------------+---------------------------+---------+-----------------------------+--------+
-    | index |     name    |          command          |  status | needs_compute_node_schedule |  _key  |
-    +-------+-------------+---------------------------+---------+-----------------------------+--------+
-    |   1   |      0      |   torc jobs run-function  |  ready  |            False            | 788309 |
-    |   2   |      1      |   torc jobs run-function  |  ready  |            False            | 788323 |
-    |   3   |      2      |   torc jobs run-function  |  ready  |            False            | 788337 |
-    |   4   | postprocess | torc jobs run-postprocess | blocked |            False            | 788389 |
-    +-------+-------------+---------------------------+---------+-----------------------------+--------+
+    +---------------------------------------------------------------------------------------------+
+    |                                     Jobs in workflow 3141686                                |
+    +-------+-------------+---------------------------+---------+------------------------+--------+
+    | index |     name    |          command          |  status | schedule_compute_nodes |  _key  |
+    +-------+-------------+---------------------------+---------+------------------------+--------+
+    |   1   |      0      |   torc jobs run-function  |  ready  |            None        | 788309 |
+    |   2   |      1      |   torc jobs run-function  |  ready  |            None        | 788323 |
+    |   3   |      2      |   torc jobs run-function  |  ready  |            None        | 788337 |
+    |   4   | postprocess | torc jobs run-postprocess | blocked |            None        | 788389 |
+    +-------+-------------+---------------------------+---------+------------------------+--------+
 
 6. Schedule compute nodes with ``Slurm``. This example only needs one compute node. You will need
    to make some estimation for your jobs.

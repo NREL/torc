@@ -262,9 +262,5 @@ function checkDependencies(workflow) {
     if (rr != null && !resourceRequirements.has(rr)) {
       throw new Error(`Invalid resource_requirements=${rr} in job ${JSON.stringify(job)}`);
     }
-    if (job.needs_compute_node_schedule && (job.scheduler == null || job.scheduler == '')) {
-      throw new Error(`Setting needs_compute_node_schedule requires that scheduler be set: ` +
-        `${JSON.stringify(job)}`);
-    }
   }
 }

@@ -15,21 +15,19 @@ commands:
   for jobs.
 - **cancel_on_blocking_job_failure**: If this is set to true and a job upon which this job is
   dependent fails, torc will cancel this job.
-- **scheduler**: This optional parameter can be set for two conditions.
+- **scheduler**: This optional parameter can be set for the following condition:
 
-  - If a job is initially blocked, you can set this with the name of a scheduler that you want torc
-    to automatically schedule for you. You must set ``needs_compute_node_schedule`` as well.
-  - You can use it to ensure that your desired compute node / job assignments are achieved. The
-    torc worker app pulls ready jobs after first sorting them in descending order by these
-    attributes: GPUs, runtime, memory. This will ensure that long jobs will start first and usually
-    prevent big-memory nodes from picking up small-memory jobs. However, you may prefer a different
-    priority. For example, you may prefer sorting by memory before runtime. This setting ensures
-    that a compute node will only pull jobs that you want it to get. Refer to
-    ``prepare_jobs_sort_method`` in :ref:`advanced_config_options` for additional customization
-    options.
+  You can use it to ensure that your desired compute node / job assignments are achieved. The
+  torc worker app pulls ready jobs after first sorting them in descending order by these
+  attributes: GPUs, runtime, memory. This will ensure that long jobs will start first and usually
+  prevent big-memory nodes from picking up small-memory jobs. However, you may prefer a different
+  priority. For example, you may prefer sorting by memory before runtime. This setting ensures
+  that a compute node will only pull jobs that you want it to get. Refer to
+  ``prepare_jobs_sort_method`` in :ref:`advanced_config_options` for additional customization
+  options.
 
-- **needs_compute_node_schedule**: As mentioned above with ``scheduler``, setting this to ``true``
-  can enable automatic compute node scheduling.
+- **schedule_compute_nodes**: Set this to a ``ComputeNodeScheduleParams`` object to tell torc to
+  schedule new compute nodes when this job reaches a status of ``ready``.
 - **supports_termination**: Should be set to true if the job handles the signal ``SIGTERM``. Refer
   to :ref:`job-graceful-shutdown`.
 

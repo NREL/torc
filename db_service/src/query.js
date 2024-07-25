@@ -269,7 +269,6 @@ function getJobSpecification(job, workflow) {
     blocked_by: blockingJobs,
     input_files: inputFiles,
     output_files: outputFiles,
-    needs_compute_node_schedule: job.needs_compute_node_schedule,
     schedule_compute_nodes: job.schedule_compute_nodes,
     resource_requirements: getJobResourceRequirements(job, workflow).name,
     scheduler: scheduler == null ? '' : scheduler._id,

@@ -38,7 +38,6 @@ class JobSpecificationModel(BaseModel):
     cancel_on_blocking_job_failure: Optional[StrictBool] = Field(default=True, description="Cancel this job if any of its blocking jobs fails.")
     supports_termination: Optional[StrictBool] = Field(default=False, description="Informs torc that the job can be terminated gracefully before a wall-time timeout.")
     scheduler: Optional[StrictStr] = Field(default=None, description="Optional name of scheduler needed by this job")
-    needs_compute_node_schedule: Optional[StrictBool] = Field(default=False, description="Informs torc to schedule a compute node to start this job.")
     schedule_compute_nodes: Optional[ComputeNodeScheduleParams] = None
     input_user_data: Optional[List[StrictStr]] = Field(default=None, description="Names of user-data objects that this job needs")
     output_user_data: Optional[List[StrictStr]] = Field(default=None, description="Names of user-data objects that this job produces")
@@ -46,7 +45,7 @@ class JobSpecificationModel(BaseModel):
     input_files: Optional[List[StrictStr]] = Field(default=None, description="Names of files that this job needs")
     output_files: Optional[List[StrictStr]] = Field(default=None, description="Names of files that this job produces")
     blocked_by: Optional[List[StrictStr]] = Field(default=None, description="Names of jobs that block this job")
-    __properties: ClassVar[List[str]] = ["name", "key", "command", "invocation_script", "cancel_on_blocking_job_failure", "supports_termination", "scheduler", "needs_compute_node_schedule", "schedule_compute_nodes", "input_user_data", "output_user_data", "resource_requirements", "input_files", "output_files", "blocked_by"]
+    __properties: ClassVar[List[str]] = ["name", "key", "command", "invocation_script", "cancel_on_blocking_job_failure", "supports_termination", "scheduler", "schedule_compute_nodes", "input_user_data", "output_user_data", "resource_requirements", "input_files", "output_files", "blocked_by"]
 
     model_config = {
         "populate_by_name": True,
@@ -106,7 +105,6 @@ class JobSpecificationModel(BaseModel):
             "cancel_on_blocking_job_failure": obj.get("cancel_on_blocking_job_failure") if obj.get("cancel_on_blocking_job_failure") is not None else True,
             "supports_termination": obj.get("supports_termination") if obj.get("supports_termination") is not None else False,
             "scheduler": obj.get("scheduler"),
-            "needs_compute_node_schedule": obj.get("needs_compute_node_schedule") if obj.get("needs_compute_node_schedule") is not None else False,
             "schedule_compute_nodes": ComputeNodeScheduleParams.from_dict(obj.get("schedule_compute_nodes")) if obj.get("schedule_compute_nodes") is not None else None,
             "input_user_data": obj.get("input_user_data"),
             "output_user_data": obj.get("output_user_data"),
