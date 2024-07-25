@@ -11,7 +11,7 @@ const schemas = require('./schemas');
 const createRouter = require('@arangodb/foxx/router');
 const router = createRouter();
 const collection = db._collection('workflows');
-const VERSION = '0.4.0'; // TODO: this needs to be stored in one file for all torc SW to read
+const VERSION = '0.4.1'; // TODO: this needs to be stored in one file for all torc SW to read
 module.exports = router;
 
 router.get('/ping', function(req, res) {
@@ -315,12 +315,12 @@ router.post('/workflows/:key/prepare_jobs_for_scheduling', function(req, res) {
     .pathParam('key', joi.string().required(), 'Workflow key')
     .body(joi.object().optional(), '')
     .response(joi.object().required().keys({
-      schedulers: joi.array().items(joi.string()),
+      schedulers: joi.array().items(schemas.computeNodeScheduleParams),
     }),
     'Schedulers that need to be activated.',
     )
-    .summary('Return scheduler IDs that need to be activated.')
-    .description('Return scheduler IDs that need to be activated. Sets job status to scheduled.');
+    .summary('Return scheduler parameters that need to be activated.')
+    .description('Return scheduler parameters that need to be activated. Sets job status to scheduled.');
 
 router.post('/workflows/:key/auto_tune_resource_requirements', function(req, res) {
   const key = req.pathParams.key;

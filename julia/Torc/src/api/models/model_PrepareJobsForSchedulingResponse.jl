@@ -8,10 +8,10 @@
         schedulers=nothing,
     )
 
-    - schedulers::Vector{String}
+    - schedulers::Vector{ComputeNodeScheduleParams}
 """
 Base.@kwdef mutable struct PrepareJobsForSchedulingResponse <: OpenAPI.APIModel
-    schedulers::Union{Nothing, Vector{String}} = nothing
+    schedulers::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{ComputeNodeScheduleParams} }
 
     function PrepareJobsForSchedulingResponse(schedulers, )
         OpenAPI.validate_property(PrepareJobsForSchedulingResponse, Symbol("schedulers"), schedulers)
@@ -19,10 +19,11 @@ Base.@kwdef mutable struct PrepareJobsForSchedulingResponse <: OpenAPI.APIModel
     end
 end # type PrepareJobsForSchedulingResponse
 
-const _property_types_PrepareJobsForSchedulingResponse = Dict{Symbol,String}(Symbol("schedulers")=>"Vector{String}", )
+const _property_types_PrepareJobsForSchedulingResponse = Dict{Symbol,String}(Symbol("schedulers")=>"Vector{ComputeNodeScheduleParams}", )
 OpenAPI.property_type(::Type{ PrepareJobsForSchedulingResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_PrepareJobsForSchedulingResponse[name]))}
 
 function check_required(o::PrepareJobsForSchedulingResponse)
+    o.schedulers === nothing && (return false)
     true
 end
 

@@ -269,7 +269,7 @@ function getJobSpecification(job, workflow) {
     blocked_by: blockingJobs,
     input_files: inputFiles,
     output_files: outputFiles,
-    needs_compute_node_schedule: job.needs_compute_node_schedule,
+    schedule_compute_nodes: job.schedule_compute_nodes,
     resource_requirements: getJobResourceRequirements(job, workflow).name,
     scheduler: scheduler == null ? '' : scheduler._id,
     input_user_data: inputUserData,
@@ -1277,13 +1277,13 @@ function prepareJobsForScheduling(workflow) {
     action: function() {
       const cursor = query({count: true})`
         FOR job IN ${collection}
-          FILTER job.status == ${JobStatus.Ready} && job.needs_compute_node_schedule
+          FILTER job.status == ${JobStatus.Ready} && NOT_NULL(job.schedule_compute_nodes)
           UPDATE job WITH { status: ${JobStatus.Scheduled} } IN ${collection}
-          RETURN job.internal.scheduler_config_id
+          RETURN job.schedule_compute_nodes
       `;
 
-      for (const scheduler of cursor) {
-        schedulers.push(scheduler);
+      for (const params of cursor) {
+        schedulers.push(params);
       }
     },
   });

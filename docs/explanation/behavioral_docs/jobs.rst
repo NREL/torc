@@ -54,8 +54,8 @@ If you enable compute node scheduling for a job that is initially blocked, as di
   sufficient resources to run the job.
 - When a torc worker application finishes its work it sends the API command
   ``prepare_jobs_for_scheduling``. The database service searches for all jobs
-  that have a ``ready`` status and ``needs_compute_node_schedule`` set to ``true``. It returns a
-  list of all those jobs' scheduler IDs. It also changes the status of each job to ``scheduled``.
+  that have a ``ready`` status and ``schedule_compute_nodes`` set with a value. It returns a
+  list of all those parameters. It also changes the status of each job to ``scheduled``.
 - The torc worker application then runs the scheduler command with those IDs (e.g., ``torc hpc
   slurm schedule-nodes``).
 - If there happens to be another compute node with available resources, that node could run the

@@ -26,11 +26,22 @@ if (!graphModule._list().includes(graphName)) {
   );
 }
 
-// This can be removed when all databases have been upgraded.
+// These can be removed when all databases have been upgraded.
 const workflows = db._collection('workflows');
 for (const doc of workflows.all()) {
   if (doc.is_archived == null) {
     doc.is_archived = false;
     workflows.update(doc, doc);
+  }
+}
+const collections = db._collections();
+for (const collection of collections) {
+  if (collection.name().startsWith('jobs__')) {
+    for (const doc of collection.all()) {
+      if ('needs_compute_node_schedule' in doc) {
+        delete doc.needs_compute_node_schedule;
+        collection.replace(doc, doc);
+      }
+    }
   }
 }

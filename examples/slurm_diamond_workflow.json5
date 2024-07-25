@@ -56,7 +56,6 @@
         "file4"
       ],
       scheduler: "slurm_schedulers/debug_gpu",
-      needs_compute_node_schedule: true,
     }
   ],
   files: [

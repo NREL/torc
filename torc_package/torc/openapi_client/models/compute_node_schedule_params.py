@@ -19,24 +19,21 @@ import json
 
 
 from typing import Any, ClassVar, Dict, List, Optional
-from pydantic import BaseModel, StrictBool, StrictInt
-from torc.openapi_client.models.compute_node_model import ComputeNodeModel
+from pydantic import BaseModel, StrictBool, StrictInt, StrictStr
 try:
     from typing import Self
 except ImportError:
     from typing_extensions import Self
 
-class ListComputeNodesResponse(BaseModel):
+class ComputeNodeScheduleParams(BaseModel):
     """
-    ListComputeNodesResponse
+    ComputeNodeScheduleParams
     """ # noqa: E501
-    items: Optional[List[ComputeNodeModel]] = None
-    skip: StrictInt
-    max_limit: StrictInt
-    count: StrictInt
-    total_count: StrictInt
-    has_more: StrictBool
-    __properties: ClassVar[List[str]] = ["items", "skip", "max_limit", "count", "total_count", "has_more"]
+    max_parallel_jobs: Optional[StrictInt] = None
+    num_jobs: StrictInt
+    scheduler_id: StrictStr
+    start_one_worker_per_node: Optional[StrictBool] = False
+    __properties: ClassVar[List[str]] = ["max_parallel_jobs", "num_jobs", "scheduler_id", "start_one_worker_per_node"]
 
     model_config = {
         "populate_by_name": True,
@@ -55,7 +52,7 @@ class ListComputeNodesResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Self:
-        """Create an instance of ListComputeNodesResponse from a JSON string"""
+        """Create an instance of ComputeNodeScheduleParams from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -74,18 +71,11 @@ class ListComputeNodesResponse(BaseModel):
             },
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of each item in items (list)
-        _items = []
-        if self.items:
-            for _item in self.items:
-                if _item:
-                    _items.append(_item.to_dict())
-            _dict['items'] = _items
         return _dict
 
     @classmethod
     def from_dict(cls, obj: Dict) -> Self:
-        """Create an instance of ListComputeNodesResponse from a dict"""
+        """Create an instance of ComputeNodeScheduleParams from a dict"""
         if obj is None:
             return None
 
@@ -93,12 +83,10 @@ class ListComputeNodesResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "items": [ComputeNodeModel.from_dict(_item) for _item in obj.get("items")] if obj.get("items") is not None else None,
-            "skip": obj.get("skip"),
-            "max_limit": obj.get("max_limit"),
-            "count": obj.get("count"),
-            "total_count": obj.get("total_count"),
-            "has_more": obj.get("has_more")
+            "max_parallel_jobs": obj.get("max_parallel_jobs"),
+            "num_jobs": obj.get("num_jobs"),
+            "scheduler_id": obj.get("scheduler_id"),
+            "start_one_worker_per_node": obj.get("start_one_worker_per_node") if obj.get("start_one_worker_per_node") is not None else False
         })
         return _obj
 

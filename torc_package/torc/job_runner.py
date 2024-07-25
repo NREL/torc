@@ -32,6 +32,7 @@ from resource_monitor.resource_monitor import run_monitor_async
 from resource_monitor.timing.timer_stats import Timer
 from torc.openapi_client import DefaultApi
 from torc.openapi_client.models.compute_node_model import ComputeNodeModel
+from torc.openapi_client.models.compute_node_schedule_params import ComputeNodeScheduleParams
 from torc.openapi_client.models.compute_node_stats_model import ComputeNodeStatsModel
 from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
 from torc.openapi_client.models.compute_node_stats import ComputeNodeStats
@@ -264,8 +265,9 @@ class JobRunner:
 
         self._terminate_jobs(list(self._outstanding_jobs.values()))
 
-        self._pids.clear()
-        self._handle_completed_process_stats()
+        if self._stats.is_enabled():
+            self._pids.clear()
+            self._handle_completed_process_stats()
 
     def _run_process_completions(
         self, extra_wait_time_start: float | None
@@ -273,6 +275,14 @@ class JobRunner:
         num_completed = self._process_completions()
         num_started = 0
         reason_none_started = None
+        if num_completed > 0:
+            schedule_result = send_api_command(
+                self._api.prepare_jobs_for_scheduling,
+                self._workflow.key,
+            )
+            for scheduler_params in schedule_result.schedulers:
+                self._schedule_compute_nodes(scheduler_params)
+
         if (
             num_completed > 0 or self._is_time_to_poll_database() or not self._outstanding_jobs
         ) and (
@@ -280,14 +290,6 @@ class JobRunner:
             or len(self._outstanding_jobs) < self._max_parallel_jobs
         ):
             num_started, reason_none_started = self._run_ready_jobs()
-
-        if num_completed > 0:
-            schedule_result = send_api_command(
-                self._api.prepare_jobs_for_scheduling,
-                self._workflow.key,
-            )
-            for scheduler_id in schedule_result.schedulers:
-                self._schedule_compute_nodes(scheduler_id)
 
         if not self._ignore_completion and num_started == 0 and not self._outstanding_jobs:
             if self._is_workflow_complete():
@@ -312,31 +314,35 @@ class JobRunner:
                 )
                 return True, extra_wait_time_start
 
-        if num_started > 0:
+        if num_started > 0 and self._stats.is_enabled():
             self._update_pids_to_monitor()
-        if num_completed > 0:
+        if num_completed > 0 and self._stats.is_enabled():
             self._handle_completed_process_stats()
             self._update_pids_to_monitor()
 
         return False, extra_wait_time_start
 
-    def _schedule_compute_nodes(self, scheduler_id) -> None:
-        if scheduler_id.startswith("slurm_schedulers"):
-            self._schedule_slurm_compute_nodes(scheduler_id)
+    def _schedule_compute_nodes(self, params: ComputeNodeScheduleParams) -> None:
+        if params.scheduler_id.startswith("slurm_schedulers"):
+            self._schedule_slurm_compute_nodes(params)
         else:
-            logger.error("Compute node scheduler %s is not supported", scheduler_id)
+            logger.error("Compute node scheduler %s is not supported", params.scheduler_id)
 
-    def _schedule_slurm_compute_nodes(self, scheduler_id) -> None:
-        key = scheduler_id.split("/")[1]
+    def _schedule_slurm_compute_nodes(self, params: ComputeNodeScheduleParams) -> None:
+        key = params.scheduler_id.split("/")[1]
         cmd = (
             f"torc -k {self._workflow.key} -u {self._api.api_client.configuration.host} "
-            f"hpc slurm schedule-nodes -n 1 "
+            f"hpc slurm schedule-nodes -n {params.num_jobs} "
             f"-o {self._output_dir} -p {self._poll_interval} -s {key}"
         )
+        if params.max_parallel_jobs is not None:
+            cmd += f" --max-parallel-jobs {params.max_parallel_jobs}"
+        if params.start_one_worker_per_node:
+            cmd += " --start-one-worker-per-node"
         ret = run_command(cmd, num_retries=2)
         if ret == 0:
             logger.info("Scheduled compute nodes with cmd=%s", cmd)
-            self._log_worker_schedule_event(scheduler_id)
+            self._log_worker_schedule_event(params.scheduler_id)
         else:
             logger.error("Failed to schedule compute nodes: %s", ret)
 
