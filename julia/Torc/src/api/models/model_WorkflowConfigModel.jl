@@ -5,6 +5,7 @@
 @doc raw"""workflow_config_model
 
     WorkflowConfigModel(;
+        workflow_startup_script=nothing,
         worker_startup_script=nothing,
         compute_node_resource_stats=nothing,
         compute_node_expiration_buffer_seconds=nothing,
@@ -17,6 +18,7 @@
         _rev=nothing,
     )
 
+    - workflow_startup_script::String
     - worker_startup_script::String
     - compute_node_resource_stats::ComputeNodeResourceStatsModel
     - compute_node_expiration_buffer_seconds::Int64 : Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database&#39;s default value of 60 seconds.
@@ -29,6 +31,7 @@
     - _rev::String
 """
 Base.@kwdef mutable struct WorkflowConfigModel <: OpenAPI.APIModel
+    workflow_startup_script::Union{Nothing, String} = nothing
     worker_startup_script::Union{Nothing, String} = nothing
     compute_node_resource_stats = nothing # spec type: Union{ Nothing, ComputeNodeResourceStatsModel }
     compute_node_expiration_buffer_seconds::Union{Nothing, Int64} = nothing
@@ -40,14 +43,14 @@ Base.@kwdef mutable struct WorkflowConfigModel <: OpenAPI.APIModel
     _id::Union{Nothing, String} = nothing
     _rev::Union{Nothing, String} = nothing
 
-    function WorkflowConfigModel(worker_startup_script, compute_node_resource_stats, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, prepare_jobs_sort_method, _key, _id, _rev, )
-        o = new(worker_startup_script, compute_node_resource_stats, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, prepare_jobs_sort_method, _key, _id, _rev, )
+    function WorkflowConfigModel(workflow_startup_script, worker_startup_script, compute_node_resource_stats, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, prepare_jobs_sort_method, _key, _id, _rev, )
+        o = new(workflow_startup_script, worker_startup_script, compute_node_resource_stats, compute_node_expiration_buffer_seconds, compute_node_wait_for_new_jobs_seconds, compute_node_ignore_workflow_completion, compute_node_wait_for_healthy_database_minutes, prepare_jobs_sort_method, _key, _id, _rev, )
         OpenAPI.validate_properties(o)
         return o
     end
 end # type WorkflowConfigModel
 
-const _property_types_WorkflowConfigModel = Dict{Symbol,String}(Symbol("worker_startup_script")=>"String", Symbol("compute_node_resource_stats")=>"ComputeNodeResourceStatsModel", Symbol("compute_node_expiration_buffer_seconds")=>"Int64", Symbol("compute_node_wait_for_new_jobs_seconds")=>"Int64", Symbol("compute_node_ignore_workflow_completion")=>"Bool", Symbol("compute_node_wait_for_healthy_database_minutes")=>"Int64", Symbol("prepare_jobs_sort_method")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
+const _property_types_WorkflowConfigModel = Dict{Symbol,String}(Symbol("workflow_startup_script")=>"String", Symbol("worker_startup_script")=>"String", Symbol("compute_node_resource_stats")=>"ComputeNodeResourceStatsModel", Symbol("compute_node_expiration_buffer_seconds")=>"Int64", Symbol("compute_node_wait_for_new_jobs_seconds")=>"Int64", Symbol("compute_node_ignore_workflow_completion")=>"Bool", Symbol("compute_node_wait_for_healthy_database_minutes")=>"Int64", Symbol("prepare_jobs_sort_method")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ WorkflowConfigModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_WorkflowConfigModel[name]))}
 
 function OpenAPI.check_required(o::WorkflowConfigModel)
@@ -55,6 +58,7 @@ function OpenAPI.check_required(o::WorkflowConfigModel)
 end
 
 function OpenAPI.validate_properties(o::WorkflowConfigModel)
+    OpenAPI.validate_property(WorkflowConfigModel, Symbol("workflow_startup_script"), o.workflow_startup_script)
     OpenAPI.validate_property(WorkflowConfigModel, Symbol("worker_startup_script"), o.worker_startup_script)
     OpenAPI.validate_property(WorkflowConfigModel, Symbol("compute_node_resource_stats"), o.compute_node_resource_stats)
     OpenAPI.validate_property(WorkflowConfigModel, Symbol("compute_node_expiration_buffer_seconds"), o.compute_node_expiration_buffer_seconds)
@@ -68,6 +72,7 @@ function OpenAPI.validate_properties(o::WorkflowConfigModel)
 end
 
 function OpenAPI.validate_property(::Type{ WorkflowConfigModel }, name::Symbol, val)
+
 
 
 

@@ -6221,6 +6221,8 @@ components:
     workflow_config_model:
       type: object
       properties:
+        workflow_startup_script:
+          type: string
         worker_startup_script:
           type: string
         compute_node_resource_stats:
