@@ -14,17 +14,23 @@ Base.@kwdef mutable struct AddJobsResponse <: OpenAPI.APIModel
     items::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{JobModel} }
 
     function AddJobsResponse(items, )
-        OpenAPI.validate_property(AddJobsResponse, Symbol("items"), items)
-        return new(items, )
+        o = new(items, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type AddJobsResponse
 
 const _property_types_AddJobsResponse = Dict{Symbol,String}(Symbol("items")=>"Vector{JobModel}", )
 OpenAPI.property_type(::Type{ AddJobsResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_AddJobsResponse[name]))}
 
-function check_required(o::AddJobsResponse)
+function OpenAPI.check_required(o::AddJobsResponse)
     true
 end
 
+function OpenAPI.validate_properties(o::AddJobsResponse)
+    OpenAPI.validate_property(AddJobsResponse, Symbol("items"), o.items)
+end
+
 function OpenAPI.validate_property(::Type{ AddJobsResponse }, name::Symbol, val)
+
 end

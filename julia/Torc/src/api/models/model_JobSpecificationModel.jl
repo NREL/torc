@@ -53,31 +53,50 @@ Base.@kwdef mutable struct JobSpecificationModel <: OpenAPI.APIModel
     blocked_by::Union{Nothing, Vector{String}} = nothing
 
     function JobSpecificationModel(name, key, command, invocation_script, cancel_on_blocking_job_failure, supports_termination, scheduler, schedule_compute_nodes, input_user_data, output_user_data, resource_requirements, input_files, output_files, blocked_by, )
-        OpenAPI.validate_property(JobSpecificationModel, Symbol("name"), name)
-        OpenAPI.validate_property(JobSpecificationModel, Symbol("key"), key)
-        OpenAPI.validate_property(JobSpecificationModel, Symbol("command"), command)
-        OpenAPI.validate_property(JobSpecificationModel, Symbol("invocation_script"), invocation_script)
-        OpenAPI.validate_property(JobSpecificationModel, Symbol("cancel_on_blocking_job_failure"), cancel_on_blocking_job_failure)
-        OpenAPI.validate_property(JobSpecificationModel, Symbol("supports_termination"), supports_termination)
-        OpenAPI.validate_property(JobSpecificationModel, Symbol("scheduler"), scheduler)
-        OpenAPI.validate_property(JobSpecificationModel, Symbol("schedule_compute_nodes"), schedule_compute_nodes)
-        OpenAPI.validate_property(JobSpecificationModel, Symbol("input_user_data"), input_user_data)
-        OpenAPI.validate_property(JobSpecificationModel, Symbol("output_user_data"), output_user_data)
-        OpenAPI.validate_property(JobSpecificationModel, Symbol("resource_requirements"), resource_requirements)
-        OpenAPI.validate_property(JobSpecificationModel, Symbol("input_files"), input_files)
-        OpenAPI.validate_property(JobSpecificationModel, Symbol("output_files"), output_files)
-        OpenAPI.validate_property(JobSpecificationModel, Symbol("blocked_by"), blocked_by)
-        return new(name, key, command, invocation_script, cancel_on_blocking_job_failure, supports_termination, scheduler, schedule_compute_nodes, input_user_data, output_user_data, resource_requirements, input_files, output_files, blocked_by, )
+        o = new(name, key, command, invocation_script, cancel_on_blocking_job_failure, supports_termination, scheduler, schedule_compute_nodes, input_user_data, output_user_data, resource_requirements, input_files, output_files, blocked_by, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type JobSpecificationModel
 
 const _property_types_JobSpecificationModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("key")=>"String", Symbol("command")=>"String", Symbol("invocation_script")=>"String", Symbol("cancel_on_blocking_job_failure")=>"Bool", Symbol("supports_termination")=>"Bool", Symbol("scheduler")=>"String", Symbol("schedule_compute_nodes")=>"ComputeNodeScheduleParams", Symbol("input_user_data")=>"Vector{String}", Symbol("output_user_data")=>"Vector{String}", Symbol("resource_requirements")=>"String", Symbol("input_files")=>"Vector{String}", Symbol("output_files")=>"Vector{String}", Symbol("blocked_by")=>"Vector{String}", )
 OpenAPI.property_type(::Type{ JobSpecificationModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_JobSpecificationModel[name]))}
 
-function check_required(o::JobSpecificationModel)
+function OpenAPI.check_required(o::JobSpecificationModel)
     o.command === nothing && (return false)
     true
 end
 
+function OpenAPI.validate_properties(o::JobSpecificationModel)
+    OpenAPI.validate_property(JobSpecificationModel, Symbol("name"), o.name)
+    OpenAPI.validate_property(JobSpecificationModel, Symbol("key"), o.key)
+    OpenAPI.validate_property(JobSpecificationModel, Symbol("command"), o.command)
+    OpenAPI.validate_property(JobSpecificationModel, Symbol("invocation_script"), o.invocation_script)
+    OpenAPI.validate_property(JobSpecificationModel, Symbol("cancel_on_blocking_job_failure"), o.cancel_on_blocking_job_failure)
+    OpenAPI.validate_property(JobSpecificationModel, Symbol("supports_termination"), o.supports_termination)
+    OpenAPI.validate_property(JobSpecificationModel, Symbol("scheduler"), o.scheduler)
+    OpenAPI.validate_property(JobSpecificationModel, Symbol("schedule_compute_nodes"), o.schedule_compute_nodes)
+    OpenAPI.validate_property(JobSpecificationModel, Symbol("input_user_data"), o.input_user_data)
+    OpenAPI.validate_property(JobSpecificationModel, Symbol("output_user_data"), o.output_user_data)
+    OpenAPI.validate_property(JobSpecificationModel, Symbol("resource_requirements"), o.resource_requirements)
+    OpenAPI.validate_property(JobSpecificationModel, Symbol("input_files"), o.input_files)
+    OpenAPI.validate_property(JobSpecificationModel, Symbol("output_files"), o.output_files)
+    OpenAPI.validate_property(JobSpecificationModel, Symbol("blocked_by"), o.blocked_by)
+end
+
 function OpenAPI.validate_property(::Type{ JobSpecificationModel }, name::Symbol, val)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 end

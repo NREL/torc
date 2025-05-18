@@ -226,6 +226,10 @@ const requiredExistingFilesResponse = joi.object().required().keys({
 });
 
 const workflowConfig = joi.object().required().keys({
+  // TODO: Consider adding workflow on_complete script option.
+  // Would have to detect last worker.
+  workflow_startup_script: joi.string().optional(),
+  worker_startup_script: joi.string().optional(),
   compute_node_resource_stats: computeNodeResourceStatConfig.default(
       computeNodeResourceStatConfig.validate({}).value),
   compute_node_expiration_buffer_seconds: joi.number().default(120),

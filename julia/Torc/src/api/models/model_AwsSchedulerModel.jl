@@ -23,20 +23,29 @@ Base.@kwdef mutable struct AwsSchedulerModel <: OpenAPI.APIModel
     _rev::Union{Nothing, String} = nothing
 
     function AwsSchedulerModel(name, _key, _id, _rev, )
-        OpenAPI.validate_property(AwsSchedulerModel, Symbol("name"), name)
-        OpenAPI.validate_property(AwsSchedulerModel, Symbol("_key"), _key)
-        OpenAPI.validate_property(AwsSchedulerModel, Symbol("_id"), _id)
-        OpenAPI.validate_property(AwsSchedulerModel, Symbol("_rev"), _rev)
-        return new(name, _key, _id, _rev, )
+        o = new(name, _key, _id, _rev, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type AwsSchedulerModel
 
 const _property_types_AwsSchedulerModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ AwsSchedulerModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_AwsSchedulerModel[name]))}
 
-function check_required(o::AwsSchedulerModel)
+function OpenAPI.check_required(o::AwsSchedulerModel)
     true
 end
 
+function OpenAPI.validate_properties(o::AwsSchedulerModel)
+    OpenAPI.validate_property(AwsSchedulerModel, Symbol("name"), o.name)
+    OpenAPI.validate_property(AwsSchedulerModel, Symbol("_key"), o._key)
+    OpenAPI.validate_property(AwsSchedulerModel, Symbol("_id"), o._id)
+    OpenAPI.validate_property(AwsSchedulerModel, Symbol("_rev"), o._rev)
+end
+
 function OpenAPI.validate_property(::Type{ AwsSchedulerModel }, name::Symbol, val)
+
+
+
+
 end

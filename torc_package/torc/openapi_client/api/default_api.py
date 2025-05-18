@@ -11,24 +11,14 @@
     Do not edit the class manually.
 """  # noqa: E501
 
-
-import io
 import warnings
-
 from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
-from typing import Dict, List, Optional, Tuple, Union, Any
-
-try:
-    from typing import Annotated
-except ImportError:
-    from typing_extensions import Annotated
-
-from pydantic import Field
+from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
-from pydantic import StrictBool, StrictFloat, StrictInt, StrictStr, field_validator
 
+from pydantic import Field, StrictBool, StrictFloat, StrictInt, StrictStr, field_validator
 from typing import Any, Dict, List, Optional, Union
-
+from typing_extensions import Annotated
 from torc.openapi_client.models.add_jobs_response import AddJobsResponse
 from torc.openapi_client.models.aws_scheduler_model import AwsSchedulerModel
 from torc.openapi_client.models.compute_node_model import ComputeNodeModel
@@ -84,7 +74,7 @@ from torc.openapi_client.models.workflow_model import WorkflowModel
 from torc.openapi_client.models.workflow_specification_model import WorkflowSpecificationModel
 from torc.openapi_client.models.workflow_status_model import WorkflowStatusModel
 
-from torc.openapi_client.api_client import ApiClient
+from torc.openapi_client.api_client import ApiClient, RequestSerialized
 from torc.openapi_client.api_response import ApiResponse
 from torc.openapi_client.rest import RESTResponseType
 
@@ -161,8 +151,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -234,8 +223,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -307,8 +295,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -325,19 +312,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -352,11 +340,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -453,8 +442,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -526,8 +514,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -599,8 +586,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -617,19 +603,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -644,11 +631,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -745,8 +733,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -818,8 +805,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -891,8 +877,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -909,19 +894,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -936,11 +922,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -1041,8 +1028,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -1118,8 +1104,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -1195,8 +1180,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -1214,19 +1198,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -1243,11 +1228,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -1344,8 +1330,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -1417,8 +1402,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -1490,8 +1474,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -1508,19 +1491,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -1535,11 +1519,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -1636,8 +1621,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -1709,8 +1693,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -1782,8 +1765,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -1800,19 +1782,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -1827,11 +1810,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -1928,8 +1912,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -2001,8 +1984,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -2074,8 +2056,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -2092,19 +2073,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -2119,11 +2101,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -2220,8 +2203,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -2293,8 +2275,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -2366,8 +2347,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -2384,19 +2364,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -2411,11 +2392,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -2516,8 +2498,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -2593,8 +2574,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -2670,8 +2650,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -2689,19 +2668,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -2718,11 +2698,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -2819,8 +2800,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AddJobsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -2892,8 +2872,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AddJobsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -2965,8 +2944,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AddJobsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -2983,19 +2961,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -3010,11 +2989,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -3111,8 +3091,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -3184,8 +3163,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -3257,8 +3235,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -3275,19 +3252,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -3302,11 +3280,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -3403,8 +3382,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -3476,8 +3454,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -3549,8 +3526,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -3567,19 +3543,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -3594,11 +3571,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -3695,8 +3673,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -3768,8 +3745,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -3841,8 +3817,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -3859,19 +3834,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -3886,11 +3862,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -3987,8 +3964,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -4060,8 +4036,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -4133,8 +4108,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -4151,19 +4125,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -4178,11 +4153,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -4279,8 +4255,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -4352,8 +4327,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -4425,8 +4399,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -4443,19 +4416,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -4470,11 +4444,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -4571,8 +4546,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -4644,8 +4618,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -4717,8 +4690,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -4735,19 +4707,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -4762,11 +4735,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -4859,8 +4833,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -4928,8 +4901,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -4997,8 +4969,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -5014,19 +4985,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -5039,11 +5011,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -5136,8 +5109,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -5205,8 +5177,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -5274,8 +5245,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -5291,19 +5261,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -5316,11 +5287,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -5417,8 +5389,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -5490,8 +5461,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -5563,8 +5533,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -5581,19 +5550,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -5608,11 +5578,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -5709,8 +5680,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -5782,8 +5752,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -5855,8 +5824,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -5873,19 +5841,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -5900,11 +5869,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -6021,8 +5991,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -6114,8 +6083,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -6207,8 +6175,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -6230,19 +6197,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -6267,11 +6235,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -6368,8 +6337,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -6441,8 +6409,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -6514,8 +6481,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -6532,19 +6498,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -6559,11 +6526,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -6660,8 +6628,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -6733,8 +6700,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -6806,8 +6772,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -6824,19 +6789,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -6851,11 +6817,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -6952,8 +6919,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -7025,8 +6991,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -7098,8 +7063,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -7116,19 +7080,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -7143,11 +7108,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -7248,8 +7214,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -7325,8 +7290,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -7402,8 +7366,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -7421,19 +7384,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -7450,11 +7414,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -7551,8 +7516,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -7624,8 +7588,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -7697,8 +7660,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -7715,19 +7677,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -7742,11 +7705,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -7843,8 +7807,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -7916,8 +7879,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -7989,8 +7951,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -8007,19 +7968,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -8034,11 +7996,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -8135,8 +8098,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -8208,8 +8170,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -8281,8 +8242,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -8299,19 +8259,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -8326,11 +8287,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -8427,8 +8389,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -8500,8 +8461,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -8573,8 +8533,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -8591,19 +8550,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -8618,11 +8578,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -8719,8 +8680,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -8792,8 +8752,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -8865,8 +8824,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -8883,19 +8841,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -8910,11 +8869,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -9011,8 +8971,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -9084,8 +9043,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -9157,8 +9115,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -9175,19 +9132,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -9202,11 +9160,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -9303,8 +9262,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -9376,8 +9334,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -9449,8 +9406,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -9467,19 +9423,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -9494,11 +9451,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -9595,8 +9553,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -9668,8 +9625,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -9741,8 +9697,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -9759,19 +9714,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -9786,11 +9742,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -9887,8 +9844,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -9960,8 +9916,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -10033,8 +9988,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -10051,19 +10005,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -10078,11 +10033,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -10179,8 +10135,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -10252,8 +10207,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -10325,8 +10279,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -10343,19 +10296,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -10370,11 +10324,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -10471,8 +10426,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -10544,8 +10498,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -10617,8 +10570,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -10635,19 +10587,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -10662,11 +10615,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -10750,8 +10704,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -10823,8 +10776,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -10896,8 +10848,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -10914,19 +10865,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -10941,11 +10893,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -11029,8 +10982,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -11102,8 +11054,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -11175,8 +11126,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -11193,19 +11143,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -11220,11 +11171,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -11308,8 +11260,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetDotGraphResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -11381,8 +11332,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetDotGraphResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -11454,8 +11404,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetDotGraphResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -11472,19 +11421,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -11499,11 +11449,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -11591,8 +11542,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -11668,8 +11618,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -11745,8 +11694,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -11764,19 +11712,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -11793,11 +11742,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -11881,8 +11831,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -11954,8 +11903,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -12027,8 +11975,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -12045,19 +11992,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -12072,11 +12020,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -12172,8 +12121,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListEventsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -12257,8 +12205,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListEventsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -12342,8 +12289,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListEventsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -12363,19 +12309,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -12402,11 +12349,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -12490,8 +12438,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -12563,8 +12510,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -12636,8 +12582,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -12654,19 +12599,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -12681,11 +12627,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -12769,8 +12716,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -12842,8 +12788,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -12915,8 +12860,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -12933,19 +12877,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -12960,11 +12905,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -13048,8 +12994,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -13121,8 +13066,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -13194,8 +13138,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -13212,19 +13155,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -13239,11 +13183,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -13327,8 +13272,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -13400,8 +13344,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -13473,8 +13416,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -13491,19 +13433,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -13518,11 +13461,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -13606,8 +13550,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobSpecificationModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -13679,8 +13622,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobSpecificationModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -13752,8 +13694,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobSpecificationModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -13770,19 +13711,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -13797,11 +13739,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -13881,8 +13824,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -13950,8 +13892,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -14019,8 +13960,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -14036,19 +13976,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -14061,11 +14002,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -14149,8 +14091,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -14222,8 +14163,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -14295,8 +14235,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -14313,19 +14252,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -14340,11 +14280,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -14428,8 +14369,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -14501,8 +14441,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -14574,8 +14513,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -14592,19 +14530,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -14619,11 +14558,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -14707,8 +14647,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "List[JobProcessStatsModel]",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -14780,8 +14719,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "List[JobProcessStatsModel]",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -14853,8 +14791,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "List[JobProcessStatsModel]",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -14871,19 +14808,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -14898,11 +14836,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -14986,8 +14925,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetReadyJobRequirementsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -15059,8 +14997,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetReadyJobRequirementsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -15132,8 +15069,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "GetReadyJobRequirementsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -15150,19 +15086,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -15179,11 +15116,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -15267,8 +15205,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -15340,8 +15277,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -15413,8 +15349,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -15431,19 +15366,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -15458,11 +15394,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -15546,8 +15483,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -15619,8 +15555,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -15692,8 +15627,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -15710,19 +15644,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -15737,11 +15672,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -15825,8 +15761,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -15898,8 +15833,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -15971,8 +15905,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -15989,19 +15922,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -16016,11 +15950,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -16104,8 +16039,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -16177,8 +16111,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -16250,8 +16183,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -16268,19 +16200,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -16295,11 +16228,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -16383,8 +16317,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -16456,8 +16389,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -16529,8 +16461,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -16547,19 +16478,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -16574,11 +16506,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -16654,8 +16587,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -16719,8 +16651,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -16784,8 +16715,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -16800,19 +16730,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -16823,11 +16754,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -16907,8 +16839,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -16976,8 +16907,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -17045,8 +16975,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -17062,19 +16991,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -17087,11 +17017,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -17171,8 +17102,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowConfigModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -17240,8 +17170,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowConfigModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -17309,8 +17238,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowConfigModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -17326,19 +17254,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -17351,11 +17280,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -17435,8 +17365,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -17504,8 +17433,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -17573,8 +17501,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -17590,19 +17517,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -17615,11 +17543,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -17695,8 +17624,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -17760,8 +17688,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -17825,8 +17752,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -17841,19 +17767,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -17864,11 +17791,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -17944,8 +17872,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -18009,8 +17936,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -18074,8 +18000,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowSpecificationModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -18090,19 +18015,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -18113,11 +18039,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -18197,8 +18124,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -18266,8 +18192,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -18335,8 +18260,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -18352,19 +18276,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -18377,11 +18302,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -18473,8 +18399,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -18554,8 +18479,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -18635,8 +18559,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -18655,19 +18578,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -18690,11 +18614,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -18787,8 +18712,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "IsCompleteResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -18856,8 +18780,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "IsCompleteResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -18925,8 +18848,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "IsCompleteResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -18942,19 +18864,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -18967,11 +18890,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -19079,8 +19003,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JoinByInboundEdgeCollectionEdgeResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -19176,8 +19099,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JoinByInboundEdgeCollectionEdgeResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -19273,8 +19195,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JoinByInboundEdgeCollectionEdgeResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -19297,19 +19218,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -19344,11 +19266,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -19469,8 +19392,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JoinByOutboundEdgeCollectionEdgeResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -19566,8 +19488,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JoinByOutboundEdgeCollectionEdgeResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -19663,8 +19584,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JoinByOutboundEdgeCollectionEdgeResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -19687,19 +19607,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -19734,11 +19655,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -19855,8 +19777,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListAwsSchedulersResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -19948,8 +19869,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListAwsSchedulersResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -20041,8 +19961,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListAwsSchedulersResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -20064,19 +19983,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -20113,11 +20033,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -20197,8 +20118,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListCollectionNamesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -20266,8 +20186,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListCollectionNamesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -20335,8 +20254,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListCollectionNamesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -20352,19 +20270,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -20377,11 +20296,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -20485,8 +20405,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListComputeNodeStatsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -20578,8 +20497,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListComputeNodeStatsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -20671,8 +20589,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListComputeNodeStatsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -20694,19 +20611,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -20743,11 +20661,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -20855,8 +20774,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListComputeNodesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -20952,8 +20870,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListComputeNodesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -21049,8 +20966,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListComputeNodesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -21073,19 +20989,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -21126,11 +21043,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -21222,8 +21140,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListEdgesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -21303,8 +21220,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListEdgesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -21384,8 +21300,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListEdgesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -21404,19 +21319,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -21439,11 +21355,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -21547,8 +21464,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListEventsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -21640,8 +21556,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListEventsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -21733,8 +21648,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListEventsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -21756,19 +21670,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -21805,11 +21720,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -21917,8 +21833,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListFilesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -22014,8 +21929,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListFilesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -22111,8 +22025,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListFilesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -22135,19 +22048,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -22188,11 +22102,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -22284,8 +22199,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListFilesProducedByJob",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -22365,8 +22279,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListFilesProducedByJob",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -22446,8 +22359,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListFilesProducedByJob",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -22466,19 +22378,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -22501,11 +22414,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -22585,8 +22499,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -22654,8 +22567,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -22723,8 +22635,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -22740,19 +22651,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -22765,11 +22677,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -22877,8 +22790,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobProcessStatsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -22974,8 +22886,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobProcessStatsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -23071,8 +22982,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobProcessStatsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -23095,19 +23005,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -23148,11 +23059,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -23240,8 +23152,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobSpecificationsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -23317,8 +23228,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobSpecificationsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -23394,8 +23304,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobSpecificationsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -23413,19 +23322,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -23446,11 +23356,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -23534,8 +23445,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobUserDataConsumesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -23607,8 +23517,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobUserDataConsumesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -23680,8 +23589,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobUserDataConsumesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -23698,19 +23606,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -23725,11 +23634,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -23813,8 +23723,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobUserDataStoresResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -23886,8 +23795,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobUserDataStoresResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -23959,8 +23867,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobUserDataStoresResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -23977,19 +23884,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -24004,11 +23912,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -24128,8 +24037,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -24237,8 +24145,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -24346,8 +24253,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -24373,19 +24279,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -24438,11 +24345,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -24534,8 +24442,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobsByNeedsFileResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -24615,8 +24522,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobsByNeedsFileResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -24696,8 +24602,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobsByNeedsFileResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -24716,19 +24621,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -24751,11 +24657,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -24847,8 +24754,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobsByStatusResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -24928,8 +24834,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobsByStatusResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -25009,8 +24914,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListJobsByStatusResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -25029,19 +24933,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -25064,11 +24969,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -25176,8 +25082,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListLocalSchedulersResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -25273,8 +25178,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListLocalSchedulersResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -25370,8 +25274,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListLocalSchedulersResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -25394,19 +25297,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -25447,11 +25351,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -25531,8 +25436,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListMissingUserDataResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -25600,8 +25504,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListMissingUserDataResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -25669,8 +25572,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListMissingUserDataResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -25686,19 +25588,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -25711,11 +25614,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -25795,8 +25699,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListRequiredExistingFilesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -25864,8 +25767,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListRequiredExistingFilesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -25933,8 +25835,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListRequiredExistingFilesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -25950,19 +25851,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -25975,11 +25877,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -26103,8 +26006,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListResourceRequirementsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -26216,8 +26118,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListResourceRequirementsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -26329,8 +26230,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListResourceRequirementsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -26357,19 +26257,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -26426,11 +26327,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -26546,8 +26448,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListResultsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -26651,8 +26552,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListResultsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -26756,8 +26656,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListResultsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -26782,19 +26681,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -26843,11 +26743,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -26959,8 +26860,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListScheduledComputeNodesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -27060,8 +26960,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListScheduledComputeNodesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -27161,8 +27060,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListScheduledComputeNodesResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -27186,19 +27084,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -27243,11 +27142,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -27383,8 +27283,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListSlurmSchedulersResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -27508,8 +27407,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListSlurmSchedulersResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -27633,8 +27531,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListSlurmSchedulersResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -27664,19 +27561,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -27745,11 +27643,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -27857,8 +27756,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListUserDataResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -27954,8 +27852,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListUserDataResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -28051,8 +27948,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListUserDataResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -28075,19 +27971,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -28128,11 +28025,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -28240,8 +28138,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListWorkflowsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -28337,8 +28234,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListWorkflowsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -28434,8 +28330,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ListWorkflowsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -28458,19 +28353,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -28513,11 +28409,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -28617,8 +28514,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -28706,8 +28602,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -28795,8 +28690,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -28817,19 +28711,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -28852,11 +28747,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -28957,8 +28853,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -29034,8 +28929,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -29111,8 +29005,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -29130,19 +29023,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -29159,11 +29053,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -29264,8 +29159,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -29341,8 +29235,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -29418,8 +29311,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -29437,19 +29329,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -29466,11 +29359,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -29571,8 +29465,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -29648,8 +29541,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -29725,8 +29617,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -29744,19 +29635,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -29773,11 +29665,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -29878,8 +29771,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -29955,8 +29847,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -30032,8 +29923,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -30051,19 +29941,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -30080,11 +29971,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -30185,8 +30077,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -30262,8 +30153,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -30339,8 +30229,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -30358,19 +30247,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -30387,11 +30277,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -30492,8 +30383,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -30569,8 +30459,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -30646,8 +30535,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -30665,19 +30553,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -30694,11 +30583,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -30799,8 +30689,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -30876,8 +30765,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -30953,8 +30841,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -30972,19 +30859,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -31001,11 +30889,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -31110,8 +30999,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -31191,8 +31079,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -31272,8 +31159,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -31292,19 +31178,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -31323,11 +31210,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -31428,8 +31316,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -31505,8 +31392,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -31582,8 +31468,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -31601,19 +31486,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -31630,11 +31516,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -31735,8 +31622,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -31812,8 +31698,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -31889,8 +31774,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -31908,19 +31792,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -31937,11 +31822,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -32042,8 +31928,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -32119,8 +32004,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -32196,8 +32080,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -32215,19 +32098,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -32244,11 +32128,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -32349,8 +32234,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -32426,8 +32310,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -32503,8 +32386,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -32522,19 +32404,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -32551,11 +32434,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -32656,8 +32540,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -32733,8 +32616,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -32810,8 +32692,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -32829,19 +32710,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -32858,11 +32740,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -32963,8 +32846,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -33040,8 +32922,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -33117,8 +32998,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -33136,19 +33016,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -33165,11 +33046,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -33266,8 +33148,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -33339,8 +33220,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -33412,8 +33292,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -33430,19 +33309,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -33457,11 +33337,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -33558,8 +33439,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowConfigModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -33631,8 +33511,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowConfigModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -33704,8 +33583,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowConfigModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -33722,19 +33600,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -33749,11 +33628,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -33850,8 +33730,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -33923,8 +33802,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -33996,8 +33874,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowStatusModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -34014,19 +33891,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -34041,11 +33919,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -34134,8 +34013,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -34199,8 +34077,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -34264,8 +34141,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -34280,19 +34156,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -34303,11 +34180,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
 
         # authentication setting
@@ -34391,8 +34269,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PrepareJobsForSchedulingResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -34464,8 +34341,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PrepareJobsForSchedulingResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -34537,8 +34413,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PrepareJobsForSchedulingResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -34555,19 +34430,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -34582,11 +34458,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -34691,8 +34568,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PrepareJobsForSubmissionResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -34772,8 +34648,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PrepareJobsForSubmissionResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -34853,8 +34728,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PrepareJobsForSubmissionResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -34873,19 +34747,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -34908,11 +34783,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -35013,8 +34889,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PrepareNextJobsForSubmissionResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -35090,8 +34965,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PrepareNextJobsForSubmissionResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -35167,8 +35041,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "PrepareNextJobsForSubmissionResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -35186,19 +35059,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -35217,11 +35091,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -35318,8 +35193,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -35391,8 +35265,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -35464,8 +35337,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -35482,19 +35354,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -35509,11 +35382,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -35610,8 +35484,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ProcessChangedJobInputsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -35683,8 +35556,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ProcessChangedJobInputsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -35756,8 +35628,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ProcessChangedJobInputsResponse",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -35774,19 +35645,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -35801,11 +35673,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -35906,8 +35779,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -35983,8 +35855,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -36060,8 +35931,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "AwsSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -36079,19 +35949,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -36108,11 +35979,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -36213,8 +36085,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -36290,8 +36161,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -36367,8 +36237,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -36386,19 +36255,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -36415,11 +36285,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -36520,8 +36391,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -36597,8 +36467,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -36674,8 +36543,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ComputeNodeStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -36693,19 +36561,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -36722,11 +36591,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -36831,8 +36701,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -36912,8 +36781,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -36993,8 +36861,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "EdgeModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -37013,19 +36880,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -37044,11 +36912,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -37149,8 +37018,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -37226,8 +37094,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -37303,8 +37170,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -37322,19 +37188,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -37351,11 +37218,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -37456,8 +37324,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -37533,8 +37400,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -37610,8 +37476,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "FileModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -37629,19 +37494,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -37658,11 +37524,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -37763,8 +37630,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -37840,8 +37706,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -37917,8 +37782,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -37936,19 +37800,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -37965,11 +37830,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -38070,8 +37936,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -38147,8 +38012,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -38224,8 +38088,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobProcessStatsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -38243,19 +38106,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -38272,11 +38136,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -38377,8 +38242,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -38454,8 +38318,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -38531,8 +38394,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "LocalSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -38550,19 +38412,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -38579,11 +38442,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -38684,8 +38548,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -38761,8 +38624,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -38838,8 +38700,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResourceRequirementsModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -38857,19 +38718,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -38886,11 +38748,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -38991,8 +38854,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -39068,8 +38930,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -39145,8 +39006,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ResultModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -39164,19 +39024,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -39193,11 +39054,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -39298,8 +39160,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -39375,8 +39236,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -39452,8 +39312,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "ScheduledComputeNodesModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -39471,19 +39330,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -39500,11 +39360,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -39605,8 +39466,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -39682,8 +39542,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -39759,8 +39618,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "SlurmSchedulerModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -39778,19 +39636,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -39807,11 +39666,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -39912,8 +39772,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -39989,8 +39848,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -40066,8 +39924,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "UserDataModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -40085,19 +39942,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -40114,11 +39972,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -40215,8 +40074,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -40288,8 +40146,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -40361,8 +40218,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "WorkflowModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -40379,19 +40235,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -40406,11 +40263,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -40511,8 +40369,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -40588,8 +40445,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -40665,8 +40521,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -40684,19 +40539,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -40715,11 +40571,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -40816,8 +40673,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -40889,8 +40745,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -40962,8 +40817,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "object",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -40980,19 +40834,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -41007,11 +40862,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:
@@ -41124,8 +40980,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -41213,8 +41068,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -41302,8 +41156,7 @@ class DefaultApi:
 
         _response_types_map: Dict[str, Optional[str]] = {
             '200': "JobModel",
-            '500': "DefaultErrorResponse"
-            
+            '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
             *_param,
@@ -41324,19 +41177,20 @@ class DefaultApi:
         _content_type,
         _headers,
         _host_index,
-    ) -> Tuple:
+    ) -> RequestSerialized:
 
         _host = None
 
         _collection_formats: Dict[str, str] = {
-            
         }
 
         _path_params: Dict[str, str] = {}
         _query_params: List[Tuple[str, str]] = []
         _header_params: Dict[str, Optional[str]] = _headers or {}
         _form_params: List[Tuple[str, str]] = []
-        _files: Dict[str, str] = {}
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
         _body_params: Optional[bytes] = None
 
         # process the path parameters
@@ -41359,11 +41213,12 @@ class DefaultApi:
 
 
         # set the HTTP header `Accept`
-        _header_params['Accept'] = self.api_client.select_header_accept(
-            [
-                'application/json'
-            ]
-        )
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
 
         # set the HTTP header `Content-Type`
         if _content_type:

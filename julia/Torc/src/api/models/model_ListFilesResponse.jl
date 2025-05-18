@@ -29,20 +29,16 @@ Base.@kwdef mutable struct ListFilesResponse <: OpenAPI.APIModel
     has_more::Union{Nothing, Bool} = nothing
 
     function ListFilesResponse(items, skip, max_limit, count, total_count, has_more, )
-        OpenAPI.validate_property(ListFilesResponse, Symbol("items"), items)
-        OpenAPI.validate_property(ListFilesResponse, Symbol("skip"), skip)
-        OpenAPI.validate_property(ListFilesResponse, Symbol("max_limit"), max_limit)
-        OpenAPI.validate_property(ListFilesResponse, Symbol("count"), count)
-        OpenAPI.validate_property(ListFilesResponse, Symbol("total_count"), total_count)
-        OpenAPI.validate_property(ListFilesResponse, Symbol("has_more"), has_more)
-        return new(items, skip, max_limit, count, total_count, has_more, )
+        o = new(items, skip, max_limit, count, total_count, has_more, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ListFilesResponse
 
 const _property_types_ListFilesResponse = Dict{Symbol,String}(Symbol("items")=>"Vector{FileModel}", Symbol("skip")=>"Int64", Symbol("max_limit")=>"Int64", Symbol("count")=>"Int64", Symbol("total_count")=>"Int64", Symbol("has_more")=>"Bool", )
 OpenAPI.property_type(::Type{ ListFilesResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ListFilesResponse[name]))}
 
-function check_required(o::ListFilesResponse)
+function OpenAPI.check_required(o::ListFilesResponse)
     o.skip === nothing && (return false)
     o.max_limit === nothing && (return false)
     o.count === nothing && (return false)
@@ -51,5 +47,20 @@ function check_required(o::ListFilesResponse)
     true
 end
 
+function OpenAPI.validate_properties(o::ListFilesResponse)
+    OpenAPI.validate_property(ListFilesResponse, Symbol("items"), o.items)
+    OpenAPI.validate_property(ListFilesResponse, Symbol("skip"), o.skip)
+    OpenAPI.validate_property(ListFilesResponse, Symbol("max_limit"), o.max_limit)
+    OpenAPI.validate_property(ListFilesResponse, Symbol("count"), o.count)
+    OpenAPI.validate_property(ListFilesResponse, Symbol("total_count"), o.total_count)
+    OpenAPI.validate_property(ListFilesResponse, Symbol("has_more"), o.has_more)
+end
+
 function OpenAPI.validate_property(::Type{ ListFilesResponse }, name::Symbol, val)
+
+
+
+
+
+
 end

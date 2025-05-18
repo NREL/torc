@@ -41,26 +41,41 @@ Base.@kwdef mutable struct WorkflowSpecificationModel <: OpenAPI.APIModel
     config = nothing # spec type: Union{ Nothing, WorkflowConfigModel }
 
     function WorkflowSpecificationModel(name, key, user, description, jobs, files, user_data, resource_requirements, schedulers, config, )
-        OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("name"), name)
-        OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("key"), key)
-        OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("user"), user)
-        OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("description"), description)
-        OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("jobs"), jobs)
-        OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("files"), files)
-        OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("user_data"), user_data)
-        OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("resource_requirements"), resource_requirements)
-        OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("schedulers"), schedulers)
-        OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("config"), config)
-        return new(name, key, user, description, jobs, files, user_data, resource_requirements, schedulers, config, )
+        o = new(name, key, user, description, jobs, files, user_data, resource_requirements, schedulers, config, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type WorkflowSpecificationModel
 
 const _property_types_WorkflowSpecificationModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("key")=>"String", Symbol("user")=>"String", Symbol("description")=>"String", Symbol("jobs")=>"Vector{JobSpecificationModel}", Symbol("files")=>"Vector{FileModel}", Symbol("user_data")=>"Vector{UserDataModel}", Symbol("resource_requirements")=>"Vector{ResourceRequirementsModel}", Symbol("schedulers")=>"WorkflowSpecificationsSchedulers", Symbol("config")=>"WorkflowConfigModel", )
 OpenAPI.property_type(::Type{ WorkflowSpecificationModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_WorkflowSpecificationModel[name]))}
 
-function check_required(o::WorkflowSpecificationModel)
+function OpenAPI.check_required(o::WorkflowSpecificationModel)
     true
 end
 
+function OpenAPI.validate_properties(o::WorkflowSpecificationModel)
+    OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("name"), o.name)
+    OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("key"), o.key)
+    OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("user"), o.user)
+    OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("description"), o.description)
+    OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("jobs"), o.jobs)
+    OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("files"), o.files)
+    OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("user_data"), o.user_data)
+    OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("resource_requirements"), o.resource_requirements)
+    OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("schedulers"), o.schedulers)
+    OpenAPI.validate_property(WorkflowSpecificationModel, Symbol("config"), o.config)
+end
+
 function OpenAPI.validate_property(::Type{ WorkflowSpecificationModel }, name::Symbol, val)
+
+
+
+
+
+
+
+
+
+
 end

@@ -17,18 +17,25 @@ Base.@kwdef mutable struct AutoTuneStatus <: OpenAPI.APIModel
     job_keys::Union{Nothing, Vector{String}} = nothing
 
     function AutoTuneStatus(enabled, job_keys, )
-        OpenAPI.validate_property(AutoTuneStatus, Symbol("enabled"), enabled)
-        OpenAPI.validate_property(AutoTuneStatus, Symbol("job_keys"), job_keys)
-        return new(enabled, job_keys, )
+        o = new(enabled, job_keys, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type AutoTuneStatus
 
 const _property_types_AutoTuneStatus = Dict{Symbol,String}(Symbol("enabled")=>"Bool", Symbol("job_keys")=>"Vector{String}", )
 OpenAPI.property_type(::Type{ AutoTuneStatus }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_AutoTuneStatus[name]))}
 
-function check_required(o::AutoTuneStatus)
+function OpenAPI.check_required(o::AutoTuneStatus)
     true
 end
 
+function OpenAPI.validate_properties(o::AutoTuneStatus)
+    OpenAPI.validate_property(AutoTuneStatus, Symbol("enabled"), o.enabled)
+    OpenAPI.validate_property(AutoTuneStatus, Symbol("job_keys"), o.job_keys)
+end
+
 function OpenAPI.validate_property(::Type{ AutoTuneStatus }, name::Symbol, val)
+
+
 end

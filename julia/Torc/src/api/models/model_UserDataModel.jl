@@ -29,22 +29,33 @@ Base.@kwdef mutable struct UserDataModel <: OpenAPI.APIModel
     _rev::Union{Nothing, String} = nothing
 
     function UserDataModel(is_ephemeral, name, data, _key, _id, _rev, )
-        OpenAPI.validate_property(UserDataModel, Symbol("is_ephemeral"), is_ephemeral)
-        OpenAPI.validate_property(UserDataModel, Symbol("name"), name)
-        OpenAPI.validate_property(UserDataModel, Symbol("data"), data)
-        OpenAPI.validate_property(UserDataModel, Symbol("_key"), _key)
-        OpenAPI.validate_property(UserDataModel, Symbol("_id"), _id)
-        OpenAPI.validate_property(UserDataModel, Symbol("_rev"), _rev)
-        return new(is_ephemeral, name, data, _key, _id, _rev, )
+        o = new(is_ephemeral, name, data, _key, _id, _rev, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type UserDataModel
 
 const _property_types_UserDataModel = Dict{Symbol,String}(Symbol("is_ephemeral")=>"Bool", Symbol("name")=>"String", Symbol("data")=>"Any", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ UserDataModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_UserDataModel[name]))}
 
-function check_required(o::UserDataModel)
+function OpenAPI.check_required(o::UserDataModel)
     true
 end
 
+function OpenAPI.validate_properties(o::UserDataModel)
+    OpenAPI.validate_property(UserDataModel, Symbol("is_ephemeral"), o.is_ephemeral)
+    OpenAPI.validate_property(UserDataModel, Symbol("name"), o.name)
+    OpenAPI.validate_property(UserDataModel, Symbol("data"), o.data)
+    OpenAPI.validate_property(UserDataModel, Symbol("_key"), o._key)
+    OpenAPI.validate_property(UserDataModel, Symbol("_id"), o._id)
+    OpenAPI.validate_property(UserDataModel, Symbol("_rev"), o._rev)
+end
+
 function OpenAPI.validate_property(::Type{ UserDataModel }, name::Symbol, val)
+
+
+
+
+
+
 end

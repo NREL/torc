@@ -29,24 +29,35 @@ Base.@kwdef mutable struct ComputeNodeStatsModel <: OpenAPI.APIModel
     _rev::Union{Nothing, String} = nothing
 
     function ComputeNodeStatsModel(hostname, stats, timestamp, _key, _id, _rev, )
-        OpenAPI.validate_property(ComputeNodeStatsModel, Symbol("hostname"), hostname)
-        OpenAPI.validate_property(ComputeNodeStatsModel, Symbol("stats"), stats)
-        OpenAPI.validate_property(ComputeNodeStatsModel, Symbol("timestamp"), timestamp)
-        OpenAPI.validate_property(ComputeNodeStatsModel, Symbol("_key"), _key)
-        OpenAPI.validate_property(ComputeNodeStatsModel, Symbol("_id"), _id)
-        OpenAPI.validate_property(ComputeNodeStatsModel, Symbol("_rev"), _rev)
-        return new(hostname, stats, timestamp, _key, _id, _rev, )
+        o = new(hostname, stats, timestamp, _key, _id, _rev, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ComputeNodeStatsModel
 
 const _property_types_ComputeNodeStatsModel = Dict{Symbol,String}(Symbol("hostname")=>"String", Symbol("stats")=>"Vector{ComputeNodeStats}", Symbol("timestamp")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ ComputeNodeStatsModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ComputeNodeStatsModel[name]))}
 
-function check_required(o::ComputeNodeStatsModel)
+function OpenAPI.check_required(o::ComputeNodeStatsModel)
     o.hostname === nothing && (return false)
     o.timestamp === nothing && (return false)
     true
 end
 
+function OpenAPI.validate_properties(o::ComputeNodeStatsModel)
+    OpenAPI.validate_property(ComputeNodeStatsModel, Symbol("hostname"), o.hostname)
+    OpenAPI.validate_property(ComputeNodeStatsModel, Symbol("stats"), o.stats)
+    OpenAPI.validate_property(ComputeNodeStatsModel, Symbol("timestamp"), o.timestamp)
+    OpenAPI.validate_property(ComputeNodeStatsModel, Symbol("_key"), o._key)
+    OpenAPI.validate_property(ComputeNodeStatsModel, Symbol("_id"), o._id)
+    OpenAPI.validate_property(ComputeNodeStatsModel, Symbol("_rev"), o._rev)
+end
+
 function OpenAPI.validate_property(::Type{ ComputeNodeStatsModel }, name::Symbol, val)
+
+
+
+
+
+
 end

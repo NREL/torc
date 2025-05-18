@@ -29,20 +29,16 @@ Base.@kwdef mutable struct ListJobsByNeedsFileResponse <: OpenAPI.APIModel
     has_more::Union{Nothing, Bool} = nothing
 
     function ListJobsByNeedsFileResponse(items, skip, max_limit, count, total_count, has_more, )
-        OpenAPI.validate_property(ListJobsByNeedsFileResponse, Symbol("items"), items)
-        OpenAPI.validate_property(ListJobsByNeedsFileResponse, Symbol("skip"), skip)
-        OpenAPI.validate_property(ListJobsByNeedsFileResponse, Symbol("max_limit"), max_limit)
-        OpenAPI.validate_property(ListJobsByNeedsFileResponse, Symbol("count"), count)
-        OpenAPI.validate_property(ListJobsByNeedsFileResponse, Symbol("total_count"), total_count)
-        OpenAPI.validate_property(ListJobsByNeedsFileResponse, Symbol("has_more"), has_more)
-        return new(items, skip, max_limit, count, total_count, has_more, )
+        o = new(items, skip, max_limit, count, total_count, has_more, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ListJobsByNeedsFileResponse
 
 const _property_types_ListJobsByNeedsFileResponse = Dict{Symbol,String}(Symbol("items")=>"Vector{JobModel}", Symbol("skip")=>"Int64", Symbol("max_limit")=>"Int64", Symbol("count")=>"Int64", Symbol("total_count")=>"Int64", Symbol("has_more")=>"Bool", )
 OpenAPI.property_type(::Type{ ListJobsByNeedsFileResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ListJobsByNeedsFileResponse[name]))}
 
-function check_required(o::ListJobsByNeedsFileResponse)
+function OpenAPI.check_required(o::ListJobsByNeedsFileResponse)
     o.skip === nothing && (return false)
     o.max_limit === nothing && (return false)
     o.count === nothing && (return false)
@@ -51,5 +47,20 @@ function check_required(o::ListJobsByNeedsFileResponse)
     true
 end
 
+function OpenAPI.validate_properties(o::ListJobsByNeedsFileResponse)
+    OpenAPI.validate_property(ListJobsByNeedsFileResponse, Symbol("items"), o.items)
+    OpenAPI.validate_property(ListJobsByNeedsFileResponse, Symbol("skip"), o.skip)
+    OpenAPI.validate_property(ListJobsByNeedsFileResponse, Symbol("max_limit"), o.max_limit)
+    OpenAPI.validate_property(ListJobsByNeedsFileResponse, Symbol("count"), o.count)
+    OpenAPI.validate_property(ListJobsByNeedsFileResponse, Symbol("total_count"), o.total_count)
+    OpenAPI.validate_property(ListJobsByNeedsFileResponse, Symbol("has_more"), o.has_more)
+end
+
 function OpenAPI.validate_property(::Type{ ListJobsByNeedsFileResponse }, name::Symbol, val)
+
+
+
+
+
+
 end

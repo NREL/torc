@@ -660,6 +660,22 @@ def create_workflow_from_json_file(
         if "user" in data:
             logger.info("Overriding user=%s with %s", data["user"], user)
         data["user"] = user
+    name_to_file = {x["name"]: x for x in data["files"]}
+    for job in data["jobs"]:
+        for field in ("input_files", "output_files"):
+            args: list[str] = []
+            for i, iofile in enumerate(job.get(field, [])):
+                if isinstance(iofile, dict):
+                    name = iofile["name"]
+                    file_obj = name_to_file[name]
+                    cli_arg = iofile.get("cli_arg", "")
+                    if cli_arg:
+                        path = file_obj["path"]
+                        args.append(f"{cli_arg}={path}")
+                    job[field][i] = name
+            if args:
+                job["command"] += f" {' '.join(args)}"
+
     spec = WorkflowSpecificationModel(**data)
     return api.add_workflow_specification(spec)
 

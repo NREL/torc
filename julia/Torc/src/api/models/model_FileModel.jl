@@ -30,23 +30,34 @@ Base.@kwdef mutable struct FileModel <: OpenAPI.APIModel
     _rev::Union{Nothing, String} = nothing
 
     function FileModel(name, path, st_mtime, _key, _id, _rev, )
-        OpenAPI.validate_property(FileModel, Symbol("name"), name)
-        OpenAPI.validate_property(FileModel, Symbol("path"), path)
-        OpenAPI.validate_property(FileModel, Symbol("st_mtime"), st_mtime)
-        OpenAPI.validate_property(FileModel, Symbol("_key"), _key)
-        OpenAPI.validate_property(FileModel, Symbol("_id"), _id)
-        OpenAPI.validate_property(FileModel, Symbol("_rev"), _rev)
-        return new(name, path, st_mtime, _key, _id, _rev, )
+        o = new(name, path, st_mtime, _key, _id, _rev, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type FileModel
 
 const _property_types_FileModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("path")=>"String", Symbol("st_mtime")=>"Float64", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ FileModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_FileModel[name]))}
 
-function check_required(o::FileModel)
+function OpenAPI.check_required(o::FileModel)
     o.path === nothing && (return false)
     true
 end
 
+function OpenAPI.validate_properties(o::FileModel)
+    OpenAPI.validate_property(FileModel, Symbol("name"), o.name)
+    OpenAPI.validate_property(FileModel, Symbol("path"), o.path)
+    OpenAPI.validate_property(FileModel, Symbol("st_mtime"), o.st_mtime)
+    OpenAPI.validate_property(FileModel, Symbol("_key"), o._key)
+    OpenAPI.validate_property(FileModel, Symbol("_id"), o._id)
+    OpenAPI.validate_property(FileModel, Symbol("_rev"), o._rev)
+end
+
 function OpenAPI.validate_property(::Type{ FileModel }, name::Symbol, val)
+
+
+
+
+
+
 end

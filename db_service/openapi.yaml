@@ -6221,6 +6221,8 @@ components:
     workflow_config_model:
       type: object
       properties:
+        worker_startup_script:
+          type: string
         compute_node_resource_stats:
           $ref: '#/components/schemas/compute_node_resource_stats_model'
         compute_node_expiration_buffer_seconds:

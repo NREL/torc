@@ -23,21 +23,30 @@ Base.@kwdef mutable struct DefaultErrorResponse <: OpenAPI.APIModel
     code::Union{Nothing, Int64} = nothing
 
     function DefaultErrorResponse(error, errorNum, errorMessage, code, )
-        OpenAPI.validate_property(DefaultErrorResponse, Symbol("error"), error)
-        OpenAPI.validate_property(DefaultErrorResponse, Symbol("errorNum"), errorNum)
-        OpenAPI.validate_property(DefaultErrorResponse, Symbol("errorMessage"), errorMessage)
-        OpenAPI.validate_property(DefaultErrorResponse, Symbol("code"), code)
-        return new(error, errorNum, errorMessage, code, )
+        o = new(error, errorNum, errorMessage, code, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type DefaultErrorResponse
 
 const _property_types_DefaultErrorResponse = Dict{Symbol,String}(Symbol("error")=>"Any", Symbol("errorNum")=>"Int64", Symbol("errorMessage")=>"String", Symbol("code")=>"Int64", )
 OpenAPI.property_type(::Type{ DefaultErrorResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_DefaultErrorResponse[name]))}
 
-function check_required(o::DefaultErrorResponse)
+function OpenAPI.check_required(o::DefaultErrorResponse)
     o.error === nothing && (return false)
     true
 end
 
+function OpenAPI.validate_properties(o::DefaultErrorResponse)
+    OpenAPI.validate_property(DefaultErrorResponse, Symbol("error"), o.error)
+    OpenAPI.validate_property(DefaultErrorResponse, Symbol("errorNum"), o.errorNum)
+    OpenAPI.validate_property(DefaultErrorResponse, Symbol("errorMessage"), o.errorMessage)
+    OpenAPI.validate_property(DefaultErrorResponse, Symbol("code"), o.code)
+end
+
 function OpenAPI.validate_property(::Type{ DefaultErrorResponse }, name::Symbol, val)
+
+
+
+
 end

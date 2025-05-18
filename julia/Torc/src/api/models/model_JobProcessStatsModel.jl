@@ -45,25 +45,16 @@ Base.@kwdef mutable struct JobProcessStatsModel <: OpenAPI.APIModel
     _rev::Union{Nothing, String} = nothing
 
     function JobProcessStatsModel(job_key, run_id, avg_cpu_percent, max_cpu_percent, avg_rss, max_rss, num_samples, timestamp, _key, _id, _rev, )
-        OpenAPI.validate_property(JobProcessStatsModel, Symbol("job_key"), job_key)
-        OpenAPI.validate_property(JobProcessStatsModel, Symbol("run_id"), run_id)
-        OpenAPI.validate_property(JobProcessStatsModel, Symbol("avg_cpu_percent"), avg_cpu_percent)
-        OpenAPI.validate_property(JobProcessStatsModel, Symbol("max_cpu_percent"), max_cpu_percent)
-        OpenAPI.validate_property(JobProcessStatsModel, Symbol("avg_rss"), avg_rss)
-        OpenAPI.validate_property(JobProcessStatsModel, Symbol("max_rss"), max_rss)
-        OpenAPI.validate_property(JobProcessStatsModel, Symbol("num_samples"), num_samples)
-        OpenAPI.validate_property(JobProcessStatsModel, Symbol("timestamp"), timestamp)
-        OpenAPI.validate_property(JobProcessStatsModel, Symbol("_key"), _key)
-        OpenAPI.validate_property(JobProcessStatsModel, Symbol("_id"), _id)
-        OpenAPI.validate_property(JobProcessStatsModel, Symbol("_rev"), _rev)
-        return new(job_key, run_id, avg_cpu_percent, max_cpu_percent, avg_rss, max_rss, num_samples, timestamp, _key, _id, _rev, )
+        o = new(job_key, run_id, avg_cpu_percent, max_cpu_percent, avg_rss, max_rss, num_samples, timestamp, _key, _id, _rev, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type JobProcessStatsModel
 
 const _property_types_JobProcessStatsModel = Dict{Symbol,String}(Symbol("job_key")=>"String", Symbol("run_id")=>"Int64", Symbol("avg_cpu_percent")=>"Float64", Symbol("max_cpu_percent")=>"Float64", Symbol("avg_rss")=>"Float64", Symbol("max_rss")=>"Float64", Symbol("num_samples")=>"Int64", Symbol("timestamp")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ JobProcessStatsModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_JobProcessStatsModel[name]))}
 
-function check_required(o::JobProcessStatsModel)
+function OpenAPI.check_required(o::JobProcessStatsModel)
     o.job_key === nothing && (return false)
     o.run_id === nothing && (return false)
     o.avg_cpu_percent === nothing && (return false)
@@ -75,5 +66,30 @@ function check_required(o::JobProcessStatsModel)
     true
 end
 
+function OpenAPI.validate_properties(o::JobProcessStatsModel)
+    OpenAPI.validate_property(JobProcessStatsModel, Symbol("job_key"), o.job_key)
+    OpenAPI.validate_property(JobProcessStatsModel, Symbol("run_id"), o.run_id)
+    OpenAPI.validate_property(JobProcessStatsModel, Symbol("avg_cpu_percent"), o.avg_cpu_percent)
+    OpenAPI.validate_property(JobProcessStatsModel, Symbol("max_cpu_percent"), o.max_cpu_percent)
+    OpenAPI.validate_property(JobProcessStatsModel, Symbol("avg_rss"), o.avg_rss)
+    OpenAPI.validate_property(JobProcessStatsModel, Symbol("max_rss"), o.max_rss)
+    OpenAPI.validate_property(JobProcessStatsModel, Symbol("num_samples"), o.num_samples)
+    OpenAPI.validate_property(JobProcessStatsModel, Symbol("timestamp"), o.timestamp)
+    OpenAPI.validate_property(JobProcessStatsModel, Symbol("_key"), o._key)
+    OpenAPI.validate_property(JobProcessStatsModel, Symbol("_id"), o._id)
+    OpenAPI.validate_property(JobProcessStatsModel, Symbol("_rev"), o._rev)
+end
+
 function OpenAPI.validate_property(::Type{ JobProcessStatsModel }, name::Symbol, val)
+
+
+
+
+
+
+
+
+
+
+
 end

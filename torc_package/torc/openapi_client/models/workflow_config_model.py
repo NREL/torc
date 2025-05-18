@@ -17,20 +17,17 @@ import pprint
 import re  # noqa: F401
 import json
 
-
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from pydantic import BaseModel, StrictBool, StrictInt, StrictStr, field_validator
-from pydantic import Field
 from torc.openapi_client.models.compute_node_resource_stats_model import ComputeNodeResourceStatsModel
-try:
-    from typing import Self
-except ImportError:
-    from typing_extensions import Self
+from typing import Optional, Set
+from typing_extensions import Self
 
 class WorkflowConfigModel(BaseModel):
     """
     WorkflowConfigModel
     """ # noqa: E501
+    worker_startup_script: Optional[StrictStr] = None
     compute_node_resource_stats: Optional[ComputeNodeResourceStatsModel] = None
     compute_node_expiration_buffer_seconds: Optional[StrictInt] = Field(default=None, description="Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database's default value of 60 seconds.")
     compute_node_wait_for_new_jobs_seconds: Optional[StrictInt] = Field(default=None, description="Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete.")
@@ -40,7 +37,7 @@ class WorkflowConfigModel(BaseModel):
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = ["compute_node_resource_stats", "compute_node_expiration_buffer_seconds", "compute_node_wait_for_new_jobs_seconds", "compute_node_ignore_workflow_completion", "compute_node_wait_for_healthy_database_minutes", "prepare_jobs_sort_method", "_key", "_id", "_rev"]
+    __properties: ClassVar[List[str]] = ["worker_startup_script", "compute_node_resource_stats", "compute_node_expiration_buffer_seconds", "compute_node_wait_for_new_jobs_seconds", "compute_node_ignore_workflow_completion", "compute_node_wait_for_healthy_database_minutes", "prepare_jobs_sort_method", "_key", "_id", "_rev"]
 
     @field_validator('prepare_jobs_sort_method')
     def prepare_jobs_sort_method_validate_enum(cls, value):
@@ -48,14 +45,15 @@ class WorkflowConfigModel(BaseModel):
         if value is None:
             return value
 
-        if value not in ('gpus_runtime_memory', 'gpus_memory_runtime', 'none'):
+        if value not in set(['gpus_runtime_memory', 'gpus_memory_runtime', 'none']):
             raise ValueError("must be one of enum values ('gpus_runtime_memory', 'gpus_memory_runtime', 'none')")
         return value
 
-    model_config = {
-        "populate_by_name": True,
-        "validate_assignment": True
-    }
+    model_config = ConfigDict(
+        populate_by_name=True,
+        validate_assignment=True,
+        protected_namespaces=(),
+    )
 
 
     def to_str(self) -> str:
@@ -68,7 +66,7 @@ class WorkflowConfigModel(BaseModel):
         return json.dumps(self.to_dict())
 
     @classmethod
-    def from_json(cls, json_str: str) -> Self:
+    def from_json(cls, json_str: str) -> Optional[Self]:
         """Create an instance of WorkflowConfigModel from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
@@ -82,10 +80,12 @@ class WorkflowConfigModel(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
+        excluded_fields: Set[str] = set([
+        ])
+
         _dict = self.model_dump(
             by_alias=True,
-            exclude={
-            },
+            exclude=excluded_fields,
             exclude_none=True,
         )
         # override the default output from pydantic by calling `to_dict()` of compute_node_resource_stats
@@ -94,7 +94,7 @@ class WorkflowConfigModel(BaseModel):
         return _dict
 
     @classmethod
-    def from_dict(cls, obj: Dict) -> Self:
+    def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
         """Create an instance of WorkflowConfigModel from a dict"""
         if obj is None:
             return None
@@ -103,7 +103,8 @@ class WorkflowConfigModel(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "compute_node_resource_stats": ComputeNodeResourceStatsModel.from_dict(obj.get("compute_node_resource_stats")) if obj.get("compute_node_resource_stats") is not None else None,
+            "worker_startup_script": obj.get("worker_startup_script"),
+            "compute_node_resource_stats": ComputeNodeResourceStatsModel.from_dict(obj["compute_node_resource_stats"]) if obj.get("compute_node_resource_stats") is not None else None,
             "compute_node_expiration_buffer_seconds": obj.get("compute_node_expiration_buffer_seconds"),
             "compute_node_wait_for_new_jobs_seconds": obj.get("compute_node_wait_for_new_jobs_seconds"),
             "compute_node_ignore_workflow_completion": obj.get("compute_node_ignore_workflow_completion") if obj.get("compute_node_ignore_workflow_completion") is not None else False,

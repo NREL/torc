@@ -14,17 +14,23 @@ Base.@kwdef mutable struct ListRequiredExistingFilesResponse <: OpenAPI.APIModel
     files::Union{Nothing, Vector{String}} = nothing
 
     function ListRequiredExistingFilesResponse(files, )
-        OpenAPI.validate_property(ListRequiredExistingFilesResponse, Symbol("files"), files)
-        return new(files, )
+        o = new(files, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ListRequiredExistingFilesResponse
 
 const _property_types_ListRequiredExistingFilesResponse = Dict{Symbol,String}(Symbol("files")=>"Vector{String}", )
 OpenAPI.property_type(::Type{ ListRequiredExistingFilesResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ListRequiredExistingFilesResponse[name]))}
 
-function check_required(o::ListRequiredExistingFilesResponse)
+function OpenAPI.check_required(o::ListRequiredExistingFilesResponse)
     true
 end
 
+function OpenAPI.validate_properties(o::ListRequiredExistingFilesResponse)
+    OpenAPI.validate_property(ListRequiredExistingFilesResponse, Symbol("files"), o.files)
+end
+
 function OpenAPI.validate_property(::Type{ ListRequiredExistingFilesResponse }, name::Symbol, val)
+
 end

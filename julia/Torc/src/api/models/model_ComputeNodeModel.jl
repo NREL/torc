@@ -41,24 +41,16 @@ Base.@kwdef mutable struct ComputeNodeModel <: OpenAPI.APIModel
     _rev::Union{Nothing, String} = nothing
 
     function ComputeNodeModel(hostname, pid, start_time, duration_seconds, is_active, resources, scheduler, _key, _id, _rev, )
-        OpenAPI.validate_property(ComputeNodeModel, Symbol("hostname"), hostname)
-        OpenAPI.validate_property(ComputeNodeModel, Symbol("pid"), pid)
-        OpenAPI.validate_property(ComputeNodeModel, Symbol("start_time"), start_time)
-        OpenAPI.validate_property(ComputeNodeModel, Symbol("duration_seconds"), duration_seconds)
-        OpenAPI.validate_property(ComputeNodeModel, Symbol("is_active"), is_active)
-        OpenAPI.validate_property(ComputeNodeModel, Symbol("resources"), resources)
-        OpenAPI.validate_property(ComputeNodeModel, Symbol("scheduler"), scheduler)
-        OpenAPI.validate_property(ComputeNodeModel, Symbol("_key"), _key)
-        OpenAPI.validate_property(ComputeNodeModel, Symbol("_id"), _id)
-        OpenAPI.validate_property(ComputeNodeModel, Symbol("_rev"), _rev)
-        return new(hostname, pid, start_time, duration_seconds, is_active, resources, scheduler, _key, _id, _rev, )
+        o = new(hostname, pid, start_time, duration_seconds, is_active, resources, scheduler, _key, _id, _rev, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ComputeNodeModel
 
 const _property_types_ComputeNodeModel = Dict{Symbol,String}(Symbol("hostname")=>"String", Symbol("pid")=>"Int64", Symbol("start_time")=>"String", Symbol("duration_seconds")=>"Float64", Symbol("is_active")=>"Bool", Symbol("resources")=>"ComputeNodesResources", Symbol("scheduler")=>"Any", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ ComputeNodeModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ComputeNodeModel[name]))}
 
-function check_required(o::ComputeNodeModel)
+function OpenAPI.check_required(o::ComputeNodeModel)
     o.hostname === nothing && (return false)
     o.pid === nothing && (return false)
     o.start_time === nothing && (return false)
@@ -66,5 +58,28 @@ function check_required(o::ComputeNodeModel)
     true
 end
 
+function OpenAPI.validate_properties(o::ComputeNodeModel)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("hostname"), o.hostname)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("pid"), o.pid)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("start_time"), o.start_time)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("duration_seconds"), o.duration_seconds)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("is_active"), o.is_active)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("resources"), o.resources)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("scheduler"), o.scheduler)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("_key"), o._key)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("_id"), o._id)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("_rev"), o._rev)
+end
+
 function OpenAPI.validate_property(::Type{ ComputeNodeModel }, name::Symbol, val)
+
+
+
+
+
+
+
+
+
+
 end

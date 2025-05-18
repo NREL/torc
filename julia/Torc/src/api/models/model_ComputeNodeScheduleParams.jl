@@ -23,22 +23,31 @@ Base.@kwdef mutable struct ComputeNodeScheduleParams <: OpenAPI.APIModel
     start_one_worker_per_node::Union{Nothing, Bool} = false
 
     function ComputeNodeScheduleParams(max_parallel_jobs, num_jobs, scheduler_id, start_one_worker_per_node, )
-        OpenAPI.validate_property(ComputeNodeScheduleParams, Symbol("max_parallel_jobs"), max_parallel_jobs)
-        OpenAPI.validate_property(ComputeNodeScheduleParams, Symbol("num_jobs"), num_jobs)
-        OpenAPI.validate_property(ComputeNodeScheduleParams, Symbol("scheduler_id"), scheduler_id)
-        OpenAPI.validate_property(ComputeNodeScheduleParams, Symbol("start_one_worker_per_node"), start_one_worker_per_node)
-        return new(max_parallel_jobs, num_jobs, scheduler_id, start_one_worker_per_node, )
+        o = new(max_parallel_jobs, num_jobs, scheduler_id, start_one_worker_per_node, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ComputeNodeScheduleParams
 
 const _property_types_ComputeNodeScheduleParams = Dict{Symbol,String}(Symbol("max_parallel_jobs")=>"Int64", Symbol("num_jobs")=>"Int64", Symbol("scheduler_id")=>"String", Symbol("start_one_worker_per_node")=>"Bool", )
 OpenAPI.property_type(::Type{ ComputeNodeScheduleParams }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ComputeNodeScheduleParams[name]))}
 
-function check_required(o::ComputeNodeScheduleParams)
+function OpenAPI.check_required(o::ComputeNodeScheduleParams)
     o.num_jobs === nothing && (return false)
     o.scheduler_id === nothing && (return false)
     true
 end
 
+function OpenAPI.validate_properties(o::ComputeNodeScheduleParams)
+    OpenAPI.validate_property(ComputeNodeScheduleParams, Symbol("max_parallel_jobs"), o.max_parallel_jobs)
+    OpenAPI.validate_property(ComputeNodeScheduleParams, Symbol("num_jobs"), o.num_jobs)
+    OpenAPI.validate_property(ComputeNodeScheduleParams, Symbol("scheduler_id"), o.scheduler_id)
+    OpenAPI.validate_property(ComputeNodeScheduleParams, Symbol("start_one_worker_per_node"), o.start_one_worker_per_node)
+end
+
 function OpenAPI.validate_property(::Type{ ComputeNodeScheduleParams }, name::Symbol, val)
+
+
+
+
 end
