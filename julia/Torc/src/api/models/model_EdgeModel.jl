@@ -29,24 +29,35 @@ Base.@kwdef mutable struct EdgeModel <: OpenAPI.APIModel
     _rev::Union{Nothing, String} = nothing
 
     function EdgeModel(_from, _to, data, _key, _id, _rev, )
-        OpenAPI.validate_property(EdgeModel, Symbol("_from"), _from)
-        OpenAPI.validate_property(EdgeModel, Symbol("_to"), _to)
-        OpenAPI.validate_property(EdgeModel, Symbol("data"), data)
-        OpenAPI.validate_property(EdgeModel, Symbol("_key"), _key)
-        OpenAPI.validate_property(EdgeModel, Symbol("_id"), _id)
-        OpenAPI.validate_property(EdgeModel, Symbol("_rev"), _rev)
-        return new(_from, _to, data, _key, _id, _rev, )
+        o = new(_from, _to, data, _key, _id, _rev, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type EdgeModel
 
 const _property_types_EdgeModel = Dict{Symbol,String}(Symbol("_from")=>"String", Symbol("_to")=>"String", Symbol("data")=>"Any", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ EdgeModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_EdgeModel[name]))}
 
-function check_required(o::EdgeModel)
+function OpenAPI.check_required(o::EdgeModel)
     o._from === nothing && (return false)
     o._to === nothing && (return false)
     true
 end
 
+function OpenAPI.validate_properties(o::EdgeModel)
+    OpenAPI.validate_property(EdgeModel, Symbol("_from"), o._from)
+    OpenAPI.validate_property(EdgeModel, Symbol("_to"), o._to)
+    OpenAPI.validate_property(EdgeModel, Symbol("data"), o.data)
+    OpenAPI.validate_property(EdgeModel, Symbol("_key"), o._key)
+    OpenAPI.validate_property(EdgeModel, Symbol("_id"), o._id)
+    OpenAPI.validate_property(EdgeModel, Symbol("_rev"), o._rev)
+end
+
 function OpenAPI.validate_property(::Type{ EdgeModel }, name::Symbol, val)
+
+
+
+
+
+
 end

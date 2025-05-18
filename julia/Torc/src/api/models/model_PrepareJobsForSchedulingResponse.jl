@@ -14,18 +14,24 @@ Base.@kwdef mutable struct PrepareJobsForSchedulingResponse <: OpenAPI.APIModel
     schedulers::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{ComputeNodeScheduleParams} }
 
     function PrepareJobsForSchedulingResponse(schedulers, )
-        OpenAPI.validate_property(PrepareJobsForSchedulingResponse, Symbol("schedulers"), schedulers)
-        return new(schedulers, )
+        o = new(schedulers, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type PrepareJobsForSchedulingResponse
 
 const _property_types_PrepareJobsForSchedulingResponse = Dict{Symbol,String}(Symbol("schedulers")=>"Vector{ComputeNodeScheduleParams}", )
 OpenAPI.property_type(::Type{ PrepareJobsForSchedulingResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_PrepareJobsForSchedulingResponse[name]))}
 
-function check_required(o::PrepareJobsForSchedulingResponse)
+function OpenAPI.check_required(o::PrepareJobsForSchedulingResponse)
     o.schedulers === nothing && (return false)
     true
 end
 
+function OpenAPI.validate_properties(o::PrepareJobsForSchedulingResponse)
+    OpenAPI.validate_property(PrepareJobsForSchedulingResponse, Symbol("schedulers"), o.schedulers)
+end
+
 function OpenAPI.validate_property(::Type{ PrepareJobsForSchedulingResponse }, name::Symbol, val)
+
 end

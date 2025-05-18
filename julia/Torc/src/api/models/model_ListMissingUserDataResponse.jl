@@ -14,17 +14,23 @@ Base.@kwdef mutable struct ListMissingUserDataResponse <: OpenAPI.APIModel
     user_data::Union{Nothing, Vector{String}} = nothing
 
     function ListMissingUserDataResponse(user_data, )
-        OpenAPI.validate_property(ListMissingUserDataResponse, Symbol("user_data"), user_data)
-        return new(user_data, )
+        o = new(user_data, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ListMissingUserDataResponse
 
 const _property_types_ListMissingUserDataResponse = Dict{Symbol,String}(Symbol("user_data")=>"Vector{String}", )
 OpenAPI.property_type(::Type{ ListMissingUserDataResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ListMissingUserDataResponse[name]))}
 
-function check_required(o::ListMissingUserDataResponse)
+function OpenAPI.check_required(o::ListMissingUserDataResponse)
     true
 end
 
+function OpenAPI.validate_properties(o::ListMissingUserDataResponse)
+    OpenAPI.validate_property(ListMissingUserDataResponse, Symbol("user_data"), o.user_data)
+end
+
 function OpenAPI.validate_property(::Type{ ListMissingUserDataResponse }, name::Symbol, val)
+
 end

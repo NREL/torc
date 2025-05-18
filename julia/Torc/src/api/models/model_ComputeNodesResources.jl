@@ -29,20 +29,16 @@ Base.@kwdef mutable struct ComputeNodesResources <: OpenAPI.APIModel
     scheduler_config_id::Union{Nothing, String} = nothing
 
     function ComputeNodesResources(num_cpus, memory_gb, num_gpus, num_nodes, time_limit, scheduler_config_id, )
-        OpenAPI.validate_property(ComputeNodesResources, Symbol("num_cpus"), num_cpus)
-        OpenAPI.validate_property(ComputeNodesResources, Symbol("memory_gb"), memory_gb)
-        OpenAPI.validate_property(ComputeNodesResources, Symbol("num_gpus"), num_gpus)
-        OpenAPI.validate_property(ComputeNodesResources, Symbol("num_nodes"), num_nodes)
-        OpenAPI.validate_property(ComputeNodesResources, Symbol("time_limit"), time_limit)
-        OpenAPI.validate_property(ComputeNodesResources, Symbol("scheduler_config_id"), scheduler_config_id)
-        return new(num_cpus, memory_gb, num_gpus, num_nodes, time_limit, scheduler_config_id, )
+        o = new(num_cpus, memory_gb, num_gpus, num_nodes, time_limit, scheduler_config_id, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ComputeNodesResources
 
 const _property_types_ComputeNodesResources = Dict{Symbol,String}(Symbol("num_cpus")=>"Int64", Symbol("memory_gb")=>"Float64", Symbol("num_gpus")=>"Int64", Symbol("num_nodes")=>"Int64", Symbol("time_limit")=>"String", Symbol("scheduler_config_id")=>"String", )
 OpenAPI.property_type(::Type{ ComputeNodesResources }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ComputeNodesResources[name]))}
 
-function check_required(o::ComputeNodesResources)
+function OpenAPI.check_required(o::ComputeNodesResources)
     o.num_cpus === nothing && (return false)
     o.memory_gb === nothing && (return false)
     o.num_gpus === nothing && (return false)
@@ -50,5 +46,20 @@ function check_required(o::ComputeNodesResources)
     true
 end
 
+function OpenAPI.validate_properties(o::ComputeNodesResources)
+    OpenAPI.validate_property(ComputeNodesResources, Symbol("num_cpus"), o.num_cpus)
+    OpenAPI.validate_property(ComputeNodesResources, Symbol("memory_gb"), o.memory_gb)
+    OpenAPI.validate_property(ComputeNodesResources, Symbol("num_gpus"), o.num_gpus)
+    OpenAPI.validate_property(ComputeNodesResources, Symbol("num_nodes"), o.num_nodes)
+    OpenAPI.validate_property(ComputeNodesResources, Symbol("time_limit"), o.time_limit)
+    OpenAPI.validate_property(ComputeNodesResources, Symbol("scheduler_config_id"), o.scheduler_config_id)
+end
+
 function OpenAPI.validate_property(::Type{ ComputeNodesResources }, name::Symbol, val)
+
+
+
+
+
+
 end

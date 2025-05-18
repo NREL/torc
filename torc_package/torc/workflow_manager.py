@@ -11,6 +11,7 @@ from torc.common import JobStatus
 from torc.exceptions import InvalidWorkflow, TorcOperationNotAllowed
 from torc.openapi_client.api import DefaultApi
 from torc.openapi_client.models.file_model import FileModel
+from torc.utils.run_command import check_run_command
 
 
 logger = logging.getLogger(__name__)
@@ -33,6 +34,10 @@ class WorkflowManager:
         only_uninitialized : bool
             If True, only initialize jobs with a status of uninitialized.
         """
+        config = send_api_command(self._api.get_workflow_config, self._key)
+        if config.workflow_startup_script is not None:
+            check_run_command(config.workflow_startup_script)
+
         self._bump_run_id()
         send_api_command(self._api.reset_workflow_status, self._key)
         self.reinitialize_jobs(
@@ -64,6 +69,9 @@ class WorkflowManager:
             If True, ignore checks for missing files and user_data.
         """
         self._check_workflow(ignore_missing_data=ignore_missing_data)
+        config = send_api_command(self._api.get_workflow_config, self._key)
+        if config.workflow_startup_script is not None:
+            check_run_command(config.workflow_startup_script)
         self._initialize_files()
         send_api_command(self._api.reset_workflow_status, self._key)
         send_api_command(self._api.reset_job_status, self._key)

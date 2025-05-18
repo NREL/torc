@@ -38,23 +38,16 @@ Base.@kwdef mutable struct ResultModel <: OpenAPI.APIModel
     _rev::Union{Nothing, String} = nothing
 
     function ResultModel(job_key, run_id, return_code, exec_time_minutes, completion_time, status, _key, _id, _rev, )
-        OpenAPI.validate_property(ResultModel, Symbol("job_key"), job_key)
-        OpenAPI.validate_property(ResultModel, Symbol("run_id"), run_id)
-        OpenAPI.validate_property(ResultModel, Symbol("return_code"), return_code)
-        OpenAPI.validate_property(ResultModel, Symbol("exec_time_minutes"), exec_time_minutes)
-        OpenAPI.validate_property(ResultModel, Symbol("completion_time"), completion_time)
-        OpenAPI.validate_property(ResultModel, Symbol("status"), status)
-        OpenAPI.validate_property(ResultModel, Symbol("_key"), _key)
-        OpenAPI.validate_property(ResultModel, Symbol("_id"), _id)
-        OpenAPI.validate_property(ResultModel, Symbol("_rev"), _rev)
-        return new(job_key, run_id, return_code, exec_time_minutes, completion_time, status, _key, _id, _rev, )
+        o = new(job_key, run_id, return_code, exec_time_minutes, completion_time, status, _key, _id, _rev, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ResultModel
 
 const _property_types_ResultModel = Dict{Symbol,String}(Symbol("job_key")=>"String", Symbol("run_id")=>"Int64", Symbol("return_code")=>"Int64", Symbol("exec_time_minutes")=>"Float64", Symbol("completion_time")=>"String", Symbol("status")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ ResultModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ResultModel[name]))}
 
-function check_required(o::ResultModel)
+function OpenAPI.check_required(o::ResultModel)
     o.job_key === nothing && (return false)
     o.run_id === nothing && (return false)
     o.return_code === nothing && (return false)
@@ -64,5 +57,26 @@ function check_required(o::ResultModel)
     true
 end
 
+function OpenAPI.validate_properties(o::ResultModel)
+    OpenAPI.validate_property(ResultModel, Symbol("job_key"), o.job_key)
+    OpenAPI.validate_property(ResultModel, Symbol("run_id"), o.run_id)
+    OpenAPI.validate_property(ResultModel, Symbol("return_code"), o.return_code)
+    OpenAPI.validate_property(ResultModel, Symbol("exec_time_minutes"), o.exec_time_minutes)
+    OpenAPI.validate_property(ResultModel, Symbol("completion_time"), o.completion_time)
+    OpenAPI.validate_property(ResultModel, Symbol("status"), o.status)
+    OpenAPI.validate_property(ResultModel, Symbol("_key"), o._key)
+    OpenAPI.validate_property(ResultModel, Symbol("_id"), o._id)
+    OpenAPI.validate_property(ResultModel, Symbol("_rev"), o._rev)
+end
+
 function OpenAPI.validate_property(::Type{ ResultModel }, name::Symbol, val)
+
+
+
+
+
+
+
+
+
 end

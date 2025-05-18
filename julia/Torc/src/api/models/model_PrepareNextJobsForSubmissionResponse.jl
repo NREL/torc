@@ -14,17 +14,23 @@ Base.@kwdef mutable struct PrepareNextJobsForSubmissionResponse <: OpenAPI.APIMo
     jobs::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{JobModel} }
 
     function PrepareNextJobsForSubmissionResponse(jobs, )
-        OpenAPI.validate_property(PrepareNextJobsForSubmissionResponse, Symbol("jobs"), jobs)
-        return new(jobs, )
+        o = new(jobs, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type PrepareNextJobsForSubmissionResponse
 
 const _property_types_PrepareNextJobsForSubmissionResponse = Dict{Symbol,String}(Symbol("jobs")=>"Vector{JobModel}", )
 OpenAPI.property_type(::Type{ PrepareNextJobsForSubmissionResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_PrepareNextJobsForSubmissionResponse[name]))}
 
-function check_required(o::PrepareNextJobsForSubmissionResponse)
+function OpenAPI.check_required(o::PrepareNextJobsForSubmissionResponse)
     true
 end
 
+function OpenAPI.validate_properties(o::PrepareNextJobsForSubmissionResponse)
+    OpenAPI.validate_property(PrepareNextJobsForSubmissionResponse, Symbol("jobs"), o.jobs)
+end
+
 function OpenAPI.validate_property(::Type{ PrepareNextJobsForSubmissionResponse }, name::Symbol, val)
+
 end

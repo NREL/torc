@@ -47,7 +47,7 @@ from torc.common import JOB_STDIO_DIR, STATS_DIR, timer_stats_collector, JobStat
 from torc.exceptions import InvalidParameter, DatabaseOffline
 from torc.utils.cpu_affinity_mask_tracker import CpuAffinityMaskTracker
 from torc.utils.filesystem_factory import make_path
-from torc.utils.run_command import run_command
+from torc.utils.run_command import check_run_command, run_command
 from .async_cli_command import AsyncCliCommand
 from .common import KiB, MiB, GiB, TiB
 
@@ -211,6 +211,10 @@ class JobRunner:
         if self._stats.is_enabled():
             self._start_resource_monitor()
 
+        if self._config.worker_startup_script is not None:
+            logger.info("Running node startup script: %s", self._config.worker_startup_script)
+            check_run_command(self._config.worker_startup_script)
+            logger.info("Completed node startup script")
         try:
             self._run_until_complete()
         finally:

@@ -29,20 +29,16 @@ Base.@kwdef mutable struct ListWorkflowsResponse <: OpenAPI.APIModel
     has_more::Union{Nothing, Bool} = nothing
 
     function ListWorkflowsResponse(items, skip, max_limit, count, total_count, has_more, )
-        OpenAPI.validate_property(ListWorkflowsResponse, Symbol("items"), items)
-        OpenAPI.validate_property(ListWorkflowsResponse, Symbol("skip"), skip)
-        OpenAPI.validate_property(ListWorkflowsResponse, Symbol("max_limit"), max_limit)
-        OpenAPI.validate_property(ListWorkflowsResponse, Symbol("count"), count)
-        OpenAPI.validate_property(ListWorkflowsResponse, Symbol("total_count"), total_count)
-        OpenAPI.validate_property(ListWorkflowsResponse, Symbol("has_more"), has_more)
-        return new(items, skip, max_limit, count, total_count, has_more, )
+        o = new(items, skip, max_limit, count, total_count, has_more, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ListWorkflowsResponse
 
 const _property_types_ListWorkflowsResponse = Dict{Symbol,String}(Symbol("items")=>"Vector{WorkflowModel}", Symbol("skip")=>"Int64", Symbol("max_limit")=>"Int64", Symbol("count")=>"Int64", Symbol("total_count")=>"Int64", Symbol("has_more")=>"Bool", )
 OpenAPI.property_type(::Type{ ListWorkflowsResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ListWorkflowsResponse[name]))}
 
-function check_required(o::ListWorkflowsResponse)
+function OpenAPI.check_required(o::ListWorkflowsResponse)
     o.skip === nothing && (return false)
     o.max_limit === nothing && (return false)
     o.count === nothing && (return false)
@@ -51,5 +47,20 @@ function check_required(o::ListWorkflowsResponse)
     true
 end
 
+function OpenAPI.validate_properties(o::ListWorkflowsResponse)
+    OpenAPI.validate_property(ListWorkflowsResponse, Symbol("items"), o.items)
+    OpenAPI.validate_property(ListWorkflowsResponse, Symbol("skip"), o.skip)
+    OpenAPI.validate_property(ListWorkflowsResponse, Symbol("max_limit"), o.max_limit)
+    OpenAPI.validate_property(ListWorkflowsResponse, Symbol("count"), o.count)
+    OpenAPI.validate_property(ListWorkflowsResponse, Symbol("total_count"), o.total_count)
+    OpenAPI.validate_property(ListWorkflowsResponse, Symbol("has_more"), o.has_more)
+end
+
 function OpenAPI.validate_property(::Type{ ListWorkflowsResponse }, name::Symbol, val)
+
+
+
+
+
+
 end

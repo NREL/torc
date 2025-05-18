@@ -29,22 +29,33 @@ Base.@kwdef mutable struct LocalSchedulerModel <: OpenAPI.APIModel
     _rev::Union{Nothing, String} = nothing
 
     function LocalSchedulerModel(name, memory, num_cpus, _key, _id, _rev, )
-        OpenAPI.validate_property(LocalSchedulerModel, Symbol("name"), name)
-        OpenAPI.validate_property(LocalSchedulerModel, Symbol("memory"), memory)
-        OpenAPI.validate_property(LocalSchedulerModel, Symbol("num_cpus"), num_cpus)
-        OpenAPI.validate_property(LocalSchedulerModel, Symbol("_key"), _key)
-        OpenAPI.validate_property(LocalSchedulerModel, Symbol("_id"), _id)
-        OpenAPI.validate_property(LocalSchedulerModel, Symbol("_rev"), _rev)
-        return new(name, memory, num_cpus, _key, _id, _rev, )
+        o = new(name, memory, num_cpus, _key, _id, _rev, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type LocalSchedulerModel
 
 const _property_types_LocalSchedulerModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("memory")=>"String", Symbol("num_cpus")=>"Int64", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ LocalSchedulerModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_LocalSchedulerModel[name]))}
 
-function check_required(o::LocalSchedulerModel)
+function OpenAPI.check_required(o::LocalSchedulerModel)
     true
 end
 
+function OpenAPI.validate_properties(o::LocalSchedulerModel)
+    OpenAPI.validate_property(LocalSchedulerModel, Symbol("name"), o.name)
+    OpenAPI.validate_property(LocalSchedulerModel, Symbol("memory"), o.memory)
+    OpenAPI.validate_property(LocalSchedulerModel, Symbol("num_cpus"), o.num_cpus)
+    OpenAPI.validate_property(LocalSchedulerModel, Symbol("_key"), o._key)
+    OpenAPI.validate_property(LocalSchedulerModel, Symbol("_id"), o._id)
+    OpenAPI.validate_property(LocalSchedulerModel, Symbol("_rev"), o._rev)
+end
+
 function OpenAPI.validate_property(::Type{ LocalSchedulerModel }, name::Symbol, val)
+
+
+
+
+
+
 end

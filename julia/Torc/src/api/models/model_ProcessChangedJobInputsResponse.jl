@@ -14,17 +14,23 @@ Base.@kwdef mutable struct ProcessChangedJobInputsResponse <: OpenAPI.APIModel
     reinitialized_jobs::Union{Nothing, Vector{String}} = nothing
 
     function ProcessChangedJobInputsResponse(reinitialized_jobs, )
-        OpenAPI.validate_property(ProcessChangedJobInputsResponse, Symbol("reinitialized_jobs"), reinitialized_jobs)
-        return new(reinitialized_jobs, )
+        o = new(reinitialized_jobs, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ProcessChangedJobInputsResponse
 
 const _property_types_ProcessChangedJobInputsResponse = Dict{Symbol,String}(Symbol("reinitialized_jobs")=>"Vector{String}", )
 OpenAPI.property_type(::Type{ ProcessChangedJobInputsResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ProcessChangedJobInputsResponse[name]))}
 
-function check_required(o::ProcessChangedJobInputsResponse)
+function OpenAPI.check_required(o::ProcessChangedJobInputsResponse)
     true
 end
 
+function OpenAPI.validate_properties(o::ProcessChangedJobInputsResponse)
+    OpenAPI.validate_property(ProcessChangedJobInputsResponse, Symbol("reinitialized_jobs"), o.reinitialized_jobs)
+end
+
 function OpenAPI.validate_property(::Type{ ProcessChangedJobInputsResponse }, name::Symbol, val)
+
 end

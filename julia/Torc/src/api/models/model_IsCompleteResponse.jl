@@ -17,20 +17,27 @@ Base.@kwdef mutable struct IsCompleteResponse <: OpenAPI.APIModel
     is_complete::Union{Nothing, Bool} = nothing
 
     function IsCompleteResponse(is_canceled, is_complete, )
-        OpenAPI.validate_property(IsCompleteResponse, Symbol("is_canceled"), is_canceled)
-        OpenAPI.validate_property(IsCompleteResponse, Symbol("is_complete"), is_complete)
-        return new(is_canceled, is_complete, )
+        o = new(is_canceled, is_complete, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type IsCompleteResponse
 
 const _property_types_IsCompleteResponse = Dict{Symbol,String}(Symbol("is_canceled")=>"Bool", Symbol("is_complete")=>"Bool", )
 OpenAPI.property_type(::Type{ IsCompleteResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_IsCompleteResponse[name]))}
 
-function check_required(o::IsCompleteResponse)
+function OpenAPI.check_required(o::IsCompleteResponse)
     o.is_canceled === nothing && (return false)
     o.is_complete === nothing && (return false)
     true
 end
 
+function OpenAPI.validate_properties(o::IsCompleteResponse)
+    OpenAPI.validate_property(IsCompleteResponse, Symbol("is_canceled"), o.is_canceled)
+    OpenAPI.validate_property(IsCompleteResponse, Symbol("is_complete"), o.is_complete)
+end
+
 function OpenAPI.validate_property(::Type{ IsCompleteResponse }, name::Symbol, val)
+
+
 end

@@ -32,21 +32,16 @@ Base.@kwdef mutable struct GetReadyJobRequirementsResponse <: OpenAPI.APIModel
     max_runtime::Union{Nothing, String} = nothing
 
     function GetReadyJobRequirementsResponse(num_jobs, num_cpus, num_gpus, memory_gb, max_memory_gb, max_num_nodes, max_runtime, )
-        OpenAPI.validate_property(GetReadyJobRequirementsResponse, Symbol("num_jobs"), num_jobs)
-        OpenAPI.validate_property(GetReadyJobRequirementsResponse, Symbol("num_cpus"), num_cpus)
-        OpenAPI.validate_property(GetReadyJobRequirementsResponse, Symbol("num_gpus"), num_gpus)
-        OpenAPI.validate_property(GetReadyJobRequirementsResponse, Symbol("memory_gb"), memory_gb)
-        OpenAPI.validate_property(GetReadyJobRequirementsResponse, Symbol("max_memory_gb"), max_memory_gb)
-        OpenAPI.validate_property(GetReadyJobRequirementsResponse, Symbol("max_num_nodes"), max_num_nodes)
-        OpenAPI.validate_property(GetReadyJobRequirementsResponse, Symbol("max_runtime"), max_runtime)
-        return new(num_jobs, num_cpus, num_gpus, memory_gb, max_memory_gb, max_num_nodes, max_runtime, )
+        o = new(num_jobs, num_cpus, num_gpus, memory_gb, max_memory_gb, max_num_nodes, max_runtime, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type GetReadyJobRequirementsResponse
 
 const _property_types_GetReadyJobRequirementsResponse = Dict{Symbol,String}(Symbol("num_jobs")=>"Int64", Symbol("num_cpus")=>"Int64", Symbol("num_gpus")=>"Int64", Symbol("memory_gb")=>"Float64", Symbol("max_memory_gb")=>"Float64", Symbol("max_num_nodes")=>"Int64", Symbol("max_runtime")=>"String", )
 OpenAPI.property_type(::Type{ GetReadyJobRequirementsResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_GetReadyJobRequirementsResponse[name]))}
 
-function check_required(o::GetReadyJobRequirementsResponse)
+function OpenAPI.check_required(o::GetReadyJobRequirementsResponse)
     o.num_jobs === nothing && (return false)
     o.num_cpus === nothing && (return false)
     o.num_gpus === nothing && (return false)
@@ -57,5 +52,22 @@ function check_required(o::GetReadyJobRequirementsResponse)
     true
 end
 
+function OpenAPI.validate_properties(o::GetReadyJobRequirementsResponse)
+    OpenAPI.validate_property(GetReadyJobRequirementsResponse, Symbol("num_jobs"), o.num_jobs)
+    OpenAPI.validate_property(GetReadyJobRequirementsResponse, Symbol("num_cpus"), o.num_cpus)
+    OpenAPI.validate_property(GetReadyJobRequirementsResponse, Symbol("num_gpus"), o.num_gpus)
+    OpenAPI.validate_property(GetReadyJobRequirementsResponse, Symbol("memory_gb"), o.memory_gb)
+    OpenAPI.validate_property(GetReadyJobRequirementsResponse, Symbol("max_memory_gb"), o.max_memory_gb)
+    OpenAPI.validate_property(GetReadyJobRequirementsResponse, Symbol("max_num_nodes"), o.max_num_nodes)
+    OpenAPI.validate_property(GetReadyJobRequirementsResponse, Symbol("max_runtime"), o.max_runtime)
+end
+
 function OpenAPI.validate_property(::Type{ GetReadyJobRequirementsResponse }, name::Symbol, val)
+
+
+
+
+
+
+
 end

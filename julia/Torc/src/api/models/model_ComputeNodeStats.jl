@@ -29,20 +29,16 @@ Base.@kwdef mutable struct ComputeNodeStats <: OpenAPI.APIModel
     job_key::Union{Nothing, String} = nothing
 
     function ComputeNodeStats(resource_type, average, minimum, maximum, num_samples, job_key, )
-        OpenAPI.validate_property(ComputeNodeStats, Symbol("resource_type"), resource_type)
-        OpenAPI.validate_property(ComputeNodeStats, Symbol("average"), average)
-        OpenAPI.validate_property(ComputeNodeStats, Symbol("minimum"), minimum)
-        OpenAPI.validate_property(ComputeNodeStats, Symbol("maximum"), maximum)
-        OpenAPI.validate_property(ComputeNodeStats, Symbol("num_samples"), num_samples)
-        OpenAPI.validate_property(ComputeNodeStats, Symbol("job_key"), job_key)
-        return new(resource_type, average, minimum, maximum, num_samples, job_key, )
+        o = new(resource_type, average, minimum, maximum, num_samples, job_key, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ComputeNodeStats
 
 const _property_types_ComputeNodeStats = Dict{Symbol,String}(Symbol("resource_type")=>"String", Symbol("average")=>"Any", Symbol("minimum")=>"Any", Symbol("maximum")=>"Any", Symbol("num_samples")=>"Int64", Symbol("job_key")=>"String", )
 OpenAPI.property_type(::Type{ ComputeNodeStats }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ComputeNodeStats[name]))}
 
-function check_required(o::ComputeNodeStats)
+function OpenAPI.check_required(o::ComputeNodeStats)
     o.resource_type === nothing && (return false)
     o.average === nothing && (return false)
     o.minimum === nothing && (return false)
@@ -51,5 +47,20 @@ function check_required(o::ComputeNodeStats)
     true
 end
 
+function OpenAPI.validate_properties(o::ComputeNodeStats)
+    OpenAPI.validate_property(ComputeNodeStats, Symbol("resource_type"), o.resource_type)
+    OpenAPI.validate_property(ComputeNodeStats, Symbol("average"), o.average)
+    OpenAPI.validate_property(ComputeNodeStats, Symbol("minimum"), o.minimum)
+    OpenAPI.validate_property(ComputeNodeStats, Symbol("maximum"), o.maximum)
+    OpenAPI.validate_property(ComputeNodeStats, Symbol("num_samples"), o.num_samples)
+    OpenAPI.validate_property(ComputeNodeStats, Symbol("job_key"), o.job_key)
+end
+
 function OpenAPI.validate_property(::Type{ ComputeNodeStats }, name::Symbol, val)
+
+
+
+
+
+
 end

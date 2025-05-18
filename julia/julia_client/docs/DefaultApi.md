@@ -154,8 +154,8 @@ Store a AWS compute node configuration in the \"aws_schedulers\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**AwsSchedulerModel**](AwsSchedulerModel.md)| AWS compute node configuration. | 
+**workflow** | **String** | Workflow key |
+**body** | [**AwsSchedulerModel**](AwsSchedulerModel.md) | AWS compute node configuration. |
 
 ### Return type
 
@@ -185,8 +185,8 @@ Store a compute node in the \"compute_nodes\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**ComputeNodeModel**](ComputeNodeModel.md)| compute node. | 
+**workflow** | **String** | Workflow key |
+**body** | [**ComputeNodeModel**](ComputeNodeModel.md) | compute node. |
 
 ### Return type
 
@@ -216,8 +216,8 @@ Store a compute node statistics in the \"compute_node_stats\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**ComputeNodeStatsModel**](ComputeNodeStatsModel.md)| compute node statistics. | 
+**workflow** | **String** | Workflow key |
+**body** | [**ComputeNodeStatsModel**](ComputeNodeStatsModel.md) | compute node statistics. |
 
 ### Return type
 
@@ -247,9 +247,9 @@ Store an edge between two vertexes in the designated collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**name** | **String**| Edge name | [default to nothing]
-**body** | [**EdgeModel**](EdgeModel.md)| Relationship between two vertexes | 
+**workflow** | **String** | Workflow key |
+**name** | **String** | Edge name |
+**body** | [**EdgeModel**](EdgeModel.md) | Relationship between two vertexes |
 
 ### Return type
 
@@ -279,8 +279,8 @@ Store a event in the \"events\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | **Any**| event. | 
+**workflow** | **String** | Workflow key |
+**body** | **Any** | event. |
 
 ### Return type
 
@@ -310,8 +310,8 @@ Store a file in the \"files\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**FileModel**](FileModel.md)| file. | 
+**workflow** | **String** | Workflow key |
+**body** | [**FileModel**](FileModel.md) | file. |
 
 ### Return type
 
@@ -341,8 +341,8 @@ Store a job in the \"jobs\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**JobModel**](JobModel.md)| job. | 
+**workflow** | **String** | Workflow key |
+**body** | [**JobModel**](JobModel.md) | job. |
 
 ### Return type
 
@@ -372,8 +372,8 @@ Store a job process statistics in the \"job_process_stats\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**JobProcessStatsModel**](JobProcessStatsModel.md)| job process statistics. | 
+**workflow** | **String** | Workflow key |
+**body** | [**JobProcessStatsModel**](JobProcessStatsModel.md) | job process statistics. |
 
 ### Return type
 
@@ -403,9 +403,9 @@ Store user data for a job and connect the two vertexes.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| Job key | [default to nothing]
-**body** | [**UserDataModel**](UserDataModel.md)| User data for the job. | 
+**workflow** | **String** | Workflow key |
+**key** | **String** | Job key |
+**body** | [**UserDataModel**](UserDataModel.md) | User data for the job. |
 
 ### Return type
 
@@ -435,8 +435,8 @@ Add jobs in bulk. Recommended max job count of 10,000.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**JobsModel**](JobsModel.md)|  | 
+**workflow** | **String** | Workflow key |
+**body** | [**JobsModel**](JobsModel.md) |  |
 
 ### Return type
 
@@ -466,8 +466,8 @@ Store a local compute node configuration in the \"local_schedulers\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**LocalSchedulerModel**](LocalSchedulerModel.md)| local compute node configuration. | 
+**workflow** | **String** | Workflow key |
+**body** | [**LocalSchedulerModel**](LocalSchedulerModel.md) | local compute node configuration. |
 
 ### Return type
 
@@ -497,8 +497,8 @@ Store a resource requirements in the \"resource_requirements\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**ResourceRequirementsModel**](ResourceRequirementsModel.md)| resource requirements. | 
+**workflow** | **String** | Workflow key |
+**body** | [**ResourceRequirementsModel**](ResourceRequirementsModel.md) | resource requirements. |
 
 ### Return type
 
@@ -528,8 +528,8 @@ Store a result in the \"results\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**ResultModel**](ResultModel.md)| result. | 
+**workflow** | **String** | Workflow key |
+**body** | [**ResultModel**](ResultModel.md) | result. |
 
 ### Return type
 
@@ -559,8 +559,8 @@ Store a scheduled compute node in the \"scheduled_compute_nodes\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**ScheduledComputeNodesModel**](ScheduledComputeNodesModel.md)| scheduled compute node. | 
+**workflow** | **String** | Workflow key |
+**body** | [**ScheduledComputeNodesModel**](ScheduledComputeNodesModel.md) | scheduled compute node. |
 
 ### Return type
 
@@ -590,8 +590,8 @@ Store a Slurm compute node configuration in the \"slurm_schedulers\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**SlurmSchedulerModel**](SlurmSchedulerModel.md)| Slurm compute node configuration. | 
+**workflow** | **String** | Workflow key |
+**body** | [**SlurmSchedulerModel**](SlurmSchedulerModel.md) | Slurm compute node configuration. |
 
 ### Return type
 
@@ -621,8 +621,8 @@ Store a user data in the \"user_data\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**body** | [**UserDataModel**](UserDataModel.md)| user data. | 
+**workflow** | **String** | Workflow key |
+**body** | [**UserDataModel**](UserDataModel.md) | user data. |
 
 ### Return type
 
@@ -652,7 +652,7 @@ Store a workflow in the \"workflows\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**body** | [**WorkflowModel**](WorkflowModel.md)| Collection of jobs and dependent resources. | 
+**body** | [**WorkflowModel**](WorkflowModel.md) | Collection of jobs and dependent resources. |
 
 ### Return type
 
@@ -682,7 +682,7 @@ Store a workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**body** | [**WorkflowSpecificationModel**](WorkflowSpecificationModel.md)| New workflow | 
+**body** | [**WorkflowSpecificationModel**](WorkflowSpecificationModel.md) | New workflow |
 
 ### Return type
 
@@ -712,13 +712,13 @@ Enable workflow for auto-tuning resource requirements.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -748,13 +748,13 @@ Cancel workflow. Workers will detect the status change and cancel jobs.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -784,13 +784,13 @@ Complete a job, connect it to a result, and manage side effects.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| Job key | [default to nothing]
-**status** | **String**| New job status. | [default to nothing]
-**rev** | **String**| Current job revision. | [default to nothing]
-**run_id** | **Int64**| Current job run ID | [default to nothing]
-**compute_node_key** | **String**| Compute node key that started the job | [default to nothing]
-**body** | [**ResultModel**](ResultModel.md)| Result of the job. | 
+**workflow** | **String** | Workflow key |
+**key** | **String** | Job key |
+**status** | **String** | New job status. |
+**rev** | **String** | Current job revision. |
+**run_id** | **Int64** | Current job run ID |
+**compute_node_key** | **String** | Compute node key that started the job |
+**body** | [**ResultModel**](ResultModel.md) | Result of the job. |
 
 ### Return type
 
@@ -820,13 +820,13 @@ Delete all documents from the \"aws_schedulers\" collection for a workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -856,13 +856,13 @@ Delete all documents from the \"compute_node_stats\" collection for a workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -892,13 +892,13 @@ Delete all documents from the \"compute_nodes\" collection for a workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -928,14 +928,14 @@ Deletes all edges from the designated collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**name** | **String**| Edge collection name | [default to nothing]
+**workflow** | **String** | Workflow key |
+**name** | **String** | Edge collection name |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -965,13 +965,13 @@ Delete all documents from the \"events\" collection for a workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -1001,13 +1001,13 @@ Delete all documents from the \"files\" collection for a workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -1037,13 +1037,13 @@ Delete all documents from the \"job_process_stats\" collection for a workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -1073,13 +1073,13 @@ Delete all documents from the \"jobs\" collection for a workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -1109,13 +1109,13 @@ Delete all documents from the \"local_schedulers\" collection for a workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -1145,13 +1145,13 @@ Delete all documents from the \"resource_requirements\" collection for a workflo
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -1181,13 +1181,13 @@ Delete all documents from the \"results\" collection for a workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -1217,13 +1217,13 @@ Delete all documents from the \"scheduled_compute_nodes\" collection for a workf
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -1253,13 +1253,13 @@ Delete all documents from the \"slurm_schedulers\" collection for a workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -1289,13 +1289,13 @@ Delete all documents from the \"user_data\" collection for a workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -1325,8 +1325,8 @@ Retrieve the document from the \"aws_schedulers\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the aws_schedulers document | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the aws_schedulers document |
 
 ### Return type
 
@@ -1356,8 +1356,8 @@ Retrieve the document from the \"compute_nodes\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the compute_nodes document | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the compute_nodes document |
 
 ### Return type
 
@@ -1387,8 +1387,8 @@ Retrieve the document from the \"compute_node_stats\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the compute_node_stats document | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the compute_node_stats document |
 
 ### Return type
 
@@ -1418,8 +1418,8 @@ Build a string for a DOT graph.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
-**name** | **String**| Graph name | [default to nothing]
+**key** | **String** | Workflow key |
+**name** | **String** | Graph name |
 
 ### Return type
 
@@ -1449,9 +1449,9 @@ Retrieves an edge from the designated collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**name** | **String**| Edge collection name | [default to nothing]
-**key** | **String**| Edge key | [default to nothing]
+**workflow** | **String** | Workflow key |
+**name** | **String** | Edge collection name |
+**key** | **String** | Edge key |
 
 ### Return type
 
@@ -1481,8 +1481,8 @@ Retrieve the document from the \"events\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the events document | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the events document |
 
 ### Return type
 
@@ -1512,16 +1512,16 @@ Return all events newer than the event with event_key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
-**timestamp** | **Float64**| Timestamp expressed as number of milliseconds since the epoch in UTC | [default to nothing]
+**key** | **String** | Workflow key |
+**timestamp** | **Float64** | Timestamp expressed as number of milliseconds since the epoch in UTC |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **category** | **String**|  | [default to &quot;null&quot;]
- **skip** | **Float64**| Ignored | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
+ **category** | **String** |  | [default to &quot;null&quot;]
+ **skip** | **Float64** | Ignored | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
 
 ### Return type
 
@@ -1551,8 +1551,8 @@ Retrieve the document from the \"files\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the files document | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the files document |
 
 ### Return type
 
@@ -1582,8 +1582,8 @@ Retrieve the document from the \"jobs\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the jobs document | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the jobs document |
 
 ### Return type
 
@@ -1613,8 +1613,8 @@ Retrieve the document from the \"job_process_stats\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the job_process_stats document | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the job_process_stats document |
 
 ### Return type
 
@@ -1644,8 +1644,8 @@ Retrieve the resource requirements for a job by its key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| Job key | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | Job key |
 
 ### Return type
 
@@ -1675,8 +1675,8 @@ Retrieves a job from the \"jobs\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| Job key | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | Job key |
 
 ### Return type
 
@@ -1706,7 +1706,7 @@ Return the timestamp of the latest event in ms since the epoch in UTC.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Return type
 
@@ -1736,8 +1736,8 @@ Retrieve the latest result for a job. Throws an error if no result is stored.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| Job key | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | Job key |
 
 ### Return type
 
@@ -1767,8 +1767,8 @@ Retrieve the document from the \"local_schedulers\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the local_schedulers document | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the local_schedulers document |
 
 ### Return type
 
@@ -1798,8 +1798,8 @@ Retrieve the job process stats for a job by its key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| Job key | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | Job key |
 
 ### Return type
 
@@ -1829,13 +1829,13 @@ Return the resource requirements for jobs with a status of ready.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **scheduler_config_id** | **String**| Limit output to jobs assigned this scheduler. | [default to nothing]
+ **scheduler_config_id** | **String** | Limit output to jobs assigned this scheduler. | [default to nothing]
 
 ### Return type
 
@@ -1865,8 +1865,8 @@ Retrieve the document from the \"resource_requirements\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the resource_requirements document | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the resource_requirements document |
 
 ### Return type
 
@@ -1896,8 +1896,8 @@ Retrieve the document from the \"results\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the results document | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the results document |
 
 ### Return type
 
@@ -1927,8 +1927,8 @@ Retrieve the document from the \"scheduled_compute_nodes\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the scheduled_compute_nodes document | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the scheduled_compute_nodes document |
 
 ### Return type
 
@@ -1958,8 +1958,8 @@ Retrieve the document from the \"slurm_schedulers\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the slurm_schedulers document | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the slurm_schedulers document |
 
 ### Return type
 
@@ -1989,8 +1989,8 @@ Retrieve the document from the \"user_data\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the user_data document | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the user_data document |
 
 ### Return type
 
@@ -2046,7 +2046,7 @@ Retrieve the document for a key from the \"workflows\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| key of the workflows document | [default to nothing]
+**key** | **String** | key of the workflows document |
 
 ### Return type
 
@@ -2076,7 +2076,7 @@ Returns the workflow config.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Return type
 
@@ -2106,7 +2106,7 @@ Retrieves the current workflow in JSON format.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| key of the workflow. | [default to nothing]
+**key** | **String** | key of the workflow. |
 
 ### Return type
 
@@ -2188,7 +2188,7 @@ Reports the workflow status.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Return type
 
@@ -2218,15 +2218,15 @@ Initialize job relationships based on file and user_data relationships.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **only_uninitialized** | **Bool**| Only initialize jobs with a status of uninitialized. | [default to false]
- **clear_ephemeral_user_data** | **Bool**| Clear all ephemeral user data. | [default to true]
- **body** | **Any**|  | 
+ **only_uninitialized** | **Bool** | Only initialize jobs with a status of uninitialized. | [default to false]
+ **clear_ephemeral_user_data** | **Bool** | Clear all ephemeral user data. | [default to true]
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -2256,7 +2256,7 @@ Reports true if all jobs in the workflow are complete.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Return type
 
@@ -2286,19 +2286,19 @@ Retrieve a table of the collections joined by an inbound edge.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
-**collection** | **String**| From collection | [default to nothing]
-**edge** | **String**| Edge name | [default to nothing]
-**body** | **Any**| Filters for query | 
+**key** | **String** | Workflow key |
+**collection** | **String** | From collection |
+**edge** | **String** | Edge name |
+**body** | **Any** | Filters for query |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **collection_key** | **String**|  | [default to nothing]
- **collection_name** | **String**|  | [default to nothing]
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
+ **collection_key** | **String** |  | [default to nothing]
+ **collection_name** | **String** |  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
 
 ### Return type
 
@@ -2328,19 +2328,19 @@ Retrieve a table of the collections joined by an outbound edge.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
-**collection** | **String**| From collection | [default to nothing]
-**edge** | **String**| Edge name | [default to nothing]
-**body** | **Any**| Filters for query | 
+**key** | **String** | Workflow key |
+**collection** | **String** | From collection |
+**edge** | **String** | Edge name |
+**body** | **Any** | Filters for query |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **collection_key** | **String**|  | [default to nothing]
- **collection_name** | **String**|  | [default to nothing]
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
+ **collection_key** | **String** |  | [default to nothing]
+ **collection_name** | **String** |  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
 
 ### Return type
 
@@ -2370,18 +2370,18 @@ Retrieve all documents from the \"aws_schedulers\" collection for one workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
- **sort_by** | **String**|  | [default to &quot;null&quot;]
- **reverse_sort** | **Bool**|  | [default to false]
- **key** | **String**|  | [default to nothing]
- **name** | **String**|  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
+ **sort_by** | **String** |  | [default to &quot;null&quot;]
+ **reverse_sort** | **Bool** |  | [default to false]
+ **key** | **String** |  | [default to nothing]
+ **name** | **String** |  | [default to nothing]
 
 ### Return type
 
@@ -2411,7 +2411,7 @@ Retrieve all collection names for one workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Return type
 
@@ -2441,18 +2441,18 @@ Retrieve all documents from the \"compute_node_stats\" collection for one workfl
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
- **sort_by** | **String**|  | [default to &quot;null&quot;]
- **reverse_sort** | **Bool**|  | [default to false]
- **key** | **String**|  | [default to nothing]
- **hostname** | **String**|  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
+ **sort_by** | **String** |  | [default to &quot;null&quot;]
+ **reverse_sort** | **Bool** |  | [default to false]
+ **key** | **String** |  | [default to nothing]
+ **hostname** | **String** |  | [default to nothing]
 
 ### Return type
 
@@ -2482,19 +2482,19 @@ Retrieve all documents from the \"compute_nodes\" collection for one workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
- **sort_by** | **String**|  | [default to &quot;null&quot;]
- **reverse_sort** | **Bool**|  | [default to false]
- **key** | **String**|  | [default to nothing]
- **hostname** | **String**|  | [default to nothing]
- **is_active** | **Bool**|  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
+ **sort_by** | **String** |  | [default to &quot;null&quot;]
+ **reverse_sort** | **Bool** |  | [default to false]
+ **key** | **String** |  | [default to nothing]
+ **hostname** | **String** |  | [default to nothing]
+ **is_active** | **Bool** |  | [default to nothing]
 
 ### Return type
 
@@ -2524,15 +2524,15 @@ Retrieve all edges from the designated collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**name** | **String**| Edge collection name | [default to nothing]
+**workflow** | **String** | Workflow key |
+**name** | **String** | Edge collection name |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
 
 ### Return type
 
@@ -2562,18 +2562,18 @@ Retrieve all documents from the \"events\" collection for one workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
- **sort_by** | **String**|  | [default to &quot;null&quot;]
- **reverse_sort** | **Bool**|  | [default to false]
- **key** | **String**|  | [default to nothing]
- **category** | **String**|  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
+ **sort_by** | **String** |  | [default to &quot;null&quot;]
+ **reverse_sort** | **Bool** |  | [default to false]
+ **key** | **String** |  | [default to nothing]
+ **category** | **String** |  | [default to nothing]
 
 ### Return type
 
@@ -2603,19 +2603,19 @@ Retrieve all documents from the \"files\" collection for one workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
- **sort_by** | **String**|  | [default to &quot;null&quot;]
- **reverse_sort** | **Bool**|  | [default to false]
- **key** | **String**|  | [default to nothing]
- **name** | **String**|  | [default to nothing]
- **path** | **String**|  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
+ **sort_by** | **String** |  | [default to &quot;null&quot;]
+ **reverse_sort** | **Bool** |  | [default to false]
+ **key** | **String** |  | [default to nothing]
+ **name** | **String** |  | [default to nothing]
+ **path** | **String** |  | [default to nothing]
 
 ### Return type
 
@@ -2645,15 +2645,15 @@ Retrieves files from the \"files\" collection produced by a job.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| Job key | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | Job key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
 
 ### Return type
 
@@ -2683,7 +2683,7 @@ Retrieves all job keys from the \"jobs\" collection for a workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Return type
 
@@ -2713,19 +2713,19 @@ Retrieve all documents from the \"job_process_stats\" collection for one workflo
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
- **sort_by** | **String**|  | [default to &quot;null&quot;]
- **reverse_sort** | **Bool**|  | [default to false]
- **key** | **String**|  | [default to nothing]
- **job_key** | **String**|  | [default to nothing]
- **run_id** | **Int64**|  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
+ **sort_by** | **String** |  | [default to &quot;null&quot;]
+ **reverse_sort** | **Bool** |  | [default to false]
+ **key** | **String** |  | [default to nothing]
+ **job_key** | **String** |  | [default to nothing]
+ **run_id** | **Int64** |  | [default to nothing]
 
 ### Return type
 
@@ -2755,14 +2755,14 @@ Retrieves all job definitions. Limit output with skip and limit.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
 
 ### Return type
 
@@ -2792,8 +2792,8 @@ Retrieve all user data consumed by a job.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| Job key | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | Job key |
 
 ### Return type
 
@@ -2823,8 +2823,8 @@ Retrieve all user data for a job.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| Job key | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | Job key |
 
 ### Return type
 
@@ -2854,22 +2854,22 @@ Retrieve all documents from the \"jobs\" collection for one workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
- **sort_by** | **String**|  | [default to &quot;null&quot;]
- **reverse_sort** | **Bool**|  | [default to false]
- **key** | **String**|  | [default to nothing]
- **name** | **String**|  | [default to nothing]
- **command** | **String**|  | [default to nothing]
- **status** | **String**|  | [default to nothing]
- **cancel_on_blocking_job_failure** | **Bool**|  | [default to nothing]
- **supports_termination** | **Bool**|  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
+ **sort_by** | **String** |  | [default to &quot;null&quot;]
+ **reverse_sort** | **Bool** |  | [default to false]
+ **key** | **String** |  | [default to nothing]
+ **name** | **String** |  | [default to nothing]
+ **command** | **String** |  | [default to nothing]
+ **status** | **String** |  | [default to nothing]
+ **cancel_on_blocking_job_failure** | **Bool** |  | [default to nothing]
+ **supports_termination** | **Bool** |  | [default to nothing]
 
 ### Return type
 
@@ -2899,15 +2899,15 @@ Retrieves all jobs connected to a file by the needs edge.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| File key | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | File key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
 
 ### Return type
 
@@ -2937,15 +2937,15 @@ Retrieves all jobs from the \"jobs\" collection with a specific status.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**status** | **String**| Job status. | [default to nothing]
+**workflow** | **String** | Workflow key |
+**status** | **String** | Job status. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
 
 ### Return type
 
@@ -2975,19 +2975,19 @@ Retrieve all documents from the \"local_schedulers\" collection for one workflow
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
- **sort_by** | **String**|  | [default to &quot;null&quot;]
- **reverse_sort** | **Bool**|  | [default to false]
- **key** | **String**|  | [default to nothing]
- **memory** | **String**|  | [default to nothing]
- **num_cpus** | **Int64**|  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
+ **sort_by** | **String** |  | [default to &quot;null&quot;]
+ **reverse_sort** | **Bool** |  | [default to false]
+ **key** | **String** |  | [default to nothing]
+ **memory** | **String** |  | [default to nothing]
+ **num_cpus** | **Int64** |  | [default to nothing]
 
 ### Return type
 
@@ -3017,7 +3017,7 @@ List missing user data that should exist.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Return type
 
@@ -3047,7 +3047,7 @@ List files that must exist.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Return type
 
@@ -3077,23 +3077,23 @@ Retrieve all documents from the \"resource_requirements\" collection for one wor
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
- **sort_by** | **String**|  | [default to &quot;null&quot;]
- **reverse_sort** | **Bool**|  | [default to false]
- **key** | **String**|  | [default to nothing]
- **name** | **String**|  | [default to nothing]
- **memory** | **String**|  | [default to nothing]
- **num_cpus** | **Int64**|  | [default to nothing]
- **num_gpus** | **Int64**|  | [default to nothing]
- **num_nodes** | **Int64**|  | [default to nothing]
- **runtime** | **String**|  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
+ **sort_by** | **String** |  | [default to &quot;null&quot;]
+ **reverse_sort** | **Bool** |  | [default to false]
+ **key** | **String** |  | [default to nothing]
+ **name** | **String** |  | [default to nothing]
+ **memory** | **String** |  | [default to nothing]
+ **num_cpus** | **Int64** |  | [default to nothing]
+ **num_gpus** | **Int64** |  | [default to nothing]
+ **num_nodes** | **Int64** |  | [default to nothing]
+ **runtime** | **String** |  | [default to nothing]
 
 ### Return type
 
@@ -3123,21 +3123,21 @@ Retrieve all documents from the \"results\" collection for one workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
- **sort_by** | **String**|  | [default to &quot;null&quot;]
- **reverse_sort** | **Bool**|  | [default to false]
- **key** | **String**|  | [default to nothing]
- **job_key** | **String**|  | [default to nothing]
- **run_id** | **Int64**|  | [default to nothing]
- **return_code** | **Int64**|  | [default to nothing]
- **status** | **String**|  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
+ **sort_by** | **String** |  | [default to &quot;null&quot;]
+ **reverse_sort** | **Bool** |  | [default to false]
+ **key** | **String** |  | [default to nothing]
+ **job_key** | **String** |  | [default to nothing]
+ **run_id** | **Int64** |  | [default to nothing]
+ **return_code** | **Int64** |  | [default to nothing]
+ **status** | **String** |  | [default to nothing]
 
 ### Return type
 
@@ -3167,20 +3167,20 @@ Retrieve all documents from the \"scheduled_compute_nodes\" collection for one w
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
- **sort_by** | **String**|  | [default to &quot;null&quot;]
- **reverse_sort** | **Bool**|  | [default to false]
- **key** | **String**|  | [default to nothing]
- **scheduler_id** | **String**|  | [default to nothing]
- **scheduler_config_id** | **String**|  | [default to nothing]
- **status** | **String**|  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
+ **sort_by** | **String** |  | [default to &quot;null&quot;]
+ **reverse_sort** | **Bool** |  | [default to false]
+ **key** | **String** |  | [default to nothing]
+ **scheduler_id** | **String** |  | [default to nothing]
+ **scheduler_config_id** | **String** |  | [default to nothing]
+ **status** | **String** |  | [default to nothing]
 
 ### Return type
 
@@ -3210,26 +3210,26 @@ Retrieve all documents from the \"slurm_schedulers\" collection for one workflow
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
- **sort_by** | **String**|  | [default to &quot;null&quot;]
- **reverse_sort** | **Bool**|  | [default to false]
- **key** | **String**|  | [default to nothing]
- **name** | **String**|  | [default to nothing]
- **account** | **String**|  | [default to nothing]
- **gres** | **String**|  | [default to nothing]
- **mem** | **String**|  | [default to nothing]
- **nodes** | **Int64**|  | [default to nothing]
- **partition** | **String**|  | [default to nothing]
- **qos** | **String**|  | [default to nothing]
- **tmp** | **String**|  | [default to nothing]
- **walltime** | **String**|  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
+ **sort_by** | **String** |  | [default to &quot;null&quot;]
+ **reverse_sort** | **Bool** |  | [default to false]
+ **key** | **String** |  | [default to nothing]
+ **name** | **String** |  | [default to nothing]
+ **account** | **String** |  | [default to nothing]
+ **gres** | **String** |  | [default to nothing]
+ **mem** | **String** |  | [default to nothing]
+ **nodes** | **Int64** |  | [default to nothing]
+ **partition** | **String** |  | [default to nothing]
+ **qos** | **String** |  | [default to nothing]
+ **tmp** | **String** |  | [default to nothing]
+ **walltime** | **String** |  | [default to nothing]
 
 ### Return type
 
@@ -3259,19 +3259,19 @@ Retrieve all documents from the \"user_data\" collection for one workflow.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
+**workflow** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **limit** | **Float64**|  | [default to 100000.0]
- **sort_by** | **String**|  | [default to &quot;null&quot;]
- **reverse_sort** | **Bool**|  | [default to false]
- **key** | **String**|  | [default to nothing]
- **name** | **String**|  | [default to nothing]
- **is_ephemeral** | **Bool**|  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
+ **sort_by** | **String** |  | [default to &quot;null&quot;]
+ **reverse_sort** | **Bool** |  | [default to false]
+ **key** | **String** |  | [default to nothing]
+ **name** | **String** |  | [default to nothing]
+ **is_ephemeral** | **Bool** |  | [default to nothing]
 
 ### Return type
 
@@ -3306,14 +3306,14 @@ Name | Type | Description  | Notes
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **skip** | **Float64**|  | [default to 0.0]
- **sort_by** | **String**|  | [default to &quot;null&quot;]
- **reverse_sort** | **Bool**|  | [default to false]
- **limit** | **Float64**|  | [default to 100000.0]
- **name** | **String**|  | [default to nothing]
- **user** | **String**|  | [default to nothing]
- **description** | **String**|  | [default to nothing]
- **is_archived** | **Bool**|  | [default to nothing]
+ **skip** | **Float64** |  | [default to 0.0]
+ **sort_by** | **String** |  | [default to &quot;null&quot;]
+ **reverse_sort** | **Bool** |  | [default to false]
+ **limit** | **Float64** |  | [default to 100000.0]
+ **name** | **String** |  | [default to nothing]
+ **user** | **String** |  | [default to nothing]
+ **description** | **String** |  | [default to nothing]
+ **is_archived** | **Bool** |  | [default to nothing]
 
 ### Return type
 
@@ -3343,17 +3343,17 @@ Change the status of a job and manage side effects.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| Job key | [default to nothing]
-**status** | **String**| New job status | [default to nothing]
-**rev** | **String**| Current job revision | [default to nothing]
-**run_id** | **Int64**| Current job run ID | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | Job key |
+**status** | **String** | New job status |
+**rev** | **String** | Current job revision |
+**run_id** | **Int64** | Current job run ID |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -3383,9 +3383,9 @@ Update a document in the \"aws_schedulers\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key. | [default to nothing]
-**key** | **String**| key of the AWS compute node configuration. | [default to nothing]
-**body** | [**AwsSchedulerModel**](AwsSchedulerModel.md)| AWS compute node configuration to update in the collection. | 
+**workflow** | **String** | Workflow key. |
+**key** | **String** | key of the AWS compute node configuration. |
+**body** | [**AwsSchedulerModel**](AwsSchedulerModel.md) | AWS compute node configuration to update in the collection. |
 
 ### Return type
 
@@ -3415,9 +3415,9 @@ Update a document in the \"compute_nodes\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key. | [default to nothing]
-**key** | **String**| key of the compute node. | [default to nothing]
-**body** | [**ComputeNodeModel**](ComputeNodeModel.md)| compute node to update in the collection. | 
+**workflow** | **String** | Workflow key. |
+**key** | **String** | key of the compute node. |
+**body** | [**ComputeNodeModel**](ComputeNodeModel.md) | compute node to update in the collection. |
 
 ### Return type
 
@@ -3447,9 +3447,9 @@ Update a document in the \"compute_node_stats\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key. | [default to nothing]
-**key** | **String**| key of the compute node statistics. | [default to nothing]
-**body** | [**ComputeNodeStatsModel**](ComputeNodeStatsModel.md)| compute node statistics to update in the collection. | 
+**workflow** | **String** | Workflow key. |
+**key** | **String** | key of the compute node statistics. |
+**body** | [**ComputeNodeStatsModel**](ComputeNodeStatsModel.md) | compute node statistics to update in the collection. |
 
 ### Return type
 
@@ -3479,9 +3479,9 @@ Update a document in the \"events\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key. | [default to nothing]
-**key** | **String**| key of the event. | [default to nothing]
-**body** | **Any**| event to update in the collection. | 
+**workflow** | **String** | Workflow key. |
+**key** | **String** | key of the event. |
+**body** | **Any** | event to update in the collection. |
 
 ### Return type
 
@@ -3511,9 +3511,9 @@ Update a document in the \"files\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key. | [default to nothing]
-**key** | **String**| key of the file. | [default to nothing]
-**body** | [**FileModel**](FileModel.md)| file to update in the collection. | 
+**workflow** | **String** | Workflow key. |
+**key** | **String** | key of the file. |
+**body** | [**FileModel**](FileModel.md) | file to update in the collection. |
 
 ### Return type
 
@@ -3543,9 +3543,9 @@ Update a document in the \"jobs\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key. | [default to nothing]
-**key** | **String**| key of the job. | [default to nothing]
-**body** | [**JobModel**](JobModel.md)| job to update in the collection. | 
+**workflow** | **String** | Workflow key. |
+**key** | **String** | key of the job. |
+**body** | [**JobModel**](JobModel.md) | job to update in the collection. |
 
 ### Return type
 
@@ -3575,9 +3575,9 @@ Update a document in the \"job_process_stats\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key. | [default to nothing]
-**key** | **String**| key of the job process statistics. | [default to nothing]
-**body** | [**JobProcessStatsModel**](JobProcessStatsModel.md)| job process statistics to update in the collection. | 
+**workflow** | **String** | Workflow key. |
+**key** | **String** | key of the job process statistics. |
+**body** | [**JobProcessStatsModel**](JobProcessStatsModel.md) | job process statistics to update in the collection. |
 
 ### Return type
 
@@ -3607,15 +3607,15 @@ Set the resource requirements for a job, replacing any current value.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| Job key | [default to nothing]
-**rr_key** | **String**|  | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | Job key |
+**rr_key** | **String** |  |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -3645,9 +3645,9 @@ Update a document in the \"local_schedulers\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key. | [default to nothing]
-**key** | **String**| key of the local compute node configuration. | [default to nothing]
-**body** | [**LocalSchedulerModel**](LocalSchedulerModel.md)| local compute node configuration to update in the collection. | 
+**workflow** | **String** | Workflow key. |
+**key** | **String** | key of the local compute node configuration. |
+**body** | [**LocalSchedulerModel**](LocalSchedulerModel.md) | local compute node configuration to update in the collection. |
 
 ### Return type
 
@@ -3677,9 +3677,9 @@ Update a document in the \"resource_requirements\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key. | [default to nothing]
-**key** | **String**| key of the resource requirements. | [default to nothing]
-**body** | [**ResourceRequirementsModel**](ResourceRequirementsModel.md)| resource requirements to update in the collection. | 
+**workflow** | **String** | Workflow key. |
+**key** | **String** | key of the resource requirements. |
+**body** | [**ResourceRequirementsModel**](ResourceRequirementsModel.md) | resource requirements to update in the collection. |
 
 ### Return type
 
@@ -3709,9 +3709,9 @@ Update a document in the \"results\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key. | [default to nothing]
-**key** | **String**| key of the result. | [default to nothing]
-**body** | [**ResultModel**](ResultModel.md)| result to update in the collection. | 
+**workflow** | **String** | Workflow key. |
+**key** | **String** | key of the result. |
+**body** | [**ResultModel**](ResultModel.md) | result to update in the collection. |
 
 ### Return type
 
@@ -3741,9 +3741,9 @@ Update a document in the \"scheduled_compute_nodes\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key. | [default to nothing]
-**key** | **String**| key of the scheduled compute node. | [default to nothing]
-**body** | [**ScheduledComputeNodesModel**](ScheduledComputeNodesModel.md)| scheduled compute node to update in the collection. | 
+**workflow** | **String** | Workflow key. |
+**key** | **String** | key of the scheduled compute node. |
+**body** | [**ScheduledComputeNodesModel**](ScheduledComputeNodesModel.md) | scheduled compute node to update in the collection. |
 
 ### Return type
 
@@ -3773,9 +3773,9 @@ Update a document in the \"slurm_schedulers\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key. | [default to nothing]
-**key** | **String**| key of the Slurm compute node configuration. | [default to nothing]
-**body** | [**SlurmSchedulerModel**](SlurmSchedulerModel.md)| Slurm compute node configuration to update in the collection. | 
+**workflow** | **String** | Workflow key. |
+**key** | **String** | key of the Slurm compute node configuration. |
+**body** | [**SlurmSchedulerModel**](SlurmSchedulerModel.md) | Slurm compute node configuration to update in the collection. |
 
 ### Return type
 
@@ -3805,9 +3805,9 @@ Update a document in the \"user_data\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key. | [default to nothing]
-**key** | **String**| key of the user data. | [default to nothing]
-**body** | [**UserDataModel**](UserDataModel.md)| user data to update in the collection. | 
+**workflow** | **String** | Workflow key. |
+**key** | **String** | key of the user data. |
+**body** | [**UserDataModel**](UserDataModel.md) | user data to update in the collection. |
 
 ### Return type
 
@@ -3837,8 +3837,8 @@ Update a document in the \"workflows\" collection.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Key of the workflow. | [default to nothing]
-**body** | [**WorkflowModel**](WorkflowModel.md)| workflow to update in the collection. | 
+**key** | **String** | Key of the workflow. |
+**body** | [**WorkflowModel**](WorkflowModel.md) | workflow to update in the collection. |
 
 ### Return type
 
@@ -3868,8 +3868,8 @@ Updates the workflow config.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
-**body** | [**WorkflowConfigModel**](WorkflowConfigModel.md)| Updated workflow config | 
+**key** | **String** | Workflow key |
+**body** | [**WorkflowConfigModel**](WorkflowConfigModel.md) | Updated workflow config |
 
 ### Return type
 
@@ -3899,8 +3899,8 @@ Reports the workflow status.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
-**body** | [**WorkflowStatusModel**](WorkflowStatusModel.md)| Updated workflow status | 
+**key** | **String** | Workflow key |
+**body** | [**WorkflowStatusModel**](WorkflowStatusModel.md) | Updated workflow status |
 
 ### Return type
 
@@ -3956,13 +3956,13 @@ Return scheduler IDs that need to be activated. Sets job status to scheduled.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -3992,15 +3992,15 @@ Return jobs that are ready for submission and meet worker resource Sets status t
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
-**body** | [**ComputeNodesResources**](ComputeNodesResources.md)| Available worker resources. | 
+**key** | **String** | Workflow key |
+**body** | [**ComputeNodesResources**](ComputeNodesResources.md) | Available worker resources. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **sort_method** | **String**|  | [default to &quot;gpus_runtime_memory&quot;]
- **limit** | **Float64**|  | [default to 100000.0]
+ **sort_method** | **String** |  | [default to &quot;gpus_runtime_memory&quot;]
+ **limit** | **Float64** |  | [default to 100000.0]
 
 ### Return type
 
@@ -4030,14 +4030,14 @@ Return user-requested number of jobs that are ready for submission. Sets status 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **limit** | **Float64**|  | [default to 1.0]
- **body** | **Any**|  | 
+ **limit** | **Float64** |  | [default to 1.0]
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4067,13 +4067,13 @@ Process the results of auto-tuning resource requirements.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4103,13 +4103,13 @@ Check for changed job inputs and update status accordingly.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4139,14 +4139,14 @@ Deletes a document from the \"aws_schedulers\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the AWS compute node configuration document. | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the AWS compute node configuration document. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4176,14 +4176,14 @@ Deletes a document from the \"compute_nodes\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the compute node document. | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the compute node document. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4213,14 +4213,14 @@ Deletes a document from the \"compute_node_stats\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the compute node statistics document. | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the compute node statistics document. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4250,15 +4250,15 @@ Deletes an edge from the designated collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**name** | **String**| Edge name. | [default to nothing]
-**key** | **String**| Edge key. | [default to nothing]
+**workflow** | **String** | Workflow key |
+**name** | **String** | Edge name. |
+**key** | **String** | Edge key. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4288,14 +4288,14 @@ Deletes a document from the \"events\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the event document. | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the event document. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4325,14 +4325,14 @@ Deletes a document from the \"files\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the file document. | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the file document. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4362,14 +4362,14 @@ Deletes a document from the \"jobs\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the job document. | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the job document. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4399,14 +4399,14 @@ Deletes a document from the \"job_process_stats\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the job process statistics document. | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the job process statistics document. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4436,14 +4436,14 @@ Deletes a document from the \"local_schedulers\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the local compute node configuration document. | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the local compute node configuration document. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4473,14 +4473,14 @@ Deletes a document from the \"resource_requirements\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the resource requirements document. | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the resource requirements document. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4510,14 +4510,14 @@ Deletes a document from the \"results\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the result document. | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the result document. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4547,14 +4547,14 @@ Deletes a document from the \"scheduled_compute_nodes\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the scheduled compute node document. | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the scheduled compute node document. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4584,14 +4584,14 @@ Deletes a document from the \"slurm_schedulers\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the Slurm compute node configuration document. | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the Slurm compute node configuration document. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4621,14 +4621,14 @@ Deletes a document from the \"user_data\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| key of the user data document. | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | key of the user data document. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4658,13 +4658,13 @@ Deletes a document from the \"workflows\" collection by key.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key. | [default to nothing]
+**key** | **String** | Workflow key. |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4694,14 +4694,14 @@ Reset status for jobs to uninitialized.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **failed_only** | **Bool**| Only reset failed jobs | [default to false]
- **body** | **Any**|  | 
+ **failed_only** | **Bool** | Only reset failed jobs | [default to false]
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4731,13 +4731,13 @@ Reset workflow status.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**key** | **String**| Workflow key | [default to nothing]
+**key** | **String** | Workflow key |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 
@@ -4767,17 +4767,17 @@ Start a job and manage side effects.
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
-**workflow** | **String**| Workflow key | [default to nothing]
-**key** | **String**| Job key | [default to nothing]
-**rev** | **String**| Current job revision. | [default to nothing]
-**run_id** | **Int64**| Current job run ID | [default to nothing]
-**compute_node_key** | **String**| Compute node key that started the job | [default to nothing]
+**workflow** | **String** | Workflow key |
+**key** | **String** | Job key |
+**rev** | **String** | Current job revision. |
+**run_id** | **Int64** | Current job run ID |
+**compute_node_key** | **String** | Compute node key that started the job |
 
 ### Optional Parameters
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
- **body** | **Any**|  | 
+ **body** | **Any** |  | 
 
 ### Return type
 

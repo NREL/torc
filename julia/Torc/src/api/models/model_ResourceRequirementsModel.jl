@@ -38,25 +38,39 @@ Base.@kwdef mutable struct ResourceRequirementsModel <: OpenAPI.APIModel
     _rev::Union{Nothing, String} = nothing
 
     function ResourceRequirementsModel(name, num_cpus, num_gpus, num_nodes, memory, runtime, _key, _id, _rev, )
-        OpenAPI.validate_property(ResourceRequirementsModel, Symbol("name"), name)
-        OpenAPI.validate_property(ResourceRequirementsModel, Symbol("num_cpus"), num_cpus)
-        OpenAPI.validate_property(ResourceRequirementsModel, Symbol("num_gpus"), num_gpus)
-        OpenAPI.validate_property(ResourceRequirementsModel, Symbol("num_nodes"), num_nodes)
-        OpenAPI.validate_property(ResourceRequirementsModel, Symbol("memory"), memory)
-        OpenAPI.validate_property(ResourceRequirementsModel, Symbol("runtime"), runtime)
-        OpenAPI.validate_property(ResourceRequirementsModel, Symbol("_key"), _key)
-        OpenAPI.validate_property(ResourceRequirementsModel, Symbol("_id"), _id)
-        OpenAPI.validate_property(ResourceRequirementsModel, Symbol("_rev"), _rev)
-        return new(name, num_cpus, num_gpus, num_nodes, memory, runtime, _key, _id, _rev, )
+        o = new(name, num_cpus, num_gpus, num_nodes, memory, runtime, _key, _id, _rev, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ResourceRequirementsModel
 
 const _property_types_ResourceRequirementsModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("num_cpus")=>"Int64", Symbol("num_gpus")=>"Int64", Symbol("num_nodes")=>"Int64", Symbol("memory")=>"String", Symbol("runtime")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ ResourceRequirementsModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ResourceRequirementsModel[name]))}
 
-function check_required(o::ResourceRequirementsModel)
+function OpenAPI.check_required(o::ResourceRequirementsModel)
     true
 end
 
+function OpenAPI.validate_properties(o::ResourceRequirementsModel)
+    OpenAPI.validate_property(ResourceRequirementsModel, Symbol("name"), o.name)
+    OpenAPI.validate_property(ResourceRequirementsModel, Symbol("num_cpus"), o.num_cpus)
+    OpenAPI.validate_property(ResourceRequirementsModel, Symbol("num_gpus"), o.num_gpus)
+    OpenAPI.validate_property(ResourceRequirementsModel, Symbol("num_nodes"), o.num_nodes)
+    OpenAPI.validate_property(ResourceRequirementsModel, Symbol("memory"), o.memory)
+    OpenAPI.validate_property(ResourceRequirementsModel, Symbol("runtime"), o.runtime)
+    OpenAPI.validate_property(ResourceRequirementsModel, Symbol("_key"), o._key)
+    OpenAPI.validate_property(ResourceRequirementsModel, Symbol("_id"), o._id)
+    OpenAPI.validate_property(ResourceRequirementsModel, Symbol("_rev"), o._rev)
+end
+
 function OpenAPI.validate_property(::Type{ ResourceRequirementsModel }, name::Symbol, val)
+
+
+
+
+
+
+
+
+
 end

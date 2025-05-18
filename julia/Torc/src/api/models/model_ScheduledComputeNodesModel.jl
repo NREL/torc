@@ -29,24 +29,35 @@ Base.@kwdef mutable struct ScheduledComputeNodesModel <: OpenAPI.APIModel
     _rev::Union{Nothing, String} = nothing
 
     function ScheduledComputeNodesModel(scheduler_id, scheduler_config_id, status, _key, _id, _rev, )
-        OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("scheduler_id"), scheduler_id)
-        OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("scheduler_config_id"), scheduler_config_id)
-        OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("status"), status)
-        OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("_key"), _key)
-        OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("_id"), _id)
-        OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("_rev"), _rev)
-        return new(scheduler_id, scheduler_config_id, status, _key, _id, _rev, )
+        o = new(scheduler_id, scheduler_config_id, status, _key, _id, _rev, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ScheduledComputeNodesModel
 
 const _property_types_ScheduledComputeNodesModel = Dict{Symbol,String}(Symbol("scheduler_id")=>"String", Symbol("scheduler_config_id")=>"String", Symbol("status")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ ScheduledComputeNodesModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ScheduledComputeNodesModel[name]))}
 
-function check_required(o::ScheduledComputeNodesModel)
+function OpenAPI.check_required(o::ScheduledComputeNodesModel)
     o.scheduler_config_id === nothing && (return false)
     o.status === nothing && (return false)
     true
 end
 
+function OpenAPI.validate_properties(o::ScheduledComputeNodesModel)
+    OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("scheduler_id"), o.scheduler_id)
+    OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("scheduler_config_id"), o.scheduler_config_id)
+    OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("status"), o.status)
+    OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("_key"), o._key)
+    OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("_id"), o._id)
+    OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("_rev"), o._rev)
+end
+
 function OpenAPI.validate_property(::Type{ ScheduledComputeNodesModel }, name::Symbol, val)
+
+
+
+
+
+
 end

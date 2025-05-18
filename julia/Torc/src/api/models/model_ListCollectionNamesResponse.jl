@@ -14,17 +14,23 @@ Base.@kwdef mutable struct ListCollectionNamesResponse <: OpenAPI.APIModel
     names::Union{Nothing, Vector{String}} = nothing
 
     function ListCollectionNamesResponse(names, )
-        OpenAPI.validate_property(ListCollectionNamesResponse, Symbol("names"), names)
-        return new(names, )
+        o = new(names, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ListCollectionNamesResponse
 
 const _property_types_ListCollectionNamesResponse = Dict{Symbol,String}(Symbol("names")=>"Vector{String}", )
 OpenAPI.property_type(::Type{ ListCollectionNamesResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ListCollectionNamesResponse[name]))}
 
-function check_required(o::ListCollectionNamesResponse)
+function OpenAPI.check_required(o::ListCollectionNamesResponse)
     true
 end
 
+function OpenAPI.validate_properties(o::ListCollectionNamesResponse)
+    OpenAPI.validate_property(ListCollectionNamesResponse, Symbol("names"), o.names)
+end
+
 function OpenAPI.validate_property(::Type{ ListCollectionNamesResponse }, name::Symbol, val)
+
 end

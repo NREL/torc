@@ -35,25 +35,38 @@ Base.@kwdef mutable struct WorkflowModel <: OpenAPI.APIModel
     _rev::Union{Nothing, String} = nothing
 
     function WorkflowModel(name, user, description, timestamp, is_archived, _key, _id, _rev, )
-        OpenAPI.validate_property(WorkflowModel, Symbol("name"), name)
-        OpenAPI.validate_property(WorkflowModel, Symbol("user"), user)
-        OpenAPI.validate_property(WorkflowModel, Symbol("description"), description)
-        OpenAPI.validate_property(WorkflowModel, Symbol("timestamp"), timestamp)
-        OpenAPI.validate_property(WorkflowModel, Symbol("is_archived"), is_archived)
-        OpenAPI.validate_property(WorkflowModel, Symbol("_key"), _key)
-        OpenAPI.validate_property(WorkflowModel, Symbol("_id"), _id)
-        OpenAPI.validate_property(WorkflowModel, Symbol("_rev"), _rev)
-        return new(name, user, description, timestamp, is_archived, _key, _id, _rev, )
+        o = new(name, user, description, timestamp, is_archived, _key, _id, _rev, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type WorkflowModel
 
 const _property_types_WorkflowModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("user")=>"String", Symbol("description")=>"String", Symbol("timestamp")=>"String", Symbol("is_archived")=>"Bool", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ WorkflowModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_WorkflowModel[name]))}
 
-function check_required(o::WorkflowModel)
+function OpenAPI.check_required(o::WorkflowModel)
     o.user === nothing && (return false)
     true
 end
 
+function OpenAPI.validate_properties(o::WorkflowModel)
+    OpenAPI.validate_property(WorkflowModel, Symbol("name"), o.name)
+    OpenAPI.validate_property(WorkflowModel, Symbol("user"), o.user)
+    OpenAPI.validate_property(WorkflowModel, Symbol("description"), o.description)
+    OpenAPI.validate_property(WorkflowModel, Symbol("timestamp"), o.timestamp)
+    OpenAPI.validate_property(WorkflowModel, Symbol("is_archived"), o.is_archived)
+    OpenAPI.validate_property(WorkflowModel, Symbol("_key"), o._key)
+    OpenAPI.validate_property(WorkflowModel, Symbol("_id"), o._id)
+    OpenAPI.validate_property(WorkflowModel, Symbol("_rev"), o._rev)
+end
+
 function OpenAPI.validate_property(::Type{ WorkflowModel }, name::Symbol, val)
+
+
+
+
+
+
+
+
 end

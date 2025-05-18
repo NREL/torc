@@ -10,6 +10,7 @@ from pathlib import Path
 
 import pytest
 from click.testing import CliRunner
+from torc.openapi_client.api.default_api import DefaultApi
 from torc.openapi_client.models.user_data_model import UserDataModel
 from torc.openapi_client.models.compute_node_model import ComputeNodeModel
 from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
@@ -30,7 +31,7 @@ logger = logging.getLogger(__name__)
 def test_run_workflow(diamond_workflow):
     """Test full execution of diamond workflow with file dependencies."""
     db, scheduler_config_id, output_dir = diamond_workflow
-    api = db.api
+    api: DefaultApi = db.api
     timer_stats_collector.enable()
     user_data_work1 = api.list_job_user_data_consumes(
         db.workflow.key, db.get_document_key("jobs", "work1")
@@ -43,6 +44,8 @@ def test_run_workflow(diamond_workflow):
     config.compute_node_resource_stats.memory = True
     config.compute_node_resource_stats.process = True
     config.compute_node_resource_stats.interval = 1
+    config.workflow_startup_script = "echo hello"
+    config.worker_startup_script = "echo hello"
     api.modify_workflow_config(db.workflow.key, config)
     mgr.start()
     runner = JobRunner(

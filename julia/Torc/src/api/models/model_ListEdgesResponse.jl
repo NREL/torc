@@ -29,20 +29,16 @@ Base.@kwdef mutable struct ListEdgesResponse <: OpenAPI.APIModel
     has_more::Union{Nothing, Bool} = nothing
 
     function ListEdgesResponse(items, skip, max_limit, count, total_count, has_more, )
-        OpenAPI.validate_property(ListEdgesResponse, Symbol("items"), items)
-        OpenAPI.validate_property(ListEdgesResponse, Symbol("skip"), skip)
-        OpenAPI.validate_property(ListEdgesResponse, Symbol("max_limit"), max_limit)
-        OpenAPI.validate_property(ListEdgesResponse, Symbol("count"), count)
-        OpenAPI.validate_property(ListEdgesResponse, Symbol("total_count"), total_count)
-        OpenAPI.validate_property(ListEdgesResponse, Symbol("has_more"), has_more)
-        return new(items, skip, max_limit, count, total_count, has_more, )
+        o = new(items, skip, max_limit, count, total_count, has_more, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ListEdgesResponse
 
 const _property_types_ListEdgesResponse = Dict{Symbol,String}(Symbol("items")=>"Vector{EdgeModel}", Symbol("skip")=>"Int64", Symbol("max_limit")=>"Int64", Symbol("count")=>"Int64", Symbol("total_count")=>"Int64", Symbol("has_more")=>"Bool", )
 OpenAPI.property_type(::Type{ ListEdgesResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ListEdgesResponse[name]))}
 
-function check_required(o::ListEdgesResponse)
+function OpenAPI.check_required(o::ListEdgesResponse)
     o.skip === nothing && (return false)
     o.max_limit === nothing && (return false)
     o.count === nothing && (return false)
@@ -51,5 +47,20 @@ function check_required(o::ListEdgesResponse)
     true
 end
 
+function OpenAPI.validate_properties(o::ListEdgesResponse)
+    OpenAPI.validate_property(ListEdgesResponse, Symbol("items"), o.items)
+    OpenAPI.validate_property(ListEdgesResponse, Symbol("skip"), o.skip)
+    OpenAPI.validate_property(ListEdgesResponse, Symbol("max_limit"), o.max_limit)
+    OpenAPI.validate_property(ListEdgesResponse, Symbol("count"), o.count)
+    OpenAPI.validate_property(ListEdgesResponse, Symbol("total_count"), o.total_count)
+    OpenAPI.validate_property(ListEdgesResponse, Symbol("has_more"), o.has_more)
+end
+
 function OpenAPI.validate_property(::Type{ ListEdgesResponse }, name::Symbol, val)
+
+
+
+
+
+
 end

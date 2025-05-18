@@ -41,26 +41,41 @@ Base.@kwdef mutable struct ComputeNodeResourceStatsModel <: OpenAPI.APIModel
     interval::Union{Nothing, Float64} = nothing
 
     function ComputeNodeResourceStatsModel(cpu, disk, memory, network, process, include_child_processes, recurse_child_processes, monitor_type, make_plots, interval, )
-        OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("cpu"), cpu)
-        OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("disk"), disk)
-        OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("memory"), memory)
-        OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("network"), network)
-        OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("process"), process)
-        OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("include_child_processes"), include_child_processes)
-        OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("recurse_child_processes"), recurse_child_processes)
-        OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("monitor_type"), monitor_type)
-        OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("make_plots"), make_plots)
-        OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("interval"), interval)
-        return new(cpu, disk, memory, network, process, include_child_processes, recurse_child_processes, monitor_type, make_plots, interval, )
+        o = new(cpu, disk, memory, network, process, include_child_processes, recurse_child_processes, monitor_type, make_plots, interval, )
+        OpenAPI.validate_properties(o)
+        return o
     end
 end # type ComputeNodeResourceStatsModel
 
 const _property_types_ComputeNodeResourceStatsModel = Dict{Symbol,String}(Symbol("cpu")=>"Bool", Symbol("disk")=>"Bool", Symbol("memory")=>"Bool", Symbol("network")=>"Bool", Symbol("process")=>"Bool", Symbol("include_child_processes")=>"Bool", Symbol("recurse_child_processes")=>"Bool", Symbol("monitor_type")=>"String", Symbol("make_plots")=>"Bool", Symbol("interval")=>"Float64", )
 OpenAPI.property_type(::Type{ ComputeNodeResourceStatsModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ComputeNodeResourceStatsModel[name]))}
 
-function check_required(o::ComputeNodeResourceStatsModel)
+function OpenAPI.check_required(o::ComputeNodeResourceStatsModel)
     true
 end
 
+function OpenAPI.validate_properties(o::ComputeNodeResourceStatsModel)
+    OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("cpu"), o.cpu)
+    OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("disk"), o.disk)
+    OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("memory"), o.memory)
+    OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("network"), o.network)
+    OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("process"), o.process)
+    OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("include_child_processes"), o.include_child_processes)
+    OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("recurse_child_processes"), o.recurse_child_processes)
+    OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("monitor_type"), o.monitor_type)
+    OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("make_plots"), o.make_plots)
+    OpenAPI.validate_property(ComputeNodeResourceStatsModel, Symbol("interval"), o.interval)
+end
+
 function OpenAPI.validate_property(::Type{ ComputeNodeResourceStatsModel }, name::Symbol, val)
+
+
+
+
+
+
+
+
+
+
 end
