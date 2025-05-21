@@ -5262,6 +5262,14 @@ paths:
         explode: false
         schema:
           type: string
+      - name: dry_run
+        in: query
+        description: If true, report changes but do not change the database.
+        required: false
+        style: simple
+        explode: false
+        schema:
+          type: boolean
       requestBody:
         content:
           application/json:

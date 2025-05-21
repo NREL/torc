@@ -448,9 +448,10 @@ function listWorkflowCollectionNames(workflow) {
  * Check for completed jobs that have had input changes and reinitialize them.
  * There is no protection for concurrent requests.
  * @param {Object} workflow
+ * @param {Boolean} dryRun
  * @return {Array}
  */
-function processChangedJobInputs(workflow) {
+function processChangedJobInputs(workflow, dryRun) {
   const jobsCollection = config.getWorkflowCollection(workflow, 'jobs');
   const reinitializedJobs = [];
 
@@ -461,12 +462,17 @@ function processChangedJobInputs(workflow) {
       reinitializedJobs.push(job._key);
       continue;
     }
-    const hash = computeJobInputHash(job, workflow);
+    const hash = computeJobInputHash(curJob, workflow);
     if (hash != job.internal.hash) {
-      job.status = JobStatus.Uninitialized;
-      updateWorkflowDocument(workflow, 'jobs', job);
-      query.updateJobsFromCompletionReversal(job, workflow);
-      reinitializedJobs.push(job._key);
+      if (!dryRun) {
+        curJob.status = JobStatus.Uninitialized;
+        updateWorkflowDocument(workflow, 'jobs', curJob);
+        reinitializedJobs.push(job._key);
+      }
+      const cursor = query.updateJobsFromCompletionReversal(job, workflow, dryRun);
+      for (const downstreamJob of cursor) {
+        reinitializedJobs.push(downstreamJob._key);
+      }
     }
   }
   return reinitializedJobs;

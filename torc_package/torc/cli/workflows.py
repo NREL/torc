@@ -545,6 +545,14 @@ def reset_status(
 
 @click.command()
 @click.option(
+    "-d",
+    "--dry-run",
+    is_flag=True,
+    default=False,
+    show_default=True,
+    help="Perform a dry run. Show status changes but do not change any database values.",
+)
+@click.option(
     "-i",
     "--ignore-missing-data",
     is_flag=True,
@@ -562,11 +570,15 @@ def reset_status(
 @click.pass_obj
 @click.pass_context
 def restart(
-    ctx: click.Context, api: DefaultApi, ignore_missing_data: bool, only_uninitialized: bool
+    ctx: click.Context,
+    api: DefaultApi,
+    dry_run: bool,
+    ignore_missing_data: bool,
+    only_uninitialized: bool,
 ) -> None:
     """Restart the workflow defined in the database specified by the URL. Resets all jobs with
     a status of canceled, submitted, submitted_pending, and terminated. Does not affect jobs with
-    a status of done.
+    a status of done unless an input file has changed.
     """
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -580,12 +592,13 @@ def restart(
     name: {workflow.name}
     description: {workflow.description}
 """
-    confirm_change(ctx, msg)
+    confirm_change(ctx, msg, dry_run=dry_run)
     restart_workflow(
         api,
         workflow_key,
         ignore_missing_data=ignore_missing_data,
         only_uninitialized=only_uninitialized,
+        dry_run=dry_run,
     )
 
 
@@ -660,7 +673,7 @@ def create_workflow_from_json_file(
         if "user" in data:
             logger.info("Overriding user=%s with %s", data["user"], user)
         data["user"] = user
-    name_to_file = {x["name"]: x for x in data["files"]}
+    name_to_file = {x["name"]: x for x in data.get("files", [])}
     for job in data["jobs"]:
         for field in ("input_files", "output_files"):
             args: list[str] = []
@@ -709,10 +722,15 @@ def restart_workflow(
     workflow_key: str,
     only_uninitialized: bool = False,
     ignore_missing_data: bool = False,
+    dry_run: bool = False,
 ) -> None:
     """Restarts the workflow."""
     mgr = WorkflowManager(api, workflow_key)
-    mgr.restart(ignore_missing_data=ignore_missing_data, only_uninitialized=only_uninitialized)
+    mgr.restart(
+        ignore_missing_data=ignore_missing_data,
+        only_uninitialized=only_uninitialized,
+        dry_run=dry_run,
+    )
     api.add_event(
         workflow_key,
         {

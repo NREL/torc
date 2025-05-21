@@ -35429,6 +35429,7 @@ class DefaultApi:
     def process_changed_job_inputs(
         self,
         key: Annotated[StrictStr, Field(description="Workflow key")],
+        dry_run: Annotated[Optional[StrictBool], Field(description="If true, report changes but do not change the database.")] = None,
         body: Optional[Dict[str, Any]] = None,
         _request_timeout: Union[
             None,
@@ -35449,6 +35450,8 @@ class DefaultApi:
 
         :param key: Workflow key (required)
         :type key: str
+        :param dry_run: If true, report changes but do not change the database.
+        :type dry_run: bool
         :param body:
         :type body: object
         :param _request_timeout: timeout setting for this request. If one
@@ -35475,6 +35478,7 @@ class DefaultApi:
 
         _param = self._process_changed_job_inputs_serialize(
             key=key,
+            dry_run=dry_run,
             body=body,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -35501,6 +35505,7 @@ class DefaultApi:
     def process_changed_job_inputs_with_http_info(
         self,
         key: Annotated[StrictStr, Field(description="Workflow key")],
+        dry_run: Annotated[Optional[StrictBool], Field(description="If true, report changes but do not change the database.")] = None,
         body: Optional[Dict[str, Any]] = None,
         _request_timeout: Union[
             None,
@@ -35521,6 +35526,8 @@ class DefaultApi:
 
         :param key: Workflow key (required)
         :type key: str
+        :param dry_run: If true, report changes but do not change the database.
+        :type dry_run: bool
         :param body:
         :type body: object
         :param _request_timeout: timeout setting for this request. If one
@@ -35547,6 +35554,7 @@ class DefaultApi:
 
         _param = self._process_changed_job_inputs_serialize(
             key=key,
+            dry_run=dry_run,
             body=body,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -35573,6 +35581,7 @@ class DefaultApi:
     def process_changed_job_inputs_without_preload_content(
         self,
         key: Annotated[StrictStr, Field(description="Workflow key")],
+        dry_run: Annotated[Optional[StrictBool], Field(description="If true, report changes but do not change the database.")] = None,
         body: Optional[Dict[str, Any]] = None,
         _request_timeout: Union[
             None,
@@ -35593,6 +35602,8 @@ class DefaultApi:
 
         :param key: Workflow key (required)
         :type key: str
+        :param dry_run: If true, report changes but do not change the database.
+        :type dry_run: bool
         :param body:
         :type body: object
         :param _request_timeout: timeout setting for this request. If one
@@ -35619,6 +35630,7 @@ class DefaultApi:
 
         _param = self._process_changed_job_inputs_serialize(
             key=key,
+            dry_run=dry_run,
             body=body,
             _request_auth=_request_auth,
             _content_type=_content_type,
@@ -35640,6 +35652,7 @@ class DefaultApi:
     def _process_changed_job_inputs_serialize(
         self,
         key,
+        dry_run,
         body,
         _request_auth,
         _content_type,
@@ -35665,6 +35678,10 @@ class DefaultApi:
         if key is not None:
             _path_params['key'] = key
         # process the query parameters
+        if dry_run is not None:
+            
+            _query_params.append(('dry_run', dry_run))
+            
         # process the header parameters
         # process the form parameters
         # process the body parameter

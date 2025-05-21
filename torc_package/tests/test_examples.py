@@ -18,8 +18,7 @@ def test_manual_dependencies_julia():
     subprocess.run(
         [
             "julia",
-            "--project",
-            str(project),
+            f"--project={project}",
             str(EXAMPLES_DIR / "manual_job_dependencies.jl"),
         ],
         check=True,
