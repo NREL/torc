@@ -72,7 +72,7 @@ def join_by_edge(
     1. Show jobs and results in a table.
        $ torc collections join-by-edge jobs returned
     2. Show jobs and results in JSON format.
-       $ torc -F JSON collections join-by-edge jobs returned
+       $ torc -F json collections join-by-edge jobs returned
     """
     _join_by_edge(
         ctx, api, collection, edge, filters, outbound, limit, skip, exclude_from, exclude_to

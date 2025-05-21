@@ -4091,8 +4091,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **process_changed_job_inputs**
-> process_changed_job_inputs(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing) -> ProcessChangedJobInputsResponse, OpenAPI.Clients.ApiResponse <br/>
-> process_changed_job_inputs(_api::DefaultApi, response_stream::Channel, key::String; body=nothing, _mediaType=nothing) -> Channel{ ProcessChangedJobInputsResponse }, OpenAPI.Clients.ApiResponse
+> process_changed_job_inputs(_api::DefaultApi, key::String; dry_run=nothing, body=nothing, _mediaType=nothing) -> ProcessChangedJobInputsResponse, OpenAPI.Clients.ApiResponse <br/>
+> process_changed_job_inputs(_api::DefaultApi, response_stream::Channel, key::String; dry_run=nothing, body=nothing, _mediaType=nothing) -> Channel{ ProcessChangedJobInputsResponse }, OpenAPI.Clients.ApiResponse
 
 Check for changed job inputs and update status accordingly.
 
@@ -4109,6 +4109,7 @@ Name | Type | Description  | Notes
 
 Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
+ **dry_run** | **Bool** | If true, report changes but do not change the database. | [default to nothing]
  **body** | **Any** |  | 
 
 ### Return type

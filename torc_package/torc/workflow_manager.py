@@ -24,7 +24,12 @@ class WorkflowManager:
         self._api = api
         self._key = key
 
-    def restart(self, ignore_missing_data: bool = False, only_uninitialized: bool = False) -> None:
+    def restart(
+        self,
+        ignore_missing_data: bool = False,
+        only_uninitialized: bool = False,
+        dry_run: bool = False,
+    ) -> None:
         """Restart the workflow.
 
         Parameters
@@ -33,28 +38,36 @@ class WorkflowManager:
             If True, ignore checks for missing files and user_data.
         only_uninitialized : bool
             If True, only initialize jobs with a status of uninitialized.
+        dry_run : bool
+            If True, report changes to jobs and files but don't change anything in the database.
+            The workflow startup script will not be executed if dry_run is True.
         """
+        # TODO: should this delete all output files that will get overwritten?
         config = send_api_command(self._api.get_workflow_config, self._key)
-        if config.workflow_startup_script is not None:
-            check_run_command(config.workflow_startup_script)
+        if not dry_run:
+            if config.workflow_startup_script is not None:
+                check_run_command(config.workflow_startup_script)
 
-        self._bump_run_id()
-        send_api_command(self._api.reset_workflow_status, self._key)
+            self._bump_run_id()
+            send_api_command(self._api.reset_workflow_status, self._key)
+
         self.reinitialize_jobs(
             ignore_missing_data=ignore_missing_data,
             only_uninitialized=only_uninitialized,
+            dry_run=dry_run,
         )
-        send_api_command(
-            self._api.add_event,
-            self._key,
-            {
-                "category": "workflow",
-                "type": "restart",
-                "user": getpass.getuser(),
-                "node_name": socket.gethostname(),
-                "message": "Restarted workflow",
-            },
-        )
+        if not dry_run:
+            send_api_command(
+                self._api.add_event,
+                self._key,
+                {
+                    "category": "workflow",
+                    "type": "restart",
+                    "user": getpass.getuser(),
+                    "node_name": socket.gethostname(),
+                    "message": "Restarted workflow",
+                },
+            )
 
     def start(
         self, auto_tune_resource_requirements: bool = False, ignore_missing_data: bool = False
@@ -125,7 +138,7 @@ class WorkflowManager:
             msg = " ".join(result.user_data)
             raise InvalidWorkflow(f"User data keys are missing data: {msg}")
 
-    def _process_changed_files(self) -> None:
+    def _process_changed_files(self, dry_run: bool = False) -> None:
         for file in iter_documents(self._api.list_files, self._key):
             path = Path(file.path)
             old: dict[str, Any] = {
@@ -140,16 +153,24 @@ class WorkflowManager:
                 new["st_mtime"] = path.stat().st_mtime
             changed = old != new
             if changed:
-                if file.st_mtime and not new["exists"]:
-                    file.st_mtime = None
-                    send_api_command(
-                        self._api.modify_file,
-                        self._key,
-                        file.key,
-                        file,
-                    )
-                    logger.info("File %s was removed. Cleared file stats", file.name)
-                self._update_jobs_on_file_change(file)
+                if file.st_mtime:
+                    if new["exists"]:
+                        msg = f"File {file.path} was changed."
+                        file.st_mtime = new["st_mtime"]
+                    else:
+                        msg = f"File {file.path} was removed."
+                        file.st_mtime = None
+                    if dry_run:
+                        logger.info("Dry run: %s File stats will be reset.", msg)
+                    else:
+                        send_api_command(
+                            self._api.modify_file,
+                            self._key,
+                            file.key,
+                            file,
+                        )
+                        logger.info("%s Reset file stats.", msg)
+                self._update_jobs_on_file_change(file, dry_run=dry_run)
 
     def _initialize_files(self) -> None:
         """Initialize the file stats in the database."""
@@ -174,7 +195,10 @@ class WorkflowManager:
         logger.info("Changed all uninitialized jobs to ready or blocked.")
 
     def reinitialize_jobs(
-        self, ignore_missing_data: bool = False, only_uninitialized: bool = False
+        self,
+        ignore_missing_data: bool = False,
+        only_uninitialized: bool = False,
+        dry_run: bool = False,
     ) -> None:
         """Reinitialize jobs. Account for jobs that are new or have been reset.
 
@@ -184,19 +208,24 @@ class WorkflowManager:
             If True, ignore checks for missing files and user_data.
         only_uninitialized : bool
             If True, only initialize jobs with a status of uninitialized.
+        dry_run : bool
+            If True, report changes to jobs and files but don't change anything in the database.
         """
         self._check_workflow(ignore_missing_data=ignore_missing_data)
-        self._process_changed_files()
-        self._update_jobs_if_output_files_are_missing()
-        response = send_api_command(self._api.process_changed_job_inputs, self._key)
+        self._process_changed_files(dry_run=dry_run)
+        self._update_jobs_if_output_files_are_missing(dry_run=dry_run)
+        response = send_api_command(
+            self._api.process_changed_job_inputs, self._key, dry_run=dry_run
+        )
         if response.reinitialized_jobs:
             logger.info(
                 "Changed job status to uninitialized because inputs were changed: %s",
                 " ".join(response.reinitialized_jobs),
             )
-        self._initialize_jobs(only_uninitialized=only_uninitialized)
+        if not dry_run:
+            self._initialize_jobs(only_uninitialized=only_uninitialized)
 
-    def _update_jobs_if_output_files_are_missing(self) -> None:
+    def _update_jobs_if_output_files_are_missing(self, dry_run: bool = False) -> None:
         run_id = None
         for job in send_api_command(
             self._api.list_jobs_by_status,
@@ -213,6 +242,53 @@ class WorkflowManager:
                     if run_id is None:
                         run_id = send_api_command(self._api.get_workflow_status, self._key).run_id
                     status = JobStatus.UNINITIALIZED.value
+                    if dry_run:
+                        logger.info(
+                            "Dry run: job %s / %s will change from done to %s because output file %s is missing. "
+                            "Downstream jobs will also be affected but are not reported here.",
+                            job.name,
+                            job.key,
+                            status,
+                            file.path,
+                        )
+                    else:
+                        send_api_command(
+                            self._api.manage_status_change,
+                            self._key,
+                            job.key,
+                            status,
+                            job.rev,
+                            run_id,
+                        )
+                        logger.info(
+                            "Changed job %s / %s from done to %s because output file %s is missing",
+                            job.name,
+                            job.key,
+                            status,
+                            file.path,
+                        )
+                    break
+
+    def _update_jobs_on_file_change(self, file: FileModel, dry_run: bool = False) -> None:
+        run_id = send_api_command(self._api.get_workflow_status, self._key).run_id
+        for job in iter_documents(
+            self._api.list_jobs_by_needs_file,
+            self._key,
+            file.key,
+        ):
+            if job.status in (JobStatus.DONE.value, JobStatus.CANCELED.value):
+                status = JobStatus.UNINITIALIZED.value
+                if dry_run:
+                    logger.info(
+                        "Dry run: job %s / %s will change from %s to %s because input file %s changed. "
+                        "Downstream jobs will also be affected but are not reported here.",
+                        job.name,
+                        job.key,
+                        job.status,
+                        status,
+                        file.path,
+                    )
+                else:
                     send_api_command(
                         self._api.manage_status_change,
                         self._key,
@@ -222,32 +298,10 @@ class WorkflowManager:
                         run_id,
                     )
                     logger.info(
-                        "Changed job %s from done to %s because output file is missing",
+                        "Changed job %s / %s from %s to %s because input file %s changed",
+                        job.name,
                         job.key,
+                        job.status,
                         status,
+                        file.path,
                     )
-                    break
-
-    def _update_jobs_on_file_change(self, file: FileModel) -> None:
-        run_id = send_api_command(self._api.get_workflow_status, self._key).run_id
-        for job in iter_documents(
-            self._api.list_jobs_by_needs_file,
-            self._key,
-            file.key,
-        ):
-            if job.status in (JobStatus.DONE.value, JobStatus.CANCELED.value):
-                status = JobStatus.UNINITIALIZED.value
-                send_api_command(
-                    self._api.manage_status_change,
-                    self._key,
-                    job.key,
-                    status,
-                    job.rev,
-                    run_id,
-                )
-                logger.info(
-                    "Changed job %s from %s to %s after input file change",
-                    job.key,
-                    job.status,
-                    status,
-                )

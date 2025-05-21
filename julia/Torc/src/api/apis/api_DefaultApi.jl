@@ -4170,9 +4170,10 @@ const _returntypes_process_changed_job_inputs_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
-function _oacinternal_process_changed_job_inputs(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing)
+function _oacinternal_process_changed_job_inputs(_api::DefaultApi, key::String; dry_run=nothing, body=nothing, _mediaType=nothing)
     _ctx = OpenAPI.Clients.Ctx(_api.client, "POST", _returntypes_process_changed_job_inputs_DefaultApi, "/workflows/{key}/process_changed_job_inputs", [], body)
     OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_param(_ctx.query, "dry_run", dry_run; style="simple", is_explode=false)  # type Bool
     OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
     OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? ["application/json", ] : [_mediaType])
     return _ctx
@@ -4184,17 +4185,18 @@ Check for changed job inputs and update status accordingly.
 
 Params:
 - key::String (required)
+- dry_run::Bool
 - body::Any
 
 Return: ProcessChangedJobInputsResponse, OpenAPI.Clients.ApiResponse
 """
-function process_changed_job_inputs(_api::DefaultApi, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_process_changed_job_inputs(_api, key; body=body, _mediaType=_mediaType)
+function process_changed_job_inputs(_api::DefaultApi, key::String; dry_run=nothing, body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_process_changed_job_inputs(_api, key; dry_run=dry_run, body=body, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx)
 end
 
-function process_changed_job_inputs(_api::DefaultApi, response_stream::Channel, key::String; body=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_process_changed_job_inputs(_api, key; body=body, _mediaType=_mediaType)
+function process_changed_job_inputs(_api::DefaultApi, response_stream::Channel, key::String; dry_run=nothing, body=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_process_changed_job_inputs(_api, key; dry_run=dry_run, body=body, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 

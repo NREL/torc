@@ -83,9 +83,9 @@ def check_output_path(path: Path, force: bool) -> None:
             sys.exit(1)
 
 
-def confirm_change(ctx: click.Context, msg: str) -> None:
+def confirm_change(ctx: click.Context, msg: str, dry_run: bool = False) -> None:
     """If prompts are enabled (default), prompt the user to confirm the change."""
-    if get_no_prompts_from_context(ctx):
+    if get_no_prompts_from_context(ctx) or dry_run:
         return
 
     print(msg, file=sys.stderr)

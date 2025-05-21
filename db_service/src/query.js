@@ -1061,6 +1061,9 @@ function listRequiredExistingFiles(workflow) {
   const needsCollection = config.getWorkflowCollection(workflow, 'needs');
   const jobsCollection = config.getWorkflowCollection(workflow, 'jobs');
   const producesCollection = config.getWorkflowCollection(workflow, 'produces');
+  const workflowStatus = getWorkflowStatus(workflow);
+
+  // TODO: use chunked return
 
   for (const edge of needsCollection.all()) {
     const fileId = edge._to;
@@ -1071,7 +1074,7 @@ function listRequiredExistingFiles(workflow) {
     } else if (producesEdge.length == 1) {
       const jobId = producesEdge[0]._from;
       const job = jobsCollection.document(jobId);
-      if (job.status == JobStatus.Done) {
+      if (job.status == JobStatus.Done && getJobResultByRunId(job, workflow, workflowStatus.run_id) == 0) {
         // This user data should have been added by the job.
         requiredFiles.push(fileId);
       }
@@ -1115,7 +1118,7 @@ function manageJobStatusChange(job, workflow, runId) {
     }
     updateBlockedJobsFromCompletion(job, workflow);
   } else if (isJobStatusComplete(oldStatus) && job.status == JobStatus.Uninitialized) {
-    updateJobsFromCompletionReversal(job, workflow);
+    updateJobsFromCompletionReversal(job, workflow, false);
   }
 
   return job;
@@ -1341,7 +1344,7 @@ function resetFailedJobStatus(workflow) {
 
   // Would it be faster to call uninitializeBlockedJobs?
   for (const job of cursor) {
-    updateJobsFromCompletionReversal(job, workflow);
+    updateJobsFromCompletionReversal(job, workflow, false);
   }
 }
 
@@ -1536,21 +1539,40 @@ function updateBlockedJobsFromCompletion(job, workflow) {
  * Update jobs after a job completion reversal.
  * @param {Object} job
  * @param {Object} workflow
+ * @param {Boolean} dryRun
+ * @return {ArangoQueryCursor}
  */
-function updateJobsFromCompletionReversal(job, workflow) {
+function updateJobsFromCompletionReversal(job, workflow, dryRun) {
   const graphName = config.getWorkflowGraphName(workflow);
   const edgeName = config.getWorkflowCollectionName(workflow, 'blocks');
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
   const numJobs = jobs.count();
-  query`
-    FOR v, e, p
-      IN 1..${numJobs}
-      OUTBOUND ${job._id}
-      GRAPH ${graphName}
-      OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
-      FILTER v.status != ${JobStatus.Uninitialized}
-      UPDATE v WITH { status: ${JobStatus.Uninitialized} } IN ${jobs}
-  `;
+  console.log(`Enter updateJobsFromCompletionReversal job=${job.name} dryRun=${dryRun}`);
+  if (dryRun) {
+    console.log(`don't make changes updateJobsFromCompletionReversal job=${job.name} dryRun=${dryRun}`);
+    // TODO: remove the duplication with proper string interpolation
+    return query`
+      FOR v, e, p
+        IN 1..${numJobs}
+        OUTBOUND ${job._id}
+        GRAPH ${graphName}
+        OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
+        FILTER v.status != ${JobStatus.Uninitialized}
+    `;
+  } else {
+    console.log(`make changes updateJobsFromCompletionReversal job=${job.name} dryRun=${dryRun}`);
+    const cursor = query`
+      FOR v, e, p
+        IN 1..${numJobs}
+        OUTBOUND ${job._id}
+        GRAPH ${graphName}
+        OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
+        FILTER v.status != ${JobStatus.Uninitialized}
+        UPDATE v WITH { status: ${JobStatus.Uninitialized} } IN ${jobs}
+    `;
+    console.log(`successfully made changes updateJobsFromCompletionReversal job=${job.name} dryRun=${dryRun}`);
+    return cursor;
+  }
 }
 
 /**

@@ -171,7 +171,7 @@ router.post('/workflows/:key/initialize_jobs', function(req, res) {
     res.throw(400, `initialized_jobs is not supported on an archived workflow.`);
   }
   try {
-    if (req.clear_ephemeral_user_data) {
+    if (req.queryParams.clear_ephemeral_user_data) {
       query.clearEphemeralUserData(workflow);
     }
     query.addBlocksEdgesFromFiles(workflow);
@@ -196,14 +196,19 @@ router.post('/workflows/:key/process_changed_job_inputs', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   try {
-    query.clearEphemeralUserData(workflow);
-    const reinitializedJobs = documents.processChangedJobInputs(workflow);
+    if (!req.queryParams.dry_run) {
+      console.log(`TODO DT: clearEphemeralUserData`);
+      query.clearEphemeralUserData(workflow);
+    }
+    console.log(`TODO DT: process_changed_job_inputs dry_run = ${req.queryParams.dry_run}`);
+    const reinitializedJobs = documents.processChangedJobInputs(workflow, req.queryParams.dry_run);
     res.send({reinitialized_jobs: reinitializedJobs});
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Process changed user data workflow key=${key}`);
   }
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
+    .queryParam('dry_run', joi.boolean().default(false), 'If true, report changes but do not change the database.')
     .body(joi.object().optional(), '')
     .response(schemas.processChangedJobInputsResponse)
     .summary('Check for changed job inputs and update status accordingly.')
