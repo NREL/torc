@@ -62,7 +62,7 @@ def test_slurm_workflow(setup_api, slurm_account):
     inputs_file.write_text(json.dumps({"val": 5}))
     file = Path(__file__).parent.parent.parent / "examples" / "slurm_diamond_workflow.json5"
     dst_file = _fix_slurm_account(file, output_dir, slurm_account)
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(
         cli, ["-F", "json", "workflows", "create-from-json-file", str(dst_file)]
     )
@@ -231,7 +231,7 @@ def _create_cpu_affinity_workflow(output_dir, slurm_account):
     file = Path(__file__).parent.parent.parent / "examples" / "slurm_cpu_affinity_workflow.json5"
     dst_file = _fix_slurm_account(file, output_dir, slurm_account)
     _fix_mem_requirement(dst_file, 0, "70G")
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(
         cli, ["-F", "json", "workflows", "create-from-json-file", str(dst_file)]
     )

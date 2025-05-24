@@ -15,6 +15,15 @@ consumed all of the compute node's memory, the out-of-memory handler will termin
 possibly the torc worker application. In these cases torc will not record a result. The job status
 will still be ``submitted``.
 
+Dry run
+=======
+For all cases below, you can perform a dry run to see what will be changed without making any
+database changes.
+
+.. code-block:: console
+
+   $ torc workflows restart --dry-run
+
 Restarting jobs that did not finish
 ===================================
 Run this command to re-initialize the workflow and relevant job statuses.

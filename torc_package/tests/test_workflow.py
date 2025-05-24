@@ -96,7 +96,7 @@ def test_run_workflow(diamond_workflow):
     assert stats_file.exists()
     timer_stats_collector.log_stats(clear=True)
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(
         cli,
         [
@@ -353,7 +353,7 @@ def test_reset_job_status_cli(completed_workflow):
     result.return_code = 1
     api.modify_result(db.workflow.key, result.key, result)
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(
         cli,
         [
@@ -478,7 +478,7 @@ def test_reinitialize_workflow_disabled_job(incomplete_workflow):
     """Test workflow reinitialization on an incomplete workflow."""
     db, _, _ = incomplete_workflow
     api = db.api
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     job_key = db.get_document("jobs", "postprocess").key
     url = api.api_client.configuration.host
     result = runner.invoke(
@@ -599,7 +599,7 @@ def test_restart_uninitialized(diamond_workflow):
                 file.st_mtime = path.stat().st_mtime
                 api.modify_file(db.workflow.key, file.key, file)
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     job_key = db.get_document("jobs", "work2").key
     url = api.api_client.configuration.host
     result = runner.invoke(

@@ -10,7 +10,8 @@ import time
 
 # command="python resource_consumption.py -i 1 -c small"
 if len(sys.argv) != 5:
-    raise Exception(f"bad inputs in resource_consumption.py: {sys.argv}")
+    msg = f"bad inputs in resource_consumption.py: {sys.argv}"
+    raise Exception(msg)
 
 print(f"running {sys.argv}")
 index = int(sys.argv[2])
@@ -23,7 +24,8 @@ match category:
     case "large":
         count = 10_000_000
     case _:
-        raise Exception(f"invalid {category=}")
+        msg = f"invalid {category=}"
+        raise Exception(msg)
 
 for i in range(5):
     data = [random.random() for _ in range(count)]

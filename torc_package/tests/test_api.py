@@ -137,4 +137,5 @@ def _get_key(data: dict):
     for key in ("key", "_key"):
         if key in data:
             return data[key]
-    raise KeyError(f"key is not stored in {data.keys()}")
+    msg = f"key is not stored in {data.keys()}"
+    raise KeyError(msg)

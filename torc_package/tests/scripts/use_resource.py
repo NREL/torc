@@ -4,6 +4,7 @@ import os
 import sys
 
 from torc.api import make_api
+from torc.openapi_client.models.user_data_model import UserDataModel
 from torc.torc_rc import TorcRuntimeConfig
 
 
@@ -18,13 +19,15 @@ def main():
 
     api = make_api(config.database_url)
     result = api.list_job_user_data_consumes(workflow_key, job_key)
-    resource_ud = None
+    resource_ud: UserDataModel | None = None
+    assert result.items is not None
     for item in result.items:
         if item.name == "resource":
             resource_ud = item
             break
 
     assert resource_ud is not None
+    assert resource_ud.data is not None
     assert "url" in resource_ud.data
 
 
