@@ -61,9 +61,8 @@ def _check_existing_counts(files, cur_version):
         with open(item["filename"], encoding="utf-8") as f:
             count = len(list(filter(lambda x: cur_version in x, f)))
             if count != item["count"]:
-                raise ValueError(
-                    f"Found unexpected count of instances of {cur_version=}: {item}"
-                )
+                msg = f"Found unexpected count of instances of {cur_version=}: {item}"
+                raise ValueError(msg)
 
 
 def _update_version(files, cur_version, new_version):

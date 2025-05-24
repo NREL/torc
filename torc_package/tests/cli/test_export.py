@@ -9,7 +9,7 @@ def test_export(tmp_path, completed_workflow):
     """Tests the CLI commands that export data from the database."""
     db = completed_workflow[0]
     filename = tmp_path / "db.sqlite"
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(
         cli, ["-u", db.url, "-k", db.workflow.key, "export", "sqlite", "-F", filename, "--force"]
     )

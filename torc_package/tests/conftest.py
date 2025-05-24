@@ -534,7 +534,7 @@ def create_workflow_cli(tmp_path_factory):
     data["config"]["compute_node_resource_stats"]["interval"] = 1
     w_file = tmp_path / file.name
     dump_data(data, w_file)
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(
         cli,
         ["-u", url, "-F", "json", "workflows", "create-from-json-file", str(w_file)],

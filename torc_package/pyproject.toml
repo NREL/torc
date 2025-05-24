@@ -4,9 +4,9 @@ build-backend = "hatchling.build"
 
 [project]
 name = "torc"
-dynamic = ["version"]
+version = "0.4.1"
 description = "Provides workflow automation services"
-requires-python = ">=3.10,<3.13"
+requires-python = ">=3.11,<3.13"
 license = "BSD-3-Clause"
 readme = "README.md"
 authors = [
@@ -14,31 +14,28 @@ authors = [
     { name = "Joseph McKinsey", email = "joseph.mckinsey@nrel.gov" },
 ]
 include_package_data = true
-keywords = ["hpc", "workflow"]
+keywords = ["hpc", "workflow", "pipeline"]
 classifiers = [
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: BSD License",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
 ]
 dependencies = [
-    "click >= 8.1, < 9",
+    "click >= 8.2, < 9",
     "graphviz",
     "json5",
     "plotly >= 5.19, < 6",
     "psutil >= 5.9, < 6",
     "prettytable >= 3.10, < 4",
-    "pydantic >= 2.4, < 3",
-    "textual~=0.54.0",
+    "pydantic >= 2.10, < 3",
+    "textual >= 3.2, < 4",
     "resource_monitor @ git+https://github.nrel.gov/dthom/resource_monitor.git#0.2.1",
     # These are required by the openapi_client. Keep in sync with its setup.py.
     "urllib3 >= 2.1.0, < 3.0.0",
     "python-dateutil >= 2.8.2",
     "typing-extensions >= 4.7.1",
 ]
-
-[tool.hatch.version]
-path = "torc/__init__.py"
 
 [tool.hatch.metadata]
 allow-direct-references = true
@@ -61,6 +58,8 @@ dev = [
     "sphinx-copybutton",
     "sphinx-tabs~=3.4",
     "textual-dev",
+    "types-networkx",
+    "types-python-dateutil",
     "types-psutil",
 ]
 plots = ["networkx", "networkxgmml", "pygraphviz"]
@@ -69,6 +68,7 @@ plots = ["networkx", "networkxgmml", "pygraphviz"]
 torc = "torc.cli.torc:cli"
 
 [tool.pytest.ini_options]
+pythonpath = "src"
 minversion = "6.0"
 addopts = "-ra"
 testpaths = ["tests"]
@@ -84,6 +84,7 @@ exclude = [
     "dist",
     "env",
     "venv",
+    "src/torc/openapi_client/*",
 ]
 
 line-length = 99
@@ -91,15 +92,31 @@ indent-width = 4
 
 target-version = "py311"
 
+[tool.mypy]
+check_untyped_defs = true
+files = [
+  "src",
+  # "tests", TODO: needs work
+]
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = "graphviz.*"
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = "networkxgmml.*"
+
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
 select = [
-    "C901",  # McCabe complexity
-    "E4",  # Subset of pycodestyle (E)
+    "C901",   # McCabe complexity
+    "E4",     # Subset of pycodestyle (E)
     "E7",
     "E9",
-    "F",  # Pyflakes
-    "W",  # pycodestyle warnings
+    "EM",     # string formatting in an exception message
+    "F",      # Pyflakes
+    "W",      # pycodestyle warnings
 ]
 ignore = []
 
@@ -118,3 +135,11 @@ docstring-code-line-length = "dynamic"
 [tool.ruff.lint.per-file-ignores]
 "__init__.py" = ["E402"]
 "**/{tests,docs,tools}/*" = ["E402"]
+
+[tool.coverage.run]
+# List directories or file patterns to omit from coverage
+omit = [
+    "src/torc/openapi_client/*",
+    "tests/*",
+    "docs/*",
+]

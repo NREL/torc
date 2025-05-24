@@ -19,7 +19,7 @@ def test_workflow_commands(create_workflow_cli):
     """Tests workflow CLI commands."""
     key, url, output_dir = create_workflow_cli
     hostname = socket.gethostname()
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "workflows", "start"])
     assert result.exit_code == 0
 
@@ -197,7 +197,7 @@ def test_resource_requirement_commands(create_workflow_cli):
     )
     check_expected_rr_key(new_rr["key"])
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(
         cli,
         [
@@ -225,7 +225,7 @@ def test_resource_requirement_commands(create_workflow_cli):
 def test_slurm_config_commands(create_workflow_cli):
     """Tests slurm config CLI commands."""
     key, url, _ = create_workflow_cli
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(cli, ["-k", key, "-u", url, "workflows", "start"])
     assert result.exit_code == 0
     output = _run_and_convert_output_from_json(
@@ -363,7 +363,7 @@ def test_archived_workflows(create_workflow_cli):
     assert not found_my_workflow(["-u", url, "-F", "json", "workflows", "list"])
     assert found_my_workflow(["-u", url, "-F", "json", "workflows", "list", "--only-archived"])
 
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(cli, ["-k", key, "-u", url, "workflows", "start"])
     assert result.exit_code != 0
     assert "Not allowed on an archived workflow" in str(result.exception)
@@ -429,7 +429,7 @@ def test_job_commands(create_workflow_cli):
     )
     _run_and_check_output(["-k", key, "-u", url, "user-data", "get", ud_key], ("key1", "val1"))
     _run_and_check_output(["-k", key, "-u", url, "user-data", "list"], ("key1", "val1"))
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "user-data", "delete", ud_key])
     assert result.exit_code == 0
 
@@ -490,7 +490,7 @@ def _run_and_check_jobs_list_output(cmd, num_expected_jobs):
 
 
 def _run_and_get_output(cmd):
-    runner = CliRunner(mix_stderr=False)
+    runner = CliRunner()
     result = runner.invoke(cli, cmd)
     assert result.exit_code == 0
     return result.stdout
