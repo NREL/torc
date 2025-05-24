@@ -6,7 +6,7 @@ import socket
 from pathlib import Path
 from typing import Any
 
-from torc.api import send_api_command, iter_documents
+from torc.api import make_job_label, send_api_command, iter_documents
 from torc.common import JobStatus
 from torc.exceptions import InvalidWorkflow, TorcOperationNotAllowed
 from torc.openapi_client.api import DefaultApi
@@ -244,13 +244,22 @@ class WorkflowManager:
                     status = JobStatus.UNINITIALIZED.value
                     if dry_run:
                         logger.info(
-                            "Dry run: job %s / %s will change from done to %s because output file %s is missing. "
-                            "Downstream jobs will also be affected but are not reported here.",
-                            job.name,
-                            job.key,
+                            "Dry run: %s will change from %s to %s because output file %s is missing. ",
+                            make_job_label(job),
+                            job.status,
                             status,
                             file.path,
                         )
+                        for job in iter_documents(
+                            self._api.list_downstream_jobs, self._key, job.key
+                        ):
+                            if job.status != status:
+                                logger.info(
+                                    "Dry run downstream job: %s will change from %s to %s",
+                                    make_job_label(job),
+                                    job.status,
+                                    status,
+                                )
                     else:
                         send_api_command(
                             self._api.manage_status_change,
@@ -261,9 +270,8 @@ class WorkflowManager:
                             run_id,
                         )
                         logger.info(
-                            "Changed job %s / %s from done to %s because output file %s is missing",
-                            job.name,
-                            job.key,
+                            "Changed %s from done to %s because output file %s is missing",
+                            make_job_label(job),
                             status,
                             file.path,
                         )
@@ -280,14 +288,21 @@ class WorkflowManager:
                 status = JobStatus.UNINITIALIZED.value
                 if dry_run:
                     logger.info(
-                        "Dry run: job %s / %s will change from %s to %s because input file %s changed. "
-                        "Downstream jobs will also be affected but are not reported here.",
-                        job.name,
-                        job.key,
+                        "Dry run: %s will change from %s to %s because input file %s changed. "
+                        "Downstream jobs will also have their statuses reset.",
+                        make_job_label(job),
                         job.status,
                         status,
                         file.path,
                     )
+                    for job in iter_documents(self._api.list_downstream_jobs, self._key, job.key):
+                        if job.status != status:
+                            logger.info(
+                                "Dry run downstream job: %s will change from %s to %s",
+                                make_job_label(job),
+                                job.status,
+                                status,
+                            )
                 else:
                     send_api_command(
                         self._api.manage_status_change,

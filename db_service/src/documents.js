@@ -464,14 +464,16 @@ function processChangedJobInputs(workflow, dryRun) {
     }
     const hash = computeJobInputHash(curJob, workflow);
     if (hash != job.internal.hash) {
-      if (!dryRun) {
+      if (dryRun) {
+        const cursor = query.listDownstreamJobs(job, workflow, 0, 1000000);
+        for (const downstreamJob of cursor) {
+          reinitializedJobs.push(downstreamJob._key);
+        }
+      } else {
         curJob.status = JobStatus.Uninitialized;
         updateWorkflowDocument(workflow, 'jobs', curJob);
+        query.updateJobsFromCompletionReversal(job, workflow);
         reinitializedJobs.push(job._key);
-      }
-      const cursor = query.updateJobsFromCompletionReversal(job, workflow, dryRun);
-      for (const downstreamJob of cursor) {
-        reinitializedJobs.push(downstreamJob._key);
       }
     }
   }

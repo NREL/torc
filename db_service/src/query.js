@@ -1074,7 +1074,8 @@ function listRequiredExistingFiles(workflow) {
     } else if (producesEdge.length == 1) {
       const jobId = producesEdge[0]._from;
       const job = jobsCollection.document(jobId);
-      if (job.status == JobStatus.Done && getJobResultByRunId(job, workflow, workflowStatus.run_id) == 0) {
+      if (job.status == JobStatus.Done &&
+        getJobResultByRunId(job, workflow, workflowStatus.run_id) == 0) {
         // This user data should have been added by the job.
         requiredFiles.push(fileId);
       }
@@ -1118,7 +1119,7 @@ function manageJobStatusChange(job, workflow, runId) {
     }
     updateBlockedJobsFromCompletion(job, workflow);
   } else if (isJobStatusComplete(oldStatus) && job.status == JobStatus.Uninitialized) {
-    updateJobsFromCompletionReversal(job, workflow, false);
+    updateJobsFromCompletionReversal(job, workflow);
   }
 
   return job;
@@ -1344,7 +1345,7 @@ function resetFailedJobStatus(workflow) {
 
   // Would it be faster to call uninitializeBlockedJobs?
   for (const job of cursor) {
-    updateJobsFromCompletionReversal(job, workflow, false);
+    updateJobsFromCompletionReversal(job, workflow);
   }
 }
 
@@ -1539,40 +1540,21 @@ function updateBlockedJobsFromCompletion(job, workflow) {
  * Update jobs after a job completion reversal.
  * @param {Object} job
  * @param {Object} workflow
- * @param {Boolean} dryRun
- * @return {ArangoQueryCursor}
  */
-function updateJobsFromCompletionReversal(job, workflow, dryRun) {
+function updateJobsFromCompletionReversal(job, workflow) {
   const graphName = config.getWorkflowGraphName(workflow);
   const edgeName = config.getWorkflowCollectionName(workflow, 'blocks');
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
   const numJobs = jobs.count();
-  console.log(`Enter updateJobsFromCompletionReversal job=${job.name} dryRun=${dryRun}`);
-  if (dryRun) {
-    console.log(`don't make changes updateJobsFromCompletionReversal job=${job.name} dryRun=${dryRun}`);
-    // TODO: remove the duplication with proper string interpolation
-    return query`
-      FOR v, e, p
-        IN 1..${numJobs}
-        OUTBOUND ${job._id}
-        GRAPH ${graphName}
-        OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
-        FILTER v.status != ${JobStatus.Uninitialized}
+  query`
+    FOR v, e, p
+      IN 1..${numJobs}
+      OUTBOUND ${job._id}
+      GRAPH ${graphName}
+      OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
+      FILTER v.status != ${JobStatus.Uninitialized}
+      UPDATE v WITH { status: ${JobStatus.Uninitialized} } IN ${jobs}
     `;
-  } else {
-    console.log(`make changes updateJobsFromCompletionReversal job=${job.name} dryRun=${dryRun}`);
-    const cursor = query`
-      FOR v, e, p
-        IN 1..${numJobs}
-        OUTBOUND ${job._id}
-        GRAPH ${graphName}
-        OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
-        FILTER v.status != ${JobStatus.Uninitialized}
-        UPDATE v WITH { status: ${JobStatus.Uninitialized} } IN ${jobs}
-    `;
-    console.log(`successfully made changes updateJobsFromCompletionReversal job=${job.name} dryRun=${dryRun}`);
-    return cursor;
-  }
 }
 
 /**
@@ -1594,6 +1576,30 @@ function uninitializeBlockedJobs(workflow) {
         OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
         FILTER v.status != ${JobStatus.Uninitialized}
         UPDATE v WITH { status: ${JobStatus.Uninitialized} } IN ${jobs}
+  `;
+}
+
+/**
+ * Return a cursor of of jobs downstream from this job.
+ * @param {Object} job
+ * @param {Object} workflow
+ * @param {skip} skip
+ * @param {number} limit
+ * @return {ArangoQueryCursor}
+ */
+function listDownstreamJobs(job, workflow, skip, limit) {
+  const graphName = config.getWorkflowGraphName(workflow);
+  const edgeName = config.getWorkflowCollectionName(workflow, 'blocks');
+  const jobs = config.getWorkflowCollection(workflow, 'jobs');
+  const numJobs = jobs.count();
+  return query({count: true})`
+    FOR v, e, p
+      IN 1..${numJobs}
+      OUTBOUND ${job._id}
+      GRAPH ${graphName}
+      OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
+      LIMIT ${skip}, ${limit}
+      RETURN p.vertices[1]
   `;
 }
 
@@ -1637,6 +1643,7 @@ module.exports = {
   joinCollectionsByInboundEdge,
   joinCollectionsByOutboundEdge,
   listConsumesUserDataRevisions,
+  listDownstreamJobs,
   listFilesNeededByJob,
   listFilesProducedByJob,
   listJobProcessStats,

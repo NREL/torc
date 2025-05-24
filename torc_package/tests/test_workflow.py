@@ -413,6 +413,7 @@ def test_reinitialize_workflow_changed_non_critical_fields(completed_workflow, f
     }
     setattr(preprocess, field, new_values[field])
     db.api.modify_job(db.workflow.key, preprocess.key, preprocess)
+
     mgr.restart()
     for job in iter_documents(db.api.list_jobs, db.workflow.key):
         assert job.status == "done"
@@ -427,6 +428,11 @@ def test_reinitialize_workflow_changed_critical_fields(completed_workflow, field
     assert job.status == "done"
     setattr(job, field, "new value")
     db.api.modify_job(db.workflow.key, job.key, job)
+
+    mgr.restart(dry_run=True)
+    for name in ("preprocess", "work1", "work2", "postprocess"):
+        assert db.get_document("jobs", name).status == "done"
+
     mgr.restart()
     assert db.get_document("jobs", "preprocess").status == "ready"
     for name in ("work1", "work2", "postprocess"):
@@ -443,6 +449,11 @@ def test_reinitialize_workflow_input_file_updated(completed_workflow):
     path.touch()
 
     mgr = WorkflowManager(api, db.workflow.key)
+
+    mgr.restart(dry_run=True)
+    for name in ("preprocess", "work1", "work2", "postprocess"):
+        assert db.get_document("jobs", name).status == "done"
+
     mgr.restart()
     assert db.get_document("jobs", "preprocess").status == "ready"
     for name in ("work1", "work2", "postprocess"):

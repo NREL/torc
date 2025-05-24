@@ -90,6 +90,14 @@ def iter_documents(func: Callable, *args, skip=0, **kwargs) -> Generator[Any, No
         has_more = result.has_more
 
 
+def make_job_label(job: JobModel, include_status: bool = False) -> str:
+    """Return a user-friendly label for the job for log statements."""
+    base = f"Job name={job.name} key={job.key}"
+    if include_status:
+        return f"{base} status={job.status}"
+    return base
+
+
 def map_job_keys_to_names(api: DefaultApi, workflow_key, filters=None) -> dict[str, str]:
     """Return a mapping of job key to name."""
     filters = filters or {}
