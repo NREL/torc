@@ -93,6 +93,7 @@ Class | Method
 *DefaultApi* | [**list_collection_names**](docs/DefaultApi.md#list_collection_names)<br/>**GET** /workflows/{key}/collection_names<br/>Retrieve all collection names for one workflow.
 *DefaultApi* | [**list_compute_node_stats**](docs/DefaultApi.md#list_compute_node_stats)<br/>**GET** /workflows/{workflow}/compute_node_stats<br/>Retrieve all compute node statistics documents
 *DefaultApi* | [**list_compute_nodes**](docs/DefaultApi.md#list_compute_nodes)<br/>**GET** /workflows/{workflow}/compute_nodes<br/>Retrieve all compute node documents
+*DefaultApi* | [**list_downstream_jobs**](docs/DefaultApi.md#list_downstream_jobs)<br/>**GET** /workflows/{workflow}/downstream_jobs/{key}<br/>Retrieve all jobs downstream of another job.
 *DefaultApi* | [**list_edges**](docs/DefaultApi.md#list_edges)<br/>**GET** /workflows/{workflow}/edges/{name}<br/>Retrieve all edges from the designated collection.
 *DefaultApi* | [**list_events**](docs/DefaultApi.md#list_events)<br/>**GET** /workflows/{workflow}/events<br/>Retrieve all event documents
 *DefaultApi* | [**list_files**](docs/DefaultApi.md#list_files)<br/>**GET** /workflows/{workflow}/files<br/>Retrieve all file documents

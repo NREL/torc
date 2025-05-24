@@ -50,6 +50,7 @@ dev = [
     "flake8",
     "furo",
     "ghp-import",
+    "mypy",
     "pre-commit",
     "pytest",
     "pytest-cov",

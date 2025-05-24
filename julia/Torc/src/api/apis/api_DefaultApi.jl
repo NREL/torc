@@ -2475,6 +2475,44 @@ function list_compute_nodes(_api::DefaultApi, response_stream::Channel, workflow
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 
+const _returntypes_list_downstream_jobs_DefaultApi = Dict{Regex,Type}(
+    Regex("^" * replace("200", "x"=>".") * "\$") => ListJobsResponse,
+    Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
+)
+
+function _oacinternal_list_downstream_jobs(_api::DefaultApi, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_list_downstream_jobs_DefaultApi, "/workflows/{workflow}/downstream_jobs/{key}", [])
+    OpenAPI.Clients.set_param(_ctx.path, "workflow", workflow)  # type String
+    OpenAPI.Clients.set_param(_ctx.path, "key", key)  # type String
+    OpenAPI.Clients.set_param(_ctx.query, "skip", skip; style="form", is_explode=true)  # type Float64
+    OpenAPI.Clients.set_param(_ctx.query, "limit", limit; style="form", is_explode=true)  # type Float64
+    OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
+    OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
+    return _ctx
+end
+
+@doc raw"""Retrieve all jobs downstream of another job.
+
+Retrieve all jobs downstream of another job.
+
+Params:
+- workflow::String (required)
+- key::String (required)
+- skip::Float64
+- limit::Float64
+
+Return: ListJobsResponse, OpenAPI.Clients.ApiResponse
+"""
+function list_downstream_jobs(_api::DefaultApi, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_downstream_jobs(_api, workflow, key; skip=skip, limit=limit, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx)
+end
+
+function list_downstream_jobs(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_downstream_jobs(_api, workflow, key; skip=skip, limit=limit, _mediaType=_mediaType)
+    return OpenAPI.Clients.exec(_ctx, response_stream)
+end
+
 const _returntypes_list_edges_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("200", "x"=>".") * "\$") => ListEdgesResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
@@ -4906,6 +4944,7 @@ export list_aws_schedulers
 export list_collection_names
 export list_compute_node_stats
 export list_compute_nodes
+export list_downstream_jobs
 export list_edges
 export list_events
 export list_files

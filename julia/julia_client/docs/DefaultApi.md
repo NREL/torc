@@ -76,6 +76,7 @@ Method | HTTP request | Description
 [**list_collection_names**](DefaultApi.md#list_collection_names) | **GET** /workflows/{key}/collection_names | Retrieve all collection names for one workflow.
 [**list_compute_node_stats**](DefaultApi.md#list_compute_node_stats) | **GET** /workflows/{workflow}/compute_node_stats | Retrieve all compute node statistics documents
 [**list_compute_nodes**](DefaultApi.md#list_compute_nodes) | **GET** /workflows/{workflow}/compute_nodes | Retrieve all compute node documents
+[**list_downstream_jobs**](DefaultApi.md#list_downstream_jobs) | **GET** /workflows/{workflow}/downstream_jobs/{key} | Retrieve all jobs downstream of another job.
 [**list_edges**](DefaultApi.md#list_edges) | **GET** /workflows/{workflow}/edges/{name} | Retrieve all edges from the designated collection.
 [**list_events**](DefaultApi.md#list_events) | **GET** /workflows/{workflow}/events | Retrieve all event documents
 [**list_files**](DefaultApi.md#list_files) | **GET** /workflows/{workflow}/files | Retrieve all file documents
@@ -2499,6 +2500,44 @@ Name | Type | Description  | Notes
 ### Return type
 
 [**ListComputeNodesResponse**](ListComputeNodesResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
+# **list_downstream_jobs**
+> list_downstream_jobs(_api::DefaultApi, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing) -> ListJobsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_downstream_jobs(_api::DefaultApi, response_stream::Channel, workflow::String, key::String; skip=nothing, limit=nothing, _mediaType=nothing) -> Channel{ ListJobsResponse }, OpenAPI.Clients.ApiResponse
+
+Retrieve all jobs downstream of another job.
+
+Retrieve all jobs downstream of another job.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**workflow** | **String** | Workflow key |
+**key** | **String** | Job key |
+
+### Optional Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **skip** | **Float64** |  | [default to 0.0]
+ **limit** | **Float64** |  | [default to 100000.0]
+
+### Return type
+
+[**ListJobsResponse**](ListJobsResponse.md)
 
 ### Authorization
 

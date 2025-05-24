@@ -4281,6 +4281,59 @@ paths:
               schema:
                 $ref: '#/components/schemas/default_error_response'
       security: []
+  /workflows/{workflow}/downstream_jobs/{key}:
+    get:
+      tags: []
+      summary: Retrieve all jobs downstream of another job.
+      description: Retrieve all jobs downstream of another job.
+      operationId: list_downstream_jobs
+      parameters:
+      - name: workflow
+        in: path
+        description: Workflow key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: key
+        in: path
+        description: Job key
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+      - name: skip
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 0.0
+      - name: limit
+        in: query
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: number
+          default: 100000.0
+      responses:
+        '200':
+          description: HTTP 200 OK.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/list_jobs_response'
+        '500':
+          description: Default error response.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/default_error_response'
+      security: []
   /workflows/{workflow}/jobs/{key}/resource_requirements:
     get:
       tags: []

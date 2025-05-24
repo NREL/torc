@@ -367,3 +367,24 @@ router.get('/workflows/:workflow/jobs/:key/user_data_consumes', function(req, re
     .response(schemas.batchUserData, 'All user data consumed by the job.')
     .summary('Retrieve all user data consumed by a job.')
     .description('Retrieve all user data consumed by a job.');
+
+router.get('workflows/:workflow/downstream_jobs/:key', function(req, res) {
+  const workflowKey = req.pathParams.workflow;
+  const key = req.pathParams.key;
+  const workflow = documents.getWorkflow(workflowKey, res);
+  const qp = req.queryParams;
+  try {
+    const job = documents.getWorkflowDocument(workflow, 'jobs', key, res);
+    const cursor = query.listDownstreamJobs(job, workflow, qp.skip, qp.limit);
+    res.send(utils.makeCursorResultFromIteration(cursor, qp.skip, cursor.count()));
+  } catch (e) {
+    utils.handleArangoApiErrors(e, res, `List downstream jobs key=${key}`);
+  }
+})
+    .pathParam('workflow', joi.string().required(), 'Workflow key')
+    .pathParam('key', joi.string().required(), 'Job key')
+    .queryParam('skip', joi.number().default(0))
+    .queryParam('limit', joi.number().default(MAX_TRANSFER_RECORDS))
+    .response(schemas.batchObjects)
+    .summary('Return all jobs downstream of the passed job.')
+    .description('Return all jobs downstream of the passed job.');

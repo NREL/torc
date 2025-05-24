@@ -195,20 +195,20 @@ router.post('/workflows/:key/initialize_jobs', function(req, res) {
 router.post('/workflows/:key/process_changed_job_inputs', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
+  const qp = req.queryParams;
   try {
-    if (!req.queryParams.dry_run) {
-      console.log(`TODO DT: clearEphemeralUserData`);
+    if (!qp.dry_run) {
       query.clearEphemeralUserData(workflow);
     }
-    console.log(`TODO DT: process_changed_job_inputs dry_run = ${req.queryParams.dry_run}`);
-    const reinitializedJobs = documents.processChangedJobInputs(workflow, req.queryParams.dry_run);
+    const reinitializedJobs = documents.processChangedJobInputs(workflow, qp.dry_run);
     res.send({reinitialized_jobs: reinitializedJobs});
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Process changed user data workflow key=${key}`);
   }
 })
     .pathParam('key', joi.string().required(), 'Workflow key')
-    .queryParam('dry_run', joi.boolean().default(false), 'If true, report changes but do not change the database.')
+    .queryParam('dry_run', joi.boolean().default(false),
+        'If true, report changes but do not change the database.')
     .body(joi.object().optional(), '')
     .response(schemas.processChangedJobInputsResponse)
     .summary('Check for changed job inputs and update status accordingly.')
@@ -325,7 +325,8 @@ router.post('/workflows/:key/prepare_jobs_for_scheduling', function(req, res) {
     'Schedulers that need to be activated.',
     )
     .summary('Return scheduler parameters that need to be activated.')
-    .description('Return scheduler parameters that need to be activated. Sets job status to scheduled.');
+    .description('Return scheduler parameters that need to be activated. ' +
+        'Sets job status to scheduled.');
 
 router.post('/workflows/:key/auto_tune_resource_requirements', function(req, res) {
   const key = req.pathParams.key;
