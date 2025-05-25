@@ -49,6 +49,7 @@ allow-direct-references = true
 dev = [
     "black",
     "bump-my-version",
+    "filelock",
     "flake8",
     "furo",
     "ghp-import",
@@ -144,7 +145,6 @@ docstring-code-line-length = "dynamic"
 [tool.coverage.run]
 # List directories or file patterns to omit from coverage
 omit = [
-    "src/torc/openapi_client/*",
     "tests/*",
     "docs/*",
 ]

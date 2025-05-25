@@ -3,16 +3,18 @@
 import getpass
 import sys
 
-from torc.api import make_api
-from torc.loggers import setup_logging
-from torc.openapi_client.api import DefaultApi
-from torc.openapi_client.models.workflow_model import WorkflowModel
-from torc.openapi_client.models.job_model import JobModel
-from torc.openapi_client.models.resource_requirements_model import (
+from torc.openapi_client import (
+    DefaultApi,
+    WorkflowModel,
+    JobModel,
     ResourceRequirementsModel,
+    SlurmSchedulerModel,
 )
-from torc.openapi_client.models.slurm_scheduler_model import SlurmSchedulerModel
-from torc.torc_rc import TorcRuntimeConfig
+from torc import (
+    make_api,
+    setup_logging,
+    torc_settings,
+)
 
 
 logger = setup_logging(__name__)
@@ -87,14 +89,13 @@ def build_workflow(api: DefaultApi, workflow: WorkflowModel):
 
 def main():
     """Entry point"""
-    config = TorcRuntimeConfig.load()
-    if config.database_url is None:
+    if torc_settings.database_url is None:
         logger.error(
             "There is no torc config file or the database URL is not defined. "
             "Please fix the config file or define the URL in this script."
         )
         sys.exit(1)
-    api = make_api(config.database_url)
+    api = make_api(torc_settings.database_url)
     workflow = create_workflow(api)
     try:
         build_workflow(api, workflow)

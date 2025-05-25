@@ -22,32 +22,24 @@ from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class ComputeNodesResources(BaseModel):
     """
     ComputeNodesResources
-    """  # noqa: E501
-
+    """ # noqa: E501
     num_cpus: StrictInt
     memory_gb: Union[StrictFloat, StrictInt]
     num_gpus: StrictInt
     num_nodes: StrictInt
     time_limit: Optional[StrictStr] = None
     scheduler_config_id: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = [
-        "num_cpus",
-        "memory_gb",
-        "num_gpus",
-        "num_nodes",
-        "time_limit",
-        "scheduler_config_id",
-    ]
+    __properties: ClassVar[List[str]] = ["num_cpus", "memory_gb", "num_gpus", "num_nodes", "time_limit", "scheduler_config_id"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -73,7 +65,8 @@ class ComputeNodesResources(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -91,14 +84,12 @@ class ComputeNodesResources(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "num_cpus": obj.get("num_cpus"),
-                "memory_gb": obj.get("memory_gb"),
-                "num_gpus": obj.get("num_gpus"),
-                "num_nodes": obj.get("num_nodes"),
-                "time_limit": obj.get("time_limit"),
-                "scheduler_config_id": obj.get("scheduler_config_id"),
-            }
-        )
+        _obj = cls.model_validate({
+            "num_cpus": obj.get("num_cpus"),
+            "memory_gb": obj.get("memory_gb"),
+            "num_gpus": obj.get("num_gpus"),
+            "num_nodes": obj.get("num_nodes"),
+            "time_limit": obj.get("time_limit"),
+            "scheduler_config_id": obj.get("scheduler_config_id")
+        })
         return _obj

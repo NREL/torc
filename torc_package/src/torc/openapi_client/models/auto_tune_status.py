@@ -22,12 +22,10 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class AutoTuneStatus(BaseModel):
     """
     AutoTuneStatus
-    """  # noqa: E501
-
+    """ # noqa: E501
     enabled: Optional[StrictBool] = False
     job_keys: Optional[List[StrictStr]] = None
     __properties: ClassVar[List[str]] = ["enabled", "job_keys"]
@@ -37,6 +35,7 @@ class AutoTuneStatus(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -62,7 +61,8 @@ class AutoTuneStatus(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -80,10 +80,8 @@ class AutoTuneStatus(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "enabled": obj.get("enabled") if obj.get("enabled") is not None else False,
-                "job_keys": obj.get("job_keys"),
-            }
-        )
+        _obj = cls.model_validate({
+            "enabled": obj.get("enabled") if obj.get("enabled") is not None else False,
+            "job_keys": obj.get("job_keys")
+        })
         return _obj

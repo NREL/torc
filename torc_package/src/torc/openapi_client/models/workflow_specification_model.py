@@ -24,60 +24,32 @@ from torc.openapi_client.models.job_specification_model import JobSpecificationM
 from torc.openapi_client.models.resource_requirements_model import ResourceRequirementsModel
 from torc.openapi_client.models.user_data_model import UserDataModel
 from torc.openapi_client.models.workflow_config_model import WorkflowConfigModel
-from torc.openapi_client.models.workflow_specifications_schedulers import (
-    WorkflowSpecificationsSchedulers,
-)
+from torc.openapi_client.models.workflow_specifications_schedulers import WorkflowSpecificationsSchedulers
 from typing import Optional, Set
 from typing_extensions import Self
-
 
 class WorkflowSpecificationModel(BaseModel):
     """
     WorkflowSpecificationModel
-    """  # noqa: E501
-
+    """ # noqa: E501
     name: Optional[StrictStr] = Field(default=None, description="Name of the workflow")
-    key: Optional[StrictStr] = Field(
-        default=None,
-        description="Optional key to use as the database identifier. If set, it must be unique in the database. It is recommended to let the database create the identifier.",
-    )
+    key: Optional[StrictStr] = Field(default=None, description="Optional key to use as the database identifier. If set, it must be unique in the database. It is recommended to let the database create the identifier.")
     user: Optional[StrictStr] = Field(default=None, description="User that created the workflow")
-    description: Optional[StrictStr] = Field(
-        default=None, description="Timestamp of workflow creation"
-    )
-    jobs: Optional[List[JobSpecificationModel]] = Field(
-        default=None, description="Jobs in the workflow. Each job name must be unique."
-    )
-    files: Optional[List[FileModel]] = Field(
-        default=None, description="Files in the workflow. Each file name must be unique."
-    )
-    user_data: Optional[List[UserDataModel]] = Field(
-        default=None, description="User data in the workflow. Each name must be unique."
-    )
-    resource_requirements: Optional[List[ResourceRequirementsModel]] = Field(
-        default=None,
-        description="Resource requirements in the workflow. Each name must be unique.",
-    )
+    description: Optional[StrictStr] = Field(default=None, description="Timestamp of workflow creation")
+    jobs: Optional[List[JobSpecificationModel]] = Field(default=None, description="Jobs in the workflow. Each job name must be unique.")
+    files: Optional[List[FileModel]] = Field(default=None, description="Files in the workflow. Each file name must be unique.")
+    user_data: Optional[List[UserDataModel]] = Field(default=None, description="User data in the workflow. Each name must be unique.")
+    resource_requirements: Optional[List[ResourceRequirementsModel]] = Field(default=None, description="Resource requirements in the workflow. Each name must be unique.")
     schedulers: Optional[WorkflowSpecificationsSchedulers] = None
     config: Optional[WorkflowConfigModel] = None
-    __properties: ClassVar[List[str]] = [
-        "name",
-        "key",
-        "user",
-        "description",
-        "jobs",
-        "files",
-        "user_data",
-        "resource_requirements",
-        "schedulers",
-        "config",
-    ]
+    __properties: ClassVar[List[str]] = ["name", "key", "user", "description", "jobs", "files", "user_data", "resource_requirements", "schedulers", "config"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -103,7 +75,8 @@ class WorkflowSpecificationModel(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -116,34 +89,34 @@ class WorkflowSpecificationModel(BaseModel):
             for _item_jobs in self.jobs:
                 if _item_jobs:
                     _items.append(_item_jobs.to_dict())
-            _dict["jobs"] = _items
+            _dict['jobs'] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in files (list)
         _items = []
         if self.files:
             for _item_files in self.files:
                 if _item_files:
                     _items.append(_item_files.to_dict())
-            _dict["files"] = _items
+            _dict['files'] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in user_data (list)
         _items = []
         if self.user_data:
             for _item_user_data in self.user_data:
                 if _item_user_data:
                     _items.append(_item_user_data.to_dict())
-            _dict["user_data"] = _items
+            _dict['user_data'] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in resource_requirements (list)
         _items = []
         if self.resource_requirements:
             for _item_resource_requirements in self.resource_requirements:
                 if _item_resource_requirements:
                     _items.append(_item_resource_requirements.to_dict())
-            _dict["resource_requirements"] = _items
+            _dict['resource_requirements'] = _items
         # override the default output from pydantic by calling `to_dict()` of schedulers
         if self.schedulers:
-            _dict["schedulers"] = self.schedulers.to_dict()
+            _dict['schedulers'] = self.schedulers.to_dict()
         # override the default output from pydantic by calling `to_dict()` of config
         if self.config:
-            _dict["config"] = self.config.to_dict()
+            _dict['config'] = self.config.to_dict()
         return _dict
 
     @classmethod
@@ -155,33 +128,16 @@ class WorkflowSpecificationModel(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "name": obj.get("name"),
-                "key": obj.get("key"),
-                "user": obj.get("user"),
-                "description": obj.get("description"),
-                "jobs": [JobSpecificationModel.from_dict(_item) for _item in obj["jobs"]]
-                if obj.get("jobs") is not None
-                else None,
-                "files": [FileModel.from_dict(_item) for _item in obj["files"]]
-                if obj.get("files") is not None
-                else None,
-                "user_data": [UserDataModel.from_dict(_item) for _item in obj["user_data"]]
-                if obj.get("user_data") is not None
-                else None,
-                "resource_requirements": [
-                    ResourceRequirementsModel.from_dict(_item)
-                    for _item in obj["resource_requirements"]
-                ]
-                if obj.get("resource_requirements") is not None
-                else None,
-                "schedulers": WorkflowSpecificationsSchedulers.from_dict(obj["schedulers"])
-                if obj.get("schedulers") is not None
-                else None,
-                "config": WorkflowConfigModel.from_dict(obj["config"])
-                if obj.get("config") is not None
-                else None,
-            }
-        )
+        _obj = cls.model_validate({
+            "name": obj.get("name"),
+            "key": obj.get("key"),
+            "user": obj.get("user"),
+            "description": obj.get("description"),
+            "jobs": [JobSpecificationModel.from_dict(_item) for _item in obj["jobs"]] if obj.get("jobs") is not None else None,
+            "files": [FileModel.from_dict(_item) for _item in obj["files"]] if obj.get("files") is not None else None,
+            "user_data": [UserDataModel.from_dict(_item) for _item in obj["user_data"]] if obj.get("user_data") is not None else None,
+            "resource_requirements": [ResourceRequirementsModel.from_dict(_item) for _item in obj["resource_requirements"]] if obj.get("resource_requirements") is not None else None,
+            "schedulers": WorkflowSpecificationsSchedulers.from_dict(obj["schedulers"]) if obj.get("schedulers") is not None else None,
+            "config": WorkflowConfigModel.from_dict(obj["config"]) if obj.get("config") is not None else None
+        })
         return _obj

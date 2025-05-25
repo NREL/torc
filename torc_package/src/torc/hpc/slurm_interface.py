@@ -3,9 +3,10 @@
 import logging
 import os
 import re
+import socket
 import subprocess
 import tempfile
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -14,8 +15,8 @@ import psutil
 from torc.exceptions import ExecutionError
 from torc.utils.files import create_script
 from torc.utils.run_command import run_command
-from .common import HpcJobStats, HpcJobStatus, HpcJobInfo
-from .hpc_interface import HpcInterface
+from torc.hpc.common import HpcJobStats, HpcJobStatus, HpcJobInfo
+from torc.hpc.hpc_interface import HpcInterface
 
 
 logger = logging.getLogger(__name__)
@@ -43,7 +44,8 @@ class SlurmInterface(HpcInterface):
 
     def get_status(self, job_id: str) -> HpcJobInfo:
         field_names = ("jobid", "name", "state")
-        cmd = f"squeue -u {self.USER} --Format \"{','.join(field_names)}\" -h -j {job_id}"
+        squeue = _get_squeue_exec()
+        cmd = f"{squeue} -u {self.USER} --Format \"{','.join(field_names)}\" -h -j {job_id}"
 
         output: dict[str, Any] = {}
         # Transient failures could be costly. Retry for up to one minute.
@@ -77,7 +79,8 @@ class SlurmInterface(HpcInterface):
 
     def get_statuses(self) -> dict[str, HpcJobStatus]:
         field_names = ("jobid", "state")
-        cmd = f"squeue -u {self.USER} --Format \"{','.join(field_names)}\" -h"
+        squeue = _get_squeue_exec()
+        cmd = f"{squeue} -u {self.USER} --Format \"{','.join(field_names)}\" -h"
 
         output: dict[str, Any] = {}
         # Transient failures could be costly. Retry for up to one minute.
@@ -164,7 +167,11 @@ class SlurmInterface(HpcInterface):
         return {k: v for k, v in os.environ.items() if "SLURM" in k}
 
     def get_job_end_time(self) -> datetime:
-        cmd = ["squeue", "-j", self.get_current_job_id(), "--format='%20e'"]
+        if "TORC_FAKE_SBATCH" in os.environ:
+            return datetime.now() + timedelta(days=10)
+
+        squeue = _get_squeue_exec()
+        cmd = [squeue, "-j", self.get_current_job_id(), "--format='%20e'"]
         proc = subprocess.run(cmd, stdout=subprocess.PIPE, check=True)
         timestamp = proc.stdout.decode("utf-8").replace("'", "").strip().split("\n")[1].strip()
         return datetime.strptime(timestamp, "%Y-%m-%dT%H:%M:%S")
@@ -254,8 +261,12 @@ class SlurmInterface(HpcInterface):
         # It's possible that 500 characters won't be enough, even with the compact format.
         # Compare the node count against the result to make sure we got all nodes.
         # There should be a better way to get this.
+        if "TORC_FAKE_SBATCH" in os.environ:
+            return [socket.gethostname()]
+
+        squeue = _get_squeue_exec()
         proc = subprocess.run(
-            ["squeue", "-j", job_id, "--format='%5D %500N'", "-h"],
+            [squeue, "-j", job_id, "--format='%5D %500N'", "-h"],
             stdout=subprocess.PIPE,
             check=True,
         )
@@ -279,7 +290,8 @@ class SlurmInterface(HpcInterface):
         output: dict[str, Any] = {}
         # Transient failures could be costly. Retry for up to one minute.
         # TODO: Some errors are not transient. We could detect those and skip the retries.
-        ret = run_command(f"sbatch {filename}", output, num_retries=6, retry_delay_s=10)
+        sbatch = _get_sbatch_exec()
+        ret = run_command(f"{sbatch} {filename}", output, num_retries=6, retry_delay_s=10)
         if ret == 0:
             stdout = output["stdout"]
             match = self._REGEX_SBATCH_OUTPUT.search(stdout)
@@ -292,3 +304,11 @@ class SlurmInterface(HpcInterface):
             ret = 1
 
         return ret, job_id, output["stderr"]
+
+
+def _get_sbatch_exec() -> str:
+    return os.getenv("TORC_FAKE_SBATCH", "sbatch")
+
+
+def _get_squeue_exec() -> str:
+    return os.getenv("TORC_FAKE_SQUEUE", "squeue")

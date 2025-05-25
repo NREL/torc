@@ -63,7 +63,7 @@ class HpcManager:
         return self._hpc_type
 
     def list_active_nodes(self, job_id: str) -> list[str]:
-        """Return the node hostname currently participating in the job. Order should be
+        """Return the node hostnames currently participating in the job. Order should be
         deterministic.
         """
         return self._intf.list_active_nodes(job_id)

@@ -22,54 +22,27 @@ from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class ResultModel(BaseModel):
     """
     ResultModel
-    """  # noqa: E501
-
+    """ # noqa: E501
     job_key: StrictStr = Field(description="Database key for the job tied to this result")
-    run_id: StrictInt = Field(
-        description="ID of the workflow run. Incremements on every start and restart."
-    )
-    return_code: StrictInt = Field(
-        description="Code returned by the job. Zero is success; non-zero is a failure."
-    )
-    exec_time_minutes: Union[StrictFloat, StrictInt] = Field(
-        description="Job execution time in minutes"
-    )
+    run_id: StrictInt = Field(description="ID of the workflow run. Incremements on every start and restart.")
+    return_code: StrictInt = Field(description="Code returned by the job. Zero is success; non-zero is a failure.")
+    exec_time_minutes: Union[StrictFloat, StrictInt] = Field(description="Job execution time in minutes")
     completion_time: StrictStr = Field(description="Timestamp of when the job completed.")
     status: StrictStr = Field(description="Status of the job; managed by torc.")
-    key: Optional[StrictStr] = Field(
-        default=None,
-        description="Unique database identifier for the result. Does not include collection name.",
-        alias="_key",
-    )
-    id: Optional[StrictStr] = Field(
-        default=None,
-        description="Unique database identifier for the result. Includes collection name and _key.",
-        alias="_id",
-    )
-    rev: Optional[StrictStr] = Field(
-        default=None, description="Database revision of the result", alias="_rev"
-    )
-    __properties: ClassVar[List[str]] = [
-        "job_key",
-        "run_id",
-        "return_code",
-        "exec_time_minutes",
-        "completion_time",
-        "status",
-        "_key",
-        "_id",
-        "_rev",
-    ]
+    key: Optional[StrictStr] = Field(default=None, description="Unique database identifier for the result. Does not include collection name.", alias="_key")
+    id: Optional[StrictStr] = Field(default=None, description="Unique database identifier for the result. Includes collection name and _key.", alias="_id")
+    rev: Optional[StrictStr] = Field(default=None, description="Database revision of the result", alias="_rev")
+    __properties: ClassVar[List[str]] = ["job_key", "run_id", "return_code", "exec_time_minutes", "completion_time", "status", "_key", "_id", "_rev"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -95,7 +68,8 @@ class ResultModel(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -113,17 +87,15 @@ class ResultModel(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "job_key": obj.get("job_key"),
-                "run_id": obj.get("run_id"),
-                "return_code": obj.get("return_code"),
-                "exec_time_minutes": obj.get("exec_time_minutes"),
-                "completion_time": obj.get("completion_time"),
-                "status": obj.get("status"),
-                "_key": obj.get("_key"),
-                "_id": obj.get("_id"),
-                "_rev": obj.get("_rev"),
-            }
-        )
+        _obj = cls.model_validate({
+            "job_key": obj.get("job_key"),
+            "run_id": obj.get("run_id"),
+            "return_code": obj.get("return_code"),
+            "exec_time_minutes": obj.get("exec_time_minutes"),
+            "completion_time": obj.get("completion_time"),
+            "status": obj.get("status"),
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
+        })
         return _obj

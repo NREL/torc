@@ -22,32 +22,24 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class ScheduledComputeNodesModel(BaseModel):
     """
     ScheduledComputeNodesModel
-    """  # noqa: E501
-
+    """ # noqa: E501
     scheduler_id: Optional[StrictStr] = None
     scheduler_config_id: StrictStr
     status: StrictStr
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = [
-        "scheduler_id",
-        "scheduler_config_id",
-        "status",
-        "_key",
-        "_id",
-        "_rev",
-    ]
+    __properties: ClassVar[List[str]] = ["scheduler_id", "scheduler_config_id", "status", "_key", "_id", "_rev"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -73,7 +65,8 @@ class ScheduledComputeNodesModel(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -91,14 +84,12 @@ class ScheduledComputeNodesModel(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "scheduler_id": obj.get("scheduler_id"),
-                "scheduler_config_id": obj.get("scheduler_config_id"),
-                "status": obj.get("status"),
-                "_key": obj.get("_key"),
-                "_id": obj.get("_id"),
-                "_rev": obj.get("_rev"),
-            }
-        )
+        _obj = cls.model_validate({
+            "scheduler_id": obj.get("scheduler_id"),
+            "scheduler_config_id": obj.get("scheduler_config_id"),
+            "status": obj.get("status"),
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
+        })
         return _obj

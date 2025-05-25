@@ -22,12 +22,10 @@ from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class ComputeNodeResourceStatsModel(BaseModel):
     """
     ComputeNodeResourceStatsModel
-    """  # noqa: E501
-
+    """ # noqa: E501
     cpu: Optional[StrictBool] = True
     disk: Optional[StrictBool] = False
     memory: Optional[StrictBool] = True
@@ -35,27 +33,17 @@ class ComputeNodeResourceStatsModel(BaseModel):
     process: Optional[StrictBool] = False
     include_child_processes: Optional[StrictBool] = True
     recurse_child_processes: Optional[StrictBool] = False
-    monitor_type: Optional[StrictStr] = "aggregation"
+    monitor_type: Optional[StrictStr] = 'aggregation'
     make_plots: Optional[StrictBool] = True
     interval: Optional[Union[StrictFloat, StrictInt]] = None
-    __properties: ClassVar[List[str]] = [
-        "cpu",
-        "disk",
-        "memory",
-        "network",
-        "process",
-        "include_child_processes",
-        "recurse_child_processes",
-        "monitor_type",
-        "make_plots",
-        "interval",
-    ]
+    __properties: ClassVar[List[str]] = ["cpu", "disk", "memory", "network", "process", "include_child_processes", "recurse_child_processes", "monitor_type", "make_plots", "interval"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -81,7 +69,8 @@ class ComputeNodeResourceStatsModel(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -99,24 +88,16 @@ class ComputeNodeResourceStatsModel(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "cpu": obj.get("cpu") if obj.get("cpu") is not None else True,
-                "disk": obj.get("disk") if obj.get("disk") is not None else False,
-                "memory": obj.get("memory") if obj.get("memory") is not None else True,
-                "network": obj.get("network") if obj.get("network") is not None else False,
-                "process": obj.get("process") if obj.get("process") is not None else False,
-                "include_child_processes": obj.get("include_child_processes")
-                if obj.get("include_child_processes") is not None
-                else True,
-                "recurse_child_processes": obj.get("recurse_child_processes")
-                if obj.get("recurse_child_processes") is not None
-                else False,
-                "monitor_type": obj.get("monitor_type")
-                if obj.get("monitor_type") is not None
-                else "aggregation",
-                "make_plots": obj.get("make_plots") if obj.get("make_plots") is not None else True,
-                "interval": obj.get("interval"),
-            }
-        )
+        _obj = cls.model_validate({
+            "cpu": obj.get("cpu") if obj.get("cpu") is not None else True,
+            "disk": obj.get("disk") if obj.get("disk") is not None else False,
+            "memory": obj.get("memory") if obj.get("memory") is not None else True,
+            "network": obj.get("network") if obj.get("network") is not None else False,
+            "process": obj.get("process") if obj.get("process") is not None else False,
+            "include_child_processes": obj.get("include_child_processes") if obj.get("include_child_processes") is not None else True,
+            "recurse_child_processes": obj.get("recurse_child_processes") if obj.get("recurse_child_processes") is not None else False,
+            "monitor_type": obj.get("monitor_type") if obj.get("monitor_type") is not None else 'aggregation',
+            "make_plots": obj.get("make_plots") if obj.get("make_plots") is not None else True,
+            "interval": obj.get("interval")
+        })
         return _obj

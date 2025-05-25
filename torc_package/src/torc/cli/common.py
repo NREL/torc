@@ -2,7 +2,6 @@
 
 import json
 import logging
-import shutil
 import sys
 from pathlib import Path
 from typing import Any, Callable, Iterable, Optional
@@ -37,30 +36,6 @@ def check_database_url(api: DefaultApi) -> None:
             file=sys.stderr,
         )
         sys.exit(1)
-
-
-def check_output_directory(path: Path, force: bool) -> None:
-    """Ensures that the parameter path is an empty directory.
-
-    Parameters
-    ----------
-    path : Path
-    force : bool
-        If False and the directory exists and has content, exit. If True, delete the contents.
-    """
-    if path.exists():
-        if not bool(path.iterdir()):
-            return
-        if force:
-            shutil.rmtree(path)
-        else:
-            print(
-                f"{path} already exists. Choose a different name or pass --force to overwrite it.",
-                file=sys.stderr,
-            )
-            sys.exit(1)
-
-    path.mkdir()
 
 
 def check_output_path(path: Path, force: bool) -> None:

@@ -23,12 +23,10 @@ from torc.openapi_client.models.compute_node_stats import ComputeNodeStats
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class ComputeNodeStatsModel(BaseModel):
     """
     ComputeNodeStatsModel
-    """  # noqa: E501
-
+    """ # noqa: E501
     hostname: StrictStr
     stats: Optional[List[ComputeNodeStats]] = None
     timestamp: StrictStr
@@ -42,6 +40,7 @@ class ComputeNodeStatsModel(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -67,7 +66,8 @@ class ComputeNodeStatsModel(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -80,7 +80,7 @@ class ComputeNodeStatsModel(BaseModel):
             for _item_stats in self.stats:
                 if _item_stats:
                     _items.append(_item_stats.to_dict())
-            _dict["stats"] = _items
+            _dict['stats'] = _items
         return _dict
 
     @classmethod
@@ -92,16 +92,12 @@ class ComputeNodeStatsModel(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "hostname": obj.get("hostname"),
-                "stats": [ComputeNodeStats.from_dict(_item) for _item in obj["stats"]]
-                if obj.get("stats") is not None
-                else None,
-                "timestamp": obj.get("timestamp"),
-                "_key": obj.get("_key"),
-                "_id": obj.get("_id"),
-                "_rev": obj.get("_rev"),
-            }
-        )
+        _obj = cls.model_validate({
+            "hostname": obj.get("hostname"),
+            "stats": [ComputeNodeStats.from_dict(_item) for _item in obj["stats"]] if obj.get("stats") is not None else None,
+            "timestamp": obj.get("timestamp"),
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
+        })
         return _obj

@@ -46,6 +46,8 @@ from torc.workflow_builder import WorkflowBuilder
 from torc.workflow_manager import WorkflowManager
 from torc.tests.database_interface import DatabaseInterface
 
+from slurm_cluster import SlurmCluster
+
 
 TEST_WORKFLOW = "test_workflow"
 PREPROCESS = Path("tests") / "scripts" / "preprocess.py"
@@ -61,11 +63,24 @@ CREATE_RESOURCE_JOB = Path("tests") / "scripts" / "create_resource.py"
 USE_RESOURCE_JOB = Path("tests") / "scripts" / "use_resource.py"
 SLEEP_JOB = Path("tests") / "scripts" / "sleep.py"
 
+SACCT = Path(__file__).parent / "fake_sacct.py"
+SBATCH = Path(__file__).parent / "fake_sbatch.py"
+SCANCEL = Path(__file__).parent / "fake_scancel.py"
+SQUEUE = Path(__file__).parent / "fake_squeue.py"
+
 
 def pytest_sessionstart(session):
     """Records existing workflows."""
     api = _initialize_api()
     session.torc_workflow_keys = {x.key for x in iter_documents(api.list_workflows)}
+    # TODO DT: use coverage
+    os.environ["TORC_FAKE_SACCT"] = f"{sys.executable} {SACCT}"
+    os.environ["TORC_FAKE_SBATCH"] = f"{sys.executable} {SBATCH}"
+    os.environ["TORC_FAKE_SCANCEL"] = f"{sys.executable} {SCANCEL}"
+    os.environ["TORC_FAKE_SQUEUE"] = f"{sys.executable} {SQUEUE}"
+    SlurmCluster.initialize()
+    with open("tests/slurm.json", "w") as f:
+        json.dump({"active_nodes": []}, f)
 
 
 def pytest_sessionfinish(session, exitstatus):
@@ -73,6 +88,7 @@ def pytest_sessionfinish(session, exitstatus):
     api = _initialize_api()
     for key in {x.key for x in iter_documents(api.list_workflows)} - session.torc_workflow_keys:
         api.remove_workflow(key)
+    SlurmCluster.delete()
 
 
 @pytest.fixture

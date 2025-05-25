@@ -22,42 +22,26 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class WorkflowModel(BaseModel):
     """
     WorkflowModel
-    """  # noqa: E501
-
+    """ # noqa: E501
     name: Optional[StrictStr] = Field(default=None, description="Name of the workflow")
     user: StrictStr = Field(description="User that created the workflow")
-    description: Optional[StrictStr] = Field(
-        default=None, description="Description of the workflow"
-    )
-    timestamp: Optional[StrictStr] = Field(
-        default=None, description="Timestamp of workflow creation"
-    )
-    is_archived: Optional[StrictBool] = Field(
-        default=False, description="Flag indicating whether the workflow has been archived"
-    )
+    description: Optional[StrictStr] = Field(default=None, description="Description of the workflow")
+    timestamp: Optional[StrictStr] = Field(default=None, description="Timestamp of workflow creation")
+    is_archived: Optional[StrictBool] = Field(default=False, description="Flag indicating whether the workflow has been archived")
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = [
-        "name",
-        "user",
-        "description",
-        "timestamp",
-        "is_archived",
-        "_key",
-        "_id",
-        "_rev",
-    ]
+    __properties: ClassVar[List[str]] = ["name", "user", "description", "timestamp", "is_archived", "_key", "_id", "_rev"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -83,7 +67,8 @@ class WorkflowModel(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -101,18 +86,14 @@ class WorkflowModel(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "name": obj.get("name"),
-                "user": obj.get("user"),
-                "description": obj.get("description"),
-                "timestamp": obj.get("timestamp"),
-                "is_archived": obj.get("is_archived")
-                if obj.get("is_archived") is not None
-                else False,
-                "_key": obj.get("_key"),
-                "_id": obj.get("_id"),
-                "_rev": obj.get("_rev"),
-            }
-        )
+        _obj = cls.model_validate({
+            "name": obj.get("name"),
+            "user": obj.get("user"),
+            "description": obj.get("description"),
+            "timestamp": obj.get("timestamp"),
+            "is_archived": obj.get("is_archived") if obj.get("is_archived") is not None else False,
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
+        })
         return _obj

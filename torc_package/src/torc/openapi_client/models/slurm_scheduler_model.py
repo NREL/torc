@@ -22,60 +22,32 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class SlurmSchedulerModel(BaseModel):
     """
     Data model for Slurm scheduler
-    """  # noqa: E501
-
+    """ # noqa: E501
     name: Optional[StrictStr] = Field(default=None, description="Name of the scheduler")
     account: StrictStr = Field(description="Slurm account ID")
     gres: Optional[StrictStr] = Field(default=None, description="Generic resource requirement")
     mem: Optional[StrictStr] = Field(default=None, description="Compute node memory requirement")
     nodes: StrictInt = Field(description="Number of nodes for the Slurm allocation")
-    ntasks_per_node: Optional[StrictInt] = Field(
-        default=None, description="Number of tasks to invoke on each node"
-    )
-    partition: Optional[StrictStr] = Field(
-        default=None,
-        description="Compute node partition; likely not necessary because Slurm should optimize it.",
-    )
-    qos: Optional[StrictStr] = Field(default="normal", description="Priority of Slurm job")
-    tmp: Optional[StrictStr] = Field(
-        default=None, description="Compute node local storage size requirement"
-    )
-    walltime: Optional[StrictStr] = Field(
-        default=None, description="Slurm runtime requirement, e.g., 04:00:00"
-    )
-    extra: Optional[StrictStr] = Field(
-        default=None,
-        description="Extra Slurm parameters that torc will append to the sbatch command",
-    )
+    ntasks_per_node: Optional[StrictInt] = Field(default=None, description="Number of tasks to invoke on each node")
+    partition: Optional[StrictStr] = Field(default=None, description="Compute node partition; likely not necessary because Slurm should optimize it.")
+    qos: Optional[StrictStr] = Field(default='normal', description="Priority of Slurm job")
+    tmp: Optional[StrictStr] = Field(default=None, description="Compute node local storage size requirement")
+    walltime: Optional[StrictStr] = Field(default=None, description="Slurm runtime requirement, e.g., 04:00:00")
+    extra: Optional[StrictStr] = Field(default=None, description="Extra Slurm parameters that torc will append to the sbatch command")
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = [
-        "name",
-        "account",
-        "gres",
-        "mem",
-        "nodes",
-        "ntasks_per_node",
-        "partition",
-        "qos",
-        "tmp",
-        "walltime",
-        "extra",
-        "_key",
-        "_id",
-        "_rev",
-    ]
+    __properties: ClassVar[List[str]] = ["name", "account", "gres", "mem", "nodes", "ntasks_per_node", "partition", "qos", "tmp", "walltime", "extra", "_key", "_id", "_rev"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -101,7 +73,8 @@ class SlurmSchedulerModel(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -119,22 +92,20 @@ class SlurmSchedulerModel(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "name": obj.get("name"),
-                "account": obj.get("account"),
-                "gres": obj.get("gres"),
-                "mem": obj.get("mem"),
-                "nodes": obj.get("nodes"),
-                "ntasks_per_node": obj.get("ntasks_per_node"),
-                "partition": obj.get("partition"),
-                "qos": obj.get("qos") if obj.get("qos") is not None else "normal",
-                "tmp": obj.get("tmp"),
-                "walltime": obj.get("walltime"),
-                "extra": obj.get("extra"),
-                "_key": obj.get("_key"),
-                "_id": obj.get("_id"),
-                "_rev": obj.get("_rev"),
-            }
-        )
+        _obj = cls.model_validate({
+            "name": obj.get("name"),
+            "account": obj.get("account"),
+            "gres": obj.get("gres"),
+            "mem": obj.get("mem"),
+            "nodes": obj.get("nodes"),
+            "ntasks_per_node": obj.get("ntasks_per_node"),
+            "partition": obj.get("partition"),
+            "qos": obj.get("qos") if obj.get("qos") is not None else 'normal',
+            "tmp": obj.get("tmp"),
+            "walltime": obj.get("walltime"),
+            "extra": obj.get("extra"),
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
+        })
         return _obj

@@ -25,12 +25,10 @@ from torc.openapi_client.models.slurm_scheduler_model import SlurmSchedulerModel
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class WorkflowSpecificationsSchedulers(BaseModel):
     """
     Data model for all schedulers in the workflow
-    """  # noqa: E501
-
+    """ # noqa: E501
     aws_schedulers: Optional[List[AwsSchedulerModel]] = None
     local_schedulers: Optional[List[LocalSchedulerModel]] = None
     slurm_schedulers: Optional[List[SlurmSchedulerModel]] = None
@@ -41,6 +39,7 @@ class WorkflowSpecificationsSchedulers(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -66,7 +65,8 @@ class WorkflowSpecificationsSchedulers(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -79,21 +79,21 @@ class WorkflowSpecificationsSchedulers(BaseModel):
             for _item_aws_schedulers in self.aws_schedulers:
                 if _item_aws_schedulers:
                     _items.append(_item_aws_schedulers.to_dict())
-            _dict["aws_schedulers"] = _items
+            _dict['aws_schedulers'] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in local_schedulers (list)
         _items = []
         if self.local_schedulers:
             for _item_local_schedulers in self.local_schedulers:
                 if _item_local_schedulers:
                     _items.append(_item_local_schedulers.to_dict())
-            _dict["local_schedulers"] = _items
+            _dict['local_schedulers'] = _items
         # override the default output from pydantic by calling `to_dict()` of each item in slurm_schedulers (list)
         _items = []
         if self.slurm_schedulers:
             for _item_slurm_schedulers in self.slurm_schedulers:
                 if _item_slurm_schedulers:
                     _items.append(_item_slurm_schedulers.to_dict())
-            _dict["slurm_schedulers"] = _items
+            _dict['slurm_schedulers'] = _items
         return _dict
 
     @classmethod
@@ -105,23 +105,9 @@ class WorkflowSpecificationsSchedulers(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "aws_schedulers": [
-                    AwsSchedulerModel.from_dict(_item) for _item in obj["aws_schedulers"]
-                ]
-                if obj.get("aws_schedulers") is not None
-                else None,
-                "local_schedulers": [
-                    LocalSchedulerModel.from_dict(_item) for _item in obj["local_schedulers"]
-                ]
-                if obj.get("local_schedulers") is not None
-                else None,
-                "slurm_schedulers": [
-                    SlurmSchedulerModel.from_dict(_item) for _item in obj["slurm_schedulers"]
-                ]
-                if obj.get("slurm_schedulers") is not None
-                else None,
-            }
-        )
+        _obj = cls.model_validate({
+            "aws_schedulers": [AwsSchedulerModel.from_dict(_item) for _item in obj["aws_schedulers"]] if obj.get("aws_schedulers") is not None else None,
+            "local_schedulers": [LocalSchedulerModel.from_dict(_item) for _item in obj["local_schedulers"]] if obj.get("local_schedulers") is not None else None,
+            "slurm_schedulers": [SlurmSchedulerModel.from_dict(_item) for _item in obj["slurm_schedulers"]] if obj.get("slurm_schedulers") is not None else None
+        })
         return _obj

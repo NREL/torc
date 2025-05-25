@@ -22,12 +22,10 @@ from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class JobsInternal(BaseModel):
     """
     JobsInternal
-    """  # noqa: E501
-
+    """ # noqa: E501
     memory_bytes: Optional[StrictInt] = None
     num_cpus: Optional[StrictInt] = None
     num_gpus: Optional[StrictInt] = None
@@ -35,21 +33,14 @@ class JobsInternal(BaseModel):
     runtime_seconds: Optional[Union[StrictFloat, StrictInt]] = None
     scheduler_config_id: Optional[StrictStr] = None
     hash: Optional[StrictInt] = None
-    __properties: ClassVar[List[str]] = [
-        "memory_bytes",
-        "num_cpus",
-        "num_gpus",
-        "num_nodes",
-        "runtime_seconds",
-        "scheduler_config_id",
-        "hash",
-    ]
+    __properties: ClassVar[List[str]] = ["memory_bytes", "num_cpus", "num_gpus", "num_nodes", "runtime_seconds", "scheduler_config_id", "hash"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -75,7 +66,8 @@ class JobsInternal(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -93,15 +85,13 @@ class JobsInternal(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "memory_bytes": obj.get("memory_bytes"),
-                "num_cpus": obj.get("num_cpus"),
-                "num_gpus": obj.get("num_gpus"),
-                "num_nodes": obj.get("num_nodes"),
-                "runtime_seconds": obj.get("runtime_seconds"),
-                "scheduler_config_id": obj.get("scheduler_config_id"),
-                "hash": obj.get("hash"),
-            }
-        )
+        _obj = cls.model_validate({
+            "memory_bytes": obj.get("memory_bytes"),
+            "num_cpus": obj.get("num_cpus"),
+            "num_gpus": obj.get("num_gpus"),
+            "num_nodes": obj.get("num_nodes"),
+            "runtime_seconds": obj.get("runtime_seconds"),
+            "scheduler_config_id": obj.get("scheduler_config_id"),
+            "hash": obj.get("hash")
+        })
         return _obj

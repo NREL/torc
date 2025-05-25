@@ -22,34 +22,16 @@ from typing import Any, ClassVar, Dict, List, Optional, Union
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class FileModel(BaseModel):
     """
     Data model for files needed or produced by jobs. Can be data or code.
-    """  # noqa: E501
-
-    name: Optional[StrictStr] = Field(
-        default=None, description="User-defined name of the file (not necessarily the filename)"
-    )
-    path: StrictStr = Field(
-        description="Path to the file; can be relative to the execution directory."
-    )
-    st_mtime: Optional[Union[StrictFloat, StrictInt]] = Field(
-        default=None, description="Timestamp of when the file was last modified"
-    )
-    key: Optional[StrictStr] = Field(
-        default=None,
-        description="Unique database identifier for the file. Does not include collection name.",
-        alias="_key",
-    )
-    id: Optional[StrictStr] = Field(
-        default=None,
-        description="Unique database identifier for the file. Includes collection name and _key.",
-        alias="_id",
-    )
-    rev: Optional[StrictStr] = Field(
-        default=None, description="Database revision of the file", alias="_rev"
-    )
+    """ # noqa: E501
+    name: Optional[StrictStr] = Field(default=None, description="User-defined name of the file (not necessarily the filename)")
+    path: StrictStr = Field(description="Path to the file; can be relative to the execution directory.")
+    st_mtime: Optional[Union[StrictFloat, StrictInt]] = Field(default=None, description="Timestamp of when the file was last modified")
+    key: Optional[StrictStr] = Field(default=None, description="Unique database identifier for the file. Does not include collection name.", alias="_key")
+    id: Optional[StrictStr] = Field(default=None, description="Unique database identifier for the file. Includes collection name and _key.", alias="_id")
+    rev: Optional[StrictStr] = Field(default=None, description="Database revision of the file", alias="_rev")
     __properties: ClassVar[List[str]] = ["name", "path", "st_mtime", "_key", "_id", "_rev"]
 
     model_config = ConfigDict(
@@ -57,6 +39,7 @@ class FileModel(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -82,7 +65,8 @@ class FileModel(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -100,14 +84,12 @@ class FileModel(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "name": obj.get("name"),
-                "path": obj.get("path"),
-                "st_mtime": obj.get("st_mtime"),
-                "_key": obj.get("_key"),
-                "_id": obj.get("_id"),
-                "_rev": obj.get("_rev"),
-            }
-        )
+        _obj = cls.model_validate({
+            "name": obj.get("name"),
+            "path": obj.get("path"),
+            "st_mtime": obj.get("st_mtime"),
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
+        })
         return _obj
