@@ -101,7 +101,7 @@ target-version = "py311"
 check_untyped_defs = true
 files = [
   "src",
-  # "tests", TODO: needs work
+  "tests",
 ]
 
 [[tool.mypy.overrides]]

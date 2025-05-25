@@ -36,9 +36,9 @@ def config():
 )
 @click.option(
     "-f",
-    "--filter-workflows-by-user",
+    "--filter-workflows-by-user/--no-filter-workflows-by-user",
     is_flag=True,
-    default=False,
+    default=True,
     show_default=True,
     help="Whether to filter workflows by the current user",
 )

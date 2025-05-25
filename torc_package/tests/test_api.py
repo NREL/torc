@@ -1,5 +1,6 @@
 """Tests database API commands"""
 
+from typing import Any
 
 import pytest
 from torc.openapi_client.rest import ApiException
@@ -11,7 +12,7 @@ def test_api_nodes_by_key(create_workflow_cli):
     """Tests API commands to get documents stored by the 'key' parameter."""
     workflow_key, url, _ = create_workflow_cli
     api = make_api(url)
-    names = {
+    names: dict[str, dict[str, Any]] = {
         "compute_node_stats": {"field": "hostname", "singular_remove_last_char": False},
         "job_process_stats": {"field": "job_key", "singular_remove_last_char": False},
         "resource_requirements": {"field": "name", "singular_remove_last_char": False},

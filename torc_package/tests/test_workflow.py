@@ -36,10 +36,13 @@ def test_run_workflow(diamond_workflow):
     user_data_work1 = api.list_job_user_data_consumes(
         db.workflow.key, db.get_document_key("jobs", "work1")
     )
+    assert user_data_work1.items is not None
     assert len(user_data_work1.items) == 1
+    assert user_data_work1.items[0].data is not None
     assert user_data_work1.items[0].data["key1"] == "val1"
     mgr = WorkflowManager(api, db.workflow.key)
     config = api.get_workflow_config(db.workflow.key)
+    assert config.compute_node_resource_stats is not None
     config.compute_node_resource_stats.cpu = True
     config.compute_node_resource_stats.memory = True
     config.compute_node_resource_stats.process = True
@@ -77,12 +80,16 @@ def test_run_workflow(diamond_workflow):
     ud_work1_consumes = api.list_job_user_data_consumes(
         db.workflow.key, db.get_document_key("jobs", "work1")
     )
+    assert ud_work1_consumes.items is not None
     assert len(ud_work1_consumes.items) == 1
     ud_work1_produces = api.list_job_user_data_stores(
         db.workflow.key, db.get_document_key("jobs", "work1")
     )
+    assert ud_work1_produces.items is not None
     assert len(ud_work1_produces.items) == 1
     result_data_overall = api.add_user_data(db.workflow.key, result_data_overall)
+    assert db.workflow.key is not None
+    assert result_data_overall.key is not None
     assert api.get_user_data(db.workflow.key, result_data_overall.key).name == "overall_result"
 
     events = db.list_documents("events")
@@ -96,8 +103,8 @@ def test_run_workflow(diamond_workflow):
     assert stats_file.exists()
     timer_stats_collector.log_stats(clear=True)
 
-    runner = CliRunner()
-    result = runner.invoke(
+    cli_runner = CliRunner()
+    cli_result = cli_runner.invoke(
         cli,
         [
             "-k",
@@ -114,7 +121,7 @@ def test_run_workflow(diamond_workflow):
             "job_user_data_dependencies",
         ],
     )
-    assert result.exit_code == 0
+    assert cli_result.exit_code == 0
     for name in ("job_file_dependencies", "job_file_dependencies", "job_user_data_dependencies"):
         assert (output_dir / (name + ".dot")).exists()
         assert (output_dir / (name + ".dot.png")).exists()
@@ -406,6 +413,7 @@ def test_reinitialize_workflow_changed_non_critical_fields(completed_workflow, f
         if job.name == "preprocess":
             preprocess = job
         assert job.status == "done"
+    assert preprocess is not None
     new_values = {
         "name": preprocess.name + " new name",
         "supports_termination": not preprocess.supports_termination,
@@ -602,19 +610,19 @@ def test_restart_uninitialized(diamond_workflow):
     runner = CliRunner()
     job_key = db.get_document("jobs", "work2").key
     url = api.api_client.configuration.host
-    result = runner.invoke(
+    cli_result = runner.invoke(
         cli, ["-n", "-u", url, "-k", db.workflow.key, "jobs", "reset-status", job_key]
     )
-    assert result.exit_code == 0
+    assert cli_result.exit_code == 0
     assert db.get_document("jobs", "preprocess").status == "done"
     assert db.get_document("jobs", "work1").status == "done"
     assert db.get_document("jobs", "work2").status == "uninitialized"
     assert db.get_document("jobs", "postprocess").status == "uninitialized"
-    result = runner.invoke(
+    cli_result = runner.invoke(
         cli,
         ["-n", "-u", url, "-k", db.workflow.key, "workflows", "restart", "--only-uninitialized"],
     )
-    assert result.exit_code == 0
+    assert cli_result.exit_code == 0
     assert db.get_document("jobs", "preprocess").status == "done"
     assert db.get_document("jobs", "work1").status == "done"
     assert db.get_document("jobs", "work2").status == "ready"
