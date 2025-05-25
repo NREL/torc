@@ -24,7 +24,7 @@ api = make_api(torc_settings.database_url)
 workflow_key = os.environ["TORC_WORKFLOW_KEY"]
 job_key = os.environ["TORC_JOB_KEY"]
 
-affinity = os.sched_getaffinity(os.getpid())
+affinity = os.sched_getaffinity(os.getpid())  # type: ignore
 result = UserDataModel(
     name="result",
     data={"affinity": list(affinity), "num_cpus": multiprocessing.cpu_count()},

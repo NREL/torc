@@ -75,10 +75,10 @@ def test_auto_tune_workflow(multi_resource_requirement_workflow):
         assert sqlite_files
         for file in sqlite_files:
             for table in ("cpu", "memory", "process"):
-                table = read_table_as_dict(file, table)
+                table = read_table_as_dict(file, table)  # type: ignore
                 assert table
             for table in ("disk", "network"):
-                table = read_table_as_dict(file, table)
+                table = read_table_as_dict(file, table)  # type: ignore
                 assert table
         assert len(html_files) == 3 * 2  # 2 JobRunner instances, cpu + memory + process
     else:
@@ -175,9 +175,12 @@ def _check_auto_tune_results(db: DatabaseInterface, auto_tune_job_keys: set[str]
         assert rr.runtime == "P0DT0H1M"
         # This is totally unreliable and sometimes is high as 54 on a 16-core system.
         assert rr.num_cpus in range(1, multiprocessing.cpu_count() + 1)
+        assert rr.memory is not None
         assert rr.memory.lower() == "1g"
 
-    for job in api.list_jobs(db.workflow.key).items:
+    result = api.list_jobs(db.workflow.key)
+    assert result.items is not None
+    for job in result.items:
         if job.key in auto_tune_job_keys:
             assert job.status == "done"
         else:

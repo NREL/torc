@@ -7,6 +7,7 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from typing import Any
 
 import pytest
 from click.testing import CliRunner
@@ -101,8 +102,8 @@ def test_slurm_workflow(setup_api, slurm_account):
 
         results = api.list_results(key).items
         assert len(results) == 4
-        for result in results:
-            assert result.return_code == 0
+        for res in results:
+            assert res.return_code == 0
 
         result = runner.invoke(cli, ["-k", key, "reports", "results", "-o", str(output_dir)])
         assert result.exit_code == 0
@@ -117,8 +118,8 @@ def test_slurm_workflow(setup_api, slurm_account):
             for file in itertools.chain(run["slurm_stdio_files"], run["job_stdio_files"]):
                 assert Path(file).exists()
 
-        start_events = []
-        complete_events = []
+        start_events: list[dict[str, Any]] = []
+        complete_events: list[dict[str, Any]] = []
         for event in iter_documents(api.list_events, key):
             if event.get("category") == "job" and event.get("type") in ("start", "complete"):
                 timestamp = event["timestamp"]
@@ -144,8 +145,8 @@ def test_slurm_workflow(setup_api, slurm_account):
         assert start_events[second]["timestamp"] > complete_events[first]["timestamp"]
 
         assert len(results) == 4
-        for result in results:
-            assert result.return_code == 0
+        for res in results:
+            assert res.return_code == 0
 
         stats_dir = output_dir / STATS_DIR
         html_files = [x for x in stats_dir.iterdir() if x.suffix == ".html"]

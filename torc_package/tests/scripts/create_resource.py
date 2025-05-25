@@ -19,6 +19,7 @@ def main():
     result = api.list_job_user_data_stores(workflow_key, job_key)
     resource_ud = None
     assert result is not None
+    assert result.items is not None
     for item in result.items:
         if item.name == "resource":
             resource_ud = item
@@ -26,6 +27,7 @@ def main():
 
     assert resource_ud is not None
     resource_ud.data = {"url": "http://localhost:8000"}
+    assert resource_ud.key is not None
     res = api.modify_user_data(workflow_key, resource_ud.key, resource_ud)
     print(f"Added {res=} to the database")
 
