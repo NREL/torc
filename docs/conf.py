@@ -10,7 +10,7 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html#project-informatio
 
 
 project = "torc"
-copyright = "2023, NREL"
+copyright = "2025, NREL"
 author = "NREL"
 release = "0.1.0"
 
@@ -18,6 +18,7 @@ release = "0.1.0"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
+    "myst_parser",
     "sphinx.ext.githubpages",
     "sphinx.ext.graphviz",
     "sphinx.ext.autodoc",
@@ -32,7 +33,9 @@ extensions = [
 
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
-
+source_suffix = {
+    ".md": "markdown",
+}
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
