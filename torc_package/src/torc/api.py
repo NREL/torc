@@ -3,7 +3,6 @@
 import itertools
 import logging
 import time
-import warnings
 from typing import Any, Callable, Generator, Optional
 
 from resource_monitor.timing.timer_stats import Timer
@@ -187,12 +186,6 @@ def add_jobs(api: DefaultApi, workflow_key: str, jobs, max_transfer_size=10_000)
         added_jobs += res.items
 
     return added_jobs
-
-
-def add_bulk_jobs(*args, **kwargs) -> list[str]:
-    """Add an iterable of jobs to the workflow."""
-    warnings.warn("Use add_jobs instead.", category=DeprecationWarning, stacklevel=2)
-    return [x.key for x in add_jobs(*args, **kwargs)]  # type: ignore
 
 
 def map_function_to_jobs(

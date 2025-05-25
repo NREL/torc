@@ -22,28 +22,22 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class ComputeNodeScheduleParams(BaseModel):
     """
     ComputeNodeScheduleParams
-    """  # noqa: E501
-
+    """ # noqa: E501
     max_parallel_jobs: Optional[StrictInt] = None
     num_jobs: StrictInt
     scheduler_id: StrictStr
     start_one_worker_per_node: Optional[StrictBool] = False
-    __properties: ClassVar[List[str]] = [
-        "max_parallel_jobs",
-        "num_jobs",
-        "scheduler_id",
-        "start_one_worker_per_node",
-    ]
+    __properties: ClassVar[List[str]] = ["max_parallel_jobs", "num_jobs", "scheduler_id", "start_one_worker_per_node"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -69,7 +63,8 @@ class ComputeNodeScheduleParams(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -87,14 +82,10 @@ class ComputeNodeScheduleParams(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "max_parallel_jobs": obj.get("max_parallel_jobs"),
-                "num_jobs": obj.get("num_jobs"),
-                "scheduler_id": obj.get("scheduler_id"),
-                "start_one_worker_per_node": obj.get("start_one_worker_per_node")
-                if obj.get("start_one_worker_per_node") is not None
-                else False,
-            }
-        )
+        _obj = cls.model_validate({
+            "max_parallel_jobs": obj.get("max_parallel_jobs"),
+            "num_jobs": obj.get("num_jobs"),
+            "scheduler_id": obj.get("scheduler_id"),
+            "start_one_worker_per_node": obj.get("start_one_worker_per_node") if obj.get("start_one_worker_per_node") is not None else False
+        })
         return _obj

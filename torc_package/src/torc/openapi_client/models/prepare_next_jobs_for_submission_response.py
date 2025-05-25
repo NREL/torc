@@ -23,12 +23,10 @@ from torc.openapi_client.models.job_model import JobModel
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class PrepareNextJobsForSubmissionResponse(BaseModel):
     """
     PrepareNextJobsForSubmissionResponse
-    """  # noqa: E501
-
+    """ # noqa: E501
     jobs: Optional[List[JobModel]] = None
     __properties: ClassVar[List[str]] = ["jobs"]
 
@@ -37,6 +35,7 @@ class PrepareNextJobsForSubmissionResponse(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -62,7 +61,8 @@ class PrepareNextJobsForSubmissionResponse(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -75,7 +75,7 @@ class PrepareNextJobsForSubmissionResponse(BaseModel):
             for _item_jobs in self.jobs:
                 if _item_jobs:
                     _items.append(_item_jobs.to_dict())
-            _dict["jobs"] = _items
+            _dict['jobs'] = _items
         return _dict
 
     @classmethod
@@ -87,11 +87,7 @@ class PrepareNextJobsForSubmissionResponse(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "jobs": [JobModel.from_dict(_item) for _item in obj["jobs"]]
-                if obj.get("jobs") is not None
-                else None
-            }
-        )
+        _obj = cls.model_validate({
+            "jobs": [JobModel.from_dict(_item) for _item in obj["jobs"]] if obj.get("jobs") is not None else None
+        })
         return _obj

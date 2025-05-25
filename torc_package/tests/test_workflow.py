@@ -16,7 +16,7 @@ from torc.openapi_client.models.compute_node_model import ComputeNodeModel
 from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
 from torc.openapi_client.models.result_model import ResultModel
 from torc.openapi_client.models.job_model import JobModel
-from torc.api import iter_documents, add_jobs
+from torc.api import iter_documents, add_jobs, wait_for_healthy_database
 from torc.cli.torc import cli
 from torc.common import GiB
 from torc.exceptions import InvalidWorkflow
@@ -33,6 +33,7 @@ def test_run_workflow(diamond_workflow):
     db, scheduler_config_id, output_dir = diamond_workflow
     api: DefaultApi = db.api
     timer_stats_collector.enable()
+    wait_for_healthy_database(api)
     user_data_work1 = api.list_job_user_data_consumes(
         db.workflow.key, db.get_document_key("jobs", "work1")
     )

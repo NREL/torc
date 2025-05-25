@@ -22,12 +22,10 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class ProcessChangedJobInputsResponse(BaseModel):
     """
     ProcessChangedJobInputsResponse
-    """  # noqa: E501
-
+    """ # noqa: E501
     reinitialized_jobs: Optional[List[StrictStr]] = None
     __properties: ClassVar[List[str]] = ["reinitialized_jobs"]
 
@@ -36,6 +34,7 @@ class ProcessChangedJobInputsResponse(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -61,7 +60,8 @@ class ProcessChangedJobInputsResponse(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -79,5 +79,7 @@ class ProcessChangedJobInputsResponse(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({"reinitialized_jobs": obj.get("reinitialized_jobs")})
+        _obj = cls.model_validate({
+            "reinitialized_jobs": obj.get("reinitialized_jobs")
+        })
         return _obj

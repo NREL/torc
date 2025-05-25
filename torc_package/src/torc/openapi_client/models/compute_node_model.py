@@ -23,12 +23,10 @@ from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResou
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class ComputeNodeModel(BaseModel):
     """
     ComputeNodeModel
-    """  # noqa: E501
-
+    """ # noqa: E501
     hostname: StrictStr
     pid: StrictInt
     start_time: StrictStr
@@ -39,24 +37,14 @@ class ComputeNodeModel(BaseModel):
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = [
-        "hostname",
-        "pid",
-        "start_time",
-        "duration_seconds",
-        "is_active",
-        "resources",
-        "scheduler",
-        "_key",
-        "_id",
-        "_rev",
-    ]
+    __properties: ClassVar[List[str]] = ["hostname", "pid", "start_time", "duration_seconds", "is_active", "resources", "scheduler", "_key", "_id", "_rev"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -82,7 +70,8 @@ class ComputeNodeModel(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -91,7 +80,7 @@ class ComputeNodeModel(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of resources
         if self.resources:
-            _dict["resources"] = self.resources.to_dict()
+            _dict['resources'] = self.resources.to_dict()
         return _dict
 
     @classmethod
@@ -103,20 +92,16 @@ class ComputeNodeModel(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "hostname": obj.get("hostname"),
-                "pid": obj.get("pid"),
-                "start_time": obj.get("start_time"),
-                "duration_seconds": obj.get("duration_seconds"),
-                "is_active": obj.get("is_active"),
-                "resources": ComputeNodesResources.from_dict(obj["resources"])
-                if obj.get("resources") is not None
-                else None,
-                "scheduler": obj.get("scheduler"),
-                "_key": obj.get("_key"),
-                "_id": obj.get("_id"),
-                "_rev": obj.get("_rev"),
-            }
-        )
+        _obj = cls.model_validate({
+            "hostname": obj.get("hostname"),
+            "pid": obj.get("pid"),
+            "start_time": obj.get("start_time"),
+            "duration_seconds": obj.get("duration_seconds"),
+            "is_active": obj.get("is_active"),
+            "resources": ComputeNodesResources.from_dict(obj["resources"]) if obj.get("resources") is not None else None,
+            "scheduler": obj.get("scheduler"),
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
+        })
         return _obj

@@ -12,10 +12,10 @@ from typing import Any
 import pytest
 from click.testing import CliRunner
 
+from torc import torc_settings
 from torc.api import make_api, iter_documents
 from torc.cli.torc import cli
 from torc.common import STATS_DIR
-from torc.config import torc_settings
 from torc.hpc.slurm_interface import SlurmInterface
 from torc.hpc.common import HpcJobStatus
 from torc.utils.files import load_json_file, dump_json_file

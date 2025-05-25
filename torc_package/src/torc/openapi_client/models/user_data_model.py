@@ -22,16 +22,11 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class UserDataModel(BaseModel):
     """
     UserDataModel
-    """  # noqa: E501
-
-    is_ephemeral: Optional[StrictBool] = Field(
-        default=False,
-        description="The data will only exist for the duration of one run. Torc will clear it before starting new runs.",
-    )
+    """ # noqa: E501
+    is_ephemeral: Optional[StrictBool] = Field(default=False, description="The data will only exist for the duration of one run. Torc will clear it before starting new runs.")
     name: Optional[StrictStr] = Field(default=None, description="Name of the data object")
     data: Optional[Dict[str, Any]] = Field(default=None, description="User-defined data")
     key: Optional[StrictStr] = Field(default=None, alias="_key")
@@ -44,6 +39,7 @@ class UserDataModel(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -69,7 +65,8 @@ class UserDataModel(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -87,16 +84,12 @@ class UserDataModel(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "is_ephemeral": obj.get("is_ephemeral")
-                if obj.get("is_ephemeral") is not None
-                else False,
-                "name": obj.get("name"),
-                "data": obj.get("data"),
-                "_key": obj.get("_key"),
-                "_id": obj.get("_id"),
-                "_rev": obj.get("_rev"),
-            }
-        )
+        _obj = cls.model_validate({
+            "is_ephemeral": obj.get("is_ephemeral") if obj.get("is_ephemeral") is not None else False,
+            "name": obj.get("name"),
+            "data": obj.get("data"),
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
+        })
         return _obj

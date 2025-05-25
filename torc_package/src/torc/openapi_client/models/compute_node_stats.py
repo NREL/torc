@@ -22,32 +22,24 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class ComputeNodeStats(BaseModel):
     """
     ComputeNodeStats
-    """  # noqa: E501
-
+    """ # noqa: E501
     resource_type: StrictStr
     average: Dict[str, Any]
     minimum: Dict[str, Any]
     maximum: Dict[str, Any]
     num_samples: StrictInt
     job_key: Optional[StrictStr] = None
-    __properties: ClassVar[List[str]] = [
-        "resource_type",
-        "average",
-        "minimum",
-        "maximum",
-        "num_samples",
-        "job_key",
-    ]
+    __properties: ClassVar[List[str]] = ["resource_type", "average", "minimum", "maximum", "num_samples", "job_key"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -73,7 +65,8 @@ class ComputeNodeStats(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -91,14 +84,12 @@ class ComputeNodeStats(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "resource_type": obj.get("resource_type"),
-                "average": obj.get("average"),
-                "minimum": obj.get("minimum"),
-                "maximum": obj.get("maximum"),
-                "num_samples": obj.get("num_samples"),
-                "job_key": obj.get("job_key"),
-            }
-        )
+        _obj = cls.model_validate({
+            "resource_type": obj.get("resource_type"),
+            "average": obj.get("average"),
+            "minimum": obj.get("minimum"),
+            "maximum": obj.get("maximum"),
+            "num_samples": obj.get("num_samples"),
+            "job_key": obj.get("job_key")
+        })
         return _obj

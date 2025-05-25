@@ -22,12 +22,10 @@ from typing import Any, ClassVar, Dict, List, Union
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class GetReadyJobRequirementsResponse(BaseModel):
     """
     GetReadyJobRequirementsResponse
-    """  # noqa: E501
-
+    """ # noqa: E501
     num_jobs: StrictInt
     num_cpus: StrictInt
     num_gpus: StrictInt
@@ -35,21 +33,14 @@ class GetReadyJobRequirementsResponse(BaseModel):
     max_memory_gb: Union[StrictFloat, StrictInt]
     max_num_nodes: StrictInt
     max_runtime: StrictStr
-    __properties: ClassVar[List[str]] = [
-        "num_jobs",
-        "num_cpus",
-        "num_gpus",
-        "memory_gb",
-        "max_memory_gb",
-        "max_num_nodes",
-        "max_runtime",
-    ]
+    __properties: ClassVar[List[str]] = ["num_jobs", "num_cpus", "num_gpus", "memory_gb", "max_memory_gb", "max_num_nodes", "max_runtime"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -75,7 +66,8 @@ class GetReadyJobRequirementsResponse(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -93,15 +85,13 @@ class GetReadyJobRequirementsResponse(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "num_jobs": obj.get("num_jobs"),
-                "num_cpus": obj.get("num_cpus"),
-                "num_gpus": obj.get("num_gpus"),
-                "memory_gb": obj.get("memory_gb"),
-                "max_memory_gb": obj.get("max_memory_gb"),
-                "max_num_nodes": obj.get("max_num_nodes"),
-                "max_runtime": obj.get("max_runtime"),
-            }
-        )
+        _obj = cls.model_validate({
+            "num_jobs": obj.get("num_jobs"),
+            "num_cpus": obj.get("num_cpus"),
+            "num_gpus": obj.get("num_gpus"),
+            "memory_gb": obj.get("memory_gb"),
+            "max_memory_gb": obj.get("max_memory_gb"),
+            "max_num_nodes": obj.get("max_num_nodes"),
+            "max_runtime": obj.get("max_runtime")
+        })
         return _obj

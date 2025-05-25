@@ -23,12 +23,10 @@ from torc.openapi_client.models.compute_node_schedule_params import ComputeNodeS
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class PrepareJobsForSchedulingResponse(BaseModel):
     """
     PrepareJobsForSchedulingResponse
-    """  # noqa: E501
-
+    """ # noqa: E501
     schedulers: List[ComputeNodeScheduleParams]
     __properties: ClassVar[List[str]] = ["schedulers"]
 
@@ -37,6 +35,7 @@ class PrepareJobsForSchedulingResponse(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -62,7 +61,8 @@ class PrepareJobsForSchedulingResponse(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -75,7 +75,7 @@ class PrepareJobsForSchedulingResponse(BaseModel):
             for _item_schedulers in self.schedulers:
                 if _item_schedulers:
                     _items.append(_item_schedulers.to_dict())
-            _dict["schedulers"] = _items
+            _dict['schedulers'] = _items
         return _dict
 
     @classmethod
@@ -87,13 +87,7 @@ class PrepareJobsForSchedulingResponse(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "schedulers": [
-                    ComputeNodeScheduleParams.from_dict(_item) for _item in obj["schedulers"]
-                ]
-                if obj.get("schedulers") is not None
-                else None
-            }
-        )
+        _obj = cls.model_validate({
+            "schedulers": [ComputeNodeScheduleParams.from_dict(_item) for _item in obj["schedulers"]] if obj.get("schedulers") is not None else None
+        })
         return _obj

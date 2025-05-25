@@ -23,32 +23,24 @@ from torc.openapi_client.models.job_model import JobModel
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class ListJobsByNeedsFileResponse(BaseModel):
     """
     ListJobsByNeedsFileResponse
-    """  # noqa: E501
-
+    """ # noqa: E501
     items: Optional[List[JobModel]] = None
     skip: StrictInt
     max_limit: StrictInt
     count: StrictInt
     total_count: StrictInt
     has_more: StrictBool
-    __properties: ClassVar[List[str]] = [
-        "items",
-        "skip",
-        "max_limit",
-        "count",
-        "total_count",
-        "has_more",
-    ]
+    __properties: ClassVar[List[str]] = ["items", "skip", "max_limit", "count", "total_count", "has_more"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -74,7 +66,8 @@ class ListJobsByNeedsFileResponse(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -87,7 +80,7 @@ class ListJobsByNeedsFileResponse(BaseModel):
             for _item_items in self.items:
                 if _item_items:
                     _items.append(_item_items.to_dict())
-            _dict["items"] = _items
+            _dict['items'] = _items
         return _dict
 
     @classmethod
@@ -99,16 +92,12 @@ class ListJobsByNeedsFileResponse(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "items": [JobModel.from_dict(_item) for _item in obj["items"]]
-                if obj.get("items") is not None
-                else None,
-                "skip": obj.get("skip"),
-                "max_limit": obj.get("max_limit"),
-                "count": obj.get("count"),
-                "total_count": obj.get("total_count"),
-                "has_more": obj.get("has_more"),
-            }
-        )
+        _obj = cls.model_validate({
+            "items": [JobModel.from_dict(_item) for _item in obj["items"]] if obj.get("items") is not None else None,
+            "skip": obj.get("skip"),
+            "max_limit": obj.get("max_limit"),
+            "count": obj.get("count"),
+            "total_count": obj.get("total_count"),
+            "has_more": obj.get("has_more")
+        })
         return _obj

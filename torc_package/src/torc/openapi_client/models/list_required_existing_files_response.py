@@ -22,12 +22,10 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class ListRequiredExistingFilesResponse(BaseModel):
     """
     ListRequiredExistingFilesResponse
-    """  # noqa: E501
-
+    """ # noqa: E501
     files: Optional[List[StrictStr]] = None
     __properties: ClassVar[List[str]] = ["files"]
 
@@ -36,6 +34,7 @@ class ListRequiredExistingFilesResponse(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -61,7 +60,8 @@ class ListRequiredExistingFilesResponse(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -79,5 +79,7 @@ class ListRequiredExistingFilesResponse(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate({"files": obj.get("files")})
+        _obj = cls.model_validate({
+            "files": obj.get("files")
+        })
         return _obj

@@ -22,48 +22,27 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class ResourceRequirementsModel(BaseModel):
     """
     ResourceRequirementsModel
-    """  # noqa: E501
-
-    name: Optional[StrictStr] = Field(
-        default=None, description="Name of the resource requirements"
-    )
-    num_cpus: Optional[StrictInt] = Field(
-        default=None, description="Number of CPUs required by a job"
-    )
-    num_gpus: Optional[StrictInt] = Field(
-        default=None, description="Number of GPUs required by a job"
-    )
-    num_nodes: Optional[StrictInt] = Field(
-        default=None, description="Number of nodes required by a job"
-    )
-    memory: Optional[StrictStr] = Field(
-        default="1m", description="Amount of memory required by a job, e.g., 20g"
-    )
-    runtime: Optional[StrictStr] = Field(default="P0DT1M", description="Maximum runtime for a job")
+    """ # noqa: E501
+    name: Optional[StrictStr] = Field(default=None, description="Name of the resource requirements")
+    num_cpus: Optional[StrictInt] = Field(default=None, description="Number of CPUs required by a job")
+    num_gpus: Optional[StrictInt] = Field(default=None, description="Number of GPUs required by a job")
+    num_nodes: Optional[StrictInt] = Field(default=None, description="Number of nodes required by a job")
+    memory: Optional[StrictStr] = Field(default='1m', description="Amount of memory required by a job, e.g., 20g")
+    runtime: Optional[StrictStr] = Field(default='P0DT1M', description="Maximum runtime for a job")
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = [
-        "name",
-        "num_cpus",
-        "num_gpus",
-        "num_nodes",
-        "memory",
-        "runtime",
-        "_key",
-        "_id",
-        "_rev",
-    ]
+    __properties: ClassVar[List[str]] = ["name", "num_cpus", "num_gpus", "num_nodes", "memory", "runtime", "_key", "_id", "_rev"]
 
     model_config = ConfigDict(
         populate_by_name=True,
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -89,7 +68,8 @@ class ResourceRequirementsModel(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -107,17 +87,15 @@ class ResourceRequirementsModel(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "name": obj.get("name"),
-                "num_cpus": obj.get("num_cpus"),
-                "num_gpus": obj.get("num_gpus"),
-                "num_nodes": obj.get("num_nodes"),
-                "memory": obj.get("memory") if obj.get("memory") is not None else "1m",
-                "runtime": obj.get("runtime") if obj.get("runtime") is not None else "P0DT1M",
-                "_key": obj.get("_key"),
-                "_id": obj.get("_id"),
-                "_rev": obj.get("_rev"),
-            }
-        )
+        _obj = cls.model_validate({
+            "name": obj.get("name"),
+            "num_cpus": obj.get("num_cpus"),
+            "num_gpus": obj.get("num_gpus"),
+            "num_nodes": obj.get("num_nodes"),
+            "memory": obj.get("memory") if obj.get("memory") is not None else '1m',
+            "runtime": obj.get("runtime") if obj.get("runtime") is not None else 'P0DT1M',
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
+        })
         return _obj

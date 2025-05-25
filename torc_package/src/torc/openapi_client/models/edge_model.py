@@ -22,12 +22,10 @@ from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 
-
 class EdgeModel(BaseModel):
     """
     EdgeModel
-    """  # noqa: E501
-
+    """ # noqa: E501
     var_from: StrictStr = Field(description="Database ID of the 'from' document", alias="_from")
     to: StrictStr = Field(description="Database ID of the 'to' document", alias="_to")
     data: Optional[Dict[str, Any]] = Field(default=None, description="User-defined data")
@@ -41,6 +39,7 @@ class EdgeModel(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -66,7 +65,8 @@ class EdgeModel(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -84,14 +84,12 @@ class EdgeModel(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "_from": obj.get("_from"),
-                "_to": obj.get("_to"),
-                "data": obj.get("data"),
-                "_key": obj.get("_key"),
-                "_id": obj.get("_id"),
-                "_rev": obj.get("_rev"),
-            }
-        )
+        _obj = cls.model_validate({
+            "_from": obj.get("_from"),
+            "_to": obj.get("_to"),
+            "data": obj.get("data"),
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
+        })
         return _obj

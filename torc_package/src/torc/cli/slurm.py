@@ -598,7 +598,7 @@ def run_jobs(
         raise
     finally:
         if activated_slurm_job:
-            # TODO: This is not very accurate. Other nodes in the allocation could still be active.
+            # TODO: This is not very accurate. Other nodes in the allocation could still be
             # active. It would be better to do this from the caller of this command.
             assert node is not None
             node.status = "complete"

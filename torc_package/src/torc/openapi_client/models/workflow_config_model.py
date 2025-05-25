@@ -17,78 +17,37 @@ import pprint
 import re  # noqa: F401
 import json
 
-from pydantic import (
-    BaseModel,
-    ConfigDict,
-    Field,
-    StrictBool,
-    StrictInt,
-    StrictStr,
-    field_validator,
-)
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr, field_validator
 from typing import Any, ClassVar, Dict, List, Optional
-from torc.openapi_client.models.compute_node_resource_stats_model import (
-    ComputeNodeResourceStatsModel,
-)
+from torc.openapi_client.models.compute_node_resource_stats_model import ComputeNodeResourceStatsModel
 from typing import Optional, Set
 from typing_extensions import Self
-
 
 class WorkflowConfigModel(BaseModel):
     """
     WorkflowConfigModel
-    """  # noqa: E501
-
+    """ # noqa: E501
     workflow_startup_script: Optional[StrictStr] = None
     worker_startup_script: Optional[StrictStr] = None
     compute_node_resource_stats: Optional[ComputeNodeResourceStatsModel] = None
-    compute_node_expiration_buffer_seconds: Optional[StrictInt] = Field(
-        default=None,
-        description="Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database's default value of 60 seconds.",
-    )
-    compute_node_wait_for_new_jobs_seconds: Optional[StrictInt] = Field(
-        default=None,
-        description="Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete.",
-    )
-    compute_node_ignore_workflow_completion: Optional[StrictBool] = Field(
-        default=False,
-        description="Inform all compute nodes to ignore workflow completions and hold onto allocations indefinitely. Useful for debugging failed jobs and possibly dynamic workflows where jobs get added after starting.",
-    )
-    compute_node_wait_for_healthy_database_minutes: Optional[StrictInt] = Field(
-        default=None,
-        description="Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.",
-    )
-    prepare_jobs_sort_method: Optional[StrictStr] = Field(
-        default="gpus_runtime_memory",
-        description="Inform all compute nodes to use this sort method when calling the prepare_jobs_for_submission command.",
-    )
+    compute_node_expiration_buffer_seconds: Optional[StrictInt] = Field(default=None, description="Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database's default value of 60 seconds.")
+    compute_node_wait_for_new_jobs_seconds: Optional[StrictInt] = Field(default=None, description="Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete.")
+    compute_node_ignore_workflow_completion: Optional[StrictBool] = Field(default=False, description="Inform all compute nodes to ignore workflow completions and hold onto allocations indefinitely. Useful for debugging failed jobs and possibly dynamic workflows where jobs get added after starting.")
+    compute_node_wait_for_healthy_database_minutes: Optional[StrictInt] = Field(default=None, description="Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.")
+    prepare_jobs_sort_method: Optional[StrictStr] = Field(default='gpus_runtime_memory', description="Inform all compute nodes to use this sort method when calling the prepare_jobs_for_submission command.")
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = [
-        "workflow_startup_script",
-        "worker_startup_script",
-        "compute_node_resource_stats",
-        "compute_node_expiration_buffer_seconds",
-        "compute_node_wait_for_new_jobs_seconds",
-        "compute_node_ignore_workflow_completion",
-        "compute_node_wait_for_healthy_database_minutes",
-        "prepare_jobs_sort_method",
-        "_key",
-        "_id",
-        "_rev",
-    ]
+    __properties: ClassVar[List[str]] = ["workflow_startup_script", "worker_startup_script", "compute_node_resource_stats", "compute_node_expiration_buffer_seconds", "compute_node_wait_for_new_jobs_seconds", "compute_node_ignore_workflow_completion", "compute_node_wait_for_healthy_database_minutes", "prepare_jobs_sort_method", "_key", "_id", "_rev"]
 
-    @field_validator("prepare_jobs_sort_method")
+    @field_validator('prepare_jobs_sort_method')
     def prepare_jobs_sort_method_validate_enum(cls, value):
         """Validates the enum"""
         if value is None:
             return value
 
-        if value not in set(["gpus_runtime_memory", "gpus_memory_runtime", "none"]):
-            raise ValueError(
-                "must be one of enum values ('gpus_runtime_memory', 'gpus_memory_runtime', 'none')"
-            )
+        if value not in set(['gpus_runtime_memory', 'gpus_memory_runtime', 'none']):
+            raise ValueError("must be one of enum values ('gpus_runtime_memory', 'gpus_memory_runtime', 'none')")
         return value
 
     model_config = ConfigDict(
@@ -96,6 +55,7 @@ class WorkflowConfigModel(BaseModel):
         validate_assignment=True,
         protected_namespaces=(),
     )
+
 
     def to_str(self) -> str:
         """Returns the string representation of the model using alias"""
@@ -121,7 +81,8 @@ class WorkflowConfigModel(BaseModel):
           were set at model initialization. Other fields with value `None`
           are ignored.
         """
-        excluded_fields: Set[str] = set([])
+        excluded_fields: Set[str] = set([
+        ])
 
         _dict = self.model_dump(
             by_alias=True,
@@ -130,7 +91,7 @@ class WorkflowConfigModel(BaseModel):
         )
         # override the default output from pydantic by calling `to_dict()` of compute_node_resource_stats
         if self.compute_node_resource_stats:
-            _dict["compute_node_resource_stats"] = self.compute_node_resource_stats.to_dict()
+            _dict['compute_node_resource_stats'] = self.compute_node_resource_stats.to_dict()
         return _dict
 
     @classmethod
@@ -142,35 +103,17 @@ class WorkflowConfigModel(BaseModel):
         if not isinstance(obj, dict):
             return cls.model_validate(obj)
 
-        _obj = cls.model_validate(
-            {
-                "workflow_startup_script": obj.get("workflow_startup_script"),
-                "worker_startup_script": obj.get("worker_startup_script"),
-                "compute_node_resource_stats": ComputeNodeResourceStatsModel.from_dict(
-                    obj["compute_node_resource_stats"]
-                )
-                if obj.get("compute_node_resource_stats") is not None
-                else None,
-                "compute_node_expiration_buffer_seconds": obj.get(
-                    "compute_node_expiration_buffer_seconds"
-                ),
-                "compute_node_wait_for_new_jobs_seconds": obj.get(
-                    "compute_node_wait_for_new_jobs_seconds"
-                ),
-                "compute_node_ignore_workflow_completion": obj.get(
-                    "compute_node_ignore_workflow_completion"
-                )
-                if obj.get("compute_node_ignore_workflow_completion") is not None
-                else False,
-                "compute_node_wait_for_healthy_database_minutes": obj.get(
-                    "compute_node_wait_for_healthy_database_minutes"
-                ),
-                "prepare_jobs_sort_method": obj.get("prepare_jobs_sort_method")
-                if obj.get("prepare_jobs_sort_method") is not None
-                else "gpus_runtime_memory",
-                "_key": obj.get("_key"),
-                "_id": obj.get("_id"),
-                "_rev": obj.get("_rev"),
-            }
-        )
+        _obj = cls.model_validate({
+            "workflow_startup_script": obj.get("workflow_startup_script"),
+            "worker_startup_script": obj.get("worker_startup_script"),
+            "compute_node_resource_stats": ComputeNodeResourceStatsModel.from_dict(obj["compute_node_resource_stats"]) if obj.get("compute_node_resource_stats") is not None else None,
+            "compute_node_expiration_buffer_seconds": obj.get("compute_node_expiration_buffer_seconds"),
+            "compute_node_wait_for_new_jobs_seconds": obj.get("compute_node_wait_for_new_jobs_seconds"),
+            "compute_node_ignore_workflow_completion": obj.get("compute_node_ignore_workflow_completion") if obj.get("compute_node_ignore_workflow_completion") is not None else False,
+            "compute_node_wait_for_healthy_database_minutes": obj.get("compute_node_wait_for_healthy_database_minutes"),
+            "prepare_jobs_sort_method": obj.get("prepare_jobs_sort_method") if obj.get("prepare_jobs_sort_method") is not None else 'gpus_runtime_memory',
+            "_key": obj.get("_key"),
+            "_id": obj.get("_id"),
+            "_rev": obj.get("_rev")
+        })
         return _obj
