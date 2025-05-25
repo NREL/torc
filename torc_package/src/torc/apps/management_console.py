@@ -43,7 +43,7 @@ from torc.cli.workflows import (
     reset_workflow_job_status,
 )
 from torc.common import convert_timestamp
-from torc.torc_rc import TorcRuntimeConfig
+from torc.config import torc_settings
 from torc.loggers import setup_logging
 
 
@@ -91,9 +91,8 @@ class TorcManagementConsole(App):
 
         full_url = database_url or None
         if full_url is None:
-            config = TorcRuntimeConfig.load()
-            if config.database_url is not None:
-                full_url = config.database_url
+            if torc_settings.database_url is not None:
+                full_url = torc_settings.database_url
 
         if full_url is not None:
             self._db_url, db_name = full_url.split("/_db/")

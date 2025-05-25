@@ -6,18 +6,20 @@ import os
 import sys
 
 from torc.api import make_api
-from torc.torc_rc import TorcRuntimeConfig
+from torc.config import torc_settings
 
-config = TorcRuntimeConfig.load()
-if config.database_url is None:
-    print(f"This test requires that the database_url be set in {config.path()}", file=sys.stderr)
+if torc_settings.database_url is None:
+    print(
+        "This test requires that the database_url be set in the torc config file", file=sys.stderr
+    )
     sys.exit(1)
 
-api = make_api(config.database_url)
+api = make_api(torc_settings.database_url)
 
 workflow_key = os.environ["TORC_WORKFLOW_KEY"]
 job_key = os.environ["TORC_JOB_KEY"]
 result = api.list_job_user_data_consumes(workflow_key, job_key)
+assert result is not None
 assert len(result.items) == 1, result
 inputs = result.items[0]
 

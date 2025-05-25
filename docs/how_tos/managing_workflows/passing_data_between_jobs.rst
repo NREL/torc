@@ -43,7 +43,7 @@ result with the torc CLI, but the API is likely more convenient.
 3. Develop code in your scripts to store and retrive the data.
 
 Here is code to connect to the database and identify your job. This example relies on database
-settings in ``~/.torc.json5``. Refer to ``torc config --help`` for more information.
+settings in ``~/.torc_settings.toml``. Refer to ``torc config --help`` for more information.
 
 .. code-block:: python
 

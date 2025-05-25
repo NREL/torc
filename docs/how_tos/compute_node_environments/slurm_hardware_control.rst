@@ -21,7 +21,7 @@ process to cores on different sockets. Each job process run by a worker inherits
 binding.
 
 .. note:: You must swap ``<url>`` and ``<workflow-key>`` with your actual values below. If you
-   added them to your ``~/.torc.json5`` file, you can delete the ``-u`` and ``-k`` options.
+   added them to your ``~/.torc_settings.toml`` file, you can delete the ``-u`` and ``-k`` options.
 
 .. code-block:: shell
 

@@ -26,7 +26,7 @@ below.
 .. code-block:: console
 
     $ torc config create -u http://<hostname>:8529/_db/<database-name>/torc-service
-    Wrote torc config to /Users/dthom/.torc.json5
+    Wrote torc config to /Users/dthom/.torc_settings.toml
 
 
 .. toctree::

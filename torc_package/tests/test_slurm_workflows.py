@@ -14,10 +14,10 @@ from click.testing import CliRunner
 from torc.api import make_api, iter_documents
 from torc.cli.torc import cli
 from torc.common import STATS_DIR
-from torc.torc_rc import TorcRuntimeConfig
+from torc.config import torc_settings
 from torc.hpc.slurm_interface import SlurmInterface
 from torc.hpc.common import HpcJobStatus
-from torc.utils.files import load_data, dump_data
+from torc.utils.files import load_json_file, dump_json_file
 
 
 if shutil.which("squeue") is None:
@@ -27,14 +27,13 @@ if shutil.which("squeue") is None:
 @pytest.fixture
 def setup_api():
     """Fixture to setup an API client."""
-    config = TorcRuntimeConfig.load()
-    if config.database_url is None:
+    if torc_settings.database_url is None:
         print(
-            f"database_url must be set in {TorcRuntimeConfig.path()} to run this test",
+            "database_url must be set in the torc config file to run this test",
             file=sys.stderr,
         )
         sys.exit(1)
-    api = make_api(config.database_url)
+    api = make_api(torc_settings.database_url)
     output_dir = Path(".") / "torc-test-output-dir"  # This needs to be accessible on all nodes.
     script_output_dir = Path(".") / "output"  # Hard-coded in spec files
     if script_output_dir.exists():
@@ -253,6 +252,7 @@ def _check_cpu_affinity_results(api, key):
         else:
             assert num_cpus == ud.data["num_cpus"]
         total_cpu_affinity.update(set(ud.data["affinity"]))
+    assert num_cpus is not None
     expected_cpu_affinity = set(range(num_cpus))
     assert total_cpu_affinity == expected_cpu_affinity
 
@@ -262,21 +262,21 @@ def _fix_slurm_account(spec_file, output_dir, account):
     if dst_file.exists():
         dst_file.unlink()
     shutil.copyfile(spec_file, dst_file)
-    data = load_data(dst_file)
+    data = load_json_file(dst_file)
     for scheduler in data["schedulers"]["slurm_schedulers"]:
         scheduler["account"] = account
         scheduler["qos"] = "standby"
     data["config"]["compute_node_resource_stats"]["monitor_type"] = "periodic"
     data["config"]["compute_node_resource_stats"]["interval"] = 1
-    dump_data(data, dst_file, indent=2)
+    dump_json_file(data, dst_file, indent=2)
     return dst_file
 
 
 def _fix_mem_requirement(spec_file, index, mem):
-    data = load_data(spec_file)
+    data = load_json_file(spec_file)
     scheduler = data["schedulers"]["slurm_schedulers"][index]
     scheduler["mem"] = mem
-    dump_data(data, spec_file, indent=2)
+    dump_json_file(data, spec_file, indent=2)
     return spec_file
 
 

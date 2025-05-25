@@ -20,7 +20,6 @@ from torc.api import remove_db_keys, sanitize_workflow, iter_documents, list_mod
 from torc.exceptions import InvalidWorkflow
 from torc.hpc.slurm_interface import SlurmInterface
 from torc.openapi_client.api import DefaultApi
-from torc.torc_rc import TorcRuntimeConfig
 from torc.workflow_manager import WorkflowManager
 from .common import (
     check_database_url,
@@ -63,14 +62,6 @@ def cancel(ctx, api: DefaultApi, workflow_keys: tuple[str]) -> None:
 
 @click.command()
 @click.option(
-    "-U",
-    "--update-rc-with-key",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Update torc runtime config file with the created workflow key.",
-)
-@click.option(
     "-d",
     "--description",
     type=str,
@@ -93,7 +84,6 @@ def cancel(ctx, api: DefaultApi, workflow_keys: tuple[str]) -> None:
 def create(
     ctx: click.Context,
     api: DefaultApi,
-    update_rc_with_key: bool,
     description: str,
     key: str,
     name: str,
@@ -113,8 +103,6 @@ def create(
         logger.info("Created a workflow with key=%s", workflow.key)
     else:
         print(json.dumps({"key": workflow.key}))
-    if update_rc_with_key:
-        _update_torc_rc(api, workflow)
 
 
 @click.command()
@@ -181,8 +169,6 @@ def create_from_commands_file(
     for i, command in enumerate(commands, start=1):
         name = str(i)
         api.add_job(workflow.key, JobModel(name=name, command=command))
-    if update_rc_with_key:
-        _update_torc_rc(api, workflow)
 
 
 @click.command()
@@ -210,8 +196,6 @@ def create_from_json_file(
         logger.info("Created a workflow from %s with key=%s", filename, workflow.key)
     else:
         print(json.dumps({"filename": str(filename), "key": workflow.key}))
-    if update_rc_with_key:
-        _update_torc_rc(api, workflow)
 
 
 @click.command()
@@ -973,17 +957,6 @@ def template(ctx: click.Context, api: DefaultApi) -> None:
     data["config"] = remove_db_keys(data["config"])
     data.pop("key", None)
     print(json.dumps(data, indent=2))
-
-
-def _update_torc_rc(api: DefaultApi, workflow: WorkflowModel) -> None:
-    config = TorcRuntimeConfig.load()
-    config.workflow_key = workflow.key
-    path = config.path()
-    logger.info("Updating %s with workflow_key=%s", path, config.workflow_key)
-    if config.database_url != api.api_client.configuration.host:
-        config.database_url = api.api_client.configuration.host
-        logger.info("Updating %s with database_url=%s", path, config.database_url)
-    config.dump(path=path)
 
 
 workflows.add_command(cancel)

@@ -13,7 +13,7 @@ from prettytable import PrettyTable
 from torc.api import iter_documents
 from torc.loggers import setup_logging
 from torc.openapi_client.api import DefaultApi
-from torc.torc_rc import TorcRuntimeConfig
+from torc.config import torc_settings
 
 
 logger = logging.getLogger(__name__)
@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 def check_database_url(api: DefaultApi) -> None:
     """Raises an exception if a database URL is not set."""
     if api is None:
-        rc_path = TorcRuntimeConfig.path()
+        rc_path = torc_settings.database_url
         print(
             "The database_url, in the format \n"
             "    http://<database_hostname>:8529/_db/<database_name>/torc-service,\n"

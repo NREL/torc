@@ -1,11 +1,12 @@
 """CLI commands to manage the torc runtime configuration"""
 
 import logging
+import toml
 from pathlib import Path
 
 import click
 
-from torc.torc_rc import TorcRuntimeConfig, RC_FILENAME
+from torc.config import DEFAULT_SETTINGS_FILENAME
 
 
 logger = logging.getLogger(__name__)
@@ -86,16 +87,19 @@ def create(
     file_level,
 ):
     """Create a local torc runtime configuration file."""
-    torc_config = TorcRuntimeConfig(
-        output_format=output_format,
-        filter_workflows_by_user=filter_workflows_by_user,
-        workflow_key=workflow_key,
-        timings=timings,
-        database_url=database_url,
-        console_level=console_level,
-        file_level=file_level,
-    )
-    torc_config.dump(path=directory / RC_FILENAME)
+    settings = {
+        "output_format": output_format,
+        "filter_workflows_by_user": filter_workflows_by_user,
+        "workflow_key": workflow_key,
+        "timings": timings,
+        "database_url": database_url,
+        "console_level": console_level,
+        "file_level": file_level,
+    }
+    filename = directory / DEFAULT_SETTINGS_FILENAME
+    with open(filename, "w") as f:
+        toml.dump(settings, f)
+        print(f"Wrote torc config to {filename}")
 
 
 config.add_command(create)
