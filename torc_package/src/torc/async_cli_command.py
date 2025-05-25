@@ -164,8 +164,8 @@ class AsyncCliCommand(AsyncJobBase):
         assert self._pipe is None
         self._start_time = time.time()
 
-        log_prefix = log_prefix or ""
-        basename = f"{log_prefix}_{self.key}_{run_id}"
+        prefix = "" if log_prefix is None else f"{log_prefix}_"
+        basename = f"{prefix}{self.key}_{run_id}"
         stdout_filename = output_dir / JOB_STDIO_DIR / f"{basename}.o"
         stderr_filename = output_dir / JOB_STDIO_DIR / f"{basename}.e"
         self._stdout_fp = open(stdout_filename, "w", encoding="utf-8")
