@@ -54,6 +54,7 @@ dev = [
     "furo",
     "ghp-import",
     "mypy",
+    "myst_parser",
     "pre-commit",
     "pytest",
     "pytest-cov",
