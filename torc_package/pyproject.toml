@@ -4,6 +4,8 @@ build-backend = "hatchling.build"
 
 [project]
 name = "torc"
+# Note: Do not update manually. Use bump-my-version, such as
+# $ bump-my-version bump minor
 version = "0.4.1"
 description = "Provides workflow automation services"
 requires-python = ">=3.11,<3.13"
@@ -46,7 +48,7 @@ allow-direct-references = true
 [project.optional-dependencies]
 dev = [
     "black",
-    "bump-pydantic",
+    "bump-my-version",
     "flake8",
     "furo",
     "ghp-import",
