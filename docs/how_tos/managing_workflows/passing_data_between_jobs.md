@@ -47,11 +47,9 @@ settings in `~/.torc_settings.toml`. Refer to `torc config --help` for more info
 ```python
 import os
 
-from torc.api import make_api
-from torc.torc_rc import TorcRuntimeConfig
+from torc import make_api, torc_settings
 
-config = TorcRuntimeConfig.load()
-api = make_api(config.database_url)
+api = make_api(torc_settings.database_url)
 workflow_key = os.environ["TORC_WORKFLOW_KEY"]
 job_key = os.environ["TORC_JOB_KEY"]
 ```

@@ -92,12 +92,8 @@ Here is what torc does to solve this problem:
 ```python
 import getpass
 
-from torc.api import make_api, map_function_to_jobs
-from torc.openapi_client.models.workflow_model import WorkflowModel
-from torc.openapi_client.models.job_model import JobModel
-from torc.openapi_client.models.resource_requirements_model import (
-    ResourceRequirementsModel,
-)
+from torc import make_api, map_function_to_jobs
+from torc.openapi_client import JobModel, ResourceRequirementsModel, WorkflowModel
 
 api = make_api("http://localhost:8529/_db/workflows/torc-service")
 params = [

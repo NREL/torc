@@ -89,11 +89,8 @@ application on compute nodes. Here are some example settings:
 
    .. code-tab:: py
 
-    from torc.openapi_client.models.workflow_model import WorkflowModel
-    from torc.openapi_client.models.compute_node_resource_stats_model import (
-        ComputeNodeResourceStatsModel,
-    )
-    from torc.api import make_api
+    from torc import make_api
+    from torc.openapi_client import ComputeNodeResourceStatsModel, WorkflowModel
 
     api = make_api("http://localhost:8529/_db/test-workflows/torc-service")
     workflow = WorkflowModel(user="user", name="my_workflow")
