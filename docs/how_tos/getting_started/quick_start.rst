@@ -12,7 +12,7 @@ run pre-defined workflows stored inside the torc repository.
 .. code-block:: console
 
    $ torc config create -u http://<database_hostname>:8529/_db/<database_name>/torc-service
-   Wrote torc config to /Users/dthom/.torc.json5
+   Wrote torc config to /Users/dthom/.torc_settings.toml
 
 3. Create a text file with one command per line. Here are contents of one such file:
 

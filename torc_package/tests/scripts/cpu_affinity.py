@@ -9,19 +9,18 @@ from torc.openapi_client.models.user_data_model import (
 )
 
 from torc.api import make_api
-from torc.torc_rc import TorcRuntimeConfig
+from torc.config import torc_settings
 
 print(f"running {sys.argv}")
 
-config = TorcRuntimeConfig.load()
-if config.database_url is None:
+if torc_settings.database_url is None:
     print(
-        f"This test requires that the database_url be set in {config.path()}",
+        "This test requires that the database_url be set in torc config file",
         file=sys.stderr,
     )
     sys.exit(1)
 
-api = make_api(config.database_url)
+api = make_api(torc_settings.database_url)
 workflow_key = os.environ["TORC_WORKFLOW_KEY"]
 job_key = os.environ["TORC_JOB_KEY"]
 

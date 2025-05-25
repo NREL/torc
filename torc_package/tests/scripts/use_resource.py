@@ -5,19 +5,18 @@ import sys
 
 from torc.api import make_api
 from torc.openapi_client.models.user_data_model import UserDataModel
-from torc.torc_rc import TorcRuntimeConfig
+from torc.config import torc_settings
 
 
 def main():
     """Entry point"""
     workflow_key = os.environ["TORC_WORKFLOW_KEY"]
     job_key = os.environ["TORC_JOB_KEY"]
-    config = TorcRuntimeConfig.load()
-    if not config.database_url:
-        print(f"The database_url must be set in {config.path()}.", file=sys.stderr)
+    if not torc_settings.database_url:
+        print("The database_url must be set in the torc config file.", file=sys.stderr)
         sys.exit(1)
 
-    api = make_api(config.database_url)
+    api = make_api(torc_settings.database_url)
     result = api.list_job_user_data_consumes(workflow_key, job_key)
     resource_ud: UserDataModel | None = None
     assert result.items is not None

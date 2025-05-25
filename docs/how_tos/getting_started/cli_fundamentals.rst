@@ -100,7 +100,7 @@ Create in your home directory (default):
 .. code-block:: console
 
    $ torc config create -u http://localhost:8529/_db/workflows/torc-service
-   Wrote torc config to /Users/dthom/.torc.json5
+   Wrote torc config to /Users/dthom/.torc_settings.toml
 
 
 Create in a working directory:
@@ -108,7 +108,7 @@ Create in a working directory:
 .. code-block:: console
 
    $ torc config create -u http://localhost:8529/_db/workflows/torc-service -d .
-   Wrote torc config to /Users/dthom/work-dir/.torc.json5
+   Wrote torc config to /Users/dthom/work-dir/.torc_settings.toml
 
 
 Environment variable
@@ -143,7 +143,7 @@ There are four ways to set it:
 
    $ torc -k 247827 jobs list
 
-2. Set the ``workflow_key`` field in ``~/.torc.json5``. Note that the ``torc workflows create*``
+2. Set the ``workflow_key`` field in ``~/.torc_settings.toml``. Note that the ``torc workflows create*``
    commands support the option ``-U`` that automatically updates the config file with the
    newly-created key.
 

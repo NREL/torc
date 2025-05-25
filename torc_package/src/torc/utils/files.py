@@ -61,8 +61,8 @@ def compute_hash(text: bytes) -> str:
     return hash_obj.hexdigest()
 
 
-def dump_data(data: dict[str, Any], filename: str | Path, **kwargs) -> None:
-    """Dump data to the filename. Supports JSON, JSON5, or custom via kwargs."""
+def dump_json_file(data: dict[str, Any], filename: str | Path, **kwargs) -> None:
+    """Dump data to the JSON or JSON5 filename."""
     mod = _get_module_from_extension(filename, **kwargs)
     with open(filename, "w", encoding="utf-8") as f_out:
         mod.dump(data, f_out, **kwargs)
@@ -70,8 +70,8 @@ def dump_data(data: dict[str, Any], filename: str | Path, **kwargs) -> None:
     logger.debug("Dumped data to %s", filename)
 
 
-def load_data(filename: str | Path, **kwargs) -> Any:
-    """Load data from the file. Supports JSON, JSON5, or custom via kwargs."""
+def load_json_file(filename: str | Path, **kwargs) -> Any:
+    """Load data from the JSON or JSON5 file."""
     mod = _get_module_from_extension(filename, **kwargs)
     with open(filename, encoding="utf-8") as f_in:
         try:

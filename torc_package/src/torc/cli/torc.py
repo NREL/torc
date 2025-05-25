@@ -26,20 +26,13 @@ from torc.cli.tui import tui
 from torc.cli.user_data import user_data
 from torc.cli.workflows import workflows
 from torc.common import timer_stats_collector
-from torc.torc_rc import TorcRuntimeConfig, RC_FILENAME
+from torc.config import torc_settings
 
 
 logger = logging.getLogger(__name__)
 
 
 @click.group()
-@click.option(
-    "-C",
-    "--torc-rc-file",
-    help=f"Torc runtime config file. Priority is as follows: this option, {RC_FILENAME} in the "
-    f"current directory, {RC_FILENAME} in {Path.home()}. Use default values if no config file "
-    "exists.",
-)
 @click.option(
     "-c",
     "--console-level",
@@ -98,7 +91,6 @@ logger = logging.getLogger(__name__)
 @click.pass_context
 def cli(
     ctx,
-    torc_rc_file,
     console_level,
     file_level,
     workflow_key,
@@ -109,7 +101,6 @@ def cli(
     database_url,
 ):
     """torc commands"""
-    torc_config = TorcRuntimeConfig.load(path=torc_rc_file)
     for param in (
         "console_level",
         "file_level",
@@ -118,10 +109,10 @@ def cli(
         "workflow_key",
     ):
         if ctx.params[param] is None:
-            ctx.params[param] = getattr(torc_config, param)
+            ctx.params[param] = getattr(torc_settings, param)
 
     if timings is None:
-        ctx.params["timings"] = torc_config.timings
+        ctx.params["timings"] = torc_settings.timings
     else:
         ctx.params["timings"] = timings == "true"
 

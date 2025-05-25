@@ -11,6 +11,7 @@ import pytest
 from click.testing import CliRunner
 
 from torc.common import GiB
+from torc.config import torc_settings
 from torc.openapi_client import ApiClient, DefaultApi
 from torc.openapi_client.configuration import Configuration
 from torc.openapi_client.models.workflow_specifications_schedulers import (
@@ -40,8 +41,7 @@ from torc.openapi_client.models.compute_node_resource_stats_model import (
 from torc.api import iter_documents, map_function_to_jobs
 from torc.cli.torc import cli
 from torc.loggers import setup_logging
-from torc.torc_rc import TorcRuntimeConfig
-from torc.utils.files import load_data, dump_data
+from torc.utils.files import load_json_file, dump_json_file
 from torc.workflow_builder import WorkflowBuilder
 from torc.workflow_manager import WorkflowManager
 from torc.tests.database_interface import DatabaseInterface
@@ -281,17 +281,16 @@ def independent_job_workflow(num_jobs):
 
 
 def _initialize_api():
-    config = TorcRuntimeConfig.load()
-    if config.database_url is None:
+    if torc_settings.database_url is None:
         print(
-            f"database_url must be set in {TorcRuntimeConfig.path()} to run this test",
+            "database_url must be set in torc config files to run this test",
             file=sys.stderr,
         )
         sys.exit(1)
 
     setup_logging("torc")
     configuration = Configuration()
-    configuration.host = config.database_url
+    configuration.host = torc_settings.database_url
     return DefaultApi(ApiClient(configuration))
 
 
@@ -530,10 +529,10 @@ def create_workflow_cli(tmp_path_factory):
     url = api.api_client.configuration.host
     tmp_path = tmp_path_factory.mktemp("torc")
     file = Path(__file__).parent.parent.parent / "examples" / "independent_workflow.json5"
-    data = load_data(file)
+    data = load_json_file(file)
     data["config"]["compute_node_resource_stats"]["interval"] = 1
     w_file = tmp_path / file.name
-    dump_data(data, w_file)
+    dump_json_file(data, w_file)
     runner = CliRunner()
     result = runner.invoke(
         cli,
