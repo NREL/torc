@@ -11,6 +11,7 @@ import click
 from torc.api import (
     iter_documents,
 )
+from torc.common import JOB_STDIO_DIR
 from torc.openapi_client.api.default_api import DefaultApi
 from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.workflow_model import WorkflowModel
@@ -23,7 +24,7 @@ from .common import (
 from .slurm import (
     get_slurm_job_runner_log_file,
     get_slurm_stdio_files,
-    get_torc_job_stdio_files,
+    get_torc_job_stdio_files_slurm,
 )
 
 
@@ -54,7 +55,7 @@ def reports():
 )
 @click.pass_obj
 @click.pass_context
-def results(ctx, api, job_keys, output: Path, run_id):
+def results(ctx, api, job_keys, output: Path, run_id: tuple[int]):
     """Report information about job results and log files."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
@@ -86,33 +87,42 @@ def results(ctx, api, job_keys, output: Path, run_id):
             continue
 
         scheduler = item["from"]["scheduler"]
-        if "slurm_job_id" not in scheduler:
-            logger.error("This command is only supported in Slurm environments.")
-            return
-        slurm_job_id = scheduler["slurm_job_id"]
-        env_vars = scheduler["environment_variables"]
-        slurm_node_id = env_vars["SLURM_NODEID"]
-        slurm_task_pid = env_vars["SLURM_TASK_PID"]
         data = lookup_by_job_and_run_id.get((job_key, item["edge"]["data"]["run_id"]))
         if data is None:
             # This run did not complete.
-            data = {"run_id": item["edge"]["data"]["run_id"]}
-            results_by_job[job_key].append(data)
+            results_by_job[job_key].append({"run_id": item["edge"]["data"]["run_id"]})
+            continue
+        r_id = item["edge"]["data"]["run_id"]
         if scheduler.get("hpc_type") == "slurm":
+            slurm_job_id = scheduler["slurm_job_id"]
+            env_vars = scheduler["environment_variables"]
+            slurm_node_id = env_vars["SLURM_NODEID"]
+            slurm_task_pid = env_vars["SLURM_TASK_PID"]
             data["job_runner_log_file"] = get_slurm_job_runner_log_file(
                 output, slurm_job_id, slurm_node_id, slurm_task_pid
             )
             data["slurm_stdio_files"] = get_slurm_stdio_files(output, slurm_job_id)
-            data["job_stdio_files"] = get_torc_job_stdio_files(
+            data["job_stdio_files"] = get_torc_job_stdio_files_slurm(
                 output,
                 slurm_job_id,
                 slurm_node_id,
                 slurm_task_pid,
                 job_key,
-                item["edge"]["data"]["run_id"],
+                r_id,
             )
+        elif scheduler.get("scheduler_type") == "local":
+            hostname = scheduler["hostname"]
+            data["job_runner_log_file"] = str(output / f"worker_{hostname}_{r_id}.log")
+            data["job_stdio_files"] = get_torc_job_stdio_files_local(output, job_key, r_id)
 
     print(json.dumps(report, indent=2))
+
+
+def get_torc_job_stdio_files_local(output_dir: Path, job_key: str, run_id: int) -> list[str]:
+    files = []
+    for ext in (".e", ".o"):
+        files.append(f"{output_dir}/{JOB_STDIO_DIR}/{job_key}_{run_id}{ext}")
+    return files
 
 
 def _build_results_by_job(

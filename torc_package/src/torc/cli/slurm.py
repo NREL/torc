@@ -554,7 +554,7 @@ def run_jobs(
     node = None if is_subtask else _get_scheduled_compute_node(api, workflow_key, slurm_job_id)
 
     workflow = send_api_command(api.get_workflow, workflow_key)
-    log_prefix = _get_torc_job_log_prefix(slurm_job_id, slurm_node_id, slurm_task_pid)
+    log_prefix = _get_torc_job_log_prefix_slurm(slurm_job_id, slurm_node_id, slurm_task_pid)
     my_logger.info(
         "Start workflow on compute node %s end_time=%s buffer=%s",
         hostname,
@@ -655,18 +655,18 @@ def get_slurm_stdio_files(output_dir, job_id) -> list[str]:
     return [f"{output_dir}/job_output_{job_id}{x}" for x in (".e", ".o")]
 
 
-def _get_torc_job_log_prefix(slurm_job_id, slurm_node_id, slurm_task_pid):
+def _get_torc_job_log_prefix_slurm(slurm_job_id, slurm_node_id, slurm_task_pid):
     """Return the names of the stdout/stderr log files written by Slurm."""
     return f"slurm_{slurm_job_id}_{slurm_node_id}_{slurm_task_pid}"
 
 
-def get_torc_job_stdio_files(
+def get_torc_job_stdio_files_slurm(
     output_dir, slurm_job_id, slurm_node_id, slurm_task_pid, job_key, run_id
 ):
     """Return the names of the stdout/stderr log files for a torc job."""
     files = []
     for ext in (".e", ".o"):
-        prefix = _get_torc_job_log_prefix(slurm_job_id, slurm_node_id, slurm_task_pid)
+        prefix = _get_torc_job_log_prefix_slurm(slurm_job_id, slurm_node_id, slurm_task_pid)
         files.append(f"{output_dir}/{JOB_STDIO_DIR}/{prefix}_{job_key}_{run_id}{ext}")
     return files
 

@@ -405,7 +405,6 @@ def reset_status(ctx: click.Context, api: DefaultApi, job_keys: tuple[str]) -> N
     type=int,
     help="Enable CPU affinity for this number of CPUs per job.",
 )
-@click.option("-l", "--log-suffix", default="", type=str, help="Log file suffix")
 @click.option(
     "-m",
     "--max-parallel-jobs",
@@ -453,7 +452,6 @@ def run(
     ctx: click.Context,
     api: DefaultApi,
     cpu_affinity_cpus_per_job: Optional[int],
-    log_suffix: str,
     max_parallel_jobs: int,
     output: Path,
     poll_interval: int,
@@ -462,19 +460,26 @@ def run(
     wait_for_healthy_database_minutes: int,
 ):
     """Run workflow jobs on the current system."""
-    output.mkdir(exist_ok=True)
-    hostname = socket.gethostname()
-    log_file = output / f"worker_{hostname}_{log_suffix}.log"
-    my_logger = setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
-    my_logger.info(get_cli_string())
-
     try:
         # NOTE: Ensure that this is the first API command that gets sent.
         api.ping()
     except DatabaseOffline:
         wait_for_healthy_database(api, wait_for_healthy_database_minutes)
 
+    hostname = socket.gethostname()
     workflow_key = get_workflow_key_from_context(ctx, api)
+    run_id = api.get_workflow_status(workflow_key).run_id
+
+    output.mkdir(exist_ok=True)
+    log_file = output / f"worker_{hostname}_{run_id}.log"
+    my_logger = setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
+    my_logger.info(get_cli_string())
+
+    scheduler = {
+        "hostname": hostname,
+        "scheduler_type": "local",
+    }
+
     if all((x.status == "uninitialized" for x in iter_documents(api.list_jobs, workflow_key))):
         start_workflow(api, workflow_key)
     check_database_url(api)
@@ -490,7 +495,7 @@ def run(
         time_limit=time_limit,
     )
     try:
-        runner.run_worker()
+        runner.run_worker(scheduler=scheduler)
     except Exception:
         logger.exception("Torc worker failed")
         raise
