@@ -85,7 +85,7 @@ $ _TORC_COMPLETE=fish_source torc > ~/.config/fish/completions/torc.fish
 All of the commands described here require connecting to the database. We recommend that you use
 a torc-provided shortcut to avoid having to type it in every command.
 
-### Torc RC file
+### Torc config file
 
 Torc allows you to store common configuration settings in a config file. It can be stored in either
 your home directory or a working directory. The current directory takes precedence over your home
@@ -140,9 +140,7 @@ There are four ways to set it:
 $ torc -k 247827 jobs list
 ```
 
-2. Set the `workflow_key` field in `~/.torc_settings.toml`. Note that the `torc workflows create*`
-   commands support the option `-U` that automatically updates the config file with the
-   newly-created key.
+2. Set the `workflow_key` field in `~/.torc_settings.toml`.
 3. Set an environment variable to apply it globally in one environment.
 
 ```console

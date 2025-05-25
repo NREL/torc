@@ -9,9 +9,7 @@ it for you when all other conditions are met.
 Define the `schedule_compute_nodes` object in the `JobModel`. For example,
 
 ```python
-from torc.openapi_client.models.compute_node_schedule_params import ComputeNodeScheduleParams
-from torc.openapi_client.models.job_model import JobModel
-from torc.openapi_client.models.slurm_scheduler_model import SlurmSchedulerModel
+from torc.openapi_client import ComputeNodeScheduleParams, JobModel, SlurmSchedulerModel
 
 short_scheduler = api.add_slurm_scheduler(
     workflow.key,

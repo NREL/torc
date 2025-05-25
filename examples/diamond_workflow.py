@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 
 from torc import add_jobs, make_api, setup_logging, torc_settings
-from torc.openapi_client.api import (
+from torc.openapi_client import (
     ComputeNodeResourceStatsModel,
     DefaultApi,
     FileModel,

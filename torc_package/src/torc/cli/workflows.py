@@ -108,14 +108,6 @@ def create(
 @click.command()
 @click.argument("filename", type=click.Path(exists=True))
 @click.option(
-    "-U",
-    "--update-rc-with-key",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Update torc runtime config file with the created workflow key.",
-)
-@click.option(
     "-d",
     "--description",
     type=str,
@@ -138,7 +130,6 @@ def create(
 def create_from_commands_file(
     ctx: click.Context,
     api: DefaultApi,
-    update_rc_with_key: bool,
     filename: Path,
     description: str,
     key: str,
@@ -173,19 +164,9 @@ def create_from_commands_file(
 
 @click.command()
 @click.argument("filename", type=click.Path(exists=True), callback=lambda *x: Path(x[2]))
-@click.option(
-    "-U",
-    "--update-rc-with-key",
-    is_flag=True,
-    default=False,
-    show_default=True,
-    help="Update torc runtime config file with the created workflow key.",
-)
 @click.pass_obj
 @click.pass_context
-def create_from_json_file(
-    ctx: click.Context, api: DefaultApi, filename: Path, update_rc_with_key: bool
-) -> None:
+def create_from_json_file(ctx: click.Context, api: DefaultApi, filename: Path) -> None:
     """Create a workflow from a JSON/JSON5 file."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
