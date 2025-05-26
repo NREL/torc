@@ -2,17 +2,14 @@
 
 import hashlib
 import json
-import logging
 import os
 import stat
 from pathlib import Path
 from types import ModuleType
 from typing import Any
 
-import json5  # type: ignore
-
-
-logger = logging.getLogger(__name__)
+import json5
+from loguru import logger
 
 
 def create_script(filename: str | Path, text: str, executable: bool = True) -> None:
@@ -67,7 +64,7 @@ def dump_json_file(data: dict[str, Any], filename: str | Path, **kwargs) -> None
     with open(filename, "w", encoding="utf-8") as f_out:
         mod.dump(data, f_out, **kwargs)
 
-    logger.debug("Dumped data to %s", filename)
+    logger.trace("Dumped data to {}", filename)
 
 
 def load_json_file(filename: str | Path, **kwargs) -> Any:
@@ -77,10 +74,10 @@ def load_json_file(filename: str | Path, **kwargs) -> Any:
         try:
             data = mod.load(f_in)
         except Exception:
-            logger.exception("Failed to load data from %s", filename)
+            logger.exception("Failed to load data from {}", filename)
             raise
 
-    logger.debug("Loaded data from %s", filename)
+    logger.debug("Loaded data from {}", filename)
     return data
 
 
@@ -106,7 +103,7 @@ def dump_line_delimited_json(data: list[Any], filename: str | Path, mode: str = 
             f_out.write(json.dumps(obj))
             f_out.write("\n")
 
-    logger.debug("Dumped data to %s", filename)
+    logger.debug("Dumped data to {}", filename)
 
 
 def load_line_delimited_json(filename: str | Path) -> list[Any]:
@@ -120,8 +117,8 @@ def load_line_delimited_json(filename: str | Path) -> list[Any]:
             try:
                 objects.append(json.loads(text))
             except Exception:
-                logger.exception("Failed to decode line number %s in %s", i, filename)
+                logger.exception("Failed to decode line number {} in {}", i, filename)
                 raise
 
-    logger.debug("Loaded data from %s", filename)
+    logger.debug("Loaded data from {}", filename)
     return objects

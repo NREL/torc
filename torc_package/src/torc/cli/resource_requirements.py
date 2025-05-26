@@ -1,9 +1,10 @@
 """CLI commands to manage job resource requirements"""
 
 import json
-import logging
 
 import click
+from loguru import logger
+
 from torc.openapi_client.models.resource_requirements_model import (
     ResourceRequirementsModel,
 )
@@ -17,9 +18,6 @@ from .common import (
     parse_filters,
     print_items,
 )
-
-
-logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -97,9 +95,9 @@ def add(ctx, api, name, num_cpus, memory, runtime, num_nodes, apply_to_all_jobs)
             edges.append(edge.to_dict())
 
     if output_format == "text":
-        logger.info("Added resource requirements with key=%s", rr.key)
+        logger.info("Added resource requirements with key={}", rr.key)
         for edge in edges:
-            logger.info("Stored job requirements via edge %s", edge)
+            logger.info("Stored job requirements via edge {}", edge)
     else:
         print(json.dumps({"key": rr.key, "edges": edges}))
 
@@ -156,7 +154,7 @@ def modify(ctx, api, resource_requirements_key, **kwargs):
         rr = api.modify_resource_requirements(workflow_key, resource_requirements_key, rr)
         if output_format == "text":
             logger.info(
-                "Modified resource requirements key = %s",
+                "Modified resource requirements key = {}",
                 resource_requirements_key,
             )
         else:
@@ -178,7 +176,7 @@ def delete(ctx, api, resource_requirement_keys):
     workflow_key = get_workflow_key_from_context(ctx, api)
     for key in resource_requirement_keys:
         api.remove_resource_requirements(workflow_key, key)
-        logger.info("Deleted workflow=%s resource_requirements=%s", workflow_key, key)
+        logger.info("Deleted workflow={} resource_requirements={}", workflow_key, key)
 
 
 @click.command()
@@ -191,7 +189,7 @@ def delete_all(ctx, api):
     workflow_key = get_workflow_key_from_context(ctx, api)
     for resource_requirement in iter_documents(api.list_resource_requirements, workflow_key):
         api.remove_resource_requirements(workflow_key, resource_requirement.key)
-        logger.info("Deleted resource_requirement %s", resource_requirement.key)
+        logger.info("Deleted resource_requirement {}", resource_requirement.key)
 
 
 @click.command(name="list")

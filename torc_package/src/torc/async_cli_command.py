@@ -1,7 +1,6 @@
 """Runs a CLI command asynchronously"""
 
 import abc
-import logging
 import os
 import shlex
 import subprocess
@@ -12,13 +11,12 @@ from io import TextIOWrapper
 from pathlib import Path
 from typing import Optional
 
+from loguru import logger
+
+from torc.common import JOB_STDIO_DIR, JobStatus
 from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.result_model import ResultModel
 from torc.utils.cpu_affinity_mask_tracker import CpuAffinityMaskTracker
-
-from torc.common import JOB_STDIO_DIR, JobStatus
-
-logger = logging.getLogger(__name__)
 
 
 class AsyncJobBase(abc.ABC):
@@ -90,7 +88,7 @@ class AsyncCliCommand(AsyncJobBase):
 
     def __del__(self) -> None:
         if self._is_running:
-            logger.warning("job %s destructed while running", self._db_job.command)
+            logger.warning("job {} destructed while running", self._db_job.command)
 
     def cancel(self) -> None:
         assert self._pipe is not None
@@ -105,11 +103,11 @@ class AsyncCliCommand(AsyncJobBase):
         for _ in range(timeout_seconds):
             if self._pipe.poll() is not None:
                 complete = True
-                logger.info("job %s has exited", self.key)
+                logger.info("job {} has exited", self.key)
                 break
             time.sleep(1)
         if not complete:
-            logger.warning("Timed out waiting for job %s to complete", self.key)
+            logger.warning("Timed out waiting for job {} to complete", self.key)
 
         self._complete(status)
 
@@ -188,7 +186,7 @@ class AsyncCliCommand(AsyncJobBase):
         self._is_running = True
 
     def _run_command(self, command, env):
-        logger.info("Run job=%s command %s", self._db_job.key, command)
+        logger.info("Run job={} command {}", self._db_job.key, command)
         cmd = shlex.split(command, posix="win" not in sys.platform)
         return subprocess.Popen(cmd, stdout=self._stdout_fp, stderr=self._stderr_fp, env=env)
 
@@ -214,7 +212,7 @@ class AsyncCliCommand(AsyncJobBase):
             self._cpu_affinity_index = None
 
         logger.info(
-            "Job %s completed return_code=%s exec_time_s=%s status=%s",
+            "Job {} completed return_code={} exec_time_s={} status={}",
             self.key,
             self._return_code,
             self._exec_time_s,

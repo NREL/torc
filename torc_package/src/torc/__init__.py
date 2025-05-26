@@ -1,6 +1,5 @@
 """torc package"""
 
-import logging
 import warnings
 from importlib import metadata
 
@@ -18,7 +17,6 @@ from torc.loggers import setup_logging
 
 __version__ = metadata.metadata("torc")["Version"]
 
-logging.getLogger(__name__).addHandler(logging.NullHandler())
 warnings.filterwarnings("once", category=DeprecationWarning)
 
 

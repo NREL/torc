@@ -1,11 +1,11 @@
 """CLI commands to manage jobs"""
 
 import json
-import logging
 from pprint import pprint
 from typing import Any
 
 import click
+from loguru import logger
 
 from torc.api import iter_documents
 from .common import (
@@ -16,9 +16,6 @@ from .common import (
     print_items,
     parse_filters,
 )
-
-
-logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -346,7 +343,7 @@ def list_collections(ctx, api, raw):
         for i, name in enumerate(results.names):
             results.names[i] = name.split("__")[0]
     if output_format == "text":
-        logger.info("Workflow collection names = \n%s", "\n".join(results.names))
+        logger.info("Workflow collection names = \n{}", "\n".join(results.names))
     else:
         print(json.dumps(results.to_dict()))
 

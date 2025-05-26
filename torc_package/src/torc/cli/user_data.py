@@ -1,10 +1,10 @@
 """CLI commands to manage user_data"""
 
 import json
-import logging
 
 import click
-import json5  # type: ignore
+import json5
+from loguru import logger
 
 from torc.openapi_client.models.user_data_model import (
     UserDataModel,
@@ -19,9 +19,6 @@ from .common import (
     parse_filters,
     setup_cli_logging,
 )
-
-
-logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -107,7 +104,7 @@ def add(ctx, api, data, ephemeral, name, stores, consumes):
             )
             consumes_edges.append(consumes_edge.to_dict())
     if output_format == "text":
-        logger.info("Added user_data key=%s", ud.key)
+        logger.info("Added user_data key={}", ud.key)
     else:
         data = {"key": ud.key}
         if stores_edge is not None:
@@ -159,7 +156,7 @@ def modify(ctx, api, user_data_key, name, data, ephemeral):
     if changed:
         ud = api.modify_user_data(workflow_key, user_data_key, ud)
         if output_format == "text":
-            logger.info("Modified user_data key = %s", user_data_key)
+            logger.info("Modified user_data key = {}", user_data_key)
         else:
             print(json.dumps({"key": user_data_key}))
     else:
@@ -183,7 +180,7 @@ def delete(ctx, api, user_data_keys):
     workflow_key = get_workflow_key_from_context(ctx, api)
     for key in user_data_keys:
         api.remove_user_data(workflow_key, key)
-        logger.info("Deleted user_data=%s", key)
+        logger.info("Deleted user_data={}", key)
 
 
 @click.command()
@@ -199,7 +196,7 @@ def delete_all(ctx, api):
     confirm_change(ctx, msg)
     for key in keys:
         api.remove_user_data(workflow_key, key)
-        logger.info("Deleted user_data %s", key)
+        logger.info("Deleted user_data {}", key)
 
 
 @click.command()

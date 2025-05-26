@@ -1,12 +1,12 @@
 """CLI commands to manage jobs"""
 
 import json
-import logging
 import socket
 from pathlib import Path
 from typing import Any, Optional
 
 import click
+from loguru import logger
 
 from torc.openapi_client.models.job_model import JobModel
 from torc.api import iter_documents, list_model_fields, wait_for_healthy_database
@@ -31,9 +31,6 @@ from .run_postprocess import run_postprocess
 from .workflows import start_workflow
 
 
-logger = logging.getLogger(__name__)
-
-
 @click.group()
 def jobs():
     """Job commands"""
@@ -48,7 +45,7 @@ def jobs():
 # def cancel(ctx, api, workflow, key):
 #    """Cancel the job in the workflow."""
 #    setup_cli_logging(ctx, __name__)
-#    logger.info("Canceled workflow=%s job=%s", workflow, key)
+#    logger.info("Canceled workflow={} job={}", workflow, key)
 
 
 @click.command()
@@ -102,7 +99,7 @@ def add(
     )
     job = api.add_job(workflow_key, job)
     if output_format == "text":
-        logger.info("Added job with key=%s", job.key)
+        logger.info("Added job with key={}", job.key)
     else:
         print(json.dumps({"key": job.key}))
 
@@ -151,7 +148,7 @@ def delete(ctx: click.Context, api: DefaultApi, job_keys: tuple[str]) -> None:
     confirm_change(ctx, msg)
     for key in job_keys:
         api.remove_job(workflow_key, key)
-        logger.info("Deleted workflow=%s job=%s", workflow_key, key)
+        logger.info("Deleted workflow={} job={}", workflow_key, key)
 
 
 @click.command()
@@ -167,7 +164,7 @@ def delete_all(ctx: click.Context, api: DefaultApi) -> None:
     confirm_change(ctx, msg)
     for key in job_keys:
         api.remove_job(workflow_key, key)
-        logger.info("Deleted job %s", key)
+        logger.info("Deleted job {}", key)
 
 
 @click.command()
@@ -195,7 +192,7 @@ def disable(ctx: click.Context, api: DefaultApi, job_keys: tuple[str]) -> None:
             job.status = "disabled"
             api.modify_job(workflow_key, key, job)
             count += 1
-            logger.info("Set job status of job key=%s name=%s to 'disabled.'", job.key, job.name)
+            logger.info("Set job status of job key={} name={} to 'disabled.'", job.key, job.name)
 
 
 @click.command(name="list")
@@ -343,9 +340,9 @@ def assign_resource_requirements(
         edges.append(edge.to_dict())
 
     if output_format == "text":
-        logger.info("Added resource requirements with key=%s", resource_requirements_key)
+        logger.info("Added resource requirements with key={}", resource_requirements_key)
         for edge_ in edges:
-            logger.info("Stored job requirements via edge %s", edge_)
+            logger.info("Stored job requirements via edge {}", edge_)
     else:
         print(json.dumps({"key": resource_requirements_key, "edges": edges}))
 
@@ -390,7 +387,7 @@ def reset_status(ctx: click.Context, api: DefaultApi, job_keys: tuple[str]) -> N
                     job.status = JobStatus.UNINITIALIZED.value
                     api.modify_job(workflow_key, key, job)
             count += 1
-            logger.info("Reset job status of job key=%s name=%s", job.key, job.name)
+            logger.info("Reset job status of job key={} name={}", job.key, job.name)
 
     if count == 0:
         logger.info("No jobs were reset.")
@@ -472,8 +469,8 @@ def run(
 
     output.mkdir(exist_ok=True)
     log_file = output / f"worker_{hostname}_{run_id}.log"
-    my_logger = setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
-    my_logger.info(get_cli_string())
+    setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
+    logger.info(get_cli_string())
 
     scheduler = {
         "hostname": hostname,

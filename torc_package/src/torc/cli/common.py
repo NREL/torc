@@ -7,15 +7,13 @@ from pathlib import Path
 from typing import Any, Callable, Iterable, Optional
 
 import click
+from loguru import logger
 from prettytable import PrettyTable
 
 from torc.api import iter_documents
 from torc.loggers import setup_logging
 from torc.openapi_client.api import DefaultApi
 from torc.config import torc_settings
-
-
-logger = logging.getLogger(__name__)
 
 
 def check_database_url(api: DefaultApi) -> None:
@@ -150,7 +148,7 @@ def print_items(
         if table.rows:
             print(table.get_formatted_string(output_format))
         else:
-            logger.info("No %s are stored", json_key)
+            logger.info("No {} are stored", json_key)
     else:
         # PrettyTable also supports JSON but we are using a custom key here.
         assert output_format == "json", output_format
@@ -203,7 +201,7 @@ def prompt_user_for_document(
         docs.append(doc)
 
     if not docs:
-        logger.error("No items of type %s with matching criteria are stored.", doc_type)
+        logger.error("No items of type {} with matching criteria are stored.", doc_type)
         return None
 
     if len(docs) == 1 and auto_select_one_option:
@@ -231,7 +229,7 @@ def prompt_user_for_document(
                 selected_index = int(choice)
                 doc = index_to_doc.get(selected_index)
             except ValueError:
-                logger.error("Could not convert %s to an integer.", choice)
+                logger.error("Could not convert {} to an integer.", choice)
             if not doc:
                 print(f"index={choice} is an invalid choice", file=sys.stderr)
     finally:
@@ -302,8 +300,7 @@ def setup_cli_logging(
 ):
     """Setup logging from a click context."""
     params = ctx.find_root().params
-    return setup_logging(
-        name,
+    setup_logging(
         filename=filename,
         console_level=params["console_level"],
         file_level=params["file_level"],

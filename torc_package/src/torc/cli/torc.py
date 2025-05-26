@@ -1,8 +1,6 @@
 """Entry point for CLI commands"""
 
 import getpass
-import logging
-from pathlib import Path
 
 import click
 
@@ -27,9 +25,6 @@ from torc.cli.user_data import user_data
 from torc.cli.workflows import workflows
 from torc.common import timer_stats_collector
 from torc.config import torc_settings
-
-
-logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -132,12 +127,9 @@ def callback(api, *args, **kwargs):
     """Log timer stats at exit."""
     if timer_stats_collector.is_enabled:
         timer_stats_collector.log_stats()
-        for handler in logging.getLogger("torc").handlers:
-            if isinstance(handler, logging.FileHandler):
-                path = Path(handler.baseFilename)
-                timer_file = path.parent / f"{path.stem}_timer_stats.json"
-                timer_stats_collector.log_json_stats(timer_file)
-                break
+        # TODO
+        # timer_file = path.parent / f"{path.stem}_timer_stats.json"
+        # timer_stats_collector.log_json_stats(timer_file)
 
 
 cli.add_command(collections)

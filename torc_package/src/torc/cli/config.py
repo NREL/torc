@@ -1,15 +1,11 @@
 """CLI commands to manage the torc runtime configuration"""
 
-import logging
 import toml
 from pathlib import Path
 
 import click
 
 from torc.config import DEFAULT_SETTINGS_FILENAME
-
-
-logger = logging.getLogger(__name__)
 
 
 @click.group()

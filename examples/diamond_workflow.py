@@ -5,6 +5,8 @@ import json
 import sys
 from pathlib import Path
 
+from loguru import logger
+
 from torc import add_jobs, make_api, setup_logging, torc_settings
 from torc.openapi_client import (
     ComputeNodeResourceStatsModel,
@@ -21,8 +23,6 @@ TEST_WORKFLOW = "test_workflow"
 PREPROCESS = Path("tests") / "scripts" / "preprocess.py"
 POSTPROCESS = Path("tests") / "scripts" / "postprocess.py"
 WORK = Path("tests") / "scripts" / "work.py"
-
-logger = setup_logging(__name__)
 
 
 def create_workflow(api: DefaultApi) -> WorkflowModel:
@@ -116,11 +116,12 @@ def build_workflow(api: DefaultApi, workflow: WorkflowModel):
     ]
     add_jobs(api, workflow.key, jobs)
 
-    logger.info("Created workflow %s with %s jobs", workflow.key, len(jobs))
+    logger.info("Created workflow {} with {} jobs", workflow.key, len(jobs))
 
 
 def main():
     """Entry point"""
+    setup_logging()
     if torc_settings.database_url is None:
         logger.error(
             "There is no torc config file or the database URL is not defined. "

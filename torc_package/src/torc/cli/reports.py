@@ -1,7 +1,6 @@
 """Reports CLI commands"""
 
 import json
-import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -26,9 +25,6 @@ from .slurm import (
     get_slurm_stdio_files,
     get_torc_job_stdio_files_slurm,
 )
-
-
-logger = logging.getLogger(__name__)
 
 
 @click.group()

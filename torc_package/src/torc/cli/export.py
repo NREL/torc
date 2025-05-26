@@ -1,19 +1,16 @@
 """CLI commands for exporting workflows from the database"""
 
 import json
-import logging
 from pathlib import Path
 from typing import Any
 
 import click
-from torc.openapi_client import DefaultApi
+from loguru import logger
 
+from torc.openapi_client import DefaultApi
 from torc.api import iter_documents
 from torc.utils.sql import make_table, insert_rows
 from .common import check_database_url, setup_cli_logging, check_output_path
-
-
-logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -83,9 +80,9 @@ def sqlite(api, workflow_keys, filename, force):
 
     if workflow_keys:
         keys = " ".join(workflow_keys)
-        logger.info("Exported database to %s for workflow keys %s", filename, keys)
+        logger.info("Exported database to {} for workflow keys {}", filename, keys)
     else:
-        logger.info("Exported database to %s for all workflows", filename)
+        logger.info("Exported database to {} for all workflows", filename)
 
 
 def _build_table(

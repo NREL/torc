@@ -28,6 +28,7 @@ dependencies = [
     "dynaconf",
     "graphviz",
     "json5",
+    "loguru",
     "plotly >= 5.19, < 6",
     "psutil >= 5.9, < 6",
     "prettytable >= 3.10, < 4",

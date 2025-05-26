@@ -2,13 +2,13 @@
 
 import getpass
 import json
-import logging
 import os
 import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
 
+from loguru import logger
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical, VerticalScroll, Grid, Container
 from textual.validation import Number
@@ -50,9 +50,6 @@ from torc.loggers import setup_logging
 LOG_FILE = "torc-management-console.log"
 
 
-logger = logging.getLogger(__name__)
-
-
 # TODOs:
 # - Need to implement async versions of API calls. Displays of large datatables are slow.
 #   textualize supports a run_worker method to help once we have async calls.
@@ -72,14 +69,13 @@ class TorcManagementConsole(App):
         api: DefaultApi | None = None,
         database_url=None,
         log_file=LOG_FILE,
-        log_level=logging.INFO,
+        log_level="INFO",
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
         setup_logging(
-            __name__,
             filename=log_file,
-            console_level=logging.FATAL,
+            console_level="FATAL",
             file_level=log_level,
             mode="a",
         )
@@ -610,7 +606,7 @@ class TorcManagementConsole(App):
 
         try:
             self._api.remove_workflow(key)
-            logger.info("Deleted workflow %s", key)
+            logger.info("Deleted workflow {}", key)
             self._post_info_msg(f"Deleted workflow {key}")
             self._connect()
         except Exception as exc:
