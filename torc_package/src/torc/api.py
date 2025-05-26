@@ -132,7 +132,7 @@ def send_api_command(func, *args, raise_on_error=True, timeout=120, **kwargs) ->
     """
     with Timer(timer_stats_collector, func.__name__):
         try:
-            logger.debug("Send API command {}", func.__name__)
+            logger.trace("Send API command {}", func.__name__)
             return func(*args, _request_timeout=timeout, **kwargs)
         except ApiException:
             # This covers all errors reported by the server.

@@ -108,7 +108,9 @@ def results(ctx, api, job_keys, output: Path, run_id: tuple[int]):
             )
         elif scheduler.get("scheduler_type") == "local":
             hostname = scheduler["hostname"]
-            data["job_runner_log_file"] = str(output / f"worker_{hostname}_{r_id}.log")
+            data["job_runner_log_file"] = str(
+                output / f"worker_{hostname}_{workflow_key}_{r_id}.log"
+            )
             data["job_stdio_files"] = get_torc_job_stdio_files_local(output, job_key, r_id)
 
     print(json.dumps(report, indent=2))

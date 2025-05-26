@@ -19,7 +19,7 @@ class HpcManager:
         self._hpc_type = hpc_type
         self._intf = self.create_hpc_interface(hpc_type)
 
-        logger.debug("Constructed HpcManager with output={}", output)
+        logger.trace("Constructed HpcManager with output={}", output)
 
     def cancel_job(self, job_id: str) -> int:
         """Cancel the job."""
@@ -133,5 +133,5 @@ class HpcManager:
                 msg = f"Unsupported HPC type: {hpc_type}"
                 raise ValueError(msg)
 
-        logger.debug("HPC manager type={}", hpc_type)
+        logger.trace("HPC manager type={}", hpc_type)
         return intf

@@ -180,7 +180,7 @@ class JobRunner:
         if self._parent_monitor_conn is not None or self._monitor_proc is not None:
             logger.warning("JobRunner destructed without stopping the resource monitor process.")
 
-    def run_worker(self, scheduler: Optional[dict[str, Any]] = None) -> None:
+    def run_worker(self, scheduler: dict[str, Any] | None = None) -> None:
         """Run jobs from a worker process.
 
         Parameters
@@ -227,7 +227,7 @@ class JobRunner:
 
     def _is_workflow_complete(self) -> bool:
         if self._ignore_completion:
-            logger.debug("Ignore workflow completions")
+            logger.trace("Ignore workflow completions")
             return False
         return send_api_command(self._api.is_workflow_complete, self._workflow.key).is_complete
 
@@ -307,7 +307,7 @@ class JobRunner:
                 and extra_wait_time_start is not None
                 and time.time() - extra_wait_time_start < self._wait_for_new_jobs_seconds
             ):
-                logger.debug(
+                logger.trace(
                     "Extra wait time remaining is {} seconds",
                     self._wait_for_new_jobs_seconds - (time.time() - extra_wait_time_start),
                 )
@@ -595,7 +595,7 @@ class JobRunner:
             logger.info("{} jobs are ready for submission", len(ready_jobs.jobs))
         else:
             reason_none_started = ready_jobs.reason
-            logger.debug("No jobs are ready: {}", reason_none_started)
+            logger.trace("No jobs are ready: {}", reason_none_started)
         for job in ready_jobs.jobs:
             self._run_job(
                 AsyncCliCommand(

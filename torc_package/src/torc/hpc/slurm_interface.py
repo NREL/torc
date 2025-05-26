@@ -62,7 +62,7 @@ class SlurmInterface(HpcInterface):
             raise ExecutionError(msg)
 
         stdout = output["stdout"]
-        logger.debug("squeue output:  [{}]", stdout)
+        logger.trace("squeue output:  [{}]", stdout)
         fields = stdout.split()
         if not fields:
             # No jobs are currently running.
@@ -95,7 +95,7 @@ class SlurmInterface(HpcInterface):
         return self._get_statuses_from_output(output["stdout"])
 
     def _get_statuses_from_output(self, output: str) -> dict[str, HpcJobStatus]:
-        logger.debug("squeue output:  [{}]", output)
+        logger.trace("squeue output:  [{}]", output)
         lines = output.split("\n")
         if not lines:
             # No jobs are currently running.

@@ -69,6 +69,7 @@ dev = [
     "types-networkx",
     "types-python-dateutil",
     "types-psutil",
+    "types-toml",
 ]
 plots = ["networkx", "networkxgmml", "pygraphviz"]
 
