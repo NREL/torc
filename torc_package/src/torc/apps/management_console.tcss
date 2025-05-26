@@ -7,6 +7,17 @@
     padding: 1 1;
 }
 
+#local_worker_container {
+    height: auto;
+    width: 100;
+    margin: 2 3;
+    content-align: center middle;
+    background: $panel;
+    color: $text;
+    border: tall $background;
+    padding: 2 2;
+}
+
 #event_monitor_container {
     height: auto;
     width: 100;
