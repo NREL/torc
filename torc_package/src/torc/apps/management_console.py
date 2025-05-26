@@ -3,10 +3,13 @@
 import getpass
 import json
 import os
+import shutil
+import subprocess
+import sys
 import threading
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from loguru import logger
 from textual.app import App, ComposeResult
@@ -75,7 +78,7 @@ class TorcManagementConsole(App):
         super().__init__(*args, **kwargs)
         setup_logging(
             filename=log_file,
-            console_level="FATAL",
+            console_level="ERROR",
             file_level=log_level,
             mode="a",
         )
@@ -83,7 +86,9 @@ class TorcManagementConsole(App):
         self._db_name = ""
         # This invalid default api is just a placeholder.
         self._api = api or make_api("invalid")
-        self._event_monitor_timer: Optional[threading.Timer] = None
+        self._event_monitor_timer: threading.Timer | None = None
+        self._run_local_proc: Any | None = None
+        self._run_local_proc_monitor: threading.Thread | None = None
 
         full_url = database_url or None
         if full_url is None:
@@ -159,7 +164,8 @@ class TorcManagementConsole(App):
                 with TabPane("Manage Workflow"):
                     with Grid(id="manage_workflow_grid"):
                         with Container():
-                            yield Static("Path to workflow file:")
+                            cwd = os.getcwd()
+                            yield Static(f"Path to workflow file (relative to {cwd}):")
                             yield Input(placeholder="workflow.json5", id="workflow_spec_file")
                             yield Checkbox(
                                 "Select workflow on creation",
@@ -213,6 +219,20 @@ class TorcManagementConsole(App):
                                     id="one_worker_per_compute_node",
                                 )
                         yield VerticalScroll(DataTable(id="slurm_schedulers_table"))
+                with TabPane("Local Worker"):
+                    with Horizontal(id="local_worker_container"):
+                        yield Button("Start", id="start_local_worker", variant="primary")
+                        yield Button("Cancel", id="cancel_local_worker", variant="warning")
+                        yield Button("Clear log", id="clear_local_worker_log", variant="primary")
+                        # TODO: spacing is all off
+                        yield Label("  Poll interval (s):")
+                        yield Input(
+                            "60",
+                            placeholder="Poll interval (s)",
+                            id="local_worker_poll_interval",
+                            validators=[Number(minimum=10)],
+                        )
+                    yield RichLog(max_lines=1000, id="local_worker_log")
                 with TabPane("Event Monitor"):
                     with Horizontal(id="event_monitor_container"):
                         yield Button("Start", id="start_event_monitor", variant="primary")
@@ -228,10 +248,6 @@ class TorcManagementConsole(App):
                         )
                     yield RichLog(max_lines=1000, id="event_log")
 
-    def action_toggle_dark(self) -> None:
-        """An action to toggle dark mode."""
-        self.dark = not self.dark
-
     def on_mount(self) -> None:
         """Called on first mount"""
         self.query_one("#table_options", RadioSet).tooltip = "Select a document table to display."
@@ -244,8 +260,17 @@ class TorcManagementConsole(App):
         self.query_one(
             "#cancel_workflow", Button
         ).tooltip = "Cancel the workflow and all running jobs."
+        self.query_one(
+            "#create_workflow", Button
+        ).tooltip = "Create a workflow from a JSON/JSON5 file or Python script."
         self.query_one("#reset_workflow", Button).tooltip = "Reset all statuses to uninitialized."
         self.query_one("#delete_workflow", Button).tooltip = "Cannot be undone!"
+        self.query_one(
+            "#start_local_worker", Button
+        ).tooltip = "Run all jobs on the current system."
+        self.query_one("#cancel_local_worker", Button).tooltip = "Cancel the local worker."
+        self.query_one("#clear_local_worker_log", Button).tooltip = "Clear the local worker log."
+        self.query_one("#local_worker_poll_interval", Input).tooltip = "Must be >= than 10"
         self.query_one(
             "#one_worker_per_compute_node", Checkbox
         ).tooltip = "Only applies to multi-node jobs."
@@ -309,6 +334,12 @@ class TorcManagementConsole(App):
                 self._reset_workflow()
             case "delete_workflow":
                 self._delete_workflow()
+            case "start_local_worker":
+                self._start_local_worker()
+            case "cancel_local_worker":
+                self._cancel_local_worker()
+            case "clear_local_worker_log":
+                self._clear_local_worker_log()
             case "schedule_slurm_nodes":
                 self._schedule_slurm_nodes()
             case "start_event_monitor":
@@ -385,7 +416,7 @@ class TorcManagementConsole(App):
             self._post_error_msg("No workflow key is selected")
         return key
 
-    def _check_workflow_spec_file(self):
+    def _check_workflow_spec_file(self) -> Path | None:
         path = self.query_one("#workflow_spec_file", Input).value
         if not path:
             self._post_error_msg("Please enter the path to a workflow file.")
@@ -409,13 +440,18 @@ class TorcManagementConsole(App):
         if full_url is None:
             return
         self._api = make_api(full_url)
-        self._show_workflow_table()
+        latest_workflow = self._show_workflow_table()
+        workflow_key = "" if latest_workflow is None else latest_workflow
         self.query_one("#document_table", DataTable).clear(columns=True)
         self.query_one("#slurm_schedulers_table", DataTable).clear(columns=True)
         self.query_one("#connect", Button).variant = "primary"
-        self.query_one("#workflow_key", Input).value = ""
+        self.query_one("#workflow_key", Input).value = workflow_key
         self.query_one("#connected_url", Input).value = full_url
         self.query_one("#create_workflow", Button).disabled = False
+
+        if latest_workflow is not None:
+            self._populate_slurm_schedulers()
+            self._set_workflow_widgets(True)
 
     def _populate_slurm_schedulers(self):
         key = self.query_one("#workflow_key", Input).value
@@ -437,10 +473,13 @@ class TorcManagementConsole(App):
             "reset_workflow",
             "delete_workflow",
             "schedule_slurm_nodes",
+            "start_local_worker",
+            "cancel_local_worker",
+            "clear_local_worker_log",
         ):
             self.query_one(f"#{name}", Button).disabled = not value
 
-    def _show_workflow_table(self):
+    def _show_workflow_table(self) -> str | None:
         filters = (
             {"user": getpass.getuser()}
             if self.query_one("#filter_by_user", Checkbox).value
@@ -457,7 +496,10 @@ class TorcManagementConsole(App):
             key=lambda x: datetime.fromisoformat(x.timestamp.replace("Z", "")),
             reverse=True,
         )
+        latest_workflow: str | None = None
         for i, workflow in enumerate(workflows, start=1):
+            if i == 1:
+                latest_workflow = workflow.key
             table.add_row(
                 workflow.key,
                 workflow.user,
@@ -467,6 +509,7 @@ class TorcManagementConsole(App):
                 key=workflow.key,
                 label=str(i),
             )
+        return latest_workflow
 
     def _show_document_table(self):
         radio_set = self.query_one("#table_options", RadioSet)
@@ -508,13 +551,33 @@ class TorcManagementConsole(App):
             self._post_error_msg(f"{filename} does not exist")
             return
 
-        workflow = create_workflow_from_json_file(self._api, filename, user=getpass.getuser())
-        self._post_info_msg(f"Created workflow key {workflow.key}")
-        self._show_workflow_table()
+        success = False
+        if filename.suffix == ".py":
+            proc = subprocess.run(
+                [sys.executable, filename],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
+            if proc.returncode == 0:
+                self._post_info_msg(proc.stdout)
+                success = True
+            else:
+                self._post_error_msg(proc.stdout)
+        else:
+            try:
+                workflow = create_workflow_from_json_file(
+                    self._api, filename, user=getpass.getuser()
+                )
+                self._post_info_msg(f"Created workflow key {workflow.key}")
+            except Exception as exc:
+                self._post_error_msg(f"Failed to create workflow: {exc}")
 
-        if self.query_one("#select_created_workflow").value:  # type: ignore
-            self.query_one("#workflow_key", Input).value = workflow.key  # type: ignore
-            self._set_workflow_widgets(True)
+        if success:
+            latest_workflow = self._show_workflow_table()
+            if latest_workflow and self.query_one("#select_created_workflow").value:  # type: ignore
+                self.query_one("#workflow_key", Input).value = latest_workflow  # type: ignore
+                self._set_workflow_widgets(True)
 
     def _start_workflow(self):
         url = self._check_url()
@@ -559,7 +622,7 @@ class TorcManagementConsole(App):
         try:
             restart_workflow(self._api, key)
             self._post_info_msg(
-                f"Restarted workflow {key}. Check the jobs table for ready jobs and schedule nodes.."
+                f"Restarted workflow {key}. Check the jobs table for ready jobs and schedule nodes."
             )
         except Exception as exc:
             self._post_error_msg(f"Failed to restart workflow: {exc}")
@@ -652,6 +715,79 @@ class TorcManagementConsole(App):
             )
         except Exception as exc:
             self._post_error_msg(f"Failed to schedule nodes: {exc}")
+
+    def _start_local_worker(self):
+        url = self._check_url()
+        if not url:
+            return
+
+        workflow_key = self._check_workflow_key()
+        if not workflow_key:
+            return
+
+        ready_jobs = self._api.list_jobs(workflow_key, status="ready", limit=1)
+        if not ready_jobs.items:
+            ready_jobs = self._api.list_jobs(workflow_key, status="scheduled", limit=1)
+        if not ready_jobs.items:
+            self._post_error_msg("No jobs are in the ready state. Did you start the workflow?")
+            return
+        if self._run_local_proc is not None:
+            self._post_error_msg("There is already one worker running on the current system.")
+            return
+
+        poll_interval_str = self.query_one("#local_worker_poll_interval", Input).value
+        if not poll_interval_str:
+            return
+        poll_interval = int(poll_interval_str)
+        try:
+            cmd = [
+                shutil.which("torc"),
+                "-c",
+                "info",
+                "-u",
+                url,
+                "jobs",
+                "run",
+                "-p",
+                str(poll_interval),
+                "-o",
+                DEFAULT_OUTPUT_DIR,
+            ]
+            self._run_local_proc = subprocess.Popen(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True,
+                bufsize=1,
+            )
+            self._post_info_msg(f"Started local worker for workflow {workflow_key}")
+        except Exception as exc:
+            self._post_error_msg(f"Failed to start local worker: {exc}")
+
+        self._run_local_proc_monitor = threading.Thread(target=self._monitor_local_worker)
+        self._run_local_proc_monitor.start()
+
+    def _cancel_local_worker(self):
+        if self._run_local_proc is None:
+            return
+        self._run_local_proc.terminate()
+        self._run_local_proc = None
+        self._post_info_msg("Canceled the local worker.")
+
+    def _monitor_local_worker(self):
+        if self._run_local_proc is None:
+            return
+        for line in iter(self._run_local_proc.stdout.readline, ""):
+            self.query_one("#local_worker_log", RichLog).write(line.strip())
+        self.query_one("#local_worker_log", RichLog).write("finished with iter, now call wait")
+        ret = self._run_local_proc.wait()
+        self._run_local_proc = None
+        self.query_one("#local_worker_log", RichLog).write(
+            f"wait completed, exiting monitor thread {ret=}"
+        )
+
+    def _clear_local_worker_log(self):
+        self.query_one("#local_worker_log", RichLog).clear()
 
     def _start_event_monitor(self):
         workflow_key = self._check_workflow_key()

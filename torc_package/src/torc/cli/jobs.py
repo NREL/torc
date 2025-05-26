@@ -8,11 +8,12 @@ from typing import Any, Optional
 import click
 from loguru import logger
 
+from torc.loggers import setup_logging
 from torc.openapi_client.models.job_model import JobModel
 from torc.api import iter_documents, list_model_fields, wait_for_healthy_database
 from torc.common import JobStatus
 from torc.exceptions import DatabaseOffline
-from torc.job_runner import JobRunner, JOB_COMPLETION_POLL_INTERVAL
+from torc.job_runner import JobRunner
 from torc.openapi_client.api import DefaultApi
 from torc.resource_monitor_reports import iter_job_process_stats
 from torc.utils.run_command import get_cli_string
@@ -418,7 +419,7 @@ def reset_status(ctx: click.Context, api: DefaultApi, job_keys: tuple[str]) -> N
 @click.option(
     "-p",
     "--poll-interval",
-    default=JOB_COMPLETION_POLL_INTERVAL,
+    default=10,
     show_default=True,
     help="Poll interval for job completions",
 )
@@ -449,11 +450,11 @@ def run(
     ctx: click.Context,
     api: DefaultApi,
     cpu_affinity_cpus_per_job: Optional[int],
-    max_parallel_jobs: int,
+    max_parallel_jobs: int | None,
     output: Path,
     poll_interval: int,
     scheduler_config_id: str,
-    time_limit: str,
+    time_limit: str | None,
     wait_for_healthy_database_minutes: int,
 ):
     """Run workflow jobs on the current system."""
@@ -463,15 +464,47 @@ def run(
     except DatabaseOffline:
         wait_for_healthy_database(api, wait_for_healthy_database_minutes)
 
-    hostname = socket.gethostname()
     workflow_key = get_workflow_key_from_context(ctx, api)
+    params = ctx.find_root().params
+    console_level = params["console_level"]
+    file_level = params["file_level"]
+    run_jobs_local_worker(
+        api,
+        workflow_key,
+        output,
+        time_limit=time_limit,
+        max_parallel_jobs=max_parallel_jobs,
+        poll_interval=poll_interval,
+        scheduler_config_id=scheduler_config_id,
+        cpu_affinity_cpus_per_job=cpu_affinity_cpus_per_job,
+        console_level=console_level,
+        file_level=file_level,
+    )
+
+
+def run_jobs_local_worker(
+    api: DefaultApi,
+    workflow_key: str,
+    output: Path,
+    time_limit: str | None = None,
+    max_parallel_jobs: int | None = None,
+    poll_interval: int = 10,
+    scheduler_config_id: str | None = None,
+    cpu_affinity_cpus_per_job: int | None = None,
+    console_level="ERROR",
+    file_level="ERROR",
+) -> None:
+    """Run the worklow on the current system."""
+    hostname = socket.gethostname()
     run_id = api.get_workflow_status(workflow_key).run_id
-
     output.mkdir(exist_ok=True)
-    log_file = output / f"worker_{hostname}_{run_id}.log"
-    setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
+    log_file = output / f"worker_{hostname}_{workflow_key}_{run_id}.log"
     logger.info(get_cli_string())
-
+    setup_logging(
+        filename=log_file,
+        console_level=console_level,
+        file_level=file_level,
+    )
     scheduler = {
         "hostname": hostname,
         "scheduler_type": "local",
