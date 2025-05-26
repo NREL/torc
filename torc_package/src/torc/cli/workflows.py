@@ -2,7 +2,6 @@
 
 import getpass
 import json
-import logging
 import math
 import sys
 from pathlib import Path
@@ -10,6 +9,8 @@ from typing import Iterable, Optional
 
 import click
 import json5
+from loguru import logger
+
 from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.workflow_model import WorkflowModel
 from torc.openapi_client.models.workflow_specification_model import (
@@ -31,9 +32,6 @@ from .common import (
     parse_filters,
     print_items,
 )
-
-
-logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -100,7 +98,7 @@ def create(
     output_format = get_output_format_from_context(ctx)
     workflow = api.add_workflow(workflow)
     if output_format == "text":
-        logger.info("Created a workflow with key=%s", workflow.key)
+        logger.info("Created a workflow with key={}", workflow.key)
     else:
         print(json.dumps({"key": workflow.key}))
 
@@ -154,7 +152,7 @@ def create_from_commands_file(
     workflow = api.add_workflow(workflow)
     assert workflow.key is not None
     if output_format == "text":
-        logger.info("Created a workflow from %s with key=%s", filename, workflow.key)
+        logger.info("Created a workflow from {} with key={}", filename, workflow.key)
     else:
         print(json.dumps({"filename": filename, "key": workflow.key}))
     for i, command in enumerate(commands, start=1):
@@ -174,7 +172,7 @@ def create_from_json_file(ctx: click.Context, api: DefaultApi, filename: Path) -
 
     output_format = get_output_format_from_context(ctx)
     if output_format == "text":
-        logger.info("Created a workflow from %s with key=%s", filename, workflow.key)
+        logger.info("Created a workflow from {} with key={}", filename, workflow.key)
     else:
         print(json.dumps({"filename": str(filename), "key": workflow.key}))
 
@@ -215,7 +213,7 @@ def modify(
     if archive is not None:
         archive_lowered = archive.lower()
         if archive_lowered not in ("true", "false"):
-            logger.error("--archive must be 'true' or 'false': %s", archive)
+            logger.error("--archive must be 'true' or 'false': {}", archive)
         workflow.is_archived = True if archive_lowered == "true" else False
     if description is not None:
         workflow.description = description
@@ -223,7 +221,7 @@ def modify(
         workflow.name = name
     workflow.user = get_user_from_context(ctx)
     workflow = api.modify_workflow(workflow_key, workflow)
-    logger.info("Updated workflow %s", workflow.key)
+    logger.info("Updated workflow {}", workflow.key)
 
 
 @click.command()
@@ -276,7 +274,7 @@ def _delete_workflows_with_warning(
             msg = f"Workflow {key} was created by {user=}, not {current_user=}. Continue?"
             confirm_change(ctx, msg)
         api.remove_workflow(key)
-        logger.info("Deleted workflow %s", key)
+        logger.info("Deleted workflow {}", key)
 
 
 @click.command()
@@ -295,7 +293,7 @@ def list_scheduler_configs(ctx: click.Context, api: DefaultApi) -> None:
             items.append(doc.id)
 
     if output_format == "text":
-        logger.info("Scheduler configs in workflow %s", workflow_key)
+        logger.info("Scheduler configs in workflow {}", workflow_key)
         for item in items:
             print(item)
     else:
@@ -409,8 +407,8 @@ def process_auto_tune_resource_requirements_results(ctx: click.Context, api: Def
     events_cmd = f"torc -k {workflow_key} -u {url} events list -f category=resource_requirements"
     logger.info(
         "Updated resource requirements. Look at current requirements with "
-        "\n  '%s'\n and at "
-        "changes by reading the events with \n  '%s'\n",
+        "\n  '{}'\n and at "
+        "changes by reading the events with \n  '{}'\n",
         rr_cmd,
         events_cmd,
     )
@@ -620,7 +618,7 @@ reset all job statuses to 'uninitialized' and then 'ready' or 'blocked.'
             ignore_missing_data=ignore_missing_data,
         )
     except InvalidWorkflow as exc:
-        logger.error("Invalid workflow: %s", exc)
+        logger.error("Invalid workflow: {}", exc)
         sys.exit(1)
 
 
@@ -636,7 +634,7 @@ def create_workflow_from_json_file(
         data = sanitize_workflow(method(f))
     if data.get("user") != user:
         if "user" in data:
-            logger.info("Overriding user=%s with %s", data["user"], user)
+            logger.info("Overriding user={} with {}", data["user"], user)
         data["user"] = user
     name_to_file = {x["name"]: x for x in data.get("files", [])}
     for job in data["jobs"]:
@@ -726,7 +724,7 @@ def reset_workflow_status(api: DefaultApi, workflow_key: str) -> None:
 def reset_workflow_job_status(api: DefaultApi, workflow_key: str, failed_only: bool = False):
     """Resets the status of the workflow jobs."""
     api.reset_job_status(workflow_key, failed_only=failed_only)
-    logger.info("Reset job status, failed_only=%s", failed_only)
+    logger.info("Reset job status, failed_only={}", failed_only)
     api.add_event(
         workflow_key,
         {
@@ -757,7 +755,7 @@ def cancel_workflow(api: DefaultApi, workflow_key: str) -> None:
                 api.modify_scheduled_compute_node(workflow_key, job.key, job)
             # else: Ignore all return codes and try to cancel all jobs.
     api.cancel_workflow(workflow_key)
-    logger.info("Canceled workflow %s", workflow_key)
+    logger.info("Canceled workflow {}", workflow_key)
     api.add_event(
         workflow_key,
         {
@@ -869,7 +867,7 @@ def set_compute_node_parameters(
         lowered = ignore_workflow_completion.lower()
         if lowered not in ("true", "false"):
             logger.error(
-                "Invalid value for ignore_workflow_completion: %s", ignore_workflow_completion
+                "Invalid value for ignore_workflow_completion: {}", ignore_workflow_completion
             )
             sys.exit(1)
         val = lowered == "true"

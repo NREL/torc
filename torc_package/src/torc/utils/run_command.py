@@ -1,6 +1,5 @@
 """Utility functions to run commands through the system"""
 
-import logging
 import os
 import shlex
 import subprocess
@@ -9,10 +8,9 @@ import time
 from pathlib import Path
 from typing import Any, Iterable
 
+from loguru import logger
+
 from torc.exceptions import ExecutionError
-
-
-logger = logging.getLogger(__name__)
 
 
 def run_command(
@@ -59,7 +57,7 @@ def run_command(
         raise ValueError(msg)
 
     cmd = str(cmd) if isinstance(cmd, Path) else cmd
-    logger.debug(cmd)
+    logger.trace(cmd)
     # Disable posix if on Windows.
     command = shlex.split(cmd, posix="win" not in sys.platform)
     max_tries = num_retries + 1
@@ -74,14 +72,14 @@ def run_command(
                     i = max_tries - 1
                 else:
                     logger.warning(
-                        "Command [%s] failed on iteration %s: %s: %s",
+                        "Command [{}] failed on iteration {}: {}: {}",
                         cmd,
                         i + 1,
                         ret,
                         _output["stderr"],
                     )
             else:
-                logger.warning("Command [%s] failed on iteration %s: %s", cmd, i + 1, ret)
+                logger.warning("Command [{}] failed on iteration {}: {}", cmd, i + 1, ret)
         if ret == 0 or i == max_tries - 1:
             if isinstance(output, dict):
                 assert _output is not None

@@ -1,14 +1,11 @@
 """Factory functions for filesystem paths, abstracts local vs cloud"""
 
-import logging
-
 # import re
 from pathlib import Path
 
 # import boto3
 # from s3path import S3Path, register_configuration_parameter
 
-logger = logging.getLogger(__name__)
 # _s3_sessions = {}
 # _REGEX_S3_PATH = re.compile(r"s3:\/\/(?P<bucket>[\w-]+)")
 
@@ -46,9 +43,9 @@ def make_path(path: str) -> Path:
 #    """
 #    bucket = _get_bucket(path)
 #    if bucket in _s3_sessions:
-#        logger.info("Replacing an S3 session bucket=%s profile_name=%s", bucket, profile_name)
+#        logger.info("Replacing an S3 session bucket={} profile_name={}", bucket, profile_name)
 #    else:
-#        logger.info("Creating an S3 session bucket=%s profile_name=%s", bucket, profile_name)
+#        logger.info("Creating an S3 session bucket={} profile_name={}", bucket, profile_name)
 #    _s3_sessions[bucket] = _S3Session(profile_name, bucket)
 #    if len(_s3_sessions) > 10:
 #        raise Exception(

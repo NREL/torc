@@ -1,15 +1,13 @@
 """HPC management functionality"""
 
-import logging
 from pathlib import Path
+
+from loguru import logger
 
 from torc.exceptions import ExecutionError
 from torc.hpc.common import HpcType, HpcJobStatus, HpcJobStats
 from torc.hpc.hpc_interface import HpcInterface
 from torc.hpc.slurm_interface import SlurmInterface
-
-
-logger = logging.getLogger(__name__)
 
 
 class HpcManager:
@@ -21,22 +19,22 @@ class HpcManager:
         self._hpc_type = hpc_type
         self._intf = self.create_hpc_interface(hpc_type)
 
-        logger.debug("Constructed HpcManager with output=%s", output)
+        logger.debug("Constructed HpcManager with output={}", output)
 
     def cancel_job(self, job_id: str) -> int:
         """Cancel the job."""
         ret = self._intf.cancel_job(job_id)
         if ret == 0:
-            logger.info("Successfully cancelled job ID %s", job_id)
+            logger.info("Successfully cancelled job ID {}", job_id)
         else:
-            logger.info("Failed to cancel job ID %s", job_id)
+            logger.info("Failed to cancel job ID {}", job_id)
 
         return ret
 
     def get_status(self, job_id: str) -> HpcJobStatus:
         """Return the status of a job by ID."""
         info = self._intf.get_status(job_id=job_id)
-        logger.debug("info=%s", info)
+        logger.trace("info={}", info)
         return info.status
 
     def get_statuses(self) -> dict[str, HpcJobStatus]:
@@ -106,16 +104,16 @@ class HpcManager:
             self._config,
             start_one_worker_per_node=start_one_worker_per_node,
         )
-        logger.debug("Created submission script %s", filename)
+        logger.trace("Created submission script {}", filename)
 
         ret, job_id, err = self._intf.submit(filename)
 
         if ret == 0:
-            logger.info("job '%s' with ID=%s submitted successfully", name, job_id)
+            logger.info("job '{}' with ID={} submitted successfully", name, job_id)
             if not keep_submission_script:
                 filename.unlink()
         else:
-            logger.error("Failed to submit job '%s': ret=%s: %s", name, ret, err)
+            logger.error("Failed to submit job '{}': ret={}: {}", name, ret, err)
             msg = f"Failed to submit HPC job {name}: {ret}"
             raise ExecutionError(msg)
 
@@ -135,5 +133,5 @@ class HpcManager:
                 msg = f"Unsupported HPC type: {hpc_type}"
                 raise ValueError(msg)
 
-        logger.debug("HPC manager type=%s", hpc_type)
+        logger.debug("HPC manager type={}", hpc_type)
         return intf

@@ -1,16 +1,13 @@
 """CLI commands for exporting workflows from the database"""
 
-import logging
 import re
 from pathlib import Path
 
 import click
+from loguru import logger
 
 from torc.utils.sql import union_tables
 from .common import setup_cli_logging
-
-
-logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -37,7 +34,7 @@ def concatenate_process(output_dir):
         for path in files:
             union_tables(concat_file, path, tables=["process"])
     else:
-        logger.warning("There are no SQLite stats files in %s", output_dir)
+        logger.warning("There are no SQLite stats files in {}", output_dir)
 
 
 stats.add_command(concatenate_process)

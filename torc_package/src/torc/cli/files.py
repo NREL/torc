@@ -1,11 +1,11 @@
 """CLI commands to manage files"""
 
 import json
-import logging
 
 import click
-from torc.openapi_client.models.file_model import FileModel
+from loguru import logger
 
+from torc.openapi_client.models.file_model import FileModel
 from torc.api import iter_documents, list_model_fields
 from .common import (
     check_database_url,
@@ -15,9 +15,6 @@ from .common import (
     parse_filters,
     print_items,
 )
-
-
-logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -53,7 +50,7 @@ def add(ctx, api, name, path):
     )
     file = api.add_file(workflow_key, file)
     if output_format == "text":
-        logger.info("Added file with key=%s", file.key)
+        logger.info("Added file with key={}", file.key)
     else:
         print(json.dumps({"key": file.key}))
 
@@ -71,7 +68,7 @@ def delete(ctx, api, file_keys):
     workflow_key = get_workflow_key_from_context(ctx, api)
     for key in file_keys:
         api.remove_file(workflow_key, key)
-        logger.info("Deleted workflow=%s file=%s", workflow_key, key)
+        logger.info("Deleted workflow={} file={}", workflow_key, key)
 
 
 @click.command()
@@ -84,7 +81,7 @@ def delete_all(ctx, api):
     workflow_key = get_workflow_key_from_context(ctx, api)
     for file in iter_documents(api.list_files, workflow_key):
         api.remove_file(workflow_key, file.key)
-        logger.info("Deleted file %s", file.key)
+        logger.info("Deleted file {}", file.key)
 
 
 @click.command(name="list")

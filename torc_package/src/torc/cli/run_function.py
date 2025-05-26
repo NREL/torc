@@ -1,10 +1,10 @@
 """Run a function on one set of inputs stored in the workflow database."""
 
-import logging
 import os
 import sys
 
 import click
+from loguru import logger
 
 from torc.common import check_function
 from torc.loggers import setup_logging
@@ -14,9 +14,6 @@ from .common import (
 )
 
 
-logger = logging.getLogger(__name__)
-
-
 @click.command()
 @click.pass_obj
 @click.pass_context
@@ -24,8 +21,7 @@ def run_function(ctx, api):
     """Run a function on one set of inputs stored in the workflow database. Only called by the
     torc worker application as part of the mapped-function workflow."""
     setup_logging(
-        __name__,
-        console_level=logging.INFO,
+        console_level="INFO",
         mode="w",
     )
     job_key = os.environ.get("TORC_JOB_KEY")
@@ -38,7 +34,7 @@ def run_function(ctx, api):
     resp = api.list_job_user_data_consumes(workflow_key, job_key)
     if len(resp.items) != 1:
         logger.error(
-            "Received unexpected input user data from database job_key=%s resp=%s",
+            "Received unexpected input user data from database job_key={} resp={}",
             job_key,
             resp,
         )
@@ -52,21 +48,21 @@ def run_function(ctx, api):
     )
 
     tag = f"user function module={module.__name__} func={func.__name__}"
-    logger.info("Running %s", tag)
+    logger.info("Running {}", tag)
     ret = 0
     result = None
     try:
         result = func(inputs["params"])
-        logger.info("Completed %s", tag)
+        logger.info("Completed {}", tag)
     except Exception:
-        logger.exception("Failed to run %s", tag)
+        logger.exception("Failed to run {}", tag)
         ret = 1
 
     if result is not None:
         resp = api.list_job_user_data_stores(workflow_key, job_key)
         if len(resp.items) != 1:
             logger.error(
-                "Received unexpected output data placeholder from database job_key=%s resp=%s",
+                "Received unexpected output data placeholder from database job_key={} resp={}",
                 job_key,
                 resp,
             )
@@ -74,6 +70,6 @@ def run_function(ctx, api):
         output = resp.items[0]
         output.data = result
         api.modify_user_data(workflow_key, output.key, output)
-        logger.info("Stored result for %s", tag)
+        logger.info("Stored result for {}", tag)
 
     sys.exit(ret)

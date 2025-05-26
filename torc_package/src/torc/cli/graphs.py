@@ -1,10 +1,10 @@
 """CLI commands for workflow graphs in the database"""
 
-import logging
 import sys
 from pathlib import Path
 
 import click
+from loguru import logger
 
 try:
     import graphviz
@@ -19,8 +19,6 @@ from .common import get_workflow_key_from_context, setup_cli_logging
 
 
 GRAPH_NAMES = ["job_job_dependencies", "job_file_dependencies", "job_user_data_dependencies"]
-
-logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -72,10 +70,10 @@ def plot(ctx, api, names, keep_dot_file, output):
         dot_file.write_text(response.graph, encoding="utf-8")
         try:
             png_file = graphviz.render("dot", "png", dot_file)
-            logger.info("Created graph image file %s", png_file)
+            logger.info("Created graph image file {}", png_file)
         finally:
             if keep_dot_file:
-                logger.info("Created %s", dot_file)
+                logger.info("Created {}", dot_file)
             else:
                 dot_file.unlink(dot_file)
 
@@ -123,10 +121,10 @@ Then rerun the pip command.
     try:
         gv.write(dot_file)
         png_file = graphviz.render("dot", "png", dot_file)
-        logger.info("Created image file %s", png_file)
+        logger.info("Created image file {}", png_file)
     finally:
         if keep_dot_file:
-            logger.info("Created %s", dot_file)
+            logger.info("Created {}", dot_file)
         else:
             dot_file.unlink()
 

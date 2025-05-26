@@ -67,12 +67,13 @@ def build_workflow(api: DefaultApi, workflow: WorkflowModel) -> str:
 
     add_jobs(api, workflow.key, jobs)
 
-    logger.info("Created workflow %s", workflow.key)
+    logger.info("Created workflow {}", workflow.key)
     return workflow.key
 
 
 def main():
     """Entry point"""
+    setup_logging()
     if torc_settings.database_url is None:
         logger.error(
             "There is no torc config file or the database URL is not defined. "

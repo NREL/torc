@@ -1,24 +1,20 @@
 """CLI commands to show items from the database."""
 
 import json
-import logging
 
 import click
 
 from torc.api import iter_documents
-from torc.resource_monitor_reports import (
-    list_compute_node_stats,
-    make_compute_node_stats_text_tables,
-)
-from .common import (
+from torc.cli.common import (
     check_database_url,
     get_output_format_from_context,
     get_workflow_key_from_context,
     setup_cli_logging,
 )
-
-
-logger = logging.getLogger(__name__)
+from torc.resource_monitor_reports import (
+    list_compute_node_stats,
+    make_compute_node_stats_text_tables,
+)
 
 
 @click.group()

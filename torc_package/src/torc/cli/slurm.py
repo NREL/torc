@@ -1,13 +1,14 @@
 """Slurm CLI commands"""
 
 import json
-import logging
 import socket
 import sys
 from datetime import timedelta
 from pathlib import Path
 
 import click
+from loguru import logger
+
 from torc.openapi_client.models.slurm_scheduler_model import (
     SlurmSchedulerModel,
 )
@@ -50,8 +51,6 @@ from .common import (
 
 DEFAULT_JOB_PREFIX = "worker"
 DEFAULT_OUTPUT_DIR = "output"
-
-logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -142,7 +141,7 @@ def add_config(ctx, api, name, account, gres, mem, nodes, partition, qos, tmp, w
         config["extra"] = extra
     scheduler = api.add_slurm_scheduler(workflow_key, SlurmSchedulerModel(name=name, **config))
     if output_format == "text":
-        logger.info("Added Slurm configuration %s to the database", name)
+        logger.info("Added Slurm configuration {} to the database", name)
     else:
         print(json.dumps({"key": scheduler.key}))
 
@@ -222,7 +221,7 @@ def modify_config(ctx, api, slurm_config_key, **kwargs):
     if changed:
         scheduler = api.modify_slurm_scheduler(workflow_key, slurm_config_key, scheduler)
         if output_format == "text":
-            logger.info("Modified Slurm configuration %s to the database", slurm_config_key)
+            logger.info("Modified Slurm configuration {} to the database", slurm_config_key)
         else:
             print(json.dumps({"key": slurm_config_key}))
     else:
@@ -334,7 +333,7 @@ def schedule_nodes(
     log_file = output / "schedule_nodes.log"
     setup_cli_logging(ctx, __name__, filename=log_file, mode="a")
     logger.info(get_cli_string())
-    logger.info("torc version %s", torc.__version__)
+    logger.info("torc version {}", torc.__version__)
     workflow_key = get_workflow_key_from_context(ctx, api)
     output_format = get_output_format_from_context(ctx)
 
@@ -428,7 +427,7 @@ def schedule_slurm_nodes(
     )
 
     if output_format == "text":
-        logger.info("Scheduled compute node job IDs: %s", " ".join(job_ids))
+        logger.info("Scheduled compute node job IDs: {}", " ".join(job_ids))
     else:
         print(json.dumps({"job_ids": job_ids, "keys": node_keys}))
 
@@ -539,8 +538,8 @@ def run_jobs(
     slurm_node_id = intf.get_node_id()
     slurm_task_pid = intf.get_task_pid()
     log_file = get_slurm_job_runner_log_file(output, slurm_job_id, slurm_node_id, slurm_task_pid)
-    my_logger = setup_cli_logging(ctx, __name__, filename=Path(log_file))
-    my_logger.info(get_cli_string())
+    setup_cli_logging(ctx, __name__, filename=Path(log_file))
+    logger.info(get_cli_string())
     scheduler = {
         "node_names": intf.list_active_nodes(slurm_job_id),
         "environment_variables": intf.get_environment_variables(),
@@ -555,8 +554,8 @@ def run_jobs(
 
     workflow = send_api_command(api.get_workflow, workflow_key)
     log_prefix = _get_torc_job_log_prefix_slurm(slurm_job_id, slurm_node_id, slurm_task_pid)
-    my_logger.info(
-        "Start workflow on compute node %s end_time=%s buffer=%s",
+    logger.info(
+        "Start workflow on compute node {} end_time={} buffer={}",
         hostname,
         end_time,
         buffer,
@@ -615,7 +614,7 @@ def _get_scheduled_compute_node(api, workflow_key, slurm_job_id):
     elif num_nodes == 1:
         node = nodes[0]
     else:
-        logger.error("num_nodes with %s cannot be %s", slurm_job_id, num_nodes)
+        logger.error("num_nodes with {} cannot be {}", slurm_job_id, num_nodes)
         sys.exit(1)
 
     return node

@@ -1,6 +1,5 @@
 """Slurm management functionality"""
 
-import logging
 import os
 import re
 import socket
@@ -11,15 +10,13 @@ from pathlib import Path
 from typing import Any
 
 import psutil
+from loguru import logger
 
 from torc.exceptions import ExecutionError
 from torc.utils.files import create_script
 from torc.utils.run_command import run_command
 from torc.hpc.common import HpcJobStats, HpcJobStatus, HpcJobInfo
 from torc.hpc.hpc_interface import HpcInterface
-
-
-logger = logging.getLogger(__name__)
 
 
 class SlurmInterface(HpcInterface):
@@ -37,9 +34,9 @@ class SlurmInterface(HpcInterface):
     def cancel_job(self, job_id: str) -> int:
         result = subprocess.run(["scancel", job_id], check=False)
         if result.returncode != 0:
-            logger.error("Failed to cancel Slurm job %s", job_id)
+            logger.error("Failed to cancel Slurm job {}", job_id)
         else:
-            logger.info("Canceled Slurm job %s", job_id)
+            logger.info("Canceled Slurm job {}", job_id)
         return result.returncode
 
     def get_status(self, job_id: str) -> HpcJobInfo:
@@ -56,7 +53,7 @@ class SlurmInterface(HpcInterface):
                 return HpcJobInfo("", "", HpcJobStatus.NONE)
 
             logger.error(
-                "Failed to run squeue command=[%s] ret=%s err=%s",
+                "Failed to run squeue command=[{}] ret={} err={}",
                 cmd,
                 ret,
                 output["stderr"],
@@ -65,7 +62,7 @@ class SlurmInterface(HpcInterface):
             raise ExecutionError(msg)
 
         stdout = output["stdout"]
-        logger.debug("squeue output:  [%s]", stdout)
+        logger.debug("squeue output:  [{}]", stdout)
         fields = stdout.split()
         if not fields:
             # No jobs are currently running.
@@ -87,7 +84,7 @@ class SlurmInterface(HpcInterface):
         ret = run_command(cmd, output, num_retries=6, retry_delay_s=10)
         if ret != 0:
             logger.error(
-                "Failed to run squeue command=[%s] ret=%s err=%s",
+                "Failed to run squeue command=[{}] ret={} err={}",
                 cmd,
                 ret,
                 output["stderr"],
@@ -98,7 +95,7 @@ class SlurmInterface(HpcInterface):
         return self._get_statuses_from_output(output["stdout"])
 
     def _get_statuses_from_output(self, output: str) -> dict[str, HpcJobStatus]:
-        logger.debug("squeue output:  [%s]", output)
+        logger.debug("squeue output:  [{}]", output)
         lines = output.split("\n")
         if not lines:
             # No jobs are currently running.
@@ -200,7 +197,7 @@ class SlurmInterface(HpcInterface):
         try:
             start = datetime.strptime(fields[3], fmt)
         except ValueError:
-            logger.exception("Failed to parse start_time=%s", fields[3])
+            logger.exception("Failed to parse start_time={}", fields[3])
             raise
         try:
             if fields[4] == "Unknown":
@@ -208,7 +205,7 @@ class SlurmInterface(HpcInterface):
             else:
                 end = datetime.strptime(fields[4], fmt)
         except ValueError:
-            logger.exception("Failed to parse end_time=%s", fields[4])
+            logger.exception("Failed to parse end_time={}", fields[4])
             raise
         stats = HpcJobStats(
             hpc_job_id=job_id,
@@ -298,7 +295,7 @@ class SlurmInterface(HpcInterface):
             if match:
                 job_id = match.group(1)
             else:
-                logger.error("Failed to interpret sbatch output [%s]", stdout)
+                logger.error("Failed to interpret sbatch output [{}]", stdout)
                 ret = 1
         else:
             ret = 1

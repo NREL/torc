@@ -1,10 +1,11 @@
 """User interface to manage a workflow"""
 
 import getpass
-import logging
 import socket
 from pathlib import Path
 from typing import Any
+
+from loguru import logger
 
 from torc.api import make_job_label, send_api_command, iter_documents
 from torc.common import JobStatus
@@ -12,9 +13,6 @@ from torc.exceptions import InvalidWorkflow, TorcOperationNotAllowed
 from torc.openapi_client.api import DefaultApi
 from torc.openapi_client.models.file_model import FileModel
 from torc.utils.run_command import check_run_command
-
-
-logger = logging.getLogger(__name__)
 
 
 class WorkflowManager:
@@ -164,7 +162,7 @@ class WorkflowManager:
                         msg = f"File {file.path} was removed."
                         file.st_mtime = None
                     if dry_run:
-                        logger.info("Dry run: %s File stats will be reset.", msg)
+                        logger.info("Dry run: {} File stats will be reset.", msg)
                     else:
                         send_api_command(
                             self._api.modify_file,
@@ -172,7 +170,7 @@ class WorkflowManager:
                             file.key,
                             file,
                         )
-                        logger.info("%s Reset file stats.", msg)
+                        logger.info("{} Reset file stats.", msg)
                 self._update_jobs_on_file_change(file, dry_run=dry_run)
 
     def _initialize_files(self) -> None:
@@ -222,7 +220,7 @@ class WorkflowManager:
         )
         if response.reinitialized_jobs:
             logger.info(
-                "Changed job status to uninitialized because inputs were changed: %s",
+                "Changed job status to uninitialized because inputs were changed: {}",
                 " ".join(response.reinitialized_jobs),
             )
         if not dry_run:
@@ -247,7 +245,7 @@ class WorkflowManager:
                     status = JobStatus.UNINITIALIZED.value
                     if dry_run:
                         logger.info(
-                            "Dry run: %s will change from %s to %s because output file %s is missing. ",
+                            "Dry run: {} will change from {} to {} because output file {} is missing. ",
                             make_job_label(job),
                             job.status,
                             status,
@@ -258,7 +256,7 @@ class WorkflowManager:
                         ):
                             if job.status != status:
                                 logger.info(
-                                    "Dry run downstream job: %s will change from %s to %s",
+                                    "Dry run downstream job: {} will change from {} to {}",
                                     make_job_label(job),
                                     job.status,
                                     status,
@@ -273,7 +271,7 @@ class WorkflowManager:
                             run_id,
                         )
                         logger.info(
-                            "Changed %s from done to %s because output file %s is missing",
+                            "Changed {} from done to {} because output file {} is missing",
                             make_job_label(job),
                             status,
                             file.path,
@@ -291,7 +289,7 @@ class WorkflowManager:
                 status = JobStatus.UNINITIALIZED.value
                 if dry_run:
                     logger.info(
-                        "Dry run: %s will change from %s to %s because input file %s changed. "
+                        "Dry run: {} will change from {} to {} because input file {} changed. "
                         "Downstream jobs will also have their statuses reset.",
                         make_job_label(job),
                         job.status,
@@ -301,7 +299,7 @@ class WorkflowManager:
                     for job in iter_documents(self._api.list_downstream_jobs, self._key, job.key):
                         if job.status != status:
                             logger.info(
-                                "Dry run downstream job: %s will change from %s to %s",
+                                "Dry run downstream job: {} will change from {} to {}",
                                 make_job_label(job),
                                 job.status,
                                 status,
@@ -316,7 +314,7 @@ class WorkflowManager:
                         run_id,
                     )
                     logger.info(
-                        "Changed job %s / %s from %s to %s because input file %s changed",
+                        "Changed job {} / {} from {} to {} because input file {} changed",
                         job.name,
                         job.key,
                         job.status,

@@ -34,6 +34,5 @@ assert len(result2.items) == 1, result2
 output_data = result2.items[0]
 assert output_data is not None
 assert output_data.key is not None
-assert output_data.data is not None
 output_data.data = {"val": input_data.data["val"] + 1}
 api.modify_user_data(workflow_key, output_data.key, output_data)

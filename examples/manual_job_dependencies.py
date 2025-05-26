@@ -3,6 +3,9 @@
 import getpass
 import sys
 
+from loguru import logger
+
+from torc import make_api, setup_logging, torc_settings
 from torc.openapi_client import (
     DefaultApi,
     WorkflowModel,
@@ -10,14 +13,6 @@ from torc.openapi_client import (
     ResourceRequirementsModel,
     SlurmSchedulerModel,
 )
-from torc import (
-    make_api,
-    setup_logging,
-    torc_settings,
-)
-
-
-logger = setup_logging(__name__)
 
 
 def create_workflow(api: DefaultApi) -> WorkflowModel:
@@ -84,11 +79,12 @@ def build_workflow(api: DefaultApi, workflow: WorkflowModel):
             blocked_by=blocking_jobs,
         ),
     )
-    logger.info("Created workflow %s", workflow.key)
+    logger.info("Created workflow {}", workflow.key)
 
 
 def main():
     """Entry point"""
+    setup_logging()
     if torc_settings.database_url is None:
         logger.error(
             "There is no torc config file or the database URL is not defined. "

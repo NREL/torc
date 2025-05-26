@@ -1,6 +1,5 @@
 """Test Auto-tune feature"""
 
-import logging
 import multiprocessing
 from pathlib import Path
 
@@ -22,13 +21,11 @@ from torc.resource_monitor_reports import (
 from torc.tests.database_interface import DatabaseInterface
 from torc.workflow_manager import WorkflowManager
 
-logger = logging.getLogger(__name__)
-
 
 @pytest.mark.parametrize("monitor_type", ["aggregation", "periodic"])
 def test_auto_tune_workflow(multi_resource_requirement_workflow):
     """Test execution of a workflow using the auto-tune feature."""
-    setup_logging("torc")
+    setup_logging()
     (
         db,
         output_dir,

@@ -85,7 +85,6 @@ def test_fake_slurm_workflow(setup_api):
             ],
             check=True,
         )
-        assert result.exit_code == 0
         _wait_for_workflow_complete(api, key)
 
         result = runner.invoke(cli, ["-k", key, "compute-nodes", "list"])

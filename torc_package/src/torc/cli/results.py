@@ -1,9 +1,9 @@
 """CLI commands to manage results"""
 
-import logging
 from collections import defaultdict
 
 import click
+from loguru import logger
 
 from torc.openapi_client.models.result_model import ResultModel
 from torc.api import iter_documents, map_job_keys_to_names, list_model_fields
@@ -14,9 +14,6 @@ from .common import (
     parse_filters,
     print_items,
 )
-
-
-logger = logging.getLogger(__name__)
 
 
 @click.group()

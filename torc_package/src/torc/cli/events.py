@@ -1,12 +1,12 @@
 """CLI commands to manage events"""
 
 import json
-import logging
 import sys
 import time
 from datetime import datetime
 
 import click
+from loguru import logger
 
 from torc.api import iter_documents
 from torc.common import convert_timestamp
@@ -17,9 +17,6 @@ from .common import (
     setup_cli_logging,
     parse_filters,
 )
-
-
-logger = logging.getLogger(__name__)
 
 
 @click.group()
@@ -148,7 +145,7 @@ def monitor(ctx, api, category, duration, poll_interval):
     end_time = time.time() + duration if duration else sys.maxsize
     latest_timestamp = api.get_latest_event_timestamp(workflow_key)["timestamp"]
     logger.info(
-        "Monitoring for events occurring after timestamp=%s with poll_interval=%s",
+        "Monitoring for events occurring after timestamp={} with poll_interval={}",
         convert_timestamp(latest_timestamp),
         poll_interval,
     )

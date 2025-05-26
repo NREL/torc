@@ -1,85 +1,73 @@
-"""Contains logging configuration data."""
+"""Contains logging functionality."""
 
 import logging
-import logging.config
+import sys
+from pathlib import Path
+from typing import Iterable
+
+from loguru import logger
+
+# Logger printing formats
+DEFAULT_FORMAT = "<level>{level}</level>: {message}"
+DEBUG_FORMAT = (
+    "<green>{time:YYYY-MM-DD HH:mm:ss}</green> | "
+    "<level>{level: <7}</level> | "
+    "<cyan>{name}:{line}</cyan> | "
+    "{message}"
+)
 
 
 def setup_logging(
-    name,
-    filename=None,
-    mode="w",
-    console_level=logging.INFO,
-    file_level=logging.INFO,
-    packages=None,
-):
+    filename: str | Path | None = None,
+    console_level: str = "INFO",
+    file_level: str = "DEBUG",
+    mode: str = "w",
+    rotation: str | None = "10 MB",
+    packages: Iterable[str] | None = None,
+) -> None:
     """Configures logging to file and console.
 
     Parameters
     ----------
-    name : str
-        logger name
-    filename : str | None
-        log filename
-    mode : str
-        Mode for how to open filename, if applicable.
-    console_level : int, optional
-        console log level. defaults to logging.INFO
-    file_level : int, optional
-        file log level. defaults to logging.INFO
-    packages : list, optional
-        enable logging for these package names. Always adds torc.
+    filename
+        Log filename, defaults to None for no file logging.
+    console_level
+        Console logging level
+    file_level
+        File logging level
+    mode
+        Mode in which to open the file
+    rotation
+        Size in which to rotate file. Set to None for no rotation.
+    packages
+        Additional packages to enable logging
     """
-    handler_names = ["console"]
-    handler_configs = {
-        "console": {
-            "level": console_level,
-            "formatter": "short",
-            "class": "logging.StreamHandler",
-        }
-    }
-    if filename is not None:
-        handler_names.append("file")
-        handler_configs["file"] = {
-            "class": "logging.FileHandler",
-            "level": file_level,
-            "filename": filename,
-            "mode": mode,
-            "formatter": "detailed",
-        }
+    logger.remove()
+    logger.enable("nwt")
+    for pkg in packages or []:
+        logger.enable(pkg)
 
-    log_config = {
-        "version": 1,
-        "disable_existing_loggers": False,
-        "formatters": {
-            "basic": {"format": "%(message)s"},
-            "short": {
-                "format": "%(asctime)s - %(levelname)s [%(name)s "
-                "%(filename)s:%(lineno)d] : %(message)s",
-            },
-            "detailed": {
-                "format": "%(asctime)s - %(levelname)s [%(name)s "
-                "%(filename)s:%(lineno)d] : %(message)s",
-            },
-        },
-        "handlers": handler_configs,
-        "loggers": {
-            name: {"handlers": handler_names, "level": "DEBUG", "propagate": False},
-        },
-    }
+    logger.add(sys.stderr, level=console_level, format=DEFAULT_FORMAT)
+    if filename:
+        logger.add(
+            filename,
+            level=file_level,
+            mode=mode,
+            rotation=rotation,
+            format=DEBUG_FORMAT,
+        )
 
-    packages = set(packages or [])
-    packages.add("torc")
-    packages.add("resource_monitor")
-    for package in packages:
-        log_config["loggers"][package] = {  # type: ignore
-            "handlers": ["console"],
-            "level": "DEBUG",
-            "propagate": False,
-        }
-        if filename is not None:
-            log_config["loggers"][package]["handlers"].append("file")  # type: ignore
 
-    logging.config.dictConfig(log_config)
-    logger = logging.getLogger(name)
-
-    return logger
+def _get_log_level_from_int(level: int) -> str:
+    if level == logging.INFO:
+        level_str = "INFO"
+    elif level == logging.WARNING:
+        level_str = "WARNING"
+    elif level == logging.ERROR:
+        level_str = "ERROR"
+    elif level == logging.DEBUG:
+        level_str = "DEBUG"
+    else:
+        msg = f"Log level: {level}"
+        raise NotImplementedError(msg)
+    return level_str

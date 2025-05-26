@@ -1,14 +1,14 @@
 """Utility functions for inserting data into a SQLite database"""
 
-import logging
 import shutil
 import sqlite3
 from pathlib import Path
 from typing import Any, Iterable, Optional
 
+from loguru import logger
+
 
 _TYPE_MAP = {int: "INTEGER", float: "REAL", str: "TEXT", bool: "INTEGER"}
-logger = logging.getLogger(__name__)
 
 
 def make_table(
@@ -49,7 +49,7 @@ def make_table(
     schema_text = ", ".join(schema)
     cur.execute(f"CREATE TABLE {table}({schema_text})")
     con.commit()
-    logger.debug("Created table=%s in db_file=%s", table, db_file)
+    logger.trace("Created table={} in db_file={}", table, db_file)
 
 
 def insert_rows(db_file: Path, table: str, rows: list[tuple]) -> None:
@@ -74,7 +74,7 @@ def insert_rows(db_file: Path, table: str, rows: list[tuple]) -> None:
         query = f"INSERT INTO {table} VALUES({placeholder})"
         cur.executemany(query, rows)
         con.commit()
-        logger.debug("Inserted rows into table=%s in db_file=%s", table, db_file)
+        logger.trace("Inserted rows into table={} in db_file={}", table, db_file)
 
 
 def union_tables(dst_db_file: Path, src_db_file: Path, tables: Optional[list[str]] = None) -> None:
@@ -110,7 +110,7 @@ def union_tables(dst_db_file: Path, src_db_file: Path, tables: Optional[list[str
                     con_dst.commit()
                 if rows:
                     insert_rows(dst_db_file, table, rows)
-            logger.info("Added table %s from %s to %s", table, src_db_file, dst_db_file)
+            logger.info("Added table {} from {} to {}", table, src_db_file, dst_db_file)
 
 
 def _does_table_exist(cur, table):

@@ -1,7 +1,6 @@
 """Test workflow execution"""
 
 import json
-import logging
 import os
 import subprocess
 import time
@@ -23,9 +22,6 @@ from torc.exceptions import InvalidWorkflow
 from torc.job_runner import JobRunner
 from torc.common import timer_stats_collector
 from torc.workflow_manager import WorkflowManager
-
-
-logger = logging.getLogger(__name__)
 
 
 def test_run_workflow(diamond_workflow):

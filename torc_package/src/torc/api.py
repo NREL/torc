@@ -1,10 +1,10 @@
 """Functions to access the Torc Database API"""
 
 import itertools
-import logging
 import time
 from typing import Any, Callable, Generator, Optional
 
+from loguru import logger
 from resource_monitor.timing.timer_stats import Timer
 
 from torc.openapi_client import ApiClient, DefaultApi
@@ -15,9 +15,6 @@ from torc.openapi_client.models.jobs_model import JobsModel
 from torc.openapi_client.models.user_data_model import UserDataModel
 from torc.common import timer_stats_collector, check_function
 from torc.exceptions import DatabaseOffline
-
-
-logger = logging.getLogger(__name__)
 
 
 def make_api(database_url) -> DefaultApi:
@@ -46,7 +43,7 @@ def wait_for_healthy_database(
         Raised if the timeout is exceeded.
     """
     logger.info(
-        "Wait for the database to become healthy: timeout_minutes=%s, poll_seconds=%s",
+        "Wait for the database to become healthy: timeout_minutes={}, poll_seconds={}",
         timeout_minutes,
         poll_seconds,
     )
@@ -135,11 +132,11 @@ def send_api_command(func, *args, raise_on_error=True, timeout=120, **kwargs) ->
     """
     with Timer(timer_stats_collector, func.__name__):
         try:
-            logger.debug("Send API command %s", func.__name__)
+            logger.debug("Send API command {}", func.__name__)
             return func(*args, _request_timeout=timeout, **kwargs)
         except ApiException:
             # This covers all errors reported by the server.
-            logger.exception("Failed to send API command %s", func.__name__)
+            logger.exception("Failed to send API command {}", func.__name__)
             if raise_on_error:
                 raise
             logger.info("Exception is ignored.")
@@ -147,7 +144,7 @@ def send_api_command(func, *args, raise_on_error=True, timeout=120, **kwargs) ->
         except Exception as exc:
             # This covers all connection errors. It is likely too risky to try to catch
             # all possible errors from the underlying libraries (OS, urllib3, etc).
-            logger.exception("Failed to send API command %s", func.__name__)
+            logger.exception("Failed to send API command {}", func.__name__)
             if raise_on_error:
                 msg = f"Received exception from API client: {exc=}"
                 raise DatabaseOffline(msg) from exc

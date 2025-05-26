@@ -21,7 +21,7 @@ if __name__ == "__main__":
     time_limit = sys.argv[3]
     output_dir = Path(sys.argv[4])
     job_completion_poll_interval = 0.1
-    setup_logging(__name__)  # , filename=output_dir / f"{os.getpid()}.log")
+    setup_logging()  # , filename=output_dir / f"{os.getpid()}.log")
     api = DefaultApi(ApiClient(configuration))
     workflow = api.get_workflow(workflow_key)
     runner = JobRunner(

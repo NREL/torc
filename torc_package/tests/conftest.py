@@ -304,7 +304,7 @@ def _initialize_api():
         )
         sys.exit(1)
 
-    setup_logging("torc")
+    setup_logging()
     configuration = Configuration()
     configuration.host = torc_settings.database_url
     return DefaultApi(ApiClient(configuration))

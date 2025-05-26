@@ -1,7 +1,6 @@
 """Runs jobs on a compute node"""
 
 import json
-import logging
 import os
 import multiprocessing
 import multiprocessing.connection
@@ -18,6 +17,7 @@ from pathlib import Path
 from typing import Any, Iterable, Optional, Union
 
 import psutil
+from loguru import logger
 from pydantic import BaseModel, ConfigDict
 from resource_monitor.models import (
     ComputeNodeResourceStatConfig,
@@ -53,7 +53,6 @@ from .common import KiB, MiB, GiB, TiB
 
 JOB_COMPLETION_POLL_INTERVAL = 60
 
-logger = logging.getLogger(__name__)
 _g_shutdown = False
 
 
@@ -175,7 +174,7 @@ class JobRunner:
     def __del__(self) -> None:
         if self._outstanding_jobs:
             logger.warning(
-                "JobRunner destructed with outstanding jobs: %s",
+                "JobRunner destructed with outstanding jobs: {}",
                 self._outstanding_jobs.keys(),
             )
         if self._parent_monitor_conn is not None or self._monitor_proc is not None:
@@ -194,8 +193,8 @@ class JobRunner:
         self._create_compute_node(scheduler)
         assert self._compute_node is not None
         logger.info(
-            "Run torc worker version=%s api_service_version=%s db=%s hostname=%s output_dir=%s "
-            "end_time=%s compute_node_key=%s resources=%s config=%s",
+            "Run torc worker version={} api_service_version={} db={} hostname={} output_dir={} "
+            "end_time={} compute_node_key={} resources={} config={}",
             torc.__version__,
             send_api_command(self._api.get_version)["version"],
             self._api.api_client.configuration.host,
@@ -214,7 +213,7 @@ class JobRunner:
             self._start_resource_monitor()
 
         if self._config.worker_startup_script is not None:
-            logger.info("Running node startup script: %s", self._config.worker_startup_script)
+            logger.info("Running node startup script: {}", self._config.worker_startup_script)
             check_run_command(self._config.worker_startup_script)
             logger.info("Completed node startup script")
         try:
@@ -301,7 +300,7 @@ class JobRunner:
             if self._is_workflow_complete():
                 logger.info("Workflow is complete.")
             elif self._wait_for_new_jobs_seconds > 0 and extra_wait_time_start is None:
-                logger.info("Wait %ss for new jobs", self._wait_for_new_jobs_seconds)
+                logger.info("Wait {}s for new jobs", self._wait_for_new_jobs_seconds)
                 extra_wait_time_start = time.time()
             elif (
                 self._wait_for_new_jobs_seconds > 0
@@ -309,13 +308,13 @@ class JobRunner:
                 and time.time() - extra_wait_time_start < self._wait_for_new_jobs_seconds
             ):
                 logger.debug(
-                    "Extra wait time remaining is %s seconds",
+                    "Extra wait time remaining is {} seconds",
                     self._wait_for_new_jobs_seconds - (time.time() - extra_wait_time_start),
                 )
             else:
                 logger.info(
                     "No jobs are outstanding on this node and no new jobs are available. "
-                    "Reason no jobs started: %s",
+                    "Reason no jobs started: {}",
                     reason_none_started,
                 )
                 return True, extra_wait_time_start
@@ -332,7 +331,7 @@ class JobRunner:
         if params.scheduler_id.startswith("slurm_schedulers"):
             self._schedule_slurm_compute_nodes(params)
         else:
-            logger.error("Compute node scheduler %s is not supported", params.scheduler_id)
+            logger.error("Compute node scheduler {} is not supported", params.scheduler_id)
 
     def _schedule_slurm_compute_nodes(self, params: ComputeNodeScheduleParams) -> None:
         key = params.scheduler_id.split("/")[1]
@@ -347,13 +346,13 @@ class JobRunner:
             cmd += " --start-one-worker-per-node"
         ret = run_command(cmd, num_retries=2)
         if ret == 0:
-            logger.info("Scheduled compute nodes with cmd=%s", cmd)
+            logger.info("Scheduled compute nodes with cmd={}", cmd)
             self._log_worker_schedule_event(params.scheduler_id)
         else:
-            logger.error("Failed to schedule compute nodes: %s", ret)
+            logger.error("Failed to schedule compute nodes: {}", ret)
 
     def _create_compute_node(self, scheduler) -> None:
-        logger.info("Compute node scheduler: %s", json.dumps(scheduler or {}))
+        logger.info("Compute node scheduler: {}", json.dumps(scheduler or {}))
         compute_node = ComputeNodeModel(
             hostname=self._hostname,
             pid=os.getpid(),
@@ -483,16 +482,16 @@ class JobRunner:
             self._cleanup_job(job, JobStatus.DONE.value)
 
         if done_jobs:
-            logger.info("Found %s completions", len(done_jobs))
+            logger.info("Found {} completions", len(done_jobs))
         else:
-            logger.debug("Found 0 completions")
+            logger.trace("Found 0 completions")
         return len(done_jobs)
 
     def _cancel_jobs(self, jobs: Iterable[AsyncCliCommand]) -> None:
         for job in jobs:
             # Note that the database API service changes job status to canceled.
             job.cancel()
-            logger.info("Canceled job key=%s name=%s", job.key, job.db_job.name)
+            logger.info("Canceled job key={} name={}", job.key, job.db_job.name)
 
         status = JobStatus.CANCELED.value
         for job in jobs:
@@ -510,7 +509,7 @@ class JobRunner:
         wait_for_exit_jobs = []
         for job in jobs:
             job.terminate()
-            logger.info("Terminated job key=%s name=%s", job.key, job.db_job.name)
+            logger.info("Terminated job key={} name={}", job.key, job.db_job.name)
             if job.db_job.supports_termination:
                 wait_for_exit_jobs.append(job)
             else:
@@ -572,7 +571,7 @@ class JobRunner:
                     f"current={self._run_id} new={run_id}"
                 )
                 raise Exception(msg)
-            logger.info("Detected a change in run_id. current=%s new=%s", self._run_id, run_id)
+            logger.info("Detected a change in run_id. current={} new={}", self._run_id, run_id)
             self._run_id = run_id
 
         reason_none_started = None
@@ -593,10 +592,10 @@ class JobRunner:
             **kwargs,
         )
         if ready_jobs.jobs:
-            logger.info("%s jobs are ready for submission", len(ready_jobs.jobs))
+            logger.info("{} jobs are ready for submission", len(ready_jobs.jobs))
         else:
             reason_none_started = ready_jobs.reason
-            logger.debug("No jobs are ready: %s", reason_none_started)
+            logger.debug("No jobs are ready: {}", reason_none_started)
         for job in ready_jobs.jobs:
             self._run_job(
                 AsyncCliCommand(
@@ -615,7 +614,7 @@ class JobRunner:
         self._parent_monitor_conn, child_conn = multiprocessing.Pipe()
         pids = self._pids if self._stats.process else None
         monitor_log_file = self._output_dir / f"monitor_{self._compute_node.key}.log"
-        logger.info("Start resource monitor with %s", json.dumps(self._stats.model_dump()))
+        logger.info("Start resource monitor with {}", json.dumps(self._stats.model_dump()))
         if self._stats.monitor_type == "aggregation":
             args = (child_conn, self._stats, pids, monitor_log_file, None)
         elif self._stats.monitor_type == "periodic":
@@ -746,7 +745,7 @@ class JobRunner:
             path = make_path(file.path)
             if not path.exists():
                 logger.warning(
-                    "Job %s should have produced file %s, but it does not exist",
+                    "Job {} should have produced file {}, but it does not exist",
                     job.key,
                     file.path,
                 )
