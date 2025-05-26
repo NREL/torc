@@ -68,9 +68,9 @@ def config():
 )
 @click.option(
     "--file-level",
-    default="info",
+    default="debug",
     show_default=True,
-    help="File log level.",
+    help="File log level. Set to 'trace' for increased verbosity.",
 )
 def create(
     output_format,

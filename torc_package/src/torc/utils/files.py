@@ -77,7 +77,7 @@ def load_json_file(filename: str | Path, **kwargs) -> Any:
             logger.exception("Failed to load data from {}", filename)
             raise
 
-    logger.debug("Loaded data from {}", filename)
+    logger.trace("Loaded data from {}", filename)
     return data
 
 
@@ -103,7 +103,7 @@ def dump_line_delimited_json(data: list[Any], filename: str | Path, mode: str = 
             f_out.write(json.dumps(obj))
             f_out.write("\n")
 
-    logger.debug("Dumped data to {}", filename)
+    logger.trace("Dumped data to {}", filename)
 
 
 def load_line_delimited_json(filename: str | Path) -> list[Any]:
@@ -120,5 +120,5 @@ def load_line_delimited_json(filename: str | Path) -> list[Any]:
                 logger.exception("Failed to decode line number {} in {}", i, filename)
                 raise
 
-    logger.debug("Loaded data from {}", filename)
+    logger.trace("Loaded data from {}", filename)
     return objects

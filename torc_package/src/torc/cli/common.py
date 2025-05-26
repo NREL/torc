@@ -79,10 +79,10 @@ def get_log_level_from_str(level: str) -> int:
             return logging.WARNING
         case "error":
             return logging.ERROR
-        case "critical":
-            return logging.CRITICAL
-        case "fatal":
-            return logging.FATAL
+        # case "critical":
+        #     return logging.CRITICAL
+        # case "fatal":
+        #     return logging.FATAL
         case _:
             msg = f"Unsupported level={level}"
             raise Exception(msg)

@@ -36,7 +36,7 @@ from torc.config import torc_settings
 @click.option(
     "-f",
     "--file-level",
-    help="File log level.",
+    help="File log level. Set to 'trace' for increased verbosity.",
 )
 @click.option(
     "-k",
