@@ -23,7 +23,13 @@ def test_workflow_commands(create_workflow_cli):
     result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "workflows", "start"])
     assert result.exit_code == 0
 
-    result = runner.invoke(cli, ["-k", key, "-u", url, "jobs", "run", "-o", str(output_dir)])
+    result = runner.invoke(
+        cli, ["-k", key, "-u", url, "jobs", "run", "-o", str(output_dir), "-p", "1"]
+    )
+    assert result.exit_code == 0
+    result = runner.invoke(
+        cli, ["-k", key, "-u", url, "reports", "results", "-o", str(output_dir)]
+    )
     assert result.exit_code == 0
     output = _get_text_and_json_outputs(["-k", key, "-u", url, "jobs", "list-process-stats"])
     assert output["json"]["stats"]
@@ -104,6 +110,51 @@ def test_workflow_commands(create_workflow_cli):
 
     result = runner.invoke(cli, ["-n", "-u", url, "workflows", "reset-status", key])
     assert result.exit_code == 0
+
+    cmd = ["-k", key, "-u", url, "-F", "json", "jobs", "list"]
+    jobs = _run_and_convert_output_from_json(cmd)["jobs"]
+    for job in jobs:
+        assert job["status"] == "uninitialized"
+
+
+def test_reset_job_status(create_workflow_cli):
+    """Tests workflow CLI commands."""
+    key, url, output_dir = create_workflow_cli
+    runner = CliRunner()
+    result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "workflows", "start"])
+    assert result.exit_code == 0
+
+    result = runner.invoke(
+        cli, ["-k", key, "-u", url, "jobs", "run", "-o", str(output_dir), "-p", "1"]
+    )
+    assert result.exit_code == 0
+
+    cmd = ["-k", key, "-u", url, "-F", "json", "jobs", "list"]
+    jobs = _run_and_convert_output_from_json(cmd)["jobs"]
+    assert len(jobs) == 3
+    job_keys: list[str] = []
+    for job in jobs:
+        assert job["status"] == "done"
+        job_keys.append(job["_key"])
+
+    result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "jobs", "reset-status"] + job_keys)
+    assert result.exit_code == 0
+
+    cmd = ["-k", key, "-u", url, "-F", "json", "jobs", "list"]
+    jobs = _run_and_convert_output_from_json(cmd)["jobs"]
+    assert len(jobs) == 3
+    for job in jobs:
+        assert job["status"] == "uninitialized"
+
+    cmd = ["-n", "-k", key, "-u", url, "-F", "json", "jobs", "disable"] + job_keys
+    result = runner.invoke(cli, cmd)
+    assert result.exit_code == 0
+
+    cmd = ["-k", key, "-u", url, "-F", "json", "jobs", "list"]
+    jobs = _run_and_convert_output_from_json(cmd)["jobs"]
+    assert len(jobs) == 3
+    for job in jobs:
+        assert job["status"] == "disabled"
 
 
 def test_resource_requirement_commands(create_workflow_cli):
@@ -384,8 +435,6 @@ def test_workflow_template(db_api):
 def test_job_commands(create_workflow_cli):
     """Tests job CLI commands."""
     key, url, _ = create_workflow_cli
-    _run_and_check_jobs_list_output(["-k", key, "-u", url, "-F", "json", "jobs", "list"], 3)
-
     cmd = [
         "-k",
         key,
