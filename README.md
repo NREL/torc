@@ -37,19 +37,26 @@ wasn't difficult to create exactly what we wanted.
 Here are the features of Torc that we think differentiate it from other tools:
 
 - Node packing on HPC compute nodes
+
   A Torc worker can maintain a maximum queue depth of jobs on a compute node until the allocation
   runs out of time. Users can start workers on any number single-node or multi-node allocations.
+
 - Torc API Server
+
   Torc provides a server that implements an API conforming to an [OpenAPI
   specification](https://swagger.io/specification/), providing automatic client library generation.
   We use both Python and Julia clients to build and manage workflows. Users can monitor workflows
   through Torc-provided CLI and TUI applications or develop their own scripts.
+
 - Debugging errors
+
   We run large numbers of simulations on untested input data. Many of them fail. Torc provides
   automatic resource monitoring, log colletion, and detailed error reporting through raw text,
   tables, and formatted JSON. Torc makes it easy for users to rerun failed jobs after applying
   fixes.
+
 - Traceability
+
   All workflows and results are stored in a database, tracked by user and other metadata.
 
 ## License
