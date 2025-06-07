@@ -35,7 +35,7 @@ rm -rf ../torc_package/src/torc/openapi_client
 rm -rf ../julia/Torc/src/api
 rm -rf ../julia/julia_client/docs
 rm -f ../julia/julia_client/README.md
-mv ${PYTHON_CLIENT}/torc/openapi_client ../torc_package/src/torc/
+mv ${PYTHON_CLIENT}/torc/openapi_client $(realpath $(pwd)/../torc_package/src/torc/)
 mv ${JULIA_CLIENT}/src ../julia/Torc/src/api
 mv ${JULIA_CLIENT}/docs ../julia/julia_client/
 mv ${JULIA_CLIENT}/README.md ../julia/julia_client/
