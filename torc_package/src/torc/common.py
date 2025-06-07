@@ -10,7 +10,7 @@ from typing import Callable, Optional
 
 from pydantic import BaseModel, ConfigDict
 
-from resource_monitor.timing.timer_stats import TimerStatsCollector
+from rmon.timing.timer_stats import TimerStatsCollector
 
 
 KiB = 1024

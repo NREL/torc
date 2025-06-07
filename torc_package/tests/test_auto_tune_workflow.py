@@ -4,7 +4,7 @@ import multiprocessing
 from pathlib import Path
 
 import pytest
-from resource_monitor.utils.sql import read_table_as_dict
+from rmon.utils.sql import read_table_as_dict
 
 from torc.openapi_client.api.default_api import DefaultApi
 from torc.openapi_client.models.compute_nodes_resources import (

@@ -19,7 +19,7 @@ from typing import Any, Iterable, Optional, Union
 import psutil
 from loguru import logger
 from pydantic import BaseModel, ConfigDict
-from resource_monitor.models import (
+from rmon.models import (
     ComputeNodeResourceStatConfig,
     ComputeNodeResourceStatResults,
     CompleteProcessesCommand,
@@ -28,8 +28,7 @@ from resource_monitor.models import (
     ProcessStatResults,
     ResourceType,
 )
-from resource_monitor.resource_monitor import run_monitor_async
-from resource_monitor.timing.timer_stats import Timer
+from rmon import run_monitor_async, Timer
 from torc.openapi_client import DefaultApi
 from torc.openapi_client.models.compute_node_model import ComputeNodeModel
 from torc.openapi_client.models.compute_node_schedule_params import ComputeNodeScheduleParams

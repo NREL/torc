@@ -5,7 +5,7 @@ import time
 from typing import Any, Callable, Generator, Optional
 
 from loguru import logger
-from resource_monitor.timing.timer_stats import Timer
+from rmon.timing.timer_stats import Timer
 
 from torc.openapi_client import ApiClient, DefaultApi
 from torc.openapi_client.configuration import Configuration

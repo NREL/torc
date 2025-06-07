@@ -33,9 +33,9 @@ dependencies = [
     "psutil >= 5.9, < 6",
     "prettytable >= 3.10, < 4",
     "pydantic >= 2.10, < 3",
-    "textual >= 3.2, < 4",
-    "resource_monitor @ git+https://github.nrel.gov/dthom/resource_monitor.git#0.2.1",
+    "rmon",
     "rich",
+    "textual >= 3.2, < 4",
     "toml",
     # These are required by the openapi_client. Keep in sync with its setup.py.
     "urllib3 >= 2.1.0, < 3.0.0",

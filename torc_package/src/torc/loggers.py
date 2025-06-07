@@ -43,7 +43,7 @@ def setup_logging(
         Additional packages to enable logging
     """
     logger.remove()
-    logger.enable("nwt")
+    logger.enable("torc")
     for pkg in packages or []:
         logger.enable(pkg)
 
