@@ -49,7 +49,7 @@ def test_fake_slurm_workflow(setup_api):
     api, output_dir = setup_api
     inputs_file = Path("inputs.json")
     inputs_file.write_text(json.dumps({"val": 5}))
-    builder = Path(__file__).parent.parent.parent / "examples" / "diamond_workflow.py"
+    builder = Path(__file__).parents[2] / "examples" / "diamond_workflow.py"
     output: dict[str, Any] = {}
     check_run_command(f"python {builder}", output=output)
     regex = re.compile(r"Created workflow (\d+) with")
@@ -57,10 +57,28 @@ def test_fake_slurm_workflow(setup_api):
     assert match
     key = match.group(1)
     runner = CliRunner()
-    # result = runner.invoke(
-    #     cli, ["-F", "json", "workflows", "create-from-json-file", str(dst_file)]
-    # )
-    # assert result.exit_code == 0
+
+    # The resource requirements in the workflow are greater than what's in CI. Decrease them.
+    result = runner.invoke(
+        cli,
+        [
+            "-k",
+            key,
+            "resource-requirements",
+            "add",
+            "--name",
+            "tiny",
+            "--num-cpus",
+            str(1),
+            "--memory",
+            "1m",
+            "--runtime",
+            "P0DT1m",
+            "--apply-to-all-jobs",
+        ],
+    )
+    assert result.exit_code == 0, f"Failed to set resource requirements: {result.stderr}"
+
     slurm_config = _get_scheduler_by_name(api, key)
 
     try:
@@ -85,13 +103,16 @@ def test_fake_slurm_workflow(setup_api):
             ],
             check=True,
         )
-        _wait_for_workflow_complete(api, key)
+        _wait_for_workflow_complete(api, key, output_dir)
 
         result = runner.invoke(cli, ["-k", key, "compute-nodes", "list"])
         assert result.exit_code == 0
         nodes = json.loads(result.stdout)["compute_nodes"]
         assert len(nodes) == 1
 
+        job_results = api.list_jobs(key).items
+        for job in job_results:
+            print(f"{job=}")
         results = api.list_results(key).items
         assert len(results) == 4
         for res in results:
@@ -140,15 +161,19 @@ def _get_scheduler_by_name(api, workflow_key):
     return slurm_configs[0]
 
 
-def _wait_for_workflow_complete(api, key, timeout=600):
+def _wait_for_workflow_complete(api, key, output_dir, timeout=60):
     timeout = time.time() + timeout
-    done = True
+    done = False
     while time.time() < timeout:
         response = api.is_workflow_complete(key)
         if response.is_complete:
             done = True
             break
         time.sleep(1)
+    if not done:
+        for path in output_dir.iterdir():
+            if path.is_file():
+                print(f"Output file: {path} - {path.read_text()}", file=sys.stderr)
     assert done
 
 

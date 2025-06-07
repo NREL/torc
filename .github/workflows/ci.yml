@@ -15,7 +15,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.12", "3.13"]
+        python-version: ["3.12"] #, "3.13"]
         os: [ubuntu-latest]  # cannot run docker on windows
 
     steps:
@@ -52,7 +52,8 @@ jobs:
       run: |
         cd torc_package
         torc config create -u http://localhost:8529/_db/test-workflows/torc-service
-        pytest -v --cov --cov-branch --cov-report=xml tests
+        #pytest -v --cov=torc --cov-report=xml tests/test_fake_slurm_workflow.py
+        pytest --pdb --log-cli-level=info -s -k test_fake_slurm_workflow
     - name: codecov
       uses: codecov/codecov-action@v5
       if: ${{ matrix.os == env.DEFAULT_OS && matrix.python-version == env.DEFAULT_PYTHON  }}

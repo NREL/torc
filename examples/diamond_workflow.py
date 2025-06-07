@@ -97,7 +97,7 @@ def build_workflow(api: DefaultApi, workflow: WorkflowModel):
             name="preprocess",
             command=f"python {preprocess.path} -i {inputs.path} -o {f1.path} -o {f2.path}",
             input_files=[preprocess.id, inputs.id],
-            output_files=[f1.id],
+            output_files=[f1.id, f2.id],
             resource_requirements=small.id,
         ),
         JobModel(
