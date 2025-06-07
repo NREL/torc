@@ -60,6 +60,7 @@ dev = [
     "pre-commit",
     "pytest",
     "pytest-cov",
+    "ruff",
     "sphinx",
     "sphinx-click",
     "sphinxcontrib-openapi",
