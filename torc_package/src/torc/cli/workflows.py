@@ -11,12 +11,12 @@ import rich_click as click
 import json5
 from loguru import logger
 
-from torc.openapi_client.models.job_model import JobModel
-from torc.openapi_client.models.workflow_model import WorkflowModel
-from torc.openapi_client.models.workflow_specification_model import (
+from torc.openapi_client import (
+    JobModel,
+    ResourceRequirementsModel,
+    WorkflowModel,
     WorkflowSpecificationModel,
 )
-
 from torc.api import remove_db_keys, sanitize_workflow, iter_documents, list_model_fields
 from torc.exceptions import InvalidWorkflow
 from torc.hpc.slurm_interface import SlurmInterface
@@ -106,6 +106,14 @@ def create(
 @click.command()
 @click.argument("filename", type=click.Path(exists=True))
 @click.option(
+    "-c",
+    "--cpus-per-job",
+    default=1,
+    show_default=True,
+    type=int,
+    help="Number of CPUs required for each job.",
+)
+@click.option(
     "-d",
     "--description",
     type=str,
@@ -118,10 +126,26 @@ def create(
     help="Workflow key. Default is to auto-generate",
 )
 @click.option(
+    "-m",
+    "--memory-per-job",
+    default="1m",
+    show_default=True,
+    type=str,
+    help="Amount of memory required for each job. Use '100m' for 100 MB, '1g' for 1 GB, etc.",
+)
+@click.option(
     "-n",
     "--name",
     type=str,
     help="Workflow name",
+)
+@click.option(
+    "-r",
+    "--runtime-per-job",
+    default="P0DT1m",
+    show_default=True,
+    type=str,
+    help="Runtime required for each job in ISO8601 format. Example: P0DT1H is one hour.",
 )
 @click.pass_obj
 @click.pass_context
@@ -129,20 +153,18 @@ def create_from_commands_file(
     ctx: click.Context,
     api: DefaultApi,
     filename: Path,
+    cpus_per_job: int,
     description: str,
     key: str,
+    memory_per_job: str,
     name: str,
+    runtime_per_job: str,
 ) -> None:
     """Create a workflow from a text file containing job CLI commands."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     output_format = get_output_format_from_context(ctx)
-    commands = []
-    with open(filename, encoding="utf-8") as f_in:
-        for line in f_in:
-            line = line.strip()
-            if line:
-                commands.append(line)
+    commands = _read_jobs_from_commands_file(filename)
     workflow = WorkflowModel(
         description=description,
         _key=key,
@@ -155,9 +177,96 @@ def create_from_commands_file(
         logger.info("Created a workflow from {} with key={}", filename, workflow.key)
     else:
         print(json.dumps({"filename": filename, "key": workflow.key}))
+
+    name = f"rr_{cpus_per_job}_{memory_per_job}_{runtime_per_job}"
+    req = api.add_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(
+            name=name, num_cpus=cpus_per_job, memory=memory_per_job, runtime=runtime_per_job
+        ),
+    )
     for i, command in enumerate(commands, start=1):
         name = str(i)
-        api.add_job(workflow.key, JobModel(name=name, command=command))
+        api.add_job(
+            workflow.key, JobModel(name=name, command=command, resource_requirements=req.id)
+        )
+
+
+@click.command()
+@click.argument("filename", type=click.Path(exists=True))
+@click.option(
+    "-c",
+    "--cpus-per-job",
+    default=1,
+    show_default=True,
+    type=int,
+    help="Number of CPUs required for each job.",
+)
+@click.option(
+    "-m",
+    "--memory-per-job",
+    default="1m",
+    show_default=True,
+    type=str,
+    help="Amount of memory required for each job. Use '100m' for 100 MB, '1g' for 1 GB, etc.",
+)
+@click.option(
+    "-r",
+    "--runtime-per-job",
+    default="P0DT1m",
+    show_default=True,
+    type=str,
+    help="Runtime required for each job in ISO8601 format. Example: P0DT1H is one hour.",
+)
+@click.pass_obj
+@click.pass_context
+def add_jobs_from_commands_file(
+    ctx: click.Context,
+    api: DefaultApi,
+    filename: Path,
+    cpus_per_job: int,
+    memory_per_job: str,
+    runtime_per_job: str,
+) -> None:
+    """Add jobs to a workflow from a text file containing job CLI commands."""
+    setup_cli_logging(ctx, __name__)
+    check_database_url(api)
+    output_format = get_output_format_from_context(ctx)
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    commands = _read_jobs_from_commands_file(filename)
+    name = f"rr_{cpus_per_job}_{memory_per_job}_{runtime_per_job}"
+    req = api.add_resource_requirements(
+        workflow_key,
+        ResourceRequirementsModel(
+            name=name, num_cpus=cpus_per_job, memory=memory_per_job, runtime=runtime_per_job
+        ),
+    )
+    res = api.list_jobs(workflow_key, limit=1)
+    count = 0
+    for i, command in enumerate(commands, start=res.total_count + 1):
+        api.add_job(
+            workflow_key, JobModel(name=str(i), command=command, resource_requirements=req.id)
+        )
+        count += 1
+
+    if output_format == "text":
+        logger.info("Added {} jobs to workflow {}", count, workflow_key)
+    else:
+        print(json.dumps({"num_jobs": count, "key": workflow_key}))
+
+
+def _read_jobs_from_commands_file(filename: Path) -> list[str]:
+    commands = []
+    with open(filename, encoding="utf-8") as f_in:
+        for line in f_in:
+            line = line.strip()
+            if line:
+                commands.append(line)
+    if not commands:
+        msg = "No commands found in the {filename=}"
+        raise InvalidWorkflow(msg)
+
+    return commands
 
 
 @click.command()
@@ -941,6 +1050,7 @@ def template(ctx: click.Context, api: DefaultApi) -> None:
 workflows.add_command(cancel)
 workflows.add_command(create)
 workflows.add_command(create_from_commands_file)
+workflows.add_command(add_jobs_from_commands_file)
 workflows.add_command(create_from_json_file)
 workflows.add_command(modify)
 workflows.add_command(delete)

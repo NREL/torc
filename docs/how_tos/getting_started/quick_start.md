@@ -24,30 +24,24 @@ bash my_script1.sh 2
 4. Create the workflow.
 
 ```console
-$ torc workflows create-from-commands-file -n my-workflow -d "My workflow" commands.txt
+$ torc workflows create-from-commands-file -n my-workflow -d "My workflow" --cpus-per-job=4 --memory="5g" --runtime=P0DT1H commands.txt
 2023-04-10 10:52:52,240 - INFO [torc.cli.workflows workflows.py:144] : Created a workflow from commands.txt with key=94956990
 ```
 
-5. Add a resource requirements definition for all jobs (assuming they have similar requirements).
-
-```console
-$ torc resource-requirements add -n medium --num-cpus 4 --memory 5g --runtime P0DT1H --apply-to-all-jobs
-```
-
-6. Add an HPC scheduler. Change `account` to your HPC account.
+5. Add an HPC scheduler. Change `account` to your HPC account.
 
 ```console
 $ torc hpc slurm add-config -a account -w 04:00:00 -N short
 ```
 
-7. Start the workflow.
+6. Start the workflow.
 
 ```console
 $ torc -k 94956990 workflows start
 2023-03-28 16:37:58,708 - INFO [torc.workflow_manager workflow_manager.py:99] : Started workflow
 ```
 
-8. Schedule compute nodes where X below is the number of HPC jobs to start with the scheduler
+7. Schedule compute nodes where X below is the number of HPC jobs to start with the scheduler
    defined in step 6. Note that there could be multiple compute nodes in each HPC job.
 
 ```console
@@ -60,7 +54,7 @@ You can optionally ask for a recommendation for the number of nodes with this co
 $ torc workflows recommend-nodes --num-cpus 36
 ```
 
-9. Monitor progress with torc or squeue
+8. Monitor progress with torc or squeue
 
 ```console
 $ torc -k 94956990 jobs list

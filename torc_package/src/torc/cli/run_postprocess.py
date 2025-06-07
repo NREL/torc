@@ -18,7 +18,7 @@ from .common import (
 @click.pass_obj
 @click.pass_context
 def run_postprocess(ctx, api):
-    """Run a postprocess function on one the results of a mapped-function workflow."""
+    """Run a postprocess function on the results of a mapped-function workflow."""
     setup_logging(
         console_level="INFO",
         mode="w",

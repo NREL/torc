@@ -95,6 +95,21 @@ bash my_script.sh -i input3.json -o output3.json
 $ torc workflows create-from-commands-file -n my-workflow -d "My workflow" commands.txt
 ```
 
+You can also specify the resource requirements for each job in the commands file. For example,
+this command will create a workflow with 5 commands, each requiring 8 CPUs and 10 GB of memory, and
+a maximum runtime of 1 hour. The `-r` option specifies the maximum runtime in ISO 8601 format.
+```console
+$ torc workflows create-from-commands-file -n my-workflow -d "My workflow" -c 8 -m 10g -r P0DT1H commands.txt
+```
+
+Finally, you can use a similar command to add jobs to an existing workflow. This is useful if different
+jobs have different resource requirements.
+```console
+$ torc workflows create-from-commands-file -n my-workflow -d "My workflow" -c 1 -m 1g -r P0DT4H commands.txt
+$ torc workflows -k 392742 add-jobs-from-commands-file -c 4 -m 10g -r P0DT4H commands.txt
+$ torc workflows -k 392742 add-jobs-from-commands-file -c 8 -m 50g -r P0DT8H commands.txt
+```
+
 ## CLI commands
 
 Build a workflow incrementally with torc CLI commands like the example below. This process may

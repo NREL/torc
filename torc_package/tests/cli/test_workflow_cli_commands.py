@@ -356,6 +356,23 @@ def test_create_workflow_from_commands_file(db_api, tmp_path):
         jobs = api.list_jobs(key).items
         assert len(jobs) == 5
         assert jobs[0].command == "echo hello"
+
+        cmd = [
+            "-u",
+            url,
+            "-k",
+            key,
+            "-F",
+            "json",
+            "workflows",
+            "add-jobs-from-commands-file",
+            str(commands_file),
+        ]
+        result = _run_and_convert_output_from_json(cmd)
+        assert result["key"] == key
+        assert result["num_jobs"] == 5
+        jobs = api.list_jobs(key).items
+        assert len(jobs) == 10
     finally:
         if key is not None:
             api.remove_workflow(key)
