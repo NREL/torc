@@ -3,12 +3,12 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "torc"
+name = "torc-client"
 # Note: Do not update manually. Use bump-my-version, such as
 # $ bump-my-version bump minor
 version = "0.4.1"
-description = "Provides workflow automation services"
-requires-python = ">=3.11,<3.13"
+description = "Workflow management system"
+requires-python = ">=3.11,<3.14"
 license = "BSD-3-Clause"
 readme = "README.md"
 authors = [
@@ -21,7 +21,7 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "License :: OSI Approved :: BSD License",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
     "click >= 8.2, < 9",
@@ -101,7 +101,7 @@ exclude = [
 line-length = 99
 indent-width = 4
 
-target-version = "py311"
+target-version = "py312"
 
 [tool.mypy]
 check_untyped_defs = true
