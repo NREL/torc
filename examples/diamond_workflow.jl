@@ -65,6 +65,30 @@ function build_workflow(api, workflow)
         workflow._key,
         APIClient.FileModel(name="files4", path=joinpath(output_dir, "f4.json")),
     )
+    f5 = send_api_command(
+        api,
+        APIClient.add_file,
+        workflow._key,
+        APIClient.FileModel(name="files5", path=joinpath(output_dir, "f5.json")),
+    )
+    preprocess = send_api_command(
+        api,
+        APIClient.add_file,
+        workflow._key,
+        APIClient.FileModel(name="preprocess", path=PREPROCESS),
+    )
+    work = send_api_command(
+        api,
+        APIClient.add_file,
+        workflow._key,
+        APIClient.FileModel(name="work", path=WORK),
+    )
+    postprocess = send_api_command(
+        api,
+        APIClient.add_file,
+        workflow._key,
+        APIClient.FileModel(name="postprocess", path=POSTPROCESS),
+    )
 
     small = send_api_command(
         api,
@@ -116,30 +140,30 @@ function build_workflow(api, workflow)
     jobs = [
         APIClient.JobModel(
             name="preprocess",
-            command="python $PREPROCESS -i $(inputs.path) -o $(f1.path)",
-            input_files=[inputs._id],
-            output_files=[f1._id],
+            command="python $(preprocess.path) -i $(inputs.path) -o $(f1.path) -o $(f2.path)",
+            input_files=[preprocess.id, inputs._id],
+            output_files=[f1._id, f2._id],
             resource_requirements=small._id,
         ),
         APIClient.JobModel(
             name="work1",
-            command="python $WORK -i $(f1.path) -o $(f2.path)",
-            input_files=[f1._id],
-            output_files=[f2._id],
+            command="python $(work.path) -i $(f1.path) -o $(f3.path)",
+            input_files=[work._id, f1._id],
+            output_files=[f3._id],
             resource_requirements=medium._id,
         ),
         APIClient.JobModel(
             name="work2",
-            command="python $WORK -i $(f1.path) -o $(f3.path)",
-            input_files=[f1._id],
-            output_files=[f3._id],
+            command="python $(work.path) -i $(f2.path) -o $(f4.path)",
+            input_files=[work._id, f2._id],
+            output_files=[f4._id],
             resource_requirements=large._id,
         ),
         APIClient.JobModel(
             name="postprocess",
-            command="python $POSTPROCESS -i $(f2.path) -i $(f3.path) -o $(f4.path)",
-            input_files=[f2._id, f3._id],
-            output_files=[f4._id],
+            command="python $(postprocess.path) -i $(f3.path) -i $(f4.path) -o $(f5.path)",
+            input_files=[postprocess._id, f3._id, f4._id],
+            output_files=[f5._id],
             resource_requirements=small._id,
         ),
     ]

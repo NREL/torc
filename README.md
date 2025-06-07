@@ -1,10 +1,10 @@
-# Torc workflow management software
+# Torc workflow management system
 
 This software package orchestrates execution of a workflow of jobs on distributed computing
 resources. It is optimized for use on HPCs with Slurm, but also can be used in the cloud and
 on local computers.
 
-Please refer to the documentation at https://github.com/NREL/pages/torc/
+Please refer to the documentation at https://github.com/NREL/pages/torc
 
 ## Project Status
 The software is well-tested and has been used in several projects at NREL. However, it is not

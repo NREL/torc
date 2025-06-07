@@ -31,13 +31,14 @@ user.
    digraph job_file_graph {
       "preprocess" -> "inputs.json" [label="needs"];
       "preprocess" -> "f1.json" [label="produces"];
+      "preprocess" -> "f2.json" [label="produces"];
       "work1" -> "f1.json" [label="needs"];
-      "work2" -> "f1.json" [label="needs"];
-      "work1" -> "f2.json" [label="produces"];
-      "work2" -> "f3.json" [label="produces"];
-      "postprocess" -> "f2.json" [label="needs"];
+      "work2" -> "f2.json" [label="needs"];
+      "work1" -> "f3.json" [label="produces"];
+      "work2" -> "f4.json" [label="produces"];
       "postprocess" -> "f3.json" [label="needs"];
-      "postprocess" -> "f4.json" [label="produces"];
+      "postprocess" -> "f4.json" [label="needs"];
+      "postprocess" -> "f5.json" [label="produces"];
    }
 ```
 

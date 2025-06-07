@@ -4,39 +4,29 @@
   jobs: [
     {
       name: "preprocess",
-      command: "python tests/scripts/preprocess.py -i output/inputs.json -o output/f1.json",
+      command: "python tests/scripts/preprocess.py -i output/inputs.json -o output/f1.json -o output/f2.json",
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
       resource_requirements: "small",
       input_files: [
+        "tests/scripts/preprocess.py",
         "inputs"
       ],
       output_files: [
-        "file1"
+        "file1",
+        "file2"
       ],
       blocked_by: []
     },
     {
       name: "work1",
-      command: "python tests/scripts/work.py -i output/f1.json -o output/f2.json",
+      command: "python tests/scripts/work.py -i output/f1.json -o output/f3.json",
       input_user_data: ["my_val"],
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
       resource_requirements: "medium",
       input_files: [
-        "file1"
-      ],
-      output_files: [
-        "file2"
-      ],
-    },
-    {
-      name: "work2",
-      command: "python tests/scripts/work.py -i output/f1.json -o output/f3.json",
-      cancel_on_blocking_job_failure: true,
-      supports_termination: false,
-      resource_requirements: "large",
-      input_files: [
+        "tests/scripts/work.py",
         "file1"
       ],
       output_files: [
@@ -44,21 +34,48 @@
       ],
     },
     {
-      name: "postprocess",
-      command: "python tests/scripts/postprocess.py -i output/f2.json -i output/f3.json -o output/f4.json",
+      name: "work2",
+      command: "python tests/scripts/work.py -i output/f2.json -o output/f4.json",
       cancel_on_blocking_job_failure: true,
       supports_termination: false,
-      resource_requirements: "small",
+      resource_requirements: "large",
       input_files: [
-        "file3",
+        "tests/scripts/work.py",
         "file2"
       ],
       output_files: [
         "file4"
       ],
     },
+    {
+      name: "postprocess",
+      command: "python tests/scripts/postprocess.py -i output/f3.json -i output/f4.json -o output/f5.json",
+      cancel_on_blocking_job_failure: true,
+      supports_termination: false,
+      resource_requirements: "small",
+      input_files: [
+        "tests/scripts/postprocess.py",
+        "file3",
+        "file4"
+      ],
+      output_files: [
+        "file5"
+      ],
+    },
   ],
   files: [
+    {
+      name: "preprocess",
+      path: "tests/scripts/preprocess.py"
+    },
+    {
+      name: "work",
+      path: "tests/scripts/work.py"
+    },
+    {
+      name: "postprocess",
+      path: "tests/scripts/postprocess.py"
+    },
     {
       name: "inputs",
       path: "output/inputs.json"

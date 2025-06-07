@@ -106,6 +106,7 @@ def diamond_workflow(tmp_path):
     f2 = builder.add_file(name="file2", path=str(output_dir / "f2.json"))
     f3 = builder.add_file(name="file3", path=str(output_dir / "f3.json"))
     f4 = builder.add_file(name="file4", path=str(output_dir / "f4.json"))
+    f5 = builder.add_file(name="file5", path=str(output_dir / "f5.json"))
 
     small = builder.add_resource_requirements(
         name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
@@ -120,35 +121,35 @@ def diamond_workflow(tmp_path):
     scheduler = builder.add_local_scheduler(name="test")
     builder.add_job(
         name="preprocess",
-        command=f"python {PREPROCESS} -i {inputs.path} -o {f1.path}",
+        command=f"python {PREPROCESS} -i {inputs.path} -o {f1.path} -o {f2.path}",
         input_files=[inputs.name],
-        output_files=[f1.name],
+        output_files=[f1.name, f2.name],
         resource_requirements=small.name,
         scheduler="local_schedulers/test",
     )
     builder.add_job(
         name="work1",
-        command=f"python {WORK} -i {f1.path} -o {f2.path}",
+        command=f"python {WORK} -i {f1.path} -o {f3.path}",
         input_user_data=["my_val1"],
         input_files=[f1.name],
-        output_files=[f2.name],
+        output_files=[f3.name],
         resource_requirements=medium.name,
         scheduler="local_schedulers/test",
     )
     builder.add_job(
         name="work2",
-        command=f"python {WORK} -i {f1.path} -o {f3.path}",
+        command=f"python {WORK} -i {f2.path} -o {f4.path}",
         input_user_data=["my_val2"],
-        input_files=[f1.name],
-        output_files=[f3.name],
+        input_files=[f2.name],
+        output_files=[f4.name],
         resource_requirements=large.name,
         scheduler="local_schedulers/test",
     )
     builder.add_job(
         name="postprocess",
-        command=f"python {POSTPROCESS} -i {f2.path} -i {f3.path} -o {f4.path}",
-        input_files=[f2.name, f3.name],
-        output_files=[f4.name],
+        command=f"python {POSTPROCESS} -i {f3.path} -i {f4.path} -o {f5.path}",
+        input_files=[f3.name, f4.name],
+        output_files=[f5.name],
         resource_requirements=small.name,
         scheduler="local_schedulers/test",
     )
@@ -428,7 +429,7 @@ def incomplete_workflow_missing_files(incomplete_workflow):
     The file produced by the work job that completed is deleted.
     """
     db, scheduler_config_id, output_dir = incomplete_workflow
-    (output_dir / "f2.json").unlink()
+    (output_dir / "f3.json").unlink()
     yield db, scheduler_config_id, output_dir
 
 

@@ -55,6 +55,14 @@ def build_workflow(api: DefaultApi, workflow: WorkflowModel):
     f2 = api.add_file(workflow.key, FileModel(name="file2", path="f2.json"))
     f3 = api.add_file(workflow.key, FileModel(name="file3", path="f3.json"))
     f4 = api.add_file(workflow.key, FileModel(name="file4", path="f4.json"))
+    f5 = api.add_file(workflow.key, FileModel(name="file5", path="f5.json"))
+    preprocess = api.add_file(
+        workflow.key, FileModel(name="preprocess", path=str(PREPROCESS))
+    )
+    work = api.add_file(workflow.key, FileModel(name="work", path=str(WORK)))
+    postprocess = api.add_file(
+        workflow.key, FileModel(name="postprocess", path=str(POSTPROCESS))
+    )
 
     small = api.add_resource_requirements(
         workflow.key,
@@ -87,30 +95,30 @@ def build_workflow(api: DefaultApi, workflow: WorkflowModel):
     jobs = [
         JobModel(
             name="preprocess",
-            command=f"python {PREPROCESS} -i {inputs.path} -o {f1.path}",
-            input_files=[inputs.id],
+            command=f"python {preprocess.path} -i {inputs.path} -o {f1.path} -o {f2.path}",
+            input_files=[preprocess.id, inputs.id],
             output_files=[f1.id],
             resource_requirements=small.id,
         ),
         JobModel(
             name="work1",
-            command=f"python {WORK} -i {f1.path} -o {f2.path}",
-            input_files=[f1.id],
-            output_files=[f2.id],
+            command=f"python {work.path} -i {f1.path} -o {f3.path}",
+            input_files=[work.id, f1.id],
+            output_files=[f3.id],
             resource_requirements=medium.id,
         ),
         JobModel(
             name="work2",
-            command=f"python {WORK} -i {f1.path} -o {f3.path}",
-            input_files=[f1.id],
-            output_files=[f3.id],
+            command=f"python {work.path} -i {f2.path} -o {f4.path}",
+            input_files=[work.id, f2.id],
+            output_files=[f4.id],
             resource_requirements=large.id,
         ),
         JobModel(
             name="postprocess",
-            command=f"python {POSTPROCESS} -i {f2.path} -i {f3.path} -o {f4.path}",
-            input_files=[f2.id, f3.id],
-            output_files=[f4.id],
+            command=f"python {postprocess.path} -i {f3.path} -i {f4.path} -o {f5.path}",
+            input_files=[postprocess.id, f3.id, f4.id],
+            output_files=[f5.id],
             resource_requirements=small.id,
         ),
     ]

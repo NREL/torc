@@ -515,7 +515,7 @@ def test_reinitialize_workflow_incomplete_missing_files(
 
 
 @pytest.mark.parametrize(
-    "missing_file", ["inputs.json", "f1.json", "f2.json", "f3.json", "f4.json"]
+    "missing_file", ["inputs.json", "f1.json", "f2.json", "f3.json", "f4.json", "f5.json"]
 )
 def test_restart_workflow_missing_files(complete_workflow_missing_files, missing_file):
     """Test workflow restart on a complete workflow with missing files."""
@@ -554,13 +554,13 @@ def test_restart_workflow_missing_files(complete_workflow_missing_files, missing
     match missing_file:
         case "inputs.json":
             expected_start = [preprocess, work1, work2, postprocess]
-        case "f1.json":
+        case "f1.json" | "f2.json":
             expected_start = [preprocess, work1, work2, postprocess]
-        case "f2.json":
-            expected_start = [work1, postprocess]
         case "f3.json":
-            expected_start = [work2, postprocess]
+            expected_start = [work1, postprocess]
         case "f4.json":
+            expected_start = [work2, postprocess]
+        case "f5.json":
             expected_start = [postprocess]
         case _:
             assert False
