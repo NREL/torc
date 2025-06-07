@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from typing import Iterable, Optional
 
-import click
+import rich_click as click
 import json5
 from loguru import logger
 

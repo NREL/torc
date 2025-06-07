@@ -4,7 +4,7 @@ import json
 from pprint import pprint
 from typing import Any
 
-import click
+import rich_click as click
 from loguru import logger
 
 from torc.api import iter_documents

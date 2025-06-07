@@ -3,7 +3,7 @@
 import os
 import sys
 
-import click
+import rich_click as click
 from loguru import logger
 
 from torc.common import check_function

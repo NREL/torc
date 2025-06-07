@@ -2,7 +2,7 @@
 
 import getpass
 
-import click
+import rich_click as click
 
 import torc
 from torc.api import make_api

@@ -3,7 +3,7 @@
 import re
 from pathlib import Path
 
-import click
+import rich_click as click
 from loguru import logger
 
 from torc.utils.sql import union_tables

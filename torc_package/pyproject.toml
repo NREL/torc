@@ -35,6 +35,7 @@ dependencies = [
     "pydantic >= 2.10, < 3",
     "rmon",
     "rich",
+    "rich_click",
     "textual >= 3.2, < 4",
     "toml",
     # These are required by the openapi_client. Keep in sync with its setup.py.

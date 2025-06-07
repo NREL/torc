@@ -2,7 +2,7 @@
 
 import json
 
-import click
+import rich_click as click
 
 from torc.api import iter_documents
 from torc.cli.common import (

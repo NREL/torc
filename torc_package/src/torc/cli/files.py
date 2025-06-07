@@ -2,7 +2,7 @@
 
 import json
 
-import click
+import rich_click as click
 from loguru import logger
 
 from torc.openapi_client.models.file_model import FileModel
