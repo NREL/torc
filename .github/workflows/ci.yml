@@ -52,8 +52,7 @@ jobs:
       run: |
         cd torc_package
         torc config create -u http://localhost:8529/_db/test-workflows/torc-service
-        #pytest -v --cov=torc --cov-report=xml tests/test_fake_slurm_workflow.py
-        pytest --pdb --log-cli-level=info -s -k test_fake_slurm_workflow
+        pytest -v --cov=torc --cov-report=xml tests
     - name: codecov
       uses: codecov/codecov-action@v5
       if: ${{ matrix.os == env.DEFAULT_OS && matrix.python-version == env.DEFAULT_PYTHON  }}
