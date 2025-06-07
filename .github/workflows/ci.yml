@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         python-version: ["3.12", "3.13"]
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest]  # cannot run docker on windows
 
     steps:
     - uses: actions/checkout@v2
@@ -52,9 +52,9 @@ jobs:
       run: |
         cd torc_package
         torc config create -u http://localhost:8529/_db/test-workflows/torc-service
-        python -m pytest -v --disable-warnings --cov=torc --cov-report=xml tests
+        pytest -v --cov --cov-branch --cov-report=xml tests
     - name: codecov
-      uses: codecov/codecov-action@v4.2.0
+      uses: codecov/codecov-action@v5
       if: ${{ matrix.os == env.DEFAULT_OS && matrix.python-version == env.DEFAULT_PYTHON  }}
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
