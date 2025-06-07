@@ -41,7 +41,7 @@ jobs:
     - name: Configure ArangoDB
       run: |
         sudo apt-get update
-        sudo apt-get install -y npm zip curl docker graphviz graphviz-dev
+        sudo apt-get install -y npm zip curl graphviz graphviz-dev
         curl -s -X POST http://127.0.0.1:8529/_db/_system/_api/database --data '{"name":"test-workflows"}'
         cd db_service
         npm install
