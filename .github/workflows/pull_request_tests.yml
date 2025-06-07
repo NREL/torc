@@ -1,13 +1,22 @@
-name: Pytest
+name: CI
 
-on: pull_request
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+env:
+  DEFAULT_PYTHON: "3.12"
+  DEFAULT_OS: ubuntu-latest
 
 jobs:
   build:
-    runs-on: viz-runners
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.12", "3.13"]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v2
@@ -43,4 +52,34 @@ jobs:
       run: |
         cd torc_package
         torc config create -u http://localhost:8529/_db/test-workflows/torc-service
-        python -m pytest -v --disable-warnings tests
+        python -m pytest -v --disable-warnings --cov=torc --cov-report=xml tests
+    - name: codecov
+      uses: codecov/codecov-action@v4.2.0
+      if: ${{ matrix.os == env.DEFAULT_OS && matrix.python-version == env.DEFAULT_PYTHON  }}
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        name: torc-tests
+        fail_ci_if_error: false
+        verbose: true
+
+  mypy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: 3.12
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install ".[dev]"
+        mypy
+  ruff:
+    runs-on: ubuntu-latest
+    name: "ruff"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: chartboost/ruff-action@v1
+        with:
+          src: "./src"
