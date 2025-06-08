@@ -37,12 +37,12 @@ $ docker run -it arangodb/arangodb:latest arangorestore \
     --server.endpoint "http+tcp://<your-database-hostname>:8529"
 ```
 
-### Singularity container on Eagle
+### Apptainer container on Kestrel
 
 #### Dump
 
 ```console
-$ singularity run /datasets/images/arangodb/arangodb.sif \
+$ apptainer run /datasets/images/arangodb/arangodb.sif \
     arangodump \
     --server.database \
     <your-database-name> \
@@ -55,7 +55,7 @@ $ singularity run /datasets/images/arangodb/arangodb.sif \
 #### Restore
 
 ```console
-$ singularity run /datasets/images/arangodb/arangodb.sif \
+$ apptainer run /datasets/images/arangodb/arangodb.sif \
     arangorestore \
     --server.database <your-database-name> \
     --create-database \

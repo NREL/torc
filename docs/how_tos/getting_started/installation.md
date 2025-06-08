@@ -1,62 +1,43 @@
 (installation)=
 
 # Installation
+This page describes how to install the `torc` client and its dependencies. The `torc` client is a
+Python package that provides a command-line interface (CLI) for interacting with the Torc API.
+It also provides a Torc worker that can run jobs on local or HPC compute nodes.
 
-1. If running on NREL's HPC, contact Daniel Thom to procure a database on our shared server.
-   If you would like to manage your own server, you can request a virtual machine from the HPC
-   Operations team. We can help you setup and manage the database.
-
-```{eval-rst}
-.. note:: The test database does not enable authentication for the torc service API. The database
-   itself enables authentication but all torc CLI and API commands are not authenticated. This can
-   be customized for other databases.
-```
-
-2. If running on a local computer or cloud environment, install a database with ArangoDB. Refer to
-   the links below.
-
-3. Create a Python 3.11+ virtual environment. This example uses the `venv` module in the standard
+1. Create a Python 3.11+ virtual environment. This example uses the `venv` module in the standard
    library to create a virtual environment in your home directory.
 
    You may prefer `conda` or `mamba`.
 
-   > ```console
-   > $ module load python
-   > $ python -m venv ~/python-envs/torc
-   > ```
+   If you are running on NREL's HPC, you may need to `module load python` first.
 
-4. Activate the virtual environment.
+   ```console
+   $ python -m venv ~/python-envs/torc
+   ```
 
-   > ```console
-   > $ source ~/python-envs/torc/bin/activate
-   > ```
+2. Activate the virtual environment.
+
+   ```console
+   $ source ~/python-envs/torc/bin/activate
+   ```
 
    Whenever you are done using torc, you can deactivate the environment by running `deactivate`.
 
-5. Install the Python package `torc`.
+3. Install the Python package `torc`.
 
-   > ```console
-   > $ pip install git+ssh://git@github.com/NREL/torc.git@v0.4.1#subdirectory=torc_package
-   > ```
+   ```console
+   $ pip install torc-client
+   ```
 
-5) Optionally install the Julia client package.
+4) Optionally install the Julia client package.
 
-   > ```console
-   > $ julia  # optionally specify an environment with --project
-   > $ using Pkg
-   > $ Pkg.add(PackageSpec(url="git@github.com:NREL/torc.git", rev="v0.4.1", subdir="julia/Torc"))
-   > ```
+   ```console
+   $ julia  # optionally specify an environment with --project
+   $ using Pkg
+   $ Pkg.add(PackageSpec(url="git@github.com:NREL/torc.git", rev="v0.4.1", subdir="julia/Torc"))
+   ```
 
-Note that you can also install the `torc` package from a clone of the repository. This will give
-you the latest code from the `main` branch.
-
-> ```console
-> $ git clone https://github.com/NREL/torc.git
-> $ pip install -e torc/torc_package
-> ```
-
-6. Optionally install `jq` from <https://stedolan.github.io/jq/download/> for parsing JSON.
+5. Optionally install `jq` from <https://stedolan.github.io/jq/download/> for parsing JSON.
    This tool is very useful when sending API requests with `curl` or dumping torc output to
    JSON.
-
-Refer to {ref}`building-torc` for developer instructions on how to build the torc packages.

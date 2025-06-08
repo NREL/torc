@@ -39,11 +39,11 @@ of running it is through Arango's Docker container. You can also install it loca
 $ docker run -it arangodb/arangodb:latest arangoexport --help
 ```
 
-**Singularity on Eagle**:
+**apptainer on Eagle**:
 
 ```console
-$ module load singularity
-$ singularity run /datasets/images/arangodb/arangodb.sif arangoexport --help
+$ module load apptainer
+$ apptainer run /datasets/images/arangodb/arangodb.sif arangoexport --help
 ```
 
 **Local**:

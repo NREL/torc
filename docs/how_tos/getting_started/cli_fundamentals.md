@@ -17,69 +17,7 @@ $ torc workflows --help
 $ torc hpc slurm --help
 ```
 
-## Shell Completion
-
-The torc CLI uses the Python package [Click](https://click.palletsprojects.com/en/8.1.x) to
-process CLI options and arguments. Click supports shell completion for commands and subcommands for
-Bash, Zsh, and Fish. We highly recommend that you configure your shell for this.
-
-To demonstrate the value let's suppose that you want to see the commands available. Type `torc`,
-a space, and then `tab`. This is the result:
-
-```console
-$ torc collections
-collections            -- Collections commands
-compute-nodes          -- Compute node commands
-config                 -- Config commands
-events                 -- Event commands
-export                 -- Export commands
-files                  -- File commands
-graphs                 -- Graph commands
-hpc                    -- HPC commands
-jobs                   -- Job commands
-local                  -- Local compute node commands
-resource-requirements  -- Job resource requirements commands
-results                -- Result commands
-stats                  -- Stats commands
-user-data              -- User data commands
-workflows              -- Workflow commands
-```
-
-Press `tab` to cycle through the options. The same principle works for subcommands (e.g., `torc
-jobs <tab>`).
-
-After running the steps below restart your shell in order for the changes to take effect.
-
-### Bash Instructions
-
-```console
-$ _TORC_COMPLETE=bash_source torc > ~/.torc-complete.bash
-```
-
-Add this line to your `~/.bashrc` file:
-
-```
-. ~/.torc-complete.bash
-```
-
-### Zsh Instructions
-
-```console
-$ _TORC_COMPLETE=zsh_source torc > ~/.torc-complete.zsh
-```
-
-Add this line to your `~/.zshrc` file:
-
-```
-. ~/.torc-complete.zsh
-```
-
-### Fish Instructions
-
-```console
-$ _TORC_COMPLETE=fish_source torc > ~/.config/fish/completions/torc.fish
-```
-
+(database-connection)=
 ## Database Connection
 
 All of the commands described here require connecting to the database. We recommend that you use
@@ -208,4 +146,67 @@ $ torc results list --sort-by exec_time_s
 
 ```console
 $ torc results list --sort-by exec_time_s --reverse-sort
+```
+
+## Shell Completion
+
+The torc CLI uses the Python package [Click](https://click.palletsprojects.com/en/stable/) to
+process CLI options and arguments. Click supports shell completion for commands and subcommands for
+Bash, Zsh, and Fish. We highly recommend that you configure your shell for this.
+
+To demonstrate the value let's suppose that you want to see the commands available. Type `torc`,
+a space, and then `tab`. This is the result:
+
+```console
+$ torc collections
+collections            -- Collections commands
+compute-nodes          -- Compute node commands
+config                 -- Config commands
+events                 -- Event commands
+export                 -- Export commands
+files                  -- File commands
+graphs                 -- Graph commands
+hpc                    -- HPC commands
+jobs                   -- Job commands
+local                  -- Local compute node commands
+resource-requirements  -- Job resource requirements commands
+results                -- Result commands
+stats                  -- Stats commands
+user-data              -- User data commands
+workflows              -- Workflow commands
+```
+
+Press `tab` to cycle through the options. The same principle works for subcommands (e.g., `torc
+jobs <tab>`).
+
+After running the steps below restart your shell in order for the changes to take effect.
+
+### Bash Instructions
+
+```console
+$ _TORC_COMPLETE=bash_source torc > ~/.torc-complete.bash
+```
+
+Add this line to your `~/.bashrc` file:
+
+```
+. ~/.torc-complete.bash
+```
+
+### Zsh Instructions
+
+```console
+$ _TORC_COMPLETE=zsh_source torc > ~/.torc-complete.zsh
+```
+
+Add this line to your `~/.zshrc` file:
+
+```
+. ~/.torc-complete.zsh
+```
+
+### Fish Instructions
+
+```console
+$ _TORC_COMPLETE=fish_source torc > ~/.config/fish/completions/torc.fish
 ```

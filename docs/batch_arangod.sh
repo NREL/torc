@@ -8,8 +8,8 @@
 #SBATCH --partition=debug
 #SBATCH --qos=standby
 
-module load singularity-container
-singularity run \
+module load apptainer
+apptainer run \
     --network-args "portmap=8529:8529" \
     --env "ARANGO_ROOT_PASSWORD=openSesame" \
     -B arangodb3:/var/lib/arangodb3 \

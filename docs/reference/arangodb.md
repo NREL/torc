@@ -39,11 +39,11 @@ Here are example commands with `arangodump` to test your installation.
 $ docker run -it arangodb/arangodb:latest arangodump --help
 ```
 
-#### Singularity
+#### apptainer
 
 ```console
-$ module load singularity
-$ singularity run /datasets/images/arangodb/arangodb.sif arangodump --help
+$ module load apptainer
+$ apptainer run /datasets/images/arangodb/arangodb.sif arangodump --help
 ```
 
 ```{eval-rst}
@@ -55,7 +55,7 @@ $ singularity run /datasets/images/arangodb/arangodb.sif arangodump --help
 Example with bind mount:
 
 ```console
-$ singularity run -B /scratch:/scratch /datasets/images/arangodb/arangodb.sif arangodump --help
+$ apptainer run -B /scratch:/scratch /datasets/images/arangodb/arangodb.sif arangodump --help
 ```
 
 #### Local

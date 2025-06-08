@@ -3,8 +3,8 @@
 # Tutorials
 
 This section provides working examples that you can follow to learn how to use torc. The examples
-are stored in the torc repository at `/examples`, and so you'll need to clone it as described
-below.
+are stored in the torc repository at https://github.com/NREL/torc/tree/main/examples. You can either
+copy them or clone the repository as described below.
 
 1. Clone the torc repository.
 

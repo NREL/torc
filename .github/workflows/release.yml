@@ -25,6 +25,8 @@ jobs:
       - name: Publish package distributions to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
 
+    # TODO: This is not the right way to do this.
+    # Need an automated way of attaching this build output to the release.
     make-torc-service:
       runs-on: ubuntu-latest
       steps:
@@ -35,10 +37,15 @@ jobs:
             sudo apt-get install -y npm zip
             cd db_service
             npm install
-            zip -r torc-service.zip manifest.json index.js node_modules src scripts
+            mkdir torc-service
+            cp -r node_modules torc-service/
+            cp -r src torc-service/
+            cp -r scripts torc-service/
+            cp manifest.json torc-service/
+            cp index.js torc-service/
 
         - name: Upload build output
           uses: actions/upload-artifact@v4
           with:
             name: torc-service
-            path: db_service/torc-service.zip
+            path: db_service/torc-service
