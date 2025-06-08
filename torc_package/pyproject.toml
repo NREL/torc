@@ -118,6 +118,10 @@ module = "graphviz.*"
 ignore_missing_imports = true
 module = "networkxgmml.*"
 
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = "isodate.*"
+
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
 select = [
