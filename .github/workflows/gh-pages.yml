@@ -12,10 +12,10 @@ jobs:
       - name: select python version
         uses: actions/setup-python@v2
         with:
-          python-version: "3.11"
+          python-version: "3.12"
       - name: install dependencies
         run: |
-          sudo apt-get update && sudo apt-get install -y graphviz
+          sudo apt update && sudo apt install -y graphviz graphviz-dev
           python -m pip install --upgrade pip
           python -m pip install './torc_package[dev,plots]'
       - name: build documentation
