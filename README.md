@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/NREL/torc/graph/badge.svg?token=OY9JDRCIB9)](https://codecov.io/gh/NREL/torc)
+
 # Torc workflow management system
 
 This software package orchestrates execution of a workflow of jobs on distributed computing

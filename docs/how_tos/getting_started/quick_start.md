@@ -1,4 +1,4 @@
-# Quick Start
+# Workflows Quick Start
 
 This page assumes that you have a database and have completed the torc installation instructions.
 Refer to {ref}`database-installation` if you haven't set up a database yet.

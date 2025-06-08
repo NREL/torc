@@ -1,9 +1,10 @@
 (installation)=
 
 # Installation
-This page describes how to install the `torc` client and its dependencies. The `torc` client is a
-Python package that provides a command-line interface (CLI) for interacting with the Torc API.
-It also provides a Torc worker that can run jobs on local or HPC compute nodes.
+This page describes how to install `torc-client` and its dependencies. `torc-client` is a
+Python package that provides a command-line interface (CLI), a terminal user interface (TUI), and
+a Python library for interacting with the Torc API server. It also provides a Torc worker that can
+run jobs on local or HPC compute nodes.
 
 1. Create a Python 3.11+ virtual environment. This example uses the `venv` module in the standard
    library to create a virtual environment in your home directory.
