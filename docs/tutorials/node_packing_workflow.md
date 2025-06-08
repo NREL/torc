@@ -32,7 +32,13 @@ $ for i in {1..1000}; do echo "hello world" >> /tmp/commands.txt; done
 
 2. Create the workflow from the commands file.
 ```console
-$ torc workflows create-from-commands-file -n my-workflow -d "My workflow" --cpus-per-job=8 --memory=10g --runtime=P0DT1H commands.txt
+$ torc workflows create-from-commands-file \
+    --name my-workflow \
+    --description "My workflow" \
+    --cpus-per-job=8 \
+    --memory-per-job=10g \
+    --runtime-per-job=P0DT1H \
+    commands.txt
 INFO: Created a workflow from /tmp/commands.txt with key=6016359
 ```
 

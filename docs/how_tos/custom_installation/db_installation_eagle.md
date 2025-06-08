@@ -1,8 +1,8 @@
 (eagle-db-installation)=
 
-# Database Installation on Eagle
+# Database Installation on Kestrel
 
-1. Start the ArangoDB Singularity container in a directory where you want
+1. Start the ArangoDB apptainer container in a directory where you want
    to keep your database. Note that you can reload your data after stopping and restarting the
    container.
 
@@ -24,8 +24,8 @@ ArangoDB parameters as needed. ArangoDB will store its data in `arangodb3` and
 #SBATCH --nodes=1
 #SBATCH --partition=debug
 
-module load singularity-container
-singularity run \
+module load apptainer
+apptainer run \
     --network-args "portmap=8529:8529" \
     --env "ARANGO_ROOT_PASSWORD=openSesame" \
     -B arangodb3:/var/lib/arangodb3 \
@@ -52,9 +52,9 @@ $ ssh -L 8529:r102u34:8529 $USER@eagle.hpc.nrel.gov
 3. Create a database for a workflow. You can use the web UI or `arangosh`.
 
 ```console
-$ module load singularity-container
+$ module load apptainer
 $ mkdir arangodb3 arangodb3-apps
-$ singularity run \
+$ apptainer run \
       --network-args "portmap=8529:8529" \
       --env "ARANGO_ROOT_PASSWORD=openSesame" \
       -B arangodb3:/var/lib/arangodb3 \
@@ -89,14 +89,14 @@ $ npm install
 $ zip -r torc-service.zip manifest.json index.js src scripts
 ```
 
-5. Use the foxx-cli Singularity container to install the API service. This can be done on a login
+5. Use the foxx-cli apptainer container to install the API service. This can be done on a login
    node. Change the IP address to the database compute node if you are not already on that node.
    You will be prompted for your password. If you don't have authentication enabled, exclude the
    `--password` option.
 
 ```console
-$ module load singularity-container
-$ singularity run -B /scratch:/scratch \
+$ module load apptainer
+$ apptainer run -B /scratch:/scratch \
     /datasets/images/arangodb/arangodb.sif foxx install \
     --server http://127.0.0.1:8529 \
     --database workflows \
@@ -104,7 +104,7 @@ $ singularity run -B /scratch:/scratch \
     -password \
     /torc-service \
     /scratch/dthom/torc-service.zip
-$ singularity run -B /scratch:/scratch \
+$ apptainer run -B /scratch:/scratch \
     /datasets/images/arangodb/arangodb.sif foxx set-dev \
     --server http://127.0.0.1:8529 \
     --database workflows \

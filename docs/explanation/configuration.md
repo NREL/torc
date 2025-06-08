@@ -22,7 +22,7 @@ This is the recommended process because the JSON file defines everything about t
 Refer to {ref}`open-api-client-models` for a definition of the data model.
 
 For a specific example, refer to this
-[file](https://github.nrel.gov/viz/torc/blob/main/examples/diamond_workflow.json5).
+[file](https://github.com/NREL/torc/blob/main/examples/diamond_workflow.json5).
 
 ```{eval-rst}
 .. note:: In that example torc determines the order of execution of jobs based on the job/file
@@ -128,7 +128,7 @@ $ torc -k 92237770 jobs add -n job1 -c "bash my_script.sh -i input1.json -o outp
 ## API calls
 
 Make your own API calls directly to the torc database service. Here is one
-[script example](https://github.nrel.gov/viz/torc/blob/main/examples/diamond_workflow.py).
+[script example](https://github.com/NREL/torc/blob/main/examples/diamond_workflow.py).
 
 ## Dependency graphs
 
