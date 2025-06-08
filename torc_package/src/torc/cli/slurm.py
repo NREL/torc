@@ -545,8 +545,14 @@ def recommend_nodes(
         print(
             json.dumps(
                 {
-                    "ready_job_requirements": reqs.to_dict(),
-                    "num_nodes_by_cpus": num_nodes_by_cpus,
+                    "num_nodes": num_nodes,
+                    "details": {
+                        "ready_job_requirements": reqs.to_dict(),
+                        "num_nodes_by_cpus": num_nodes_by_cpus,
+                        "num_nodes_by_memory": num_nodes_by_memory,
+                        "jobs_per_node_by_duration": jobs_per_node_by_duration,
+                        "limiter": limiter,
+                    },
                 }
             )
         )

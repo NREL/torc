@@ -54,11 +54,6 @@ $ torc compute-nodes list-resource-stats
 If you set `monitor_type = periodic` in the config then you will one SQLite file per compute node
 in `<output-dir>/stats/*.sqlite`. Here are some example commands.
 
-```{eval-rst}
-.. warning:: NREL's Eagle HPC cluster has an outdated version of sqlite3. Use ``sqlite -header
-   -column`` instead of ``sqlite -table``.
-```
-
 ```console
 $ sqlite3 -table output/stats/compute_node_98209950.sqlite
 SQLite version 3.41.2 2023-03-22 11:56:21

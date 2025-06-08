@@ -28,6 +28,7 @@ from .common import (
     get_workflow_key_from_context,
     get_output_format_from_context,
     get_user_from_context,
+    prompt_user_for_workflow,
     setup_cli_logging,
     parse_filters,
     print_items,
@@ -341,8 +342,8 @@ def delete(ctx: click.Context, api: DefaultApi, workflow_keys: tuple[str]):
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     if not workflow_keys:
-        logger.warning("No workflow keys were passed")
-        return
+        workflow = prompt_user_for_workflow(ctx, api, auto_select_one_option=False)
+        workflow_keys = [workflow.key]
 
     _delete_workflows_with_warning(ctx, api, workflow_keys)
 
@@ -523,7 +524,7 @@ def process_auto_tune_resource_requirements_results(ctx: click.Context, api: Def
 
 
 @click.command()
-@click.argument("workflow_key")
+@click.argument("workflow_keys", nargs=-1)
 @click.option(
     "-f",
     "--failed-only",
@@ -543,25 +544,35 @@ def process_auto_tune_resource_requirements_results(ctx: click.Context, api: Def
 @click.pass_obj
 @click.pass_context
 def reset_status(
-    ctx: click.Context, api: DefaultApi, workflow_key: str, failed_only: bool, restart: bool
+    ctx: click.Context,
+    api: DefaultApi,
+    workflow_keys: tuple[str],
+    failed_only: bool,
+    restart: bool,
 ) -> None:
-    """Reset the status of the workflow and all jobs."""
+    """Reset the status of the workflow(s) and all jobs."""
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
-    workflow = api.get_workflow(workflow_key)
-    msg = f"""This command will reset the status of this workflow:
-    key: {workflow_key}
-    user: {workflow.user}
-    name: {workflow.name}
-    description: {workflow.description}
-"""
-    if restart:
-        msg += "\nAfter resetting status this command will restart the workflow."
-    confirm_change(ctx, msg)
-    reset_workflow_status(api, workflow_key)
-    reset_workflow_job_status(api, workflow_key, failed_only=failed_only)
-    if restart:
-        restart_workflow(api, workflow_key)
+    if workflow_keys:
+        workflows = [api.get_workflow(x) for x in workflow_keys]
+    else:
+        workflows = [prompt_user_for_workflow(ctx, api, auto_select_one_option=False)]
+
+    for workflow in workflows:
+        assert workflow.key is not None
+        msg = f"""This command will reset the status of this workflow:
+        key: {workflow.key}
+        user: {workflow.user}
+        name: {workflow.name}
+        description: {workflow.description}
+        """
+        if restart:
+            msg += "\nAfter resetting status this command will restart the workflow."
+        confirm_change(ctx, msg)
+        reset_workflow_status(api, workflow.key)
+        reset_workflow_job_status(api, workflow.key, failed_only=failed_only)
+        if restart:
+            restart_workflow(api, workflow.key)
 
 
 @click.command()

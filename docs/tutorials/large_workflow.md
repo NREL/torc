@@ -8,7 +8,7 @@ the workflow specification exceeds that size, creation will fail. Large workflow
 burden on the API service. The example used here builds the workflow incrementally. This should be
 used for any workflow with more than 10,000 jobs.
 
-The builder script is [large_workflow.py](https://github.nrel.gov/viz/torc/blob/main/examples/large_workflow.py). It creates a
+The builder script is [large_workflow.py](https://github.com/NREL/torc/blob/main/examples/large_workflow.py). It creates a
 workflow with 20,000 independent jobs. It creates jobs in two batchs of 10,000 each. It specifies
 resource requirements and a scheduler for each job.
 

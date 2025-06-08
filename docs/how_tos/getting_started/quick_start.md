@@ -24,7 +24,13 @@ bash my_script1.sh 2
 4. Create the workflow.
 
 ```console
-$ torc workflows create-from-commands-file -n my-workflow -d "My workflow" --cpus-per-job=4 --memory-per-job="5g" --runtime-per-job=P0DT1H commands.txt
+$ torc workflows create-from-commands-file \
+    --name my-workflow \
+    --description "My workflow" \
+    --cpus-per-job=4 \
+    --memory-per-job=5g \
+    --runtime-per-job=P0DT1H \
+    commands.txt
 2023-04-10 10:52:52,240 - INFO [torc.cli.workflows workflows.py:144] : Created a workflow from commands.txt with key=94956990
 ```
 

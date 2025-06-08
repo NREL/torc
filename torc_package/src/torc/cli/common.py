@@ -12,8 +12,9 @@ from prettytable import PrettyTable
 
 from torc.api import iter_documents
 from torc.loggers import setup_logging
-from torc.openapi_client.api import DefaultApi
+from torc.openapi_client import DefaultApi
 from torc.config import torc_settings
+from torc.openapi_client.models.workflow_model import WorkflowModel
 
 
 def check_database_url(api: DefaultApi) -> None:
@@ -236,6 +237,30 @@ def prompt_user_for_document(
         sys.stdout = orig_stdout
 
     return doc
+
+
+def prompt_user_for_workflow(
+    ctx: click.Context, api: DefaultApi, auto_select_one_option: bool = False
+) -> WorkflowModel:
+    """Prompt the user to select a workflow key from table of workflows."""
+    msg = (
+        "\nThis command requires a workflow key and one was not provided. "
+        "Please choose one from below.\n"
+    )
+    workflow = prompt_user_for_document(
+        "workflow",
+        api.list_workflows,
+        exclude_columns=("_id", "_rev"),
+        msg=msg,
+        auto_select_one_option=auto_select_one_option,
+        user=get_user_from_context(ctx),
+        is_archived=False,
+    )
+    if workflow is None:
+        logger.error("No workflows are stored")
+        sys.exit(1)
+
+    return workflow
 
 
 def make_text_table(

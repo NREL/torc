@@ -12,7 +12,7 @@ with these torc features:
 The workflow is a derivation of the {ref}`diamond-workflow`. Follow the same steps except for these
 deviations:
 
-1. Use the workflow specification file [examples/slurm_diamond_workflow.json5](https://github.nrel.gov/viz/torc/blob/main/examples/slurm_diamond_workflow.json5).
+1. Use the workflow specification file [examples/slurm_diamond_workflow.json5](https://github.com/NREL/torc/blob/main/examples/slurm_diamond_workflow.json5).
 2. Change the Slurm account name.
 3. Configure and start the workflow from an HPC login node.
 4. Instead of `torc jobs run`, schedule a compute node to run the jobs with
