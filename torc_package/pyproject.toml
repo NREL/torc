@@ -18,7 +18,6 @@ authors = [
 keywords = ["hpc", "workflow", "pipeline"]
 classifiers = [
     "Development Status :: 4 - Beta",
-    "License-File :: LICENSE",
     "Natural Language :: English",
     "Programming Language :: Python :: 3.12",
 ]
