@@ -293,7 +293,7 @@ def test_slurm_config_commands(create_workflow_cli):
     assert output["configs"][0]["walltime"] == "04:00:00"
     config_key = output["configs"][0]["_key"]
 
-    new_walltime = "02:00:00"
+    new_walltime = "24:00:00"
     result = runner.invoke(
         cli,
         [
@@ -325,8 +325,11 @@ def test_slurm_config_commands(create_workflow_cli):
             key,
             "-u",
             url,
-            "workflows",
+            "hpc",
+            "slurm",
             "recommend-nodes",
+            "-c",
+            "36",
         ]
     )
     assert output["num_nodes_by_cpus"] == 1

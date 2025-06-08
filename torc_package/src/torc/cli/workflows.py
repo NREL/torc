@@ -2,22 +2,22 @@
 
 import getpass
 import json
-import math
 import sys
 from pathlib import Path
 from typing import Iterable, Optional
 
-import rich_click as click
 import json5
+import rich_click as click
 from loguru import logger
 
+from torc import add_jobs, iter_documents
 from torc.openapi_client import (
     JobModel,
     ResourceRequirementsModel,
     WorkflowModel,
     WorkflowSpecificationModel,
 )
-from torc.api import remove_db_keys, sanitize_workflow, iter_documents, list_model_fields
+from torc.api import remove_db_keys, sanitize_workflow, list_model_fields
 from torc.exceptions import InvalidWorkflow
 from torc.hpc.slurm_interface import SlurmInterface
 from torc.openapi_client.api import DefaultApi
@@ -185,11 +185,11 @@ def create_from_commands_file(
             name=name, num_cpus=cpus_per_job, memory=memory_per_job, runtime=runtime_per_job
         ),
     )
-    for i, command in enumerate(commands, start=1):
-        name = str(i)
-        api.add_job(
-            workflow.key, JobModel(name=name, command=command, resource_requirements=req.id)
-        )
+    jobs = [
+        JobModel(name=str(i + 1), command=command, resource_requirements=req.id)
+        for i, command in enumerate(commands)
+    ]
+    add_jobs(api, workflow.key, jobs)
 
 
 @click.command()
@@ -242,17 +242,16 @@ def add_jobs_from_commands_file(
         ),
     )
     res = api.list_jobs(workflow_key, limit=1)
-    count = 0
-    for i, command in enumerate(commands, start=res.total_count + 1):
-        api.add_job(
-            workflow_key, JobModel(name=str(i), command=command, resource_requirements=req.id)
-        )
-        count += 1
+    jobs = [
+        JobModel(name=str(i), command=command, resource_requirements=req.id)
+        for i, command in enumerate(commands, start=res.total_count + 1)
+    ]
+    add_jobs(api, workflow_key, jobs)
 
     if output_format == "text":
-        logger.info("Added {} jobs to workflow {}", count, workflow_key)
+        logger.info("Added {} jobs to workflow {}", len(jobs), workflow_key)
     else:
-        print(json.dumps({"num_jobs": count, "key": workflow_key}))
+        print(json.dumps({"num_jobs": len(jobs), "key": workflow_key}))
 
 
 def _read_jobs_from_commands_file(filename: Path) -> list[str]:
@@ -521,56 +520,6 @@ def process_auto_tune_resource_requirements_results(ctx: click.Context, api: Def
         rr_cmd,
         events_cmd,
     )
-
-
-@click.command()
-@click.option(
-    "-c",
-    "--num-cpus",
-    type=int,
-    default=36,
-    help="Number of CPUs per node",
-    show_default=True,
-)
-@click.option(
-    "-s",
-    "--scheduler-config-id",
-    type=str,
-    help="Limit output to jobs assigned this scheduler config ID. Refer to list-scheduler-configs.",
-)
-@click.pass_obj
-@click.pass_context
-def recommend_nodes(
-    ctx: click.Context, api: DefaultApi, num_cpus: int, scheduler_config_id: str
-) -> None:
-    """Recommend compute nodes to schedule."""
-    setup_cli_logging(ctx, __name__)
-    check_database_url(api)
-    output_format = get_output_format_from_context(ctx)
-    workflow_key = get_workflow_key_from_context(ctx, api)
-    if scheduler_config_id is None:
-        reqs = api.get_ready_job_requirements(workflow_key)
-    else:
-        reqs = api.get_ready_job_requirements(
-            workflow_key, scheduler_config_id=scheduler_config_id
-        )
-    if reqs.num_jobs == 0:
-        logger.error("No jobs are in the ready state. You may need to run 'torc workflows start'")
-        sys.exit(1)
-
-    num_nodes_by_cpus = math.ceil(reqs.num_cpus / num_cpus)
-    if output_format == "text":
-        print(f"Requirements for jobs in the ready state: \n{reqs}")
-        print(f"Based on CPUs, number of required nodes = {num_nodes_by_cpus}")
-    else:
-        print(
-            json.dumps(
-                {
-                    "ready_job_requirements": reqs.to_dict(),
-                    "num_nodes_by_cpus": num_nodes_by_cpus,
-                }
-            )
-        )
 
 
 @click.command()
@@ -1058,7 +1007,6 @@ workflows.add_command(delete_all)
 workflows.add_command(list_scheduler_configs)
 workflows.add_command(list_workflows)
 workflows.add_command(process_auto_tune_resource_requirements_results)
-workflows.add_command(recommend_nodes)
 workflows.add_command(reset_status)
 workflows.add_command(restart)
 workflows.add_command(set_compute_node_parameters)

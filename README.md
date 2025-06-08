@@ -41,6 +41,9 @@ Here are the features of Torc that we think differentiate it from other tools:
   A Torc worker can maintain a maximum queue depth of jobs on a compute node until the allocation
   runs out of time. Users can start workers on any number single-node or multi-node allocations.
 
+  Users that are not savvy with Bash, Slurm, or workflows can easily distribute many jobs across
+  nodes.
+
 - Torc API Server
 
   Torc provides a server that implements an API conforming to an [OpenAPI

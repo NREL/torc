@@ -30,10 +30,9 @@ class GetReadyJobRequirementsResponse(BaseModel):
     num_cpus: StrictInt
     num_gpus: StrictInt
     memory_gb: Union[StrictFloat, StrictInt]
-    max_memory_gb: Union[StrictFloat, StrictInt]
     max_num_nodes: StrictInt
     max_runtime: StrictStr
-    __properties: ClassVar[List[str]] = ["num_jobs", "num_cpus", "num_gpus", "memory_gb", "max_memory_gb", "max_num_nodes", "max_runtime"]
+    __properties: ClassVar[List[str]] = ["num_jobs", "num_cpus", "num_gpus", "memory_gb", "max_num_nodes", "max_runtime"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -90,7 +89,6 @@ class GetReadyJobRequirementsResponse(BaseModel):
             "num_cpus": obj.get("num_cpus"),
             "num_gpus": obj.get("num_gpus"),
             "memory_gb": obj.get("memory_gb"),
-            "max_memory_gb": obj.get("max_memory_gb"),
             "max_num_nodes": obj.get("max_num_nodes"),
             "max_runtime": obj.get("max_runtime")
         })

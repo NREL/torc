@@ -8,7 +8,6 @@ Name | Type | Description | Notes
 **num_cpus** | **Int64** |  | [default to nothing]
 **num_gpus** | **Int64** |  | [default to nothing]
 **memory_gb** | **Float64** |  | [default to nothing]
-**max_memory_gb** | **Float64** |  | [default to nothing]
 **max_num_nodes** | **Int64** |  | [default to nothing]
 **max_runtime** | **String** |  | [default to nothing]
 

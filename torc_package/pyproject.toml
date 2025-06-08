@@ -27,6 +27,7 @@ dependencies = [
     "dynaconf",
     "graphviz",
     "json5",
+    "isodate",
     "loguru",
     "plotly >= 5.19, < 6",
     "psutil >= 5.9, < 6",

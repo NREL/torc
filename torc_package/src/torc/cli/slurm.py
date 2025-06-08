@@ -1,24 +1,23 @@
 """Slurm CLI commands"""
 
 import json
+import math
 import socket
 import sys
 from datetime import timedelta
 from pathlib import Path
 
+import isodate
 import rich_click as click
 from loguru import logger
 
-from torc.openapi_client.models.slurm_scheduler_model import (
+from torc.openapi_client import (
+    ApiException,
+    ComputeNodesResources,
+    DefaultApi,
     SlurmSchedulerModel,
-)
-from torc.openapi_client.models.scheduled_compute_nodes_model import (
     ScheduledComputeNodesModel,
 )
-from torc.openapi_client.models.compute_nodes_resources import (
-    ComputeNodesResources,
-)
-from torc.openapi_client.rest import ApiException
 
 import torc
 from torc.api import (
@@ -441,7 +440,7 @@ def _check_schedule_params(api, workflow_key):
         sys.exit(1)
 
 
-def _get_scheduler_config(ctx, api, workflow_key, scheduler_config_key):
+def _get_scheduler_config(ctx, api, workflow_key, scheduler_config_key) -> SlurmSchedulerModel:
     if scheduler_config_key is None:
         params = ctx.find_root().params
         if params["no_prompts"]:
@@ -467,6 +466,90 @@ def _get_scheduler_config(ctx, api, workflow_key, scheduler_config_key):
         config = api.get_slurm_scheduler(workflow_key, scheduler_config_key)
 
     return config
+
+
+@click.command()
+@click.option(
+    "-c",
+    "--num-cpus",
+    type=int,
+    default=104,
+    help="Number of CPUs per node",
+    show_default=True,
+)
+@click.option(
+    "-m",
+    "--memory-gb",
+    type=int,
+    default=240,
+    help="Amount of memory in GB per node",
+    show_default=True,
+)
+@click.option(
+    "-s",
+    "--scheduler-config-key",
+    type=str,
+    help="Limit output to jobs assigned this scheduler config key.",
+)
+@click.pass_obj
+@click.pass_context
+def recommend_nodes(
+    ctx: click.Context, api: DefaultApi, num_cpus: int, memory_gb, scheduler_config_key: str | None
+) -> None:
+    """Recommend compute nodes to schedule."""
+    setup_cli_logging(ctx, __name__)
+    check_database_url(api)
+    output_format = get_output_format_from_context(ctx)
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    config = _get_scheduler_config(ctx, api, workflow_key, scheduler_config_key)
+    reqs = api.get_ready_job_requirements(workflow_key, scheduler_config_id=config.id)
+    if reqs.num_jobs == 0:
+        logger.error("No jobs are in the ready state. You may need to run 'torc workflows start'")
+        sys.exit(1)
+
+    max_runtime_s = isodate.parse_duration(reqs.max_runtime).total_seconds()
+    assert config.walltime is not None, "Slurm walltime must be set in the config"
+    node_duration = slurm_time_to_timedelta(config.walltime).total_seconds()
+    if max_runtime_s > node_duration:
+        logger.error(
+            "The max job runtime of {} is greater than the Slurm walltime of {}. "
+            "This configuration is invalid",
+            reqs.max_runtime,
+            config.walltime,
+        )
+        sys.exit(1)
+    jobs_per_node_by_duration = math.ceil(node_duration / max_runtime_s)
+
+    num_nodes_by_cpus = math.ceil(reqs.num_cpus / num_cpus / jobs_per_node_by_duration)
+    num_nodes_by_memory = math.ceil(reqs.memory_gb / memory_gb / jobs_per_node_by_duration)
+    if num_nodes_by_cpus >= num_nodes_by_memory:
+        limiter = "CPU"
+        num_nodes = num_nodes_by_cpus
+    else:
+        limiter = "memory"
+        num_nodes = num_nodes_by_memory
+    if output_format == "text":
+        print(f"Requirements for jobs in the ready state: \n{reqs}")
+        print(f"  Based on CPUs, number of required nodes = {num_nodes_by_cpus}")
+        print(f"  Based on memory, number of required nodes = {num_nodes_by_memory}")
+        print(f"  Max job runtime: {reqs.max_runtime}")
+        print(f"  Slurm walltime: {config.walltime}")
+        print(f"  Jobs per node by duration: {jobs_per_node_by_duration}\n")
+        print(
+            f"After accounting for a max runtime and a limiter based on {limiter}, "
+            f"torc recommends scheduling {num_nodes} nodes.\n"
+            "Please perform a sanity check on this number before scheduling jobs.\n"
+            "The algorithm is most accurate when the jobs have uniform requirements."
+        )
+    else:
+        print(
+            json.dumps(
+                {
+                    "ready_job_requirements": reqs.to_dict(),
+                    "num_nodes_by_cpus": num_nodes_by_cpus,
+                }
+            )
+        )
 
 
 @click.command()
@@ -670,8 +753,20 @@ def get_torc_job_stdio_files_slurm(
     return files
 
 
+def slurm_time_to_timedelta(walltime: str) -> timedelta:
+    if "-" in walltime:
+        days_part, time_part = walltime.split("-")
+        days = int(days_part)
+    else:
+        days = 0
+        time_part = walltime
+    h, m, s = map(int, time_part.split(":"))
+    return timedelta(days=days, hours=h, minutes=m, seconds=s)
+
+
 slurm.add_command(add_config)
 slurm.add_command(modify_config)
 slurm.add_command(list_configs)
+slurm.add_command(recommend_nodes)
 slurm.add_command(run_jobs)
 slurm.add_command(schedule_nodes)
