@@ -3,7 +3,7 @@
 import toml
 from pathlib import Path
 
-import click
+import rich_click as click
 
 from torc.config import DEFAULT_SETTINGS_FILENAME
 

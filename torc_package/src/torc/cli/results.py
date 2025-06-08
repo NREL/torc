@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 
-import click
+import rich_click as click
 from loguru import logger
 
 from torc.openapi_client.models.result_model import ResultModel

@@ -7323,7 +7323,6 @@ components:
           type: boolean
     get_ready_job_requirements_response:
       required:
-      - max_memory_gb
       - max_num_nodes
       - max_runtime
       - memory_gb
@@ -7339,8 +7338,6 @@ components:
         num_gpus:
           type: integer
         memory_gb:
-          type: number
-        max_memory_gb:
           type: number
         max_num_nodes:
           type: integer

@@ -6,7 +6,7 @@ import sys
 from pathlib import Path
 from typing import Any, Callable, Iterable, Optional
 
-import click
+import rich_click as click
 from loguru import logger
 from prettytable import PrettyTable
 

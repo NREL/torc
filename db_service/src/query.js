@@ -131,7 +131,11 @@ function getReadyJobRequirements(workflow, schedulerConfigId) {
 
   const collection = config.getWorkflowCollection(workflow, 'jobs');
   for (const job of collection.byExample({status: JobStatus.Ready})) {
-    if (schedulerConfigId != null && job.internal.scheduler_config_id != schedulerConfigId) {
+    if (
+      schedulerConfigId != null &&
+        job.internal.scheduler_config_id != '' &&
+        job.internal.scheduler_config_id != schedulerConfigId
+    ) {
       continue;
     }
     const reqs = getJobResourceRequirements(job, workflow);
@@ -140,9 +144,6 @@ function getReadyJobRequirements(workflow, schedulerConfigId) {
     numGpus += reqs.num_gpus;
     const memory = utils.getMemoryInBytes(reqs.memory);
     totalMemory += memory;
-    if (memory > maxMemory) {
-      maxMemory = memory;
-    }
     const runtime = utils.getTimeDurationInSeconds(reqs.runtime);
     if (runtime > maxRuntime) {
       maxRuntime = runtime;
@@ -157,7 +158,6 @@ function getReadyJobRequirements(workflow, schedulerConfigId) {
     num_cpus: numCpus,
     num_gpus: numGpus,
     memory_gb: totalMemory / GiB,
-    max_memory_gb: maxMemory / GiB,
     max_num_nodes: maxNumNodes,
     max_runtime: maxRuntimeDuration,
   };

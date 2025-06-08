@@ -9,7 +9,7 @@ below.
 1. Clone the torc repository.
 
 ```console
-$ git clone https://github.nrel.gov/viz/torc.git
+$ git clone https://github.com/NREL/torc.git
 ```
 
 2. Change to the `torc` directory so that you have access to the torc test scripts.
@@ -32,6 +32,7 @@ Wrote torc config to /Users/dthom/.torc_settings.toml
 
 diamond_workflow
 slurm_diamond_workflow
+node_packing_workflow
 manual_job_dependencies
 cpu_affinity_workflow
 map_python_function

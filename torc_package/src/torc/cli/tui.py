@@ -1,6 +1,6 @@
 """Starts a terminal-based management application."""
 
-import click
+import rich_click as click
 
 from torc.apps.management_console import TorcManagementConsole
 

@@ -5,7 +5,7 @@ import socket
 from pathlib import Path
 from typing import Any, Optional
 
-import click
+import rich_click as click
 from loguru import logger
 
 from torc.loggers import setup_logging

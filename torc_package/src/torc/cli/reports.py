@@ -5,7 +5,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-import click
+import rich_click as click
 
 from torc.api import (
     iter_documents,

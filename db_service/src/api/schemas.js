@@ -162,7 +162,6 @@ const readyJobsResourceRequirements = joi.object().required().keys({
   num_cpus: joi.number().integer().required(),
   num_gpus: joi.number().integer().required(),
   memory_gb: joi.number().required(),
-  max_memory_gb: joi.number().required(),
   max_num_nodes: joi.number().integer().required(),
   max_runtime: joi.string().required(),
 });

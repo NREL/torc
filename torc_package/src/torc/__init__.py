@@ -15,7 +15,7 @@ from torc.config import torc_settings
 from torc.loggers import setup_logging
 
 
-__version__ = metadata.metadata("torc")["Version"]
+__version__ = metadata.metadata("torc-client")["Version"]
 
 warnings.filterwarnings("once", category=DeprecationWarning)
 

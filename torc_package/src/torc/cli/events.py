@@ -5,7 +5,7 @@ import sys
 import time
 from datetime import datetime
 
-import click
+import rich_click as click
 from loguru import logger
 
 from torc.api import iter_documents

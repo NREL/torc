@@ -1,6 +1,6 @@
 """HPC CLI commands"""
 
-import click
+import rich_click as click
 
 from .slurm import slurm
 

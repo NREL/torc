@@ -138,9 +138,9 @@ $ torc workflows process-auto-tune-resource-requirements-results
    Use the `recommend` command to help estimate the number of nodes.
 
 ```console
-$ torc workflows recommend-nodes -s 95614387
-$ torc workflows recommend-nodes -s 95614398
-$ torc workflows recommend-nodes -s 95614405
+$ torc hpc slurm recommend-nodes -s 95614387
+$ torc hpc slurm recommend-nodes -s 95614398
+$ torc hpc slurm recommend-nodes -s 95614405
 ```
 
 Use the output above to assign numbers for X, Y, and Z below.

@@ -1,7 +1,6 @@
 # Run a workflow
 
-This is an HPC example that schedules one node to do the work. Note that it saves the workflow
-key to the local torc rc file. You will need to change this if you change workflows.
+This is an HPC example that schedules one node to do the work.
 
 ```{eval-rst}
 .. note:: The paths to all relevant scripts need to correct based on your current directory.
@@ -20,13 +19,12 @@ $ torc workflows start
 ```
 
 This command asks the database to give a recommendation on how many compute nodes should be
-scheduled given that each node has 36 CPUs.
+scheduled given that each node has 104 CPUs.
 
 ```console
-$ torc workflows recommend-nodes -n 36
+$ torc hpc slurm recommend-nodes -n 104
 Requirements for jobs in the ready state:
-{'max_memory_gb': 16.0,
- 'max_num_nodes': 1,
+{'max_num_nodes': 1,
  'max_runtime': 'P0DT12H',
  'memory_gb': 25.0,
  'num_cpus': 13,

@@ -293,7 +293,7 @@ def test_slurm_config_commands(create_workflow_cli):
     assert output["configs"][0]["walltime"] == "04:00:00"
     config_key = output["configs"][0]["_key"]
 
-    new_walltime = "02:00:00"
+    new_walltime = "24:00:00"
     result = runner.invoke(
         cli,
         [
@@ -325,8 +325,11 @@ def test_slurm_config_commands(create_workflow_cli):
             key,
             "-u",
             url,
-            "workflows",
+            "hpc",
+            "slurm",
             "recommend-nodes",
+            "-c",
+            "36",
         ]
     )
     assert output["num_nodes_by_cpus"] == 1
@@ -356,6 +359,23 @@ def test_create_workflow_from_commands_file(db_api, tmp_path):
         jobs = api.list_jobs(key).items
         assert len(jobs) == 5
         assert jobs[0].command == "echo hello"
+
+        cmd = [
+            "-u",
+            url,
+            "-k",
+            key,
+            "-F",
+            "json",
+            "workflows",
+            "add-jobs-from-commands-file",
+            str(commands_file),
+        ]
+        result = _run_and_convert_output_from_json(cmd)
+        assert result["key"] == key
+        assert result["num_jobs"] == 5
+        jobs = api.list_jobs(key).items
+        assert len(jobs) == 10
     finally:
         if key is not None:
             api.remove_workflow(key)

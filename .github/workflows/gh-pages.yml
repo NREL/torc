@@ -6,7 +6,7 @@ on:
 
 jobs:
   make-pages:
-    runs-on: viz-runners
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: select python version

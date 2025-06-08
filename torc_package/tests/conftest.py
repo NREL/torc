@@ -545,9 +545,13 @@ def create_workflow_cli(tmp_path_factory):
     api = _initialize_api()
     url = api.api_client.configuration.host
     tmp_path = tmp_path_factory.mktemp("torc")
-    file = Path(__file__).parent.parent.parent / "examples" / "independent_workflow.json5"
+    file = Path(__file__).parents[2] / "examples" / "independent_workflow.json5"
     data = load_json_file(file)
     data["config"]["compute_node_resource_stats"]["interval"] = 1
+    if "CI" in os.environ:
+        for req in data["resource_requirements"]:
+            req["memory"] = "1m"
+            req["num_cpus"] = 1
     w_file = tmp_path / file.name
     dump_json_file(data, w_file)
     runner = CliRunner()

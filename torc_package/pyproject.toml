@@ -1,33 +1,33 @@
 [build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
 
 [project]
-name = "torc"
+name = "torc-client"
 # Note: Do not update manually. Use bump-my-version, such as
 # $ bump-my-version bump minor
 version = "0.4.1"
-description = "Provides workflow automation services"
-requires-python = ">=3.11,<3.13"
+description = "Workflow management system"
+requires-python = ">=3.11,<3.14"
 license = "BSD-3-Clause"
 readme = "README.md"
 authors = [
     { name = "Daniel Thom", email = "daniel.thom@nrel.gov" },
     { name = "Joseph McKinsey", email = "joseph.mckinsey@nrel.gov" },
 ]
-include_package_data = true
 keywords = ["hpc", "workflow", "pipeline"]
 classifiers = [
     "Development Status :: 4 - Beta",
-    "License :: OSI Approved :: BSD License",
+    "License-File :: LICENSE",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
     "click >= 8.2, < 9",
     "dynaconf",
     "graphviz",
     "json5",
+    "isodate",
     "loguru",
     "plotly >= 5.19, < 6",
     "psutil >= 5.9, < 6",
@@ -35,6 +35,7 @@ dependencies = [
     "pydantic >= 2.10, < 3",
     "rmon",
     "rich",
+    "rich_click",
     "textual >= 3.2, < 4",
     "toml",
     # These are required by the openapi_client. Keep in sync with its setup.py.
@@ -43,8 +44,8 @@ dependencies = [
     "typing-extensions >= 4.7.1",
 ]
 
-[tool.hatch.metadata]
-allow-direct-references = true
+[tool.setuptools.packages.find]
+where = ["src"]
 
 [project.optional-dependencies]
 dev = [
@@ -59,6 +60,7 @@ dev = [
     "pre-commit",
     "pytest",
     "pytest-cov",
+    "ruff",
     "sphinx",
     "sphinx-click",
     "sphinxcontrib-openapi",
@@ -99,7 +101,7 @@ exclude = [
 line-length = 99
 indent-width = 4
 
-target-version = "py311"
+target-version = "py312"
 
 [tool.mypy]
 check_untyped_defs = true
@@ -115,6 +117,10 @@ module = "graphviz.*"
 [[tool.mypy.overrides]]
 ignore_missing_imports = true
 module = "networkxgmml.*"
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = "isodate.*"
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.

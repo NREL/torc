@@ -314,7 +314,7 @@ class TorcManagementConsole(App):
             assert event.row_key.value is not None
             self.query_one("#slurm_scheduler_key", Input).value = event.row_key.value
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
+    def on_button_pressed(self, event: Button.Pressed) -> None:  # noqa: C901
         """Event handler called when a button is pressed."""
         self._clear_output_box()
         match event.button.id:

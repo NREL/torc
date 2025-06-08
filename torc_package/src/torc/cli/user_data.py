@@ -2,7 +2,7 @@
 
 import json
 
-import click
+import rich_click as click
 import json5
 from loguru import logger
 

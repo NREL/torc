@@ -11,7 +11,7 @@ directory or a sub-directory.
 ```console
 $ mkdir work-dir && cd work-dir
 $ torc workflows start
-$ torc worklows recommend-nodes -n 36
+$ torc hpc slurm recommend-nodes -n 36
 $ torc hpc slurm schedule-nodes -n 10
 ```
 
