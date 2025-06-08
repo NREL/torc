@@ -2,12 +2,14 @@
 
 import getpass
 import json
+import math
 import os
 import shutil
 import socket
 import tempfile
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
 from torc.cli.torc import cli
@@ -273,66 +275,100 @@ def test_resource_requirement_commands(create_workflow_cli):
         assert item["to"]["runtime"] == "P0DT24H"
 
 
-def test_slurm_config_commands(create_workflow_cli):
+@pytest.mark.parametrize("memory_per_job", ["10g", "50g"])
+def test_slurm_recommend_nodes(db_api, tmp_path, memory_per_job):
     """Tests slurm config CLI commands."""
-    key, url, _ = create_workflow_cli
+    api, url = db_api
+    commands_file = tmp_path / "commands.txt"
+    with open(commands_file, "w", encoding="utf-8") as f_out:
+        for _ in range(1000):
+            f_out.write("echo hello\n")
+
     runner = CliRunner()
-    result = runner.invoke(cli, ["-k", key, "-u", url, "workflows", "start"])
-    assert result.exit_code == 0
-    output = _run_and_convert_output_from_json(
-        ["-F", "json", "-k", key, "-u", url, "workflows", "list-scheduler-configs"]
-    )
-    assert output["ids"]
-    scheduler_id = output["ids"][0]
-    output = _run_and_convert_output_from_json(
-        ["-F", "json", "-k", key, "-u", url, "hpc", "slurm", "list-configs"]
-    )
-
-    assert output["configs"]
-    assert output["configs"][0]["_id"] == scheduler_id
-    assert output["configs"][0]["walltime"] == "04:00:00"
-    config_key = output["configs"][0]["_key"]
-
-    new_walltime = "24:00:00"
-    result = runner.invoke(
-        cli,
-        [
-            "-k",
-            key,
+    key = None
+    try:
+        cmd = [
             "-u",
             url,
-            "hpc",
-            "slurm",
-            "modify-config",
-            config_key,
-            "-w",
-            new_walltime,
-        ],
-    )
-    assert result.exit_code == 0
-
-    output = _run_and_convert_output_from_json(
-        ["-F", "json", "-k", key, "-u", url, "hpc", "slurm", "list-configs"]
-    )
-    assert output["configs"]
-    assert output["configs"][0]["walltime"] == new_walltime
-
-    output = _run_and_convert_output_from_json(
-        [
             "-F",
             "json",
-            "-k",
-            key,
-            "-u",
-            url,
-            "hpc",
-            "slurm",
-            "recommend-nodes",
-            "-c",
-            "36",
+            "workflows",
+            "create-from-commands-file",
+            "--cpus-per-job=8",
+            "--memory-per-job",
+            memory_per_job,
+            "--runtime-per-job=P0DT1H",
+            str(commands_file),
         ]
-    )
-    assert output["num_nodes_by_cpus"] == 1
+        result = _run_and_convert_output_from_json(cmd)
+        key = result["key"]
+        assert (
+            runner.invoke(
+                cli,
+                [
+                    "-u",
+                    url,
+                    "-k",
+                    key,
+                    "workflows",
+                    "start",
+                ],
+            ).exit_code
+            == 0
+        )
+        assert (
+            runner.invoke(
+                cli,
+                [
+                    "-u",
+                    url,
+                    "-k",
+                    key,
+                    "hpc",
+                    "slurm",
+                    "add-config",
+                    "--account=my_account",
+                    "--name=short",
+                    "--mem=240G",
+                    "--walltime=04:00:00",
+                ],
+            ).exit_code
+            == 0
+        )
+
+        output = _run_and_convert_output_from_json(
+            [
+                "-F",
+                "json",
+                "-k",
+                key,
+                "-u",
+                url,
+                "hpc",
+                "slurm",
+                "recommend-nodes",
+                "-c",
+                "104",
+                "-m",
+                "240",
+            ]
+        )
+        job_rounds_by_duration = 4
+        match memory_per_job:
+            case "10g":
+                one_node_jobs = math.floor(104 / 8 * job_rounds_by_duration)
+                assert output["num_nodes"] == math.ceil(1000 / one_node_jobs)
+                assert output["details"]["limiter"] == "CPU"
+            case "50g":
+                one_node_jobs = math.floor(240 / 50 * job_rounds_by_duration)
+                num_nodes = math.ceil(1000 / one_node_jobs)
+                assert output["num_nodes"] == num_nodes
+                assert output["details"]["limiter"] == "memory"
+            case _:
+                assert False, f"Unexpected memory_per_job: {memory_per_job}"
+    finally:
+        if key is not None:
+            api.remove_workflow(key)
 
 
 def test_create_workflow_from_commands_file(db_api, tmp_path):
