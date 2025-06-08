@@ -33,4 +33,4 @@ filename = "db_service/src/api/workflows.js"
 filename = "db_service/config.json"
 
 [[tool.bumpversion.files]]
-filename = "docs/how_tos/getting_started/installation.rst"
+filename = "docs/how_tos/getting_started/installation.md"
