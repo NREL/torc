@@ -31,11 +31,11 @@ ${CONTAINER_EXEC} run \
     docker.io/openapitools/openapi-generator-cli:${OPENAPI_CLI_VERSION} \
     generate -g julia-client --input-spec=/data/openapi.yaml -o /julia_client
 
-rm -rf ../torc_package/src/torc/openapi_client/*
+rm -rf ../torc_client/src/torc/openapi_client/*
 rm -rf ../julia/Torc/src/api/*
 rm -rf ../julia/julia_client/docs/*
 rm -f ../julia/julia_client/README.md
-cp -r ${PYTHON_CLIENT}/torc/openapi_client/* ../torc_package/src/torc/openapi_client/
+cp -r ${PYTHON_CLIENT}/torc/openapi_client/* ../torc_client/src/torc/openapi_client/
 cp -r ${JULIA_CLIENT}/src/* ../julia/Torc/src/api/
 cp -r ${JULIA_CLIENT}/docs/* ../julia/julia_client/docs/
 cp ${JULIA_CLIENT}/README.md ../julia/julia_client/

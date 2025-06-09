@@ -15,7 +15,7 @@ $ git clone https://github.com/NREL/torc.git
 2. Change to the `torc` directory so that you have access to the torc test scripts.
 
 ```console
-$ cd torc/torc_package
+$ cd torc/torc_client
 ```
 
 3. Create a torc runtime configuration file. We will use it shorten the commands that we type

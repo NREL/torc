@@ -41,7 +41,7 @@ $ cd db_service
 - Create a Python client package.
 - Create a Julia client package.
 - Copy the Python package directory, `python_client/openapi_client`, into the `torc` package at
-  `/torc_package/torc/openapi_client`, overwriting the existing code.
+  `/torc_client/torc/openapi_client`, overwriting the existing code.
 - Copy the Julia package directory, `julia_client/openapi_client`, into the `Torc` package at
   `/julia/Torc/src/api`, overwriting the existing code.
 
