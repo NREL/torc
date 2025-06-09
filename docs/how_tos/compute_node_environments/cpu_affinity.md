@@ -19,13 +19,13 @@ This page describes how to do this for your jobs. There are several caveats to u
 
 When you schedule or run jobs with the commands below, set `--cpu-affinity-cpus-per-job`.
 
-Suppose a set of jobs needs 4 CPUs each and the compute node has 36 CPUs.
+Suppose a set of jobs needs 4 CPUs each and the compute node has 104 CPUs.
 
 ```console
 $ torc hpc slurm schedule-nodes --cpu-affinity-cpus-per-job 4
 $ torc jobs run --cpu-affinity-cpus-per-job 4
 ```
 
-The torc worker application on the compute node will create 9 CPU masks. Each time it starts a job
+The torc worker application on the compute node will create 26 CPU masks. Each time it starts a job
 it will assign the job's process affinity to an available mask with the system call
-`sched_setaffinity`. Torc will keep 9 jobs running in parallel until all complete.
+`sched_setaffinity`. Torc will keep 26 jobs running in parallel until all complete.

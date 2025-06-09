@@ -18,6 +18,4 @@ results/index
 compute_node_environments/index
 compute_node_utilization/index
 api/index
-building_torc/index
-custom_installation/index
 ```

@@ -1,7 +1,7 @@
 # CPU Affinity Workflow
 
 In this tutorial you will learn how to set CPU affinity for all job processes. Refer to
-{ref}`set_cpu_affinity` for more information about this feature.
+{ref}`set-cpu-affinity` for more information about this feature.
 
 The workflow must be run on an HPC with the Slurm scheduler. The steps are similar to the
 {ref}`slurm-diamond-workflow` except that you must set the additional parameter below when you

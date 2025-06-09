@@ -15,4 +15,5 @@ http_api_reference
 python_client
 arangodb
 architecture
+for_developers/index
 ```

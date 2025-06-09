@@ -3,6 +3,8 @@
 import getpass
 import sys
 
+from loguru import logger
+
 from torc import add_jobs, make_api, setup_logging, torc_settings
 from torc.openapi_client import (
     ComputeNodeResourceStatsModel,
@@ -12,8 +14,6 @@ from torc.openapi_client import (
     SlurmSchedulerModel,
     WorkflowModel,
 )
-
-logger = setup_logging(__name__)
 
 
 def create_workflow(api: DefaultApi) -> WorkflowModel:

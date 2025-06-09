@@ -4,8 +4,8 @@
 
 This page describes what developers should do to release new versions after making changes.
 
-1. Update the torc version in all files by running `python scripts/update_version.py NEW_VERSION`
-   from the root of the repository. Choose the new version by following guidance from
+1. Update the torc version in all files by running `bump-my-version bump major|minor|patch`
+   from the root of the repository. Choose the major vs minor vs patch by following guidance from
    <http://semver.org>.
 2. Rebuild the Python client installed inside torc by following the
    instructions at {ref}`generate-client-apis`.

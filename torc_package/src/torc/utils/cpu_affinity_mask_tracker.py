@@ -46,6 +46,7 @@ def compute_cpu_indexes(num_cpus_in_node, cpus_per_process) -> list[tuple[int, .
     """Return tuples of CPU indexes that can be used to assign CPU affinity to processes.
     If num_cpus_in_node is not evenly divisible by cpus_per_process, not all CPUs will be assigned.
     """
+    # TODO: be NUMA aware
     return [
         tuple(range(i, i + cpus_per_process)) for i in range(0, num_cpus_in_node, cpus_per_process)
     ]
