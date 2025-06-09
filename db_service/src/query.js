@@ -123,7 +123,6 @@ function getReadyJobRequirements(workflow, schedulerConfigId) {
   let numCpus = 0;
   let numGpus = 0;
   let numJobs = 0;
-  let maxMemory = 0;
   let totalMemory = 0;
   let maxRuntime = 0;
   let maxRuntimeDuration = '';
@@ -850,6 +849,39 @@ function isWorkflowComplete(workflow) {
       RETURN job._key
   `;
   return cursor.count() == 0;
+}
+
+/**
+* Return true if this is the first time that workflow completion has been detected
+* and a completion script is defined.
+* It is assumed that the caller has already checked that the workflow is complete.
+* @param {Object} workflow
+* @return {bool}
+*/
+function needsToRunCompletionScript(workflow) {
+  const config = getWorkflowConfig(workflow);
+  if (config.workflow_completion_script == null) {
+    return false;
+  }
+  const collection = db._collection('workflow_statuses');
+  const status = getWorkflowStatus(workflow);
+  // TODO: There is probably a way to do this without locking the entire collection.
+  const needsRunCompletionScript = db._executeTransaction({
+    collections: {
+      exclusive: 'workflow_statuses',
+      allowImplicit: false,
+    },
+    action: function() {
+      const needsRun = !status.has_detected_need_to_run_completion_script;
+      if (needsRun) {
+        status.has_detected_need_to_run_completion_script = true;
+        collection.update(status, status, {mergeObjects: false});
+        console.debug(`Workflow ${workflow._key} has been detected as complete.`);
+      }
+      return needsRun;
+    },
+  });
+  return needsRunCompletionScript;
 }
 
 /**
@@ -1639,6 +1671,7 @@ module.exports = {
   isJobInitiallyBlocked,
   isJobStatusComplete,
   isWorkflowComplete,
+  needsToRunCompletionScript,
   iterWorkflowDocuments,
   joinCollectionsByInboundEdge,
   joinCollectionsByOutboundEdge,

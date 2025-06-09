@@ -135,8 +135,19 @@ router.get('/workflows/:key/is_complete', function(req, res) {
   const key = req.pathParams.key;
   const workflow = documents.getWorkflow(key, res);
   const status = query.getWorkflowStatus(workflow);
+  const isComplete = query.isWorkflowComplete(workflow);
+  let needsToRunCompletionScript = false;
+  if (!status.is_canceled && isComplete) {
+    needsToRunCompletionScript = query.needsToRunCompletionScript(workflow);
+  }
   try {
-    res.send({is_canceled: status.is_canceled, is_complete: query.isWorkflowComplete(workflow)});
+    res.send(
+        {
+          is_canceled: status.is_canceled,
+          is_complete: isComplete,
+          needs_to_run_completion_script: needsToRunCompletionScript,
+        },
+    );
   } catch (e) {
     utils.handleArangoApiErrors(e, res, `Check workflow is_complete key=${key}`);
   }

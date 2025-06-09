@@ -9,6 +9,7 @@ Data model for a workflow
         is_canceled=nothing,
         run_id=nothing,
         auto_tune_status=nothing,
+        has_detected_need_to_run_completion_script=false,
         _key=nothing,
         _id=nothing,
         _rev=nothing,
@@ -17,6 +18,7 @@ Data model for a workflow
     - is_canceled::Bool
     - run_id::Int64
     - auto_tune_status::AutoTuneStatus
+    - has_detected_need_to_run_completion_script::Bool
     - _key::String
     - _id::String
     - _rev::String
@@ -25,18 +27,19 @@ Base.@kwdef mutable struct WorkflowStatusModel <: OpenAPI.APIModel
     is_canceled::Union{Nothing, Bool} = nothing
     run_id::Union{Nothing, Int64} = nothing
     auto_tune_status = nothing # spec type: Union{ Nothing, AutoTuneStatus }
+    has_detected_need_to_run_completion_script::Union{Nothing, Bool} = false
     _key::Union{Nothing, String} = nothing
     _id::Union{Nothing, String} = nothing
     _rev::Union{Nothing, String} = nothing
 
-    function WorkflowStatusModel(is_canceled, run_id, auto_tune_status, _key, _id, _rev, )
-        o = new(is_canceled, run_id, auto_tune_status, _key, _id, _rev, )
+    function WorkflowStatusModel(is_canceled, run_id, auto_tune_status, has_detected_need_to_run_completion_script, _key, _id, _rev, )
+        o = new(is_canceled, run_id, auto_tune_status, has_detected_need_to_run_completion_script, _key, _id, _rev, )
         OpenAPI.validate_properties(o)
         return o
     end
 end # type WorkflowStatusModel
 
-const _property_types_WorkflowStatusModel = Dict{Symbol,String}(Symbol("is_canceled")=>"Bool", Symbol("run_id")=>"Int64", Symbol("auto_tune_status")=>"AutoTuneStatus", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
+const _property_types_WorkflowStatusModel = Dict{Symbol,String}(Symbol("is_canceled")=>"Bool", Symbol("run_id")=>"Int64", Symbol("auto_tune_status")=>"AutoTuneStatus", Symbol("has_detected_need_to_run_completion_script")=>"Bool", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
 OpenAPI.property_type(::Type{ WorkflowStatusModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_WorkflowStatusModel[name]))}
 
 function OpenAPI.check_required(o::WorkflowStatusModel)
@@ -50,12 +53,14 @@ function OpenAPI.validate_properties(o::WorkflowStatusModel)
     OpenAPI.validate_property(WorkflowStatusModel, Symbol("is_canceled"), o.is_canceled)
     OpenAPI.validate_property(WorkflowStatusModel, Symbol("run_id"), o.run_id)
     OpenAPI.validate_property(WorkflowStatusModel, Symbol("auto_tune_status"), o.auto_tune_status)
+    OpenAPI.validate_property(WorkflowStatusModel, Symbol("has_detected_need_to_run_completion_script"), o.has_detected_need_to_run_completion_script)
     OpenAPI.validate_property(WorkflowStatusModel, Symbol("_key"), o._key)
     OpenAPI.validate_property(WorkflowStatusModel, Symbol("_id"), o._id)
     OpenAPI.validate_property(WorkflowStatusModel, Symbol("_rev"), o._rev)
 end
 
 function OpenAPI.validate_property(::Type{ WorkflowStatusModel }, name::Symbol, val)
+
 
 
 

@@ -61,9 +61,64 @@ Note that if you don't have a CLI executable for your jobs and instead want torc
 input parameters across workers, you can call `Torc.map_function_to_jobs()`. Refer to
 the tutorial {ref}`map-julia-function-tutorial` for more information.
 
+## Startup and completion scripts
+Torc provides the ability to run startup and completion scripts for workflows. This can be useful
+if you want to perform some actions before the workflow starts or after it completes and do not want
+to define them as jobs in the workflow. Defining the dependencies can be onerous.
+
+Torc also provides the ability to run a script on each compute node before it starts running jobs.
+
+Here is how to configure each of these:
+
+```{eval-rst}
+.. tabs::
+
+   .. code-tab:: js JSON5
+
+    user: "user",
+    name: "my_workflow",
+    config: {
+      workflow_startup_script: "bash workflow_startup.sh",
+      workflow_completion_script: "bash workflow_completion.sh",
+      worker_startup_script: "bash worker_startup.sh",
+    }
+
+   .. code-tab:: py
+
+    from torc import make_api
+    from torc.openapi_client import WorkflowModel
+
+    api = make_api("http://localhost:8529/_db/test-workflows/torc-service")
+    workflow = WorkflowModel(user="user", name="my_workflow")
+    config = api.get_workflow_config(workflow.key)
+    config.workflow_startup_script = "bash workflow_startup.sh"
+    config.workflow_completion_script = "bash workflow_completion.sh"
+    config.worker_startup_script = "bash worker_startup.sh"
+    api.modify_workflow_config(workflow.key, config)
+
+   .. code-tab:: jl
+
+    using Torc
+    import Torc: APIClient
+
+    api = make_api("http://localhost:8529/_db/test-workflows/torc-service")
+    workflow = send_api_command(
+        api,
+        APIClient.add_workflow,
+        APIClient.WorkflowModel(user = "user", name = "my_workflow")
+    )
+    config = send_api_command(api, APIClient.get_workflows_key_config, workflow._key)
+    config = api.get_workflow_config(workflow.key)
+    config.workflow_startup_script = "bash workflow_startup.sh"
+    config.workflow_completion_script = "bash workflow_completion.sh"
+    config.worker_startup_script = "bash worker_startup.sh"
+    api.modify_workflow_config(workflow.key, config)
+    send_api_command(api, APIClient.put_workflows_key_config, workflow._key, config)
+```
+
 ## Compute node configuration options
 
-Refer to {ref}`advanced_config_options` for how to customize behavior of the torc worker
+Refer to {ref}`advanced-config-options` for how to customize behavior of the torc worker
 application on compute nodes. Here are some example settings:
 
 ```{eval-rst}

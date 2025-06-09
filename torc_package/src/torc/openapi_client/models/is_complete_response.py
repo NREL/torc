@@ -28,7 +28,8 @@ class IsCompleteResponse(BaseModel):
     """ # noqa: E501
     is_canceled: StrictBool
     is_complete: StrictBool
-    __properties: ClassVar[List[str]] = ["is_canceled", "is_complete"]
+    needs_to_run_completion_script: StrictBool
+    __properties: ClassVar[List[str]] = ["is_canceled", "is_complete", "needs_to_run_completion_script"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -82,6 +83,7 @@ class IsCompleteResponse(BaseModel):
 
         _obj = cls.model_validate({
             "is_canceled": obj.get("is_canceled"),
-            "is_complete": obj.get("is_complete")
+            "is_complete": obj.get("is_complete"),
+            "needs_to_run_completion_script": obj.get("needs_to_run_completion_script")
         })
         return _obj

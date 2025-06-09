@@ -7,6 +7,7 @@ Name | Type | Description | Notes
 **is_canceled** | **Bool** |  | [default to nothing]
 **run_id** | **Int64** |  | [default to nothing]
 **auto_tune_status** | [***AutoTuneStatus**](AutoTuneStatus.md) |  | [default to nothing]
+**has_detected_need_to_run_completion_script** | **Bool** |  | [optional] [default to false]
 **_key** | **String** |  | [optional] [default to nothing]
 **_id** | **String** |  | [optional] [default to nothing]
 **_rev** | **String** |  | [optional] [default to nothing]
