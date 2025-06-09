@@ -291,6 +291,8 @@ def test_reset_job_status_all(completed_workflow):
     db, _, _ = completed_workflow
     for name in ("preprocess", "work1", "work2", "postprocess"):
         assert db.get_document("jobs", name).status == "done"
+    status = db.api.get_workflow_status(db.workflow.key)
+    assert status.has_detected_need_to_run_completion_script
     db.api.reset_job_status(db.workflow.key, failed_only=False)
     for name in ("preprocess", "work1", "work2", "postprocess"):
         assert db.get_document("jobs", name).status == "uninitialized"
@@ -301,6 +303,9 @@ def test_reset_job_status_all(completed_workflow):
     assert db.get_document("jobs", "preprocess").status == "ready"
     for name in ("work1", "work2", "postprocess"):
         assert db.get_document("jobs", name).status == "blocked"
+
+    status = db.api.get_workflow_status(db.workflow.key)
+    assert not status.has_detected_need_to_run_completion_script
 
 
 def test_reset_job_status_failed_only(completed_workflow):

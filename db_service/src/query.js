@@ -1,5 +1,7 @@
 'use strict';
 const {aql, query} = require('@arangodb');
+const errors = require('@arangodb').errors;
+const CONFLICTING_REV = errors.ERROR_ARANGO_CONFLICT.code;
 const db = require('@arangodb').db;
 const {GiB, JobStatus, GRAPH_NAME} = require('./defs');
 const schemas = require('./api/schemas');
@@ -865,23 +867,20 @@ function needsToRunCompletionScript(workflow) {
   }
   const collection = db._collection('workflow_statuses');
   const status = getWorkflowStatus(workflow);
-  // TODO: There is probably a way to do this without locking the entire collection.
-  const needsRunCompletionScript = db._executeTransaction({
-    collections: {
-      exclusive: 'workflow_statuses',
-      allowImplicit: false,
-    },
-    action: function() {
-      const needsRun = !status.has_detected_need_to_run_completion_script;
-      if (needsRun) {
-        status.has_detected_need_to_run_completion_script = true;
-        collection.update(status, status, {mergeObjects: false});
-        console.debug(`Workflow ${workflow._key} has been detected as complete.`);
+  const needsRun = !status.has_detected_need_to_run_completion_script;
+  if (needsRun) {
+    status.has_detected_need_to_run_completion_script = true;
+    try {
+      collection.update(status, status, {mergeObjects: false});
+      console.debug(`Workflow ${workflow._key} has been detected as complete.`);
+    } catch (err) {
+      if (e.errorNum === CONFLICTING_REV) {
+        return false; // Another process has already set this.
       }
-      return needsRun;
-    },
-  });
-  return needsRunCompletionScript;
+      throw err;
+    }
+  }
+  return needsRun;
 }
 
 /**
@@ -1420,6 +1419,7 @@ function resetWorkflowStatus(workflow) {
     is_canceled: false,
     scheduled_compute_node_ids: [],
     auto_tune_status: schemas.autoTuneStatus.validate({}).value,
+    has_detected_need_to_run_completion_script: false,
   };
   const doc = getWorkflowStatus(workflow);
   Object.assign(doc, status);

@@ -68,6 +68,12 @@ to define them as jobs in the workflow. Defining the dependencies can be onerous
 
 Torc also provides the ability to run a script on each compute node before it starts running jobs.
 
+- `workflow_startup_script`: A script that runs on the computer that initializes the workflow graph
+   (`torc workflows start`). In an HPC environment, this is typically the login node. If it is the
+   login node, take care to not consume large amounts of CPU and memory.
+- `workflow_completion_script`: A script that runs on the compute node that completes the last job.
+- `worker_startup_script`: A script that runs on each compute node before it starts running jobs.
+
 Here is how to configure each of these:
 
 ```{eval-rst}
