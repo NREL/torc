@@ -4,37 +4,6 @@
 
 ## Database Installation
 
-Choose how you want to run ArangoDB: natively or in a container.
-
-### Native installation
-
-1\. Install `ArangoDB Community Edition` locally by following instructions at
-<https://www.arangodb.com/download-major/>
-
-Add the `bin` directory to your system path. It will likely be in a location like this:
-
-```
-$HOME/Applications/ArangoDB3-CLI.app/Contents/Resources/opt/arangodb/bin
-```
-
-Note the configuration files in this directory:
-
-```
-$HOME/Applications/ArangoDB3-CLI.app/Contents/Resources/opt/arangodb/etc/arangodb3
-```
-
-Customize as desired, particularly regarding authentication.
-
-2. Start the database by running `arangodb`.
-
-You may need to specify the config file with `arangodb --conf <your-path>/arangod.conf`
-
-```{raw} html
-<hr>
-```
-
-### Docker container
-
 Run the ArangoDB Docker container by following instructions at
 <https://www.arangodb.com/download-major/docker/>
 

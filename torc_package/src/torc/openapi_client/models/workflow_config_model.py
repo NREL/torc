@@ -28,6 +28,7 @@ class WorkflowConfigModel(BaseModel):
     WorkflowConfigModel
     """ # noqa: E501
     workflow_startup_script: Optional[StrictStr] = None
+    workflow_completion_script: Optional[StrictStr] = None
     worker_startup_script: Optional[StrictStr] = None
     compute_node_resource_stats: Optional[ComputeNodeResourceStatsModel] = None
     compute_node_expiration_buffer_seconds: Optional[StrictInt] = Field(default=None, description="Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database's default value of 60 seconds.")
@@ -38,7 +39,7 @@ class WorkflowConfigModel(BaseModel):
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = ["workflow_startup_script", "worker_startup_script", "compute_node_resource_stats", "compute_node_expiration_buffer_seconds", "compute_node_wait_for_new_jobs_seconds", "compute_node_ignore_workflow_completion", "compute_node_wait_for_healthy_database_minutes", "prepare_jobs_sort_method", "_key", "_id", "_rev"]
+    __properties: ClassVar[List[str]] = ["workflow_startup_script", "workflow_completion_script", "worker_startup_script", "compute_node_resource_stats", "compute_node_expiration_buffer_seconds", "compute_node_wait_for_new_jobs_seconds", "compute_node_ignore_workflow_completion", "compute_node_wait_for_healthy_database_minutes", "prepare_jobs_sort_method", "_key", "_id", "_rev"]
 
     @field_validator('prepare_jobs_sort_method')
     def prepare_jobs_sort_method_validate_enum(cls, value):
@@ -105,6 +106,7 @@ class WorkflowConfigModel(BaseModel):
 
         _obj = cls.model_validate({
             "workflow_startup_script": obj.get("workflow_startup_script"),
+            "workflow_completion_script": obj.get("workflow_completion_script"),
             "worker_startup_script": obj.get("worker_startup_script"),
             "compute_node_resource_stats": ComputeNodeResourceStatsModel.from_dict(obj["compute_node_resource_stats"]) if obj.get("compute_node_resource_stats") is not None else None,
             "compute_node_expiration_buffer_seconds": obj.get("compute_node_expiration_buffer_seconds"),

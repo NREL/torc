@@ -10,7 +10,7 @@ https://www.sphinx-doc.org/en/master/usage/configuration.html#project-informatio
 
 
 project = "torc"
-copyright = "2025, 2025 Alliance for Sustainable Energy, LLC"
+copyright = "2025, Alliance for Sustainable Energy, LLC"
 author = "NREL"
 release = "0.1.0"
 

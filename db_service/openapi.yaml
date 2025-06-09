@@ -6214,6 +6214,9 @@ components:
           type: integer
         auto_tune_status:
           $ref: '#/components/schemas/auto_tune_status'
+        has_detected_need_to_run_completion_script:
+          type: boolean
+          default: false
         _key:
           type: string
         _id:
@@ -6283,6 +6286,8 @@ components:
       type: object
       properties:
         workflow_startup_script:
+          type: string
+        workflow_completion_script:
           type: string
         worker_startup_script:
           type: string
@@ -7315,11 +7320,14 @@ components:
       required:
       - is_canceled
       - is_complete
+      - needs_to_run_completion_script
       type: object
       properties:
         is_canceled:
           type: boolean
         is_complete:
+          type: boolean
+        needs_to_run_completion_script:
           type: boolean
     get_ready_job_requirements_response:
       required:

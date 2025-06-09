@@ -30,10 +30,11 @@ class WorkflowStatusModel(BaseModel):
     is_canceled: StrictBool
     run_id: StrictInt
     auto_tune_status: AutoTuneStatus
+    has_detected_need_to_run_completion_script: Optional[StrictBool] = False
     key: Optional[StrictStr] = Field(default=None, alias="_key")
     id: Optional[StrictStr] = Field(default=None, alias="_id")
     rev: Optional[StrictStr] = Field(default=None, alias="_rev")
-    __properties: ClassVar[List[str]] = ["is_canceled", "run_id", "auto_tune_status", "_key", "_id", "_rev"]
+    __properties: ClassVar[List[str]] = ["is_canceled", "run_id", "auto_tune_status", "has_detected_need_to_run_completion_script", "_key", "_id", "_rev"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -92,6 +93,7 @@ class WorkflowStatusModel(BaseModel):
             "is_canceled": obj.get("is_canceled"),
             "run_id": obj.get("run_id"),
             "auto_tune_status": AutoTuneStatus.from_dict(obj["auto_tune_status"]) if obj.get("auto_tune_status") is not None else None,
+            "has_detected_need_to_run_completion_script": obj.get("has_detected_need_to_run_completion_script") if obj.get("has_detected_need_to_run_completion_script") is not None else False,
             "_key": obj.get("_key"),
             "_id": obj.get("_id"),
             "_rev": obj.get("_rev")

@@ -70,6 +70,7 @@ const file = joi.object().required().keys({
 const isComplete = joi.object().required().keys({
   is_canceled: joi.boolean().required(),
   is_complete: joi.boolean().required(),
+  needs_to_run_completion_script: joi.boolean().required(),
 });
 
 const computeNodeScheduleParams = joi.object().required().keys({
@@ -228,6 +229,7 @@ const workflowConfig = joi.object().required().keys({
   // TODO: Consider adding workflow on_complete script option.
   // Would have to detect last worker.
   workflow_startup_script: joi.string().optional(),
+  workflow_completion_script: joi.string().optional(),
   worker_startup_script: joi.string().optional(),
   compute_node_resource_stats: computeNodeResourceStatConfig.default(
       computeNodeResourceStatConfig.validate({}).value),
@@ -325,6 +327,7 @@ const workflowStatus = joi.object().required().keys({
   is_canceled: joi.boolean().required(),
   run_id: joi.number().integer().required(),
   auto_tune_status: autoTuneStatus,
+  has_detected_need_to_run_completion_script: joi.boolean().default(false),
   _key: joi.string(),
   _id: joi.string(),
   _rev: joi.string(),

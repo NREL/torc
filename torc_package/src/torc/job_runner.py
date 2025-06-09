@@ -228,7 +228,20 @@ class JobRunner:
         if self._ignore_completion:
             logger.trace("Ignore workflow completions")
             return False
-        return send_api_command(self._api.is_workflow_complete, self._workflow.key).is_complete
+        response = send_api_command(self._api.is_workflow_complete, self._workflow.key)
+        if response.needs_to_run_completion_script:
+            logger.info(
+                "Running workflow completion script: {}", self._config.workflow_completion_script
+            )
+            ret = run_command(self._config.workflow_completion_script)
+            if ret == 0:
+                logger.info("Completed workflow completion script")
+            else:
+                logger.error(
+                    "Failed to run workflow completion script {}",
+                    self._config.workflow_completion_script,
+                )
+        return response.is_complete
 
     def _run_until_complete(self) -> None:
         assert isinstance(self._workflow.key, str)

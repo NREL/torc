@@ -45,6 +45,7 @@ def test_run_workflow(diamond_workflow):
     config.compute_node_resource_stats.process = True
     config.compute_node_resource_stats.interval = 1
     config.workflow_startup_script = "echo hello"
+    config.workflow_completion_script = "echo hello"
     config.worker_startup_script = "echo hello"
     api.modify_workflow_config(db.workflow.key, config)
     mgr.start()

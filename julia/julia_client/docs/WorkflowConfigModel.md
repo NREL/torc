@@ -5,6 +5,7 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **workflow_startup_script** | **String** |  | [optional] [default to nothing]
+**workflow_completion_script** | **String** |  | [optional] [default to nothing]
 **worker_startup_script** | **String** |  | [optional] [default to nothing]
 **compute_node_resource_stats** | [***ComputeNodeResourceStatsModel**](ComputeNodeResourceStatsModel.md) |  | [optional] [default to nothing]
 **compute_node_expiration_buffer_seconds** | **Int64** | Inform all compute nodes to shut down this number of seconds before the expiration time. This allows torc to send SIGTERM to all job processes and set all statuses to terminated. Increase the time in cases where the job processes handle SIGTERM and need more time to gracefully shut down. Set the value to 0 to maximize the time given to jobs. If not set, take the database&#39;s default value of 60 seconds. | [optional] [default to nothing]
