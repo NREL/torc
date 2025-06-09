@@ -17,7 +17,7 @@ jobs:
         run: |
           sudo apt update && sudo apt install -y graphviz graphviz-dev
           python -m pip install --upgrade pip
-          python -m pip install './torc_package[dev,plots]'
+          python -m pip install './torc_client[dev,plots]'
       - name: build documentation
         run: |
           cd docs

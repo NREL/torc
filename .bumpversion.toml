@@ -21,7 +21,7 @@ pre_commit_hooks = []
 post_commit_hooks = []
 
 [[tool.bumpversion.files]]
-filename = "torc_package/pyproject.toml"
+filename = "torc_client/pyproject.toml"
 
 [[tool.bumpversion.files]]
 filename = "db_service/openapi.yaml"

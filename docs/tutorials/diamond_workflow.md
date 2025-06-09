@@ -10,7 +10,7 @@ dependency graph looks like a diamond). This is the same workflow described at {
 
 You can run this workflow on a laptop.
 
-Ensure that you are in the `torc_package` directory. It has a `tests` subdirectory which is
+Ensure that you are in the `torc_client` directory. It has a `tests` subdirectory which is
 required by this workflow.
 
 ```{eval-rst}

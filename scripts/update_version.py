@@ -7,7 +7,7 @@ from pathlib import Path
 
 FILES = [
     {
-        "filename": "torc_package/torc/__init__.py",
+        "filename": "torc_client/torc/__init__.py",
         "count": 1,
     },
     {
@@ -48,7 +48,7 @@ def update_version(files, new_version):
 
 def _get_cur_version():
     lines = (
-        Path("torc_package/torc/__init__.py").read_text(encoding="utf-8").splitlines()
+        Path("torc_client/torc/__init__.py").read_text(encoding="utf-8").splitlines()
     )
     for line in lines:
         if line.startswith("__version__"):

@@ -20,4 +20,4 @@ repos:
   #  - id: mypy
 
 
-exclude: "(torc_package/torc/openapi_client/.*)|(julia/julia_client/.*)"
+exclude: "(torc_client/torc/openapi_client/.*)|(julia/julia_client/.*)"

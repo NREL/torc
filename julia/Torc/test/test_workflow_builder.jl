@@ -1,5 +1,5 @@
 const BASE_DIR = dirname(dirname(Base.find_package("Torc")))
-const SLEEP = joinpath(BASE_DIR, "..", "..", "torc_package", "tests", "scripts", "sleep.py")
+const SLEEP = joinpath(BASE_DIR, "..", "..", "torc_client", "tests", "scripts", "sleep.py")
 
 @testset "Test workflow builder" begin
     url = "http://localhost:8529/_db/test-workflows/torc-service"
