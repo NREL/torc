@@ -167,6 +167,9 @@ def diamond_workflow(tmp_path):
     spec = builder.build()
     workflow = api.add_workflow_specification(spec)
     db = DatabaseInterface(api, workflow)
+    config = api.get_workflow_config(db.workflow.key)
+    config.workflow_completion_script = "echo hello"
+    api.modify_workflow_config(db.workflow.key, config)
     api.initialize_jobs(workflow.key)
     scheduler = db.get_document("local_schedulers", "test")
     yield db, scheduler.id, output_dir
@@ -378,6 +381,8 @@ def completed_workflow(diamond_workflow):
             compute_node.key,
             result,
         )
+    workflow_status.has_detected_need_to_run_completion_script = True
+    api.modify_workflow_status(db.workflow.key, workflow_status)
 
     yield db, scheduler_config_id, output_dir
 
