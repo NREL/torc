@@ -152,6 +152,10 @@ docstring-code-line-length = "dynamic"
 "**/{tests,docs,tools}/*" = ["E402"]
 
 [tool.coverage.run]
+branch = true
+parallel = true
+concurrency = ["multiprocessing"]
+
 # List directories or file patterns to omit from coverage
 omit = [
     "tests/*",

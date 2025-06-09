@@ -1,6 +1,5 @@
 """Contains logging functionality."""
 
-import logging
 import sys
 from pathlib import Path
 from typing import Iterable
@@ -56,18 +55,3 @@ def setup_logging(
             rotation=rotation,
             format=DEBUG_FORMAT,
         )
-
-
-def _get_log_level_from_int(level: int) -> str:
-    if level == logging.INFO:
-        level_str = "INFO"
-    elif level == logging.WARNING:
-        level_str = "WARNING"
-    elif level == logging.ERROR:
-        level_str = "ERROR"
-    elif level == logging.DEBUG:
-        level_str = "DEBUG"
-    else:
-        msg = f"Log level: {level}"
-        raise NotImplementedError(msg)
-    return level_str
