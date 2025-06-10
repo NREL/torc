@@ -6,7 +6,6 @@ import rich_click as click
 
 import torc
 from torc.api import make_api
-from torc.cli.common import get_log_level_from_str
 from torc.cli.collections import collections
 from torc.cli.compute_nodes import compute_nodes
 from torc.cli.config import config
@@ -115,8 +114,8 @@ def cli(
         timer_stats_collector.enable()
     else:
         timer_stats_collector.disable()
-    ctx.params["console_level"] = get_log_level_from_str(ctx.params["console_level"])
-    ctx.params["file_level"] = get_log_level_from_str(ctx.params["file_level"])
+    ctx.params["console_level"] = ctx.params["console_level"].upper()
+    ctx.params["file_level"] = ctx.params["file_level"].upper()
     if ctx.params["database_url"]:
         ctx.obj = make_api(ctx.params["database_url"])
 

@@ -969,7 +969,7 @@ def show_config(ctx: click.Context, api: DefaultApi) -> None:
     print(json.dumps(config.to_dict(), indent=2))
 
 
-@click.command(name="status")
+@click.command()
 @click.pass_obj
 @click.pass_context
 def show_status(ctx: click.Context, api: DefaultApi) -> None:

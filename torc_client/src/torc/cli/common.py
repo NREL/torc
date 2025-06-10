@@ -1,7 +1,6 @@
 """Common functions for CLI commands"""
 
 import json
-import logging
 import sys
 from pathlib import Path
 from typing import Any, Callable, Iterable, Optional
@@ -67,26 +66,6 @@ def confirm_change(ctx: click.Context, msg: str, dry_run: bool = False) -> None:
     if response == "n":
         print("Exiting", file=sys.stderr)
         sys.exit(0)
-
-
-def get_log_level_from_str(level: str) -> int:
-    """Convert a log level string to logging type."""
-    match level:
-        case "debug":
-            return logging.DEBUG
-        case "info":
-            return logging.INFO
-        case "warning":
-            return logging.WARNING
-        case "error":
-            return logging.ERROR
-        # case "critical":
-        #     return logging.CRITICAL
-        # case "fatal":
-        #     return logging.FATAL
-        case _:
-            msg = f"Unsupported level={level}"
-            raise Exception(msg)
 
 
 def get_no_prompts_from_context(ctx: click.Context) -> bool:

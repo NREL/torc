@@ -58,6 +58,19 @@ def test_workflow_commands(create_workflow_cli):
         ["-k", key, "-u", url, "-F", "json", "events", "list"]
     )
     assert isinstance(events, list) and events
+    data = _run_and_convert_output_from_json(
+        [
+            "-k",
+            key,
+            "-u",
+            url,
+            "-F",
+            "json",
+            "events",
+            "get-latest-event-timestamp",
+        ]
+    )
+    assert "timestamp" in data
     _run_and_convert_output_from_json(
         [
             "-k",
@@ -117,6 +130,34 @@ def test_workflow_commands(create_workflow_cli):
     jobs = _run_and_convert_output_from_json(cmd)["jobs"]
     for job in jobs:
         assert job["status"] == "uninitialized"
+
+    cmd = ["-k", key, "-u", url, "-F", "json", "workflows", "show"]
+    result = runner.invoke(cli, cmd)
+    assert result.exit_code == 0
+    cmd = ["-k", key, "-u", url, "-F", "json", "workflows", "show-config"]
+    result = runner.invoke(cli, cmd)
+    assert result.exit_code == 0
+    cmd = ["-k", key, "-u", url, "-F", "json", "workflows", "show-status"]
+    result = runner.invoke(cli, cmd)
+    assert result.exit_code == 0
+    cmd = [
+        "-k",
+        key,
+        "-u",
+        url,
+        "workflows",
+        "set-compute-node-parameters",
+        "-e",
+        "90",
+        "-h",
+        "12",
+        "-i",
+        "true",
+        "-w",
+        "6",
+    ]
+    result = runner.invoke(cli, cmd)
+    assert result.exit_code == 0
 
 
 def test_reset_job_status(create_workflow_cli):
@@ -274,6 +315,22 @@ def test_resource_requirement_commands(create_workflow_cli):
         assert item["to"]["num_cpus"] == 36
         assert item["to"]["runtime"] == "P0DT24H"
 
+    result = runner.invoke(
+        cli,
+        [
+            "-F",
+            "json",
+            "-k",
+            key,
+            "-u",
+            url,
+            "resource-requirements",
+            "delete",
+            new_rr["key"],
+        ],
+    )
+    assert result.exit_code == 0
+
 
 @pytest.mark.parametrize("memory_per_job", ["10g", "50g"])
 def test_slurm_recommend_nodes(db_api, tmp_path, memory_per_job):
@@ -366,6 +423,7 @@ def test_slurm_recommend_nodes(db_api, tmp_path, memory_per_job):
                 assert output["details"]["limiter"] == "memory"
             case _:
                 assert False, f"Unexpected memory_per_job: {memory_per_job}"
+        runner.invoke(cli, ["-k", key, "-u", url, "workflows", "list-scheduler-configs"])
     finally:
         if key is not None:
             api.remove_workflow(key)
@@ -535,6 +593,22 @@ def test_job_commands(create_workflow_cli):
     _run_and_check_output(["-k", key, "-u", url, "user-data", "get", ud_key], ("key1", "val1"))
     _run_and_check_output(["-k", key, "-u", url, "user-data", "list"], ("key1", "val1"))
     runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        [
+            "-n",
+            "-k",
+            key,
+            "-u",
+            url,
+            "user-data",
+            "modify",
+            ud_key,
+            "-d",
+            json.dumps({"key2": "val2"}),
+        ],
+    )
+    assert result.exit_code == 0
     result = runner.invoke(cli, ["-n", "-k", key, "-u", url, "user-data", "delete", ud_key])
     assert result.exit_code == 0
 
@@ -582,6 +656,18 @@ def test_collections_list_command(create_workflow_cli):
         ["-k", key, "-u", url, "-F", "json", "collections", "list"]
     )["names"]
     assert set(("files", "events", "jobs", "needs")).issubset(set(names))
+
+
+def test_files_commands(create_workflow_cli):
+    """Tests collections list CLI commands."""
+    key, url, tmp_path = create_workflow_cli
+    filename = tmp_path / "data.txt"
+    filename.touch()
+    key = _run_and_convert_output_from_json(
+        ["-k", key, "-u", url, "-F", "json", "files", "add", "-n", "myfile", "-p", str(filename)]
+    )["key"]
+    runner = CliRunner()
+    runner.invoke(cli, ["-k", key, "-u", url, "files", "delete", key])
 
 
 def _run_and_check_output(cmd, expected_strings):

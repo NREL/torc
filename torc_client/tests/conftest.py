@@ -103,7 +103,7 @@ def diamond_workflow(tmp_path):
     f2 = api.add_file(workflow.key, FileModel(name="file2", path=str(output_dir / "f2.json")))
     f3 = api.add_file(workflow.key, FileModel(name="file3", path=str(output_dir / "f3.json")))
     f4 = api.add_file(workflow.key, FileModel(name="file4", path=str(output_dir / "f4.json")))
-    f5 = api.add_file(workflow.key, FileModel(ame="file5", path=str(output_dir / "f5.json")))
+    f5 = api.add_file(workflow.key, FileModel(name="file5", path=str(output_dir / "f5.json")))
 
     small = api.add_resource_requirements(
         workflow.key,

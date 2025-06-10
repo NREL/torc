@@ -1,4 +1,5 @@
-[![codecov](https://codecov.io/gh/NREL/torc/graph/badge.svg?token=OY9JDRCIB9)](https://codecov.io/gh/NREL/torc)
+<!-- codecov isn't processing the CliRunner-executed commands correctly. It is substantially under-counted. -->
+<!-- [![codecov](https://codecov.io/gh/NREL/torc/graph/badge.svg?token=OY9JDRCIB9)](https://codecov.io/gh/NREL/torc) -->
 
 # Torc workflow management system
 
