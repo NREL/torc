@@ -22,7 +22,7 @@ exit.
 ## Customization
 
 You can change the value of `compute_node_wait_for_healthy_database_minutes` in the `config`
-section of a workflow specification file (JSON), through the Python and Julia `WorkflowBuilder`
+section of a workflow specification file (JSON), through the Julia `WorkflowBuilder`
 scripts, or through the torc CLI command `torc workflows set-compute-node-parameters`.
 
 % TODO: make how to page for managing all compute node params

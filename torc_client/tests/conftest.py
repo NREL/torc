@@ -1,6 +1,5 @@
 """pytest fixtures"""
 
-import getpass
 import json
 import os
 import sys
@@ -10,40 +9,32 @@ from pathlib import Path
 import pytest
 from click.testing import CliRunner
 
+from torc import WorkflowManager, add_jobs, iter_documents, map_function_to_jobs
 from torc.common import GiB
 from torc.config import torc_settings
-from torc.openapi_client import ApiClient, DefaultApi
-from torc.openapi_client.configuration import Configuration
-from torc.openapi_client.models.workflow_specifications_schedulers import (
+from torc.openapi_client import (
+    ApiClient,
+    ComputeNodeModel,
+    ComputeNodeResourceStatsModel,
+    ComputeNodesResources,
+    Configuration,
+    DefaultApi,
+    FileModel,
+    JobModel,
+    JobSpecificationModel,
+    LocalSchedulerModel,
+    ResourceRequirementsModel,
+    ResultModel,
+    SlurmSchedulerModel,
+    UserDataModel,
+    WorkflowConfigModel,
+    WorkflowModel,
+    WorkflowSpecificationModel,
     WorkflowSpecificationsSchedulers,
 )
-from torc.openapi_client.models.compute_node_model import ComputeNodeModel
-from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
-from torc.openapi_client.models.local_scheduler_model import (
-    LocalSchedulerModel,
-)
-from torc.openapi_client.models.job_model import JobModel
-from torc.openapi_client.models.job_specification_model import (
-    JobSpecificationModel,
-)
-from torc.openapi_client.models.resource_requirements_model import (
-    ResourceRequirementsModel,
-)
-from torc.openapi_client.models.workflow_model import WorkflowModel
-from torc.openapi_client.models.workflow_specification_model import (
-    WorkflowSpecificationModel,
-)
-from torc.openapi_client.models.workflow_config_model import WorkflowConfigModel
-from torc.openapi_client.models.result_model import ResultModel
-from torc.openapi_client.models.compute_node_resource_stats_model import (
-    ComputeNodeResourceStatsModel,
-)
-from torc.api import iter_documents, map_function_to_jobs
 from torc.cli.torc import cli
 from torc.loggers import setup_logging
 from torc.utils.files import load_json_file, dump_json_file
-from torc.workflow_builder import WorkflowBuilder
-from torc.workflow_manager import WorkflowManager
 from torc.tests.database_interface import DatabaseInterface
 
 from slurm_cluster import SlurmCluster
@@ -73,7 +64,6 @@ def pytest_sessionstart(session):
     """Records existing workflows."""
     api = _initialize_api()
     session.torc_workflow_keys = {x.key for x in iter_documents(api.list_workflows)}
-    # TODO DT: use coverage
     os.environ["TORC_FAKE_SACCT"] = f"{sys.executable} {SACCT}"
     os.environ["TORC_FAKE_SBATCH"] = f"{sys.executable} {SBATCH}"
     os.environ["TORC_FAKE_SCANCEL"] = f"{sys.executable} {SCANCEL}"
@@ -100,72 +90,92 @@ def diamond_workflow(tmp_path):
     inputs_file = output_dir / "inputs.json"
     inputs_file.write_text(json.dumps({"val": 5}))
 
-    builder = WorkflowBuilder()
-    inputs = builder.add_file(name="inputs", path=str(inputs_file))
-    f1 = builder.add_file(name="file1", path=str(output_dir / "f1.json"))
-    f2 = builder.add_file(name="file2", path=str(output_dir / "f2.json"))
-    f3 = builder.add_file(name="file3", path=str(output_dir / "f3.json"))
-    f4 = builder.add_file(name="file4", path=str(output_dir / "f4.json"))
-    f5 = builder.add_file(name="file5", path=str(output_dir / "f5.json"))
-
-    small = builder.add_resource_requirements(
-        name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
-    )
-    medium = builder.add_resource_requirements(
-        name="medium", num_cpus=2, memory="2g", runtime="P0DT8H"
-    )
-    large = builder.add_resource_requirements(
-        name="large", num_cpus=2, memory="3g", runtime="P0DT12H"
+    workflow = api.add_workflow(
+        WorkflowModel(
+            user="tester",
+            name="test_diamond_workflow",
+            description="Test diamond workflow",
+        )
     )
 
-    scheduler = builder.add_local_scheduler(name="test")
-    builder.add_job(
-        name="preprocess",
-        command=f"python {PREPROCESS} -i {inputs.path} -o {f1.path} -o {f2.path}",
-        input_files=[inputs.name],
-        output_files=[f1.name, f2.name],
-        resource_requirements=small.name,
-        scheduler="local_schedulers/test",
+    inputs = api.add_file(workflow.key, FileModel(name="inputs", path=str(inputs_file)))
+    f1 = api.add_file(workflow.key, FileModel(name="file1", path=str(output_dir / "f1.json")))
+    f2 = api.add_file(workflow.key, FileModel(name="file2", path=str(output_dir / "f2.json")))
+    f3 = api.add_file(workflow.key, FileModel(name="file3", path=str(output_dir / "f3.json")))
+    f4 = api.add_file(workflow.key, FileModel(name="file4", path=str(output_dir / "f4.json")))
+    f5 = api.add_file(workflow.key, FileModel(name="file5", path=str(output_dir / "f5.json")))
+
+    small = api.add_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT1H"),
     )
-    builder.add_job(
-        name="work1",
-        command=f"python {WORK} -i {f1.path} -o {f3.path}",
-        input_user_data=["my_val1"],
-        input_files=[f1.name],
-        output_files=[f3.name],
-        resource_requirements=medium.name,
-        scheduler="local_schedulers/test",
+    medium = api.add_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(name="medium", num_cpus=2, memory="2g", runtime="P0DT8H"),
     )
-    builder.add_job(
-        name="work2",
-        command=f"python {WORK} -i {f2.path} -o {f4.path}",
-        input_user_data=["my_val2"],
-        input_files=[f2.name],
-        output_files=[f4.name],
-        resource_requirements=large.name,
-        scheduler="local_schedulers/test",
-    )
-    builder.add_job(
-        name="postprocess",
-        command=f"python {POSTPROCESS} -i {f3.path} -i {f4.path} -o {f5.path}",
-        input_files=[f3.name, f4.name],
-        output_files=[f5.name],
-        resource_requirements=small.name,
-        scheduler="local_schedulers/test",
-    )
-    builder.add_user_data(
-        name="my_val1",
-        is_ephemeral=False,
-        data={"key1": "val1"},
-    )
-    builder.add_user_data(
-        name="my_val2",
-        is_ephemeral=False,
-        data={"key2": "val2"},
+    large = api.add_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(name="large", num_cpus=2, memory="3g", runtime="P0DT12H"),
     )
 
-    spec = builder.build()
-    workflow = api.add_workflow_specification(spec)
+    scheduler = api.add_local_scheduler(workflow.key, LocalSchedulerModel(name="test"))
+    ud1 = api.add_user_data(
+        workflow.key,
+        UserDataModel(
+            name="my_val1",
+            is_ephemeral=False,
+            data={"key1": "val1"},
+        ),
+    )
+    ud2 = api.add_user_data(
+        workflow.key,
+        UserDataModel(
+            name="my_val2",
+            is_ephemeral=False,
+            data={"key2": "val2"},
+        ),
+    )
+    add_jobs(
+        api,
+        workflow.key,
+        [
+            JobModel(
+                name="preprocess",
+                command=f"python {PREPROCESS} -i {inputs.path} -o {f1.path} -o {f2.path}",
+                input_files=[inputs.id],
+                output_files=[f1.id, f2.id],
+                resource_requirements=small.id,
+                scheduler=scheduler.id,
+            ),
+            JobModel(
+                name="work1",
+                command=f"python {WORK} -i {f1.path} -o {f3.path}",
+                input_user_data=[ud1.id],
+                input_files=[f1.id],
+                output_files=[f3.id],
+                resource_requirements=medium.id,
+                scheduler=scheduler.id,
+            ),
+            JobModel(
+                name="work2",
+                command=f"python {WORK} -i {f2.path} -o {f4.path}",
+                input_user_data=[ud2.id],
+                input_files=[f2.id],
+                output_files=[f4.id],
+                resource_requirements=large.id,
+                scheduler=scheduler.id,
+            ),
+            JobModel(
+                name="postprocess",
+                command=f"python {POSTPROCESS} -i {f3.path} -i {f4.path} -o {f5.path}",
+                input_files=[f3.id, f4.id],
+                output_files=[f5.id],
+                resource_requirements=small.id,
+                scheduler=scheduler.id,
+            ),
+        ],
+    )
+
     db = DatabaseInterface(api, workflow)
     config = api.get_workflow_config(db.workflow.key)
     config.workflow_completion_script = "echo hello"
@@ -183,60 +193,73 @@ def diamond_workflow_user_data(tmp_path):
     output_dir = tmp_path / "output"
     output_dir.mkdir()
 
-    builder = WorkflowBuilder()
-    inputs = builder.add_user_data(name="inputs", data={"val": 5})
-    d1 = builder.add_user_data(name="data1")
-    d2 = builder.add_user_data(name="data2")
-    d3 = builder.add_user_data(name="data3")
-    d4 = builder.add_user_data(name="data4")
-    d5 = builder.add_user_data(name="data5")
+    workflow = api.add_workflow(
+        WorkflowModel(
+            user="tester",
+            name="test_diamond_workflow",
+            description="Test diamond workflow",
+        )
+    )
+    inputs = api.add_user_data(workflow.key, UserDataModel(name="inputs", data={"val": 5}))
+    d1 = api.add_user_data(workflow.key, UserDataModel(name="data1"))
+    d2 = api.add_user_data(workflow.key, UserDataModel(name="data2"))
+    d3 = api.add_user_data(workflow.key, UserDataModel(name="data3"))
+    d4 = api.add_user_data(workflow.key, UserDataModel(name="data4"))
+    d5 = api.add_user_data(workflow.key, UserDataModel(name="data5"))
 
-    small = builder.add_resource_requirements(
-        name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
+    small = api.add_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT1H"),
     )
-    medium = builder.add_resource_requirements(
-        name="medium", num_cpus=2, memory="2g", runtime="P0DT8H"
+    medium = api.add_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(name="medium", num_cpus=2, memory="2g", runtime="P0DT8H"),
     )
-    large = builder.add_resource_requirements(
-        name="large", num_cpus=2, memory="3g", runtime="P0DT12H"
-    )
-
-    scheduler = builder.add_local_scheduler(name="test")
-    builder.add_job(
-        name="preprocess",
-        command=f"python {PREPROCESS_UD}",
-        input_user_data=[inputs.name],
-        output_user_data=[d1.name, d2.name],
-        resource_requirements=small.name,
-        scheduler="local_schedulers/test",
-    )
-    builder.add_job(
-        name="work1",
-        command=f"python {WORK_UD}",
-        input_user_data=[d1.name],
-        output_user_data=[d3.name],
-        resource_requirements=medium.name,
-        scheduler="local_schedulers/test",
-    )
-    builder.add_job(
-        name="work2",
-        command=f"python {WORK_UD}",
-        input_user_data=[d2.name],
-        output_user_data=[d4.name],
-        resource_requirements=large.name,
-        scheduler="local_schedulers/test",
-    )
-    builder.add_job(
-        name="postprocess",
-        command=f"python {POSTPROCESS_UD}",
-        input_user_data=[d3.name, d4.name],
-        output_user_data=[d5.name],
-        resource_requirements=small.name,
-        scheduler="local_schedulers/test",
+    large = api.add_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(name="large", num_cpus=2, memory="3g", runtime="P0DT12H"),
     )
 
-    spec = builder.build()
-    workflow = api.add_workflow_specification(spec)
+    scheduler = api.add_local_scheduler(workflow.key, LocalSchedulerModel(name="test"))
+    add_jobs(
+        api,
+        workflow.key,
+        [
+            JobModel(
+                name="preprocess",
+                command=f"python {PREPROCESS_UD}",
+                input_user_data=[inputs.id],
+                output_user_data=[d1.id, d2.id],
+                resource_requirements=small.id,
+                scheduler=scheduler.id,
+            ),
+            JobModel(
+                name="work1",
+                command=f"python {WORK_UD}",
+                input_user_data=[d1.id],
+                output_user_data=[d3.id],
+                resource_requirements=medium.id,
+                scheduler=scheduler.id,
+            ),
+            JobModel(
+                name="work2",
+                command=f"python {WORK_UD}",
+                input_user_data=[d2.id],
+                output_user_data=[d4.id],
+                resource_requirements=large.id,
+                scheduler=scheduler.id,
+            ),
+            JobModel(
+                name="postprocess",
+                command=f"python {POSTPROCESS_UD}",
+                input_user_data=[d3.id, d4.id],
+                output_user_data=[d5.id],
+                resource_requirements=small.id,
+                scheduler=scheduler.id,
+            ),
+        ],
+    )
+
     db = DatabaseInterface(api, workflow)
     api.initialize_jobs(workflow.key)
     scheduler = db.get_document("local_schedulers", "test")
@@ -249,21 +272,31 @@ def workflow_with_ephemeral_resource():
     """Creates a workflow with one job that creates an ephemeral resource."""
     api = _initialize_api()
 
-    builder = WorkflowBuilder()
-    resource = builder.add_user_data(name="resource", is_ephemeral=True)
-    builder.add_job(
-        name="create_resource",
-        command=f"python {CREATE_RESOURCE_JOB}",
-        output_user_data=[resource.name],
+    workflow = api.add_workflow(
+        WorkflowModel(
+            user="tester",
+            name="test_ephemeral_resource_workflow",
+            description="Test workflow with ephemeral resource",
+        )
     )
-    builder.add_job(
-        name="use_resource",
-        command=f"python {USE_RESOURCE_JOB}",
-        input_user_data=[resource.name],
+    resource = api.add_user_data(workflow.key, UserDataModel(name="resource", is_ephemeral=True))
+    api.add_job(
+        workflow.key,
+        JobModel(
+            name="create_resource",
+            command=f"python {CREATE_RESOURCE_JOB}",
+            output_user_data=[resource.id],
+        ),
+    )
+    api.add_job(
+        workflow.key,
+        JobModel(
+            name="use_resource",
+            command=f"python {USE_RESOURCE_JOB}",
+            input_user_data=[resource.id],
+        ),
     )
 
-    spec = builder.build()
-    workflow = api.add_workflow_specification(spec)
     db = DatabaseInterface(api, workflow)
     api.initialize_jobs(workflow.key)
     yield db
@@ -597,16 +630,17 @@ def mapped_function_workflow(tmp_path):
 def job_requirement_uniform():
     """Creates a workflow with uniform resource requirements."""
     api = _initialize_api()
-    builder = WorkflowBuilder()
-    short = builder.add_resource_requirements(
-        name="short", num_cpus=4, memory="4g", runtime="P0DT30M"
+    workflow = api.add_workflow(WorkflowModel(user="tester", name="test"))
+    short = api.add_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(name="short", num_cpus=4, memory="4g", runtime="P0DT30M"),
     )
 
-    for i in range(1, 31):
-        builder.add_job(name=f"job{i}", command="noop", resource_requirements=short.name)
-
-    spec = builder.build(user=getpass.getuser(), name="test")
-    workflow = api.add_workflow_specification(spec)
+    jobs = [
+        JobModel(name=f"job{i}", command="noop", resource_requirements=short.id)
+        for i in range(1, 31)
+    ]
+    add_jobs(api, workflow.key, jobs)
     db = DatabaseInterface(api, workflow)
     mgr = WorkflowManager(api, db.workflow.key)
     mgr.start()
@@ -618,19 +652,23 @@ def job_requirement_uniform():
 def job_requirement_runtime():
     """Creates a workflow with two different runtime resource requirements."""
     api = _initialize_api()
-    builder = WorkflowBuilder()
-    short = builder.add_resource_requirements(
-        name="short", num_cpus=4, memory="4g", runtime="P0DT40M"
+    workflow = api.add_workflow(WorkflowModel(user="tester", name="test"))
+    short = api.add_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(name="short", num_cpus=4, memory="4g", runtime="P0DT40M"),
     )
-    medium = builder.add_resource_requirements(
-        name="medium", num_cpus=4, memory="4g", runtime="P0DT50M"
+    medium = api.add_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(name="medium", num_cpus=4, memory="4g", runtime="P0DT50M"),
     )
 
-    builder.add_job(name="short_job", command="noop", resource_requirements=short.name)
-    builder.add_job(name="medium_job", command="noop", resource_requirements=medium.name)
+    api.add_job(
+        workflow.key, JobModel(name="short_job", command="noop", resource_requirements=short.id)
+    )
+    api.add_job(
+        workflow.key, JobModel(name="medium_job", command="noop", resource_requirements=medium.id)
+    )
 
-    spec = builder.build(user=getpass.getuser(), name="test")
-    workflow = api.add_workflow_specification(spec)
     db = DatabaseInterface(api, workflow)
     mgr = WorkflowManager(api, db.workflow.key)
     mgr.start()
@@ -642,58 +680,75 @@ def job_requirement_runtime():
 def job_requirement_variations():
     """Creates a workflow with varying resource requirements."""
     api = _initialize_api()
-    builder = WorkflowBuilder()
-    medium = builder.add_resource_requirements(
-        name="medium", num_cpus=12, memory="8g", runtime="P0DT1H"
+    workflow = api.add_workflow(WorkflowModel(user="tester", name="test"))
+    medium = api.add_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(name="medium", num_cpus=12, memory="8g", runtime="P0DT1H"),
     )
-    large = builder.add_resource_requirements(
-        name="large", num_cpus=18, memory="16g", runtime="P0DT1H"
+    large = api.add_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(name="large", num_cpus=18, memory="16g", runtime="P0DT1H"),
     )
-    gpu = builder.add_resource_requirements(
-        name="gpu", num_cpus=1, num_gpus=1, memory="32g", runtime="P0DT1H"
+    gpu = api.add_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(
+            name="gpu", num_cpus=1, num_gpus=1, memory="32g", runtime="P0DT1H"
+        ),
     )
-    short = builder.add_resource_requirements(
-        name="short", num_cpus=4, memory="4g", runtime="P0DT30M"
+    short = api.add_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(name="short", num_cpus=4, memory="4g", runtime="P0DT30M"),
     )
-    long = builder.add_resource_requirements(
-        name="long", num_cpus=4, memory="8g", runtime="P0DT24H"
+    long = api.add_resource_requirements(
+        workflow.key,
+        ResourceRequirementsModel(name="long", num_cpus=4, memory="8g", runtime="P0DT24H"),
     )
-    builder.add_slurm_scheduler(
-        name="standard",
-        account="my_account",
-        nodes=1,
-        walltime="04:00:00",
+    api.add_slurm_scheduler(
+        workflow.key,
+        SlurmSchedulerModel(
+            name="standard",
+            account="my_account",
+            nodes=1,
+            walltime="04:00:00",
+        ),
     )
-    builder.add_slurm_scheduler(
-        name="bigmem",
-        account="my_account",
-        nodes=1,
-        partition="bigmem",
-        walltime="04:00:00",
+    bigmem_scheduler = api.add_slurm_scheduler(
+        workflow.key,
+        SlurmSchedulerModel(
+            name="bigmem",
+            account="my_account",
+            nodes=1,
+            partition="bigmem",
+            walltime="04:00:00",
+        ),
     )
 
     # Order is important so that the tests can check that GPUs and memory are prioritized -
     # GPU and bigmem nodes should not pick up small jobs.
-    builder.add_job(name="short_job", command="noop", resource_requirements=short.name)
+    jobs = [JobModel(name="short_job", command="noop", resource_requirements=short.id)]
     for i in range(1, 11):
-        builder.add_job(name=f"medium_job{i}", command="noop", resource_requirements=medium.name)
-    for i in range(1, 11):
-        builder.add_job(
-            name=f"large_job{i}",
-            command="noop",
-            resource_requirements=large.name,
-            scheduler="slurm_schedulers/bigmem",
+        jobs.append(
+            JobModel(name=f"medium_job{i}", command="noop", resource_requirements=medium.id)
         )
-    builder.add_job(
-        name="large_job_no_scheduler",
-        command="noop",
-        resource_requirements=large.name,
-    )
-    builder.add_job(name="gpu_job", command="noop", resource_requirements=gpu.name)
-    builder.add_job(name="long_job", command="noop", resource_requirements=long.name)
-
-    spec = builder.build(user=getpass.getuser(), name="test")
-    workflow = api.add_workflow_specification(spec)
+    for i in range(1, 11):
+        jobs.append(
+            JobModel(
+                name=f"large_job{i}",
+                command="noop",
+                resource_requirements=large.id,
+                scheduler=bigmem_scheduler.id,
+            )
+        )
+    jobs += [
+        JobModel(
+            name="large_job_no_scheduler",
+            command="noop",
+            resource_requirements=large.id,
+        ),
+        JobModel(name="gpu_job", command="noop", resource_requirements=gpu.id),
+        JobModel(name="long_job", command="noop", resource_requirements=long.id),
+    ]
+    add_jobs(api, workflow.key, jobs)
     db = DatabaseInterface(api, workflow)
     mgr = WorkflowManager(api, db.workflow.key)
     mgr.start()
