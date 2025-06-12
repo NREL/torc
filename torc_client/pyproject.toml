@@ -33,6 +33,7 @@ dependencies = [
     "psutil >= 5.9, < 6",
     "prettytable >= 3.10, < 4",
     "pydantic >= 2.10, < 3",
+    "py-libnuma",
     "rmon",
     "rich",
     "rich_click",
@@ -121,6 +122,10 @@ module = "networkxgmml.*"
 [[tool.mypy.overrides]]
 ignore_missing_imports = true
 module = "isodate.*"
+
+[[tool.mypy.overrides]]
+ignore_missing_imports = true
+module = "numa.*"
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.

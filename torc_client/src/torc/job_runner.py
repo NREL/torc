@@ -145,7 +145,7 @@ class JobRunner:
             if cpu_affinity_cpus_per_job > num_cpus:
                 msg = f"{cpu_affinity_cpus_per_job=} cannot be greater than {num_cpus=}"
                 raise InvalidParameter(msg)
-            self._cpu_tracker = CpuAffinityMaskTracker(num_cpus, cpu_affinity_cpus_per_job)
+            self._cpu_tracker = CpuAffinityMaskTracker.load(cpu_affinity_cpus_per_job)
             num_masks = self._cpu_tracker.get_num_masks()
             if self._max_parallel_jobs is not None and self._max_parallel_jobs < num_masks:
                 msg = f"{max_parallel_jobs=} cannot be less than {num_masks=}"
