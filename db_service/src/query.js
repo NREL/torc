@@ -753,6 +753,7 @@ function initializeJobStatus(workflow, onlyUninitialized) {
         FILTER job.status != ${JobStatus.Disabled}
           && job.status != ${JobStatus.Blocked}
           && job.status != ${JobStatus.Done}
+          && job.status != ${JobStatus.Canceled}
         UPDATE job WITH { status: ${JobStatus.Ready} } IN ${jobs}
   `;
   console.debug(
