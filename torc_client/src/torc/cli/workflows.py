@@ -737,15 +737,6 @@ def start_workflow(
         auto_tune_resource_requirements=auto_tune_resource_requirements,
         ignore_missing_data=ignore_missing_data,
     )
-    api.add_event(
-        workflow_key,
-        {
-            "category": "workflow",
-            "type": "start",
-            "key": workflow_key,
-            "message": f"Started workflow {workflow_key}",
-        },
-    )
     # TODO: This could schedule nodes.
 
 

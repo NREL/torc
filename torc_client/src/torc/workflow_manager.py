@@ -42,11 +42,12 @@ class WorkflowManager:
         """
         # TODO: should this delete all output files that will get overwritten?
         config = send_api_command(self._api.get_workflow_config, self._key)
+        run_id: int | None = None
         if not dry_run:
             if config.workflow_startup_script is not None:
                 check_run_command(config.workflow_startup_script)
 
-            self._bump_run_id()
+            run_id = self._bump_run_id()
             send_api_command(self._api.reset_workflow_status, self._key)
 
         self.reinitialize_jobs(
@@ -63,9 +64,11 @@ class WorkflowManager:
                     "type": "restart",
                     "user": getpass.getuser(),
                     "node_name": socket.gethostname(),
-                    "message": "Restarted workflow",
+                    "run_id": run_id,
+                    "message": f"Restarted workflow {run_id=}",
                 },
             )
+            logger.info("Restarted workflow {} to run_id={}", self._key, run_id)
 
     def start(
         self, auto_tune_resource_requirements: bool = False, ignore_missing_data: bool = False
@@ -86,7 +89,7 @@ class WorkflowManager:
         self._initialize_files()
         send_api_command(self._api.reset_workflow_status, self._key)
         send_api_command(self._api.reset_job_status, self._key)
-        self._bump_run_id()
+        run_id = self._bump_run_id()
         self._initialize_jobs()
 
         if auto_tune_resource_requirements:
@@ -101,15 +104,17 @@ class WorkflowManager:
                 "type": "start",
                 "user": getpass.getuser(),
                 "node_name": socket.gethostname(),
-                "message": "Started workflow",
+                "run_id": run_id,
+                "message": f"Started workflow {run_id=}",
             },
         )
-        logger.info("Started workflow")
+        logger.info("Started workflow run_id={}", run_id)
 
-    def _bump_run_id(self) -> None:
+    def _bump_run_id(self) -> int:
         status = send_api_command(self._api.get_workflow_status, self._key)
         status.run_id += 1
         send_api_command(self._api.modify_workflow_status, self._key, status)
+        return status.run_id
 
     def _check_workflow(self, ignore_missing_data: bool = False) -> None:
         workflow = send_api_command(self._api.get_workflow, self._key)
