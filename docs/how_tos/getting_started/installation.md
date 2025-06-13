@@ -36,7 +36,7 @@ run jobs on local or HPC compute nodes.
    ```console
    $ julia  # optionally specify an environment with --project
    $ using Pkg
-   $ Pkg.add(PackageSpec(url="git@github.com:NREL/torc.git", rev="v0.6.2", subdir="julia/Torc"))
+   $ Pkg.add(PackageSpec(url="git@github.com:NREL/torc.git", rev="v0.6.3", subdir="julia/Torc"))
    ```
 
 5. Optionally install `jq` from <https://stedolan.github.io/jq/download/> for parsing JSON.
