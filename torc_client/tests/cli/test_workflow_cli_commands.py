@@ -52,7 +52,24 @@ def test_workflow_commands(create_workflow_cli):
     assert all(x in output["text"] for x in expected)
 
     output = _get_text_and_json_outputs(["-k", key, "-u", url, "results", "list"])
+    assert output["json"]["results"]
     assert all(x in output["text"] for x in ("job_key", "return_code"))
+
+    result = runner.invoke(
+        cli,
+        [
+            "-k",
+            key,
+            "-u",
+            url,
+            "-n",
+            "results",
+            "delete",
+        ],
+    )
+    assert result.exit_code == 0
+    output = _get_text_and_json_outputs(["-k", key, "-u", url, "results", "list"])
+    assert not output["json"]["results"]
 
     events = _run_and_convert_output_from_json(
         ["-k", key, "-u", url, "-F", "json", "events", "list"]

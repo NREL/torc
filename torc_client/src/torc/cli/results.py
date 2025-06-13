@@ -5,10 +5,11 @@ from collections import defaultdict
 import rich_click as click
 from loguru import logger
 
-from torc.openapi_client.models.result_model import ResultModel
+from torc.openapi_client import DefaultApi, ResultModel
 from torc.api import iter_documents, map_job_keys_to_names, list_model_fields
 from .common import (
     check_database_url,
+    confirm_change,
     get_workflow_key_from_context,
     setup_cli_logging,
     parse_filters,
@@ -19,6 +20,19 @@ from .common import (
 @click.group()
 def results():
     """Result commands"""
+
+
+@click.command()
+@click.pass_obj
+@click.pass_context
+def delete(ctx: click.Context, api: DefaultApi) -> None:
+    """Delete all results for one or more workflows."""
+    setup_cli_logging(ctx, __name__)
+    check_database_url(api)
+    workflow_key = get_workflow_key_from_context(ctx, api)
+    msg = f"This command will delete all results for workflow {workflow_key}."
+    confirm_change(ctx, msg)
+    api.delete_results(workflow_key)
 
 
 @click.command(name="list")
@@ -127,4 +141,5 @@ def list_results(
     )
 
 
+results.add_command(delete)
 results.add_command(list_results)
