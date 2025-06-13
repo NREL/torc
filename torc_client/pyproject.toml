@@ -48,6 +48,9 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.setuptools.package-data]
+"*" = ["*.tcss"]
+
 [project.optional-dependencies]
 dev = [
     "black",
