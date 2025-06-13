@@ -1557,14 +1557,33 @@ function updateBlockedJobsFromCompletion(job, workflow) {
   const result = getJobResultByRunId(job, workflow, workflowStatus.run_id);
   // TODO: should other queries use bfs?
   const jobs = config.getWorkflowCollection(workflow, 'jobs');
+  const canceledJobs = [];
   for (const blockedJob of cursor) {
     if (result.return_code != 0 && blockedJob.cancel_on_blocking_job_failure) {
       blockedJob.status = JobStatus.Canceled;
+      // Need to cancel all other jobs that also block this job.
+      // They might not have started yet and it would be pointless to run them.
+      canceledJobs.push(blockedJob._id);
     } else if (!isJobBlocked(blockedJob, workflow)) {
       blockedJob.status = JobStatus.Ready;
     }
     if (job.status != JobStatus.Blocked) {
       jobs.update(blockedJob, blockedJob, {mergeObjects: false});
+    }
+  }
+  if (canceledJobs.length > 0) {
+    for (const jobId of canceledJobs) {
+      // TODO: consider canceling running jobs.
+      query`
+        FOR v, e, p
+          IN 1
+          INBOUND ${jobId}
+          GRAPH ${graphName}
+          OPTIONS { edgeCollections: ${edgeName}, uniqueVertices: 'global', order: 'bfs' }
+          FILTER v.status == ${JobStatus.Ready}
+          UPDATE v WITH { status: ${JobStatus.Canceled} } IN ${jobs}
+          RETURN p.vertices[1]
+      `;
     }
   }
 }

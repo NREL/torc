@@ -44,7 +44,7 @@ import torc
 from torc.api import send_api_command, iter_documents, wait_for_healthy_database
 from torc.common import JOB_STDIO_DIR, STATS_DIR, timer_stats_collector, JobStatus
 from torc.exceptions import InvalidParameter, DatabaseOffline
-from torc.utils.cpu_affinity_mask_tracker import CpuAffinityMaskTracker
+from torc.utils.cpu_affinity_mask_tracker import CpuAffinityMaskTracker, get_max_parallel_jobs
 from torc.utils.filesystem_factory import make_path
 from torc.utils.run_command import check_run_command, run_command
 from .async_cli_command import AsyncCliCommand
@@ -141,11 +141,12 @@ class JobRunner:
                 msg = "This platform does not support sched_setaffinity"
                 raise InvalidParameter(msg)
 
-            num_cpus = self._orig_resources.num_cpus
+            num_cpus = get_max_parallel_jobs(cpu_affinity_cpus_per_job)
+            self._orig_resources.num_cpus = num_cpus
             if cpu_affinity_cpus_per_job > num_cpus:
                 msg = f"{cpu_affinity_cpus_per_job=} cannot be greater than {num_cpus=}"
                 raise InvalidParameter(msg)
-            self._cpu_tracker = CpuAffinityMaskTracker(num_cpus, cpu_affinity_cpus_per_job)
+            self._cpu_tracker = CpuAffinityMaskTracker.load(cpu_affinity_cpus_per_job)
             num_masks = self._cpu_tracker.get_num_masks()
             if self._max_parallel_jobs is not None and self._max_parallel_jobs < num_masks:
                 msg = f"{max_parallel_jobs=} cannot be less than {num_masks=}"

@@ -49,8 +49,8 @@ def cancel(ctx, api: DefaultApi, workflow_keys: tuple[str]) -> None:
     setup_cli_logging(ctx, __name__)
     check_database_url(api)
     if not workflow_keys:
-        logger.warning("No workflow keys were passed")
-        return
+        workflow = prompt_user_for_workflow(ctx, api, auto_select_one_option=False)
+        workflow_keys = [workflow.key]
 
     msg = "This command will cancel all specified workflows."
     confirm_change(ctx, msg)
@@ -736,15 +736,6 @@ def start_workflow(
     mgr.start(
         auto_tune_resource_requirements=auto_tune_resource_requirements,
         ignore_missing_data=ignore_missing_data,
-    )
-    api.add_event(
-        workflow_key,
-        {
-            "category": "workflow",
-            "type": "start",
-            "key": workflow_key,
-            "message": f"Started workflow {workflow_key}",
-        },
     )
     # TODO: This could schedule nodes.
 

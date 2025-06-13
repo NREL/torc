@@ -181,7 +181,7 @@ class AsyncCliCommand(AsyncJobBase):
                 msg = f"This platform does not support sched_setaffinity: {sys.platform}."
                 raise NotImplementedError(msg)
             os.sched_setaffinity(self._pipe.pid, mask)  # type: ignore
-            logger.info("Set CPU affinity for job={self._key} to {mask=}")
+            logger.info("Set CPU affinity for job={} to mask={}", self._db_job.key, mask)
 
         self._is_running = True
 

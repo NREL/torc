@@ -757,6 +757,33 @@ def job_requirement_variations():
 
 
 @pytest.fixture
+def manual_dependencies_with_failure(tmp_path):
+    """Creates a workflow with dependencies set manually and one expected failure."""
+    api = _initialize_api()
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+    workflow = api.add_workflow(
+        WorkflowModel(
+            user="tester",
+            name="test_manual_blocking_job",
+            description="Test manual blocking job workflow",
+        )
+    )
+
+    bad_job = api.add_job(workflow.key, JobModel(name="first", command="ls invalid_file_path_xyz"))
+    good_job = api.add_job(workflow.key, JobModel(name="second", command="echo hello"))
+    api.add_job(
+        workflow.key,
+        JobModel(name="third", command="echo hello", blocked_by=[bad_job.id, good_job.id]),
+    )
+
+    db = DatabaseInterface(api, workflow)
+    api.initialize_jobs(workflow.key)
+    yield db, "", output_dir
+    api.remove_workflow(workflow.key)
+
+
+@pytest.fixture
 def db_api():
     """Returns an api instance."""
     api = _initialize_api()
