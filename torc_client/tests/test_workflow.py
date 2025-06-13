@@ -768,6 +768,31 @@ def test_add_bulk_jobs(diamond_workflow):
     assert len(final_job_keys) == len(initial_job_keys) + 50
 
 
+def test_cancel_ready_jobs_on_failure(manual_dependencies_with_failure):
+    db, _, output_dir = manual_dependencies_with_failure
+    api = db.api
+    mgr = WorkflowManager(api, db.workflow.key)
+    mgr.start()
+    runner = JobRunner(
+        api,
+        db.workflow,
+        output_dir,
+        time_limit="P0DT24H",
+        job_completion_poll_interval=0.1,
+        max_parallel_jobs=1,
+    )
+    runner.run_worker()
+    assert api.is_workflow_complete(db.workflow.key).is_complete
+    for job in api.list_jobs(db.workflow.key).items:
+        match job.name:
+            case "first":
+                assert job.status == "done"
+            case "second" | "third":
+                assert job.status == "canceled"
+            case _:
+                assert False
+
+
 def _fake_complete_job(api, workflow_key, job, compute_node):
     job = api.modify_job(workflow_key, job.key, job)
     status = "done"
