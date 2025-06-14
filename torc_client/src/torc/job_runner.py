@@ -212,11 +212,11 @@ class JobRunner:
         if self._stats.is_enabled():
             self._start_resource_monitor()
 
-        if self._config.worker_startup_script is not None:
-            logger.info("Running node startup script: {}", self._config.worker_startup_script)
-            check_run_command(self._config.worker_startup_script)
-            logger.info("Completed node startup script")
         try:
+            if self._config.worker_startup_script is not None:
+                logger.info("Running node startup script: {}", self._config.worker_startup_script)
+                check_run_command(self._config.worker_startup_script)
+                logger.info("Completed node startup script")
             self._run_until_complete()
         finally:
             logger.info("Exiting worker")
