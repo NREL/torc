@@ -41,7 +41,7 @@ from torc.openapi_client.models.job_process_stats_model import JobProcessStatsMo
 from torc.openapi_client.models.workflow_model import WorkflowModel
 
 import torc
-from torc.api import send_api_command, iter_documents, wait_for_healthy_database
+from torc.api import make_job_label, send_api_command, iter_documents, wait_for_healthy_database
 from torc.common import JOB_STDIO_DIR, STATS_DIR, timer_stats_collector, JobStatus
 from torc.exceptions import InvalidParameter, DatabaseOffline
 from torc.utils.cpu_affinity_mask_tracker import CpuAffinityMaskTracker, get_max_parallel_jobs
@@ -542,7 +542,13 @@ class JobRunner:
         result = job.get_result(self._run_id)
 
         if result.return_code == 0:
-            self._update_file_info(job)
+            if not self._update_file_info(job):
+                result.return_code = 1
+                logger.error(
+                    "Set job {} to return_code {} because it did not create all required files",
+                    make_job_label(job.db_job),
+                    result.return_code,
+                )
 
         assert job.db_job.name is not None
         self._complete_job(job.db_job, result, status)
@@ -749,7 +755,8 @@ class JobRunner:
             ),
         )
 
-    def _update_file_info(self, job: AsyncCliCommand) -> None:
+    def _update_file_info(self, job: AsyncCliCommand) -> bool:
+        created_all_files = True
         for file in iter_documents(
             self._api.list_files_produced_by_job,
             self._workflow.key,
@@ -757,11 +764,12 @@ class JobRunner:
         ):
             path = make_path(file.path)
             if not path.exists():
-                logger.warning(
+                logger.error(
                     "Job {} should have produced file {}, but it does not exist",
                     job.key,
                     file.path,
                 )
+                created_all_files = False
                 continue
             # file.file_hash = compute_file_hash(path)
             file.st_mtime = path.stat().st_mtime
@@ -771,6 +779,7 @@ class JobRunner:
                 file.key,
                 file,
             )
+        return created_all_files
 
 
 def _get_system_resources() -> ComputeNodesResources:

@@ -479,6 +479,33 @@ def complete_workflow_missing_files(completed_workflow):
 
 
 @pytest.fixture
+def job_fails_to_produce_file(tmp_path):
+    """Create a workflow where a job fails to produce a file."""
+    api = _initialize_api()
+    output_dir = tmp_path / "output"
+    output_dir.mkdir()
+
+    workflow = api.add_workflow(WorkflowModel(user="tester", name="test"))
+    assert workflow.key is not None
+    out_file = api.add_file(
+        workflow.key, FileModel(name="out_file", path=str(output_dir / "output.txt"))
+    )
+    add_jobs(
+        api,
+        workflow.key,
+        [
+            JobModel(name="work", command="echo hello", output_files=[out_file.id]),
+            JobModel(name="postprocess", command="echo hello", input_files=[out_file.id]),
+        ],
+    )
+
+    db = DatabaseInterface(api, workflow)
+    api.initialize_jobs(workflow.key)
+    yield db, output_dir
+    api.remove_workflow(workflow.key)
+
+
+@pytest.fixture
 def multi_resource_requirement_workflow(tmp_path, monitor_type):
     """Creates a workflow with jobs that need different categories of resource requirements."""
     api = _initialize_api()

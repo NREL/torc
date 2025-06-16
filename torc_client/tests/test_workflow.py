@@ -242,6 +242,29 @@ def test_run_workflow_missing_user_data(diamond_workflow_user_data):
         mgr.start()
 
 
+def test_run_workflow_no_output_file(job_fails_to_produce_file):
+    """Verify that a job is failed if it does not produce its required output file."""
+    db, output_dir = job_fails_to_produce_file
+    api: DefaultApi = db.api
+    mgr = WorkflowManager(api, db.workflow.key)
+    mgr.start()
+    runner = JobRunner(
+        api,
+        db.workflow,
+        output_dir,
+        time_limit="P0DT24H",
+        job_completion_poll_interval=0.1,
+    )
+    runner.run_worker()
+    assert api.is_workflow_complete(db.workflow.key).is_complete
+    work_job = db.get_document("jobs", "work")
+    assert work_job.status == "done"
+    result = api.get_latest_job_result(db.workflow.key, db.get_document_key("jobs", "work"))
+    assert result.return_code != 0
+    postprocess_job = db.get_document("jobs", "postprocess")
+    assert postprocess_job.status == "canceled"
+
+
 def test_prepare_next_jobs_for_submission(diamond_workflow):
     """Test the API command prepare_next_jobs_for_submission."""
     db = diamond_workflow[0]
