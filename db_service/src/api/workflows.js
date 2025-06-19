@@ -261,7 +261,7 @@ router.post('/workflows/:key/prepare_jobs_for_submission', function(req, res) {
   try {
     const status = query.getWorkflowStatus(workflow);
     if (status.is_canceled) {
-      res.send([]);
+      res.send({jobs: [], reason: 'The workflow was canceled.'});
     } else {
       const resources = req.body;
       const qp = req.queryParams == null ? {} : req.queryParams;
