@@ -31,7 +31,7 @@ run jobs on local or HPC compute nodes.
    $ pip install torc-client
    ```
 
-4) Optionally install the Julia client package.
+4. Optionally install the Julia client package.
 
    ```console
    $ julia  # optionally specify an environment with --project

@@ -4,5 +4,5 @@ This CLI command will cancel a workflow as well as all active jobs. It may take 
 compute nodes to kill their jobs and exit.
 
 ```console
-$ torc workflow cancel <workflow_key>
+$ torc workflows cancel <workflow_key>
 ```
