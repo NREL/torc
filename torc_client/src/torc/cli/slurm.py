@@ -284,7 +284,7 @@ def list_configs(ctx, api):
     default=DEFAULT_OUTPUT_DIR,
     show_default=True,
     help="Output directory for compute nodes",
-    callback=path_callback,
+    callback=path_callback,  # type: ignore
 )
 @click.option(
     "-p",
@@ -576,7 +576,7 @@ def recommend_nodes(
     "--output",
     default="output",
     show_default=True,
-    callback=path_callback,
+    callback=path_callback,  # type: ignore
 )
 @click.option(
     "-p",

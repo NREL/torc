@@ -40,7 +40,7 @@ def reports():
     default="output",
     show_default=True,
     type=click.Path(exists=True),
-    callback=path_callback,
+    callback=path_callback,  # type: ignore
 )
 @click.option(
     "-r",

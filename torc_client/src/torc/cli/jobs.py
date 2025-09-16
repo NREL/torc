@@ -414,7 +414,7 @@ def reset_status(ctx: click.Context, api: DefaultApi, job_keys: tuple[str]) -> N
     "--output",
     default="output",
     show_default=True,
-    callback=path_callback,
+    callback=path_callback,  # type: ignore
 )
 @click.option(
     "-p",
