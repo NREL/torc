@@ -3,6 +3,10 @@
 This guide will walk you through creating and running your first Torc workflows. These examples
 rely on local execution. Refer to the Tutorials for HPC examples.
 
+## Enable logging
+We recommend setting the environment variable RUST_LOG=info so that server
+and client logs are displayed in the console.
+
 ## Start the server
 This will create a torc database in the current directory if it doesn't exist.
 

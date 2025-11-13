@@ -43,7 +43,11 @@ cargo build --release --bin torc-slurm-job-runner
 cargo build --release --bin torc-tui
 ```
 
-Binaries will be in `target/release/`.
+Binaries will be in `target/release/`. We recommend adding this directory
+to your system path so that run all binaries without using the path.
+
+We also recommend setting the environment variable RUST_LOG=info so that server
+and client logs are displayed in the console.
 
 ## For Developers
 
