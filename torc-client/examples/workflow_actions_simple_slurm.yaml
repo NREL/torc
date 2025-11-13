@@ -39,7 +39,6 @@ slurm_schedulers:
     partition: "short"
     nodes: 1
     walltime: "00:30:00"
-    cpus_per_task: 2
     mem: "4G"
 
   # Larger scheduler for compute-intensive processing stage
@@ -48,7 +47,6 @@ slurm_schedulers:
     partition: "compute"
     nodes: 2
     walltime: "02:00:00"
-    cpus_per_task: 8
     mem: "16G"
 
   # Medium scheduler for finalization stage
@@ -57,7 +55,6 @@ slurm_schedulers:
     partition: "short"
     nodes: 1
     walltime: "00:30:00"
-    cpus_per_task: 4
     mem: "8G"
 
 actions:

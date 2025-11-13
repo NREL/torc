@@ -91,7 +91,7 @@ if __name__ == "__main__":
     try:
         iterations = mixed_workload(60)
         print(f"\n✓ Mixed workload job completed successfully")
-        sys.exit(1)
+        sys.exit(0)
     except Exception as e:
         print(f"\n✗ Error: {e}", file=sys.stderr)
         sys.exit(1)

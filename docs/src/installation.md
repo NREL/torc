@@ -14,6 +14,25 @@ cd torc
 
 ## Building All Components
 
+**Create environment configuration:**
+
+Update `.env` file in repository root:
+
+```bash
+DATABASE_URL=sqlite:torc.db
+```
+
+Alternatively, set the `DATABASE_URL` environment variable in your shell.
+
+**Initialize the database**
+
+```bash
+# Install sqlx-cli if needed
+cargo install sqlx-cli --no-default-features --features sqlite
+sqlx migrate create
+sqlx database reset
+```
+
 **Build everything (server, client, job runners):**
 
 ```bash
@@ -66,29 +85,11 @@ RUST_LOG=info cargo test -- --nocapture
 
 ### Setting Up the Server
 
-**Create environment configuration:**
-
-Create `.env` file in repository root:
-
-```bash
-DATABASE_URL=sqlite:torc.db
-```
-
-**Run database migrations:**
-
-```bash
-# Install sqlx-cli if needed
-cargo install sqlx-cli --no-default-features --features sqlite
-
-# Run migrations
-sqlx migrate run
-```
-
 **Start the server:**
 
 ```bash
 # Development mode
-cargo run --bin torc-server
+cargo run -p torc-server
 
 # Production mode (release build)
 ./target/release/torc-server
