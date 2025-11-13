@@ -26,22 +26,15 @@ description: A diamond-shaped workflow demonstrating fan-out and fan-in job depe
 jobs:
   - name: preprocess
     command: "bash tests/scripts/preprocess.sh -i ${files.input.f1} -o ${files.output.f2} -o ${files.output.f3}"
-    resource_requirements_name: small
 
   - name: work1
     command: "bash tests/scripts/work.sh -i ${files.input.f2} -o ${files.output.f4}"
-    cancel_on_blocking_job_failure: true
-    resource_requirements_name: large
 
   - name: work2
     command: "bash tests/scripts/work.sh -i ${files.input.f3} -o ${files.output.f5}"
-    cancel_on_blocking_job_failure: true
-    resource_requirements_name: large
 
   - name: postprocess
     command: "bash tests/scripts/postprocess.sh -i ${files.input.f4} -i ${files.input.f5} -o ${files.output.f6}"
-    cancel_on_blocking_job_failure: true
-    resource_requirements_name: medium
 
 # File definitions - representing the data files in the workflow
 files:
@@ -62,30 +55,3 @@ files:
 
   - name: f6
     path: f6.json
-
-# User data - not used in this workflow
-user_data: []
-
-# Resource requirements - minimal resources for test jobs
-resource_requirements:
-  - name: small
-    num_cpus: 1
-    num_gpus: 0
-    num_nodes: 1
-    memory: 1g
-    runtime: PT10M  # ISO 8601 duration: 10 minutes
-  - name: medium
-    num_cpus: 4
-    num_gpus: 0
-    num_nodes: 1
-    memory: 10g
-    runtime: PT1H  # ISO 8601 duration: 1 hour
-  - name: large
-    num_cpus: 8
-    num_gpus: 0
-    num_nodes: 1
-    memory: 20g
-    runtime: PT4H  # ISO 8601 duration: 4 hour
-
-# Slurm schedulers - not used in this workflow (runs locally)
-slurm_schedulers: []

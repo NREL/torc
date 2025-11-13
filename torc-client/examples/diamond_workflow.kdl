@@ -29,52 +29,20 @@ file "f4" path="f4.json"
 file "f5" path="f5.json"
 file "f6" path="f6.json"
 
-// Resource requirements definitions
-resource_requirements "small" {
-    num_cpus 1
-    num_gpus 0
-    num_nodes 1
-    memory "1g"
-    runtime "PT10M"  // ISO 8601 duration: 10 minutes
-}
-
-resource_requirements "medium" {
-    num_cpus 4
-    num_gpus 0
-    num_nodes 1
-    memory "10g"
-    runtime "PT1H"  // ISO 8601 duration: 1 hour
-}
-
-resource_requirements "large" {
-    num_cpus 8
-    num_gpus 0
-    num_nodes 1
-    memory "20g"
-    runtime "PT4H"  // ISO 8601 duration: 4 hours
-}
-
 // Job definitions using ${files.input.NAME} and ${files.output.NAME}
 // Input/output file dependencies are automatically inferred from the command
 job "preprocess" {
     command "bash tests/scripts/preprocess.sh -i ${files.input.f1} -o ${files.output.f2} -o ${files.output.f3}"
-    resource_requirements_name "small"
 }
 
 job "work1" {
     command "bash tests/scripts/work.sh -i ${files.input.f2} -o ${files.output.f4}"
-    cancel_on_blocking_job_failure #true
-    resource_requirements_name "large"
 }
 
 job "work2" {
     command "bash tests/scripts/work.sh -i ${files.input.f3} -o ${files.output.f5}"
-    cancel_on_blocking_job_failure #true
-    resource_requirements_name "large"
 }
 
 job "postprocess" {
     command "bash tests/scripts/postprocess.sh -i ${files.input.f4} -i ${files.input.f5} -o ${files.output.f6}"
-    cancel_on_blocking_job_failure #true
-    resource_requirements_name "medium"
 }

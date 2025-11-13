@@ -56,31 +56,21 @@ def build_workflow(api: DefaultApi, workflow: WorkflowModel):
     f3 = api.add_file(workflow.key, FileModel(name="file3", path="f3.json"))
     f4 = api.add_file(workflow.key, FileModel(name="file4", path="f4.json"))
     f5 = api.add_file(workflow.key, FileModel(name="file5", path="f5.json"))
-    preprocess = api.add_file(
-        workflow.key, FileModel(name="preprocess", path=str(PREPROCESS))
-    )
+    preprocess = api.add_file(workflow.key, FileModel(name="preprocess", path=str(PREPROCESS)))
     work = api.add_file(workflow.key, FileModel(name="work", path=str(WORK)))
-    postprocess = api.add_file(
-        workflow.key, FileModel(name="postprocess", path=str(POSTPROCESS))
-    )
+    postprocess = api.add_file(workflow.key, FileModel(name="postprocess", path=str(POSTPROCESS)))
 
     small = api.add_resource_requirements(
         workflow.key,
-        ResourceRequirementsModel(
-            name="small", num_cpus=1, memory="1g", runtime="P0DT1H"
-        ),
+        ResourceRequirementsModel(name="small", num_cpus=1, memory="1g", runtime="P0DT1H"),
     )
     medium = api.add_resource_requirements(
         workflow.key,
-        ResourceRequirementsModel(
-            name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"
-        ),
+        ResourceRequirementsModel(name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"),
     )
     large = api.add_resource_requirements(
         workflow.key,
-        ResourceRequirementsModel(
-            name="large", num_cpus=8, memory="16g", runtime="P0DT12H"
-        ),
+        ResourceRequirementsModel(name="large", num_cpus=8, memory="16g", runtime="P0DT12H"),
     )
     api.add_slurm_scheduler(
         workflow.key,
