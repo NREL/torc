@@ -1,0 +1,117 @@
+# Data Processing Pipeline with Parameterization
+# Demonstrates parameterized files and job dependencies
+# Processes data from multiple sources through multiple stages
+
+name: data_pipeline
+user: datauser
+description: Multi-stage data processing pipeline for multiple datasets
+
+jobs:
+  # Stage 1: Download raw data for each dataset
+  - name: download_{dataset}
+    command: wget https://example.com/data/{dataset}.csv -O /data/raw/{dataset}.csv
+    resource_requirements_name: download
+    output_file_names:
+      - raw_{dataset}
+    parameters:
+      dataset: "['sales','inventory','customers','products']"
+
+  # Stage 2: Clean and preprocess each dataset
+  - name: preprocess_{dataset}
+    command: python scripts/preprocess.py --input=/data/raw/{dataset}.csv --output=/data/clean/{dataset}.csv
+    resource_requirements_name: cpu_intensive
+    blocked_by_job_names:
+      - download_{dataset}
+    input_file_names:
+      - raw_{dataset}
+    output_file_names:
+      - clean_{dataset}
+    parameters:
+      dataset: "['sales','inventory','customers','products']"
+
+  # Stage 3: Run multiple analysis types on each dataset
+  - name: analyze_{dataset}_{analysis_type}
+    command: |
+      python scripts/analyze.py \
+        --input=/data/clean/{dataset}.csv \
+        --analysis={analysis_type} \
+        --output=/results/{dataset}_{analysis_type}_results.json
+    resource_requirements_name: cpu_intensive
+    blocked_by_job_names:
+      - preprocess_{dataset}
+    input_file_names:
+      - clean_{dataset}
+    output_file_names:
+      - results_{dataset}_{analysis_type}
+    parameters:
+      dataset: "['sales','inventory','customers','products']"
+      analysis_type: "['summary','trends','anomalies']"
+
+  # Stage 4: Generate reports combining all analyses for each dataset
+  - name: report_{dataset}
+    command: |
+      python scripts/generate_report.py \
+        --dataset={dataset} \
+        --input-dir=/results \
+        --output=/reports/{dataset}_report.html
+    resource_requirements_name: minimal
+    blocked_by_job_names:
+      - analyze_{dataset}_{analysis_type}
+    input_file_names:
+      - results_{dataset}_{analysis_type}
+    parameters:
+      dataset: "['sales','inventory','customers','products']"
+      analysis_type: "['summary','trends','anomalies']"
+
+  # Stage 5: Create executive summary combining all reports
+  - name: executive_summary
+    command: python scripts/executive_summary.py --input-dir=/reports --output=/reports/executive_summary.pdf
+    resource_requirements_name: minimal
+    blocked_by_job_names:
+      - report_{dataset}
+    parameters:
+      dataset: "['sales','inventory','customers','products']"
+
+# File specifications with parameterization
+files:
+  # Raw data files (downloaded)
+  - name: raw_{dataset}
+    path: /data/raw/{dataset}.csv
+    parameters:
+      dataset: "['sales','inventory','customers','products']"
+
+  # Cleaned data files
+  - name: clean_{dataset}
+    path: /data/clean/{dataset}.csv
+    parameters:
+      dataset: "['sales','inventory','customers','products']"
+
+  # Analysis results (4 datasets * 3 analysis types = 12 files)
+  - name: results_{dataset}_{analysis_type}
+    path: /results/{dataset}_{analysis_type}_results.json
+    parameters:
+      dataset: "['sales','inventory','customers','products']"
+      analysis_type: "['summary','trends','anomalies']"
+
+# Resource requirements
+resource_requirements:
+  - name: minimal
+    num_cpus: 1
+    num_gpus: 0
+    num_nodes: 1
+    memory: 2g
+    runtime: PT10M
+
+  - name: download
+    num_cpus: 1
+    num_gpus: 0
+    num_nodes: 1
+    memory: 1g
+    runtime: PT15M
+
+  - name: cpu_intensive
+    num_cpus: 8
+    num_gpus: 0
+    num_nodes: 1
+    memory: 16g
+    runtime: PT1H

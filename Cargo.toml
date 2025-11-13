@@ -1,0 +1,175 @@
+[workspace]
+members = [
+    ".",
+    "torc-server",
+    "torc-client",
+    "torc-tui",
+    "torc-job-runner",
+    "torc-slurm-job-runner",
+    "torc-plot-resources",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.7.0"
+authors = ["Daniel Thom"]
+license = "BSD-3-Clause"
+edition = "2024"
+
+[workspace.dependencies]
+# Shared dependencies
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_repr = "0.1"
+serde_with = { version = "3.8", default-features = false, features = ["base64", "std", "macros"] }
+chrono = { version = "0.4", features = ["serde"] }
+log = "0.4.28"
+env_logger = "0.11"
+clap = { version = "4.4", features = ["derive", "env"] }
+tokio = { version = "1.47", features = ["rt-multi-thread", "macros", "net"] }
+url = "2.5"
+validator = { version = "0.16", features = ["derive"] }
+mime = "0.3"
+futures = "0.3"
+
+# Server-specific
+async-trait = "0.1.24"
+swagger = { version = "6.1", features = ["serdejson", "server", "client", "tls", "tcp"] }
+hyper = { version = "0.14", features = ["full"] }
+serde_ignored = "0.1.1"
+percent-encoding = "2.1.0"
+regex = "1.3"
+lazy_static = "1.4"
+anyhow = "1"
+sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
+dotenvy = "0.15.7"
+iso8601 = "0.6"
+jsonwebtoken = "9.3.0"
+sha2 = "0.10"
+
+# Client-specific
+reqwest = { version = "0.12", default-features = false, features = ["json", "blocking", "multipart"] }
+sysinfo = "0.29"
+hostname = "0.4.1"
+json5 = "0.4"
+serde_yaml = "0.9"
+tabled = "0.17"
+kdl = "6.5"
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+# Platform-specific (macOS/Windows/iOS)
+native-tls = "0.2"
+hyper-tls = "0.5"
+
+# Platform-specific (Linux/other)
+hyper-openssl = "0.9"
+openssl = "0.10"
+
+[package]
+name = "torc"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+description = "Workflow orchestration system - shared library"
+
+[features]
+default = ["client"]
+server = [
+    "dep:async-trait",
+    "dep:swagger",
+    "dep:hyper",
+    "dep:serde_ignored",
+    "dep:percent-encoding",
+    "dep:regex",
+    "dep:lazy_static",
+    "dep:anyhow",
+    "dep:sqlx",
+    "dep:tokio",
+    "dep:dotenvy",
+    "dep:jsonwebtoken",
+    "dep:sha2",
+]
+client = [
+    "dep:reqwest",
+    "dep:sysinfo",
+    "dep:hostname",
+    "dep:json5",
+    "dep:serde_yaml",
+    "dep:kdl",
+    "dep:clap",
+    "dep:env_logger",
+    "dep:serde_with",
+    "dep:serde_repr",
+    "dep:tabled",
+    "dep:anyhow",
+    "dep:regex",
+    "dep:rusqlite",
+]
+conversion = ["frunk", "frunk_derives", "frunk_core", "frunk-enum-core", "frunk-enum-derive"]
+
+[target.'cfg(any(target_os = "macos", target_os = "windows", target_os = "ios"))'.dependencies]
+native-tls = { workspace = true, optional = true }
+hyper-tls = { workspace = true, optional = true }
+
+[target.'cfg(not(any(target_os = "macos", target_os = "windows", target_os = "ios")))'.dependencies]
+hyper-openssl = { workspace = true, optional = true }
+openssl = { workspace = true, optional = true }
+
+[dependencies]
+# Shared dependencies (always available)
+serde.workspace = true
+serde_json.workspace = true
+chrono.workspace = true
+log.workspace = true
+mime.workspace = true
+futures.workspace = true
+validator.workspace = true
+
+# Server dependencies (optional)
+async-trait = { workspace = true, optional = true }
+swagger = { workspace = true, optional = true }
+hyper = { workspace = true, optional = true }
+serde_ignored = { workspace = true, optional = true }
+percent-encoding = { workspace = true, optional = true }
+regex = { workspace = true, optional = true }
+lazy_static = { workspace = true, optional = true }
+anyhow = { workspace = true, optional = true }
+sqlx = { workspace = true, optional = true }
+tokio = { workspace = true, optional = true }
+dotenvy = { workspace = true, optional = true }
+iso8601 = { workspace = true }
+jsonwebtoken = { workspace = true, optional = true }
+sha2 = { workspace = true, optional = true }
+
+# Client dependencies (optional)
+reqwest = { workspace = true, optional = true }
+sysinfo = { workspace = true, optional = true }
+hostname = { workspace = true, optional = true }
+json5 = { workspace = true, optional = true }
+serde_yaml = { workspace = true, optional = true }
+kdl = { workspace = true, optional = true }
+serde_with = { workspace = true, optional = true }
+serde_repr = { workspace = true, optional = true }
+url = { workspace = true }
+clap = { workspace = true, optional = true }
+env_logger = { workspace = true, optional = true }
+tabled = { workspace = true, optional = true }
+rusqlite = { workspace = true, optional = true }
+
+# Conversion feature dependencies
+frunk = { version = "0.4.0", optional = true }
+frunk_derives = { version = "0.4.0", optional = true }
+frunk_core = { version = "0.4.0", optional = true }
+frunk-enum-derive = { version = "0.3.0", optional = true }
+frunk-enum-core = { version = "0.3.0", optional = true }
+
+[target.'cfg(not(any(target_os = "macos", target_os = "windows", target_os = "ios")))'.dev-dependencies]
+tokio-openssl = "0.6"
+openssl = "0.10"
+
+[dev-dependencies]
+rstest = "0.26.1"
+tempfile = "3.22.0"
+serial_test = "3.0"
+reqwest = { workspace = true }

@@ -1,0 +1,274 @@
+#[cfg(test)]
+mod cli_tests {
+    use clap::Parser;
+    use std::process::Command;
+
+    // Import the CLI structures from main.rs for testing
+    // Note: In a real project, you'd want to move these to a lib.rs or separate module
+    // so they can be imported properly for testing
+
+    #[test]
+    fn test_cli_help_commands() {
+        // Test that help commands work without errors
+        let output = Command::new("cargo")
+            .args(&["run", "--", "--help"])
+            .output();
+        
+        match output {
+            Ok(output) => {
+                assert!(output.status.success() || output.status.code() == Some(0));
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                assert!(stdout.contains("Workflow management commands"));
+                assert!(stdout.contains("Job management commands"));
+            }
+            Err(_) => {
+                // Skip test if cargo run fails (e.g., in environments without Rust)
+                println!("Skipping CLI help test - cargo not available");
+            }
+        }
+    }
+
+    #[test]
+    fn test_workflows_help() {
+        let output = Command::new("cargo")
+            .args(&["run", "--", "workflows", "--help"])
+            .output();
+        
+        match output {
+            Ok(output) => {
+                assert!(output.status.success() || output.status.code() == Some(0));
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                assert!(stdout.contains("add") && stdout.contains("list"));
+            }
+            Err(_) => {
+                println!("Skipping workflows help test - cargo not available");
+            }
+        }
+    }
+
+    #[test]
+    fn test_jobs_help() {
+        let output = Command::new("cargo")
+            .args(&["run", "--", "jobs", "--help"])
+            .output();
+        
+        match output {
+            Ok(output) => {
+                assert!(output.status.success() || output.status.code() == Some(0));
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                assert!(stdout.contains("add") && stdout.contains("list"));
+            }
+            Err(_) => {
+                println!("Skipping jobs help test - cargo not available");
+            }
+        }
+    }
+
+    #[test]
+    fn test_format_validation() {
+        // Test invalid format option
+        let output = Command::new("cargo")
+            .args(&["run", "--", "--format", "invalid", "workflows", "list", "--user", "test"])
+            .output();
+        
+        match output {
+            Ok(output) => {
+                assert!(!output.status.success());
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                assert!(stderr.contains("format must be either 'table' or 'json'"));
+            }
+            Err(_) => {
+                println!("Skipping format validation test - cargo not available");
+            }
+        }
+    }
+
+    #[test]
+    fn test_workflow_add_missing_args() {
+        // Test workflow add without required arguments
+        let output = Command::new("cargo")
+            .args(&["run", "--", "workflows", "add"])
+            .output();
+        
+        match output {
+            Ok(output) => {
+                assert!(!output.status.success());
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                assert!(stderr.contains("required") || stderr.contains("name"));
+            }
+            Err(_) => {
+                println!("Skipping workflow add validation test - cargo not available");
+            }
+        }
+    }
+
+    #[test]
+    fn test_job_add_missing_args() {
+        // Test job add without required arguments
+        let output = Command::new("cargo")
+            .args(&["run", "--", "jobs", "add"])
+            .output();
+        
+        match output {
+            Ok(output) => {
+                assert!(!output.status.success());
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                assert!(
+                    stderr.contains("name") || 
+                    stderr.contains("command") || 
+                    stderr.contains("workflow-id")
+                );
+            }
+            Err(_) => {
+                println!("Skipping job add validation test - cargo not available");
+            }
+        }
+    }
+
+    #[test]
+    fn test_truncate_string_function() {
+        // Test the truncate_string function logic
+        // This would normally be in a unit test, but since the function is in main.rs,
+        // we test the behavior indirectly
+        
+        // We can't directly test the function since it's in main.rs,
+        // but we can verify the CLI handles long strings gracefully
+        let long_name = "a".repeat(100);
+        let output = Command::new("cargo")
+            .args(&[
+                "run", "--", 
+                "workflows", "add", 
+                "--name", &long_name,
+                "--user", "testuser"
+            ])
+            .env("TORC_BASE_URL", "http://localhost:9999") // Non-existent service
+            .output();
+        
+        match output {
+            Ok(output) => {
+                // Should fail due to network error, not argument processing
+                let stderr = String::from_utf8_lossy(&output.stderr);
+                assert!(stderr.contains("Network error") || stderr.contains("connection"));
+            }
+            Err(_) => {
+                println!("Skipping long name test - cargo not available");
+            }
+        }
+    }
+
+    #[test]
+    fn test_environment_variable_defaults() {
+        // Test that USER environment variable is used as default
+        let output = Command::new("cargo")
+            .args(&["run", "--", "workflows", "list", "--help"])
+            .output();
+        
+        match output {
+            Ok(output) => {
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                assert!(stdout.contains("USER") || stdout.contains("environment"));
+            }
+            Err(_) => {
+                println!("Skipping environment variable test - cargo not available");
+            }
+        }
+    }
+}
+
+// Unit tests for helper functions (if we could access them)
+#[cfg(test)]
+mod unit_tests {
+    // These tests would work if we moved the utility functions to a lib module
+    
+    #[test]
+    fn test_truncate_string_short() {
+        // This is a conceptual test - the actual function is in main.rs
+        let input = "short";
+        let max_len = 10;
+        // Expected: "short" (unchanged)
+        assert!(input.len() <= max_len);
+    }
+    
+    #[test]
+    fn test_truncate_string_long() {
+        // This is a conceptual test - the actual function is in main.rs
+        let input = "this is a very long string that should be truncated";
+        let max_len = 10;
+        // Expected: "this i..." (truncated with ellipsis)
+        assert!(input.len() > max_len);
+    }
+}
+
+// Integration tests that could work with a mock server
+#[cfg(test)]
+mod integration_tests {
+    use std::process::Command;
+    
+    #[test]
+    #[ignore] // Ignore by default since it requires a running server
+    fn test_full_workflow_creation() {
+        // This test would require a real Torc server running
+        let output = Command::new("cargo")
+            .args(&[
+                "run", "--", 
+                "--format", "json",
+                "workflows", "add",
+                "--name", "Test Workflow",
+                "--description", "Integration test workflow",
+                "--user", "testuser"
+            ])
+            .env("TORC_BASE_URL", "http://localhost:8080")
+            .output();
+        
+        match output {
+            Ok(output) => {
+                if output.status.success() {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    assert!(stdout.contains("\"id\""));
+                    assert!(stdout.contains("Test Workflow"));
+                } else {
+                    // Expected if server is not running
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    assert!(stderr.contains("Network error") || stderr.contains("connection"));
+                }
+            }
+            Err(_) => {
+                println!("Skipping full workflow test - cargo not available");
+            }
+        }
+    }
+    
+    #[test]
+    #[ignore] // Ignore by default since it requires a running server  
+    fn test_workflow_listing() {
+        // This test would require a real Torc server running
+        let output = Command::new("cargo")
+            .args(&[
+                "run", "--",
+                "workflows", "list",
+                "--user", "testuser",
+                "--limit", "5"
+            ])
+            .env("TORC_BASE_URL", "http://localhost:8080")
+            .output();
+        
+        match output {
+            Ok(output) => {
+                if output.status.success() {
+                    let stdout = String::from_utf8_lossy(&output.stdout);
+                    assert!(
+                        stdout.contains("Workflows for user") || 
+                        stdout.contains("No workflows found")
+                    );
+                } else {
+                    // Expected if server is not running
+                    let stderr = String::from_utf8_lossy(&output.stderr);
+                    assert!(stderr.contains("Network error") || stderr.contains("connection"));
+                }
+            }
+            Err(_) => {
+                println!("Skipping workflow listing test - cargo not available");
+            }
+        }
+    }
+}

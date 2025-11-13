@@ -1,0 +1,650 @@
+//! Resource requirements-related API endpoints
+
+use async_trait::async_trait;
+use log::{debug, error};
+use sqlx::Row;
+use swagger::{ApiError, Has, XSpanIdString};
+
+use crate::server::api_types::{
+    CreateResourceRequirementsResponse, DeleteAllResourceRequirementsResponse,
+    DeleteResourceRequirementsResponse, GetResourceRequirementsResponse,
+    ListResourceRequirementsResponse, UpdateResourceRequirementsResponse,
+};
+
+use crate::models;
+use crate::time_utils::duration_string_to_seconds;
+
+use super::{ApiContext, MAX_RECORD_TRANSFER_COUNT, SqlQueryBuilder, database_error};
+
+/// Trait defining resource requirements-related API operations
+#[async_trait]
+pub trait ResourceRequirementsApi<C> {
+    /// Store one resource requirements record.
+    async fn create_resource_requirements(
+        &self,
+        mut body: models::ResourceRequirementsModel,
+        context: &C,
+    ) -> Result<CreateResourceRequirementsResponse, ApiError>;
+
+    /// Delete all resource requirements for one workflow.
+    async fn delete_all_resource_requirements(
+        &self,
+        workflow_id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteAllResourceRequirementsResponse, ApiError>;
+
+    /// Retrieve a resource requirements record by ID.
+    async fn get_resource_requirements(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<GetResourceRequirementsResponse, ApiError>;
+
+    /// Retrieve all resource requirements records for one workflow.
+    async fn list_resource_requirements(
+        &self,
+        workflow_id: i64,
+        name: Option<String>,
+        offset: i64,
+        limit: i64,
+        sort_by: Option<String>,
+        reverse_sort: Option<bool>,
+        context: &C,
+    ) -> Result<ListResourceRequirementsResponse, ApiError>;
+
+    /// Update a resource requirements record.
+    async fn update_resource_requirements(
+        &self,
+        id: i64,
+        body: models::ResourceRequirementsModel,
+        context: &C,
+    ) -> Result<UpdateResourceRequirementsResponse, ApiError>;
+
+    /// Delete a resource requirements record.
+    async fn delete_resource_requirements(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteResourceRequirementsResponse, ApiError>;
+}
+
+/// Implementation of resource requirements API for the server
+#[derive(Clone)]
+pub struct ResourceRequirementsApiImpl {
+    pub context: ApiContext,
+}
+
+impl ResourceRequirementsApiImpl {
+    pub fn new(context: ApiContext) -> Self {
+        Self { context }
+    }
+
+    /// Convert memory string to bytes
+    /// Supports formats like "1024", "1k", "2M", "3g", "4T" (case insensitive)
+    /// k/K = KiB (1024 bytes), m/M = MiB, g/G = GiB, t/T = TiB
+    fn memory_string_to_bytes(memory_str: &str) -> Result<i64, String> {
+        let memory_str = memory_str.trim();
+
+        if memory_str.is_empty() {
+            return Err("Memory string cannot be empty".to_string());
+        }
+
+        // Check if the last character is a unit
+        let (number_part, multiplier) = if let Some(last_char) = memory_str.chars().last() {
+            if last_char.is_alphabetic() {
+                let number_part = &memory_str[..memory_str.len() - 1];
+                let multiplier = match last_char.to_ascii_lowercase() {
+                    'k' => 1024_i64,
+                    'm' => 1024_i64.pow(2),
+                    'g' => 1024_i64.pow(3),
+                    't' => 1024_i64.pow(4),
+                    _ => return Err(format!("Invalid memory unit: {}", last_char)),
+                };
+                (number_part, multiplier)
+            } else {
+                (memory_str, 1_i64)
+            }
+        } else {
+            return Err("Memory string cannot be empty".to_string());
+        };
+
+        // Parse the number part
+        let number: i64 = number_part
+            .parse()
+            .map_err(|_| format!("Invalid number in memory string: {}", number_part))?;
+
+        if number < 0 {
+            return Err("Memory size cannot be negative".to_string());
+        }
+
+        // Calculate total bytes, checking for overflow
+        number
+            .checked_mul(multiplier)
+            .ok_or_else(|| "Memory size too large, would cause overflow".to_string())
+    }
+}
+
+#[async_trait]
+impl<C> ResourceRequirementsApi<C> for ResourceRequirementsApiImpl
+where
+    C: Has<XSpanIdString> + Send + Sync,
+{
+    /// Store one resource requirements record.
+    async fn create_resource_requirements(
+        &self,
+        mut body: models::ResourceRequirementsModel,
+        context: &C,
+    ) -> Result<CreateResourceRequirementsResponse, ApiError> {
+        debug!(
+            "create_resource_requirements({:?}) - X-Span-ID: {:?}",
+            body,
+            context.get().0.clone()
+        );
+
+        let memory_bytes = match Self::memory_string_to_bytes(&body.memory) {
+            Ok(bytes) => bytes,
+            Err(e) => {
+                let error_response = models::ErrorResponse::new(serde_json::json!({
+                    "message": format!("Invalid memory format '{}': {}", body.memory, e),
+                    "field": "memory",
+                    "value": body.memory
+                }));
+                return Ok(
+                    CreateResourceRequirementsResponse::UnprocessableContentErrorResponse(
+                        error_response,
+                    ),
+                );
+            }
+        };
+
+        let runtime_seconds = match duration_string_to_seconds(&body.runtime) {
+            Ok(seconds) => seconds,
+            Err(e) => {
+                let error_response = models::ErrorResponse::new(serde_json::json!({
+                    "message": format!("Invalid runtime format '{}': {}", body.runtime, e),
+                    "field": "runtime",
+                    "value": body.runtime
+                }));
+                return Ok(
+                    CreateResourceRequirementsResponse::UnprocessableContentErrorResponse(
+                        error_response,
+                    ),
+                );
+            }
+        };
+
+        let result = match sqlx::query!(
+            r#"
+            INSERT INTO resource_requirements
+            (
+                workflow_id
+                ,name
+                ,num_cpus
+                ,num_gpus
+                ,num_nodes
+                ,memory
+                ,runtime
+                ,memory_bytes
+                ,runtime_s
+            )
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+            RETURNING rowid
+        "#,
+            body.workflow_id,
+            body.name,
+            body.num_cpus,
+            body.num_gpus,
+            body.num_nodes,
+            body.memory,
+            body.runtime,
+            memory_bytes,
+            runtime_seconds,
+        )
+        .fetch_one(self.context.pool.as_ref())
+        .await
+        {
+            Ok(result) => result,
+            Err(e) => {
+                error!("Database error: {}", e);
+                return Err(ApiError("Database error".to_string()));
+            }
+        };
+        body.id = Some(result.id);
+        Ok(CreateResourceRequirementsResponse::SuccessfulResponse(body))
+    }
+
+    /// Delete all resource requirements for one workflow.
+    async fn delete_all_resource_requirements(
+        &self,
+        workflow_id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteAllResourceRequirementsResponse, ApiError> {
+        debug!(
+            "delete_all_resource_requirements({}, {:?}) - X-Span-ID: {:?}",
+            workflow_id,
+            body,
+            context.get().0.clone()
+        );
+
+        let result = match sqlx::query!(
+            "DELETE FROM resource_requirements WHERE workflow_id = $1",
+            workflow_id
+        )
+        .execute(self.context.pool.as_ref())
+        .await
+        {
+            Ok(result) => result,
+            Err(e) => {
+                error!("Database error: {}", e);
+                return Err(database_error(e));
+            }
+        };
+
+        let deleted_count = result.rows_affected() as i64;
+
+        debug!(
+            "delete_all_resource_requirements({}) deleted {} records - X-Span-ID: {:?}",
+            workflow_id,
+            deleted_count,
+            context.get().0.clone()
+        );
+
+        Ok(DeleteAllResourceRequirementsResponse::SuccessfulResponse(
+            serde_json::json!({
+                "count": deleted_count
+            }),
+        ))
+    }
+
+    /// Retrieve a resource requirements record by ID.
+    async fn get_resource_requirements(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<GetResourceRequirementsResponse, ApiError> {
+        debug!(
+            "get_resource_requirements({}) - X-Span-ID: {:?}",
+            id,
+            context.get().0.clone()
+        );
+
+        let record = match sqlx::query!(
+            r#"
+                SELECT id, workflow_id, name, num_cpus, num_gpus, num_nodes, memory, runtime
+                FROM resource_requirements
+                WHERE id = $1
+            "#,
+            id
+        )
+        .fetch_optional(self.context.pool.as_ref())
+        .await
+        {
+            Ok(Some(rec)) => rec,
+            Ok(None) => {
+                let error_response = models::ErrorResponse::new(serde_json::json!({
+                    "message": format!("Resource requirements not found with ID: {}", id)
+                }));
+                return Ok(GetResourceRequirementsResponse::NotFoundErrorResponse(
+                    error_response,
+                ));
+            }
+            Err(e) => {
+                return Err(database_error(e));
+            }
+        };
+
+        let resource_requirements = models::ResourceRequirementsModel {
+            id: Some(record.id),
+            workflow_id: record.workflow_id,
+            name: record.name,
+            num_cpus: record.num_cpus,
+            num_gpus: record.num_gpus,
+            num_nodes: record.num_nodes,
+            memory: record.memory,
+            runtime: record.runtime,
+        };
+
+        Ok(GetResourceRequirementsResponse::SuccessfulResponse(
+            resource_requirements,
+        ))
+    }
+
+    /// Retrieve all resource requirements records for one workflow.
+    async fn list_resource_requirements(
+        &self,
+        workflow_id: i64,
+        name: Option<String>,
+        offset: i64,
+        limit: i64,
+        sort_by: Option<String>,
+        reverse_sort: Option<bool>,
+        context: &C,
+    ) -> Result<ListResourceRequirementsResponse, ApiError> {
+        debug!(
+            "list_resource_requirements({}, {:?}, {}, {}, {:?}, {:?}) - X-Span-ID: {:?}",
+            workflow_id,
+            name,
+            offset,
+            limit,
+            sort_by,
+            reverse_sort,
+            context.get().0.clone()
+        );
+
+        // Build base query
+        let base_query = "SELECT id, workflow_id, name, num_cpus, num_gpus, num_nodes, memory, runtime FROM resource_requirements".to_string();
+
+        // Build WHERE clause conditions
+        let mut where_conditions = vec!["workflow_id = ?".to_string()];
+        let mut bind_values: Vec<Box<dyn sqlx::Encode<'_, sqlx::Sqlite> + Send>> =
+            vec![Box::new(workflow_id)];
+
+        if let Some(name_filter) = &name {
+            where_conditions.push("name = ?".to_string());
+            bind_values.push(Box::new(name_filter.clone()));
+        }
+
+        let where_clause = where_conditions.join(" AND ");
+
+        // Build the complete query with pagination and sorting
+        let query = SqlQueryBuilder::new(base_query)
+            .with_where(where_clause.clone())
+            .with_pagination_and_sorting(offset, limit, sort_by, reverse_sort, "id")
+            .build();
+
+        debug!("Executing query: {}", query);
+
+        // Execute the query
+        let mut sqlx_query = sqlx::query(&query);
+
+        // Bind workflow_id
+        sqlx_query = sqlx_query.bind(workflow_id);
+
+        // Bind optional parameters in order
+        if let Some(name_filter) = &name {
+            sqlx_query = sqlx_query.bind(name_filter);
+        }
+
+        let records = match sqlx_query.fetch_all(self.context.pool.as_ref()).await {
+            Ok(recs) => recs,
+            Err(e) => {
+                error!("Database error: {}", e);
+                return Err(database_error(e));
+            }
+        };
+
+        let mut items: Vec<models::ResourceRequirementsModel> = Vec::new();
+        for record in records {
+            items.push(models::ResourceRequirementsModel {
+                id: Some(record.get("id")),
+                workflow_id: record.get("workflow_id"),
+                name: record.get("name"),
+                num_cpus: record.get("num_cpus"),
+                num_gpus: record.get("num_gpus"),
+                num_nodes: record.get("num_nodes"),
+                memory: record.get("memory"),
+                runtime: record.get("runtime"),
+            });
+        }
+
+        // For proper pagination, we should get the total count without LIMIT/OFFSET
+        let count_query =
+            SqlQueryBuilder::new("SELECT COUNT(*) as total FROM resource_requirements".to_string())
+                .with_where(where_clause)
+                .build();
+
+        let mut count_sqlx_query = sqlx::query(&count_query);
+        count_sqlx_query = count_sqlx_query.bind(workflow_id);
+        if let Some(name_filter) = &name {
+            count_sqlx_query = count_sqlx_query.bind(name_filter);
+        }
+
+        let total_count = match count_sqlx_query.fetch_one(self.context.pool.as_ref()).await {
+            Ok(row) => row.get::<i64, _>("total"),
+            Err(e) => {
+                error!("Database error getting count: {}", e);
+                return Err(database_error(e));
+            }
+        };
+
+        let current_count = items.len() as i64;
+        let offset_val = offset;
+        let has_more = offset_val + current_count < total_count;
+
+        debug!(
+            "list_resource_requirements({}, {}/{}) - X-Span-ID: {:?}",
+            workflow_id,
+            current_count,
+            total_count,
+            context.get().0.clone()
+        );
+
+        Ok(ListResourceRequirementsResponse::SuccessfulResponse(
+            models::ListResourceRequirementsResponse {
+                items: Some(items),
+                offset: offset_val,
+                max_limit: MAX_RECORD_TRANSFER_COUNT,
+                count: current_count,
+                total_count,
+                has_more,
+            },
+        ))
+    }
+
+    /// Update a resource requirements record.
+    async fn update_resource_requirements(
+        &self,
+        id: i64,
+        body: models::ResourceRequirementsModel,
+        context: &C,
+    ) -> Result<UpdateResourceRequirementsResponse, ApiError> {
+        debug!(
+            "update_resource_requirements({}, {:?}) - X-Span-ID: {:?}",
+            id,
+            body,
+            context.get().0.clone()
+        );
+
+        let memory_bytes = Self::memory_string_to_bytes(&body.memory)
+            .map_err(|e| ApiError(format!("Invalid memory format '{}': {}", body.memory, e)))?;
+
+        let runtime_seconds = duration_string_to_seconds(&body.runtime)
+            .map_err(|e| ApiError(format!("Invalid runtime format '{}': {}", body.runtime, e)))?;
+
+        // First check if the record exists
+        match self.get_resource_requirements(id, context).await? {
+            GetResourceRequirementsResponse::SuccessfulResponse(_) => {}
+            GetResourceRequirementsResponse::NotFoundErrorResponse(err) => {
+                return Ok(UpdateResourceRequirementsResponse::NotFoundErrorResponse(
+                    err,
+                ));
+            }
+            GetResourceRequirementsResponse::DefaultErrorResponse(_) => {
+                return Err(ApiError("Failed to get resource requirements".to_string()));
+            }
+        };
+
+        // Update the record
+        match sqlx::query!(
+            r#"
+            UPDATE resource_requirements
+            SET workflow_id = $1,
+                name = $2,
+                num_cpus = $3,
+                num_gpus = $4,
+                num_nodes = $5,
+                memory = $6,
+                runtime = $7,
+                memory_bytes = $8,
+                runtime_s = $9
+            WHERE id = $10
+            "#,
+            body.workflow_id,
+            body.name,
+            body.num_cpus,
+            body.num_gpus,
+            body.num_nodes,
+            body.memory,
+            body.runtime,
+            memory_bytes,
+            runtime_seconds,
+            id,
+        )
+        .execute(self.context.pool.as_ref())
+        .await
+        {
+            Ok(_) => {
+                let mut updated_body = body;
+                updated_body.id = Some(id);
+                Ok(UpdateResourceRequirementsResponse::SuccessfulResponse(
+                    updated_body,
+                ))
+            }
+            Err(e) => Err(database_error(e)),
+        }
+    }
+
+    /// Delete a resource requirements record.
+    async fn delete_resource_requirements(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteResourceRequirementsResponse, ApiError> {
+        debug!(
+            "delete_resource_requirements({}, {:?}) - X-Span-ID: {:?}",
+            id,
+            body,
+            context.get().0.clone()
+        );
+
+        // First get the resource requirements to ensure it exists and extract the ResourceRequirementsModel
+        let resource_requirements = match self.get_resource_requirements(id, context).await? {
+            GetResourceRequirementsResponse::SuccessfulResponse(resource_requirements) => {
+                resource_requirements
+            }
+            GetResourceRequirementsResponse::NotFoundErrorResponse(err) => {
+                return Ok(DeleteResourceRequirementsResponse::NotFoundErrorResponse(
+                    err,
+                ));
+            }
+            GetResourceRequirementsResponse::DefaultErrorResponse(_) => {
+                return Err(ApiError("Failed to get resource requirements".to_string()));
+            }
+        };
+
+        match sqlx::query!(r#"DELETE FROM resource_requirements WHERE id = $1"#, id)
+            .execute(self.context.pool.as_ref())
+            .await
+        {
+            Ok(res) => {
+                if res.rows_affected() > 1 {
+                    Err(ApiError(format!(
+                        "Database error: Unexpected number of rows affected: {}",
+                        res.rows_affected()
+                    )))
+                } else if res.rows_affected() == 0 {
+                    Err(ApiError("Database error: No rows affected".to_string()))
+                } else {
+                    debug!("Removed resource requirements with id: {}", id);
+                    Ok(DeleteResourceRequirementsResponse::SuccessfulResponse(
+                        resource_requirements,
+                    ))
+                }
+            }
+            Err(e) => {
+                error!("Database error: {}", e);
+                Err(database_error(e))
+            }
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_memory_string_to_bytes() {
+        // Test plain bytes
+        assert_eq!(
+            ResourceRequirementsApiImpl::memory_string_to_bytes("1024").unwrap(),
+            1024
+        );
+        assert_eq!(
+            ResourceRequirementsApiImpl::memory_string_to_bytes("0").unwrap(),
+            0
+        );
+
+        // Test KiB (1024 bytes)
+        assert_eq!(
+            ResourceRequirementsApiImpl::memory_string_to_bytes("1k").unwrap(),
+            1024
+        );
+        assert_eq!(
+            ResourceRequirementsApiImpl::memory_string_to_bytes("1K").unwrap(),
+            1024
+        );
+        assert_eq!(
+            ResourceRequirementsApiImpl::memory_string_to_bytes("2k").unwrap(),
+            2048
+        );
+
+        // Test MiB (1024^2 bytes)
+        assert_eq!(
+            ResourceRequirementsApiImpl::memory_string_to_bytes("1m").unwrap(),
+            1024 * 1024
+        );
+        assert_eq!(
+            ResourceRequirementsApiImpl::memory_string_to_bytes("1M").unwrap(),
+            1024 * 1024
+        );
+        assert_eq!(
+            ResourceRequirementsApiImpl::memory_string_to_bytes("2m").unwrap(),
+            2 * 1024 * 1024
+        );
+
+        // Test GiB (1024^3 bytes)
+        assert_eq!(
+            ResourceRequirementsApiImpl::memory_string_to_bytes("1g").unwrap(),
+            1024_i64.pow(3)
+        );
+        assert_eq!(
+            ResourceRequirementsApiImpl::memory_string_to_bytes("1G").unwrap(),
+            1024_i64.pow(3)
+        );
+
+        // Test TiB (1024^4 bytes)
+        assert_eq!(
+            ResourceRequirementsApiImpl::memory_string_to_bytes("1t").unwrap(),
+            1024_i64.pow(4)
+        );
+        assert_eq!(
+            ResourceRequirementsApiImpl::memory_string_to_bytes("1T").unwrap(),
+            1024_i64.pow(4)
+        );
+
+        // Test whitespace trimming
+        assert_eq!(
+            ResourceRequirementsApiImpl::memory_string_to_bytes(" 1k ").unwrap(),
+            1024
+        );
+        assert_eq!(
+            ResourceRequirementsApiImpl::memory_string_to_bytes("  512m  ").unwrap(),
+            512 * 1024 * 1024
+        );
+
+        // Test error cases
+        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("").is_err());
+        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("   ").is_err());
+        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("invalid").is_err());
+        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("1x").is_err());
+        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("-1").is_err());
+        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("-1k").is_err());
+        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("abc").is_err());
+        assert!(ResourceRequirementsApiImpl::memory_string_to_bytes("1.5k").is_err());
+    }
+}

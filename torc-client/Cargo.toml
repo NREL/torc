@@ -1,0 +1,22 @@
+[package]
+name = "torc-client"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+description = "Torc workflow orchestration client"
+
+[[bin]]
+name = "torc-client"
+path = "src/main.rs"
+
+[dependencies]
+torc = { path = "..", features = ["client"] }
+clap.workspace = true
+env_logger.workspace = true
+log.workspace = true
+
+[dev-dependencies]
+rstest = "0.26.1"
+tempfile = "3.22.0"
+serial_test = "3.0"

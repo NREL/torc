@@ -1,0 +1,8 @@
+CREATE TABLE user_data (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  workflow_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  is_ephemeral INTEGER NOT NULL,
+  data JSON NULL,
+  FOREIGN KEY (workflow_id) REFERENCES workflow(id) ON DELETE CASCADE
+);

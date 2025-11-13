@@ -1,0 +1,305 @@
+mod common;
+
+use common::{
+    ServerProcess, create_diamond_workflow, run_cli_command, run_jobs_cli_command, start_server,
+};
+use rstest::rstest;
+use std::collections::HashMap;
+use std::fs;
+use std::path::PathBuf;
+use torc::client::default_api;
+use torc::models;
+
+#[rstest]
+#[case(None)] // Test with resource-based allocation
+#[case(Some(2))] // Test with simple queue-based allocation (max 2 jobs at a time)
+fn test_diamond_workflow(start_server: &ServerProcess, #[case] max_parallel_jobs: Option<i64>) {
+    assert!(start_server.child.id() > 0);
+    let config = &start_server.config;
+
+    let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
+    let work_dir = temp_dir.path().to_path_buf();
+
+    let jobs = create_diamond_workflow(config, false, &work_dir);
+    let preprocess = jobs.get("preprocess").expect("preprocess job not found");
+    let workflow_id = preprocess.workflow_id;
+
+    create_input_file(&work_dir);
+    run_cli_command(
+        &["workflows", "initialize", &workflow_id.to_string()],
+        start_server,
+    )
+    .expect("Failed to initialize workflow");
+
+    // Build CLI arguments based on max_parallel_jobs parameter
+    let mut cli_args = vec![
+        workflow_id.to_string(),
+        "--output-dir".to_string(),
+        work_dir.to_str().unwrap().to_string(),
+        "--poll-interval".to_string(),
+        "0.1".to_string(),
+    ];
+
+    if let Some(max_jobs) = max_parallel_jobs {
+        // Use simple queue-based allocation with claim_next_jobs
+        cli_args.push("--max-parallel-jobs".to_string());
+        cli_args.push(max_jobs.to_string());
+    } else {
+        // Use resource-based allocation with claim_jobs_based_on_resources
+        cli_args.push("--num-cpus".to_string());
+        cli_args.push("4".to_string());
+        cli_args.push("--memory-gb".to_string());
+        cli_args.push("8.0".to_string());
+        cli_args.push("--num-nodes".to_string());
+        cli_args.push("1".to_string());
+    }
+
+    // Convert Vec<String> to Vec<&str> for run_jobs_cli_command
+    let cli_args_refs: Vec<&str> = cli_args.iter().map(|s| s.as_str()).collect();
+
+    run_jobs_cli_command(&cli_args_refs, start_server).expect("Failed to run jobs");
+
+    verify_diamond_workflow_completion(config, workflow_id, &work_dir);
+
+    let temp_dir2 = tempfile::tempdir().expect("Failed to create temp dir");
+    let work_dir2 = temp_dir2.path();
+    let jobs2 = create_diamond_workflow(config, true, work_dir2);
+    check_diamond_workflow_init_job_statuses(config, &jobs2);
+
+    default_api::delete_workflow(config, workflow_id, None).expect("Failed to delete workflow");
+    for (name, job) in &jobs {
+        let result = default_api::get_job(config, job.id.unwrap());
+        assert!(
+            result.is_err(),
+            "Expected job {} to be deleted with workflow",
+            name
+        );
+    }
+    check_diamond_workflow_init_job_statuses(config, &jobs2);
+}
+
+fn create_input_file(work_dir: &PathBuf) {
+    let input_data = r#"{"data": "initial input", "value": 42}"#;
+    fs::write(work_dir.join("f1.json"), input_data).expect("Failed to write f1.json");
+}
+
+fn verify_diamond_workflow_completion(
+    config: &torc::client::Configuration,
+    workflow_id: i64,
+    work_dir: &PathBuf,
+) {
+    let jobs = default_api::list_jobs(
+        config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .expect("Failed to list jobs");
+
+    for job in jobs.items.unwrap() {
+        assert_eq!(
+            job.status.unwrap(),
+            models::JobStatus::Done,
+            "Job {} should be done",
+            job.name
+        );
+    }
+
+    // Get results for all jobs in the workflow and verify return codes
+    let results = default_api::list_results(
+        config,
+        workflow_id,
+        None, // job_id - get results for all jobs
+        None, // run_id
+        None, // offset
+        None, // limit
+        None, // sort_by
+        None, // reverse_sort
+        None, // return_code filter
+        None, // status filter
+        None, // all_runs
+    )
+    .expect("Failed to list results");
+
+    let result_items = results.items.unwrap();
+
+    for result in result_items {
+        assert_eq!(
+            result.return_code, 0,
+            "Job ID {} should have return code 0, but got {}",
+            result.job_id, result.return_code
+        );
+    }
+
+    assert!(work_dir.join("f2.json").exists(), "f2.json should exist");
+    assert!(work_dir.join("f3.json").exists(), "f3.json should exist");
+    assert!(work_dir.join("f4.json").exists(), "f4.json should exist");
+    assert!(work_dir.join("f5.json").exists(), "f5.json should exist");
+    assert!(work_dir.join("f6.json").exists(), "f6.json should exist");
+
+    let f6_content = fs::read_to_string(work_dir.join("f6.json")).expect("Failed to read f6.json");
+    println!("Final output (f6.json): {}", f6_content);
+}
+
+#[rstest]
+fn test_uninitialize_blocked_jobs(start_server: &ServerProcess) {
+    assert!(start_server.child.id() > 0);
+    let config = &start_server.config;
+    let name = "test_workflow".to_string();
+    let user = "test_user".to_string();
+    let workflow = models::WorkflowModel::new(name.clone(), user.clone());
+    let created_workflow =
+        default_api::create_workflow(config, workflow).expect("Failed to create workflow");
+    let workflow_id = created_workflow.id.unwrap();
+
+    let job1 = default_api::create_job(
+        config,
+        models::JobModel::new(
+            workflow_id as i64,
+            "job1".to_string(),
+            "command".to_string(),
+        ),
+    )
+    .expect("Failed to create job1");
+    let mut job2_pre = models::JobModel::new(
+        workflow_id as i64,
+        "job2".to_string(),
+        "command".to_string(),
+    );
+    job2_pre.blocked_by_job_ids = Some(vec![job1.id.unwrap()]);
+    let mut job2 = default_api::create_job(config, job2_pre).expect("Failed to create job2");
+    // let job2_id = job2.id.unwrap();
+    let mut bystander = default_api::create_job(
+        config,
+        models::JobModel::new(
+            workflow_id as i64,
+            "bystander".to_string(),
+            "command".to_string(),
+        ),
+    )
+    .expect("Failed to create bystander");
+    // let bystander_id = bystander.id.unwrap();
+
+    assert_eq!(job1.status, Some(models::JobStatus::Uninitialized));
+    job2.status = Some(models::JobStatus::Done);
+    bystander.status = Some(models::JobStatus::Done);
+    // TODO: Is this providing value? Updating status like this is no longer allowed.
+    // let job2b = default_api::update_job(config, job2_id, job2).expect("Failed to update job2");
+    // assert_eq!(job2b.status, Some(models::JobStatus::Done));
+    // let bystander_b = default_api::update_job(config, bystander_id, bystander)
+    //     .expect("Failed to update bystander");
+    // assert_eq!(bystander_b.status, Some(models::JobStatus::Done));
+
+    // default_api::initialize_jobs(config, workflow_id as i64, Some(false), None, None)
+    //     .expect("Failed to initialize jobs");
+    // let job1_post = default_api::get_job(config, job1.id.unwrap()).expect("Failed to get job1");
+    // let job2_post = default_api::get_job(config, job2_id).expect("Failed to get job2");
+    // let bystander_post =
+    //     default_api::get_job(config, bystander_id).expect("Failed to get bystander");
+    // assert_eq!(job1_post.status, Some(models::JobStatus::Ready));
+    // assert_eq!(job2_post.status, Some(models::JobStatus::Blocked));
+    // assert_eq!(bystander_post.status, Some(models::JobStatus::Done));
+}
+
+#[rstest]
+fn test_remove_job(start_server: &ServerProcess) {
+    assert!(start_server.child.id() > 0);
+    let config = &start_server.config;
+    let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
+    let work_dir = temp_dir.path();
+    let jobs = create_diamond_workflow(config, true, work_dir);
+    for (name, job) in &jobs {
+        let removed =
+            default_api::delete_job(config, job.id.unwrap(), None).expect("Failed to delete job");
+        let result = default_api::get_job(config, removed.id.unwrap());
+        assert!(result.is_err(), "Expected job {} to be deleted", name);
+    }
+}
+
+#[rstest]
+fn test_events(start_server: &ServerProcess) {
+    assert!(start_server.child.id() > 0);
+    let config = &start_server.config;
+    let name = "test_event_workflow".to_string();
+    let user = "test_user".to_string();
+    let workflow = models::WorkflowModel::new(name.clone(), user.clone());
+    let created_workflow =
+        default_api::create_workflow(config, workflow).expect("Failed to create workflow");
+    let workflow_id = created_workflow.id.unwrap();
+    let event1 = default_api::create_event(
+        config,
+        models::EventModel::new(
+            workflow_id as i64,
+            serde_json::json!({"key1": 1, "key2": 2}),
+        ),
+    )
+    .expect("Failed to create event");
+    let event2 = default_api::create_event(
+        config,
+        models::EventModel::new(
+            workflow_id as i64,
+            serde_json::json!({"key3": 3, "key4": 4}),
+        ),
+    )
+    .expect("Failed to create event");
+
+    let event_id1 = event1.id.unwrap();
+    let event_id2 = event2.id.unwrap();
+
+    let events = default_api::list_events(
+        config,
+        workflow_id as i64,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .expect("Failed to list events");
+    assert_eq!(events.items.as_ref().unwrap().len(), 2);
+    assert_eq!(
+        events.items.as_ref().unwrap()[1].data,
+        serde_json::json!({"key3": 3, "key4": 4})
+    );
+    default_api::delete_event(config, event_id1, None).expect("Failed to delete event");
+    default_api::delete_event(config, event_id2, None).expect("Failed to delete event");
+    let events = default_api::list_events(
+        config,
+        workflow_id as i64,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .expect("Failed to list events");
+    assert!(events.items.as_ref().unwrap().is_empty());
+}
+
+fn check_diamond_workflow_init_job_statuses(
+    config: &torc::client::Configuration,
+    jobs: &HashMap<String, models::JobModel>,
+) {
+    let preprocess = jobs.get("preprocess").expect("preprocess job not found");
+    let work1 = jobs.get("work1").expect("work1 job not found");
+    let work2 = jobs.get("work2").expect("work2 job not found");
+    let postprocess = jobs.get("postprocess").expect("postprocess job not found");
+
+    let preprocess_post =
+        default_api::get_job(&config, preprocess.id.unwrap()).expect("Failed to get preprocess");
+    assert_eq!(preprocess_post.status.unwrap(), models::JobStatus::Ready);
+    let work1_post = default_api::get_job(&config, work1.id.unwrap()).expect("Failed to get work1");
+    assert_eq!(work1_post.status.unwrap(), models::JobStatus::Blocked);
+    let work2_post = default_api::get_job(&config, work2.id.unwrap()).expect("Failed to get work2");
+    assert_eq!(work2_post.status.unwrap(), models::JobStatus::Blocked);
+    let postprocess_post =
+        default_api::get_job(&config, postprocess.id.unwrap()).expect("Failed to get postprocess");
+    assert_eq!(postprocess_post.status.unwrap(), models::JobStatus::Blocked);
+}

@@ -1,0 +1,6 @@
+# mdBook build output
+book/
+
+# Generated search index
+searchindex.json
+searchindex.js

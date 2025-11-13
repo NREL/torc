@@ -1,0 +1,120 @@
+# Scientific Simulation Parameter Sweep
+# Demonstrates parameterization with numeric ranges and format specifiers
+# Runs simulations across temperature and pressure ranges
+
+name: simulation_sweep
+user: scientist
+description: Molecular dynamics simulations across temperature and pressure ranges
+
+jobs:
+  # Setup: Generate initial configurations
+  - name: generate_config
+    command: python scripts/generate_initial_config.py --output=/configs/initial_config.xyz
+    resource_requirements_name: minimal
+    output_file_names:
+      - initial_config
+
+  # Run simulations across parameter space
+  # Temperature: 250K to 400K in steps of 50K (4 values)
+  # Pressure: 1 to 100 bar (5 values)
+  # Total: 4 * 5 = 20 simulations
+  - name: simulate_T{temp}_P{pressure:03d}
+    command: |
+      ./run_simulation \
+        --config=/configs/initial_config.xyz \
+        --temperature={temp} \
+        --pressure={pressure} \
+        --steps=1000000 \
+        --output=/data/simulation_T{temp}_P{pressure:03d}.xyz \
+        --log=/logs/simulation_T{temp}_P{pressure:03d}.log
+    resource_requirements_name: simulation
+    blocked_by_job_names:
+      - generate_config
+    input_file_names:
+      - initial_config
+    output_file_names:
+      - simulation_T{temp}_P{pressure:03d}
+      - log_T{temp}_P{pressure:03d}
+    parameters:
+      temp: "250:400:50"        # Temperature range: 250, 300, 350, 400 K
+      pressure: "1:100:25"       # Pressure range: 1, 26, 51, 76, 101 bar
+
+  # Analyze each simulation result
+  - name: analyze_T{temp}_P{pressure:03d}
+    command: |
+      python scripts/analyze.py \
+        --input=/data/simulation_T{temp}_P{pressure:03d}.xyz \
+        --output=/analysis/analysis_T{temp}_P{pressure:03d}.json \
+        --temperature={temp} \
+        --pressure={pressure}
+    resource_requirements_name: analysis
+    blocked_by_job_names:
+      - simulate_T{temp}_P{pressure:03d}
+    input_file_names:
+      - simulation_T{temp}_P{pressure:03d}
+    output_file_names:
+      - analysis_T{temp}_P{pressure:03d}
+    parameters:
+      temp: "250:400:50"
+      pressure: "1:100:25"
+
+  # Generate phase diagram from all analysis results
+  - name: generate_phase_diagram
+    command: python scripts/phase_diagram.py --input-dir=/analysis --output=/results/phase_diagram.png
+    resource_requirements_name: minimal
+    blocked_by_job_names:
+      - analyze_T{temp}_P{pressure:03d}
+    input_file_names:
+      - analysis_T{temp}_P{pressure:03d}
+    parameters:
+      temp: "250:400:50"
+      pressure: "1:100:25"
+
+# File specifications
+files:
+  - name: initial_config
+    path: /configs/initial_config.xyz
+
+  # Simulation output files (20 files)
+  - name: simulation_T{temp}_P{pressure:03d}
+    path: /data/simulation_T{temp}_P{pressure:03d}.xyz
+    parameters:
+      temp: "250:400:50"
+      pressure: "1:100:25"
+
+  # Log files (20 files)
+  - name: log_T{temp}_P{pressure:03d}
+    path: /logs/simulation_T{temp}_P{pressure:03d}.log
+    parameters:
+      temp: "250:400:50"
+      pressure: "1:100:25"
+
+  # Analysis results (20 files)
+  - name: analysis_T{temp}_P{pressure:03d}
+    path: /analysis/analysis_T{temp}_P{pressure:03d}.json
+    parameters:
+      temp: "250:400:50"
+      pressure: "1:100:25"
+
+# Resource requirements
+resource_requirements:
+  - name: minimal
+    num_cpus: 1
+    num_gpus: 0
+    num_nodes: 1
+    memory: 2g
+    runtime: PT10M
+
+  - name: simulation
+    num_cpus: 16
+    num_gpus: 0
+    num_nodes: 1
+    memory: 64g
+    runtime: PT4H
+
+  - name: analysis
+    num_cpus: 4
+    num_gpus: 0
+    num_nodes: 1
+    memory: 8g
+    runtime: PT30M

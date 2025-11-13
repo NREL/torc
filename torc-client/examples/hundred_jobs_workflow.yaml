@@ -1,0 +1,417 @@
+# Simple Workflow with 100 Independent Jobs
+# This demonstrates a workflow with many parallel jobs
+
+name: hundred_jobs_workflow
+user: testuser
+description: A workflow with 100 independent jobs that each echo hello
+
+# Job definitions - 100 independent jobs
+jobs:
+  - name: job_001
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_002
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_003
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_004
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_005
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_006
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_007
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_008
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_009
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_010
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_011
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_012
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_013
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_014
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_015
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_016
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_017
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_018
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_019
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_020
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_021
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_022
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_023
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_024
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_025
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_026
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_027
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_028
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_029
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_030
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_031
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_032
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_033
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_034
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_035
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_036
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_037
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_038
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_039
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_040
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_041
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_042
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_043
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_044
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_045
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_046
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_047
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_048
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_049
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_050
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_051
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_052
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_053
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_054
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_055
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_056
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_057
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_058
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_059
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_060
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_061
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_062
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_063
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_064
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_065
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_066
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_067
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_068
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_069
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_070
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_071
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_072
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_073
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_074
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_075
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_076
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_077
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_078
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_079
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_080
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_081
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_082
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_083
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_084
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_085
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_086
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_087
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_088
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_089
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_090
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_091
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_092
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_093
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_094
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_095
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_096
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_097
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_098
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_099
+    command: echo hello
+    resource_requirements_name: minimal
+
+  - name: job_100
+    command: echo hello
+    resource_requirements_name: minimal
+
+# Resource requirements - minimal resources for simple echo commands
+resource_requirements:
+  - name: minimal
+    num_cpus: 1
+    num_gpus: 0
+    num_nodes: 1
+    memory: 1g
+    runtime: P0DT1M  # ISO 8601 duration: 1 minute

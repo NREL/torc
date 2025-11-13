@@ -1,0 +1,4194 @@
+//! Main library entry point for torc implementation.
+
+#![allow(unused_imports)]
+#![allow(dead_code)]
+
+use async_trait::async_trait;
+use chrono::{DateTime, Utc};
+use futures::{Stream, StreamExt, TryFutureExt, TryStreamExt, future};
+use hyper::server::conn::Http;
+use hyper::service::Service;
+use log::{debug, error, info};
+use sqlx::Row;
+use std::collections::hash_set::Union;
+use std::future::Future;
+use std::marker::PhantomData;
+use std::mem::MaybeUninit;
+use std::net::SocketAddr;
+use std::str::FromStr;
+use std::sync::Arc;
+use std::task::{Context, Poll};
+use swagger::EmptyContext;
+use swagger::auth::MakeAllowAllAuthenticator;
+use swagger::{Has, XSpanIdString};
+use tokio::net::TcpListener;
+use torc::models;
+use torc::server::api::ComputeNodesApi;
+use torc::server::api::EventsApi;
+use torc::server::api::FilesApi;
+use torc::server::api::JobsApi;
+use torc::server::api::ResourceRequirementsApi;
+use torc::server::api::ResultsApi;
+use torc::server::api::SchedulersApi;
+use torc::server::api::UserDataApi;
+use torc::server::api::WorkflowActionsApi;
+use torc::server::api::WorkflowsApi;
+use torc::server::api::database_error;
+use torc::server::api_types::*;
+
+#[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "ios")))]
+use openssl::ssl::{Ssl, SslAcceptor, SslAcceptorBuilder, SslFiletype, SslMethod};
+
+use sqlx::sqlite::SqlitePool;
+
+const TORC_VERSION: &str = "0.1.0";
+const MAX_RECORD_TRANSFER_COUNT: i64 = 10_000;
+
+/// Process optional offset and limit parameters and return concrete values.
+/// Returns (offset, limit) where:
+/// - offset defaults to 0 if not provided
+/// - limit defaults to 10000 if not provided
+/// - Returns an error if limit exceeds 10000
+fn process_pagination_params(
+    offset: Option<i64>,
+    limit: Option<i64>,
+) -> Result<(i64, i64), ApiError> {
+    let processed_offset = offset.unwrap_or(0);
+    let processed_limit = limit.unwrap_or(10000);
+
+    if processed_limit > 10000 {
+        error!(
+            "Limit exceeds maximum allowed value: {} > 10000",
+            processed_limit
+        );
+        return Err(ApiError("Limit cannot exceed 10000".to_string()));
+    }
+
+    Ok((processed_offset, processed_limit))
+}
+
+/// Builds an SSL implementation for Simple HTTPS from some hard-coded file names
+pub async fn create(addr: &str, https: bool, pool: SqlitePool) {
+    // Resolve hostname to socket address (supports both hostnames and IP addresses)
+    let addr = tokio::net::lookup_host(addr)
+        .await
+        .expect("Failed to resolve bind address")
+        .next()
+        .expect("No addresses resolved for bind address");
+
+    let server = Server::new(pool);
+
+    let service = MakeService::new(server);
+
+    let service = MakeAllowAllAuthenticator::new(service, "cosmo");
+
+    #[allow(unused_mut)]
+    let mut service = torc::server::context::MakeAddContext::<_, EmptyContext>::new(service);
+
+    if https {
+        #[cfg(any(target_os = "macos", target_os = "windows", target_os = "ios"))]
+        {
+            unimplemented!("SSL is not implemented for the examples on MacOS, Windows or iOS");
+        }
+
+        #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "ios")))]
+        {
+            let mut ssl = SslAcceptor::mozilla_intermediate_v5(SslMethod::tls())
+                .expect("Failed to create SSL Acceptor");
+
+            // Server authentication
+            ssl.set_private_key_file("examples/server-key.pem", SslFiletype::PEM)
+                .expect("Failed to set private key");
+            ssl.set_certificate_chain_file("examples/server-chain.pem")
+                .expect("Failed to set certificate chain");
+            ssl.check_private_key()
+                .expect("Failed to check private key");
+
+            let tls_acceptor = ssl.build();
+            let tcp_listener = TcpListener::bind(&addr).await.unwrap();
+
+            info!("Starting a server (with https)");
+            loop {
+                if let Ok((tcp, _)) = tcp_listener.accept().await {
+                    let ssl = Ssl::new(tls_acceptor.context()).unwrap();
+                    let addr = tcp.peer_addr().expect("Unable to get remote address");
+                    let service = service.call(addr);
+
+                    tokio::spawn(async move {
+                        let tls = tokio_openssl::SslStream::new(ssl, tcp).map_err(|_| ())?;
+                        let service = service.await.map_err(|_| ())?;
+
+                        Http::new()
+                            .serve_connection(tls, service)
+                            .await
+                            .map_err(|_| ())
+                    });
+                }
+            }
+        }
+    } else {
+        info!("Starting a server (over http, so no TLS)");
+        // Using HTTP
+        hyper::server::Server::bind(&addr)
+            .serve(service)
+            .await
+            .unwrap()
+    }
+}
+
+#[derive(Clone)]
+pub struct Server<C> {
+    marker: PhantomData<C>,
+    pool: Arc<SqlitePool>,
+    compute_nodes_api: ComputeNodesApiImpl,
+    events_api: EventsApiImpl,
+    files_api: FilesApiImpl,
+    jobs_api: JobsApiImpl,
+    resource_requirements_api: ResourceRequirementsApiImpl,
+    results_api: ResultsApiImpl,
+    schedulers_api: SchedulersApiImpl,
+    user_data_api: UserDataApiImpl,
+    workflow_actions_api: WorkflowActionsApiImpl,
+    workflows_api: WorkflowsApiImpl,
+}
+
+impl<C> Server<C> {
+    pub fn new(pool: SqlitePool) -> Self {
+        let pool_arc = Arc::new(pool);
+        let api_context = ApiContext::new(pool_arc.as_ref().clone());
+
+        Server {
+            marker: PhantomData,
+            pool: pool_arc,
+            compute_nodes_api: ComputeNodesApiImpl::new(api_context.clone()),
+            events_api: EventsApiImpl::new(api_context.clone()),
+            files_api: FilesApiImpl::new(api_context.clone()),
+            jobs_api: JobsApiImpl::new(api_context.clone()),
+            resource_requirements_api: ResourceRequirementsApiImpl::new(api_context.clone()),
+            results_api: ResultsApiImpl::new(api_context.clone()),
+            schedulers_api: SchedulersApiImpl::new(api_context.clone()),
+            user_data_api: UserDataApiImpl::new(api_context.clone()),
+            workflow_actions_api: WorkflowActionsApiImpl::new(api_context.clone()),
+            workflows_api: WorkflowsApiImpl::new(api_context.clone()),
+        }
+    }
+
+    /// Create an association between a job and a file.
+    /// The table name must be job_input_file or job_output_file.
+    async fn add_job_file_association(
+        &self,
+        job_id: i64,
+        file_id: i64,
+        workflow_id: i64,
+        table: &str,
+    ) -> Result<(), ApiError> {
+        if table != "job_input_file" && table != "job_output_file" {
+            error!(
+                "Invalid table name provided for job-file association: '{}'. Must be 'job_input_file' or 'job_output_file'",
+                table
+            );
+            return Err(ApiError(
+                "Invalid table name. Must be 'job_input_file' or 'job_output_file'".to_string(),
+            ));
+        }
+
+        let sql = format!(
+            r#"
+            INSERT INTO {}
+            (
+                job_id
+                ,file_id
+                ,workflow_id
+            )
+            VALUES ($1, $2, $3)
+        "#,
+            table
+        );
+
+        match sqlx::query(&sql)
+            .bind(job_id)
+            .bind(file_id)
+            .bind(workflow_id)
+            .execute(self.pool.as_ref())
+            .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                info!("Database error: {}", e);
+                Err(ApiError("Database error".to_string()))
+            }
+        }
+    }
+
+    /// Create a blocked-by association between two jobs.
+    async fn add_blocked_by_association(
+        &self,
+        job_id: i64,
+        blocked_by_job_id: i64,
+        workflow_id: i64,
+    ) -> Result<(), ApiError> {
+        match sqlx::query!(
+            r#"
+            INSERT INTO job_blocked_by
+            (
+                job_id
+                ,blocked_by_job_id
+                ,workflow_id
+            )
+            VALUES ($1, $2, $3)
+        "#,
+            job_id,
+            blocked_by_job_id,
+            workflow_id,
+        )
+        .execute(self.pool.as_ref())
+        .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                info!("Database error: {}", e);
+                Err(ApiError("Database error".to_string()))
+            }
+        }
+    }
+
+    /// Create a blocked-by association between two jobs based on file dependencies.
+    async fn add_blocked_by_associations_from_files<'e, E>(
+        &self,
+        executor: E,
+        workflow_id: i64,
+    ) -> Result<(), ApiError>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+    {
+        match sqlx::query!(
+            r#"INSERT OR IGNORE INTO job_blocked_by (job_id, blocked_by_job_id, workflow_id)
+            SELECT
+                i.job_id AS job_id
+                ,o.job_id AS blocked_by_job_id
+                ,i.workflow_id AS workflow_id
+            FROM job_input_file i
+            JOIN job_output_file o ON i.file_id = o.file_id
+            WHERE i.workflow_id = $1
+            "#,
+            workflow_id
+        )
+        .execute(executor)
+        .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                info!("Database error: {}", e);
+                Err(ApiError("Database error".to_string()))
+            }
+        }
+    }
+
+    /// Add blocked-by associations based on user_data dependencies.
+    /// If job A outputs user_data X and job B inputs user_data X, then job B is blocked by job A.
+    async fn add_blocked_by_associations_from_user_data<'e, E>(
+        &self,
+        executor: E,
+        workflow_id: i64,
+    ) -> Result<(), ApiError>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+    {
+        match sqlx::query!(
+            r#"INSERT OR IGNORE INTO job_blocked_by (job_id, blocked_by_job_id, workflow_id)
+            SELECT
+                i.job_id AS job_id
+                ,o.job_id AS blocked_by_job_id
+                ,j.workflow_id AS workflow_id
+            FROM job_input_user_data i
+            JOIN job_output_user_data o ON i.user_data_id = o.user_data_id
+            JOIN job j ON i.job_id = j.id
+            WHERE j.workflow_id = $1
+            "#,
+            workflow_id
+        )
+        .execute(executor)
+        .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                error!("Database error: {}", e);
+                Err(ApiError("Database error".to_string()))
+            }
+        }
+    }
+
+    /// Ensure that all jobs downstream of an uninitialized job are also uninitialized.
+    async fn uninitialize_blocked_jobs<'e, E>(
+        &self,
+        executor: E,
+        workflow_id: i64,
+    ) -> Result<(), ApiError>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+    {
+        let uninitialized_status = models::JobStatus::Uninitialized.to_int();
+
+        // Use a recursive CTE to find all jobs that should be uninitialized
+        // based on the transitive closure of job dependencies
+        match sqlx::query!(
+            r#"
+            WITH RECURSIVE jobs_to_uninitialize(job_id) AS (
+                -- Base case: find all uninitialized jobs in this workflow
+                SELECT id FROM job
+                WHERE workflow_id = $1 AND status = $2
+
+                UNION
+
+                -- Recursive case: find jobs blocked by any job that should be uninitialized
+                SELECT jbb.job_id
+                FROM job_blocked_by jbb
+                JOIN jobs_to_uninitialize jtu ON jbb.blocked_by_job_id = jtu.job_id
+                WHERE jbb.workflow_id = $1
+            )
+            UPDATE job
+            SET status = $2
+            WHERE workflow_id = $1
+            AND id IN (SELECT job_id FROM jobs_to_uninitialize)
+            "#,
+            workflow_id,
+            uninitialized_status
+        )
+        .execute(executor)
+        .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                info!("Database error: {}", e);
+                Err(ApiError("Database error".to_string()))
+            }
+        }
+    }
+
+    /// Set the status of all blocked jobs to blocked.
+    async fn initialize_blocked_jobs_to_blocked<'e, E>(
+        &self,
+        executor: E,
+        workflow_id: i64,
+        only_uninitialized: bool,
+    ) -> Result<(), ApiError>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+    {
+        let uninitialized_status = models::JobStatus::Uninitialized.to_int();
+        let blocked_status = models::JobStatus::Blocked.to_int();
+
+        let sql = if only_uninitialized {
+            r#"
+            UPDATE job
+            SET status = $1
+            WHERE workflow_id = $2
+            AND status = $3
+            AND id IN (
+                SELECT DISTINCT job_id
+                FROM job_blocked_by
+                WHERE workflow_id = $2
+            )
+            "#
+        } else {
+            r#"
+            UPDATE job
+            SET status = $1
+            WHERE workflow_id = $2
+            AND id IN (
+                SELECT DISTINCT job_id
+                FROM job_blocked_by
+                WHERE workflow_id = $2
+            )
+            "#
+        };
+
+        let query = if only_uninitialized {
+            sqlx::query(sql)
+                .bind(blocked_status)
+                .bind(workflow_id)
+                .bind(uninitialized_status)
+        } else {
+            sqlx::query(sql).bind(blocked_status).bind(workflow_id)
+        };
+
+        match query.execute(executor).await {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                info!("Database error: {}", e);
+                Err(ApiError("Database error".to_string()))
+            }
+        }
+    }
+
+    /// Get the default resource requirements ID for a workflow
+    async fn get_default_resource_requirements_id<Ctx>(
+        &self,
+        workflow_id: i64,
+        context: &Ctx,
+    ) -> Result<i64, ApiError>
+    where
+        Ctx: Has<XSpanIdString> + Send + Sync,
+    {
+        let result = self
+            .resource_requirements_api
+            .list_resource_requirements(
+                workflow_id,
+                Some("default".to_string()),
+                0,
+                1,
+                None,
+                None,
+                context,
+            )
+            .await;
+
+        match result {
+            Ok(ListResourceRequirementsResponse::SuccessfulResponse(records)) => {
+                if let Some(items) = records.items {
+                    if items.len() != 1 {
+                        return Err(ApiError("Expected exactly 1 default resource requirement, found different number".to_string()));
+                    }
+                    if let Some(id) = items[0].id {
+                        Ok(id)
+                    } else {
+                        Err(ApiError(
+                            "Default resource requirement has no ID".to_string(),
+                        ))
+                    }
+                } else {
+                    Err(ApiError(
+                        "No default resource requirements found".to_string(),
+                    ))
+                }
+            }
+            Ok(ListResourceRequirementsResponse::DefaultErrorResponse(_)) => Err(ApiError(
+                "Did not find default resource requirements".to_string(),
+            )),
+            Err(e) => {
+                error!(
+                    "Database error looking up default resource requirements: {}",
+                    e
+                );
+                Err(ApiError("Database error".to_string()))
+            }
+        }
+    }
+
+    /// Set the status of all unblocked jobs to ready.
+    async fn initialize_unblocked_jobs<'e, E>(
+        &self,
+        executor: E,
+        workflow_id: i64,
+    ) -> Result<(), ApiError>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+    {
+        let disabled = models::JobStatus::Disabled.to_int();
+        let blocked = models::JobStatus::Blocked.to_int();
+        let done = models::JobStatus::Done.to_int();
+        let canceled = models::JobStatus::Canceled.to_int();
+        let ready = models::JobStatus::Ready.to_int();
+        match sqlx::query!(
+            r#"
+            UPDATE job
+            SET status = $1
+            WHERE workflow_id = $2
+            AND status NOT IN ($3, $4, $5, $6, $7)
+            "#,
+            ready,
+            workflow_id,
+            disabled,
+            blocked,
+            done,
+            canceled,
+            ready,
+        )
+        .execute(executor)
+        .await
+        {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                info!("Database error: {}", e);
+                Err(ApiError("Database error".to_string()))
+            }
+        }
+    }
+
+    /// Add rows to the ready_queue table for each job in the "ready" status
+    async fn add_ready_jobs<'e, E>(&self, executor: E, workflow_id: i64) -> Result<(), ApiError>
+    where
+        E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
+    {
+        debug!(
+            "add_ready_jobs({}) - adding ready jobs to ready_queue",
+            workflow_id
+        );
+        let status = models::JobStatus::Ready.to_int();
+        match sqlx::query!(
+            r#"
+            INSERT INTO ready_queue (workflow_id, job_id, resource_requirements_id)
+            SELECT workflow_id, id, resource_requirements_id
+            FROM job
+            WHERE workflow_id = $1 AND status = $2
+            "#,
+            workflow_id,
+            status,
+        )
+        .execute(executor)
+        .await
+        {
+            Ok(result) => {
+                debug!(
+                    "Created {} ready jobs to ready_queue for workflow {}",
+                    result.rows_affected(),
+                    workflow_id
+                );
+                Ok(())
+            }
+            Err(e) => {
+                info!("Database error: {}", e);
+                Err(ApiError("Database error".to_string()))
+            }
+        }
+    }
+
+    /// Manage job status change with validation and side effects.
+    ///
+    /// This function validates a job status change by:
+    /// 1. Looking up the current job status from the database
+    /// 2. Comparing with the new status and returning early if they match
+    /// 3. Validating the run_id matches the workflow status run_id
+    /// 4. For terminal statuses (done, canceled, terminated), ensuring a result exists
+    ///
+    /// # Arguments
+    /// * `job` - The JobModel containing the new status and job ID
+    /// * `run_id` - The run_id to validate against workflow status
+    ///
+    /// # Returns
+    /// * `Ok(())` if the status change is valid
+    /// * `Err(ApiError)` if validation fails
+    ///
+    /// # Errors
+    /// This function will return an error if:
+    /// - The job ID is missing from the JobModel
+    /// - The job status is missing from the JobModel
+    /// - The job is not found in the database
+    /// - The workflow status is not found
+    /// - The run_id does not match the workflow's run_id
+    /// - A terminal status is requested but no result exists for the job and run_id
+    async fn manage_job_status_change(
+        &self,
+        job: &models::JobModel,
+        run_id: i64,
+    ) -> Result<(), ApiError> {
+        // TODO: return NotFoundError
+        // TODO: How is this different than manage_status_change, which is available in the API?
+        let job_id = job
+            .id
+            .ok_or_else(|| ApiError("Job ID is required".to_string()))?;
+        let new_status = job
+            .status
+            .as_ref()
+            .ok_or_else(|| ApiError("Job status is required".to_string()))?;
+
+        debug!(
+            "manage_job_status_change: job_id={}, new_status={}, run_id={}",
+            job_id, new_status, run_id
+        );
+
+        // 1. Look up current job status from database
+        let current_job =
+            match sqlx::query!("SELECT status, workflow_id FROM job WHERE id = ?", job_id)
+                .fetch_optional(self.pool.as_ref())
+                .await
+            {
+                Ok(Some(row)) => row,
+                Ok(None) => {
+                    error!("Job not found with ID: {}", job_id);
+                    return Err(ApiError(format!("Job not found with ID: {}", job_id)));
+                }
+                Err(e) => {
+                    error!("Database error looking up job: {}", e);
+                    return Err(ApiError("Database error".to_string()));
+                }
+            };
+
+        // Parse current status
+        let current_status = match models::JobStatus::from_int(current_job.status as i32) {
+            Ok(status) => status,
+            Err(e) => {
+                error!(
+                    "Failed to parse current job status '{}': {}",
+                    current_job.status, e
+                );
+                return Err(ApiError("Invalid current job status".to_string()));
+            }
+        };
+
+        // If new status matches current status, return early and do nothing
+        if current_status == *new_status {
+            debug!(
+                "manage_job_status_change: job_id={} already has status '{}', no change needed",
+                job_id, current_status
+            );
+            return Ok(());
+        }
+
+        debug!(
+            "manage_job_status_change: job_id={} status change from '{}' to '{}'",
+            job_id, current_status, new_status
+        );
+
+        // 2. Look up current workflow status and validate run_id
+        let workflow_status = match sqlx::query!(
+            "SELECT run_id FROM workflow_status WHERE id = ?",
+            current_job.workflow_id
+        )
+        .fetch_optional(self.pool.as_ref())
+        .await
+        {
+            Ok(Some(row)) => row,
+            Ok(None) => {
+                return Err(ApiError(format!(
+                    "Workflow status not found for workflow ID: {}",
+                    current_job.workflow_id
+                )));
+            }
+            Err(e) => {
+                error!("Database error looking up workflow status: {}", e);
+                return Err(ApiError("Database error".to_string()));
+            }
+        };
+
+        // Validate run_id matches workflow status run_id
+        if run_id != workflow_status.run_id {
+            error!(
+                "Run ID mismatch: provided {} but workflow status has {}",
+                run_id, workflow_status.run_id
+            );
+            return Err(ApiError(format!(
+                "Run ID mismatch: provided {} but workflow status has {}",
+                run_id, workflow_status.run_id
+            )));
+        }
+
+        // 3. For terminal statuses, check if result exists and get return_code
+        let return_code = if new_status.is_complete() {
+            let result_record = match sqlx::query!(
+                "SELECT return_code FROM result WHERE job_id = ? AND run_id = ?",
+                job_id,
+                run_id
+            )
+            .fetch_optional(self.pool.as_ref())
+            .await
+            {
+                Ok(result) => result,
+                Err(e) => {
+                    error!("Database error checking for result: {}", e);
+                    return Err(ApiError("Database error".to_string()));
+                }
+            };
+
+            match result_record {
+                Some(row) => row.return_code,
+                None => {
+                    error!(
+                        "No result found for job ID {} and run_id {}",
+                        job_id, run_id
+                    );
+                    return Err(ApiError(format!(
+                        "No result found for job ID {} and run_id {} when transitioning to terminal status '{}'",
+                        job_id, run_id, new_status
+                    )));
+                }
+            }
+        } else {
+            -1
+        };
+        // 4. Update the job status in the database
+        let new_status_int = new_status.to_int();
+
+        match sqlx::query!(
+            "UPDATE job SET status = ? WHERE id = ?",
+            new_status_int,
+            job_id
+        )
+        .execute(self.pool.as_ref())
+        .await
+        {
+            Ok(result) => {
+                if result.rows_affected() == 0 {
+                    error!(
+                        "No rows affected for job ID {} when updating status",
+                        job_id
+                    );
+                    return Err(ApiError(format!(
+                        "Failed to update job status: no rows affected for job ID {}",
+                        job_id
+                    )));
+                }
+            }
+            Err(e) => {
+                error!("Database error updating job status: {}", e);
+                return Err(ApiError(format!(
+                    "Database error updating job status: {}",
+                    e
+                )));
+            }
+        }
+        // 5. If the new status is complete, check for jobs that can be unblocked
+        if new_status.is_complete() {
+            self.unblock_jobs_waiting_for(job_id, current_job.workflow_id, return_code)
+                .await?;
+        }
+
+        // 6. If reverting from complete to non-complete status, reset downstream jobs
+        if current_status.is_complete() && !new_status.is_complete() {
+            debug!(
+                "manage_job_status_change: reverting completed job_id={}, resetting downstream jobs",
+                job_id
+            );
+            self.update_jobs_from_completion_reversal(job_id).await?;
+        }
+
+        Ok(())
+    }
+
+    /// Unblock jobs that were waiting for a completed job and add them to ready_queue if appropriate.
+    ///
+    /// This function finds all jobs that were blocked by the completed job and checks if they
+    /// can now be unblocked. A job can be unblocked if it's no longer blocked by any incomplete jobs.
+    /// Uses a recursive CTE to handle cascading cancellations in a single database transaction with
+    /// an IMMEDIATE lock to prevent concurrent modifications.
+    ///
+    /// # Arguments
+    /// * `completed_job_id` - The ID of the job that just completed
+    /// * `workflow_id` - The workflow ID containing the jobs
+    /// * `return_code` - The return code of the completed job (0 = success, non-zero = failure)
+    ///
+    /// # Returns
+    /// * `Ok(())` if the operation succeeds
+    /// * `Err(ApiError)` if there's a database error
+    async fn unblock_jobs_waiting_for(
+        &self,
+        completed_job_id: i64,
+        workflow_id: i64,
+        return_code: i64,
+    ) -> Result<(), ApiError> {
+        debug!(
+            "unblock_jobs_waiting_for: checking jobs blocked by job_id={} in workflow={} with return_code={}",
+            completed_job_id, workflow_id, return_code
+        );
+
+        let done_status = models::JobStatus::Done.to_int();
+        let canceled_status = models::JobStatus::Canceled.to_int();
+        let terminated_status = models::JobStatus::Terminated.to_int();
+        let ready_status = models::JobStatus::Ready.to_int();
+        let blocked_status = models::JobStatus::Blocked.to_int();
+
+        // Begin a transaction to ensure atomicity
+        // Note: SQLx automatically uses BEGIN IMMEDIATE for SQLite when the first write occurs
+        let mut tx = match self.pool.begin().await {
+            Ok(tx) => tx,
+            Err(e) => {
+                error!("Failed to begin transaction: {}", e);
+                return Err(ApiError("Database error".to_string()));
+            }
+        };
+
+        // Use a recursive CTE to find all jobs that need status updates (including cascading cancellations)
+        // The CTE propagates return codes through the dependency chain to determine final status
+        let jobs_to_update = match sqlx::query(
+            r#"
+            WITH RECURSIVE jobs_to_process(job_id, should_cancel, level) AS (
+                -- Base case: find jobs directly blocked by the completed job
+                SELECT
+                    jbb.job_id,
+                    -- Cancel if: return_code != 0 AND cancel_on_blocking_job_failure = true
+                    CASE
+                        WHEN ? != 0 AND j.cancel_on_blocking_job_failure != 0 THEN 1
+                        ELSE 0
+                    END as should_cancel,
+                    0 as level
+                FROM job_blocked_by jbb
+                JOIN job j ON jbb.job_id = j.id
+                WHERE jbb.blocked_by_job_id = ?
+                  AND jbb.workflow_id = ?
+                  AND j.status = ?
+                  -- Only process if no other incomplete blocking jobs exist
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM job_blocked_by jbb2
+                      JOIN job j2 ON jbb2.blocked_by_job_id = j2.id
+                      WHERE jbb2.job_id = jbb.job_id
+                        AND jbb2.blocked_by_job_id != ?
+                        AND j2.status NOT IN (?, ?, ?)
+                  )
+
+                UNION ALL
+
+                -- Recursive case: find jobs blocked by jobs that will be canceled
+                SELECT
+                    jbb.job_id,
+                    -- Propagate cancellation: if parent is canceled and child has cancel_on_blocking_job_failure = true
+                    CASE
+                        WHEN jtp.should_cancel = 1 AND j.cancel_on_blocking_job_failure != 0 THEN 1
+                        ELSE 0
+                    END as should_cancel,
+                    jtp.level + 1 as level
+                FROM jobs_to_process jtp
+                JOIN job_blocked_by jbb ON jbb.blocked_by_job_id = jtp.job_id
+                JOIN job j ON jbb.job_id = j.id
+                WHERE jtp.should_cancel = 1  -- Only cascade from jobs that will be canceled
+                  AND jbb.workflow_id = ?
+                  AND j.status = ?
+                  AND jtp.level < 100  -- Prevent infinite loops
+                  -- Only process if no other incomplete blocking jobs exist
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM job_blocked_by jbb2
+                      JOIN job j2 ON jbb2.blocked_by_job_id = j2.id
+                      WHERE jbb2.job_id = jbb.job_id
+                        AND jbb2.blocked_by_job_id != jtp.job_id
+                        AND j2.status NOT IN (?, ?, ?)
+                  )
+            )
+            SELECT
+                jtp.job_id,
+                jtp.should_cancel,
+                j.resource_requirements_id
+            FROM jobs_to_process jtp
+            JOIN job j ON jtp.job_id = j.id
+            ORDER BY jtp.level ASC  -- Process in dependency order
+            "#,
+        )
+        .bind(return_code)           // Base case: check return_code for cancellation
+        .bind(completed_job_id)      // Base case: blocked_by_job_id
+        .bind(workflow_id)           // Base case: workflow_id
+        .bind(blocked_status)        // Base case: only process blocked jobs
+        .bind(completed_job_id)      // Base case: exclude the completed job itself
+        .bind(done_status)           // Base case: complete statuses
+        .bind(canceled_status)
+        .bind(terminated_status)
+        .bind(workflow_id)           // Recursive case: workflow_id
+        .bind(blocked_status)        // Recursive case: only process blocked jobs
+        .bind(done_status)           // Recursive case: complete statuses
+        .bind(canceled_status)
+        .bind(terminated_status)
+        .fetch_all(&mut *tx)
+        .await
+        {
+            Ok(rows) => rows,
+            Err(e) => {
+                error!("Database error finding jobs to unblock: {}", e);
+                let _ = tx.rollback().await;
+                return Err(ApiError("Database error".to_string()));
+            }
+        };
+
+        if jobs_to_update.is_empty() {
+            debug!(
+                "unblock_jobs_waiting_for: no jobs to unblock after completion of job_id={}",
+                completed_job_id
+            );
+            if let Err(e) = tx.commit().await {
+                error!("Failed to commit transaction: {}", e);
+                return Err(ApiError("Database error".to_string()));
+            }
+            return Ok(()); // No jobs to unblock
+        }
+
+        debug!(
+            "unblock_jobs_waiting_for: found {} jobs to update after completion of job_id={}",
+            jobs_to_update.len(),
+            completed_job_id
+        );
+
+        // Update job statuses and insert into ready_queue
+        let mut updated_count = 0;
+        let mut ready_count = 0;
+        let mut canceled_count = 0;
+        let mut ready_job_ids = Vec::new(); // Track jobs that became ready
+
+        for row in jobs_to_update {
+            let job_id: i64 = row.get("job_id");
+            let should_cancel: i64 = row.get("should_cancel");
+            let resource_requirements_id: i64 = row.get("resource_requirements_id");
+            let new_status = if should_cancel != 0 {
+                canceled_status
+            } else {
+                ready_status
+            };
+
+            // Update job status
+            match sqlx::query!(
+                "UPDATE job SET status = ? WHERE id = ? AND workflow_id = ? AND status = ?",
+                new_status,
+                job_id,
+                workflow_id,
+                blocked_status
+            )
+            .execute(&mut *tx)
+            .await
+            {
+                Ok(result) => {
+                    if result.rows_affected() > 0 {
+                        updated_count += 1;
+                        if new_status == ready_status {
+                            ready_count += 1;
+                            ready_job_ids.push(job_id); // Track this job for triggering actions
+                        } else {
+                            canceled_count += 1;
+                        }
+
+                        debug!(
+                            "unblock_jobs_waiting_for: updated job_id={} to status={}",
+                            job_id,
+                            if new_status == ready_status {
+                                "ready"
+                            } else {
+                                "canceled"
+                            }
+                        );
+                    }
+                }
+                Err(e) => {
+                    error!("Database error updating job {} status: {}", job_id, e);
+                    let _ = tx.rollback().await;
+                    return Err(ApiError("Database error".to_string()));
+                }
+            }
+
+            // Add to ready_queue only if the job was set to Ready status
+            if new_status == ready_status {
+                match sqlx::query!(
+                    r#"
+                    INSERT INTO ready_queue (workflow_id, job_id, resource_requirements_id)
+                    VALUES (?, ?, ?)
+                    "#,
+                    workflow_id,
+                    job_id,
+                    resource_requirements_id
+                )
+                .execute(&mut *tx)
+                .await
+                {
+                    Ok(_) => {
+                        debug!(
+                            "unblock_jobs_waiting_for: added job_id={} to ready_queue",
+                            job_id
+                        );
+                    }
+                    Err(e) => {
+                        error!("Database error inserting into ready_queue: {}", e);
+                        let _ = tx.rollback().await;
+                        return Err(ApiError("Database error".to_string()));
+                    }
+                }
+            }
+        }
+
+        // Commit the transaction
+        if let Err(e) = tx.commit().await {
+            error!("Failed to commit transaction: {}", e);
+            return Err(ApiError("Database error".to_string()));
+        }
+
+        // After committing, trigger on_jobs_ready actions for jobs that became ready
+        // This must be done AFTER the transaction commit to avoid SQLite database locks
+        if !ready_job_ids.is_empty() {
+            debug!(
+                "unblock_jobs_waiting_for: checking on_jobs_ready actions for {} jobs that became ready",
+                ready_job_ids.len()
+            );
+
+            // Trigger on_jobs_ready actions that involve the newly ready jobs
+            if let Err(e) = self
+                .workflow_actions_api
+                .check_and_trigger_actions(
+                    workflow_id,
+                    "on_jobs_ready",
+                    Some(ready_job_ids.clone()),
+                )
+                .await
+            {
+                error!(
+                    "Failed to check_and_trigger_actions for on_jobs_ready: {}",
+                    e
+                );
+                // Don't fail the entire operation, but log the error
+            }
+        }
+
+        debug!(
+            "unblock_jobs_waiting_for: successfully updated {} jobs ({} ready, {} canceled) after completion of job_id={}",
+            updated_count, ready_count, canceled_count, completed_job_id
+        );
+
+        Ok(())
+    }
+
+    /// Reinitialize downstream jobs when a completed job is set back to uninitialized.
+    ///
+    /// This function finds all jobs that were blocked by the specified job and changes
+    /// any that are in a "done" status back to "uninitialized".
+    ///
+    /// # Arguments
+    /// * `job_id` - The ID of the job that was reset to uninitialized
+    /// * `workflow_id` - The workflow ID containing the jobs
+    ///
+    /// # Returns
+    /// * `Ok(())` if the operation succeeds
+    /// * `Err(ApiError)` if there's a database error
+    async fn reinitialize_downstream_jobs(
+        &self,
+        job_id: i64,
+        workflow_id: i64,
+    ) -> Result<(), ApiError> {
+        debug!(
+            "reinitialize_downstream_jobs: resetting downstream jobs for job_id={} in workflow={}",
+            job_id, workflow_id
+        );
+
+        // Find all jobs that were blocked by this job and are currently done
+        let done_status = models::JobStatus::Done.to_int();
+        let uninitialized_status = models::JobStatus::Uninitialized.to_int();
+
+        let affected_jobs = match sqlx::query!(
+            r#"
+            SELECT DISTINCT jbb.job_id
+            FROM job_blocked_by jbb
+            JOIN job j ON jbb.job_id = j.id
+            WHERE jbb.blocked_by_job_id = ? 
+            AND jbb.workflow_id = ?
+            AND j.status = ?
+            "#,
+            job_id,
+            workflow_id,
+            done_status
+        )
+        .fetch_all(self.pool.as_ref())
+        .await
+        {
+            Ok(rows) => rows,
+            Err(e) => {
+                error!("Database error finding downstream jobs: {}", e);
+                return Err(ApiError("Database error".to_string()));
+            }
+        };
+
+        if affected_jobs.is_empty() {
+            debug!(
+                "reinitialize_downstream_jobs: no downstream jobs to reinitialize for job_id={}",
+                job_id
+            );
+            return Ok(());
+        }
+
+        debug!(
+            "reinitialize_downstream_jobs: found {} downstream jobs to reinitialize",
+            affected_jobs.len()
+        );
+
+        // Update the status of affected jobs to uninitialized
+        for row in &affected_jobs {
+            let downstream_job_id = row.job_id;
+
+            match sqlx::query!(
+                "UPDATE job SET status = ? WHERE id = ? AND workflow_id = ?",
+                uninitialized_status,
+                downstream_job_id,
+                workflow_id
+            )
+            .execute(self.pool.as_ref())
+            .await
+            {
+                Ok(result) => {
+                    if result.rows_affected() > 0 {
+                        debug!(
+                            "reinitialize_downstream_jobs: reset job_id={} from done to uninitialized",
+                            downstream_job_id
+                        );
+                    }
+                }
+                Err(e) => {
+                    error!(
+                        "Database error updating job {} status: {}",
+                        downstream_job_id, e
+                    );
+                    return Err(ApiError("Database error".to_string()));
+                }
+            }
+
+            // Remove from ready_queue if present
+            match sqlx::query!(
+                "DELETE FROM ready_queue WHERE job_id = ? AND workflow_id = ?",
+                downstream_job_id,
+                workflow_id
+            )
+            .execute(self.pool.as_ref())
+            .await
+            {
+                Ok(_) => {
+                    debug!(
+                        "reinitialize_downstream_jobs: removed job_id={} from ready_queue",
+                        downstream_job_id
+                    );
+                }
+                Err(e) => {
+                    error!(
+                        "Database error removing job {} from ready_queue: {}",
+                        downstream_job_id, e
+                    );
+                    return Err(ApiError("Database error".to_string()));
+                }
+            }
+        }
+
+        info!(
+            "reinitialize_downstream_jobs: successfully reinitialized {} downstream jobs for job_id={}",
+            affected_jobs.len(),
+            job_id
+        );
+
+        Ok(())
+    }
+
+    /// Reset all jobs downstream of the given job to Uninitialized status
+    /// This is called when a completed job needs to be reset, requiring all
+    /// downstream jobs to also be reset recursively
+    async fn update_jobs_from_completion_reversal(&self, job_id: i64) -> Result<(), ApiError> {
+        debug!(
+            "update_jobs_from_completion_reversal: resetting downstream jobs for job_id={}",
+            job_id
+        );
+
+        let uninitialized_status = models::JobStatus::Uninitialized.to_int();
+
+        // Begin a transaction with immediate lock to ensure atomicity
+        // SQLx automatically uses BEGIN IMMEDIATE for SQLite when the first write occurs
+        let mut tx = match self.pool.begin().await {
+            Ok(tx) => tx,
+            Err(e) => {
+                error!("Failed to begin transaction for completion reversal: {}", e);
+                return Err(ApiError("Database error".to_string()));
+            }
+        };
+
+        // Get the workflow_id for the given job_id first
+        let workflow_id = match sqlx::query!("SELECT workflow_id FROM job WHERE id = ?", job_id)
+            .fetch_optional(&mut *tx)
+            .await
+        {
+            Ok(Some(row)) => row.workflow_id,
+            Ok(None) => {
+                error!("Job with id {} not found", job_id);
+                return Err(ApiError("Job not found".to_string()));
+            }
+            Err(e) => {
+                error!("Database error finding job {}: {}", job_id, e);
+                return Err(ApiError("Database error".to_string()));
+            }
+        };
+
+        // Use a recursive CTE to find all jobs downstream of the given job
+        // and reset them to uninitialized status
+        let result = sqlx::query!(
+            r#"
+            WITH RECURSIVE downstream_jobs(job_id, level) AS (
+                -- Base case: find jobs directly blocked by the given job
+                SELECT 
+                    jbb.job_id,
+                    0 as level
+                FROM job_blocked_by jbb
+                WHERE jbb.blocked_by_job_id = ?
+                  AND jbb.workflow_id = ?
+                
+                UNION ALL
+                
+                -- Recursive case: find jobs blocked by any downstream job
+                SELECT 
+                    jbb.job_id,
+                    dj.level + 1 as level
+                FROM downstream_jobs dj
+                JOIN job_blocked_by jbb ON jbb.blocked_by_job_id = dj.job_id
+                WHERE jbb.workflow_id = ?
+                  AND dj.level < 100  -- Prevent infinite loops
+            )
+            UPDATE job 
+            SET status = ?
+            WHERE workflow_id = ? 
+              AND id IN (SELECT DISTINCT job_id FROM downstream_jobs)
+            "#,
+            job_id,
+            workflow_id,
+            workflow_id,
+            uninitialized_status,
+            workflow_id
+        )
+        .execute(&mut *tx)
+        .await;
+
+        match result {
+            Ok(result) => {
+                let affected_rows = result.rows_affected();
+                debug!(
+                    "update_jobs_from_completion_reversal: reset {} downstream jobs for job_id={}",
+                    affected_rows, job_id
+                );
+
+                // Commit the transaction
+                if let Err(e) = tx.commit().await {
+                    error!(
+                        "Failed to commit transaction for completion reversal: {}",
+                        e
+                    );
+                    return Err(ApiError("Database error".to_string()));
+                }
+
+                info!(
+                    "Successfully reset {} downstream jobs for job_id={} in workflow={}",
+                    affected_rows, job_id, workflow_id
+                );
+
+                Ok(())
+            }
+            Err(e) => {
+                error!(
+                    "Database error during completion reversal for job {}: {}",
+                    job_id, e
+                );
+                // Transaction will be automatically rolled back when tx is dropped
+                Err(ApiError("Database error".to_string()))
+            }
+        }
+    }
+}
+
+use jsonwebtoken::{
+    Algorithm, DecodingKey, EncodingKey, Header, TokenData, Validation, decode, encode,
+    errors::Error as JwtError,
+};
+use serde::{Deserialize, Serialize};
+use swagger::auth::Authorization;
+
+use std::error::Error;
+use swagger::ApiError;
+use torc::server::routing::MakeService;
+use torc::server::{
+    Api, CancelWorkflowResponse, ClaimJobsBasedOnResources, ClaimNextJobsResponse,
+    CompleteJobResponse, CreateComputeNodeResponse, CreateEventResponse, CreateFileResponse,
+    CreateJobResponse, CreateJobsResponse, CreateLocalSchedulerResponse,
+    CreateResourceRequirementsResponse, CreateResultResponse, CreateScheduledComputeNodeResponse,
+    CreateSlurmSchedulerResponse, CreateUserDataResponse, CreateWorkflowResponse,
+    DeleteAllResourceRequirementsResponse, DeleteAllUserDataResponse, DeleteComputeNodeResponse,
+    DeleteComputeNodesResponse, DeleteEventResponse, DeleteEventsResponse, DeleteFileResponse,
+    DeleteFilesResponse, DeleteJobResponse, DeleteJobsResponse, DeleteLocalSchedulerResponse,
+    DeleteLocalSchedulersResponse, DeleteResourceRequirementsResponse, DeleteResultResponse,
+    DeleteResultsResponse, DeleteScheduledComputeNodeResponse, DeleteScheduledComputeNodesResponse,
+    DeleteSlurmSchedulerResponse, DeleteSlurmSchedulersResponse, DeleteUserDataResponse,
+    DeleteWorkflowResponse, GetComputeNodeResponse, GetDotGraphResponse, GetEventResponse,
+    GetFileResponse, GetJobResponse, GetLatestEventTimestampResponse, GetLocalSchedulerResponse,
+    GetReadyJobRequirementsResponse, GetResourceRequirementsResponse, GetResultResponse,
+    GetScheduledComputeNodeResponse, GetSlurmSchedulerResponse, GetUserDataResponse,
+    GetVersionResponse, GetWorkflowResponse, GetWorkflowStatusResponse, InitializeJobsResponse,
+    IsWorkflowCompleteResponse, IsWorkflowUninitializedResponse, ListComputeNodesResponse,
+    ListEventsResponse, ListFilesResponse, ListJobIdsResponse, ListJobsResponse,
+    ListLocalSchedulersResponse, ListMissingUserDataResponse, ListRequiredExistingFilesResponse,
+    ListResourceRequirementsResponse, ListResultsResponse, ListScheduledComputeNodesResponse,
+    ListSlurmSchedulersResponse, ListUserDataResponse, ListWorkflowsResponse,
+    ManageStatusChangeResponse, PingResponse, ProcessChangedJobInputsResponse,
+    ResetJobStatusResponse, ResetWorkflowStatusResponse, StartJobResponse,
+    UpdateComputeNodeResponse, UpdateEventResponse, UpdateFileResponse, UpdateJobResponse,
+    UpdateLocalSchedulerResponse, UpdateResourceRequirementsResponse, UpdateResultResponse,
+    UpdateScheduledComputeNodeResponse, UpdateSlurmSchedulerResponse, UpdateUserDataResponse,
+    UpdateWorkflowResponse, UpdateWorkflowStatusResponse,
+};
+use torc::time_utils::duration_string_to_seconds;
+
+// Import the API implementations from torc library
+use torc::server::api::{
+    ApiContext, ComputeNodesApiImpl, EventsApiImpl, FilesApiImpl, JobsApiImpl,
+    ResourceRequirementsApiImpl, ResultsApiImpl, SchedulersApiImpl, UserDataApiImpl,
+    WorkflowActionsApiImpl, WorkflowsApiImpl,
+};
+
+#[async_trait]
+impl<C> Api<C> for Server<C>
+where
+    C: Has<XSpanIdString> + Send + Sync,
+{
+    /// Store a compute node.
+    async fn create_compute_node(
+        &self,
+        body: models::ComputeNodeModel,
+        context: &C,
+    ) -> Result<CreateComputeNodeResponse, ApiError> {
+        // Check if workflow exists
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(body.workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", body.workflow_id)
+            }));
+            return Ok(CreateComputeNodeResponse::NotFoundErrorResponse(
+                error_response,
+            ));
+        }
+
+        self.compute_nodes_api
+            .create_compute_node(body, context)
+            .await
+    }
+
+    /// Store an event.
+    async fn create_event(
+        &self,
+        body: models::EventModel,
+        context: &C,
+    ) -> Result<CreateEventResponse, ApiError> {
+        // Check if workflow exists
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(body.workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", body.workflow_id)
+            }));
+            return Ok(CreateEventResponse::NotFoundErrorResponse(error_response));
+        }
+
+        self.events_api.create_event(body, context).await
+    }
+
+    /// Store a file.
+    async fn create_file(
+        &self,
+        file: models::FileModel,
+        context: &C,
+    ) -> Result<CreateFileResponse, ApiError> {
+        // Check if workflow exists
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(file.workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", file.workflow_id)
+            }));
+            return Ok(CreateFileResponse::NotFoundErrorResponse(error_response));
+        }
+
+        self.files_api.create_file(file, context).await
+    }
+
+    /// Store a job.
+    async fn create_job(
+        &self,
+        mut job: models::JobModel,
+        context: &C,
+    ) -> Result<CreateJobResponse, ApiError> {
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(job.workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", job.workflow_id)
+            }));
+            return Ok(CreateJobResponse::NotFoundErrorResponse(error_response));
+        }
+
+        if job.resource_requirements_id.is_none() {
+            let default_id = self
+                .get_default_resource_requirements_id(job.workflow_id, context)
+                .await?;
+            job.resource_requirements_id = Some(default_id);
+        }
+
+        self.jobs_api.create_job(job, context).await
+    }
+
+    /// Create jobs in bulk. Recommended max job count of 10,000.
+    async fn create_jobs(
+        &self,
+        mut body: models::JobsModel,
+        context: &C,
+    ) -> Result<CreateJobsResponse, ApiError> {
+        if body.jobs.is_empty() {
+            return self.jobs_api.create_jobs(body, context).await;
+        }
+
+        // Validate that all jobs have the same workflow_id
+        let first_workflow_id = body.jobs[0].workflow_id;
+        for job in &body.jobs {
+            if job.workflow_id != first_workflow_id {
+                let error_response = models::ErrorResponse::new(serde_json::json!({
+                    "message": format!(
+                        "All jobs in a batch must have the same workflow_id. Found workflow_ids: {} and {}",
+                        first_workflow_id, job.workflow_id
+                    )
+                }));
+                return Ok(CreateJobsResponse::UnprocessableContentErrorResponse(
+                    error_response,
+                ));
+            }
+        }
+
+        // Check if workflow exists
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(first_workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", first_workflow_id)
+            }));
+            return Ok(CreateJobsResponse::NotFoundErrorResponse(error_response));
+        }
+
+        // Get default resource requirements for this workflow once
+        let default_resource_requirements_id = self
+            .get_default_resource_requirements_id(first_workflow_id, context)
+            .await?;
+
+        // Set default resource requirements for any jobs that don't have one
+        for job in &mut body.jobs {
+            if job.resource_requirements_id.is_none() {
+                job.resource_requirements_id = Some(default_resource_requirements_id);
+            }
+        }
+
+        self.jobs_api.create_jobs(body, context).await
+    }
+
+    /// Store a local scheduler.
+    async fn create_local_scheduler(
+        &self,
+        body: models::LocalSchedulerModel,
+        context: &C,
+    ) -> Result<CreateLocalSchedulerResponse, ApiError> {
+        // Check if workflow exists
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(body.workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", body.workflow_id)
+            }));
+            return Ok(CreateLocalSchedulerResponse::DefaultErrorResponse(
+                error_response,
+            ));
+        }
+
+        self.schedulers_api
+            .create_local_scheduler(body, context)
+            .await
+    }
+
+    /// Store one resource requirements record.
+    async fn create_resource_requirements(
+        &self,
+        body: models::ResourceRequirementsModel,
+        context: &C,
+    ) -> Result<CreateResourceRequirementsResponse, ApiError> {
+        // Prevent external API calls from creating "default" resource requirements
+        if body.name == "default".to_string() {
+            error!(
+                "Attempt to create resource requirement with reserved name 'default' via external API for workflow_id={}",
+                body.workflow_id
+            );
+            return Err(ApiError(
+                "Cannot create resource requirement named 'default' via external API".to_string(),
+            ));
+        }
+
+        // Check if workflow exists
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(body.workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", body.workflow_id)
+            }));
+            return Ok(CreateResourceRequirementsResponse::NotFoundErrorResponse(
+                error_response,
+            ));
+        }
+
+        self.resource_requirements_api
+            .create_resource_requirements(body, context)
+            .await
+    }
+
+    /// Store a job result.
+    async fn create_result(
+        &self,
+        body: models::ResultModel,
+        context: &C,
+    ) -> Result<CreateResultResponse, ApiError> {
+        // Check if workflow exists
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(body.workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", body.workflow_id)
+            }));
+            return Ok(CreateResultResponse::NotFoundErrorResponse(error_response));
+        }
+
+        self.results_api.create_result(body, context).await
+    }
+
+    /// Store a scheduled compute node.
+    async fn create_scheduled_compute_node(
+        &self,
+        body: models::ScheduledComputeNodesModel,
+        context: &C,
+    ) -> Result<CreateScheduledComputeNodeResponse, ApiError> {
+        // Check if workflow exists
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(body.workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", body.workflow_id)
+            }));
+            return Ok(CreateScheduledComputeNodeResponse::DefaultErrorResponse(
+                error_response,
+            ));
+        }
+
+        self.schedulers_api
+            .create_scheduled_compute_node(body, context)
+            .await
+    }
+
+    /// Store a Slurm compute node configuration.
+    async fn create_slurm_scheduler(
+        &self,
+        body: models::SlurmSchedulerModel,
+        context: &C,
+    ) -> Result<CreateSlurmSchedulerResponse, ApiError> {
+        // Check if workflow exists
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(body.workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", body.workflow_id)
+            }));
+            return Ok(CreateSlurmSchedulerResponse::NotFoundErrorResponse(
+                error_response,
+            ));
+        }
+
+        self.schedulers_api
+            .create_slurm_scheduler(body, context)
+            .await
+    }
+
+    /// Store a user data record.
+    async fn create_user_data(
+        &self,
+        body: models::UserDataModel,
+        consumer_job_id: Option<i64>,
+        producer_job_id: Option<i64>,
+        context: &C,
+    ) -> Result<CreateUserDataResponse, ApiError> {
+        // Check if workflow exists
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(body.workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", body.workflow_id)
+            }));
+            return Ok(CreateUserDataResponse::NotFoundErrorResponse(
+                error_response,
+            ));
+        }
+
+        self.user_data_api
+            .create_user_data(body, consumer_job_id, producer_job_id, context)
+            .await
+    }
+
+    /// Store a workflow.
+    async fn create_workflow(
+        &self,
+        body: models::WorkflowModel,
+        context: &C,
+    ) -> Result<CreateWorkflowResponse, ApiError> {
+        let response = self.workflows_api.create_workflow(body, context).await?;
+        match response {
+            CreateWorkflowResponse::SuccessfulResponse(w) => {
+                let rr = models::ResourceRequirementsModel {
+                    id: None,
+                    workflow_id: w.id.expect("Failed to get workflow ID"),
+                    name: "default".to_string(),
+                    num_cpus: 1,
+                    num_gpus: 0,
+                    num_nodes: 1,
+                    memory: "1m".to_string(),
+                    runtime: "P0DT1M".to_string(),
+                };
+                let _result = self
+                    .resource_requirements_api
+                    .create_resource_requirements(rr, context)
+                    .await?;
+                Ok(CreateWorkflowResponse::SuccessfulResponse(w))
+            }
+            CreateWorkflowResponse::DefaultErrorResponse(err) => {
+                Ok(CreateWorkflowResponse::DefaultErrorResponse(err))
+            }
+        }
+    }
+
+    /// Create a workflow action.
+    async fn create_workflow_action(
+        &self,
+        workflow_id: i64,
+        body: serde_json::Value,
+        context: &C,
+    ) -> Result<CreateWorkflowActionResponse, ApiError> {
+        // Parse body into WorkflowActionModel
+        let action_model: models::WorkflowActionModel = match serde_json::from_value(body) {
+            Ok(model) => model,
+            Err(e) => {
+                let error_response = models::ErrorResponse::new(serde_json::json!({
+                    "message": format!("Invalid workflow action data: {}", e)
+                }));
+                return Ok(CreateWorkflowActionResponse::DefaultErrorResponse(
+                    error_response,
+                ));
+            }
+        };
+
+        // Check if workflow exists
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", workflow_id)
+            }));
+            return Ok(CreateWorkflowActionResponse::NotFoundErrorResponse(
+                error_response,
+            ));
+        }
+
+        self.workflow_actions_api
+            .create_workflow_action(workflow_id, action_model, context)
+            .await
+    }
+
+    /// Get all workflow actions for a workflow.
+    async fn get_workflow_actions(
+        &self,
+        workflow_id: i64,
+        context: &C,
+    ) -> Result<GetWorkflowActionsResponse, ApiError> {
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", workflow_id)
+            }));
+            return Ok(GetWorkflowActionsResponse::NotFoundErrorResponse(
+                error_response,
+            ));
+        }
+        self.workflow_actions_api
+            .get_workflow_actions(workflow_id, context)
+            .await
+    }
+
+    /// Get pending (unexecuted) workflow actions for a workflow.
+    async fn get_pending_actions(
+        &self,
+        workflow_id: i64,
+        trigger_types: Option<Vec<String>>,
+        context: &C,
+    ) -> Result<GetPendingActionsResponse, ApiError> {
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", workflow_id)
+            }));
+            return Ok(GetPendingActionsResponse::NotFoundErrorResponse(
+                error_response,
+            ));
+        }
+        self.workflow_actions_api
+            .get_pending_actions(workflow_id, trigger_types, context)
+            .await
+    }
+
+    /// Atomically claim a workflow action for execution.
+    async fn claim_action(
+        &self,
+        workflow_id: i64,
+        action_id: i64,
+        body: serde_json::Value,
+        context: &C,
+    ) -> Result<ClaimActionResponse, ApiError> {
+        // Parse compute_node_id from body
+        let compute_node_id = match body.get("compute_node_id").and_then(|v| v.as_i64()) {
+            Some(id) => id,
+            None => {
+                let error_response = models::ErrorResponse::new(serde_json::json!({
+                    "message": "Missing or invalid compute_node_id in request body"
+                }));
+                return Ok(ClaimActionResponse::DefaultErrorResponse(error_response));
+            }
+        };
+
+        // Check if workflow exists
+        let workflow_exists = self
+            .workflows_api
+            .does_workflow_exist(workflow_id, context)
+            .await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", workflow_id)
+            }));
+            return Ok(ClaimActionResponse::NotFoundErrorResponse(error_response));
+        }
+
+        self.workflow_actions_api
+            .claim_action(workflow_id, action_id, compute_node_id, context)
+            .await
+    }
+
+    /// Return the version of the service.
+    async fn get_version(&self, context: &C) -> Result<GetVersionResponse, ApiError> {
+        info!("get_version() - X-Span-ID: {:?}", context.get().0.clone());
+        Ok(GetVersionResponse::SuccessfulResponse(serde_json::json!(
+            TORC_VERSION
+        )))
+    }
+
+    /// Retrieve all workflows.
+    async fn list_workflows(
+        &self,
+        offset: Option<i64>,
+        sort_by: Option<String>,
+        reverse_sort: Option<bool>,
+        limit: Option<i64>,
+        name: Option<String>,
+        user: Option<String>,
+        description: Option<String>,
+        is_archived: Option<bool>,
+        context: &C,
+    ) -> Result<ListWorkflowsResponse, ApiError> {
+        let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
+        self.workflows_api
+            .list_workflows(
+                processed_offset,
+                sort_by,
+                reverse_sort,
+                processed_limit,
+                name,
+                user,
+                description,
+                is_archived,
+                context,
+            )
+            .await
+    }
+
+    /// Check if the service is running.
+    async fn ping(&self, context: &C) -> Result<PingResponse, ApiError> {
+        debug!("ping() - X-Span-ID: {:?}", context.get().0.clone());
+        let response = PingResponse::SuccessfulResponse(serde_json::json!({"status": "ok"}));
+        Ok(response)
+    }
+
+    /// Cancel a workflow. Workers will detect the status change and cancel jobs.
+    async fn cancel_workflow(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<CancelWorkflowResponse, ApiError> {
+        self.workflows_api.cancel_workflow(id, body, context).await
+    }
+
+    /// Delete all compute node records for one workflow.
+    async fn delete_compute_nodes(
+        &self,
+        workflow_id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteComputeNodesResponse, ApiError> {
+        self.compute_nodes_api
+            .delete_compute_nodes(workflow_id, body, context)
+            .await
+    }
+
+    /// Delete all events for one workflow.
+    async fn delete_events(
+        &self,
+        workflow_id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteEventsResponse, ApiError> {
+        self.events_api
+            .delete_events(workflow_id, body, context)
+            .await
+    }
+
+    /// Delete all files for one workflow.
+    async fn delete_files(
+        &self,
+        workflow_id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteFilesResponse, ApiError> {
+        self.files_api
+            .delete_files(workflow_id, body, context)
+            .await
+    }
+
+    /// Delete all jobs for one workflow.
+    async fn delete_jobs(
+        &self,
+        workflow_id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteJobsResponse, ApiError> {
+        self.jobs_api.delete_jobs(workflow_id, body, context).await
+    }
+
+    /// Delete all local schedulers for one workflow.
+    async fn delete_local_schedulers(
+        &self,
+        workflow_id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteLocalSchedulersResponse, ApiError> {
+        self.schedulers_api
+            .delete_local_schedulers(workflow_id, body, context)
+            .await
+    }
+
+    /// Delete all resource requirements records for one workflow.
+    async fn delete_all_resource_requirements(
+        &self,
+        workflow_id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteAllResourceRequirementsResponse, ApiError> {
+        self.resource_requirements_api
+            .delete_all_resource_requirements(workflow_id, body, context)
+            .await
+    }
+
+    /// Delete all job results for one workflow.
+    async fn delete_results(
+        &self,
+        workflow_id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteResultsResponse, ApiError> {
+        self.results_api
+            .delete_results(workflow_id, body, context)
+            .await
+    }
+
+    /// Delete all scheduled compute node records for one workflow.
+    async fn delete_scheduled_compute_nodes(
+        &self,
+        workflow_id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteScheduledComputeNodesResponse, ApiError> {
+        self.schedulers_api
+            .delete_scheduled_compute_nodes(workflow_id, body, context)
+            .await
+    }
+
+    /// Retrieve all Slurm compute node configurations for one workflow.
+    async fn delete_slurm_schedulers(
+        &self,
+        workflow_id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteSlurmSchedulersResponse, ApiError> {
+        self.schedulers_api
+            .delete_slurm_schedulers(workflow_id, body, context)
+            .await
+    }
+
+    /// Delete all user data records for one workflow.
+    async fn delete_all_user_data(
+        &self,
+        workflow_id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteAllUserDataResponse, ApiError> {
+        self.user_data_api
+            .delete_all_user_data(workflow_id, body, context)
+            .await
+    }
+
+    /// Retrieve all compute node records for one workflow.
+    async fn list_compute_nodes(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        sort_by: Option<String>,
+        reverse_sort: Option<bool>,
+        context: &C,
+    ) -> Result<ListComputeNodesResponse, ApiError> {
+        let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
+        self.compute_nodes_api
+            .list_compute_nodes(
+                workflow_id,
+                processed_offset,
+                processed_limit,
+                sort_by,
+                reverse_sort,
+                context,
+            )
+            .await
+    }
+
+    /// Retrieve all events for one workflow.
+    async fn list_events(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        sort_by: Option<String>,
+        reverse_sort: Option<bool>,
+        category: Option<String>,
+        after_timestamp: Option<f64>,
+        context: &C,
+    ) -> Result<ListEventsResponse, ApiError> {
+        let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
+        self.events_api
+            .list_events(
+                workflow_id,
+                processed_offset,
+                processed_limit,
+                sort_by,
+                reverse_sort,
+                category,
+                after_timestamp,
+                context,
+            )
+            .await
+    }
+
+    /// Retrieve all files for one workflow.
+    async fn list_files(
+        &self,
+        workflow_id: i64,
+        produced_by_job_id: Option<i64>,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        sort_by: Option<String>,
+        reverse_sort: Option<bool>,
+        name: Option<String>,
+        path: Option<String>,
+        context: &C,
+    ) -> Result<ListFilesResponse, ApiError> {
+        let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
+        self.files_api
+            .list_files(
+                workflow_id,
+                produced_by_job_id,
+                processed_offset,
+                processed_limit,
+                sort_by,
+                reverse_sort,
+                name,
+                path,
+                context,
+            )
+            .await
+    }
+
+    /// Retrieve all jobs for one workflow.
+    async fn list_jobs(
+        &self,
+        workflow_id: i64,
+        status: Option<models::JobStatus>,
+        needs_file_id: Option<i64>,
+        upstream_job_id: Option<i64>,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        sort_by: Option<String>,
+        reverse_sort: Option<bool>,
+        context: &C,
+    ) -> Result<ListJobsResponse, ApiError> {
+        let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
+        self.jobs_api
+            .list_jobs(
+                workflow_id,
+                status,
+                needs_file_id,
+                upstream_job_id,
+                processed_offset,
+                processed_limit,
+                sort_by,
+                reverse_sort,
+                context,
+            )
+            .await
+    }
+
+    /// Retrieve all job dependencies for one workflow.
+    async fn list_job_dependencies(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        context: &C,
+    ) -> Result<ListJobDependenciesResponse, ApiError> {
+        self.workflows_api
+            .list_job_dependencies(workflow_id, offset, limit, context)
+            .await
+    }
+
+    /// Retrieve local schedulers for one workflow.
+    async fn list_local_schedulers(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        sort_by: Option<String>,
+        reverse_sort: Option<bool>,
+        memory: Option<String>,
+        num_cpus: Option<i64>,
+        context: &C,
+    ) -> Result<ListLocalSchedulersResponse, ApiError> {
+        let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
+        self.schedulers_api
+            .list_local_schedulers(
+                workflow_id,
+                processed_offset,
+                processed_limit,
+                sort_by,
+                reverse_sort,
+                memory,
+                num_cpus,
+                context,
+            )
+            .await
+    }
+
+    /// Retrieve all resource requirements records for one workflow.
+    async fn list_resource_requirements(
+        &self,
+        workflow_id: i64,
+        name: Option<String>,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        sort_by: Option<String>,
+        reverse_sort: Option<bool>,
+        context: &C,
+    ) -> Result<ListResourceRequirementsResponse, ApiError> {
+        let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
+        self.resource_requirements_api
+            .list_resource_requirements(
+                workflow_id,
+                name,
+                processed_offset,
+                processed_limit,
+                sort_by,
+                reverse_sort,
+                context,
+            )
+            .await
+    }
+
+    /// Retrieve all job results for one workflow.
+    async fn list_results(
+        &self,
+        workflow_id: i64,
+        job_id: Option<i64>,
+        run_id: Option<i64>,
+        return_code: Option<i64>,
+        status: Option<models::JobStatus>,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        sort_by: Option<String>,
+        reverse_sort: Option<bool>,
+        all_runs: Option<bool>,
+        context: &C,
+    ) -> Result<ListResultsResponse, ApiError> {
+        info!(
+            "list_results({}, {:?}, {:?}, {:?}, {:?}, {:?}, {:?}, {:?}, {:?}, all_runs={:?}) - X-Span-ID: {:?}",
+            workflow_id,
+            job_id,
+            run_id,
+            return_code,
+            status,
+            offset,
+            limit,
+            sort_by,
+            reverse_sort,
+            all_runs,
+            context.get().0.clone()
+        );
+
+        let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
+        self.results_api
+            .list_results(
+                workflow_id,
+                job_id,
+                run_id,
+                return_code,
+                status,
+                processed_offset,
+                processed_limit,
+                sort_by,
+                reverse_sort,
+                all_runs,
+                context,
+            )
+            .await
+    }
+
+    /// Retrieve scheduled compute node records for one workflow.
+    async fn list_scheduled_compute_nodes(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        sort_by: Option<String>,
+        reverse_sort: Option<bool>,
+        scheduler_id: Option<String>,
+        scheduler_config_id: Option<String>,
+        status: Option<String>,
+        context: &C,
+    ) -> Result<ListScheduledComputeNodesResponse, ApiError> {
+        let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
+        self.schedulers_api
+            .list_scheduled_compute_nodes(
+                workflow_id,
+                processed_offset,
+                processed_limit,
+                sort_by,
+                reverse_sort,
+                scheduler_id,
+                scheduler_config_id,
+                status,
+                context,
+            )
+            .await
+    }
+
+    /// Retrieve a Slurm compute node configuration.
+    async fn list_slurm_schedulers(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        sort_by: Option<String>,
+        reverse_sort: Option<bool>,
+        _: Option<String>,
+        _: Option<String>,
+        _: Option<String>,
+        _: Option<String>,
+        _: Option<i64>,
+        _: Option<String>,
+        _: Option<String>,
+        _: Option<String>,
+        _: Option<String>,
+        context: &C,
+    ) -> Result<ListSlurmSchedulersResponse, ApiError> {
+        let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
+        self.schedulers_api
+            .list_slurm_schedulers(
+                workflow_id,
+                processed_offset,
+                processed_limit,
+                sort_by,
+                reverse_sort,
+                context,
+            )
+            .await
+    }
+
+    /// Retrieve all user data records for one workflow.
+    async fn list_user_data(
+        &self,
+        workflow_id: i64,
+        consumer_job_id: Option<i64>,
+        producer_job_id: Option<i64>,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        sort_by: Option<String>,
+        reverse_sort: Option<bool>,
+        name: Option<String>,
+        is_ephemeral: Option<bool>,
+        context: &C,
+    ) -> Result<ListUserDataResponse, ApiError> {
+        let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
+        self.user_data_api
+            .list_user_data(
+                workflow_id,
+                consumer_job_id,
+                producer_job_id,
+                processed_offset,
+                processed_limit,
+                sort_by,
+                reverse_sort,
+                name,
+                is_ephemeral,
+                context,
+            )
+            .await
+    }
+
+    /// Retrieve a compute node by ID.
+    async fn get_compute_node(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<GetComputeNodeResponse, ApiError> {
+        self.compute_nodes_api.get_compute_node(id, context).await
+    }
+
+    /// Retrieve an event by ID.
+    async fn get_event(&self, id: i64, context: &C) -> Result<GetEventResponse, ApiError> {
+        self.events_api.get_event(id, context).await
+    }
+
+    /// Retrieve a file.
+    async fn get_file(&self, id: i64, context: &C) -> Result<GetFileResponse, ApiError> {
+        self.files_api.get_file(id, context).await
+    }
+
+    /// Retrieve a job.
+    async fn get_job(&self, id: i64, context: &C) -> Result<GetJobResponse, ApiError> {
+        self.jobs_api.get_job(id, context).await
+    }
+
+    /// Return the timestamp of the latest event in ms since the epoch in UTC.
+    async fn get_latest_event_timestamp(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<GetLatestEventTimestampResponse, ApiError> {
+        self.events_api
+            .get_latest_event_timestamp(id, context)
+            .await
+    }
+
+    /// Retrieve a local scheduler.
+    async fn get_local_scheduler(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<GetLocalSchedulerResponse, ApiError> {
+        self.schedulers_api.get_local_scheduler(id, context).await
+    }
+
+    /// Return the resource requirements for jobs with a status of ready.
+    async fn get_ready_job_requirements(
+        &self,
+        id: i64,
+        scheduler_config_id: Option<i64>,
+        context: &C,
+    ) -> Result<GetReadyJobRequirementsResponse, ApiError> {
+        info!(
+            "get_ready_job_requirements({}, {:?}) - X-Span-ID: {:?}",
+            id,
+            scheduler_config_id,
+            context.get().0.clone()
+        );
+        error!("get_ready_job_requirements operation is not implemented");
+        Err(ApiError("Api-Error: Operation is NOT implemented".into()))
+    }
+
+    /// Retrieve one resource requirements record.
+    async fn get_resource_requirements(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<GetResourceRequirementsResponse, ApiError> {
+        self.resource_requirements_api
+            .get_resource_requirements(id, context)
+            .await
+    }
+
+    /// Retrieve a job result.
+    async fn get_result(&self, id: i64, context: &C) -> Result<GetResultResponse, ApiError> {
+        self.results_api.get_result(id, context).await
+    }
+
+    /// Retrieve a scheduled compute node.
+    async fn get_scheduled_compute_node(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<GetScheduledComputeNodeResponse, ApiError> {
+        self.schedulers_api
+            .get_scheduled_compute_node(id, context)
+            .await
+    }
+
+    /// Retrieve a Slurm compute node configuration.
+    async fn get_slurm_scheduler(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<GetSlurmSchedulerResponse, ApiError> {
+        self.schedulers_api.get_slurm_scheduler(id, context).await
+    }
+
+    /// Retrieve a user data record.
+    async fn get_user_data(&self, id: i64, context: &C) -> Result<GetUserDataResponse, ApiError> {
+        self.user_data_api.get_user_data(id, context).await
+    }
+
+    /// Retrieve a workflow.
+    async fn get_workflow(&self, id: i64, context: &C) -> Result<GetWorkflowResponse, ApiError> {
+        self.workflows_api.get_workflow(id, context).await
+    }
+
+    /// Return the workflow status.
+    async fn get_workflow_status(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<GetWorkflowStatusResponse, ApiError> {
+        self.workflows_api.get_workflow_status(id, context).await
+    }
+
+    /// Initialize job relationships based on file and user_data relationships.
+    ///
+    /// This operation wraps all initialization steps in a transaction to ensure atomicity.
+    /// If any step fails, all changes will be rolled back.
+    ///
+    /// This function can be called multiple times (e.g., for workflow reruns). It will:
+    /// - Clear the ready_queue for the workflow
+    /// - Delete workflow_result records for incomplete jobs
+    /// - Re-initialize job statuses based on dependencies
+    async fn initialize_jobs(
+        &self,
+        id: i64,
+        only_uninitialized: Option<bool>,
+        clear_ephemeral_user_data: Option<bool>,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<InitializeJobsResponse, ApiError> {
+        info!(
+            "initialize_jobs({}, {:?}, {:?}, {:?}) - X-Span-ID: {:?}",
+            id,
+            only_uninitialized,
+            clear_ephemeral_user_data,
+            body,
+            context.get().0.clone()
+        );
+
+        // Begin a transaction to ensure all initialization steps are atomic
+        let mut tx = match self.pool.begin().await {
+            Ok(tx) => tx,
+            Err(e) => {
+                error!("Failed to begin transaction for initialize_jobs: {}", e);
+                return Err(ApiError("Database error".to_string()));
+            }
+        };
+
+        // Step 1: Add blocked-by associations based on file dependencies
+        if let Err(e) = self
+            .add_blocked_by_associations_from_files(&mut *tx, id)
+            .await
+        {
+            error!("Failed to add blocked-by associations from files: {}", e);
+            let _ = tx.rollback().await;
+            return Err(e);
+        }
+
+        // Step 1b: Add blocked-by associations from user_data
+        if let Err(e) = self
+            .add_blocked_by_associations_from_user_data(&mut *tx, id)
+            .await
+        {
+            error!(
+                "Failed to add blocked-by associations from user_data: {}",
+                e
+            );
+            let _ = tx.rollback().await;
+            return Err(e);
+        }
+
+        // Step 2: Uninitialize blocked jobs (safety net against bugs)
+        if let Err(e) = self.uninitialize_blocked_jobs(&mut *tx, id).await {
+            error!("Failed to uninitialize blocked jobs: {}", e);
+            let _ = tx.rollback().await;
+            return Err(e);
+        }
+
+        // Step 3: Initialize blocked jobs to blocked status
+        let only_uninit = only_uninitialized.unwrap_or(false);
+        if let Err(e) = self
+            .initialize_blocked_jobs_to_blocked(&mut *tx, id, only_uninit)
+            .await
+        {
+            error!("Failed to initialize blocked jobs to blocked: {}", e);
+            let _ = tx.rollback().await;
+            return Err(e);
+        }
+
+        // Step 4: Initialize unblocked jobs to ready status
+        if let Err(e) = self.initialize_unblocked_jobs(&mut *tx, id).await {
+            error!("Failed to initialize unblocked jobs: {}", e);
+            let _ = tx.rollback().await;
+            return Err(e);
+        }
+
+        // TODO: helper function
+        // Step 5: Delete workflow_result records for jobs that are not complete
+        // This is done after steps 1-4 to be future-proof in case those steps reset job completion statuses
+        // Complete statuses are: Done (4), Canceled (2), Terminated (3)
+        let done_status = models::JobStatus::Done.to_int();
+        let canceled_status = models::JobStatus::Canceled.to_int();
+        let terminated_status = models::JobStatus::Terminated.to_int();
+
+        match sqlx::query!(
+            r#"
+            DELETE FROM workflow_result
+            WHERE workflow_id = $1
+              AND job_id IN (
+                SELECT id FROM job
+                WHERE workflow_id = $1
+                  AND status NOT IN ($2, $3, $4)
+              )
+            "#,
+            id,
+            canceled_status,
+            terminated_status,
+            done_status
+        )
+        .execute(&mut *tx)
+        .await
+        {
+            Ok(result) => {
+                debug!(
+                    "Deleted {} workflow_result records for incomplete jobs in workflow {}",
+                    result.rows_affected(),
+                    id
+                );
+            }
+            Err(e) => {
+                error!(
+                    "Failed to delete workflow_result records for incomplete jobs: {}",
+                    e
+                );
+                let _ = tx.rollback().await;
+                return Err(ApiError("Database error".to_string()));
+            }
+        }
+
+        // TODO: helper function
+        // Step 6: Clear the ready queue for this workflow
+        // This allows initialize_jobs to be called multiple times (e.g., for workflow reruns)
+        match sqlx::query!(
+            r#"
+            DELETE FROM ready_queue
+            WHERE workflow_id = $1
+            "#,
+            id
+        )
+        .execute(&mut *tx)
+        .await
+        {
+            Ok(result) => {
+                debug!(
+                    "Cleared {} entries from ready_queue for workflow {}",
+                    result.rows_affected(),
+                    id
+                );
+            }
+            Err(e) => {
+                error!("Failed to clear ready_queue for workflow {}: {}", id, e);
+                let _ = tx.rollback().await;
+                return Err(ApiError("Database error".to_string()));
+            }
+        }
+
+        // Step 7: Add ready jobs to the ready queue
+        if let Err(e) = self.add_ready_jobs(&mut *tx, id).await {
+            error!("Failed to add ready jobs to queue: {}", e);
+            let _ = tx.rollback().await;
+            return Err(e);
+        }
+
+        // Step 8: Compute and store input hashes for all jobs in the workflow
+        // This tracks the baseline hash for this run to detect future input changes
+        // Query job IDs within the transaction
+        let job_ids = match sqlx::query!(
+            r#"
+            SELECT id
+            FROM job
+            WHERE workflow_id = $1
+            ORDER BY id
+            "#,
+            id
+        )
+        .fetch_all(&mut *tx)
+        .await
+        {
+            Ok(rows) => rows,
+            Err(e) => {
+                error!("Failed to query job IDs for hash computation: {}", e);
+                let _ = tx.rollback().await;
+                return Err(ApiError("Database error".to_string()));
+            }
+        };
+
+        let job_count = job_ids.len();
+        debug!(
+            "Computing and storing input hashes for {} jobs in workflow {}",
+            job_count, id
+        );
+
+        for row in job_ids {
+            let job_id = row.id;
+
+            // Compute hash (reads from pool, doesn't modify data)
+            match self.jobs_api.compute_job_input_hash(job_id).await {
+                Ok(hash) => {
+                    // Store hash within the transaction
+                    match sqlx::query!(
+                        r#"
+                        INSERT INTO job_internal (job_id, input_hash)
+                        VALUES ($1, $2)
+                        ON CONFLICT(job_id) DO UPDATE SET input_hash = excluded.input_hash
+                        "#,
+                        job_id,
+                        hash
+                    )
+                    .execute(&mut *tx)
+                    .await
+                    {
+                        Ok(_) => {
+                            debug!("Stored input hash for job {}", job_id);
+                        }
+                        Err(e) => {
+                            error!("Failed to store input hash for job {}: {}", job_id, e);
+                            let _ = tx.rollback().await;
+                            return Err(ApiError("Database error".to_string()));
+                        }
+                    }
+                }
+                Err(e) => {
+                    error!("Failed to compute input hash for job {}: {}", job_id, e);
+                    let _ = tx.rollback().await;
+                    return Err(e);
+                }
+            }
+        }
+
+        debug!(
+            "Completed computing and storing input hashes for {} jobs in workflow {}",
+            job_count, id
+        );
+
+        // Commit the transaction
+        if let Err(e) = tx.commit().await {
+            error!("Failed to commit transaction for initialize_jobs: {}", e);
+            return Err(ApiError("Database error".to_string()));
+        }
+
+        debug!(
+            "Successfully initialized jobs for workflow {} with transaction",
+            id
+        );
+
+        // Trigger workflow actions after initialization
+        // First, reset all trigger counts to 0 for this workflow (in case of re-initialization)
+        match sqlx::query("UPDATE workflow_action SET trigger_count = 0 WHERE workflow_id = ?")
+            .bind(id)
+            .execute(self.pool.as_ref())
+            .await
+        {
+            Ok(_) => {
+                debug!("Reset trigger counts for all actions in workflow {}", id);
+            }
+            Err(e) => {
+                error!("Failed to reset trigger counts for workflow {}: {}", id, e);
+                // Don't fail the request, just log the error
+            }
+        }
+
+        // Activate on_workflow_start actions (workflow has started with initialization)
+        if let Err(e) = self
+            .workflow_actions_api
+            .check_and_trigger_actions(id, "on_workflow_start", None)
+            .await
+        {
+            error!(
+                "Failed to check_and_trigger_actions for on_workflow_start: {}",
+                e
+            );
+            // Don't fail the request, just log the error
+        }
+
+        // Activate on_worker_start and on_worker_complete actions immediately
+        // These are worker-lifecycle events that workers can claim when they start/complete
+        for trigger_type in &["on_worker_start", "on_worker_complete"] {
+            match sqlx::query(
+                "UPDATE workflow_action SET trigger_count = required_triggers WHERE workflow_id = ? AND trigger_type = ?"
+            )
+            .bind(id)
+            .bind(trigger_type)
+            .execute(self.pool.as_ref())
+            .await
+            {
+                Ok(result) => {
+                    let count = result.rows_affected();
+                    if count > 0 {
+                        debug!("Activated {} {} actions for workflow {}", count, trigger_type, id);
+                    }
+                }
+                Err(e) => {
+                    error!("Failed to activate {} actions for workflow {}: {}", trigger_type, id, e);
+                    // Don't fail the request, just log the error
+                }
+            }
+        }
+
+        // Check if any on_jobs_ready actions should be triggered based on job states
+        if let Err(e) = self
+            .workflow_actions_api
+            .check_and_trigger_actions(id, "on_jobs_ready", None)
+            .await
+        {
+            error!(
+                "Failed to check_and_trigger_actions for on_jobs_ready: {}",
+                e
+            );
+            // Don't fail the request, just log the error
+        }
+
+        let response = InitializeJobsResponse::SuccessfulResponse(
+            serde_json::json!({"message": "Initialized job status"}),
+        );
+        Ok(response)
+    }
+
+    /// Return true if all jobs in the workflow are complete.
+    async fn is_workflow_complete(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<IsWorkflowCompleteResponse, ApiError> {
+        self.workflows_api.is_workflow_complete(id, context).await
+    }
+
+    async fn is_workflow_uninitialized(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<IsWorkflowUninitializedResponse, ApiError> {
+        self.workflows_api
+            .is_workflow_uninitialized(id, context)
+            .await
+    }
+
+    /// Retrieve all job IDs for one workflow.
+    async fn list_job_ids(&self, id: i64, context: &C) -> Result<ListJobIdsResponse, ApiError> {
+        self.jobs_api.list_job_ids(id, context).await
+    }
+
+    /// List missing user data that should exist.
+    async fn list_missing_user_data(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<ListMissingUserDataResponse, ApiError> {
+        self.user_data_api.list_missing_user_data(id, context).await
+    }
+
+    /// List files that must exist.
+    async fn list_required_existing_files(
+        &self,
+        id: i64,
+        context: &C,
+    ) -> Result<ListRequiredExistingFilesResponse, ApiError> {
+        self.files_api
+            .list_required_existing_files(id, context)
+            .await
+    }
+
+    /// Update a compute node.
+    async fn update_compute_node(
+        &self,
+        id: i64,
+        body: models::ComputeNodeModel,
+        context: &C,
+    ) -> Result<UpdateComputeNodeResponse, ApiError> {
+        self.compute_nodes_api
+            .update_compute_node(id, body, context)
+            .await
+    }
+
+    /// Update an event.
+    async fn update_event(
+        &self,
+        id: i64,
+        body: serde_json::Value,
+        context: &C,
+    ) -> Result<UpdateEventResponse, ApiError> {
+        self.events_api.update_event(id, body, context).await
+    }
+
+    /// Update a file.
+    async fn update_file(
+        &self,
+        id: i64,
+        body: models::FileModel,
+        context: &C,
+    ) -> Result<UpdateFileResponse, ApiError> {
+        self.files_api.update_file(id, body, context).await
+    }
+
+    /// Update a job.
+    async fn update_job(
+        &self,
+        id: i64,
+        body: models::JobModel,
+        context: &C,
+    ) -> Result<UpdateJobResponse, ApiError> {
+        self.jobs_api.update_job(id, body, context).await
+    }
+
+    /// Update a local scheduler.
+    async fn update_local_scheduler(
+        &self,
+        id: i64,
+        body: models::LocalSchedulerModel,
+        context: &C,
+    ) -> Result<UpdateLocalSchedulerResponse, ApiError> {
+        self.schedulers_api
+            .update_local_scheduler(id, body, context)
+            .await
+    }
+
+    /// Update one resource requirements record.
+    async fn update_resource_requirements(
+        &self,
+        id: i64,
+        body: models::ResourceRequirementsModel,
+        context: &C,
+    ) -> Result<UpdateResourceRequirementsResponse, ApiError> {
+        self.resource_requirements_api
+            .update_resource_requirements(id, body, context)
+            .await
+    }
+
+    /// Update a job result.
+    async fn update_result(
+        &self,
+        id: i64,
+        body: models::ResultModel,
+        context: &C,
+    ) -> Result<UpdateResultResponse, ApiError> {
+        self.results_api.update_result(id, body, context).await
+    }
+
+    /// Update a scheduled compute node.
+    async fn update_scheduled_compute_node(
+        &self,
+        id: i64,
+        body: models::ScheduledComputeNodesModel,
+        context: &C,
+    ) -> Result<UpdateScheduledComputeNodeResponse, ApiError> {
+        self.schedulers_api
+            .update_scheduled_compute_node(id, body, context)
+            .await
+    }
+
+    /// Update a Slurm compute node configuration.
+    async fn update_slurm_scheduler(
+        &self,
+        id: i64,
+        body: models::SlurmSchedulerModel,
+        context: &C,
+    ) -> Result<UpdateSlurmSchedulerResponse, ApiError> {
+        self.schedulers_api
+            .update_slurm_scheduler(id, body, context)
+            .await
+    }
+
+    /// Update a user data record.
+    async fn update_user_data(
+        &self,
+        id: i64,
+        body: models::UserDataModel,
+        context: &C,
+    ) -> Result<UpdateUserDataResponse, ApiError> {
+        self.user_data_api.update_user_data(id, body, context).await
+    }
+
+    /// Update a workflow.
+    async fn update_workflow(
+        &self,
+        id: i64,
+        body: models::WorkflowModel,
+        context: &C,
+    ) -> Result<UpdateWorkflowResponse, ApiError> {
+        self.workflows_api.update_workflow(id, body, context).await
+    }
+
+    /// Update the workflow status.
+    async fn update_workflow_status(
+        &self,
+        id: i64,
+        body: models::WorkflowStatusModel,
+        context: &C,
+    ) -> Result<UpdateWorkflowStatusResponse, ApiError> {
+        self.workflows_api
+            .update_workflow_status(id, body, context)
+            .await
+    }
+
+    /// Return jobs that are ready for submission and meet worker resource requirements. Set status to pending.
+    async fn claim_jobs_based_on_resources(
+        &self,
+        id: i64,
+        body: models::ComputeNodesResources,
+        limit: i64,
+        sort_method: Option<models::ClaimJobsSortMethod>,
+        context: &C,
+    ) -> Result<ClaimJobsBasedOnResources, ApiError> {
+        debug!(
+            "claim_jobs_based_on_resources({}, {:?}, {:?}, {:?}) - X-Span-ID: {:?}",
+            id,
+            body,
+            sort_method,
+            limit,
+            context.get().0.clone()
+        );
+        let status = match self.get_workflow_status(id, context).await {
+            Ok(GetWorkflowStatusResponse::SuccessfulResponse(status)) => status,
+            Ok(_) => {
+                error!(
+                    "Unexpected response from get_workflow_status for workflow_id={}",
+                    id
+                );
+                return Err(ApiError(
+                    "Unexpected response from get_workflow_status".to_string(),
+                ));
+            }
+            Err(e) => return Err(e),
+        };
+
+        if status.is_canceled {
+            return Ok(ClaimJobsBasedOnResources::SuccessfulResponse(
+                models::ClaimJobsBasedOnResources {
+                    jobs: Some(vec![]),
+                    reason: Some("Workflow is canceled".to_string()),
+                },
+            ));
+        }
+
+        self.prepare_ready_jobs(id, body, sort_method, limit, context)
+            .await
+    }
+
+    /// Return user-requested number of jobs that are ready for submission. Sets status to pending.
+    async fn claim_next_jobs(
+        &self,
+        id: i64,
+        limit: Option<i64>,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<ClaimNextJobsResponse, ApiError> {
+        debug!(
+            "claim_next_jobs({}, {:?}, {:?}) - X-Span-ID: {:?}",
+            id,
+            limit,
+            body,
+            context.get().0.clone()
+        );
+
+        let workflow_id = id;
+        let job_limit = limit.unwrap_or(10);
+
+        // Check if workflow is canceled first
+        let status = match self.get_workflow_status(workflow_id, context).await {
+            Ok(GetWorkflowStatusResponse::SuccessfulResponse(status)) => status,
+            Ok(_) => {
+                error!(
+                    "Unexpected response from get_workflow_status for workflow_id={}",
+                    workflow_id
+                );
+                return Err(ApiError(
+                    "Unexpected response from get_workflow_status".to_string(),
+                ));
+            }
+            Err(e) => return Err(e),
+        };
+
+        if status.is_canceled {
+            return Ok(ClaimNextJobsResponse::SuccessfulResponse(
+                models::ClaimNextJobsResponse { jobs: Some(vec![]) },
+            ));
+        }
+
+        // Use BEGIN IMMEDIATE TRANSACTION to acquire a database write lock.
+        // This ensures thread safety at the database level for the entire job selection process.
+        // The IMMEDIATE mode acquires a reserved lock immediately, preventing other writers
+        // and ensuring that concurrent reads see a consistent snapshot.
+        // This prevents race conditions where multiple clients could:
+        // 1. Select the same jobs from ready_queue
+        // 2. Double-allocate jobs to different clients
+        // The lock is held for the entire transaction duration.
+
+        // Start an IMMEDIATE transaction using raw SQL
+        let mut conn = self.pool.acquire().await.map_err(|e| {
+            error!("Failed to acquire database connection: {}", e);
+            ApiError("Database connection error".to_string())
+        })?;
+
+        sqlx::query("BEGIN IMMEDIATE")
+            .execute(&mut *conn)
+            .await
+            .map_err(|e| {
+                error!("Failed to begin immediate transaction: {}", e);
+                ApiError("Database lock error".to_string())
+            })?;
+
+        debug!(
+            "claim_next_jobs: workflow_id={}, limit={}",
+            workflow_id, job_limit
+        );
+
+        // First check if the workflow exists
+        let workflow_exists = sqlx::query("SELECT id FROM workflow WHERE id = $1")
+            .bind(workflow_id)
+            .fetch_optional(&mut *conn)
+            .await
+            .map_err(|e| {
+                error!("Database error checking workflow existence: {}", e);
+                ApiError("Database error".to_string())
+            })?;
+
+        if workflow_exists.is_none() {
+            // Rollback the transaction since we're returning early
+            let _ = sqlx::query("ROLLBACK").execute(&mut *conn).await;
+
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", workflow_id)
+            }));
+            return Ok(ClaimNextJobsResponse::DefaultErrorResponse(error_response));
+        }
+
+        // Query the ready_queue for the next N jobs (no resource filtering)
+        let query = r#"
+            SELECT
+                rq.workflow_id,
+                rq.job_id,
+                job.name,
+                job.command,
+                job.status,
+                job.cancel_on_blocking_job_failure,
+                job.supports_termination,
+                rq.resource_requirements_id
+            FROM ready_queue rq
+            JOIN job ON rq.job_id = job.id
+            WHERE rq.workflow_id = $1
+            LIMIT $2
+            "#;
+
+        let rows = sqlx::query(query)
+            .bind(workflow_id)
+            .bind(job_limit)
+            .fetch_all(&mut *conn)
+            .await
+            .map_err(|e| {
+                error!("Database error in claim_next_jobs: {}", e);
+                ApiError("Database error".to_string())
+            })?;
+
+        debug!(
+            "claim_next_jobs: Found {} jobs for workflow {}",
+            rows.len(),
+            workflow_id
+        );
+
+        let mut selected_jobs = Vec::new();
+        let mut job_ids_to_update = Vec::new();
+
+        // Process all returned jobs
+        for row in rows {
+            let job_id: i64 = row.get("job_id");
+            job_ids_to_update.push(job_id);
+
+            let status =
+                models::JobStatus::from_int(row.get::<i64, _>("status") as i32).map_err(|e| {
+                    error!("Failed to parse job status: {}", e);
+                    ApiError("Invalid job status".to_string())
+                })?;
+
+            if status != models::JobStatus::Ready {
+                error!("Expected job status to be Ready, but got: {}", status);
+                // Rollback the transaction since we're returning early
+                let _ = sqlx::query("ROLLBACK").execute(&mut *conn).await;
+                return Err(ApiError("Invalid job status in ready queue".to_string()));
+            }
+
+            let job = models::JobModel {
+                id: Some(job_id),
+                workflow_id: row.get("workflow_id"),
+                name: row.get("name"),
+                command: row.get("command"),
+                invocation_script: None,
+                status: Some(models::JobStatus::Pending),
+                schedule_compute_nodes: None,
+                cancel_on_blocking_job_failure: Some(row.get("cancel_on_blocking_job_failure")),
+                supports_termination: Some(row.get("supports_termination")),
+                blocked_by_job_ids: None,
+                input_file_ids: None,
+                output_file_ids: None,
+                input_user_data_ids: None,
+                output_user_data_ids: None,
+                resource_requirements_id: Some(row.get("resource_requirements_id")),
+                scheduler_id: None,
+            };
+
+            selected_jobs.push(job);
+        }
+
+        // If we have jobs to update, update their status and remove from ready_queue
+        if !job_ids_to_update.is_empty() {
+            // Update job status to pending
+            let pending = models::JobStatus::Pending.to_int();
+            for job_id in &job_ids_to_update {
+                sqlx::query!("UPDATE job SET status = $1 WHERE id = $2", pending, job_id)
+                    .execute(&mut *conn)
+                    .await
+                    .map_err(|e| {
+                        error!("Failed to update job status: {}", e);
+                        ApiError("Database update error".to_string())
+                    })?;
+            }
+
+            // Delete jobs from ready_queue
+            for job_id in &job_ids_to_update {
+                sqlx::query!(
+                    "DELETE FROM ready_queue WHERE job_id = $1 AND workflow_id = $2",
+                    job_id,
+                    workflow_id
+                )
+                .execute(&mut *conn)
+                .await
+                .map_err(|e| {
+                    error!("Failed to remove from ready_queue: {}", e);
+                    ApiError("Database delete error".to_string())
+                })?;
+            }
+
+            info!(
+                "Updated {} jobs to pending status for workflow {}",
+                job_ids_to_update.len(),
+                workflow_id
+            );
+        }
+
+        // Commit the transaction to release the database lock
+        sqlx::query("COMMIT")
+            .execute(&mut *conn)
+            .await
+            .map_err(|e| {
+                error!("Failed to commit transaction: {}", e);
+                ApiError("Database commit error".to_string())
+            })?;
+
+        let response = models::ClaimNextJobsResponse {
+            jobs: Some(selected_jobs),
+        };
+
+        Ok(ClaimNextJobsResponse::SuccessfulResponse(response))
+    }
+
+    /// Check for changed job inputs and update status accordingly.
+    async fn process_changed_job_inputs(
+        &self,
+        id: i64,
+        dry_run: Option<bool>,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<ProcessChangedJobInputsResponse, ApiError> {
+        let dry_run_value = dry_run.unwrap_or(false);
+        self.jobs_api
+            .process_changed_job_inputs(id, body, dry_run_value, context)
+            .await
+    }
+
+    /// Delete a compute node.
+    async fn delete_compute_node(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteComputeNodeResponse, ApiError> {
+        self.compute_nodes_api
+            .delete_compute_node(id, body, context)
+            .await
+    }
+
+    /// Delete an event.
+    async fn delete_event(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteEventResponse, ApiError> {
+        self.events_api.delete_event(id, body, context).await
+    }
+
+    /// Delete a file.
+    async fn delete_file(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteFileResponse, ApiError> {
+        self.files_api.delete_file(id, body, context).await
+    }
+
+    /// Delete a job.
+    async fn delete_job(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteJobResponse, ApiError> {
+        self.jobs_api.delete_job(id, body, context).await
+    }
+
+    /// Delete a local scheduler.
+    async fn delete_local_scheduler(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteLocalSchedulerResponse, ApiError> {
+        self.schedulers_api
+            .delete_local_scheduler(id, body, context)
+            .await
+    }
+
+    /// Delete a resource requirements record.
+    async fn delete_resource_requirements(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteResourceRequirementsResponse, ApiError> {
+        self.resource_requirements_api
+            .delete_resource_requirements(id, body, context)
+            .await
+    }
+
+    /// Delete a job result.
+    async fn delete_result(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteResultResponse, ApiError> {
+        self.results_api.delete_result(id, body, context).await
+    }
+
+    /// Delete a scheduled compute node.
+    async fn delete_scheduled_compute_node(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteScheduledComputeNodeResponse, ApiError> {
+        self.schedulers_api
+            .delete_scheduled_compute_node(id, body, context)
+            .await
+    }
+
+    /// Delete Slurm compute node configuration.
+    async fn delete_slurm_scheduler(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteSlurmSchedulerResponse, ApiError> {
+        self.schedulers_api
+            .delete_slurm_scheduler(id, body, context)
+            .await
+    }
+
+    /// Delete a user data record.
+    async fn delete_user_data(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteUserDataResponse, ApiError> {
+        self.user_data_api.delete_user_data(id, body, context).await
+    }
+
+    /// Delete a workflow.
+    async fn delete_workflow(
+        &self,
+        id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<DeleteWorkflowResponse, ApiError> {
+        self.workflows_api.delete_workflow(id, body, context).await
+    }
+
+    /// Reset status for jobs to uninitialized.
+    /// If failed_only is true, only jobs with a failed result will be reset.
+    /// If failed_only is false, all jobs will be reset.
+    async fn reset_job_status(
+        &self,
+        id: i64,
+        failed_only: Option<bool>,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<ResetJobStatusResponse, ApiError> {
+        // Check if workflow exists
+        let workflow_exists = self.workflows_api.does_workflow_exist(id, context).await?;
+        if !workflow_exists {
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", id)
+            }));
+            return Ok(ResetJobStatusResponse::NotFoundErrorResponse(
+                error_response,
+            ));
+        }
+
+        self.jobs_api
+            .reset_job_status(id, failed_only.unwrap_or(false), body, context)
+            .await
+    }
+
+    /// Reset worklow status.
+    /// Rules:
+    /// - Not allowed if any job is running or SubmittedPending (unless force=true)
+    /// Actions:
+    /// - Reset fields in WorkflowStatusModel
+    async fn reset_workflow_status(
+        &self,
+        id: i64,
+        force: Option<bool>,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<ResetWorkflowStatusResponse, ApiError> {
+        // TODO: don't allow this if any nodes are scheduled
+        self.workflows_api
+            .reset_workflow_status(id, force, body, context)
+            .await
+    }
+
+    /// Build a string for a DOT graph.
+    async fn get_dot_graph(
+        &self,
+        id: i64,
+        name: String,
+        context: &C,
+    ) -> Result<GetDotGraphResponse, ApiError> {
+        info!(
+            "get_dot_graph({}, \"{}\") - X-Span-ID: {:?}",
+            id,
+            name,
+            context.get().0.clone()
+        );
+        error!("get_dot_graph operation is not implemented");
+        Err(ApiError("Api-Error: Operation is NOT implemented".into()))
+    }
+
+    /// Change the status of a job and manage side effects.
+    async fn manage_status_change(
+        &self,
+        id: i64,
+        status: models::JobStatus,
+        run_id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<ManageStatusChangeResponse, ApiError> {
+        info!(
+            "manage_status_change({}, {:?}, {}, {:?}) - X-Span-ID: {:?}",
+            id,
+            status,
+            run_id,
+            body,
+            context.get().0.clone()
+        );
+
+        // 1. Call get_job. If the job doesn't exist, return a 404.
+        let mut job = match self.jobs_api.get_job(id, context).await? {
+            GetJobResponse::SuccessfulResponse(job) => job,
+            GetJobResponse::NotFoundErrorResponse(err) => {
+                return Ok(ManageStatusChangeResponse::NotFoundErrorResponse(err));
+            }
+            GetJobResponse::DefaultErrorResponse(err) => {
+                return Ok(ManageStatusChangeResponse::DefaultErrorResponse(err));
+            }
+        };
+
+        let current_status = job
+            .status
+            .as_ref()
+            .ok_or_else(|| {
+                error!("Job status is missing for job_id={}", id);
+                ApiError("Job status is required".to_string())
+            })?
+            .clone();
+
+        if current_status == status {
+            debug!(
+                "manage_status_change: job_id={} already has status '{}', no change needed",
+                id, status
+            );
+            return Ok(ManageStatusChangeResponse::SuccessfulResponse(job));
+        }
+
+        // 2. Get the current workflow's run_id. If it doesn't match the passed run_id, return an error.
+        let workflow_status = match sqlx::query!(
+            "SELECT run_id FROM workflow_status WHERE id = ?",
+            job.workflow_id
+        )
+        .fetch_optional(self.pool.as_ref())
+        .await
+        {
+            Ok(Some(row)) => row,
+            Ok(None) => {
+                let error_response = models::ErrorResponse::new(serde_json::json!({
+                    "message": format!("Workflow status not found for workflow ID: {}", job.workflow_id)
+                }));
+                return Ok(ManageStatusChangeResponse::DefaultErrorResponse(
+                    error_response,
+                ));
+            }
+            Err(e) => {
+                error!("Database error looking up workflow status: {}", e);
+                let error_response = models::ErrorResponse::new(serde_json::json!({
+                    "message": "Database error"
+                }));
+                return Ok(ManageStatusChangeResponse::DefaultErrorResponse(
+                    error_response,
+                ));
+            }
+        };
+
+        if run_id != workflow_status.run_id {
+            error!(
+                "manage_status_change: run_id mismatch for job_id={}, provided={}, workflow_run_id={}",
+                id, run_id, workflow_status.run_id
+            );
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Run ID mismatch: provided {} but workflow status has {}", run_id, workflow_status.run_id)
+            }));
+            return Ok(
+                ManageStatusChangeResponse::UnprocessableContentErrorResponse(error_response),
+            );
+        }
+
+        job.status = Some(status.clone());
+
+        // 3. Call self.update_job to set the new status
+        let updated_job = match self
+            .jobs_api
+            .update_job_status(id, job.status.expect("Job status must be set"), context)
+            .await?
+        {
+            UpdateJobResponse::SuccessfulResponse(job) => job,
+            UpdateJobResponse::NotFoundErrorResponse(err) => {
+                return Ok(ManageStatusChangeResponse::NotFoundErrorResponse(err));
+            }
+            UpdateJobResponse::UnprocessableContentErrorResponse(err) => {
+                return Ok(ManageStatusChangeResponse::UnprocessableContentErrorResponse(err));
+            }
+            UpdateJobResponse::DefaultErrorResponse(err) => {
+                return Ok(ManageStatusChangeResponse::DefaultErrorResponse(err));
+            }
+        };
+
+        // Handle completion and uninitialization side effects
+        let is_current_complete = current_status.is_complete();
+        let is_new_complete = status.is_complete();
+
+        if !is_current_complete && is_new_complete {
+            // Current status is not complete and new status is complete
+            // Check that a job result record exists and get the return_code
+            let return_code = match sqlx::query!(
+                "SELECT return_code FROM result WHERE job_id = ? AND run_id = ?",
+                id,
+                run_id
+            )
+            .fetch_optional(self.pool.as_ref())
+            .await
+            {
+                Ok(Some(row)) => row.return_code,
+                Ok(None) => {
+                    error!(
+                        "manage_status_change: no result found for completion status change, job_id={}, run_id={}, status={}",
+                        id, run_id, status
+                    );
+                    let error_response = models::ErrorResponse::new(serde_json::json!({
+                        "message": format!(
+                            "No result found for job ID {} and run_id {} when transitioning to completion status '{}'",
+                            id, run_id, status
+                        )
+                    }));
+                    return Ok(
+                        ManageStatusChangeResponse::UnprocessableContentErrorResponse(
+                            error_response,
+                        ),
+                    );
+                }
+                Err(e) => {
+                    error!("Database error checking for result: {}", e);
+                    let error_response = models::ErrorResponse::new(serde_json::json!({
+                        "message": "Database error"
+                    }));
+                    return Ok(ManageStatusChangeResponse::DefaultErrorResponse(
+                        error_response,
+                    ));
+                }
+            };
+
+            // Update all blocked jobs as a result of the completion
+            if let Err(e) = self
+                .unblock_jobs_waiting_for(id, job.workflow_id, return_code)
+                .await
+            {
+                error!("Failed to unblock jobs waiting for job {}: {}", id, e);
+                let error_response = models::ErrorResponse::new(serde_json::json!({
+                    "message": "Failed to update blocked jobs"
+                }));
+                return Ok(ManageStatusChangeResponse::DefaultErrorResponse(
+                    error_response,
+                ));
+            }
+        } else if is_current_complete && status == models::JobStatus::Uninitialized {
+            // Current status is complete and new status is Uninitialized
+            // Change all downstream jobs accordingly - jobs blocked by this job that are "done"
+            // should also be changed to JobStatus::Uninitialized
+            if let Err(e) = self.reinitialize_downstream_jobs(id, job.workflow_id).await {
+                error!(
+                    "Failed to reinitialize downstream jobs for job {}: {}",
+                    id, e
+                );
+                let error_response = models::ErrorResponse::new(serde_json::json!({
+                    "message": "Failed to reinitialize downstream jobs"
+                }));
+                return Ok(ManageStatusChangeResponse::DefaultErrorResponse(
+                    error_response,
+                ));
+            }
+        }
+
+        info!(
+            "manage_status_change: successfully changed job_id={} status from '{}' to '{}'",
+            id, current_status, status
+        );
+
+        Ok(ManageStatusChangeResponse::SuccessfulResponse(updated_job))
+    }
+
+    /// Start a job and manage side effects.
+    async fn start_job(
+        &self,
+        id: i64,
+        run_id: i64,
+        compute_node_id: i64,
+        body: Option<serde_json::Value>,
+        context: &C,
+    ) -> Result<StartJobResponse, ApiError> {
+        debug!(
+            "start_job({}, {}, {}, {:?}) - X-Span-ID: {:?}",
+            id,
+            run_id,
+            compute_node_id,
+            body,
+            context.get().0.clone()
+        );
+        let mut job = match self.jobs_api.get_job(id, context).await? {
+            GetJobResponse::SuccessfulResponse(job) => job,
+            GetJobResponse::NotFoundErrorResponse(err) => {
+                error!("Job not found {}: {:?}", id, err);
+                return Err(ApiError("Job not found".to_string()));
+            }
+            GetJobResponse::DefaultErrorResponse(err) => {
+                error!("Failed to get job {}: {:?}", id, err);
+                return Err(ApiError("Failed to get job".to_string()));
+            }
+        };
+        match job.status {
+            Some(models::JobStatus::Pending) => {
+                job.status = Some(models::JobStatus::Running);
+            }
+            Some(status) => {
+                error!(
+                    "start_job: Invalid job status for job_id={}. Expected SubmittedPending, got {:?}",
+                    id, status
+                );
+                return Err(ApiError(format!(
+                    "Job {} has invalid status {:?}. Expected SubmittedPending for job start.",
+                    id, status
+                )));
+            }
+            None => {
+                error!("start_job: Job status not set for job_id={}", id);
+                return Err(ApiError(format!(
+                    "Job {} has no status set. Expected SubmittedPending for job start.",
+                    id
+                )));
+            }
+        }
+        // TODO: compute_node_id...when do we connect it to the job and how?
+        // Are events sufficient?
+
+        if let Err(e) = self.manage_job_status_change(&job, run_id).await {
+            // Check if this is a run_id mismatch error
+            // TODO: wrong approach
+            if e.to_string().contains("Run ID mismatch") {
+                let error_response = models::ErrorResponse::new(serde_json::json!({
+                    "message": e.to_string()
+                }));
+                return Ok(StartJobResponse::UnprocessableContentErrorResponse(
+                    error_response,
+                ));
+            }
+            // For other errors, propagate them
+            return Err(e);
+        }
+        let event_data = serde_json::json!({
+            "job_id": id,
+            "compute_node_id": compute_node_id,
+            "run_id": run_id,
+            "message": format!("Job with name = {} started on compute node {}.", job.name, compute_node_id),
+            "category": "job"
+        });
+
+        let event = models::EventModel::new(job.workflow_id, event_data);
+        match self.events_api.create_event(event, context).await {
+            Ok(_) => {
+                debug!("Successfully added start event for job_id={}", id);
+            }
+            Err(e) => {
+                error!("Failed to add start event for job_id={}: {:?}", id, e);
+            }
+        }
+        Ok(StartJobResponse::SuccessfulResponse(job))
+    }
+
+    /// Complete a job, connect it to a result, and manage side effects.
+    async fn complete_job(
+        &self,
+        id: i64,
+        status: models::JobStatus,
+        run_id: i64,
+        result: models::ResultModel,
+        context: &C,
+    ) -> Result<CompleteJobResponse, ApiError> {
+        debug!(
+            "complete_job({}, {:?}, {}, {:?}) - X-Span-ID: {:?}",
+            id,
+            status,
+            run_id,
+            result,
+            context.get().0.clone()
+        );
+        // 1. Verify job status is complete
+        if !status.is_complete() {
+            error!(
+                "Attempted to complete job {} with non-complete status '{}'",
+                id, status
+            );
+            return Err(ApiError(format!(
+                "Status '{}' is not a complete status for job completion",
+                status
+            )));
+        }
+
+        // 1. Ensure the job exists.
+        let mut job = match self.jobs_api.get_job(id, context).await? {
+            GetJobResponse::SuccessfulResponse(job) => job,
+            GetJobResponse::NotFoundErrorResponse(err) => {
+                error!("Job not found {}: {:?}", id, err);
+                return Err(ApiError("Job not found".to_string()));
+            }
+            GetJobResponse::DefaultErrorResponse(err) => {
+                error!("Failed to get job {}: {:?}", id, err);
+                return Err(ApiError("Failed to get job".to_string()));
+            }
+        };
+
+        // Check if job is already complete
+        if let Some(current_status) = &job.status {
+            if current_status.is_complete() {
+                error!(
+                    "Job {} is already complete with status {:?}",
+                    id, current_status
+                );
+                let error_response = models::ErrorResponse::new(serde_json::json!({
+                    "message": format!("Job {} is already complete with status {:?}", id, current_status)
+                }));
+                return Ok(CompleteJobResponse::UnprocessableContentErrorResponse(
+                    error_response,
+                ));
+            }
+        }
+
+        job.status = Some(status);
+
+        // 2. Add the result to the database
+        let result_response = self.results_api.create_result(result, context).await?;
+
+        let result_id = match result_response {
+            CreateResultResponse::SuccessfulResponse(result) => {
+                debug!(
+                    "complete_job: added result with ID {:?} for job_id={}",
+                    result.id, id
+                );
+                result.id
+            }
+            CreateResultResponse::NotFoundErrorResponse(err) => {
+                error!("Failed to add result for job {}: {:?}", id, err);
+                return Err(ApiError("Failed to add result".to_string()));
+            }
+            CreateResultResponse::DefaultErrorResponse(err) => {
+                error!("Failed to add result for job {}: {:?}", id, err);
+                return Err(ApiError("Failed to add result".to_string()));
+            }
+        };
+
+        // 3. Add/update workflow_result record
+        // First, delete any existing record for this workflow_id and job_id combination
+        // This handles the case where a job is being re-run or a result is being replaced
+        let workflow_id = job.workflow_id;
+        match sqlx::query!(
+            "DELETE FROM workflow_result WHERE workflow_id = ? AND job_id = ?",
+            workflow_id,
+            id
+        )
+        .execute(self.pool.as_ref())
+        .await
+        {
+            Ok(result) => {
+                if result.rows_affected() > 0 {
+                    error!(
+                        "Bug in complete_job: found existing workflow_result record for workflow_id={}, job_id={}",
+                        workflow_id, id
+                    );
+                }
+            }
+            Err(e) => {
+                error!(
+                    "Failed to delete existing workflow_result for workflow_id={}, job_id={}: {}",
+                    workflow_id, id, e
+                );
+                return Err(ApiError("Database error".to_string()));
+            }
+        }
+
+        // Now insert the new workflow_result record
+        let result_id_value = result_id.ok_or_else(|| {
+            error!("Result ID is missing after creating result");
+            ApiError("Result ID is missing".to_string())
+        })?;
+
+        match sqlx::query!(
+            r#"
+            INSERT INTO workflow_result (workflow_id, job_id, result_id)
+            VALUES (?, ?, ?)
+            "#,
+            workflow_id,
+            id,
+            result_id_value
+        )
+        .execute(self.pool.as_ref())
+        .await
+        {
+            Ok(_) => {
+                debug!(
+                    "complete_job: added workflow_result record for workflow_id={}, job_id={}, result_id={}",
+                    workflow_id, id, result_id_value
+                );
+            }
+            Err(e) => {
+                error!(
+                    "Failed to insert workflow_result for workflow_id={}, job_id={}, result_id={}: {}",
+                    workflow_id, id, result_id_value, e
+                );
+                return Err(ApiError("Database error".to_string()));
+            }
+        }
+
+        // 4. Call manage_job_status_change for validation and side effects
+        self.manage_job_status_change(&job, run_id).await?;
+
+        // 5. Use job data we already have for event logging
+        let job_name = job.name.clone();
+        let job_workflow_id = job.workflow_id;
+
+        // 6. Create event for job completion
+        let event_data = serde_json::json!({
+            "job_id": id,
+            "message": format!("Job with name = {} completed with status = {}.", job_name, status.to_string()),
+            "category": "job_completion"
+        });
+
+        let event = models::EventModel::new(job_workflow_id, event_data);
+        match self.events_api.create_event(event, context).await {
+            Ok(_) => {
+                debug!("Successfully added completion event for job_id={}", id);
+            }
+            Err(e) => {
+                error!("Failed to add completion event for job_id={}: {:?}", id, e);
+                // Don't fail the entire operation just because event logging failed
+            }
+        }
+
+        info!(
+            "complete_job: successfully completed job_id={} with status={}, result_id={:?}",
+            id, status, result_id
+        );
+
+        // TODO: update job hash?
+
+        // Check if any on_jobs_complete actions should be triggered
+        // Only check actions that involve this specific completed job for efficiency
+        if let Err(e) = self
+            .workflow_actions_api
+            .check_and_trigger_actions(workflow_id, "on_jobs_complete", Some(vec![id]))
+            .await
+        {
+            error!(
+                "Failed to check_and_trigger_actions for on_jobs_complete: {}",
+                e
+            );
+        }
+
+        // Note: on_jobs_ready actions are checked in unblock_jobs_waiting_for() which is called
+        // by manage_job_status_change() above. When jobs transition to Ready status,
+        // the relevant on_jobs_ready actions are triggered within that transaction.
+
+        // Check if workflow is now complete and trigger on_workflow_complete actions
+        match self
+            .workflows_api
+            .is_workflow_complete(workflow_id, context)
+            .await
+        {
+            Ok(response) => {
+                if let IsWorkflowCompleteResponse::SuccessfulResponse(completion_status) = response
+                {
+                    if completion_status.is_complete {
+                        debug!(
+                            "Workflow {} is complete, triggering on_workflow_complete actions",
+                            workflow_id
+                        );
+                        if let Err(e) = self
+                            .workflow_actions_api
+                            .check_and_trigger_actions(workflow_id, "on_workflow_complete", None)
+                            .await
+                        {
+                            error!(
+                                "Failed to check_and_trigger_actions for on_workflow_complete: {}",
+                                e
+                            );
+                        }
+                    }
+                }
+            }
+            Err(e) => {
+                error!(
+                    "Failed to check if workflow {} is complete: {}",
+                    workflow_id, e
+                );
+            }
+        }
+
+        Ok(CompleteJobResponse::SuccessfulResponse(job))
+    }
+
+    /// Get ready jobs that fit within the specified resource constraints.
+    ///
+    /// This function performs the following operations:
+    /// 1. Joins ready_queue, job, and resource_requirements tables
+    /// 2. Filters jobs based on resource constraints:
+    ///    - memory_bytes <= resources.memory_gb (converted from GiB to bytes)
+    ///    - num_cpus <= resources.num_cpus
+    ///    - num_gpus <= resources.num_gpus
+    ///    - num_nodes <= resources.num_nodes (only multi-node jobs consume dedicated nodes)
+    ///    - runtime_s < resources.time_limit (converted to seconds using duration_string_to_seconds)
+    /// 3. Sorts results according to the sort_method:
+    ///    - None: No sorting applied
+    ///    - GpusRuntimeMemory: Sort by num_gpus DESC, runtime_s DESC, memory_bytes DESC
+    ///    - GpusMemoryRuntime: Sort by num_gpus DESC, memory_bytes DESC, runtime_s DESC
+    /// 4. Loops through returned records and accumulates resource consumption
+    /// 5. Selects jobs that can fit within total available resources
+    /// 6. Atomically updates selected jobs to "pending" status and removes them from ready_queue
+    ///
+    /// # Parameters
+    /// - `workflow_id`: ID of the workflow to get jobs for
+    /// - `resources`: Available compute resources (CPUs, memory, GPUs, nodes, time limit)
+    /// - `sort_method`: Optional sorting method for job prioritization
+    /// - `limit`: Maximum number of jobs to return
+    ///
+    /// # Returns  
+    /// A `ClaimJobsBasedOnResources` containing the list of jobs that were selected and updated,
+    /// or an error if the operation fails. The `reason` field is set to an empty string.
+    ///
+    /// # Implementation Notes
+    /// - Uses SQLite BEGIN IMMEDIATE TRANSACTION to acquire a database write lock
+    /// - This ensures thread-safe access at the database level, preventing race conditions
+    /// - The lock prevents concurrent job selection and ensures consistent resource accounting
+    /// - Leverages the time_utils::duration_string_to_seconds function for time parsing
+    /// - All selected jobs are changed from "ready" to "pending" status atomically
+    async fn prepare_ready_jobs(
+        &self,
+        workflow_id: i64,
+        resources: models::ComputeNodesResources,
+        sort_method: Option<models::ClaimJobsSortMethod>,
+        limit: i64,
+        context: &C,
+    ) -> Result<ClaimJobsBasedOnResources, ApiError> {
+        // Use BEGIN IMMEDIATE TRANSACTION to acquire a database write lock.
+        // This ensures thread safety at the database level for the entire job selection process.
+        // The IMMEDIATE mode acquires a reserved lock immediately, preventing other writers
+        // and ensuring that concurrent reads see a consistent snapshot.
+        // This prevents race conditions where multiple clients could:
+        // 1. Select the same jobs from ready_queue
+        // 2. Double-allocate jobs to different clients
+        // 3. Create inconsistent resource counting
+        // The lock is held for the entire transaction duration.
+
+        // Start an IMMEDIATE transaction using raw SQL
+        // We can't use pool.begin() because it starts a regular transaction, not IMMEDIATE
+        let mut conn = self.pool.acquire().await.map_err(|e| {
+            error!("Failed to acquire database connection: {}", e);
+            ApiError("Database connection error".to_string())
+        })?;
+
+        sqlx::query("BEGIN IMMEDIATE")
+            .execute(&mut *conn)
+            .await
+            .map_err(|e| {
+                error!("Failed to begin immediate transaction: {}", e);
+                ApiError("Database lock error".to_string())
+            })?;
+
+        let actual_sort_method = sort_method.unwrap_or(models::ClaimJobsSortMethod::None);
+        debug!(
+            "get_ready_jobs: workflow_id={}, limit={}, sort_method={:?}, resources={:?} - X-Span-ID: {:?}",
+            workflow_id,
+            limit,
+            actual_sort_method,
+            resources,
+            context.get().0.clone()
+        );
+
+        // First check if the workflow exists
+        let workflow_exists = sqlx::query("SELECT id FROM workflow WHERE id = $1")
+            .bind(workflow_id)
+            .fetch_optional(&mut *conn)
+            .await
+            .map_err(|e| {
+                error!("Database error checking workflow existence: {}", e);
+                ApiError("Database error".to_string())
+            })?;
+
+        if workflow_exists.is_none() {
+            // Rollback the transaction since we're returning early
+            let _ = sqlx::query("ROLLBACK").execute(&mut *conn).await;
+
+            let error_response = models::ErrorResponse::new(serde_json::json!({
+                "message": format!("Workflow not found with ID: {}", workflow_id)
+            }));
+            return Ok(ClaimJobsBasedOnResources::NotFoundErrorResponse(
+                error_response,
+            ));
+        }
+
+        // Convert resources.time_limit to seconds if provided
+        let time_limit_seconds = if let Some(ref time_limit) = resources.time_limit {
+            match duration_string_to_seconds(time_limit) {
+                Ok(seconds) => seconds,
+                Err(e) => {
+                    // Rollback the transaction since we're returning early
+                    let _ = sqlx::query("ROLLBACK").execute(&mut *conn).await;
+
+                    let error_response = models::ErrorResponse::new(serde_json::json!({
+                        "message": format!("Invalid time_limit format '{}': {}", time_limit, e),
+                        "field": "time_limit",
+                        "value": time_limit
+                    }));
+                    return Ok(
+                        ClaimJobsBasedOnResources::UnprocessableContentErrorResponse(
+                            error_response,
+                        ),
+                    );
+                }
+            }
+        } else {
+            // If no time limit specified, use a very large value (effectively unlimited)
+            i64::MAX
+        };
+
+        // Convert memory_gb to bytes (1 GiB = 1024^3 bytes)
+        let memory_bytes = (resources.memory_gb * 1024.0 * 1024.0 * 1024.0) as i64;
+
+        // Build the ORDER BY clause based on sort_method
+        let order_by_clause = match actual_sort_method {
+            models::ClaimJobsSortMethod::None => "",
+            models::ClaimJobsSortMethod::GpusRuntimeMemory => {
+                "ORDER BY rr.num_gpus DESC, rr.runtime_s DESC, rr.memory_bytes DESC"
+            }
+            models::ClaimJobsSortMethod::GpusMemoryRuntime => {
+                "ORDER BY rr.num_gpus DESC, rr.memory_bytes DESC, rr.runtime_s DESC"
+            }
+        };
+
+        let query = format!(
+            r#"
+            SELECT
+                rq.workflow_id,
+                rq.job_id,
+                job.name,
+                job.command,
+                job.invocation_script,
+                job.status,
+                job.cancel_on_blocking_job_failure,
+                job.supports_termination,
+                rr.id AS resource_requirements_id,
+                rr.memory_bytes,
+                rr.num_cpus,
+                rr.num_gpus,
+                rr.num_nodes,
+                rr.runtime_s
+            FROM ready_queue rq
+            JOIN resource_requirements rr ON rq.resource_requirements_id = rr.id
+            JOIN job ON rq.job_id = job.id
+            WHERE rq.workflow_id = $1
+            AND rr.memory_bytes <= $2
+            AND rr.num_cpus <= $3
+            AND rr.num_gpus <= $4
+            AND rr.num_nodes <= $5
+            AND rr.runtime_s <= $6
+            AND (job.scheduler_id IS NULL OR job.scheduler_id = $7)
+            {}
+            LIMIT $8
+            "#,
+            order_by_clause
+        );
+
+        let rows = sqlx::query(&query)
+            .bind(workflow_id)
+            .bind(memory_bytes)
+            .bind(resources.num_cpus)
+            .bind(resources.num_gpus)
+            .bind(resources.num_nodes)
+            .bind(time_limit_seconds)
+            .bind(resources.scheduler_config_id)
+            .bind(limit)
+            .fetch_all(&mut *conn)
+            .await
+            .map_err(|e| {
+                error!("Database error in get_ready_jobs: {}", e);
+                ApiError("Database error".to_string())
+            })?;
+
+        // Track consumed resources
+        let mut consumed_memory_bytes = 0i64;
+        let mut consumed_cpus = 0i64;
+        let mut consumed_gpus = 0i64;
+        let mut consumed_nodes = 0i64; // Only tracks dedicated nodes consumed by multi-node jobs
+        let mut selected_jobs = Vec::new();
+        let mut job_ids_to_update = Vec::new();
+
+        debug!(
+            "get_ready_jobs: Found {} potential jobs for workflow {} with resources: memory_gb={}, cpus={}, gpus={}, nodes={}, time_limit={:?}",
+            rows.len(),
+            workflow_id,
+            resources.memory_gb,
+            resources.num_cpus,
+            resources.num_gpus,
+            resources.num_nodes,
+            resources.time_limit
+        );
+        // Loop through jobs and select those that fit within resource limits
+        for row in rows {
+            let job_memory: i64 = row.get("memory_bytes");
+            let job_cpus: i64 = row.get("num_cpus");
+            let job_gpus: i64 = row.get("num_gpus");
+            let job_nodes: i64 = row.get("num_nodes");
+
+            // Check if this job would exceed resource limits
+            // For multi-node jobs (num_nodes > 1), check if we have enough dedicated nodes
+            // For single-node jobs (num_nodes = 1), they can share nodes so only check other resources
+            let would_exceed_nodes = if job_nodes > 1 {
+                consumed_nodes + job_nodes > resources.num_nodes
+            } else {
+                false // Single-node jobs don't count against node limit
+            };
+
+            if consumed_memory_bytes + job_memory <= memory_bytes
+                && consumed_cpus + job_cpus <= resources.num_cpus
+                && consumed_gpus + job_gpus <= resources.num_gpus
+                && !would_exceed_nodes
+            {
+                // Add this job to the selection
+                consumed_memory_bytes += job_memory;
+                consumed_cpus += job_cpus;
+                consumed_gpus += job_gpus;
+                // Only increment consumed_nodes for multi-node jobs
+                if job_nodes > 1 {
+                    consumed_nodes += job_nodes;
+                }
+
+                let job_id: i64 = row.get("job_id");
+                job_ids_to_update.push(job_id);
+
+                let status = models::JobStatus::from_int(row.get::<i64, _>("status") as i32)
+                    .map_err(|e| {
+                        error!("Failed to parse job status: {}", e);
+                        ApiError("Invalid job status".to_string())
+                    })?;
+
+                if status != models::JobStatus::Ready {
+                    error!("Expected job status to be Ready, but got: {}", status);
+                    // Rollback the transaction since we're returning early
+                    let _ = sqlx::query("ROLLBACK").execute(&mut *conn).await;
+                    return Err(ApiError("Invalid job status in ready queue".to_string()));
+                }
+                let job = models::JobModel {
+                    id: Some(job_id),
+                    workflow_id: row.get("workflow_id"),
+                    name: row.get("name"),
+                    command: row.get("command"),
+                    invocation_script: None,
+                    status: Some(models::JobStatus::Pending),
+                    schedule_compute_nodes: None,
+                    cancel_on_blocking_job_failure: Some(row.get("cancel_on_blocking_job_failure")),
+                    supports_termination: Some(row.get("supports_termination")),
+                    blocked_by_job_ids: None,
+                    input_file_ids: None,
+                    output_file_ids: None,
+                    input_user_data_ids: None,
+                    output_user_data_ids: None,
+                    resource_requirements_id: Some(row.get("resource_requirements_id")),
+                    scheduler_id: None,
+                };
+
+                selected_jobs.push(job);
+            } else {
+                // Job would exceed resource limits, skip it
+                let node_limit_reason = if job_nodes > 1
+                    && consumed_nodes + job_nodes > resources.num_nodes
+                {
+                    format!(
+                        " [multi-node job needs {} nodes but only {} available after {} consumed]",
+                        job_nodes,
+                        resources.num_nodes - consumed_nodes,
+                        consumed_nodes
+                    )
+                } else {
+                    String::new()
+                };
+
+                debug!(
+                    "Skipping job {} - would exceed resource limits (memory: {}/{}, cpus: {}/{}, gpus: {}/{}){}",
+                    row.get::<i64, _>("job_id"),
+                    consumed_memory_bytes + job_memory,
+                    memory_bytes,
+                    consumed_cpus + job_cpus,
+                    resources.num_cpus,
+                    consumed_gpus + job_gpus,
+                    resources.num_gpus,
+                    node_limit_reason
+                );
+            }
+        }
+
+        // If we have jobs to update, update their status and remove from ready_queue
+        if !job_ids_to_update.is_empty() {
+            // Update job status to pending
+            let pending = models::JobStatus::Pending.to_int();
+            for job_id in &job_ids_to_update {
+                sqlx::query!("UPDATE job SET status = $1 WHERE id = $2", pending, job_id)
+                    .execute(&mut *conn)
+                    .await
+                    .map_err(|e| {
+                        error!("Failed to update job status: {}", e);
+                        ApiError("Database update error".to_string())
+                    })?;
+            }
+
+            // Delete jobs from ready_queue
+            for job_id in &job_ids_to_update {
+                sqlx::query!(
+                    "DELETE FROM ready_queue WHERE job_id = $1 AND workflow_id = $2",
+                    job_id,
+                    workflow_id
+                )
+                .execute(&mut *conn)
+                .await
+                .map_err(|e| {
+                    error!("Failed to remove from ready_queue: {}", e);
+                    ApiError("Database delete error".to_string())
+                })?;
+            }
+
+            info!(
+                "Updated {} jobs to pending status for workflow {}",
+                job_ids_to_update.len(),
+                workflow_id
+            );
+        }
+
+        // Commit the transaction to release the database lock
+        sqlx::query("COMMIT")
+            .execute(&mut *conn)
+            .await
+            .map_err(|e| {
+                error!("Failed to commit transaction: {}", e);
+                ApiError("Database commit error".to_string())
+            })?;
+
+        // TODO: generate a reason for the jobs that were not selected
+        let response = models::ClaimJobsBasedOnResources {
+            jobs: Some(selected_jobs),
+            reason: Some(String::new()),
+        };
+
+        Ok(ClaimJobsBasedOnResources::SuccessfulResponse(response))
+    }
+}
+
+// Helper methods for Server (not part of the Api trait)
+impl<C> Server<C>
+where
+    C: Has<XSpanIdString> + Send + Sync,
+{
+    // No additional helper methods needed
+}

@@ -1,0 +1,150 @@
+{
+  "name": "sample_data_processing_workflow",
+  "user": "testuser",
+  "description": "A sample workflow that demonstrates data processing with multiple jobs",
+  "jobs": [
+    {
+      "name": "data_download",
+      "command": "wget https://example.com/data.csv -O input_data.csv",
+      "invocation_script": null,
+      "cancel_on_blocking_job_failure": false,
+      "supports_termination": true,
+      "resource_requirements_name": "small_job",
+      "blocked_by_job_names": null,
+      "input_file_names": null,
+      "output_file_names": ["raw_data"],
+      "input_user_data_names": null,
+      "output_data_names": ["download_metadata"],
+      "scheduler_name": "default_scheduler"
+    },
+    {
+      "name": "data_validation",
+      "command": "python validate_data.py input_data.csv",
+      "invocation_script": "#!/bin/bash\nset -e\nexport PYTHONPATH=/opt/validation:$PYTHONPATH\n",
+      "cancel_on_blocking_job_failure": true,
+      "supports_termination": true,
+      "resource_requirements_name": "small_job",
+      "blocked_by_job_names": ["data_download"],
+      "input_file_names": ["raw_data", "validation_script"],
+      "output_file_names": ["validated_data"],
+      "input_user_data_names": ["download_metadata"],
+      "output_data_names": ["validation_results"],
+      "scheduler_name": "default_scheduler"
+    },
+    {
+      "name": "data_analysis",
+      "command": "python analyze_data.py validated_data.csv --output results.json",
+      "invocation_script": null,
+      "cancel_on_blocking_job_failure": true,
+      "supports_termination": false,
+      "resource_requirements_name": "large_job",
+      "blocked_by_job_names": ["data_validation"],
+      "input_file_names": ["validated_data", "analysis_script"],
+      "output_file_names": ["analysis_results"],
+      "input_user_data_names": ["validation_results"],
+      "output_data_names": ["final_analysis"],
+      "scheduler_name": "gpu_scheduler"
+    }
+  ],
+  "files": [
+    {
+      "name": "raw_data",
+      "path": "/data/input/raw_data.csv",
+      "st_mtime": null
+    },
+    {
+      "name": "validated_data", 
+      "path": "/data/processed/validated_data.csv",
+      "st_mtime": null
+    },
+    {
+      "name": "analysis_results",
+      "path": "/data/output/results.json",
+      "st_mtime": null
+    },
+    {
+      "name": "validation_script",
+      "path": "/scripts/validate_data.py",
+      "st_mtime": 1640995200.0
+    },
+    {
+      "name": "analysis_script",
+      "path": "/scripts/analyze_data.py", 
+      "st_mtime": 1640995200.0
+    }
+  ],
+  "user_data": [
+    {
+      "name": "download_metadata",
+      "data": {
+        "source_url": "https://example.com/data.csv",
+        "download_timestamp": "2024-01-15T10:30:00Z",
+        "file_size_bytes": 1048576
+      },
+      "is_ephemeral": true
+    },
+    {
+      "name": "validation_results",
+      "data": {
+        "validation_rules": ["no_nulls", "valid_dates", "numeric_ranges"],
+        "passed": true,
+        "row_count": 10000
+      },
+      "is_ephemeral": false
+    },
+    {
+      "name": "final_analysis",
+      "data": {
+        "analysis_type": "statistical_summary",
+        "confidence_level": 0.95
+      },
+      "is_ephemeral": false
+    }
+  ],
+  "resource_requirements": [
+    {
+      "name": "small_job",
+      "num_cpus": 1,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "2g",
+      "runtime": "PT30M"
+    },
+    {
+      "name": "large_job", 
+      "num_cpus": 4,
+      "num_gpus": 1,
+      "num_nodes": 1,
+      "memory": "16g",
+      "runtime": "PT2H"
+    }
+  ],
+  "slurm_schedulers": [
+    {
+      "name": "default_scheduler",
+      "account": "project_account",
+      "gres": null,
+      "mem": "8G",
+      "nodes": 1,
+      "ntasks_per_node": 1,
+      "partition": "general",
+      "qos": "normal",
+      "tmp": "10G",
+      "walltime": "01:00:00",
+      "extra": "--constraint=haswell"
+    },
+    {
+      "name": "gpu_scheduler",
+      "account": "gpu_project", 
+      "gres": "gpu:1",
+      "mem": "32G",
+      "nodes": 1,
+      "ntasks_per_node": 1,
+      "partition": "gpu",
+      "qos": "high",
+      "tmp": "50G", 
+      "walltime": "04:00:00",
+      "extra": "--constraint=v100"
+    }
+  ]
+}

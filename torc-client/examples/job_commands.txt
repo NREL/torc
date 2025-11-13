@@ -1,0 +1,28 @@
+torc-client/examples/hundred_jobs_workflow.yaml# Example job commands file for testing the create-from-file command
+# Lines starting with # are ignored as comments
+# Empty lines are also ignored
+
+# Simple echo commands
+echo "Hello from job 1"
+echo "Hello from job 2"
+echo "Processing data batch 1"
+
+# Commands with different complexities
+python -c "print('Python job executed')"
+ls -la /tmp
+sleep 10 && echo "Sleep job completed"
+
+# Data processing commands
+wget https://example.com/data.csv -O /tmp/data1.csv
+python process_data.py --input /tmp/data1.csv --output /tmp/results1.json
+cat /tmp/results1.json | jq '.status'
+
+# System commands
+df -h
+ps aux | head -10
+uptime
+
+# More complex multi-argument commands
+ffmpeg -i input.mp4 -vcodec libx264 -acodec mp2 output.mp4
+rsync -av /source/directory/ /destination/directory/
+find /home -name "*.log" -mtime +7 -delete

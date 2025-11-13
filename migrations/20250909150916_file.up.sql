@@ -1,0 +1,8 @@
+CREATE TABLE file (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  workflow_id INTEGER NOT NULL,
+  name TEXT NOT NULL,
+  path TEXT NOT NULL,
+  st_mtime REAL NULL,
+  FOREIGN KEY (workflow_id) REFERENCES workflow(id) ON DELETE CASCADE
+);

@@ -1,0 +1,35 @@
+name: "Simple Workflow with Actions"
+user: "demo"
+description: "Demonstrates scheduler actions for different workflow stages"
+
+jobs:
+  - name: "setup"
+    command: "echo 'Setting up...' && sleep 2"
+
+  - name: "process"
+    command: "echo 'Processing data...' && sleep 5"
+    blocked_by_job_names: ["setup"]
+
+  - name: "finalize"
+    command: "echo 'Finalizing...' && sleep 2"
+    blocked_by_job_names: ["process"]
+
+actions:
+  # Run setup commands when the workflow starts
+  - trigger_type: "on_workflow_start"
+    action_type: "run_commands"
+    commands:
+      - "echo 'Workflow started at $(date)' > workflow_log.txt"
+      - "mkdir -p output temp"
+      - "echo 'Environment ready'"
+
+  # Run cleanup when the workflow completes
+  - trigger_type: "on_workflow_complete"
+    action_type: "run_commands"
+    commands:
+      - "echo 'Workflow completed at $(date)' >> workflow_log.txt"
+      - "echo 'Cleaning up temporary files...'"
+      - "rm -rf temp"
+      - "echo 'Archiving results...'"
+      - "tar -czf output/results.tar.gz workflow_log.txt"
+      - "echo 'Workflow cleanup complete'"

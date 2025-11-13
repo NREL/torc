@@ -1,0 +1,7 @@
+CREATE TABLE event (
+  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  workflow_id INTEGER NOT NULL,
+  timestamp TEXT NOT NULL,
+  data TEXT NOT NULL,
+  FOREIGN KEY (workflow_id) REFERENCES workflow(id) ON DELETE CASCADE
+);

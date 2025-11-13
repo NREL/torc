@@ -1,0 +1,5412 @@
+openapi: 3.1.1
+info:
+  description: Defines the API for the torc service.
+  license:
+    name: BSD 3-Clause
+    identifier: BSD 3-Clause
+  title: torc
+  version: v0.7.0
+servers:
+- url: /torc-service/v1
+paths:
+  /compute_nodes:
+    post:
+      description: Store a compute node.
+      operationId: create_compute_node
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/compute_node_model"
+        description: Compute node
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/compute_node_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Store a compute node.
+      tags: []
+      x-codegen-request-body-name: body
+    delete:
+      description: Delete all compute node records for one workflow.
+      operationId: delete_compute_nodes
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete all compute node records for one workflow.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve all compute node records for one workflow.
+      operationId: list_compute_nodes
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100000
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: sort_by
+        required: false
+        schema:
+          default: null
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: reverse_sort
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - explode: true
+        in: query
+        name: hostname
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: is_active
+        required: false
+        schema:
+          type: boolean
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_compute_nodes_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve all compute node records for one workflow.
+      tags: []
+  /compute_nodes/{id}:
+    delete:
+      description: Delete a compute node.
+      operationId: delete_compute_node
+      parameters:
+      - description: ID of the compute node
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/compute_node_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete a compute node.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve a compute node by ID.
+      operationId: get_compute_node
+      parameters:
+      - description: ID of the compute node record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/compute_node_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve a compute node by ID.
+      tags: []
+    put:
+      description: Update a compute node.
+      operationId: update_compute_node
+      parameters:
+      - description: ID of the compute node.
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/compute_node_model"
+        description: Compute node to update in the database.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/compute_node_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Update a compute node.
+      tags: []
+      x-codegen-request-body-name: body
+  /events:
+    post:
+      description: Store an event.
+      operationId: create_event
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/event_model"
+        description: Event body
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/event_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Store an event.
+      tags: []
+      x-codegen-request-body-name: body
+    delete:
+      description: Delete all events for one workflow.
+      operationId: delete_events
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete all events for one workflow.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve all events for one workflow.
+      operationId: list_events
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100000
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: sort_by
+        required: false
+        schema:
+          default: null
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: reverse_sort
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - explode: true
+        in: query
+        name: category
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_events_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve all events for one workflow.
+      tags: []
+  /events/{id}:
+    delete:
+      description: Deletes an event.
+      operationId: delete_event
+      parameters:
+      - description: ID of the event record.
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/event_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete an event.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve an event by ID.
+      operationId: get_event
+      parameters:
+      - description: ID of the events record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/event_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve an event by ID.
+      tags: []
+    put:
+      description: Update an event.
+      operationId: update_event
+      parameters:
+      - description: ID of the event.
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        description: event to update in the table.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/event_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Update an event.
+      tags: []
+      x-codegen-request-body-name: body
+  /files:
+    post:
+      description: Store a file.
+      operationId: create_file
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/file_model"
+        description: file.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/file_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Store a file.
+      tags: []
+      x-codegen-request-body-name: body
+    delete:
+      description: Delete all files for one workflow.
+      operationId: delete_files
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete all files for one workflow.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve all files for one workflow.
+      operationId: list_files
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Return files produced by a specific job.
+        explode: false
+        in: query
+        name: produced_by_job_id
+        required: false
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100000
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: sort_by
+        required: false
+        schema:
+          default: null
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: reverse_sort
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - explode: true
+        in: query
+        name: name
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: path
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_files_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve all files for one workflow.
+      tags: []
+  /files/{id}:
+    delete:
+      description: Delete a file.
+      operationId: delete_file
+      parameters:
+      - description: ID of the file record.
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/file_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete a file.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve a file.
+      operationId: get_file
+      parameters:
+      - description: ID of the files record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/file_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve a file.
+      tags: []
+    put:
+      description: Update a file.
+      operationId: update_file
+      parameters:
+      - description: ID of the file.
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/file_model"
+        description: file to update in the table.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/file_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Update a file.
+      tags: []
+      x-codegen-request-body-name: body
+  /bulk_jobs:
+    post:
+      description: "Create jobs in bulk. Recommended max job count of 10,000."
+      operationId: create_jobs
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/jobs_model"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/add_jobs_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: "Create jobs in bulk. Recommended max job count of 10,000."
+      tags: []
+      x-codegen-request-body-name: body
+  /jobs:
+    post:
+      description: Store a job.
+      operationId: create_job
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/job_model"
+        description: Job body
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/job_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Store a job.
+      tags: []
+      x-codegen-request-body-name: body
+    delete:
+      description: Delete all jobs for one workflow.
+      operationId: delete_jobs
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete all jobs for one workflow.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve all jobs for one workflow.
+      operationId: list_jobs
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Return jobs with this status.
+        explode: false
+        in: query
+        name: status
+        required: false
+        schema:
+          $ref: "#/components/schemas/job_status"
+        style: simple
+      - description: Return jobs that need this file as an input.
+        explode: false
+        in: query
+        name: needs_file_id
+        required: false
+        schema:
+          type: integer
+        style: simple
+      - description: Return jobs that are downstream of this job ID in the workflow
+          graph.
+        explode: false
+        in: query
+        name: upstream_job_id
+        required: false
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100000
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: sort_by
+        required: false
+        schema:
+          default: null
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: reverse_sort
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_jobs_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve all jobs for one workflow.
+      tags: []
+  /jobs/{id}:
+    delete:
+      description: Delete a job.
+      operationId: delete_job
+      parameters:
+      - description: Job ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/job_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete a job.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve a job.
+      operationId: get_job
+      parameters:
+      - description: ID of the job record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/job_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve a job.
+      tags: []
+    put:
+      description: Update a job.
+      operationId: update_job
+      parameters:
+      - description: ID of the job.
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/job_model"
+        description: job to update in the table.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/job_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Update a job.
+      tags: []
+      x-codegen-request-body-name: body
+  /jobs/{id}/complete_job/{status}/{run_id}:
+    post:
+      description: "Complete a job, connect it to a result, and manage side effects."
+      operationId: complete_job
+      parameters:
+      - description: Job ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: New job status.
+        explode: false
+        in: path
+        name: status
+        required: true
+        schema:
+          $ref: "#/components/schemas/job_status"
+        style: simple
+      - description: Current job run ID
+        explode: false
+        in: path
+        name: run_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/result_model"
+        description: Result of the job.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/job_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: "Complete a job, connect it to a result, and manage side effects."
+      tags: []
+      x-codegen-request-body-name: body
+  /jobs/{id}/manage_status_change/{status}/{run_id}:
+    put:
+      description: Change the status of a job and manage side effects.
+      operationId: manage_status_change
+      parameters:
+      - description: Job ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: New job status
+        explode: false
+        in: path
+        name: status
+        required: true
+        schema:
+          $ref: "#/components/schemas/job_status"
+        style: simple
+      - description: Current job run ID
+        explode: false
+        in: path
+        name: run_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/job_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Change the status of a job and manage side effects.
+      tags: []
+      x-codegen-request-body-name: body
+  /jobs/{id}/start_job/{run_id}/{compute_node_id}:
+    put:
+      description: Start a job and manage side effects.
+      operationId: start_job
+      parameters:
+      - description: Job ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Current job run ID
+        explode: false
+        in: path
+        name: run_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Compute node ID that started the job
+        explode: false
+        in: path
+        name: compute_node_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/job_model"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Start a job and manage side effects.
+      tags: []
+      x-codegen-request-body-name: body
+  /local_schedulers:
+    post:
+      description: Store a local scheduler. table.
+      operationId: create_local_scheduler
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/local_scheduler_model"
+        description: local compute node configuration.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/local_scheduler_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Store a local scheduler.
+      tags: []
+      x-codegen-request-body-name: body
+    delete:
+      description: Delete all local schedulers for one workflow.
+      operationId: delete_local_schedulers
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete all local schedulers for one workflow.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve local schedulers for one workflow.
+      operationId: list_local_schedulers
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100000
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: sort_by
+        required: false
+        schema:
+          default: null
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: reverse_sort
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - explode: true
+        in: query
+        name: memory
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: num_cpus
+        required: false
+        schema:
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_local_schedulers_response"
+          description: HTTP 200 OK.
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve local schedulers for one workflow.
+      tags: []
+  /local_schedulers/{id}:
+    delete:
+      description: Delete a local scheduler.
+      operationId: delete_local_scheduler
+      parameters:
+      - description: ID of the local compute node configuration record.
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/local_scheduler_model"
+          description: local compute node configuration stored in the table.
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete a local scheduler.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve a local scheduler.
+      operationId: get_local_scheduler
+      parameters:
+      - description: Scheduler ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/local_scheduler_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve a local scheduler.
+      tags: []
+    put:
+      description: Update a local scheduler.
+      operationId: update_local_scheduler
+      parameters:
+      - description: Scheduler ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/local_scheduler_model"
+        description: local compute node configuration to update in the table.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/local_scheduler_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Update a local scheduler.
+      tags: []
+      x-codegen-request-body-name: body
+  /resource_requirements:
+    post:
+      description: Store one resource requirements definition.
+      operationId: create_resource_requirements
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/resource_requirements_model"
+        description: resource requirements.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/resource_requirements_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Store one resource requirements record.
+      tags: []
+      x-codegen-request-body-name: body
+    delete:
+      description: Delete all resource requirements records for one workflow.
+      operationId: delete_resource_requirements
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete all resource requirements records for one workflow.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve all resource requirements records for one workflow.
+      operationId: list_resource_requirements
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Return the resource requirements for a specific job.
+        explode: true
+        in: query
+        name: job_id
+        required: false
+        schema:
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100000
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: sort_by
+        required: false
+        schema:
+          default: null
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: reverse_sort
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - explode: true
+        in: query
+        name: name
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: memory
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: num_cpus
+        required: false
+        schema:
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: num_gpus
+        required: false
+        schema:
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: num_nodes
+        required: false
+        schema:
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: runtime
+        required: false
+        schema:
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_resource_requirements_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve all resource requirements records for one workflow.
+      tags: []
+  /resource_requirements/{id}:
+    delete:
+      description: Delete a resource requirements record.
+      operationId: delete_resource_requirements
+      parameters:
+      - description: Resource requirements ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/resource_requirements_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete a resource requirements record.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve one resource requirements record.
+      operationId: get_resource_requirements
+      parameters:
+      - description: Resource requirements ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/resource_requirements_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve one resource requirements record.
+      tags: []
+    put:
+      description: Update one resource requirements record.
+      operationId: update_resource_requirements
+      parameters:
+      - description: Resource requirements ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/resource_requirements_model"
+        description: resource requirements to update in the table.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/resource_requirements_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Update one resource requirements record.
+      tags: []
+      x-codegen-request-body-name: body
+  /results:
+    post:
+      description: Store a job result.
+      operationId: create_result
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/result_model"
+        description: result.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/result_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Store a job result.
+      tags: []
+      x-codegen-request-body-name: body
+    delete:
+      description: Delete all job results for one workflow.
+      operationId: delete_results
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete all job results for one workflow.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve all job results for one workflow.
+      operationId: list_results
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Return the results for a specific job.
+        explode: false
+        in: query
+        name: job_id
+        required: false
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100000
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: sort_by
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: reverse_sort
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - explode: true
+        in: query
+        name: run_id
+        required: false
+        schema:
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: return_code
+        required: false
+        schema:
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          $ref: "#/components/schemas/job_status"
+        style: form
+      - explode: true
+        in: query
+        name: all_runs
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+        description: If false (default), only return results in the workflow_result table (current results). If true, return all historical results.
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_results_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve all job results for one workflow.
+      tags: []
+  /results/{id}:
+    delete:
+      description: Delete a job result.
+      operationId: delete_result
+      parameters:
+      - description: Results ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/result_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete a job result.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve a job result.
+      operationId: get_result
+      parameters:
+      - description: Results ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/result_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve a job result.
+      tags: []
+    put:
+      description: Update a job result.
+      operationId: update_result
+      parameters:
+      - description: Result ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/result_model"
+        description: result to update in the table.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/result_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Update a job result.
+      tags: []
+      x-codegen-request-body-name: body
+  /scheduled_compute_nodes:
+    post:
+      description: Store a scheduled compute node.
+      operationId: create_scheduled_compute_node
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/scheduled_compute_nodes_model"
+        description: scheduled compute node.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/scheduled_compute_nodes_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Store a scheduled compute node.
+      tags: []
+      x-codegen-request-body-name: body
+    delete:
+      description: Delete all scheduled compute node records for one workflow.
+      operationId: delete_scheduled_compute_nodes
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete all scheduled compute node records for one workflow.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve scheduled compute node records for one workflow.
+      operationId: list_scheduled_compute_nodes
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100000
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: sort_by
+        required: false
+        schema:
+          default: null
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: reverse_sort
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - explode: true
+        in: query
+        name: scheduler_id
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: scheduler_config_id
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: status
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_scheduled_compute_nodes_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve scheduled compute node records for one workflow.
+      tags: []
+  /scheduled_compute_nodes/{id}:
+    delete:
+      description: Delete a scheduled compute node.
+      operationId: delete_scheduled_compute_node
+      parameters:
+      - description: Scheduled compute node ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/scheduled_compute_nodes_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete a scheduled compute node.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve a scheduled compute node.
+      operationId: get_scheduled_compute_node
+      parameters:
+      - description: ID of the scheduled_compute_nodes record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/scheduled_compute_nodes_model"
+          description: HTTP 200 OK.
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve a scheduled compute node.
+      tags: []
+    put:
+      description: Update a scheduled compute node.
+      operationId: update_scheduled_compute_node
+      parameters:
+      - description: Scheduled compute node ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/scheduled_compute_nodes_model"
+        description: scheduled compute node to update in the table.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/scheduled_compute_nodes_model"
+          description: scheduled compute node updated in the table.
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Update a scheduled compute node.
+      tags: []
+      x-codegen-request-body-name: body
+  /slurm_schedulers:
+    post:
+      description: Store a Slurm compute node configuration.
+      operationId: create_slurm_scheduler
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/slurm_scheduler_model"
+        description: Slurm compute node configuration.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/slurm_scheduler_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Store a Slurm compute node configuration.
+      tags: []
+      x-codegen-request-body-name: body
+    delete:
+      description: Retrieve all Slurm compute node configurations for one workflow.
+      operationId: delete_slurm_schedulers
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve all Slurm compute node configurations for one workflow.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve a Slurm compute node configuration.
+      operationId: list_slurm_schedulers
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100000
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: sort_by
+        required: false
+        schema:
+          default: null
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: reverse_sort
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - explode: true
+        in: query
+        name: name
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: account
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: gres
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: mem
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: nodes
+        required: false
+        schema:
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: partition
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: qos
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: tmp
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: walltime
+        required: false
+        schema:
+          type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_slurm_schedulers_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve a Slurm compute node configuration.
+      tags: []
+  /slurm_schedulers/{id}:
+    delete:
+      description: Delete Slurm compute node configuration.
+      operationId: delete_slurm_scheduler
+      parameters:
+      - description: Slurm compute node configuration ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/slurm_scheduler_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete Slurm compute node configuration.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve a Slurm compute node configuration.
+      operationId: get_slurm_scheduler
+      parameters:
+      - description: Slurm compute node configuration ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/slurm_scheduler_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve a Slurm compute node configuration.
+      tags: []
+    put:
+      description: Update a Slurm compute node configuration.
+      operationId: update_slurm_scheduler
+      parameters:
+      - description: Slurm compute node configuration ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/slurm_scheduler_model"
+        description: Slurm compute node configuration to update in the table.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/slurm_scheduler_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Update a Slurm compute node configuration.
+      tags: []
+      x-codegen-request-body-name: body
+  /user_data:
+    post:
+      description: Store a user data record.
+      operationId: create_user_data
+      parameters:
+      - description: ID of the job that consumes this user data.
+        explode: false
+        in: query
+        name: consumer_job_id
+        required: false
+        schema:
+          type: integer
+        style: simple
+      - description: ID of the job that produces this user data.
+        explode: false
+        in: query
+        name: producer_job_id
+        required: false
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/user_data_model"
+        description: user data.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/user_data_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Store a user data record.
+      tags: []
+      x-codegen-request-body-name: body
+    delete:
+      description: Delete all user data records for one workflow.
+      operationId: delete_user_data
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete all user data records for one workflow.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve all user data records for one workflow.
+      operationId: list_user_data
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: query
+        name: workflow_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Return user data records that are consumed by a specific job.
+        explode: false
+        in: query
+        name: consumer_job_id
+        required: false
+        schema:
+          type: integer
+        style: simple
+      - description: Return user data records that are produced by a specific job.
+        explode: false
+        in: query
+        name: producer_job_id
+        required: false
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100000
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: sort_by
+        required: false
+        schema:
+          default: null
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: reverse_sort
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - explode: true
+        in: query
+        name: name
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: is_ephemeral
+        required: false
+        schema:
+          type: boolean
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_user_data_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve all user data records for one workflow.
+      tags: []
+  /user_data/{id}:
+    delete:
+      description: Delete a user data record.
+      operationId: delete_user_data
+      parameters:
+      - description: User data record ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/user_data_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete a user data record.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve a user data record.
+      operationId: get_user_data
+      parameters:
+      - description: User data record ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/user_data_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve a user data record.
+      tags: []
+    put:
+      description: Update a user data record.
+      operationId: update_user_data
+      parameters:
+      - description: User data record ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/user_data_model"
+        description: user data to update in the table.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/user_data_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Update a user data record.
+      tags: []
+      x-codegen-request-body-name: body
+  /ping:
+    get:
+      description: Check if the service is running.
+      operationId: ping
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Check if the service is running.
+      tags: []
+  /version:
+    get:
+      description: Return the version of the service.
+      operationId: get_version
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Return the version of the service.
+      tags: []
+  /workflows:
+    get:
+      description: Retrieve all workflows.
+      operationId: list_workflows
+      parameters:
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: sort_by
+        required: false
+        schema:
+          default: null
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: reverse_sort
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100000
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: name
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: user
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: description
+        required: false
+        schema:
+          type: string
+        style: form
+      - explode: true
+        in: query
+        name: is_archived
+        required: false
+        schema:
+          type: boolean
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_workflows_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve all workflows.
+      tags: []
+    post:
+      description: Store a workflow.
+      operationId: create_workflow
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/workflow_model"
+        description: Workflow attributes
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/workflow_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Store a workflow.
+      tags: []
+      x-codegen-request-body-name: body
+  /workflows/{id}:
+    delete:
+      description: Delete a workflow.
+      operationId: delete_workflow
+      parameters:
+      - description: Workflow ID.
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/workflow_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Delete a workflow.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Retrieve a workflow.
+      operationId: get_workflow
+      parameters:
+      - description: ID of the workflows record
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/workflow_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve a workflow.
+      tags: []
+    put:
+      description: Update a workflow.
+      operationId: update_workflow
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/workflow_model"
+        description: workflow to update in the table.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/workflow_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Update a workflow.
+      tags: []
+      x-codegen-request-body-name: body
+  /workflows/{id}/cancel:
+    put:
+      description: Cancel a workflow. Workers will detect the status change and cancel
+        jobs.
+      operationId: cancel_workflow
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Cancel a workflow. Workers will detect the status change and cancel jobs.
+      tags: []
+      x-codegen-request-body-name: body
+  /workflows/{id}/events_after_timestamp/{timestamp}:
+    get:
+      description: Return all events newer than the event with timestamp.
+      operationId: list_events_after_timestamp
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Timestamp expressed as number of milliseconds since the epoch
+          in UTC
+        explode: false
+        in: path
+        name: timestamp
+        required: true
+        schema:
+          type: number
+        style: simple
+      - explode: true
+        in: query
+        name: category
+        required: false
+        schema:
+          default: null
+          type: string
+        style: form
+      - description: Ignored
+        explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100000
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_events_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Return all events newer than the event with timestamp.
+      tags: []
+  /workflows/{id}/initialize_jobs:
+    post:
+      description: Initialize job relationships based on file and user_data relationships.
+      operationId: initialize_jobs
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Only initialize jobs with a status of uninitialized.
+        explode: true
+        in: query
+        name: only_uninitialized
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      - description: Clear all ephemeral user data.
+        explode: true
+        in: query
+        name: clear_ephemeral_user_data
+        required: false
+        schema:
+          default: true
+          type: boolean
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Initialize job relationships based on file and user_data relationships.
+      tags: []
+      x-codegen-request-body-name: body
+  /workflows/{id}/is_complete:
+    get:
+      description: Return true if all jobs in the workflow are complete.
+      operationId: is_workflow_complete
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/is_complete_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Return true if all jobs in the workflow are complete.
+      tags: []
+  /workflows/{id}/is_uninitialized:
+    get:
+      description: Return true if all jobs in the workflow are uninitialized or disabled.
+      operationId: is_workflow_uninitialized
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/is_uninitialized_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Return true if all jobs in the workflow are uninitialized or disabled.
+      tags: []
+  /workflows/{id}/job_ids:
+    get:
+      description: Retrieve all job IDs for one workflow.
+      operationId: list_job_ids
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve all job IDs for one workflow.
+      tags: []
+  /workflows/{id}/latest_event_timestamp:
+    get:
+      description: Return the timestamp of the latest event in ms since the epoch
+        in UTC.
+      operationId: get_latest_event_timestamp
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Return the timestamp of the latest event in ms since the epoch in UTC.
+      tags: []
+  /workflows/{id}/missing_user_data:
+    get:
+      description: List missing user data that should exist.
+      operationId: list_missing_user_data
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_missing_user_data_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: List missing user data that should exist.
+      tags: []
+  /workflows/{id}/process_changed_job_inputs:
+    post:
+      description: Check for changed job inputs and update status accordingly.
+      operationId: process_changed_job_inputs
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: "If true, report changes but do not change the database."
+        explode: false
+        in: query
+        name: dry_run
+        required: false
+        schema:
+          type: boolean
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/process_changed_job_inputs_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Check for changed job inputs and update status accordingly.
+      tags: []
+      x-codegen-request-body-name: body
+  /workflows/{id}/ready_job_requirements:
+    get:
+      description: Return the resource requirements for jobs with a status of ready.
+      operationId: get_ready_job_requirements
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Limit output to jobs assigned this scheduler.
+        explode: true
+        in: query
+        name: scheduler_config_id
+        required: false
+        schema:
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/get_ready_job_requirements_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Return the resource requirements for jobs with a status of ready.
+      tags: []
+  /workflows/{id}/required_existing_files:
+    get:
+      description: List files that must exist.
+      operationId: list_required_existing_files
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_required_existing_files_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: List files that must exist.
+      tags: []
+  /workflows/{id}/claim_jobs_based_on_resources/{limit}:
+    post:
+      description: Return jobs that are ready for submission and meet worker resource requirements. Set status to pending.
+      operationId: claim_jobs_based_on_resources
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: sort_method
+        required: false
+        schema:
+          $ref: "#/components/schemas/jobs_sort_method"
+        style: form
+      - explode: true
+        in: path
+        name: limit
+        required: true
+        schema:
+          type: integer
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/compute_nodes_resources"
+        description: Available worker resources.
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/prepare_jobs_for_submission_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Return jobs that are ready for submission and meet worker resource requirements. Set status to pending.
+      tags: []
+      x-codegen-request-body-name: body
+  /workflows/{id}/claim_next_jobs:
+    post:
+      description: Return user-requested number of jobs that are ready for submission. Sets status to pending.
+      operationId: claim_next_jobs
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 1.0
+          type: integer
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/prepare_next_jobs_for_submission_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Return user-requested number of jobs that are ready for submission. Sets status to pending.
+      tags: []
+      x-codegen-request-body-name: body
+  /workflows/{id}/reset_status:
+    post:
+      description: Reset workflow status.
+      operationId: reset_workflow_status
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: If true, ignore active jobs check and reset anyway
+        explode: true
+        in: query
+        name: force
+        required: false
+        schema:
+          type: boolean
+          default: false
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Reset worklow status.
+      tags: []
+      x-codegen-request-body-name: body
+  /workflows/{id}/reset_job_status:
+    post:
+      description: Reset status for jobs to uninitialized.
+      operationId: reset_job_status
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Only reset failed jobs
+        explode: true
+        in: query
+        name: failed_only
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+        required: false
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Reset status for jobs to uninitialized.
+      tags: []
+      x-codegen-request-body-name: body
+  /workflows/{id}/status:
+    get:
+      description: Return the workflow status.
+      operationId: get_workflow_status
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/workflow_status_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Return the workflow status.
+      tags: []
+    put:
+      description: Update the workflow status.
+      operationId: update_workflow_status
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/workflow_status_model"
+        description: Updated workflow status
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/workflow_status_model"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Update the workflow status.
+      tags: []
+      x-codegen-request-body-name: body
+  /workflows/{id}/job_dependencies:
+    get:
+      description: Retrieve all job blocking relationships for one workflow from the job_blocked_by table.
+      operationId: list_job_dependencies
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100000
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_job_dependencies_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve job blocking relationships for a workflow.
+      tags: []
+  /workflows/{id}/actions:
+    post:
+      description: Create a workflow action.
+      operationId: create_workflow_action
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/workflow_action_model"
+        description: Workflow action to create
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/workflow_action_model"
+          description: Successful response
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Unprocessable content error response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Create a workflow action.
+      tags: []
+      x-codegen-request-body-name: body
+    get:
+      description: Get all workflow actions for a workflow.
+      operationId: get_workflow_actions
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/workflow_action_model"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Get all workflow actions for a workflow.
+      tags: []
+  /workflows/{id}/actions/pending:
+    get:
+      description: Get pending (unexecuted) workflow actions for a workflow, optionally filtered by trigger type.
+      operationId: get_pending_actions
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Filter by trigger type (can be specified multiple times)
+        explode: true
+        in: query
+        name: trigger_type
+        required: false
+        schema:
+          type: array
+          items:
+            type: string
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/workflow_action_model"
+          description: Successful response
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/not_found_error_response"
+          description: Not found error response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Get pending workflow actions, optionally filtered by trigger type.
+      tags: []
+  /workflows/{id}/actions/{action_id}/claim:
+    post:
+      description: Atomically claim a workflow action for execution by a compute node.
+      operationId: claim_action
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - description: Action ID
+        explode: false
+        in: path
+        name: action_id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                compute_node_id:
+                  type: integer
+                  description: ID of the compute node claiming the action
+              required:
+                - compute_node_id
+        description: Compute node claiming the action
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  action_id:
+                    type: integer
+                  success:
+                    type: boolean
+          description: Successful response
+        "409":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Conflict - action already claimed
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Atomically claim a workflow action.
+      tags: []
+      x-codegen-request-body-name: body
+components:
+  schemas:
+    compute_node_model:
+      example:
+        workflow_id: 37
+        duration_seconds: 1.4658129805029452
+        num_cpus: 5
+        is_active: true
+        time_limit: time_limit
+        num_gpus: 2
+        pid: 6
+        scheduler_config_id: 9
+        num_nodes: 7
+        compute_node_type: local
+        scheduler: "{}"
+        start_time: start_time
+        hostname: hostname
+        memory_gb: 5.637376656633329
+        id: 0
+      properties:
+        id:
+          type: integer
+        workflow_id:
+          type: integer
+        hostname:
+          type: string
+        pid:
+          type: integer
+        start_time:
+          type: string
+        duration_seconds:
+          type: number
+        is_active:
+          type: boolean
+        num_cpus:
+          type: integer
+        memory_gb:
+          type: number
+        num_gpus:
+          type: integer
+        num_nodes:
+          type: integer
+        time_limit:
+          type: string
+        scheduler_config_id:
+          type: integer
+        compute_node_type:
+          type: string
+        scheduler:
+          properties: {}
+          type: object
+      required:
+      - workflow_id
+      - hostname
+      - memory_gb
+      - num_cpus
+      - num_gpus
+      - num_nodes
+      - pid
+      - start_time
+      - compute_node_type
+    compute_node_schedule:
+      example:
+        start_one_worker_per_node: false
+        num_jobs: 5
+        max_parallel_jobs: 1
+        scheduler_id: scheduler_id
+      properties:
+        max_parallel_jobs:
+          type: integer
+        num_jobs:
+          type: integer
+        scheduler_id:
+          type: integer
+        start_one_worker_per_node:
+          default: false
+          type: boolean
+      required:
+      - num_jobs
+      - scheduler_id
+    compute_nodes_resources:
+      properties:
+        id:
+          type: integer
+        num_cpus:
+          type: integer
+        memory_gb:
+          type: number
+        num_gpus:
+          type: integer
+        num_nodes:
+          type: integer
+        time_limit:
+          type: string
+        scheduler_config_id:
+          type: integer
+      required:
+      - memory_gb
+      - num_cpus
+      - num_gpus
+      - num_nodes
+    event_model:
+      description: Data model for events.
+      example:
+        workflow_id: 6
+        data: "{}"
+        id: 0
+        timestamp: timestamp
+      properties:
+        id:
+          description: Database ID of the event.
+          type: integer
+        workflow_id:
+          description: Database ID of the workflow this record is associated with.
+          type: integer
+        timestamp:
+          description: Timestamp of the event
+          type: string
+        data:
+          description: User-defined data associated with the event
+          type: object
+      required:
+      - data
+      - timestamp  # TODO: this was a mistake. Need to patch the code.
+      - workflow_id
+    file_model:
+      description: Data model for files needed or produced by jobs. Can be data or
+        code.
+      example:
+        st_mtime: 1.4658129805029452
+        path: path
+        workflow_id: 6
+        name: name
+        id: 0
+      properties:
+        id:
+          type: integer
+        workflow_id:
+          description: Database ID of the workflow this record is associated with.
+          type: integer
+        name:
+          description: User-defined name of the file (not necessarily the filename)
+          type: string
+        path:
+          description: Path to the file; can be relative to the execution directory.
+          type: string
+        st_mtime:
+          description: Timestamp of when the file was last modified
+          type: number
+      required:
+      - name
+      - path
+      - workflow_id
+    job_model:
+      example:
+        output_user_data:
+        - 3
+        - 3
+        workflow_id: 6
+        cancel_on_blocking_job_failure: true
+        command: command
+        schedule_compute_nodes:
+          start_one_worker_per_node: false
+          num_jobs: 5
+          max_parallel_jobs: 1
+          scheduler_id: scheduler_id
+        input_user_data:
+        - 9
+        - 9
+        scheduler: 4
+        input_file_ids:
+        - 2
+        - 2
+        output_files:
+        - 7
+        - 7
+        blocked_by_job_ids:
+        - 5
+        - 5
+        resource_requirements_id: 2
+        name: name
+        id: 0
+        invocation_script: invocation_script
+        status: ready
+        supports_termination: false
+      properties:
+        id:
+          type: integer
+        workflow_id:
+          type: integer
+        name:
+          description: Name of the job; no requirements on uniqueness
+          type: string
+        command:
+          description: CLI command to execute. Will not be executed in a shell and
+            so must not include shell characters.
+          type: string
+        invocation_script:
+          description: Wrapper script for command in case the environment needs customization.
+          type: string
+        status:
+          description: Status of job; managed by torc.
+          schema:
+            $ref: "#/components/schemas/job_status"
+        schedule_compute_nodes:
+          $ref: "#/components/schemas/compute_node_schedule"
+        cancel_on_blocking_job_failure:
+          default: true
+          description: Cancel this job if any of its blocking jobs fails.
+          type: boolean
+        supports_termination:
+          default: false
+          description: Informs torc that the job can be terminated gracefully before
+            a wall-time timeout.
+          type: boolean
+        blocked_by_job_ids:
+          description: Database IDs of jobs that block this job
+          items:
+            type: integer
+          type: array
+        input_file_ids:
+          description: Database IDs of files that this job needs
+          items:
+            type: integer
+          type: array
+        output_files:
+          description: Database IDs of files that this job produces
+          items:
+            type: integer
+          type: array
+        input_user_data:
+          description: Database IDs of user-data objects that this job needs
+          items:
+            type: integer
+          type: array
+        output_user_data:
+          description: Database IDs of user-data objects that this job produces
+          items:
+            type: integer
+          type: array
+        resource_requirements_id:
+          description: Optional database ID of resources required by this job
+          type: integer
+        scheduler_id:
+          description: Optional database ID of scheduler needed by this job
+          type: integer
+      required:
+      - command
+      - name
+      - workflow_id
+    jobs_model:
+      description: Data model for a batch of jobs
+      properties:
+        jobs:
+          description: Jobs in the batch
+          items:
+            $ref: "#/components/schemas/job_model"
+          type: array
+      required:
+      - jobs
+    local_scheduler_model:
+      example:
+        num_cpus: 1
+        workflow_id: 6
+        memory: memory
+        name: default
+        id: 0
+      properties:
+        id:
+          type: integer
+        workflow_id:
+          type: integer
+        name:
+          default: default
+          type: string
+        memory:
+          type: string
+        num_cpus:
+          type: integer
+      required:
+      - workflow_id
+    resource_requirements_model:
+      example:
+        num_cpus: 1
+        workflow_id: 6
+        memory: 1m
+        num_gpus: 5
+        name: name
+        runtime: P0DT1M
+        id: 0
+        num_nodes: 5
+      properties:
+        id:
+          description: Database ID of this record.
+          type: integer
+        workflow_id:
+          description: Database ID of the workflow this record is associated with.
+          type: integer
+        name:
+          description: Name of the resource requirements
+          type: string
+        num_cpus:
+          description: Number of CPUs required by a job
+          type: integer
+          default: 1
+        num_gpus:
+          description: Number of GPUs required by a job
+          type: integer
+          default: 0
+        num_nodes:
+          description: Number of nodes required by a job
+          type: integer
+        memory:
+          default: 1m
+          description: "Amount of memory required by a job, e.g., 20g"
+          type: string
+        runtime:
+          default: P0DT1M
+          description: Maximum runtime for a job
+          type: string
+      required:
+      - workflow_id
+      - name
+    result_model:
+      example:
+        workflow_id: 1
+        run_id: 5
+        completion_time: completion_time
+        job_id: 6
+        exec_time_minutes: 2.3021358869347655
+        id: 0
+        return_code: 5
+        status: status
+        compute_node_id: 1
+      properties:
+        id:
+          type: integer
+        job_id:
+          description: Database ID for the job tied to this result
+          type: integer
+        workflow_id:
+          description: Database ID for the workflow tied to this result
+          type: integer
+        run_id:
+          description: ID of the workflow run. Incremements on every start and restart.
+          type: integer
+        compute_node_id:
+          description: Database ID for the compute node that ran this job
+          type: integer
+        return_code:
+          description: Code returned by the job. Zero is success; non-zero is a failure.
+          type: integer
+        exec_time_minutes:
+          description: Job execution time in minutes
+          type: number
+        completion_time:
+          description: Timestamp of when the job completed.
+          type: string
+        status:
+          description: Status of the job; managed by torc.
+          schema:
+            $ref: "#/components/schemas/job_status"
+      required:
+      - completion_time
+      - compute_node_id
+      - exec_time_minutes
+      - job_id
+      - return_code
+      - run_id
+      - status
+      - workflow_id
+    scheduled_compute_nodes_model:
+      example:
+        workflow_id: 6
+        id: 0
+        scheduler_config_id: 5
+        scheduler_id: 1
+        status: status
+      properties:
+        id:
+          type: integer
+        workflow_id:
+          type: integer
+        scheduler_id:
+          type: integer
+        scheduler_config_id:
+          type: integer
+        status:
+          type: string
+      required:
+      - scheduler_config_id
+      - status
+      - workflow_id
+    slurm_scheduler_model:
+      description: Data model for Slurm scheduler
+      example:
+        ntasks_per_node: 5
+        workflow_id: 6
+        gres: gres
+        walltime: walltime
+        nodes: 1
+        partition: partition
+        mem: mem
+        qos: normal
+        tmp: tmp
+        extra: extra
+        name: name
+        id: 0
+        account: account
+      properties:
+        id:
+          type: integer
+        workflow_id:
+          description: Database ID of the workflow this scheduler is associated with.
+          type: integer
+        name:
+          description: Name of the scheduler
+          type: string
+        account:
+          description: Slurm account ID
+          type: string
+        gres:
+          description: Generic resource requirement
+          type: string
+        mem:
+          description: Compute node memory requirement
+          type: string
+        nodes:
+          description: Number of nodes for the Slurm allocation
+          type: integer
+        ntasks_per_node:
+          description: Number of tasks to invoke on each node
+          type: integer
+        partition:
+          description: Compute node partition; likely not necessary because Slurm
+            should optimize it.
+          type: string
+        qos:
+          default: normal
+          description: Priority of Slurm job
+          type: string
+        tmp:
+          description: Compute node local storage size requirement
+          type: string
+        walltime:
+          description: "Slurm runtime requirement, e.g., 04:00:00"
+          type: string
+        extra:
+          description: Extra Slurm parameters that torc will append to the sbatch
+            command
+          type: string
+      required:
+      - account
+      - nodes
+      - workflow_id
+    user_data_model:
+      example:
+        workflow_id: 6
+        data: "{}"
+        is_ephemeral: false
+        name: name
+        id: 0
+      properties:
+        id:
+          type: integer
+        workflow_id:
+          description: Database ID of the workflow this record is associated with.
+          type: integer
+        is_ephemeral:
+          default: false
+          description: The data will only exist for the duration of one run. Torc
+            will clear it before starting new runs.
+          type: boolean
+        name:
+          description: Name of the data object
+          type: string
+        data:
+          description: User-defined data
+          properties: {}
+          type: object
+      required:
+      - workflow_id
+      - name
+    workflow_model:
+      example:
+        status_id: 1
+        name: name
+        description: description
+        id: 0
+        user: user
+        timestamp: timestamp
+        jobs_sort_method: gpus_runtime_memory
+        workflow_completion_script: workflow_completion_script
+        compute_node_ignore_workflow_completion: false
+        compute_node_wait_for_new_jobs_seconds: 1
+        compute_node_wait_for_healthy_database_minutes: 5
+        worker_startup_script: worker_startup_script
+        worker_completion_script: worker_completion_script
+        compute_node_expiration_buffer_seconds: 6
+      properties:
+        id:
+          type: integer
+        name:
+          description: Name of the workflow
+          type: string
+        user:
+          description: User that created the workflow
+          type: string
+        description:
+          description: Description of the workflow
+          type: string
+        timestamp:
+          description: Timestamp of workflow creation
+          type: string
+
+        compute_node_expiration_buffer_seconds:
+          default: 60
+          description: "Inform all compute nodes to shut down this number of seconds\
+            \ before the expiration time. This allows torc to send SIGTERM to all\
+            \ job processes and set all statuses to terminated. Increase the time\
+            \ in cases where the job processes handle SIGTERM and need more time to\
+            \ gracefully shut down. Set the value to 0 to maximize the time given\
+            \ to jobs. If not set, take the database's default value of 60 seconds."
+          type: integer
+        compute_node_wait_for_new_jobs_seconds:
+          default: 0
+          description: Inform all compute nodes to wait for new jobs for this time
+            period before exiting. Does not apply if the workflow is complete.
+          type: integer
+        compute_node_ignore_workflow_completion:
+          default: false
+          description: Inform all compute nodes to ignore workflow completions and
+            hold onto allocations indefinitely. Useful for debugging failed jobs and
+            possibly dynamic workflows where jobs get added after starting.
+          type: boolean
+        compute_node_wait_for_healthy_database_minutes:
+          default: 20
+          description: Inform all compute nodes to wait this number of minutes if
+            the database becomes unresponsive.
+          type: integer
+        jobs_sort_method:
+          $ref: "#/components/schemas/jobs_sort_method"
+          type: integer
+        status_id:
+          type: integer
+      required:
+      - name
+      - user
+    workflow_action_model:
+      description: Data model for a workflow action
+      example:
+        id: 1
+        workflow_id: 123
+        trigger_type: "on_workflow_start"
+        action_type: "run_commands"
+        action_config:
+          commands:
+            - "echo 'Workflow started'"
+        job_ids: [1,2,3]
+        executed: false
+        executed_at: null
+        executed_by: null
+        persistent: false
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the action
+        workflow_id:
+          type: integer
+          description: ID of the workflow this action belongs to
+        trigger_type:
+          type: string
+          description: "Type of trigger (e.g., on_workflow_start, on_jobs_ready, on_jobs_complete, on_worker_start, on_worker_complete)"
+        action_type:
+          type: string
+          description: "Type of action to execute (e.g., run_commands, schedule_nodes)"
+        action_config:
+          type: object
+          description: Configuration for the action (JSON object)
+        job_ids:
+          type: array
+          items:
+            type: integer
+          description: Array of job IDs that this action applies to (for job-specific triggers)
+        executed:
+          type: boolean
+          default: false
+          description: Whether the action has been executed
+        executed_at:
+          type: string
+          description: Timestamp when the action was executed
+        executed_by:
+          type: integer
+          description: ID of the compute node that executed the action
+        persistent:
+          type: boolean
+          default: false
+          description: Whether the action can be claimed by multiple workers (persistent) or only once (non-persistent)
+      required:
+      - workflow_id
+      - trigger_type
+      - action_type
+      - action_config
+    workflow_status_model:
+      description: Data model for a workflow
+      example:
+        run_id: 6
+        is_archived: false
+        is_canceled: true
+        id: 0
+        has_detected_need_to_run_completion_script: false
+      properties:
+        id:
+          type: integer
+        is_canceled:
+          description: Flag indicating whether the workflow has been canceled.
+          type: boolean
+        is_archived:
+          default: false
+          description: Flag indicating whether the workflow has been archived.
+          type: boolean
+        run_id:
+          type: integer
+        has_detected_need_to_run_completion_script:
+          default: false
+          type: boolean
+      required:
+      - is_canceled
+      - run_id
+    default_error_response:
+      example:
+        code: 2
+        errorNum: 3
+        errorMessage: errorMessage
+        error: "{}"
+      properties:
+        error:
+          type: object
+        errorNum:
+          type: integer
+        errorMessage:
+          type: string
+        code:
+          type: integer
+      required:
+      - error
+    add_jobs_response:
+      example:
+        items:
+        - output_user_data:
+          - 3
+          - 3
+          workflow_id: 6
+          cancel_on_blocking_job_failure: true
+          command: command
+          schedule_compute_nodes:
+            start_one_worker_per_node: false
+            num_jobs: 5
+            max_parallel_jobs: 1
+            scheduler_id: scheduler_id
+          input_user_data:
+          - 9
+          - 9
+          scheduler: 4
+          input_file_ids:
+          - 2
+          - 2
+          output_files:
+          - 7
+          - 7
+          blocked_by_job_ids:
+          - 5
+          - 5
+          resource_requirements_id: 2
+          name: name
+          id: 0
+          invocation_script: invocation_script
+          status: uninitialized
+          supports_termination: false
+        - output_user_data:
+          - 3
+          - 3
+          workflow_id: 6
+          cancel_on_blocking_job_failure: true
+          command: command
+          schedule_compute_nodes:
+            start_one_worker_per_node: false
+            num_jobs: 5
+            max_parallel_jobs: 1
+            scheduler_id: scheduler_id
+          input_user_data:
+          - 9
+          - 9
+          scheduler: 4
+          input_file_ids:
+          - 2
+          - 2
+          output_files:
+          - 7
+          - 7
+          blocked_by_job_ids:
+          - 5
+          - 5
+          resource_requirements_id: 2
+          name: name
+          id: 0
+          invocation_script: invocation_script
+          status: uninitialized
+          supports_termination: false
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/job_model"
+          type: array
+    list_compute_nodes_response:
+      example:
+        max_limit: 6
+        total_count: 5
+        count: 1
+        offset: 0
+        has_more: true
+        items:
+        - duration_seconds: 1.4658129805029452
+          num_cpus: 5
+          is_active: true
+          time_limit: time_limit
+          num_gpus: 2
+          pid: 6
+          scheduler_config_id: 9
+          num_nodes: 7
+          scheduler: "{}"
+          start_time: start_time
+          hostname: hostname
+          memory_gb: 5.637376656633329
+          id: 0
+        - duration_seconds: 1.4658129805029452
+          num_cpus: 5
+          is_active: true
+          time_limit: time_limit
+          num_gpus: 2
+          pid: 6
+          scheduler_config_id: 9
+          num_nodes: 7
+          scheduler: "{}"
+          start_time: start_time
+          hostname: hostname
+          memory_gb: 5.637376656633329
+          id: 0
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/compute_node_model"
+          type: array
+        offset:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - count
+      - has_more
+      - max_limit
+      - offset
+      - total_count
+    list_events_response:
+      example:
+        max_limit: 6
+        total_count: 5
+        count: 1
+        offset: 0
+        has_more: true
+        items:
+        - workflow_id: 6
+          data: "{}"
+          id: 0
+          timestamp: timestamp
+        - workflow_id: 6
+          data: "{}"
+          id: 0
+          timestamp: timestamp
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/event_model"
+          type: array
+        offset:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - count
+      - has_more
+      - max_limit
+      - offset
+      - total_count
+    list_files_response:
+      example:
+        max_limit: 6
+        total_count: 5
+        count: 1
+        offset: 0
+        has_more: true
+        items:
+        - st_mtime: 1.4658129805029452
+          path: path
+          workflow_id: 6
+          name: name
+          id: 0
+        - st_mtime: 1.4658129805029452
+          path: path
+          workflow_id: 6
+          name: name
+          id: 0
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/file_model"
+          type: array
+        offset:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - count
+      - has_more
+      - max_limit
+      - offset
+      - total_count
+    list_jobs_response:
+      example:
+        max_limit: 6
+        total_count: 5
+        count: 1
+        offset: 0
+        has_more: true
+        items:
+        - output_user_data:
+          - 3
+          - 3
+          workflow_id: 6
+          cancel_on_blocking_job_failure: true
+          command: command
+          schedule_compute_nodes:
+            start_one_worker_per_node: false
+            num_jobs: 5
+            max_parallel_jobs: 1
+            scheduler_id: scheduler_id
+          input_user_data:
+          - 9
+          - 9
+          scheduler: 4
+          input_file_ids:
+          - 2
+          - 2
+          output_files:
+          - 7
+          - 7
+          blocked_by_job_ids:
+          - 5
+          - 5
+          resource_requirements_id: 2
+          name: name
+          id: 0
+          invocation_script: invocation_script
+          status: ready
+          supports_termination: false
+        - output_user_data:
+          - 3
+          - 3
+          workflow_id: 6
+          cancel_on_blocking_job_failure: true
+          command: command
+          schedule_compute_nodes:
+            start_one_worker_per_node: false
+            num_jobs: 5
+            max_parallel_jobs: 1
+            scheduler_id: scheduler_id
+          input_user_data:
+          - 9
+          - 9
+          scheduler: 4
+          input_file_ids:
+          - 2
+          - 2
+          output_files:
+          - 7
+          - 7
+          blocked_by_job_ids:
+          - 5
+          - 5
+          resource_requirements_id: 2
+          name: name
+          id: 0
+          invocation_script: invocation_script
+          status: ready
+          supports_termination: false
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/job_model"
+          type: array
+        offset:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - count
+      - has_more
+      - max_limit
+      - offset
+      - total_count
+    job_dependency_model:
+      description: Represents a blocking relationship between two jobs in the job_blocked_by table.
+      example:
+        job_id: 123
+        job_name: "process_data"
+        blocked_by_job_id: 456
+        blocked_by_job_name: "download_data"
+        workflow_id: 789
+      properties:
+        job_id:
+          description: The job that is blocked
+          type: integer
+        job_name:
+          description: The name of the job that is blocked
+          type: string
+        blocked_by_job_id:
+          description: The job that must complete first
+          type: integer
+        blocked_by_job_name:
+          description: The name of the job that must complete first
+          type: string
+        workflow_id:
+          description: The workflow containing both jobs
+          type: integer
+      required:
+      - job_id
+      - job_name
+      - blocked_by_job_id
+      - blocked_by_job_name
+      - workflow_id
+      type: object
+    list_job_dependencies_response:
+      example:
+        max_limit: 100000
+        total_count: 42
+        count: 42
+        offset: 0
+        has_more: false
+        items:
+        - job_id: 123
+          job_name: "process_data"
+          blocked_by_job_id: 456
+          blocked_by_job_name: "download_data"
+          workflow_id: 789
+        - job_id: 124
+          job_name: "analyze_data"
+          blocked_by_job_id: 456
+          blocked_by_job_name: "download_data"
+          workflow_id: 789
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/job_dependency_model"
+          type: array
+        offset:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - count
+      - has_more
+      - max_limit
+      - offset
+      - total_count
+      type: object
+    list_local_schedulers_response:
+      example:
+        max_limit: 6
+        total_count: 5
+        count: 1
+        offset: 0
+        has_more: true
+        items:
+        - num_cpus: 1
+          workflow_id: 6
+          memory: memory
+          name: default
+          id: 0
+        - num_cpus: 1
+          workflow_id: 6
+          memory: memory
+          name: default
+          id: 0
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/local_scheduler_model"
+          type: array
+        offset:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - count
+      - has_more
+      - max_limit
+      - offset
+      - total_count
+    list_resource_requirements_response:
+      example:
+        max_limit: 6
+        total_count: 5
+        count: 1
+        offset: 0
+        has_more: true
+        items:
+        - num_cpus: 1
+          workflow_id: 6
+          memory: 1m
+          num_gpus: 5
+          name: name
+          runtime: P0DT1M
+          id: 0
+          num_nodes: 5
+        - num_cpus: 1
+          workflow_id: 6
+          memory: 1m
+          num_gpus: 5
+          name: name
+          runtime: P0DT1M
+          id: 0
+          num_nodes: 5
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/resource_requirements_model"
+          type: array
+        offset:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - count
+      - has_more
+      - max_limit
+      - offset
+      - total_count
+    list_results_response:
+      example:
+        max_limit: 6
+        total_count: 5
+        count: 1
+        offset: 0
+        has_more: true
+        items:
+        - workflow_id: 1
+          run_id: 5
+          completion_time: completion_time
+          job_id: 6
+          exec_time_minutes: 2.3021358869347655
+          id: 0
+          return_code: 5
+          status: done
+        - workflow_id: 1
+          run_id: 5
+          completion_time: completion_time
+          job_id: 6
+          exec_time_minutes: 2.3021358869347655
+          id: 0
+          return_code: 5
+          status: done
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/result_model"
+          type: array
+        offset:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - count
+      - has_more
+      - max_limit
+      - offset
+      - total_count
+    list_scheduled_compute_nodes_response:
+      example:
+        max_limit: 6
+        total_count: 5
+        count: 1
+        offset: 0
+        has_more: true
+        items:
+        - workflow_id: 6
+          id: 0
+          scheduler_config_id: 5
+          scheduler_id: 1
+          status: status
+        - workflow_id: 6
+          id: 0
+          scheduler_config_id: 5
+          scheduler_id: 1
+          status: status
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/scheduled_compute_nodes_model"
+          type: array
+        offset:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - count
+      - has_more
+      - max_limit
+      - offset
+      - total_count
+    list_slurm_schedulers_response:
+      example:
+        max_limit: 6
+        total_count: 5
+        count: 1
+        offset: 0
+        has_more: true
+        items:
+        - ntasks_per_node: 5
+          workflow_id: 6
+          gres: gres
+          walltime: walltime
+          nodes: 1
+          partition: partition
+          mem: mem
+          qos: normal
+          tmp: tmp
+          extra: extra
+          name: name
+          id: 0
+          account: account
+        - ntasks_per_node: 5
+          workflow_id: 6
+          gres: gres
+          walltime: walltime
+          nodes: 1
+          partition: partition
+          mem: mem
+          qos: normal
+          tmp: tmp
+          extra: extra
+          name: name
+          id: 0
+          account: account
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/slurm_scheduler_model"
+          type: array
+        offset:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - count
+      - has_more
+      - max_limit
+      - offset
+      - total_count
+    list_user_data_response:
+      example:
+        max_limit: 6
+        total_count: 5
+        count: 1
+        offset: 0
+        has_more: true
+        items:
+        - workflow_id: 6
+          data: "{}"
+          is_ephemeral: false
+          name: name
+          id: 0
+        - workflow_id: 6
+          data: "{}"
+          is_ephemeral: false
+          name: name
+          id: 0
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/user_data_model"
+          type: array
+        offset:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - count
+      - has_more
+      - max_limit
+      - offset
+      - total_count
+    list_workflows_response:
+      example:
+        max_limit: 5
+        total_count: 7
+        count: 2
+        offset: 5
+        has_more: true
+        items:
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/workflow_model"
+          type: array
+        offset:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - count
+      - has_more
+      - max_limit
+      - offset
+      - total_count
+    is_complete_response:
+      example:
+        is_canceled: true
+        needs_to_run_completion_script: true
+        is_complete: true
+      properties:
+        is_canceled:
+          type: boolean
+        is_complete:
+          type: boolean
+        needs_to_run_completion_script:
+          type: boolean
+      required:
+      - is_canceled
+      - is_complete
+      - needs_to_run_completion_script
+    is_uninitialized_response:
+      example:
+        is_uninitialized: true
+      properties:
+        is_uninitialized:
+          type: boolean
+      required:
+      - is_uninitialized
+    get_ready_job_requirements_response:
+      example:
+        num_cpus: 6
+        memory_gb: 5.962133916683182
+        max_runtime: max_runtime
+        num_gpus: 1
+        num_jobs: 0
+        max_num_nodes: 5
+      properties:
+        num_jobs:
+          type: integer
+        num_cpus:
+          type: integer
+        num_gpus:
+          type: integer
+        memory_gb:
+          type: number
+        max_num_nodes:
+          type: integer
+        max_runtime:
+          type: string
+      required:
+      - max_num_nodes
+      - max_runtime
+      - memory_gb
+      - num_cpus
+      - num_gpus
+      - num_jobs
+    process_changed_job_inputs_response:
+      example:
+        reinitialized_jobs:
+        - reinitialized_jobs
+        - reinitialized_jobs
+      properties:
+        reinitialized_jobs:
+          items:
+            type: string
+          type: array
+    list_missing_user_data_response:
+      example:
+        user_data:
+        - user_data
+        - user_data
+      properties:
+        user_data:
+          items:
+            type: integer
+          type: array
+    list_required_existing_files_response:
+      example:
+        files:
+        - files
+        - files
+      properties:
+        files:
+          items:
+            type: string
+          type: array
+    prepare_jobs_for_submission_response:
+      example:
+        reason: reason
+        jobs:
+        - output_user_data:
+          - 3
+          - 3
+          workflow_id: 6
+          cancel_on_blocking_job_failure: true
+          command: command
+          schedule_compute_nodes:
+            start_one_worker_per_node: false
+            num_jobs: 5
+            max_parallel_jobs: 1
+            scheduler_id: scheduler_id
+          input_user_data:
+          - 9
+          - 9
+          scheduler: 4
+          input_file_ids:
+          - 2
+          - 2
+          output_files:
+          - 7
+          - 7
+          blocked_by_job_ids:
+          - 5
+          - 5
+          resource_requirements_id: 2
+          name: name
+          id: 0
+          invocation_script: invocation_script
+          status: status
+          supports_termination: false
+        - output_user_data:
+          - 3
+          - 3
+          workflow_id: 6
+          cancel_on_blocking_job_failure: true
+          command: command
+          schedule_compute_nodes:
+            start_one_worker_per_node: false
+            num_jobs: 5
+            max_parallel_jobs: 1
+            scheduler_id: scheduler_id
+          input_user_data:
+          - 9
+          - 9
+          scheduler: 4
+          input_file_ids:
+          - 2
+          - 2
+          output_files:
+          - 7
+          - 7
+          blocked_by_job_ids:
+          - 5
+          - 5
+          resource_requirements_id: 2
+          name: name
+          id: 0
+          invocation_script: invocation_script
+          status: status
+          supports_termination: false
+      properties:
+        jobs:
+          items:
+            $ref: "#/components/schemas/job_model"
+          type: array
+        reason:
+          type: string
+    prepare_next_jobs_for_submission_response:
+      example:
+        jobs:
+        - output_user_data:
+          - 3
+          - 3
+          workflow_id: 6
+          cancel_on_blocking_job_failure: true
+          command: command
+          schedule_compute_nodes:
+            start_one_worker_per_node: false
+            num_jobs: 5
+            max_parallel_jobs: 1
+            scheduler_id: scheduler_id
+          input_user_data:
+          - 9
+          - 9
+          scheduler: 4
+          input_file_ids:
+          - 2
+          - 2
+          output_files:
+          - 7
+          - 7
+          blocked_by_job_ids:
+          - 5
+          - 5
+          resource_requirements_id: 2
+          name: name
+          id: 0
+          invocation_script: invocation_script
+          status: status
+          supports_termination: false
+        - output_user_data:
+          - 3
+          - 3
+          workflow_id: 6
+          cancel_on_blocking_job_failure: true
+          command: command
+          schedule_compute_nodes:
+            start_one_worker_per_node: false
+            num_jobs: 5
+            max_parallel_jobs: 1
+            scheduler_id: scheduler_id
+          input_user_data:
+          - 9
+          - 9
+          scheduler: 4
+          input_file_ids:
+          - 2
+          - 2
+          output_files:
+          - 7
+          - 7
+          blocked_by_job_ids:
+          - 5
+          - 5
+          resource_requirements_id: 2
+          name: name
+          id: 0
+          invocation_script: invocation_script
+          status: status
+          supports_termination: false
+      properties:
+        jobs:
+          items:
+            $ref: "#/components/schemas/job_model"
+          type: array
+    job_status:
+      description: Job statuses
+      enum:
+        - uninitialized
+        - blocked
+        - canceled
+        - terminated
+        - done
+        - ready
+        - scheduled
+        - running
+        - pending
+        - disabled
+      type: string
+    jobs_sort_method:
+      default: gpus_runtime_memory
+      description: Inform the server to use this sort method when processing the claim_jobs_based_on_resources command.
+      enum:
+      - gpus_runtime_memory
+      - gpus_memory_runtime
+      - none
+      type: string
+x-original-swagger-version: "2.0"

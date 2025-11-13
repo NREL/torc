@@ -1,34 +1,65 @@
-<!-- codecov isn't processing the CliRunner-executed commands correctly. It is substantially under-counted. -->
-<!-- [![codecov](https://codecov.io/gh/NREL/torc/graph/badge.svg?token=OY9JDRCIB9)](https://codecov.io/gh/NREL/torc) -->
 
 # Torc workflow management system
 
-This software package orchestrates execution of a workflow of jobs on distributed computing
-resources. It is optimized for use on HPCs with Slurm, but also can be used in the cloud and
-on local computers.
+**Distributed workflow orchestration for complex computational pipelines**
 
-Please refer to the documentation at https://nrel.github.io/torc
+Torc is a workflow management system designed for running large-scale computational workflows with complex dependencies on local machines and HPC clusters. It uses a client-server architecture with a centralized SQLite database for state management and coordination.
+
+[![License](https://img.shields.io/badge/license-BSD%203--Clause-blue.svg)](LICENSE)
 
 ## Project Status
-The software is well-tested and has been used in several projects at NREL. However, it is not
-currently sponsored for active development. Unless user adoption changes significantly, we will
-likely only make incremental feature updates, depending on project needs.
+The software is currently being ported from Python + JavaScript + ArangoDB to Rust + SQLite.
+This increases portability, especially for local environments. Previous releases are still
+available and supported.
 
-### Maintenance
-We will attempt to fix any bugs reported as well as address updates to software dependencies.
-
-### Future Development
-Contributions to the development of Torc are welcome.
-
-The main new feature of interest to current users is the removal of the need to run an external
-database (ArangoDB). While that mode of operation has many benefits and will continue to be the
-default, some users want to be able to run local workflows without having to manage a database
-and a Docker/Podman container. The current Python and Julia application code would be unchanged
-if the database and Torc API service running within it were replaced by a new server process.
-
-We would like to see this happen and will look for opportunities to implement it.
+Most functionality is currently available, but the interfaces should not be treated as stable.
+Validation is not complete, and so the tool should not be used for production workloads.
+We expect the port to be ready for use by January 2026.
 
 Please post new ideas for Torc in the [discussions](https://github.com/NREL/torc/discussions).
+
+## Features
+
+- **Declarative Workflow Specifications** - Define workflows in YAML, JSON5, JSON, or KDL
+- **Automatic Dependency Resolution** - Dependencies inferred from file and data relationships
+- **Job Parameterization** - Create parameter sweeps and grid searches with simple syntax
+- **Distributed Execution** - Run jobs across multiple compute nodes with resource tracking
+- **Slurm Integration** - Native support for HPC cluster job submission
+- **Workflow Resumption** - Restart workflows after failures without losing progress
+- **Change Detection** - Automatically detect input changes and re-run affected jobs
+- **Resource Management** - Track CPU, memory, and GPU usage across all jobs
+- **RESTful API** - Complete OpenAPI-specified REST API for integration
+
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                         Torc Server                          │
+│  ┌────────────────────────────────────────────────────┐     │
+│  │            REST API (Tokio 8-thread)               │     │
+│  │  /workflows  /jobs  /files  /user_data  /results  │     │
+│  └───────────────────┬────────────────────────────────┘     │
+│                      │                                       │
+│  ┌───────────────────▼────────────────────────────────┐     │
+│  │              SQLite Database (WAL)                 │     │
+│  │  • Workflow state    • Job dependencies           │     │
+│  │  • Resource tracking • Execution results          │     │
+│  └────────────────────────────────────────────────────┘     │
+└─────────────────────────────────────────────────────────────┘
+                             ▲
+                             │ HTTP/REST
+                             │
+        ┌────────────────────┼────────────────────┐
+        │                    │                    │
+┌───────▼────────┐  ┌────────▼────────┐  ┌───────▼────────┐
+│  Torc Client   │  │  Job Runner 1   │  │  Job Runner N  │
+│                │  │  (compute-01)   │  │  (compute-nn)  │
+│ • Create       │  │                 │  │                │
+│   workflows    │  │ • Poll for jobs │  │ • Poll for jobs│
+│ • Submit specs │  │ • Execute tasks │  │ • Execute tasks│
+│ • Monitor      │  │ • Report results│  │ • Report results│
+└────────────────┘  └─────────────────┘  └────────────────┘
+```
 
 ## Why develop another workflow management tool?
 Since there are so many open source workflow management tools available, some may ask, "why develop
@@ -38,6 +69,9 @@ excellent tools and we took inspiration from them. However, they did not fully m
 wasn't difficult to create exactly what we wanted.
 
 Here are the features of Torc that we think differentiate it from other tools:
+
+- Simple execution on local computers. Many tools require advanced setup and management.
+  Torc provides precompiled binaries for each supported platform.
 
 - Node packing on HPC compute nodes
 

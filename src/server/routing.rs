@@ -1,0 +1,13909 @@
+use futures::{future, future::BoxFuture};
+use hyper::header::{CONTENT_TYPE, HeaderName, HeaderValue};
+use hyper::{Body, Request, Response, StatusCode};
+use log::warn;
+#[allow(unused_imports)]
+use std::convert::{TryFrom, TryInto};
+use std::marker::PhantomData;
+use std::task::{Context, Poll};
+pub use swagger::auth::Authorization;
+use swagger::{BodyExt, Has, RequestParser, XSpanIdString};
+use url::form_urlencoded;
+
+use crate::models;
+#[allow(unused_imports)]
+use crate::server::auth::AuthenticationApi;
+
+pub use crate::server::context;
+
+type ServiceFuture =
+    BoxFuture<'static, Result<Response<Body>, crate::server::api_types::ServiceError>>;
+
+use crate::server::api_types::{
+    Api, CancelWorkflowResponse, ClaimActionResponse, ClaimJobsBasedOnResources,
+    ClaimNextJobsResponse, CompleteJobResponse, CreateComputeNodeResponse, CreateEventResponse,
+    CreateFileResponse, CreateJobResponse, CreateJobsResponse, CreateLocalSchedulerResponse,
+    CreateResourceRequirementsResponse, CreateResultResponse, CreateScheduledComputeNodeResponse,
+    CreateSlurmSchedulerResponse, CreateUserDataResponse, CreateWorkflowActionResponse,
+    CreateWorkflowResponse, DeleteAllResourceRequirementsResponse, DeleteAllUserDataResponse,
+    DeleteComputeNodeResponse, DeleteComputeNodesResponse, DeleteEventResponse,
+    DeleteEventsResponse, DeleteFileResponse, DeleteFilesResponse, DeleteJobResponse,
+    DeleteJobsResponse, DeleteLocalSchedulerResponse, DeleteLocalSchedulersResponse,
+    DeleteResourceRequirementsResponse, DeleteResultResponse, DeleteResultsResponse,
+    DeleteScheduledComputeNodeResponse, DeleteScheduledComputeNodesResponse,
+    DeleteSlurmSchedulerResponse, DeleteSlurmSchedulersResponse, DeleteUserDataResponse,
+    DeleteWorkflowResponse, GetComputeNodeResponse, GetDotGraphResponse, GetEventResponse,
+    GetFileResponse, GetJobResponse, GetLatestEventTimestampResponse, GetLocalSchedulerResponse,
+    GetPendingActionsResponse, GetReadyJobRequirementsResponse, GetResourceRequirementsResponse,
+    GetResultResponse, GetScheduledComputeNodeResponse, GetSlurmSchedulerResponse,
+    GetUserDataResponse, GetVersionResponse, GetWorkflowActionsResponse, GetWorkflowResponse,
+    GetWorkflowStatusResponse, InitializeJobsResponse, IsWorkflowCompleteResponse,
+    IsWorkflowUninitializedResponse, ListComputeNodesResponse, ListEventsResponse,
+    ListFilesResponse, ListJobDependenciesResponse, ListJobIdsResponse, ListJobsResponse,
+    ListLocalSchedulersResponse, ListMissingUserDataResponse, ListRequiredExistingFilesResponse,
+    ListResourceRequirementsResponse, ListResultsResponse, ListScheduledComputeNodesResponse,
+    ListSlurmSchedulersResponse, ListUserDataResponse, ListWorkflowsResponse,
+    ManageStatusChangeResponse, PingResponse, ProcessChangedJobInputsResponse,
+    ResetJobStatusResponse, ResetWorkflowStatusResponse, StartJobResponse,
+    UpdateComputeNodeResponse, UpdateEventResponse, UpdateFileResponse, UpdateJobResponse,
+    UpdateLocalSchedulerResponse, UpdateResourceRequirementsResponse, UpdateResultResponse,
+    UpdateScheduledComputeNodeResponse, UpdateSlurmSchedulerResponse, UpdateUserDataResponse,
+    UpdateWorkflowResponse, UpdateWorkflowStatusResponse,
+};
+
+mod paths {
+    use lazy_static::lazy_static;
+
+    lazy_static! {
+        pub static ref GLOBAL_REGEX_SET: regex::RegexSet = regex::RegexSet::new(vec![
+            r"^/torc-service/v1/bulk_jobs$",
+            r"^/torc-service/v1/compute_nodes$",
+            r"^/torc-service/v1/compute_nodes/(?P<id>[^/?#]*)$",
+            r"^/torc-service/v1/events$",
+            r"^/torc-service/v1/events/(?P<id>[^/?#]*)$",
+            r"^/torc-service/v1/files$",
+            r"^/torc-service/v1/files/(?P<id>[^/?#]*)$",
+            r"^/torc-service/v1/jobs$",
+            r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)$",
+            r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)/complete_job/(?P<status>[^/?#]*)/(?P<run_id>[^/?#]*)$",
+            r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)/manage_status_change/(?P<status>[^/?#]*)/(?P<run_id>[^/?#]*)$",
+            r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)/start_job/(?P<run_id>[^/?#]*)/(?P<compute_node_id>[^/?#]*)$",
+            r"^/torc-service/v1/local_schedulers$",
+            r"^/torc-service/v1/local_schedulers/(?P<id>[^/?#]*)$",
+            r"^/torc-service/v1/ping$",
+            r"^/torc-service/v1/resource_requirements$",
+            r"^/torc-service/v1/resource_requirements/(?P<id>[^/?#]*)$",
+            r"^/torc-service/v1/results$",
+            r"^/torc-service/v1/results/(?P<id>[^/?#]*)$",
+            r"^/torc-service/v1/scheduled_compute_nodes$",
+            r"^/torc-service/v1/scheduled_compute_nodes/(?P<id>[^/?#]*)$",
+            r"^/torc-service/v1/slurm_schedulers$",
+            r"^/torc-service/v1/slurm_schedulers/(?P<id>[^/?#]*)$",
+            r"^/torc-service/v1/user_data$",
+            r"^/torc-service/v1/user_data/(?P<id>[^/?#]*)$",
+            r"^/torc-service/v1/version$",
+            r"^/torc-service/v1/workflows$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/cancel$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/dot_graph/(?P<name>[^/?#]*)$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/events_after_timestamp/(?P<timestamp>[^/?#]*)$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/initialize_jobs$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/is_complete$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/is_uninitialized$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_ids$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/latest_event_timestamp$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/missing_user_data$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/prepare_jobs_for_scheduling$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/claim_jobs_based_on_resources/(?P<limit>[^/?#]*)$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/claim_next_jobs$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/process_changed_job_inputs$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/ready_job_requirements$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/required_existing_files$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/reset_job_status$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/reset_status$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/status$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_dependencies$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions/pending$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions/(?P<action_id>[^/?#]*)/claim$"
+        ])
+        .expect("Unable to create global regex set");
+    }
+    pub(crate) static ID_BULK_JOBS: usize = 0;
+    pub(crate) static ID_COMPUTE_NODES: usize = 1;
+    pub(crate) static ID_COMPUTE_NODES_ID: usize = 2;
+    lazy_static! {
+        pub static ref REGEX_COMPUTE_NODES_ID: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/compute_nodes/(?P<id>[^/?#]*)$")
+                .expect("Unable to create regex for COMPUTE_NODES_ID");
+    }
+    pub(crate) static ID_EVENTS: usize = 3;
+    pub(crate) static ID_EVENTS_ID: usize = 4;
+    lazy_static! {
+        pub static ref REGEX_EVENTS_ID: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/events/(?P<id>[^/?#]*)$")
+                .expect("Unable to create regex for EVENTS_ID");
+    }
+    pub(crate) static ID_FILES: usize = 5;
+    pub(crate) static ID_FILES_ID: usize = 6;
+    lazy_static! {
+        pub static ref REGEX_FILES_ID: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/files/(?P<id>[^/?#]*)$")
+                .expect("Unable to create regex for FILES_ID");
+    }
+    pub(crate) static ID_JOBS: usize = 7;
+    pub(crate) static ID_JOBS_ID: usize = 8;
+    lazy_static! {
+        pub static ref REGEX_JOBS_ID: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)$")
+                .expect("Unable to create regex for JOBS_ID");
+    }
+    pub(crate) static ID_JOBS_ID_COMPLETE_JOB_STATUS_REV_RUN_ID: usize = 9;
+    lazy_static! {
+        pub static ref REGEX_JOBS_ID_COMPLETE_JOB_STATUS_REV_RUN_ID: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)/complete_job/(?P<status>[^/?#]*)/(?P<run_id>[^/?#]*)$")
+                .expect("Unable to create regex for JOBS_ID_COMPLETE_JOB_STATUS_REV_RUN_ID");
+    }
+    pub(crate) static ID_JOBS_ID_MANAGE_STATUS_CHANGE_STATUS_REV_RUN_ID: usize = 10;
+    lazy_static! {
+        pub static ref REGEX_JOBS_ID_MANAGE_STATUS_CHANGE_STATUS_REV_RUN_ID: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)/manage_status_change/(?P<status>[^/?#]*)/(?P<run_id>[^/?#]*)$")
+                .expect("Unable to create regex for JOBS_ID_MANAGE_STATUS_CHANGE_STATUS_REV_RUN_ID");
+    }
+    pub(crate) static ID_JOBS_ID_START_JOB_REV_RUN_ID_COMPUTE_NODE_ID: usize = 11;
+    lazy_static! {
+        pub static ref REGEX_JOBS_ID_START_JOB_REV_RUN_ID_COMPUTE_NODE_ID: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/jobs/(?P<id>[^/?#]*)/start_job/(?P<run_id>[^/?#]*)/(?P<compute_node_id>[^/?#]*)$")
+                .expect("Unable to create regex for JOBS_ID_START_JOB_REV_RUN_ID_COMPUTE_NODE_ID");
+    }
+    pub(crate) static ID_LOCAL_SCHEDULERS: usize = 12;
+    pub(crate) static ID_LOCAL_SCHEDULERS_ID: usize = 13;
+    lazy_static! {
+        pub static ref REGEX_LOCAL_SCHEDULERS_ID: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/local_schedulers/(?P<id>[^/?#]*)$")
+                .expect("Unable to create regex for LOCAL_SCHEDULERS_ID");
+    }
+    pub(crate) static ID_PING: usize = 14;
+    pub(crate) static ID_RESOURCE_REQUIREMENTS: usize = 15;
+    pub(crate) static ID_RESOURCE_REQUIREMENTS_ID: usize = 16;
+    lazy_static! {
+        pub static ref REGEX_RESOURCE_REQUIREMENTS_ID: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/resource_requirements/(?P<id>[^/?#]*)$")
+                .expect("Unable to create regex for RESOURCE_REQUIREMENTS_ID");
+    }
+    pub(crate) static ID_RESULTS: usize = 17;
+    pub(crate) static ID_RESULTS_ID: usize = 18;
+    lazy_static! {
+        pub static ref REGEX_RESULTS_ID: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/results/(?P<id>[^/?#]*)$")
+                .expect("Unable to create regex for RESULTS_ID");
+    }
+    pub(crate) static ID_SCHEDULED_COMPUTE_NODES: usize = 19;
+    pub(crate) static ID_SCHEDULED_COMPUTE_NODES_ID: usize = 20;
+    lazy_static! {
+        pub static ref REGEX_SCHEDULED_COMPUTE_NODES_ID: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/scheduled_compute_nodes/(?P<id>[^/?#]*)$")
+                .expect("Unable to create regex for SCHEDULED_COMPUTE_NODES_ID");
+    }
+    pub(crate) static ID_SLURM_SCHEDULERS: usize = 21;
+    pub(crate) static ID_SLURM_SCHEDULERS_ID: usize = 22;
+    lazy_static! {
+        pub static ref REGEX_SLURM_SCHEDULERS_ID: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/slurm_schedulers/(?P<id>[^/?#]*)$")
+                .expect("Unable to create regex for SLURM_SCHEDULERS_ID");
+    }
+    pub(crate) static ID_USER_DATA: usize = 23;
+    pub(crate) static ID_USER_DATA_ID: usize = 24;
+    lazy_static! {
+        pub static ref REGEX_USER_DATA_ID: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/user_data/(?P<id>[^/?#]*)$")
+                .expect("Unable to create regex for USER_DATA_ID");
+    }
+    pub(crate) static ID_VERSION: usize = 25;
+    pub(crate) static ID_WORKFLOWS: usize = 26;
+    pub(crate) static ID_WORKFLOWS_ID: usize = 27;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)$")
+                .expect("Unable to create regex for WORKFLOWS_ID");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_CANCEL: usize = 28;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_CANCEL: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/cancel$")
+                .expect("Unable to create regex for WORKFLOWS_ID_CANCEL");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_DOT_GRAPH_NAME: usize = 29;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_DOT_GRAPH_NAME: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(
+                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/dot_graph/(?P<name>[^/?#]*)$"
+            )
+            .expect("Unable to create regex for WORKFLOWS_ID_DOT_GRAPH_NAME");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_EVENTS_AFTER_TIMESTAMP_TIMESTAMP: usize = 30;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_EVENTS_AFTER_TIMESTAMP_TIMESTAMP: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/events_after_timestamp/(?P<timestamp>[^/?#]*)$")
+                .expect("Unable to create regex for WORKFLOWS_ID_EVENTS_AFTER_TIMESTAMP_TIMESTAMP");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_INITIALIZE_JOBS: usize = 31;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_INITIALIZE_JOBS: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/initialize_jobs$")
+                .expect("Unable to create regex for WORKFLOWS_ID_INITIALIZE_JOBS");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_IS_COMPLETE: usize = 32;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_IS_COMPLETE: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/is_complete$")
+                .expect("Unable to create regex for WORKFLOWS_ID_IS_COMPLETE");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_IS_UNINITIALIZED: usize = 33;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_IS_UNINITIALIZED: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/is_uninitialized$")
+                .expect("Unable to create regex for WORKFLOWS_ID_IS_UNINITIALIZED");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_JOB_IDS: usize = 34;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_JOB_IDS: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_ids$")
+                .expect("Unable to create regex for WORKFLOWS_ID_JOB_IDS");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP: usize = 35;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(
+                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/latest_event_timestamp$"
+            )
+            .expect("Unable to create regex for WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_MISSING_USER_DATA: usize = 36;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_MISSING_USER_DATA: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/missing_user_data$")
+                .expect("Unable to create regex for WORKFLOWS_ID_MISSING_USER_DATA");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_PREPARE_JOBS_FOR_SCHEDULING: usize = 37;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_PREPARE_JOBS_FOR_SCHEDULING: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(
+                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/prepare_jobs_for_scheduling$"
+            )
+            .expect("Unable to create regex for WORKFLOWS_ID_PREPARE_JOBS_FOR_SCHEDULING");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_PREPARE_JOBS_FOR_SUBMISSION: usize = 38;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_PREPARE_JOBS_FOR_SUBMISSION: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(
+                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/claim_jobs_based_on_resources/(?P<limit>[^/?#]*)$"
+            )
+            .expect("Unable to create regex for WORKFLOWS_ID_CLAIM_JOBS_BASED_ON_RESOURCES");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_CLAIM_NEXT_JOBS: usize = 39;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_PREPARE_NEXT_JOBS_FOR_SUBMISSION: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/claim_next_jobs$")
+                .expect("Unable to create regex for WORKFLOWS_ID_PREPARE_NEXT_JOBS_FOR_SUBMISSION");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_PROCESS_CHANGED_JOB_INPUTS: usize = 40;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_PROCESS_CHANGED_JOB_INPUTS: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(
+                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/process_changed_job_inputs$"
+            )
+            .expect("Unable to create regex for WORKFLOWS_ID_PROCESS_CHANGED_JOB_INPUTS");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_READY_JOB_REQUIREMENTS: usize = 41;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_READY_JOB_REQUIREMENTS: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(
+                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/ready_job_requirements$"
+            )
+            .expect("Unable to create regex for WORKFLOWS_ID_READY_JOB_REQUIREMENTS");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_REQUIRED_EXISTING_FILES: usize = 42;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_REQUIRED_EXISTING_FILES: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(
+                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/required_existing_files$"
+            )
+            .expect("Unable to create regex for WORKFLOWS_ID_REQUIRED_EXISTING_FILES");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_RESET_JOB_STATUS: usize = 43;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_RESET_JOB_STATUS: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/reset_job_status$")
+                .expect("Unable to create regex for WORKFLOWS_ID_RESET_JOB_STATUS");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_RESET_STATUS: usize = 44;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_RESET_STATUS: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/reset_status$")
+                .expect("Unable to create regex for WORKFLOWS_ID_RESET_STATUS");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_STATUS: usize = 45;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_STATUS: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/status$")
+                .expect("Unable to create regex for WORKFLOWS_ID_STATUS");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_JOB_DEPENDENCIES: usize = 46;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_JOB_DEPENDENCIES: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_dependencies$")
+                .expect("Unable to create regex for WORKFLOWS_ID_JOB_DEPENDENCIES");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_ACTIONS: usize = 47;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_ACTIONS: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions$")
+                .expect("Unable to create regex for WORKFLOWS_ID_ACTIONS");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_ACTIONS_PENDING: usize = 48;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_ACTIONS_PENDING: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions/pending$")
+                .expect("Unable to create regex for WORKFLOWS_ID_ACTIONS_PENDING");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_ACTIONS_ACTION_ID_CLAIM: usize = 49;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_ACTIONS_ACTION_ID_CLAIM: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(
+                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions/(?P<action_id>[^/?#]*)/claim$"
+            )
+            .expect("Unable to create regex for WORKFLOWS_ID_ACTIONS_ACTION_ID_CLAIM");
+    }
+}
+
+pub struct MakeService<T, C>
+where
+    T: Api<C> + Clone + Send + 'static,
+    C: Has<XSpanIdString> + Send + Sync + 'static,
+{
+    api_impl: T,
+    marker: PhantomData<C>,
+}
+
+impl<T, C> MakeService<T, C>
+where
+    T: Api<C> + Clone + Send + 'static,
+    C: Has<XSpanIdString> + Send + Sync + 'static,
+{
+    pub fn new(api_impl: T) -> Self {
+        MakeService {
+            api_impl,
+            marker: PhantomData,
+        }
+    }
+}
+
+impl<T, C, Target> hyper::service::Service<Target> for MakeService<T, C>
+where
+    T: Api<C> + Clone + Send + 'static,
+    C: Has<XSpanIdString> + Send + Sync + 'static,
+{
+    type Response = Service<T, C>;
+    type Error = crate::server::api_types::ServiceError;
+    type Future = future::Ready<Result<Self::Response, Self::Error>>;
+
+    fn poll_ready(&mut self, _cx: &mut Context<'_>) -> Poll<Result<(), Self::Error>> {
+        Poll::Ready(Ok(()))
+    }
+
+    fn call(&mut self, _target: Target) -> Self::Future {
+        let service = Service::new(self.api_impl.clone());
+
+        future::ok(service)
+    }
+}
+
+fn method_not_allowed() -> Result<Response<Body>, crate::server::api_types::ServiceError> {
+    Ok(Response::builder()
+        .status(StatusCode::METHOD_NOT_ALLOWED)
+        .body(Body::empty())
+        .expect("Unable to create Method Not Allowed response"))
+}
+
+pub struct Service<T, C>
+where
+    T: Api<C> + Clone + Send + 'static,
+    C: Has<XSpanIdString> + Send + Sync + 'static,
+{
+    api_impl: T,
+    marker: PhantomData<C>,
+}
+
+impl<T, C> Service<T, C>
+where
+    T: Api<C> + Clone + Send + 'static,
+    C: Has<XSpanIdString> + Send + Sync + 'static,
+{
+    pub fn new(api_impl: T) -> Self {
+        Service {
+            api_impl,
+            marker: PhantomData,
+        }
+    }
+}
+
+impl<T, C> Clone for Service<T, C>
+where
+    T: Api<C> + Clone + Send + 'static,
+    C: Has<XSpanIdString> + Send + Sync + 'static,
+{
+    fn clone(&self) -> Self {
+        Service {
+            api_impl: self.api_impl.clone(),
+            marker: self.marker,
+        }
+    }
+}
+
+impl<T, C> hyper::service::Service<(Request<Body>, C)> for Service<T, C>
+where
+    T: Api<C> + Clone + Send + Sync + 'static,
+    C: Has<XSpanIdString> + Send + Sync + 'static,
+{
+    type Response = Response<Body>;
+    type Error = crate::server::api_types::ServiceError;
+    type Future = ServiceFuture;
+
+    fn poll_ready(&mut self, cx: &mut Context) -> Poll<Result<(), Self::Error>> {
+        self.api_impl.poll_ready(cx)
+    }
+
+    fn call(&mut self, req: (Request<Body>, C)) -> Self::Future {
+        async fn run<T, C>(
+            api_impl: T,
+            req: (Request<Body>, C),
+        ) -> Result<Response<Body>, crate::server::api_types::ServiceError>
+        where
+            T: Api<C> + Clone + Send + 'static,
+            C: Has<XSpanIdString> + Send + Sync + 'static,
+        {
+            let (request, context) = req;
+            let (parts, body) = request.into_parts();
+            let (method, uri, _headers) = (parts.method, parts.uri, parts.headers);
+            let path = paths::GLOBAL_REGEX_SET.matches(uri.path());
+
+            match method {
+                // CreateComputeNode - POST /compute_nodes
+                hyper::Method::POST if path.matched(paths::ID_COMPUTE_NODES) => {
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::ComputeNodeModel> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl.create_compute_node(param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CreateComputeNodeResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateComputeNodeResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateComputeNodeResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // CreateEvent - POST /events
+                hyper::Method::POST if path.matched(paths::ID_EVENTS) => {
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::EventModel> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl.create_event(param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CreateEventResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateEventResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateEventResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // CreateFile - POST /files
+                hyper::Method::POST if path.matched(paths::ID_FILES) => {
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::FileModel> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl.create_file(param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CreateFileResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateFileResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateFileResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // CreateJob - POST /jobs
+                hyper::Method::POST if path.matched(paths::ID_JOBS) => {
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::JobModel> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl.create_job(param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CreateJobResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateJobResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateJobResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // CreateJobs - POST /bulk_jobs
+                hyper::Method::POST if path.matched(paths::ID_BULK_JOBS) => {
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::JobsModel> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl.create_jobs(param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CreateJobsResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateJobsResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateJobsResponse::UnprocessableContentErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(422)
+                                            .expect("Unable to turn 422 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateJobsResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // CreateLocalScheduler - POST /local_schedulers
+                hyper::Method::POST if path.matched(paths::ID_LOCAL_SCHEDULERS) => {
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::LocalSchedulerModel> = if !body
+                                .is_empty()
+                            {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result =
+                                api_impl.create_local_scheduler(param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CreateLocalSchedulerResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateLocalSchedulerResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // CreateResourceRequirements - POST /resource_requirements
+                hyper::Method::POST if path.matched(paths::ID_RESOURCE_REQUIREMENTS) => {
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::ResourceRequirementsModel> = if !body
+                                .is_empty()
+                            {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl
+                                .create_resource_requirements(param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CreateResourceRequirementsResponse::SuccessfulResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateResourceRequirementsResponse::NotFoundErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateResourceRequirementsResponse::UnprocessableContentErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(422)
+                                            .expect("Unable to turn 422 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateResourceRequirementsResponse::DefaultErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // CreateResult - POST /results
+                hyper::Method::POST if path.matched(paths::ID_RESULTS) => {
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::ResultModel> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl.create_result(param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CreateResultResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateResultResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateResultResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // CreateScheduledComputeNode - POST /scheduled_compute_nodes
+                hyper::Method::POST if path.matched(paths::ID_SCHEDULED_COMPUTE_NODES) => {
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::ScheduledComputeNodesModel> = if !body
+                                .is_empty()
+                            {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl
+                                .create_scheduled_compute_node(param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CreateScheduledComputeNodeResponse::SuccessfulResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateScheduledComputeNodeResponse::DefaultErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // CreateSlurmScheduler - POST /slurm_schedulers
+                hyper::Method::POST if path.matched(paths::ID_SLURM_SCHEDULERS) => {
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::SlurmSchedulerModel> = if !body
+                                .is_empty()
+                            {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result =
+                                api_impl.create_slurm_scheduler(param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CreateSlurmSchedulerResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateSlurmSchedulerResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateSlurmSchedulerResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // CreateUserData - POST /user_data
+                hyper::Method::POST if path.matched(paths::ID_USER_DATA) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_consumer_job_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "consumer_job_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_consumer_job_id = match param_consumer_job_id {
+                        Some(param_consumer_job_id) => {
+                            let param_consumer_job_id =
+                                <i64 as std::str::FromStr>::from_str(&param_consumer_job_id);
+                            match param_consumer_job_id {
+                            Ok(param_consumer_job_id) => Some(param_consumer_job_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter consumer_job_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter consumer_job_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_producer_job_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "producer_job_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_producer_job_id = match param_producer_job_id {
+                        Some(param_producer_job_id) => {
+                            let param_producer_job_id =
+                                <i64 as std::str::FromStr>::from_str(&param_producer_job_id);
+                            match param_producer_job_id {
+                            Ok(param_producer_job_id) => Some(param_producer_job_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter producer_job_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter producer_job_id")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::UserDataModel> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl
+                                .create_user_data(
+                                    param_body,
+                                    param_consumer_job_id,
+                                    param_producer_job_id,
+                                    &context,
+                                )
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CreateUserDataResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateUserDataResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateUserDataResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // CreateWorkflow - POST /workflows
+                hyper::Method::POST if path.matched(paths::ID_WORKFLOWS) => {
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::WorkflowModel> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl.create_workflow(param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CreateWorkflowResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateWorkflowResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteComputeNodes - DELETE /compute_nodes
+                hyper::Method::DELETE if path.matched(paths::ID_COMPUTE_NODES) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_compute_nodes(param_workflow_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteComputeNodesResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteComputeNodesResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteComputeNodesResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteEvents - DELETE /events
+                hyper::Method::DELETE if path.matched(paths::ID_EVENTS) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_events(param_workflow_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteEventsResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteEventsResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteEventsResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteFiles - DELETE /files
+                hyper::Method::DELETE if path.matched(paths::ID_FILES) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_files(param_workflow_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteFilesResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteFilesResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteFilesResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteJobs - DELETE /jobs
+                hyper::Method::DELETE if path.matched(paths::ID_JOBS) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_jobs(param_workflow_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteJobsResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteJobsResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteJobsResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteLocalSchedulers - DELETE /local_schedulers
+                hyper::Method::DELETE if path.matched(paths::ID_LOCAL_SCHEDULERS) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_local_schedulers(param_workflow_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteLocalSchedulersResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteLocalSchedulersResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteLocalSchedulersResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteResourceRequirements - DELETE /resource_requirements
+                hyper::Method::DELETE if path.matched(paths::ID_RESOURCE_REQUIREMENTS) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_all_resource_requirements(
+                                    param_workflow_id,
+                                    param_body,
+                                    &context,
+                                )
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteAllResourceRequirementsResponse::SuccessfulResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteAllResourceRequirementsResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteAllResourceRequirementsResponse::DefaultErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteResults - DELETE /results
+                hyper::Method::DELETE if path.matched(paths::ID_RESULTS) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_results(param_workflow_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteResultsResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteResultsResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteResultsResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteScheduledComputeNodes - DELETE /scheduled_compute_nodes
+                hyper::Method::DELETE if path.matched(paths::ID_SCHEDULED_COMPUTE_NODES) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_scheduled_compute_nodes(
+                                    param_workflow_id,
+                                    param_body,
+                                    &context,
+                                )
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteScheduledComputeNodesResponse::SuccessfulResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteScheduledComputeNodesResponse::NotFoundErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteScheduledComputeNodesResponse::DefaultErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteSlurmSchedulers - DELETE /slurm_schedulers
+                hyper::Method::DELETE if path.matched(paths::ID_SLURM_SCHEDULERS) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_slurm_schedulers(param_workflow_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteSlurmSchedulersResponse::Message(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteSlurmSchedulersResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteSlurmSchedulersResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteUserData - DELETE /user_data
+                hyper::Method::DELETE if path.matched(paths::ID_USER_DATA) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_all_user_data(param_workflow_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteAllUserDataResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteAllUserDataResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteAllUserDataResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // GetVersion - GET /version
+                hyper::Method::GET if path.matched(paths::ID_VERSION) => {
+                    let result = api_impl.get_version(&context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetVersionResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetVersionResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetVersionResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListComputeNodes - GET /compute_nodes
+                hyper::Method::GET if path.matched(paths::ID_COMPUTE_NODES) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+                    let param_skip = query_params
+                        .iter()
+                        .filter(|e| e.0 == "offset")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_skip = match param_skip {
+                        Some(param_skip) => {
+                            let param_skip = <i64 as std::str::FromStr>::from_str(&param_skip);
+                            match param_skip {
+                            Ok(param_skip) => Some(param_skip),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter offset - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter offset")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_limit = query_params
+                        .iter()
+                        .filter(|e| e.0 == "limit")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_limit = match param_limit {
+                        Some(param_limit) => {
+                            let param_limit = <i64 as std::str::FromStr>::from_str(&param_limit);
+                            match param_limit {
+                            Ok(param_limit) => Some(param_limit),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter limit - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter limit")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_sort_by = query_params
+                        .iter()
+                        .filter(|e| e.0 == "sort_by")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_sort_by = match param_sort_by {
+                        Some(param_sort_by) => {
+                            let param_sort_by =
+                                <String as std::str::FromStr>::from_str(&param_sort_by);
+                            match param_sort_by {
+                            Ok(param_sort_by) => Some(param_sort_by),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter sort_by - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter sort_by")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_reverse_sort = query_params
+                        .iter()
+                        .filter(|e| e.0 == "reverse_sort")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_reverse_sort = match param_reverse_sort {
+                        Some(param_reverse_sort) => {
+                            let param_reverse_sort =
+                                <bool as std::str::FromStr>::from_str(&param_reverse_sort);
+                            match param_reverse_sort {
+                            Ok(param_reverse_sort) => Some(param_reverse_sort),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter reverse_sort - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter reverse_sort")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_hostname = query_params
+                        .iter()
+                        .filter(|e| e.0 == "hostname")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let _param_hostname = match param_hostname {
+                        Some(param_hostname) => {
+                            let param_hostname =
+                                <String as std::str::FromStr>::from_str(&param_hostname);
+                            match param_hostname {
+                            Ok(param_hostname) => Some(param_hostname),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter hostname - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter hostname")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_is_active = query_params
+                        .iter()
+                        .filter(|e| e.0 == "is_active")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let _param_is_active = match param_is_active {
+                        Some(param_is_active) => {
+                            let param_is_active =
+                                <bool as std::str::FromStr>::from_str(&param_is_active);
+                            match param_is_active {
+                            Ok(param_is_active) => Some(param_is_active),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter is_active - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter is_active")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    let result = api_impl
+                        .list_compute_nodes(
+                            param_workflow_id,
+                            param_skip,
+                            param_limit,
+                            param_sort_by,
+                            param_reverse_sort,
+                            &context,
+                        )
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListComputeNodesResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListComputeNodesResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListEvents - GET /events
+                hyper::Method::GET if path.matched(paths::ID_EVENTS) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+                    let param_skip = query_params
+                        .iter()
+                        .filter(|e| e.0 == "offset")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_skip = match param_skip {
+                        Some(param_skip) => {
+                            let param_skip = <i64 as std::str::FromStr>::from_str(&param_skip);
+                            match param_skip {
+                            Ok(param_skip) => Some(param_skip),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter offset - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter offset")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_limit = query_params
+                        .iter()
+                        .filter(|e| e.0 == "limit")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_limit = match param_limit {
+                        Some(param_limit) => {
+                            let param_limit = <i64 as std::str::FromStr>::from_str(&param_limit);
+                            match param_limit {
+                            Ok(param_limit) => Some(param_limit),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter limit - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter limit")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_sort_by = query_params
+                        .iter()
+                        .filter(|e| e.0 == "sort_by")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_sort_by = match param_sort_by {
+                        Some(param_sort_by) => {
+                            let param_sort_by =
+                                <String as std::str::FromStr>::from_str(&param_sort_by);
+                            match param_sort_by {
+                            Ok(param_sort_by) => Some(param_sort_by),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter sort_by - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter sort_by")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_reverse_sort = query_params
+                        .iter()
+                        .filter(|e| e.0 == "reverse_sort")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_reverse_sort = match param_reverse_sort {
+                        Some(param_reverse_sort) => {
+                            let param_reverse_sort =
+                                <bool as std::str::FromStr>::from_str(&param_reverse_sort);
+                            match param_reverse_sort {
+                            Ok(param_reverse_sort) => Some(param_reverse_sort),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter reverse_sort - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter reverse_sort")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_category = query_params
+                        .iter()
+                        .filter(|e| e.0 == "category")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_category = match param_category {
+                        Some(param_category) => {
+                            let param_category =
+                                <String as std::str::FromStr>::from_str(&param_category);
+                            match param_category {
+                            Ok(param_category) => Some(param_category),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter category - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter category")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_after_timestamp = query_params
+                        .iter()
+                        .filter(|e| e.0 == "after_timestamp")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_after_timestamp = match param_after_timestamp {
+                        Some(param_after_timestamp) => {
+                            let param_after_timestamp =
+                                <f64 as std::str::FromStr>::from_str(&param_after_timestamp);
+                            match param_after_timestamp {
+                            Ok(param_after_timestamp) => Some(param_after_timestamp),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter after_timestamp - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter after_timestamp")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    let result = api_impl
+                        .list_events(
+                            param_workflow_id,
+                            param_skip,
+                            param_limit,
+                            param_sort_by,
+                            param_reverse_sort,
+                            param_category,
+                            param_after_timestamp,
+                            &context,
+                        )
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListEventsResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListEventsResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListFiles - GET /files
+                hyper::Method::GET if path.matched(paths::ID_FILES) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+                    let param_produced_by_job_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "produced_by_job_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_produced_by_job_id = match param_produced_by_job_id {
+                        Some(param_produced_by_job_id) => {
+                            let param_produced_by_job_id =
+                                <i64 as std::str::FromStr>::from_str(&param_produced_by_job_id);
+                            match param_produced_by_job_id {
+                            Ok(param_produced_by_job_id) => Some(param_produced_by_job_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter produced_by_job_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter produced_by_job_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_skip = query_params
+                        .iter()
+                        .filter(|e| e.0 == "offset")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_skip = match param_skip {
+                        Some(param_skip) => {
+                            let param_skip = <i64 as std::str::FromStr>::from_str(&param_skip);
+                            match param_skip {
+                            Ok(param_skip) => Some(param_skip),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter offset - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter offset")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_limit = query_params
+                        .iter()
+                        .filter(|e| e.0 == "limit")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_limit = match param_limit {
+                        Some(param_limit) => {
+                            let param_limit = <i64 as std::str::FromStr>::from_str(&param_limit);
+                            match param_limit {
+                            Ok(param_limit) => Some(param_limit),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter limit - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter limit")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_sort_by = query_params
+                        .iter()
+                        .filter(|e| e.0 == "sort_by")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_sort_by = match param_sort_by {
+                        Some(param_sort_by) => {
+                            let param_sort_by =
+                                <String as std::str::FromStr>::from_str(&param_sort_by);
+                            match param_sort_by {
+                            Ok(param_sort_by) => Some(param_sort_by),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter sort_by - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter sort_by")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_reverse_sort = query_params
+                        .iter()
+                        .filter(|e| e.0 == "reverse_sort")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_reverse_sort = match param_reverse_sort {
+                        Some(param_reverse_sort) => {
+                            let param_reverse_sort =
+                                <bool as std::str::FromStr>::from_str(&param_reverse_sort);
+                            match param_reverse_sort {
+                            Ok(param_reverse_sort) => Some(param_reverse_sort),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter reverse_sort - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter reverse_sort")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_name = query_params
+                        .iter()
+                        .filter(|e| e.0 == "name")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_name = match param_name {
+                        Some(param_name) => {
+                            let param_name = <String as std::str::FromStr>::from_str(&param_name);
+                            match param_name {
+                            Ok(param_name) => Some(param_name),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter name - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter name")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_path = query_params
+                        .iter()
+                        .filter(|e| e.0 == "path")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_path = match param_path {
+                        Some(param_path) => {
+                            let param_path = <String as std::str::FromStr>::from_str(&param_path);
+                            match param_path {
+                            Ok(param_path) => Some(param_path),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter path - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter path")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    let result = api_impl
+                        .list_files(
+                            param_workflow_id,
+                            param_produced_by_job_id,
+                            param_skip,
+                            param_limit,
+                            param_sort_by,
+                            param_reverse_sort,
+                            param_name,
+                            param_path,
+                            &context,
+                        )
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListFilesResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListFilesResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListJobs - GET /jobs
+                hyper::Method::GET if path.matched(paths::ID_JOBS) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+                    let param_status = query_params
+                        .iter()
+                        .filter(|e| e.0 == "status")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_status = match param_status {
+                        Some(param_status) => {
+                            let param_status =
+                                <models::JobStatus as std::str::FromStr>::from_str(&param_status);
+                            match param_status {
+                            Ok(param_status) => Some(param_status),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter status - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter status")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_needs_file_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "needs_file_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_needs_file_id = match param_needs_file_id {
+                        Some(param_needs_file_id) => {
+                            let param_needs_file_id =
+                                <i64 as std::str::FromStr>::from_str(&param_needs_file_id);
+                            match param_needs_file_id {
+                            Ok(param_needs_file_id) => Some(param_needs_file_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter needs_file_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter needs_file_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_upstream_job_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "upstream_job_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_upstream_job_id = match param_upstream_job_id {
+                        Some(param_upstream_job_id) => {
+                            let param_upstream_job_id =
+                                <i64 as std::str::FromStr>::from_str(&param_upstream_job_id);
+                            match param_upstream_job_id {
+                            Ok(param_upstream_job_id) => Some(param_upstream_job_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter upstream_job_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter upstream_job_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_skip = query_params
+                        .iter()
+                        .filter(|e| e.0 == "offset")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_skip = match param_skip {
+                        Some(param_skip) => {
+                            let param_skip = <i64 as std::str::FromStr>::from_str(&param_skip);
+                            match param_skip {
+                            Ok(param_skip) => Some(param_skip),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter offset - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter offset")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_limit = query_params
+                        .iter()
+                        .filter(|e| e.0 == "limit")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_limit = match param_limit {
+                        Some(param_limit) => {
+                            let param_limit = <i64 as std::str::FromStr>::from_str(&param_limit);
+                            match param_limit {
+                            Ok(param_limit) => Some(param_limit),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter limit - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter limit")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_sort_by = query_params
+                        .iter()
+                        .filter(|e| e.0 == "sort_by")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_sort_by = match param_sort_by {
+                        Some(param_sort_by) => {
+                            let param_sort_by =
+                                <String as std::str::FromStr>::from_str(&param_sort_by);
+                            match param_sort_by {
+                            Ok(param_sort_by) => Some(param_sort_by),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter sort_by - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter sort_by")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_reverse_sort = query_params
+                        .iter()
+                        .filter(|e| e.0 == "reverse_sort")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_reverse_sort = match param_reverse_sort {
+                        Some(param_reverse_sort) => {
+                            let param_reverse_sort =
+                                <bool as std::str::FromStr>::from_str(&param_reverse_sort);
+                            match param_reverse_sort {
+                            Ok(param_reverse_sort) => Some(param_reverse_sort),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter reverse_sort - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter reverse_sort")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    let result = api_impl
+                        .list_jobs(
+                            param_workflow_id,
+                            param_status,
+                            param_needs_file_id,
+                            param_upstream_job_id,
+                            param_skip,
+                            param_limit,
+                            param_sort_by,
+                            param_reverse_sort,
+                            &context,
+                        )
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListJobsResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListJobsResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListLocalSchedulers - GET /local_schedulers
+                hyper::Method::GET if path.matched(paths::ID_LOCAL_SCHEDULERS) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+                    let param_skip = query_params
+                        .iter()
+                        .filter(|e| e.0 == "offset")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_skip = match param_skip {
+                        Some(param_skip) => {
+                            let param_skip = <i64 as std::str::FromStr>::from_str(&param_skip);
+                            match param_skip {
+                            Ok(param_skip) => Some(param_skip),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter offset - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter offset")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_limit = query_params
+                        .iter()
+                        .filter(|e| e.0 == "limit")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_limit = match param_limit {
+                        Some(param_limit) => {
+                            let param_limit = <i64 as std::str::FromStr>::from_str(&param_limit);
+                            match param_limit {
+                            Ok(param_limit) => Some(param_limit),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter limit - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter limit")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_sort_by = query_params
+                        .iter()
+                        .filter(|e| e.0 == "sort_by")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_sort_by = match param_sort_by {
+                        Some(param_sort_by) => {
+                            let param_sort_by =
+                                <String as std::str::FromStr>::from_str(&param_sort_by);
+                            match param_sort_by {
+                            Ok(param_sort_by) => Some(param_sort_by),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter sort_by - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter sort_by")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_reverse_sort = query_params
+                        .iter()
+                        .filter(|e| e.0 == "reverse_sort")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_reverse_sort = match param_reverse_sort {
+                        Some(param_reverse_sort) => {
+                            let param_reverse_sort =
+                                <bool as std::str::FromStr>::from_str(&param_reverse_sort);
+                            match param_reverse_sort {
+                            Ok(param_reverse_sort) => Some(param_reverse_sort),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter reverse_sort - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter reverse_sort")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_memory = query_params
+                        .iter()
+                        .filter(|e| e.0 == "memory")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_memory = match param_memory {
+                        Some(param_memory) => {
+                            let param_memory =
+                                <String as std::str::FromStr>::from_str(&param_memory);
+                            match param_memory {
+                            Ok(param_memory) => Some(param_memory),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter memory - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter memory")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_num_cpus = query_params
+                        .iter()
+                        .filter(|e| e.0 == "num_cpus")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_num_cpus = match param_num_cpus {
+                        Some(param_num_cpus) => {
+                            let param_num_cpus =
+                                <i64 as std::str::FromStr>::from_str(&param_num_cpus);
+                            match param_num_cpus {
+                            Ok(param_num_cpus) => Some(param_num_cpus),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter num_cpus - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter num_cpus")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    let result = api_impl
+                        .list_local_schedulers(
+                            param_workflow_id,
+                            param_skip,
+                            param_limit,
+                            param_sort_by,
+                            param_reverse_sort,
+                            param_memory,
+                            param_num_cpus,
+                            &context,
+                        )
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListLocalSchedulersResponse::HTTP(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListLocalSchedulersResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListResourceRequirements - GET /resource_requirements
+                hyper::Method::GET if path.matched(paths::ID_RESOURCE_REQUIREMENTS) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+                    let param_job_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "job_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let _param_job_id = match param_job_id {
+                        Some(param_job_id) => {
+                            let param_job_id = <i64 as std::str::FromStr>::from_str(&param_job_id);
+                            match param_job_id {
+                            Ok(param_job_id) => Some(param_job_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter job_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter job_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_skip = query_params
+                        .iter()
+                        .filter(|e| e.0 == "offset")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_skip = match param_skip {
+                        Some(param_skip) => {
+                            let param_skip = <i64 as std::str::FromStr>::from_str(&param_skip);
+                            match param_skip {
+                            Ok(param_skip) => Some(param_skip),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter offset - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter offset")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_limit = query_params
+                        .iter()
+                        .filter(|e| e.0 == "limit")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_limit = match param_limit {
+                        Some(param_limit) => {
+                            let param_limit = <i64 as std::str::FromStr>::from_str(&param_limit);
+                            match param_limit {
+                            Ok(param_limit) => Some(param_limit),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter limit - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter limit")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_sort_by = query_params
+                        .iter()
+                        .filter(|e| e.0 == "sort_by")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_sort_by = match param_sort_by {
+                        Some(param_sort_by) => {
+                            let param_sort_by =
+                                <String as std::str::FromStr>::from_str(&param_sort_by);
+                            match param_sort_by {
+                            Ok(param_sort_by) => Some(param_sort_by),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter sort_by - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter sort_by")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_reverse_sort = query_params
+                        .iter()
+                        .filter(|e| e.0 == "reverse_sort")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_reverse_sort = match param_reverse_sort {
+                        Some(param_reverse_sort) => {
+                            let param_reverse_sort =
+                                <bool as std::str::FromStr>::from_str(&param_reverse_sort);
+                            match param_reverse_sort {
+                            Ok(param_reverse_sort) => Some(param_reverse_sort),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter reverse_sort - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter reverse_sort")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_name = query_params
+                        .iter()
+                        .filter(|e| e.0 == "name")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_name = match param_name {
+                        Some(param_name) => {
+                            let param_name = <String as std::str::FromStr>::from_str(&param_name);
+                            match param_name {
+                            Ok(param_name) => Some(param_name),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter name - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter name")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_memory = query_params
+                        .iter()
+                        .filter(|e| e.0 == "memory")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let _param_memory = match param_memory {
+                        Some(param_memory) => {
+                            let param_memory =
+                                <String as std::str::FromStr>::from_str(&param_memory);
+                            match param_memory {
+                            Ok(param_memory) => Some(param_memory),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter memory - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter memory")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_num_cpus = query_params
+                        .iter()
+                        .filter(|e| e.0 == "num_cpus")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let _param_num_cpus = match param_num_cpus {
+                        Some(param_num_cpus) => {
+                            let param_num_cpus =
+                                <i64 as std::str::FromStr>::from_str(&param_num_cpus);
+                            match param_num_cpus {
+                            Ok(param_num_cpus) => Some(param_num_cpus),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter num_cpus - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter num_cpus")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_num_gpus = query_params
+                        .iter()
+                        .filter(|e| e.0 == "num_gpus")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let _param_num_gpus = match param_num_gpus {
+                        Some(param_num_gpus) => {
+                            let param_num_gpus =
+                                <i64 as std::str::FromStr>::from_str(&param_num_gpus);
+                            match param_num_gpus {
+                            Ok(param_num_gpus) => Some(param_num_gpus),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter num_gpus - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter num_gpus")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_num_nodes = query_params
+                        .iter()
+                        .filter(|e| e.0 == "num_nodes")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let _param_num_nodes = match param_num_nodes {
+                        Some(param_num_nodes) => {
+                            let param_num_nodes =
+                                <i64 as std::str::FromStr>::from_str(&param_num_nodes);
+                            match param_num_nodes {
+                            Ok(param_num_nodes) => Some(param_num_nodes),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter num_nodes - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter num_nodes")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_runtime = query_params
+                        .iter()
+                        .filter(|e| e.0 == "runtime")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let _param_runtime = match param_runtime {
+                        Some(param_runtime) => {
+                            let param_runtime =
+                                <i64 as std::str::FromStr>::from_str(&param_runtime);
+                            match param_runtime {
+                            Ok(param_runtime) => Some(param_runtime),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter runtime - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter runtime")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    let result = api_impl
+                        .list_resource_requirements(
+                            param_workflow_id,
+                            param_name,
+                            param_skip,
+                            param_limit,
+                            param_sort_by,
+                            param_reverse_sort,
+                            &context,
+                        )
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListResourceRequirementsResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListResourceRequirementsResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListResults - GET /results
+                hyper::Method::GET if path.matched(paths::ID_RESULTS) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+                    let param_job_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "job_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_job_id = match param_job_id {
+                        Some(param_job_id) => {
+                            let param_job_id = <i64 as std::str::FromStr>::from_str(&param_job_id);
+                            match param_job_id {
+                            Ok(param_job_id) => Some(param_job_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter job_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter job_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_skip = query_params
+                        .iter()
+                        .filter(|e| e.0 == "offset")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_skip = match param_skip {
+                        Some(param_skip) => {
+                            let param_skip = <i64 as std::str::FromStr>::from_str(&param_skip);
+                            match param_skip {
+                            Ok(param_skip) => Some(param_skip),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter offset - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter offset")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_limit = query_params
+                        .iter()
+                        .filter(|e| e.0 == "limit")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_limit = match param_limit {
+                        Some(param_limit) => {
+                            let param_limit = <i64 as std::str::FromStr>::from_str(&param_limit);
+                            match param_limit {
+                            Ok(param_limit) => Some(param_limit),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter limit - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter limit")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_sort_by = query_params
+                        .iter()
+                        .filter(|e| e.0 == "sort_by")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_sort_by = match param_sort_by {
+                        Some(param_sort_by) => {
+                            let param_sort_by =
+                                <String as std::str::FromStr>::from_str(&param_sort_by);
+                            match param_sort_by {
+                            Ok(param_sort_by) => Some(param_sort_by),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter sort_by - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter sort_by")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_reverse_sort = query_params
+                        .iter()
+                        .filter(|e| e.0 == "reverse_sort")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_reverse_sort = match param_reverse_sort {
+                        Some(param_reverse_sort) => {
+                            let param_reverse_sort =
+                                <bool as std::str::FromStr>::from_str(&param_reverse_sort);
+                            match param_reverse_sort {
+                            Ok(param_reverse_sort) => Some(param_reverse_sort),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter reverse_sort - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter reverse_sort")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_run_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "run_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_run_id = match param_run_id {
+                        Some(param_run_id) => {
+                            let param_run_id = <i64 as std::str::FromStr>::from_str(&param_run_id);
+                            match param_run_id {
+                            Ok(param_run_id) => Some(param_run_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter run_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter run_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_return_code = query_params
+                        .iter()
+                        .filter(|e| e.0 == "return_code")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_return_code = match param_return_code {
+                        Some(param_return_code) => {
+                            let param_return_code =
+                                <i64 as std::str::FromStr>::from_str(&param_return_code);
+                            match param_return_code {
+                            Ok(param_return_code) => Some(param_return_code),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter return_code - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter return_code")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_status = query_params
+                        .iter()
+                        .filter(|e| e.0 == "status")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_status = match param_status {
+                        Some(param_status) => {
+                            let param_status =
+                                <models::JobStatus as std::str::FromStr>::from_str(&param_status);
+                            match param_status {
+                            Ok(param_status) => Some(param_status),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter status - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter status")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_all_runs = query_params
+                        .iter()
+                        .filter(|e| e.0 == "all_runs")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_all_runs = match param_all_runs {
+                        Some(param_all_runs) => {
+                            let param_all_runs =
+                                <bool as std::str::FromStr>::from_str(&param_all_runs);
+                            match param_all_runs {
+                            Ok(param_all_runs) => Some(param_all_runs),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter all_runs - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter all_runs")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    let result = api_impl
+                        .list_results(
+                            param_workflow_id,
+                            param_job_id,
+                            param_run_id,
+                            param_return_code,
+                            param_status,
+                            param_skip,
+                            param_limit,
+                            param_sort_by,
+                            param_reverse_sort,
+                            param_all_runs,
+                            &context,
+                        )
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListResultsResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListResultsResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListScheduledComputeNodes - GET /scheduled_compute_nodes
+                hyper::Method::GET if path.matched(paths::ID_SCHEDULED_COMPUTE_NODES) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+                    let param_skip = query_params
+                        .iter()
+                        .filter(|e| e.0 == "offset")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_skip = match param_skip {
+                        Some(param_skip) => {
+                            let param_skip = <i64 as std::str::FromStr>::from_str(&param_skip);
+                            match param_skip {
+                            Ok(param_skip) => Some(param_skip),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter offset - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter offset")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_limit = query_params
+                        .iter()
+                        .filter(|e| e.0 == "limit")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_limit = match param_limit {
+                        Some(param_limit) => {
+                            let param_limit = <i64 as std::str::FromStr>::from_str(&param_limit);
+                            match param_limit {
+                            Ok(param_limit) => Some(param_limit),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter limit - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter limit")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_sort_by = query_params
+                        .iter()
+                        .filter(|e| e.0 == "sort_by")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_sort_by = match param_sort_by {
+                        Some(param_sort_by) => {
+                            let param_sort_by =
+                                <String as std::str::FromStr>::from_str(&param_sort_by);
+                            match param_sort_by {
+                            Ok(param_sort_by) => Some(param_sort_by),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter sort_by - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter sort_by")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_reverse_sort = query_params
+                        .iter()
+                        .filter(|e| e.0 == "reverse_sort")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_reverse_sort = match param_reverse_sort {
+                        Some(param_reverse_sort) => {
+                            let param_reverse_sort =
+                                <bool as std::str::FromStr>::from_str(&param_reverse_sort);
+                            match param_reverse_sort {
+                            Ok(param_reverse_sort) => Some(param_reverse_sort),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter reverse_sort - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter reverse_sort")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_scheduler_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "scheduler_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_scheduler_id = match param_scheduler_id {
+                        Some(param_scheduler_id) => {
+                            let param_scheduler_id =
+                                <String as std::str::FromStr>::from_str(&param_scheduler_id);
+                            match param_scheduler_id {
+                            Ok(param_scheduler_id) => Some(param_scheduler_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter scheduler_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter scheduler_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_scheduler_config_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "scheduler_config_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_scheduler_config_id = match param_scheduler_config_id {
+                        Some(param_scheduler_config_id) => {
+                            let param_scheduler_config_id =
+                                <String as std::str::FromStr>::from_str(&param_scheduler_config_id);
+                            match param_scheduler_config_id {
+                            Ok(param_scheduler_config_id) => Some(param_scheduler_config_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter scheduler_config_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter scheduler_config_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_status = query_params
+                        .iter()
+                        .filter(|e| e.0 == "status")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_status = match param_status {
+                        Some(param_status) => {
+                            let param_status =
+                                <String as std::str::FromStr>::from_str(&param_status);
+                            match param_status {
+                            Ok(param_status) => Some(param_status),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter status - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter status")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    let result = api_impl
+                        .list_scheduled_compute_nodes(
+                            param_workflow_id,
+                            param_skip,
+                            param_limit,
+                            param_sort_by,
+                            param_reverse_sort,
+                            param_scheduler_id,
+                            param_scheduler_config_id,
+                            param_status,
+                            &context,
+                        )
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListScheduledComputeNodesResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListScheduledComputeNodesResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListSlurmSchedulers - GET /slurm_schedulers
+                hyper::Method::GET if path.matched(paths::ID_SLURM_SCHEDULERS) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+                    let param_skip = query_params
+                        .iter()
+                        .filter(|e| e.0 == "offset")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_skip = match param_skip {
+                        Some(param_skip) => {
+                            let param_skip = <i64 as std::str::FromStr>::from_str(&param_skip);
+                            match param_skip {
+                            Ok(param_skip) => Some(param_skip),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter offset - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter offset")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_limit = query_params
+                        .iter()
+                        .filter(|e| e.0 == "limit")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_limit = match param_limit {
+                        Some(param_limit) => {
+                            let param_limit = <i64 as std::str::FromStr>::from_str(&param_limit);
+                            match param_limit {
+                            Ok(param_limit) => Some(param_limit),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter limit - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter limit")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_sort_by = query_params
+                        .iter()
+                        .filter(|e| e.0 == "sort_by")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_sort_by = match param_sort_by {
+                        Some(param_sort_by) => {
+                            let param_sort_by =
+                                <String as std::str::FromStr>::from_str(&param_sort_by);
+                            match param_sort_by {
+                            Ok(param_sort_by) => Some(param_sort_by),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter sort_by - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter sort_by")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_reverse_sort = query_params
+                        .iter()
+                        .filter(|e| e.0 == "reverse_sort")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_reverse_sort = match param_reverse_sort {
+                        Some(param_reverse_sort) => {
+                            let param_reverse_sort =
+                                <bool as std::str::FromStr>::from_str(&param_reverse_sort);
+                            match param_reverse_sort {
+                            Ok(param_reverse_sort) => Some(param_reverse_sort),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter reverse_sort - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter reverse_sort")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_name = query_params
+                        .iter()
+                        .filter(|e| e.0 == "name")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_name = match param_name {
+                        Some(param_name) => {
+                            let param_name = <String as std::str::FromStr>::from_str(&param_name);
+                            match param_name {
+                            Ok(param_name) => Some(param_name),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter name - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter name")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_account = query_params
+                        .iter()
+                        .filter(|e| e.0 == "account")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_account = match param_account {
+                        Some(param_account) => {
+                            let param_account =
+                                <String as std::str::FromStr>::from_str(&param_account);
+                            match param_account {
+                            Ok(param_account) => Some(param_account),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter account - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter account")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_gres = query_params
+                        .iter()
+                        .filter(|e| e.0 == "gres")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_gres = match param_gres {
+                        Some(param_gres) => {
+                            let param_gres = <String as std::str::FromStr>::from_str(&param_gres);
+                            match param_gres {
+                            Ok(param_gres) => Some(param_gres),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter gres - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter gres")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_mem = query_params
+                        .iter()
+                        .filter(|e| e.0 == "mem")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_mem = match param_mem {
+                        Some(param_mem) => {
+                            let param_mem = <String as std::str::FromStr>::from_str(&param_mem);
+                            match param_mem {
+                            Ok(param_mem) => Some(param_mem),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter mem - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter mem")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_nodes = query_params
+                        .iter()
+                        .filter(|e| e.0 == "nodes")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_nodes = match param_nodes {
+                        Some(param_nodes) => {
+                            let param_nodes = <i64 as std::str::FromStr>::from_str(&param_nodes);
+                            match param_nodes {
+                            Ok(param_nodes) => Some(param_nodes),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter nodes - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter nodes")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_partition = query_params
+                        .iter()
+                        .filter(|e| e.0 == "partition")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_partition = match param_partition {
+                        Some(param_partition) => {
+                            let param_partition =
+                                <String as std::str::FromStr>::from_str(&param_partition);
+                            match param_partition {
+                            Ok(param_partition) => Some(param_partition),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter partition - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter partition")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_qos = query_params
+                        .iter()
+                        .filter(|e| e.0 == "qos")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_qos = match param_qos {
+                        Some(param_qos) => {
+                            let param_qos = <String as std::str::FromStr>::from_str(&param_qos);
+                            match param_qos {
+                            Ok(param_qos) => Some(param_qos),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter qos - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter qos")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_tmp = query_params
+                        .iter()
+                        .filter(|e| e.0 == "tmp")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_tmp = match param_tmp {
+                        Some(param_tmp) => {
+                            let param_tmp = <String as std::str::FromStr>::from_str(&param_tmp);
+                            match param_tmp {
+                            Ok(param_tmp) => Some(param_tmp),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter tmp - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter tmp")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_walltime = query_params
+                        .iter()
+                        .filter(|e| e.0 == "walltime")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_walltime = match param_walltime {
+                        Some(param_walltime) => {
+                            let param_walltime =
+                                <String as std::str::FromStr>::from_str(&param_walltime);
+                            match param_walltime {
+                            Ok(param_walltime) => Some(param_walltime),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter walltime - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter walltime")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    let result = api_impl
+                        .list_slurm_schedulers(
+                            param_workflow_id,
+                            param_skip,
+                            param_limit,
+                            param_sort_by,
+                            param_reverse_sort,
+                            param_name,
+                            param_account,
+                            param_gres,
+                            param_mem,
+                            param_nodes,
+                            param_partition,
+                            param_qos,
+                            param_tmp,
+                            param_walltime,
+                            &context,
+                        )
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListSlurmSchedulersResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListSlurmSchedulersResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListUserData - GET /user_data
+                hyper::Method::GET if path.matched(paths::ID_USER_DATA) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_workflow_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "workflow_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_workflow_id = match param_workflow_id {
+                        Some(param_workflow_id) => {
+                            let param_workflow_id =
+                                <i64 as std::str::FromStr>::from_str(&param_workflow_id);
+                            match param_workflow_id {
+                            Ok(param_workflow_id) => Some(param_workflow_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter workflow_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter workflow_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_workflow_id = match param_workflow_id {
+                    Some(param_workflow_id) => param_workflow_id,
+                    None => return Ok(Response::builder()
+                        .status(StatusCode::BAD_REQUEST)
+                        .body(Body::from("Missing required query parameter workflow_id"))
+                        .expect("Unable to create Bad Request response for missing query parameter workflow_id")),
+                };
+                    let param_consumer_job_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "consumer_job_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_consumer_job_id = match param_consumer_job_id {
+                        Some(param_consumer_job_id) => {
+                            let param_consumer_job_id =
+                                <i64 as std::str::FromStr>::from_str(&param_consumer_job_id);
+                            match param_consumer_job_id {
+                            Ok(param_consumer_job_id) => Some(param_consumer_job_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter consumer_job_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter consumer_job_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_producer_job_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "producer_job_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_producer_job_id = match param_producer_job_id {
+                        Some(param_producer_job_id) => {
+                            let param_producer_job_id =
+                                <i64 as std::str::FromStr>::from_str(&param_producer_job_id);
+                            match param_producer_job_id {
+                            Ok(param_producer_job_id) => Some(param_producer_job_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter producer_job_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter producer_job_id")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_skip = query_params
+                        .iter()
+                        .filter(|e| e.0 == "offset")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_skip = match param_skip {
+                        Some(param_skip) => {
+                            let param_skip = <i64 as std::str::FromStr>::from_str(&param_skip);
+                            match param_skip {
+                            Ok(param_skip) => Some(param_skip),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter offset - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter offset")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_limit = query_params
+                        .iter()
+                        .filter(|e| e.0 == "limit")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_limit = match param_limit {
+                        Some(param_limit) => {
+                            let param_limit = <i64 as std::str::FromStr>::from_str(&param_limit);
+                            match param_limit {
+                            Ok(param_limit) => Some(param_limit),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter limit - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter limit")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_sort_by = query_params
+                        .iter()
+                        .filter(|e| e.0 == "sort_by")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_sort_by = match param_sort_by {
+                        Some(param_sort_by) => {
+                            let param_sort_by =
+                                <String as std::str::FromStr>::from_str(&param_sort_by);
+                            match param_sort_by {
+                            Ok(param_sort_by) => Some(param_sort_by),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter sort_by - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter sort_by")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_reverse_sort = query_params
+                        .iter()
+                        .filter(|e| e.0 == "reverse_sort")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_reverse_sort = match param_reverse_sort {
+                        Some(param_reverse_sort) => {
+                            let param_reverse_sort =
+                                <bool as std::str::FromStr>::from_str(&param_reverse_sort);
+                            match param_reverse_sort {
+                            Ok(param_reverse_sort) => Some(param_reverse_sort),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter reverse_sort - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter reverse_sort")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_name = query_params
+                        .iter()
+                        .filter(|e| e.0 == "name")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_name = match param_name {
+                        Some(param_name) => {
+                            let param_name = <String as std::str::FromStr>::from_str(&param_name);
+                            match param_name {
+                            Ok(param_name) => Some(param_name),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter name - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter name")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_is_ephemeral = query_params
+                        .iter()
+                        .filter(|e| e.0 == "is_ephemeral")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_is_ephemeral = match param_is_ephemeral {
+                        Some(param_is_ephemeral) => {
+                            let param_is_ephemeral =
+                                <bool as std::str::FromStr>::from_str(&param_is_ephemeral);
+                            match param_is_ephemeral {
+                            Ok(param_is_ephemeral) => Some(param_is_ephemeral),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter is_ephemeral - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter is_ephemeral")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    let result = api_impl
+                        .list_user_data(
+                            param_workflow_id,
+                            param_consumer_job_id,
+                            param_producer_job_id,
+                            param_skip,
+                            param_limit,
+                            param_sort_by,
+                            param_reverse_sort,
+                            param_name,
+                            param_is_ephemeral,
+                            &context,
+                        )
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListUserDataResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListUserDataResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListWorkflows - GET /workflows
+                hyper::Method::GET if path.matched(paths::ID_WORKFLOWS) => {
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_skip = query_params
+                        .iter()
+                        .filter(|e| e.0 == "offset")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_skip = match param_skip {
+                        Some(param_skip) => {
+                            let param_skip = <i64 as std::str::FromStr>::from_str(&param_skip);
+                            match param_skip {
+                            Ok(param_skip) => Some(param_skip),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter offset - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter offset")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_sort_by = query_params
+                        .iter()
+                        .filter(|e| e.0 == "sort_by")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_sort_by = match param_sort_by {
+                        Some(param_sort_by) => {
+                            let param_sort_by =
+                                <String as std::str::FromStr>::from_str(&param_sort_by);
+                            match param_sort_by {
+                            Ok(param_sort_by) => Some(param_sort_by),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter sort_by - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter sort_by")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_reverse_sort = query_params
+                        .iter()
+                        .filter(|e| e.0 == "reverse_sort")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_reverse_sort = match param_reverse_sort {
+                        Some(param_reverse_sort) => {
+                            let param_reverse_sort =
+                                <bool as std::str::FromStr>::from_str(&param_reverse_sort);
+                            match param_reverse_sort {
+                            Ok(param_reverse_sort) => Some(param_reverse_sort),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter reverse_sort - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter reverse_sort")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_limit = query_params
+                        .iter()
+                        .filter(|e| e.0 == "limit")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_limit = match param_limit {
+                        Some(param_limit) => {
+                            let param_limit = <i64 as std::str::FromStr>::from_str(&param_limit);
+                            match param_limit {
+                            Ok(param_limit) => Some(param_limit),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter limit - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter limit")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_name = query_params
+                        .iter()
+                        .filter(|e| e.0 == "name")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_name = match param_name {
+                        Some(param_name) => {
+                            let param_name = <String as std::str::FromStr>::from_str(&param_name);
+                            match param_name {
+                            Ok(param_name) => Some(param_name),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter name - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter name")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_user = query_params
+                        .iter()
+                        .filter(|e| e.0 == "user")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_user = match param_user {
+                        Some(param_user) => {
+                            let param_user = <String as std::str::FromStr>::from_str(&param_user);
+                            match param_user {
+                            Ok(param_user) => Some(param_user),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter user - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter user")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_description = query_params
+                        .iter()
+                        .filter(|e| e.0 == "description")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_description = match param_description {
+                        Some(param_description) => {
+                            let param_description =
+                                <String as std::str::FromStr>::from_str(&param_description);
+                            match param_description {
+                            Ok(param_description) => Some(param_description),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter description - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter description")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_is_archived = query_params
+                        .iter()
+                        .filter(|e| e.0 == "is_archived")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_is_archived = match param_is_archived {
+                        Some(param_is_archived) => {
+                            let param_is_archived =
+                                <bool as std::str::FromStr>::from_str(&param_is_archived);
+                            match param_is_archived {
+                            Ok(param_is_archived) => Some(param_is_archived),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter is_archived - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter is_archived")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    let result = api_impl
+                        .list_workflows(
+                            param_skip,
+                            param_sort_by,
+                            param_reverse_sort,
+                            param_limit,
+                            param_name,
+                            param_user,
+                            param_description,
+                            param_is_archived,
+                            &context,
+                        )
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListWorkflowsResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListWorkflowsResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // Ping - GET /ping
+                hyper::Method::GET if path.matched(paths::ID_PING) => {
+                    let result = api_impl.ping(&context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                PingResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                PingResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // CancelWorkflow - PUT /workflows/{id}/cancel
+                hyper::Method::PUT if path.matched(paths::ID_WORKFLOWS_ID_CANCEL) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_CANCEL
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_CANCEL in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_CANCEL.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .cancel_workflow(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CancelWorkflowResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CancelWorkflowResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // GetComputeNode - GET /compute_nodes/{id}
+                hyper::Method::GET if path.matched(paths::ID_COMPUTE_NODES_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_COMPUTE_NODES_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE COMPUTE_NODES_ID in set but failed match against \"{}\"", path, paths::REGEX_COMPUTE_NODES_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.get_compute_node(param_id, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetComputeNodeResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetComputeNodeResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetComputeNodeResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // GetEvent - GET /events/{id}
+                hyper::Method::GET if path.matched(paths::ID_EVENTS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params = paths::REGEX_EVENTS_ID.captures(path).unwrap_or_else(|| {
+                        panic!(
+                            "Path {} matched RE EVENTS_ID in set but failed match against \"{}\"",
+                            path,
+                            paths::REGEX_EVENTS_ID.as_str()
+                        )
+                    });
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.get_event(param_id, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetEventResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetEventResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetEventResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // GetFile - GET /files/{id}
+                hyper::Method::GET if path.matched(paths::ID_FILES_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params = paths::REGEX_FILES_ID.captures(path).unwrap_or_else(|| {
+                        panic!(
+                            "Path {} matched RE FILES_ID in set but failed match against \"{}\"",
+                            path,
+                            paths::REGEX_FILES_ID.as_str()
+                        )
+                    });
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.get_file(param_id, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetFileResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetFileResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetFileResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // GetJob - GET /jobs/{id}
+                hyper::Method::GET if path.matched(paths::ID_JOBS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params = paths::REGEX_JOBS_ID.captures(path).unwrap_or_else(|| {
+                        panic!(
+                            "Path {} matched RE JOBS_ID in set but failed match against \"{}\"",
+                            path,
+                            paths::REGEX_JOBS_ID.as_str()
+                        )
+                    });
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.get_job(param_id, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetJobResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetJobResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetJobResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // GetLatestEventTimestamp - GET /workflows/{id}/latest_event_timestamp
+                hyper::Method::GET
+                    if path.matched(paths::ID_WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP) =>
+                {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl
+                        .get_latest_event_timestamp(param_id, &context)
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetLatestEventTimestampResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetLatestEventTimestampResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetLatestEventTimestampResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // GetLocalScheduler - GET /local_schedulers/{id}
+                hyper::Method::GET if path.matched(paths::ID_LOCAL_SCHEDULERS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_LOCAL_SCHEDULERS_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE LOCAL_SCHEDULERS_ID in set but failed match against \"{}\"", path, paths::REGEX_LOCAL_SCHEDULERS_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.get_local_scheduler(param_id, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetLocalSchedulerResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetLocalSchedulerResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetLocalSchedulerResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // GetReadyJobRequirements - GET /workflows/{id}/ready_job_requirements
+                hyper::Method::GET
+                    if path.matched(paths::ID_WORKFLOWS_ID_READY_JOB_REQUIREMENTS) =>
+                {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_READY_JOB_REQUIREMENTS
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_READY_JOB_REQUIREMENTS in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_READY_JOB_REQUIREMENTS.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_scheduler_config_id = query_params
+                        .iter()
+                        .filter(|e| e.0 == "scheduler_config_id")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_scheduler_config_id = match param_scheduler_config_id {
+                        Some(param_scheduler_config_id) => {
+                            let param_scheduler_config_id =
+                                <i64 as std::str::FromStr>::from_str(&param_scheduler_config_id);
+                            match param_scheduler_config_id {
+                            Ok(param_scheduler_config_id) => Some(param_scheduler_config_id),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter scheduler_config_id - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter scheduler_config_id")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    let result = api_impl
+                        .get_ready_job_requirements(param_id, param_scheduler_config_id, &context)
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetReadyJobRequirementsResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetReadyJobRequirementsResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetReadyJobRequirementsResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // GetResourceRequirements - GET /resource_requirements/{id}
+                hyper::Method::GET if path.matched(paths::ID_RESOURCE_REQUIREMENTS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_RESOURCE_REQUIREMENTS_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE RESOURCE_REQUIREMENTS_ID in set but failed match against \"{}\"", path, paths::REGEX_RESOURCE_REQUIREMENTS_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.get_resource_requirements(param_id, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetResourceRequirementsResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetResourceRequirementsResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetResourceRequirementsResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // GetResult - GET /results/{id}
+                hyper::Method::GET if path.matched(paths::ID_RESULTS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params = paths::REGEX_RESULTS_ID.captures(path).unwrap_or_else(|| {
+                        panic!(
+                            "Path {} matched RE RESULTS_ID in set but failed match against \"{}\"",
+                            path,
+                            paths::REGEX_RESULTS_ID.as_str()
+                        )
+                    });
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.get_result(param_id, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetResultResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetResultResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetResultResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // GetScheduledComputeNode - GET /scheduled_compute_nodes/{id}
+                hyper::Method::GET if path.matched(paths::ID_SCHEDULED_COMPUTE_NODES_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_SCHEDULED_COMPUTE_NODES_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE SCHEDULED_COMPUTE_NODES_ID in set but failed match against \"{}\"", path, paths::REGEX_SCHEDULED_COMPUTE_NODES_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl
+                        .get_scheduled_compute_node(param_id, &context)
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetScheduledComputeNodeResponse::HTTP(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetScheduledComputeNodeResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetScheduledComputeNodeResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // GetSlurmScheduler - GET /slurm_schedulers/{id}
+                hyper::Method::GET if path.matched(paths::ID_SLURM_SCHEDULERS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_SLURM_SCHEDULERS_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE SLURM_SCHEDULERS_ID in set but failed match against \"{}\"", path, paths::REGEX_SLURM_SCHEDULERS_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.get_slurm_scheduler(param_id, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetSlurmSchedulerResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetSlurmSchedulerResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetSlurmSchedulerResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // GetUserData - GET /user_data/{id}
+                hyper::Method::GET if path.matched(paths::ID_USER_DATA_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_USER_DATA_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE USER_DATA_ID in set but failed match against \"{}\"", path, paths::REGEX_USER_DATA_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.get_user_data(param_id, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetUserDataResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetUserDataResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetUserDataResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // GetWorkflow - GET /workflows/{id}
+                hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.get_workflow(param_id, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetWorkflowResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetWorkflowResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetWorkflowResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // GetWorkflowStatus - GET /workflows/{id}/status
+                hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_STATUS) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_STATUS
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_STATUS in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_STATUS.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.get_workflow_status(param_id, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetWorkflowStatusResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetWorkflowStatusResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetWorkflowStatusResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // InitializeJobs - POST /workflows/{id}/initialize_jobs
+                hyper::Method::POST if path.matched(paths::ID_WORKFLOWS_ID_INITIALIZE_JOBS) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_INITIALIZE_JOBS
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_INITIALIZE_JOBS in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_INITIALIZE_JOBS.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_only_uninitialized = query_params
+                        .iter()
+                        .filter(|e| e.0 == "only_uninitialized")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_only_uninitialized = match param_only_uninitialized {
+                        Some(param_only_uninitialized) => {
+                            let param_only_uninitialized =
+                                <bool as std::str::FromStr>::from_str(&param_only_uninitialized);
+                            match param_only_uninitialized {
+                            Ok(param_only_uninitialized) => Some(param_only_uninitialized),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter only_uninitialized - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter only_uninitialized")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_clear_ephemeral_user_data = query_params
+                        .iter()
+                        .filter(|e| e.0 == "clear_ephemeral_user_data")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_clear_ephemeral_user_data = match param_clear_ephemeral_user_data {
+                        Some(param_clear_ephemeral_user_data) => {
+                            let param_clear_ephemeral_user_data =
+                                <bool as std::str::FromStr>::from_str(
+                                    &param_clear_ephemeral_user_data,
+                                );
+                            match param_clear_ephemeral_user_data {
+                            Ok(param_clear_ephemeral_user_data) => Some(param_clear_ephemeral_user_data),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter clear_ephemeral_user_data - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter clear_ephemeral_user_data")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .initialize_jobs(
+                                    param_id,
+                                    param_only_uninitialized,
+                                    param_clear_ephemeral_user_data,
+                                    param_body,
+                                    &context,
+                                )
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    InitializeJobsResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    InitializeJobsResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // IsWorkflowComplete - GET /workflows/{id}/is_complete
+                hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_IS_COMPLETE) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_IS_COMPLETE
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_IS_COMPLETE in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_IS_COMPLETE.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.is_workflow_complete(param_id, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                IsWorkflowCompleteResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                IsWorkflowCompleteResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // IsWorkflowUninitialized - GET /workflows/{id}/is_uninitialized
+                hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_IS_UNINITIALIZED) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_IS_UNINITIALIZED
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_IS_UNINITIALIZED in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_IS_UNINITIALIZED.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.is_workflow_uninitialized(param_id, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                IsWorkflowUninitializedResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                IsWorkflowUninitializedResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListJobIds - GET /workflows/{id}/job_ids
+                hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_JOB_IDS) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_JOB_IDS
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_JOB_IDS in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_JOB_IDS.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.list_job_ids(param_id, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListJobIdsResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListJobIdsResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListJobDependencies - GET /workflows/{id}/job_dependencies
+                hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_JOB_DEPENDENCIES) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_JOB_DEPENDENCIES
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_JOB_DEPENDENCIES in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_JOB_DEPENDENCIES.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_offset = query_params
+                        .iter()
+                        .filter(|e| e.0 == "offset")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_offset = match param_offset {
+                        Some(param_offset) => {
+                            let param_offset = <i64 as std::str::FromStr>::from_str(&param_offset);
+                            match param_offset {
+                            Ok(param_offset) => Some(param_offset),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter offset - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter offset")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_limit = query_params
+                        .iter()
+                        .filter(|e| e.0 == "limit")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_limit = match param_limit {
+                        Some(param_limit) => {
+                            let param_limit = <i64 as std::str::FromStr>::from_str(&param_limit);
+                            match param_limit {
+                            Ok(param_limit) => Some(param_limit),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter limit - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter limit")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    let result = api_impl
+                        .list_job_dependencies(param_id, param_offset, param_limit, &context)
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListJobDependenciesResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListJobDependenciesResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // CreateWorkflowAction - POST /workflows/{id}/actions
+                hyper::Method::POST if path.matched(paths::ID_WORKFLOWS_ID_ACTIONS) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_ACTIONS
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_ACTIONS in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_ACTIONS.as_str())
+                    );
+
+                    let param_workflow_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_workflow_id) => match param_workflow_id.parse::<i64>() {
+                        Ok(param_workflow_id) => param_workflow_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let param_body: serde_json::Value = if !body.is_empty() {
+                                match serde_json::from_slice(&*body) {
+                                    Ok(param_body) => param_body,
+                                    Err(e) => return Ok(Response::builder()
+                                                    .status(StatusCode::BAD_REQUEST)
+                                                    .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                    .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                }
+                            } else {
+                                return Ok(Response::builder()
+                                    .status(StatusCode::BAD_REQUEST)
+                                    .body(Body::from("Missing required body parameter body"))
+                                    .expect("Unable to create Bad Request response for missing body parameter body"));
+                            };
+
+                            let result = api_impl
+                                .create_workflow_action(param_workflow_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CreateWorkflowActionResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                            CONTENT_TYPE,
+                                                            HeaderValue::from_str("application/json")
+                                                                .expect("Unable to create Content-Type header for application/json"));
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateWorkflowActionResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                            CONTENT_TYPE,
+                                                            HeaderValue::from_str("application/json")
+                                                                .expect("Unable to create Content-Type header for application/json"));
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateWorkflowActionResponse::UnprocessableContentErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(422)
+                                            .expect("Unable to turn 422 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                            CONTENT_TYPE,
+                                                            HeaderValue::from_str("application/json")
+                                                                .expect("Unable to create Content-Type header for application/json"));
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CreateWorkflowActionResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                            CONTENT_TYPE,
+                                                            HeaderValue::from_str("application/json")
+                                                                .expect("Unable to create Content-Type header for application/json"));
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!(
+                                "Couldn't read body parameter body: {}",
+                                e
+                            )))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // GetWorkflowActions - GET /workflows/{id}/actions
+                hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_ACTIONS) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_ACTIONS
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_ACTIONS in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_ACTIONS.as_str())
+                    );
+
+                    let param_workflow_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_workflow_id) => match param_workflow_id.parse::<i64>() {
+                        Ok(param_workflow_id) => param_workflow_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl
+                        .get_workflow_actions(param_workflow_id, &context)
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetWorkflowActionsResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                    CONTENT_TYPE,
+                                                    HeaderValue::from_str("application/json")
+                                                        .expect("Unable to create Content-Type header for application/json"));
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetWorkflowActionsResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                    CONTENT_TYPE,
+                                                    HeaderValue::from_str("application/json")
+                                                        .expect("Unable to create Content-Type header for application/json"));
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetWorkflowActionsResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                    CONTENT_TYPE,
+                                                    HeaderValue::from_str("application/json")
+                                                        .expect("Unable to create Content-Type header for application/json"));
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // GetPendingActions - GET /workflows/{id}/actions/pending
+                hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_ACTIONS_PENDING) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_ACTIONS_PENDING
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_ACTIONS_PENDING in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_ACTIONS_PENDING.as_str())
+                    );
+
+                    let param_workflow_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_workflow_id) => match param_workflow_id.parse::<i64>() {
+                        Ok(param_workflow_id) => param_workflow_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Query parameters for trigger_types filter
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_trigger_types: Option<Vec<String>> = {
+                        let types: Vec<String> = query_params
+                            .iter()
+                            .filter(|e| e.0 == "trigger_type")
+                            .map(|e| e.1.to_string())
+                            .collect();
+                        if types.is_empty() { None } else { Some(types) }
+                    };
+
+                    let result = api_impl
+                        .get_pending_actions(param_workflow_id, param_trigger_types, &context)
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetPendingActionsResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                    CONTENT_TYPE,
+                                                    HeaderValue::from_str("application/json")
+                                                        .expect("Unable to create Content-Type header for application/json"));
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetPendingActionsResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                    CONTENT_TYPE,
+                                                    HeaderValue::from_str("application/json")
+                                                        .expect("Unable to create Content-Type header for application/json"));
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetPendingActionsResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                    CONTENT_TYPE,
+                                                    HeaderValue::from_str("application/json")
+                                                        .expect("Unable to create Content-Type header for application/json"));
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ClaimAction - POST /workflows/{id}/actions/{action_id}/claim
+                hyper::Method::POST
+                    if path.matched(paths::ID_WORKFLOWS_ID_ACTIONS_ACTION_ID_CLAIM) =>
+                {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_ACTIONS_ACTION_ID_CLAIM
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_ACTIONS_ACTION_ID_CLAIM in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_ACTIONS_ACTION_ID_CLAIM.as_str())
+                    );
+
+                    let param_workflow_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_workflow_id) => match param_workflow_id.parse::<i64>() {
+                        Ok(param_workflow_id) => param_workflow_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let param_action_id = match percent_encoding::percent_decode(path_params["action_id"].as_bytes()).decode_utf8() {
+                    Ok(param_action_id) => match param_action_id.parse::<i64>() {
+                        Ok(param_action_id) => param_action_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter action_id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["action_id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let param_body: serde_json::Value = if !body.is_empty() {
+                                match serde_json::from_slice(&*body) {
+                                    Ok(param_body) => param_body,
+                                    Err(e) => return Ok(Response::builder()
+                                                    .status(StatusCode::BAD_REQUEST)
+                                                    .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                    .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                }
+                            } else {
+                                return Ok(Response::builder()
+                                    .status(StatusCode::BAD_REQUEST)
+                                    .body(Body::from("Missing required body parameter body"))
+                                    .expect("Unable to create Bad Request response for missing body parameter body"));
+                            };
+
+                            let result = api_impl
+                                .claim_action(
+                                    param_workflow_id,
+                                    param_action_id,
+                                    param_body,
+                                    &context,
+                                )
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    ClaimActionResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                            CONTENT_TYPE,
+                                                            HeaderValue::from_str("application/json")
+                                                                .expect("Unable to create Content-Type header for application/json"));
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ClaimActionResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                            CONTENT_TYPE,
+                                                            HeaderValue::from_str("application/json")
+                                                                .expect("Unable to create Content-Type header for application/json"));
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ClaimActionResponse::ConflictResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(409)
+                                            .expect("Unable to turn 409 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                            CONTENT_TYPE,
+                                                            HeaderValue::from_str("application/json")
+                                                                .expect("Unable to create Content-Type header for application/json"));
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ClaimActionResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                            CONTENT_TYPE,
+                                                            HeaderValue::from_str("application/json")
+                                                                .expect("Unable to create Content-Type header for application/json"));
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!(
+                                "Couldn't read body parameter body: {}",
+                                e
+                            )))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // ListMissingUserData - GET /workflows/{id}/missing_user_data
+                hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_MISSING_USER_DATA) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_MISSING_USER_DATA
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_MISSING_USER_DATA in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_MISSING_USER_DATA.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.list_missing_user_data(param_id, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListMissingUserDataResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListMissingUserDataResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListRequiredExistingFiles - GET /workflows/{id}/required_existing_files
+                hyper::Method::GET
+                    if path.matched(paths::ID_WORKFLOWS_ID_REQUIRED_EXISTING_FILES) =>
+                {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_REQUIRED_EXISTING_FILES
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_REQUIRED_EXISTING_FILES in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_REQUIRED_EXISTING_FILES.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl
+                        .list_required_existing_files(param_id, &context)
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListRequiredExistingFilesResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListRequiredExistingFilesResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // UpdateComputeNode - PUT /compute_nodes/{id}
+                hyper::Method::PUT if path.matched(paths::ID_COMPUTE_NODES_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_COMPUTE_NODES_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE COMPUTE_NODES_ID in set but failed match against \"{}\"", path, paths::REGEX_COMPUTE_NODES_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::ComputeNodeModel> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl
+                                .update_compute_node(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    UpdateComputeNodeResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateComputeNodeResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateComputeNodeResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // UpdateEvent - PUT /events/{id}
+                hyper::Method::PUT if path.matched(paths::ID_EVENTS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params = paths::REGEX_EVENTS_ID.captures(path).unwrap_or_else(|| {
+                        panic!(
+                            "Path {} matched RE EVENTS_ID in set but failed match against \"{}\"",
+                            path,
+                            paths::REGEX_EVENTS_ID.as_str()
+                        )
+                    });
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result =
+                                api_impl.update_event(param_id, param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    UpdateEventResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateEventResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateEventResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // UpdateFile - PUT /files/{id}
+                hyper::Method::PUT if path.matched(paths::ID_FILES_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params = paths::REGEX_FILES_ID.captures(path).unwrap_or_else(|| {
+                        panic!(
+                            "Path {} matched RE FILES_ID in set but failed match against \"{}\"",
+                            path,
+                            paths::REGEX_FILES_ID.as_str()
+                        )
+                    });
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::FileModel> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl.update_file(param_id, param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    UpdateFileResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateFileResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateFileResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // UpdateJob - PUT /jobs/{id}
+                hyper::Method::PUT if path.matched(paths::ID_JOBS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params = paths::REGEX_JOBS_ID.captures(path).unwrap_or_else(|| {
+                        panic!(
+                            "Path {} matched RE JOBS_ID in set but failed match against \"{}\"",
+                            path,
+                            paths::REGEX_JOBS_ID.as_str()
+                        )
+                    });
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::JobModel> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl.update_job(param_id, param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    UpdateJobResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateJobResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateJobResponse::UnprocessableContentErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(422)
+                                            .expect("Unable to turn 422 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateJobResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // UpdateLocalScheduler - PUT /local_schedulers/{id}
+                hyper::Method::PUT if path.matched(paths::ID_LOCAL_SCHEDULERS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_LOCAL_SCHEDULERS_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE LOCAL_SCHEDULERS_ID in set but failed match against \"{}\"", path, paths::REGEX_LOCAL_SCHEDULERS_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::LocalSchedulerModel> = if !body
+                                .is_empty()
+                            {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl
+                                .update_local_scheduler(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    UpdateLocalSchedulerResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateLocalSchedulerResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateLocalSchedulerResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // UpdateResourceRequirements - PUT /resource_requirements/{id}
+                hyper::Method::PUT if path.matched(paths::ID_RESOURCE_REQUIREMENTS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_RESOURCE_REQUIREMENTS_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE RESOURCE_REQUIREMENTS_ID in set but failed match against \"{}\"", path, paths::REGEX_RESOURCE_REQUIREMENTS_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::ResourceRequirementsModel> = if !body
+                                .is_empty()
+                            {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl
+                                .update_resource_requirements(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    UpdateResourceRequirementsResponse::SuccessfulResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateResourceRequirementsResponse::NotFoundErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateResourceRequirementsResponse::DefaultErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // UpdateResult - PUT /results/{id}
+                hyper::Method::PUT if path.matched(paths::ID_RESULTS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params = paths::REGEX_RESULTS_ID.captures(path).unwrap_or_else(|| {
+                        panic!(
+                            "Path {} matched RE RESULTS_ID in set but failed match against \"{}\"",
+                            path,
+                            paths::REGEX_RESULTS_ID.as_str()
+                        )
+                    });
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::ResultModel> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result =
+                                api_impl.update_result(param_id, param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    UpdateResultResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateResultResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateResultResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // UpdateScheduledComputeNode - PUT /scheduled_compute_nodes/{id}
+                hyper::Method::PUT if path.matched(paths::ID_SCHEDULED_COMPUTE_NODES_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_SCHEDULED_COMPUTE_NODES_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE SCHEDULED_COMPUTE_NODES_ID in set but failed match against \"{}\"", path, paths::REGEX_SCHEDULED_COMPUTE_NODES_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::ScheduledComputeNodesModel> = if !body
+                                .is_empty()
+                            {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl
+                                .update_scheduled_compute_node(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                            Ok(rsp) => match rsp {
+                                                UpdateScheduledComputeNodeResponse::ScheduledComputeNodeUpdatedInTheTable
+                                                    (body)
+                                                => {
+                                                    *response.status_mut() = StatusCode::from_u16(200).expect("Unable to turn 200 into a StatusCode");
+                                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                                    // JSON Body
+                                                    let body = serde_json::to_string(&body).expect("impossible to fail to serialize");
+                                                    *response.body_mut() = Body::from(body);
+
+                                                },
+                                                UpdateScheduledComputeNodeResponse::NotFoundErrorResponse
+                                                    (body)
+                                                => {
+                                                    *response.status_mut() = StatusCode::from_u16(404).expect("Unable to turn 404 into a StatusCode");
+                                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                                    // JSON Body
+                                                    let body = serde_json::to_string(&body).expect("impossible to fail to serialize");
+                                                    *response.body_mut() = Body::from(body);
+
+                                                },
+                                                UpdateScheduledComputeNodeResponse::DefaultErrorResponse
+                                                    (body)
+                                                => {
+                                                    *response.status_mut() = StatusCode::from_u16(500).expect("Unable to turn 500 into a StatusCode");
+                                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                                    // JSON Body
+                                                    let body = serde_json::to_string(&body).expect("impossible to fail to serialize");
+                                                    *response.body_mut() = Body::from(body);
+
+                                                },
+                                            },
+                                            Err(_) => {
+                                                // Application code returned an error. This should not happen, as the implementation should
+                                                // return a valid response.
+                                                *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                                *response.body_mut() = Body::from("An internal error occurred");
+                                            },
+                                        }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // UpdateSlurmScheduler - PUT /slurm_schedulers/{id}
+                hyper::Method::PUT if path.matched(paths::ID_SLURM_SCHEDULERS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_SLURM_SCHEDULERS_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE SLURM_SCHEDULERS_ID in set but failed match against \"{}\"", path, paths::REGEX_SLURM_SCHEDULERS_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::SlurmSchedulerModel> = if !body
+                                .is_empty()
+                            {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl
+                                .update_slurm_scheduler(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    UpdateSlurmSchedulerResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateSlurmSchedulerResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateSlurmSchedulerResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // UpdateUserData - PUT /user_data/{id}
+                hyper::Method::PUT if path.matched(paths::ID_USER_DATA_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_USER_DATA_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE USER_DATA_ID in set but failed match against \"{}\"", path, paths::REGEX_USER_DATA_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::UserDataModel> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl
+                                .update_user_data(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    UpdateUserDataResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateUserDataResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateUserDataResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // UpdateWorkflow - PUT /workflows/{id}
+                hyper::Method::PUT if path.matched(paths::ID_WORKFLOWS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::WorkflowModel> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl
+                                .update_workflow(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    UpdateWorkflowResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateWorkflowResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateWorkflowResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // UpdateWorkflowStatus - PUT /workflows/{id}/status
+                hyper::Method::PUT if path.matched(paths::ID_WORKFLOWS_ID_STATUS) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_STATUS
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_STATUS in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_STATUS.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::WorkflowStatusModel> = if !body
+                                .is_empty()
+                            {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl
+                                .update_workflow_status(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    UpdateWorkflowStatusResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateWorkflowStatusResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    UpdateWorkflowStatusResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // PrepareJobsForSubmission - POST /workflows/{id}/claim_jobs_based_on_resources/{limit}
+                hyper::Method::POST
+                    if path.matched(paths::ID_WORKFLOWS_ID_PREPARE_JOBS_FOR_SUBMISSION) =>
+                {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_PREPARE_JOBS_FOR_SUBMISSION
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_CLAIM_JOBS_BASED_ON_RESOURCES in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_PREPARE_JOBS_FOR_SUBMISSION.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                    };
+                    let param_limit = match percent_encoding::percent_decode(path_params["limit"].as_bytes()).decode_utf8() {
+                    Ok(param_limit) => match param_limit.parse::<i64>() {
+                        Ok(param_limit) => param_limit,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter limit: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["limit"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                    };
+
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_sort_method = query_params
+                        .iter()
+                        .filter(|e| e.0 == "sort_method")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_sort_method = match param_sort_method {
+                        Some(param_sort_method) => {
+                            let param_sort_method =
+                                <models::ClaimJobsSortMethod as std::str::FromStr>::from_str(
+                                    &param_sort_method,
+                                );
+                            match param_sort_method {
+                            Ok(param_sort_method) => Some(param_sort_method),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter sort_method - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter sort_method")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::ComputeNodesResources> = if !body
+                                .is_empty()
+                            {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl
+                                .claim_jobs_based_on_resources(
+                                    param_id,
+                                    param_body,
+                                    param_limit,
+                                    param_sort_method,
+                                    &context,
+                                )
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    ClaimJobsBasedOnResources::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ClaimJobsBasedOnResources::NotFoundErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                            CONTENT_TYPE,
+                                                            HeaderValue::from_str("application/json")
+                                                                .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ClaimJobsBasedOnResources::UnprocessableContentErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(422)
+                                            .expect("Unable to turn 422 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ClaimJobsBasedOnResources::DefaultErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // PrepareNextJobsForSubmission - POST /workflows/{id}/claim_next_jobs
+                hyper::Method::POST if path.matched(paths::ID_WORKFLOWS_ID_CLAIM_NEXT_JOBS) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_PREPARE_NEXT_JOBS_FOR_SUBMISSION
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_PREPARE_NEXT_JOBS_FOR_SUBMISSION in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_PREPARE_NEXT_JOBS_FOR_SUBMISSION.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_limit = query_params
+                        .iter()
+                        .filter(|e| e.0 == "limit")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_limit = match param_limit {
+                        Some(param_limit) => {
+                            let param_limit = <i64 as std::str::FromStr>::from_str(&param_limit);
+                            match param_limit {
+                            Ok(param_limit) => Some(param_limit),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter limit - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter limit")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .claim_next_jobs(param_id, param_limit, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    ClaimNextJobsResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ClaimNextJobsResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // ProcessChangedJobInputs - POST /workflows/{id}/process_changed_job_inputs
+                hyper::Method::POST
+                    if path.matched(paths::ID_WORKFLOWS_ID_PROCESS_CHANGED_JOB_INPUTS) =>
+                {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_PROCESS_CHANGED_JOB_INPUTS
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_PROCESS_CHANGED_JOB_INPUTS in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_PROCESS_CHANGED_JOB_INPUTS.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_dry_run = query_params
+                        .iter()
+                        .filter(|e| e.0 == "dry_run")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_dry_run = match param_dry_run {
+                        Some(param_dry_run) => {
+                            let param_dry_run =
+                                <bool as std::str::FromStr>::from_str(&param_dry_run);
+                            match param_dry_run {
+                            Ok(param_dry_run) => Some(param_dry_run),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter dry_run - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter dry_run")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .process_changed_job_inputs(
+                                    param_id,
+                                    param_dry_run,
+                                    param_body,
+                                    &context,
+                                )
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    ProcessChangedJobInputsResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ProcessChangedJobInputsResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteComputeNode - DELETE /compute_nodes/{id}
+                hyper::Method::DELETE if path.matched(paths::ID_COMPUTE_NODES_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_COMPUTE_NODES_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE COMPUTE_NODES_ID in set but failed match against \"{}\"", path, paths::REGEX_COMPUTE_NODES_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_compute_node(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteComputeNodeResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteComputeNodeResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteComputeNodeResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteEvent - DELETE /events/{id}
+                hyper::Method::DELETE if path.matched(paths::ID_EVENTS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params = paths::REGEX_EVENTS_ID.captures(path).unwrap_or_else(|| {
+                        panic!(
+                            "Path {} matched RE EVENTS_ID in set but failed match against \"{}\"",
+                            path,
+                            paths::REGEX_EVENTS_ID.as_str()
+                        )
+                    });
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result =
+                                api_impl.delete_event(param_id, param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteEventResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteEventResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteEventResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteFile - DELETE /files/{id}
+                hyper::Method::DELETE if path.matched(paths::ID_FILES_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params = paths::REGEX_FILES_ID.captures(path).unwrap_or_else(|| {
+                        panic!(
+                            "Path {} matched RE FILES_ID in set but failed match against \"{}\"",
+                            path,
+                            paths::REGEX_FILES_ID.as_str()
+                        )
+                    });
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl.delete_file(param_id, param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteFileResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteFileResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteFileResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteJob - DELETE /jobs/{id}
+                hyper::Method::DELETE if path.matched(paths::ID_JOBS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params = paths::REGEX_JOBS_ID.captures(path).unwrap_or_else(|| {
+                        panic!(
+                            "Path {} matched RE JOBS_ID in set but failed match against \"{}\"",
+                            path,
+                            paths::REGEX_JOBS_ID.as_str()
+                        )
+                    });
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl.delete_job(param_id, param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteJobResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteJobResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteJobResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteLocalScheduler - DELETE /local_schedulers/{id}
+                hyper::Method::DELETE if path.matched(paths::ID_LOCAL_SCHEDULERS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_LOCAL_SCHEDULERS_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE LOCAL_SCHEDULERS_ID in set but failed match against \"{}\"", path, paths::REGEX_LOCAL_SCHEDULERS_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_local_scheduler(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                            Ok(rsp) => match rsp {
+                                                DeleteLocalSchedulerResponse::LocalComputeNodeConfigurationStoredInTheTable
+                                                    (body)
+                                                => {
+                                                    *response.status_mut() = StatusCode::from_u16(200).expect("Unable to turn 200 into a StatusCode");
+                                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                                    // JSON Body
+                                                    let body = serde_json::to_string(&body).expect("impossible to fail to serialize");
+                                                    *response.body_mut() = Body::from(body);
+
+                                                },
+                                                DeleteLocalSchedulerResponse::NotFoundErrorResponse(body) => {
+                                                    *response.status_mut() = StatusCode::from_u16(404).expect("Unable to turn 404 into a StatusCode");
+                                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                                    // JSON Body
+                                                    let body = serde_json::to_string(&body).expect("impossible to fail to serialize");
+                                                    *response.body_mut() = Body::from(body);
+                                                },
+                                                DeleteLocalSchedulerResponse::DefaultErrorResponse
+                                                    (body)
+                                                => {
+                                                    *response.status_mut() = StatusCode::from_u16(500).expect("Unable to turn 500 into a StatusCode");
+                                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                                    // JSON Body
+                                                    let body = serde_json::to_string(&body).expect("impossible to fail to serialize");
+                                                    *response.body_mut() = Body::from(body);
+
+                                                },
+                                            },
+                                            Err(_) => {
+                                                // Application code returned an error. This should not happen, as the implementation should
+                                                // return a valid response.
+                                                *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                                *response.body_mut() = Body::from("An internal error occurred");
+                                            },
+                                        }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteResourceRequirements - DELETE /resource_requirements/{id}
+                hyper::Method::DELETE if path.matched(paths::ID_RESOURCE_REQUIREMENTS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_RESOURCE_REQUIREMENTS_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE RESOURCE_REQUIREMENTS_ID in set but failed match against \"{}\"", path, paths::REGEX_RESOURCE_REQUIREMENTS_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_resource_requirements(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteResourceRequirementsResponse::SuccessfulResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteResourceRequirementsResponse::NotFoundErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteResourceRequirementsResponse::DefaultErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteResult - DELETE /results/{id}
+                hyper::Method::DELETE if path.matched(paths::ID_RESULTS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params = paths::REGEX_RESULTS_ID.captures(path).unwrap_or_else(|| {
+                        panic!(
+                            "Path {} matched RE RESULTS_ID in set but failed match against \"{}\"",
+                            path,
+                            paths::REGEX_RESULTS_ID.as_str()
+                        )
+                    });
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result =
+                                api_impl.delete_result(param_id, param_body, &context).await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteResultResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteResultResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteResultResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteScheduledComputeNode - DELETE /scheduled_compute_nodes/{id}
+                hyper::Method::DELETE if path.matched(paths::ID_SCHEDULED_COMPUTE_NODES_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_SCHEDULED_COMPUTE_NODES_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE SCHEDULED_COMPUTE_NODES_ID in set but failed match against \"{}\"", path, paths::REGEX_SCHEDULED_COMPUTE_NODES_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_scheduled_compute_node(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteScheduledComputeNodeResponse::SuccessfulResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteScheduledComputeNodeResponse::NotFoundErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                            CONTENT_TYPE,
+                                                            HeaderValue::from_str("application/json")
+                                                                .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteScheduledComputeNodeResponse::DefaultErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteSlurmScheduler - DELETE /slurm_schedulers/{id}
+                hyper::Method::DELETE if path.matched(paths::ID_SLURM_SCHEDULERS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_SLURM_SCHEDULERS_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE SLURM_SCHEDULERS_ID in set but failed match against \"{}\"", path, paths::REGEX_SLURM_SCHEDULERS_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_slurm_scheduler(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteSlurmSchedulerResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteSlurmSchedulerResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteSlurmSchedulerResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteUserData - DELETE /user_data/{id}
+                hyper::Method::DELETE if path.matched(paths::ID_USER_DATA_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_USER_DATA_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE USER_DATA_ID in set but failed match against \"{}\"", path, paths::REGEX_USER_DATA_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_user_data(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteUserDataResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteUserDataResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteUserDataResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // DeleteWorkflow - DELETE /workflows/{id}
+                hyper::Method::DELETE if path.matched(paths::ID_WORKFLOWS_ID) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .delete_workflow(param_id, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    DeleteWorkflowResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteWorkflowResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                            CONTENT_TYPE,
+                                                            HeaderValue::from_str("application/json")
+                                                                .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    DeleteWorkflowResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // ResetJobStatus - POST /workflows/{id}/reset_job_status
+                hyper::Method::POST if path.matched(paths::ID_WORKFLOWS_ID_RESET_JOB_STATUS) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_RESET_JOB_STATUS
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_RESET_JOB_STATUS in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_RESET_JOB_STATUS.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_failed_only = query_params
+                        .iter()
+                        .filter(|e| e.0 == "failed_only")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_failed_only = match param_failed_only {
+                        Some(param_failed_only) => {
+                            let param_failed_only =
+                                <bool as std::str::FromStr>::from_str(&param_failed_only);
+                            match param_failed_only {
+                            Ok(param_failed_only) => Some(param_failed_only),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter failed_only - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter failed_only")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .reset_job_status(param_id, param_failed_only, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    ResetJobStatusResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ResetJobStatusResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ResetJobStatusResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // ResetWorkflowStatus - POST /workflows/{id}/reset_status
+                hyper::Method::POST if path.matched(paths::ID_WORKFLOWS_ID_RESET_STATUS) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_RESET_STATUS
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_RESET_STATUS in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_RESET_STATUS.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_force = query_params
+                        .iter()
+                        .filter(|e| e.0 == "force")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_force = match param_force {
+                        Some(param_force) => {
+                            let param_force = <bool as std::str::FromStr>::from_str(&param_force);
+                            match param_force {
+                            Ok(param_force) => Some(param_force),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter force - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter force")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .reset_workflow_status(param_id, param_force, param_body, &context)
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    ResetWorkflowStatusResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ResetWorkflowStatusResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ResetWorkflowStatusResponse::UnprocessableContentErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(422)
+                                            .expect("Unable to turn 422 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ResetWorkflowStatusResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // GetDotGraph - GET /workflows/{id}/dot_graph/{name}
+                hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_DOT_GRAPH_NAME) => {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_DOT_GRAPH_NAME
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_DOT_GRAPH_NAME in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_DOT_GRAPH_NAME.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let param_name = match percent_encoding::percent_decode(path_params["name"].as_bytes()).decode_utf8() {
+                    Ok(param_name) => match param_name.parse::<String>() {
+                        Ok(param_name) => param_name,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter name: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["name"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let result = api_impl.get_dot_graph(param_id, param_name, &context).await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                GetDotGraphResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetDotGraphResponse::NotFoundErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(404)
+                                        .expect("Unable to turn 404 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                    CONTENT_TYPE,
+                                                    HeaderValue::from_str("application/json")
+                                                        .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                GetDotGraphResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ManageStatusChange - PUT /jobs/{id}/manage_status_change/{status}/{run_id}
+                hyper::Method::PUT
+                    if path.matched(paths::ID_JOBS_ID_MANAGE_STATUS_CHANGE_STATUS_REV_RUN_ID) =>
+                {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_JOBS_ID_MANAGE_STATUS_CHANGE_STATUS_REV_RUN_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE JOBS_ID_MANAGE_STATUS_CHANGE_STATUS_REV_RUN_ID in set but failed match against \"{}\"", path, paths::REGEX_JOBS_ID_MANAGE_STATUS_CHANGE_STATUS_REV_RUN_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let param_status = match percent_encoding::percent_decode(path_params["status"].as_bytes()).decode_utf8() {
+                    Ok(param_status) => match param_status.parse::<models::JobStatus>() {
+                        Ok(param_status) => param_status,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter status: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["status"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let param_run_id = match percent_encoding::percent_decode(path_params["run_id"].as_bytes()).decode_utf8() {
+                    Ok(param_run_id) => match param_run_id.parse::<i64>() {
+                        Ok(param_run_id) => param_run_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter run_id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["run_id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .manage_status_change(
+                                    param_id,
+                                    param_status,
+                                    param_run_id,
+                                    param_body,
+                                    &context,
+                                )
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    ManageStatusChangeResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ManageStatusChangeResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ManageStatusChangeResponse::UnprocessableContentErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(422)
+                                            .expect("Unable to turn 422 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    ManageStatusChangeResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // StartJob - PUT /jobs/{id}/start_job/{run_id}/{compute_node_id}
+                hyper::Method::PUT
+                    if path.matched(paths::ID_JOBS_ID_START_JOB_REV_RUN_ID_COMPUTE_NODE_ID) =>
+                {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_JOBS_ID_START_JOB_REV_RUN_ID_COMPUTE_NODE_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE JOBS_ID_START_JOB_REV_RUN_ID_COMPUTE_NODE_ID in set but failed match against \"{}\"", path, paths::REGEX_JOBS_ID_START_JOB_REV_RUN_ID_COMPUTE_NODE_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let param_run_id = match percent_encoding::percent_decode(path_params["run_id"].as_bytes()).decode_utf8() {
+                    Ok(param_run_id) => match param_run_id.parse::<i64>() {
+                        Ok(param_run_id) => param_run_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter run_id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["run_id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let param_compute_node_id = match percent_encoding::percent_decode(path_params["compute_node_id"].as_bytes()).decode_utf8() {
+                    Ok(param_compute_node_id) => match param_compute_node_id.parse::<i64>() {
+                        Ok(param_compute_node_id) => param_compute_node_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter compute_node_id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["compute_node_id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<serde_json::Value> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                    warn!("Ignoring unknown field in body: {}", path);
+                                    unused_elements.push(path.to_string());
+                                }) {
+                                    Ok(param_body) => param_body,
+                                    Err(_) => None,
+                                }
+                            } else {
+                                None
+                            };
+
+                            let result = api_impl
+                                .start_job(
+                                    param_id,
+                                    param_run_id,
+                                    param_compute_node_id,
+                                    param_body,
+                                    &context,
+                                )
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    StartJobResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    StartJobResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    StartJobResponse::UnprocessableContentErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(422)
+                                            .expect("Unable to turn 422 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    StartJobResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                // CompleteJob - POST /jobs/{id}/complete_job/{status}/{run_id}
+                hyper::Method::POST
+                    if path.matched(paths::ID_JOBS_ID_COMPLETE_JOB_STATUS_REV_RUN_ID) =>
+                {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_JOBS_ID_COMPLETE_JOB_STATUS_REV_RUN_ID
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE JOBS_ID_COMPLETE_JOB_STATUS_REV_RUN_ID in set but failed match against \"{}\"", path, paths::REGEX_JOBS_ID_COMPLETE_JOB_STATUS_REV_RUN_ID.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let param_status = match percent_encoding::percent_decode(path_params["status"].as_bytes()).decode_utf8() {
+                    Ok(param_status) => match param_status.parse::<models::JobStatus>() {
+                        Ok(param_status) => param_status,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter status: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["status"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    let param_run_id = match percent_encoding::percent_decode(path_params["run_id"].as_bytes()).decode_utf8() {
+                    Ok(param_run_id) => match param_run_id.parse::<i64>() {
+                        Ok(param_run_id) => param_run_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter run_id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["run_id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Handle body parameters (note that non-required body parameters will ignore garbage
+                    // values, rather than causing a 400 response). Produce warning header and logs for
+                    // any unused fields.
+                    let result = body.into_raw().await;
+                    match result {
+                        Ok(body) => {
+                            let mut unused_elements: Vec<String> = vec![];
+                            let param_body: Option<models::ResultModel> = if !body.is_empty() {
+                                let deserializer =
+                                    &mut serde_json::Deserializer::from_slice(&*body);
+                                match serde_ignored::deserialize(deserializer, |path| {
+                                            warn!("Ignoring unknown field in body: {}", path);
+                                            unused_elements.push(path.to_string());
+                                    }) {
+                                        Ok(param_body) => param_body,
+                                        Err(e) => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from(format!("Couldn't parse body parameter body - doesn't match schema: {}", e)))
+                                                        .expect("Unable to create Bad Request response for invalid body parameter body due to schema")),
+                                    }
+                            } else {
+                                None
+                            };
+                            let param_body = match param_body {
+                                    Some(param_body) => param_body,
+                                    None => return Ok(Response::builder()
+                                                        .status(StatusCode::BAD_REQUEST)
+                                                        .body(Body::from("Missing required body parameter body"))
+                                                        .expect("Unable to create Bad Request response for missing body parameter body")),
+                                };
+
+                            let result = api_impl
+                                .complete_job(
+                                    param_id,
+                                    param_status,
+                                    param_run_id,
+                                    param_body,
+                                    &context,
+                                )
+                                .await;
+                            let mut response = Response::new(Body::empty());
+                            response.headers_mut().insert(
+                                HeaderName::from_static("x-span-id"),
+                                HeaderValue::from_str(
+                                    (&context as &dyn Has<XSpanIdString>)
+                                        .get()
+                                        .0
+                                        .clone()
+                                        .as_str(),
+                                )
+                                .expect("Unable to create X-Span-ID header value"),
+                            );
+
+                            if !unused_elements.is_empty() {
+                                response.headers_mut().insert(
+                                    HeaderName::from_static("warning"),
+                                    HeaderValue::from_str(
+                                        format!(
+                                            "Ignoring unknown fields in body: {:?}",
+                                            unused_elements
+                                        )
+                                        .as_str(),
+                                    )
+                                    .expect("Unable to create Warning header value"),
+                                );
+                            }
+                            match result {
+                                Ok(rsp) => match rsp {
+                                    CompleteJobResponse::SuccessfulResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(200)
+                                            .expect("Unable to turn 200 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CompleteJobResponse::NotFoundErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(404)
+                                            .expect("Unable to turn 404 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CompleteJobResponse::UnprocessableContentErrorResponse(
+                                        body,
+                                    ) => {
+                                        *response.status_mut() = StatusCode::from_u16(422)
+                                            .expect("Unable to turn 422 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                    CompleteJobResponse::DefaultErrorResponse(body) => {
+                                        *response.status_mut() = StatusCode::from_u16(500)
+                                            .expect("Unable to turn 500 into a StatusCode");
+                                        response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                        // JSON Body
+                                        let body = serde_json::to_string(&body)
+                                            .expect("impossible to fail to serialize");
+                                        *response.body_mut() = Body::from(body);
+                                    }
+                                },
+                                Err(_) => {
+                                    // Application code returned an error. This should not happen, as the implementation should
+                                    // return a valid response.
+                                    *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                                    *response.body_mut() = Body::from("An internal error occurred");
+                                }
+                            }
+
+                            Ok(response)
+                        }
+                        Err(e) => Ok(Response::builder()
+                            .status(StatusCode::BAD_REQUEST)
+                            .body(Body::from(format!("Unable to read body: {}", e)))
+                            .expect(
+                                "Unable to create Bad Request response due to unable to read body",
+                            )),
+                    }
+                }
+
+                _ if path.matched(paths::ID_BULK_JOBS) => method_not_allowed(),
+                _ if path.matched(paths::ID_COMPUTE_NODES) => method_not_allowed(),
+                _ if path.matched(paths::ID_COMPUTE_NODES_ID) => method_not_allowed(),
+                _ if path.matched(paths::ID_EVENTS) => method_not_allowed(),
+                _ if path.matched(paths::ID_EVENTS_ID) => method_not_allowed(),
+                _ if path.matched(paths::ID_FILES) => method_not_allowed(),
+                _ if path.matched(paths::ID_FILES_ID) => method_not_allowed(),
+                _ if path.matched(paths::ID_JOBS) => method_not_allowed(),
+                _ if path.matched(paths::ID_JOBS_ID) => method_not_allowed(),
+                _ if path.matched(paths::ID_JOBS_ID_COMPLETE_JOB_STATUS_REV_RUN_ID) => {
+                    method_not_allowed()
+                }
+                _ if path.matched(paths::ID_JOBS_ID_MANAGE_STATUS_CHANGE_STATUS_REV_RUN_ID) => {
+                    method_not_allowed()
+                }
+                _ if path.matched(paths::ID_JOBS_ID_START_JOB_REV_RUN_ID_COMPUTE_NODE_ID) => {
+                    method_not_allowed()
+                }
+                _ if path.matched(paths::ID_LOCAL_SCHEDULERS) => method_not_allowed(),
+                _ if path.matched(paths::ID_LOCAL_SCHEDULERS_ID) => method_not_allowed(),
+                _ if path.matched(paths::ID_PING) => method_not_allowed(),
+                _ if path.matched(paths::ID_RESOURCE_REQUIREMENTS) => method_not_allowed(),
+                _ if path.matched(paths::ID_RESOURCE_REQUIREMENTS_ID) => method_not_allowed(),
+                _ if path.matched(paths::ID_RESULTS) => method_not_allowed(),
+                _ if path.matched(paths::ID_RESULTS_ID) => method_not_allowed(),
+                _ if path.matched(paths::ID_SCHEDULED_COMPUTE_NODES) => method_not_allowed(),
+                _ if path.matched(paths::ID_SCHEDULED_COMPUTE_NODES_ID) => method_not_allowed(),
+                _ if path.matched(paths::ID_SLURM_SCHEDULERS) => method_not_allowed(),
+                _ if path.matched(paths::ID_SLURM_SCHEDULERS_ID) => method_not_allowed(),
+                _ if path.matched(paths::ID_USER_DATA) => method_not_allowed(),
+                _ if path.matched(paths::ID_USER_DATA_ID) => method_not_allowed(),
+                _ if path.matched(paths::ID_VERSION) => method_not_allowed(),
+                _ if path.matched(paths::ID_WORKFLOWS) => method_not_allowed(),
+                _ if path.matched(paths::ID_WORKFLOWS_ID) => method_not_allowed(),
+                _ if path.matched(paths::ID_WORKFLOWS_ID_CANCEL) => method_not_allowed(),
+                _ if path.matched(paths::ID_WORKFLOWS_ID_DOT_GRAPH_NAME) => method_not_allowed(),
+                _ if path.matched(paths::ID_WORKFLOWS_ID_EVENTS_AFTER_TIMESTAMP_TIMESTAMP) => {
+                    method_not_allowed()
+                }
+                _ if path.matched(paths::ID_WORKFLOWS_ID_INITIALIZE_JOBS) => method_not_allowed(),
+                _ if path.matched(paths::ID_WORKFLOWS_ID_IS_COMPLETE) => method_not_allowed(),
+                _ if path.matched(paths::ID_WORKFLOWS_ID_JOB_IDS) => method_not_allowed(),
+                _ if path.matched(paths::ID_WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP) => {
+                    method_not_allowed()
+                }
+                _ if path.matched(paths::ID_WORKFLOWS_ID_MISSING_USER_DATA) => method_not_allowed(),
+                _ if path.matched(paths::ID_WORKFLOWS_ID_PREPARE_JOBS_FOR_SCHEDULING) => {
+                    method_not_allowed()
+                }
+                _ if path.matched(paths::ID_WORKFLOWS_ID_PREPARE_JOBS_FOR_SUBMISSION) => {
+                    method_not_allowed()
+                }
+                _ if path.matched(paths::ID_WORKFLOWS_ID_CLAIM_NEXT_JOBS) => method_not_allowed(),
+                _ if path.matched(paths::ID_WORKFLOWS_ID_PROCESS_CHANGED_JOB_INPUTS) => {
+                    method_not_allowed()
+                }
+                _ if path.matched(paths::ID_WORKFLOWS_ID_READY_JOB_REQUIREMENTS) => {
+                    method_not_allowed()
+                }
+                _ if path.matched(paths::ID_WORKFLOWS_ID_REQUIRED_EXISTING_FILES) => {
+                    method_not_allowed()
+                }
+                _ if path.matched(paths::ID_WORKFLOWS_ID_RESET_JOB_STATUS) => method_not_allowed(),
+                _ if path.matched(paths::ID_WORKFLOWS_ID_RESET_STATUS) => method_not_allowed(),
+                _ if path.matched(paths::ID_WORKFLOWS_ID_STATUS) => method_not_allowed(),
+                _ => Ok(Response::builder()
+                    .status(StatusCode::NOT_FOUND)
+                    .body(Body::empty())
+                    .expect("Unable to create Not Found response")),
+            }
+        }
+        Box::pin(run(self.api_impl.clone(), req))
+    }
+}
+
+/// Request parser for `Api`.
+pub struct ApiRequestParser;
+impl<T> RequestParser<T> for ApiRequestParser {
+    fn parse_operation_id(request: &Request<T>) -> Option<&'static str> {
+        let path = paths::GLOBAL_REGEX_SET.matches(request.uri().path());
+        match *request.method() {
+            // CreateComputeNode - POST /compute_nodes
+            hyper::Method::POST if path.matched(paths::ID_COMPUTE_NODES) => {
+                Some("CreateComputeNode")
+            }
+            // CreateEvent - POST /events
+            hyper::Method::POST if path.matched(paths::ID_EVENTS) => Some("CreateEvent"),
+            // CreateFile - POST /files
+            hyper::Method::POST if path.matched(paths::ID_FILES) => Some("CreateFile"),
+            // CreateJob - POST /jobs
+            hyper::Method::POST if path.matched(paths::ID_JOBS) => Some("CreateJob"),
+            // CreateJobs - POST /bulk_jobs
+            hyper::Method::POST if path.matched(paths::ID_BULK_JOBS) => Some("CreateJobs"),
+            // CreateLocalScheduler - POST /local_schedulers
+            hyper::Method::POST if path.matched(paths::ID_LOCAL_SCHEDULERS) => {
+                Some("CreateLocalScheduler")
+            }
+            // CreateResourceRequirements - POST /resource_requirements
+            hyper::Method::POST if path.matched(paths::ID_RESOURCE_REQUIREMENTS) => {
+                Some("CreateResourceRequirements")
+            }
+            // CreateResult - POST /results
+            hyper::Method::POST if path.matched(paths::ID_RESULTS) => Some("CreateResult"),
+            // CreateScheduledComputeNode - POST /scheduled_compute_nodes
+            hyper::Method::POST if path.matched(paths::ID_SCHEDULED_COMPUTE_NODES) => {
+                Some("CreateScheduledComputeNode")
+            }
+            // CreateSlurmScheduler - POST /slurm_schedulers
+            hyper::Method::POST if path.matched(paths::ID_SLURM_SCHEDULERS) => {
+                Some("CreateSlurmScheduler")
+            }
+            // CreateUserData - POST /user_data
+            hyper::Method::POST if path.matched(paths::ID_USER_DATA) => Some("CreateUserData"),
+            // CreateWorkflow - POST /workflows
+            hyper::Method::POST if path.matched(paths::ID_WORKFLOWS) => Some("CreateWorkflow"),
+            // DeleteComputeNodes - DELETE /compute_nodes
+            hyper::Method::DELETE if path.matched(paths::ID_COMPUTE_NODES) => {
+                Some("DeleteComputeNodes")
+            }
+            // DeleteEvents - DELETE /events
+            hyper::Method::DELETE if path.matched(paths::ID_EVENTS) => Some("DeleteEvents"),
+            // DeleteFiles - DELETE /files
+            hyper::Method::DELETE if path.matched(paths::ID_FILES) => Some("DeleteFiles"),
+            // DeleteJobs - DELETE /jobs
+            hyper::Method::DELETE if path.matched(paths::ID_JOBS) => Some("DeleteJobs"),
+            // DeleteLocalSchedulers - DELETE /local_schedulers
+            hyper::Method::DELETE if path.matched(paths::ID_LOCAL_SCHEDULERS) => {
+                Some("DeleteLocalSchedulers")
+            }
+            // DeleteResourceRequirements - DELETE /resource_requirements
+            hyper::Method::DELETE if path.matched(paths::ID_RESOURCE_REQUIREMENTS) => {
+                Some("DeleteResourceRequirements")
+            }
+            // DeleteResults - DELETE /results
+            hyper::Method::DELETE if path.matched(paths::ID_RESULTS) => Some("DeleteResults"),
+            // DeleteScheduledComputeNodes - DELETE /scheduled_compute_nodes
+            hyper::Method::DELETE if path.matched(paths::ID_SCHEDULED_COMPUTE_NODES) => {
+                Some("DeleteScheduledComputeNodes")
+            }
+            // DeleteSlurmSchedulers - DELETE /slurm_schedulers
+            hyper::Method::DELETE if path.matched(paths::ID_SLURM_SCHEDULERS) => {
+                Some("DeleteSlurmSchedulers")
+            }
+            // DeleteUserData - DELETE /user_data
+            hyper::Method::DELETE if path.matched(paths::ID_USER_DATA) => Some("DeleteUserData"),
+            // GetVersion - GET /version
+            hyper::Method::GET if path.matched(paths::ID_VERSION) => Some("GetVersion"),
+            // ListComputeNodes - GET /compute_nodes
+            hyper::Method::GET if path.matched(paths::ID_COMPUTE_NODES) => Some("ListComputeNodes"),
+            // ListEvents - GET /events
+            hyper::Method::GET if path.matched(paths::ID_EVENTS) => Some("ListEvents"),
+            // ListFiles - GET /files
+            hyper::Method::GET if path.matched(paths::ID_FILES) => Some("ListFiles"),
+            // ListJobs - GET /jobs
+            hyper::Method::GET if path.matched(paths::ID_JOBS) => Some("ListJobs"),
+            // ListLocalSchedulers - GET /local_schedulers
+            hyper::Method::GET if path.matched(paths::ID_LOCAL_SCHEDULERS) => {
+                Some("ListLocalSchedulers")
+            }
+            // ListResourceRequirements - GET /resource_requirements
+            hyper::Method::GET if path.matched(paths::ID_RESOURCE_REQUIREMENTS) => {
+                Some("ListResourceRequirements")
+            }
+            // ListResults - GET /results
+            hyper::Method::GET if path.matched(paths::ID_RESULTS) => Some("ListResults"),
+            // ListScheduledComputeNodes - GET /scheduled_compute_nodes
+            hyper::Method::GET if path.matched(paths::ID_SCHEDULED_COMPUTE_NODES) => {
+                Some("ListScheduledComputeNodes")
+            }
+            // ListSlurmSchedulers - GET /slurm_schedulers
+            hyper::Method::GET if path.matched(paths::ID_SLURM_SCHEDULERS) => {
+                Some("ListSlurmSchedulers")
+            }
+            // ListUserData - GET /user_data
+            hyper::Method::GET if path.matched(paths::ID_USER_DATA) => Some("ListUserData"),
+            // ListWorkflows - GET /workflows
+            hyper::Method::GET if path.matched(paths::ID_WORKFLOWS) => Some("ListWorkflows"),
+            // Ping - GET /ping
+            hyper::Method::GET if path.matched(paths::ID_PING) => Some("Ping"),
+            // CancelWorkflow - PUT /workflows/{id}/cancel
+            hyper::Method::PUT if path.matched(paths::ID_WORKFLOWS_ID_CANCEL) => {
+                Some("CancelWorkflow")
+            }
+            // GetComputeNode - GET /compute_nodes/{id}
+            hyper::Method::GET if path.matched(paths::ID_COMPUTE_NODES_ID) => {
+                Some("GetComputeNode")
+            }
+            // GetEvent - GET /events/{id}
+            hyper::Method::GET if path.matched(paths::ID_EVENTS_ID) => Some("GetEvent"),
+            // GetFile - GET /files/{id}
+            hyper::Method::GET if path.matched(paths::ID_FILES_ID) => Some("GetFile"),
+            // GetJob - GET /jobs/{id}
+            hyper::Method::GET if path.matched(paths::ID_JOBS_ID) => Some("GetJob"),
+            // GetLatestEventTimestamp - GET /workflows/{id}/latest_event_timestamp
+            hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_LATEST_EVENT_TIMESTAMP) => {
+                Some("GetLatestEventTimestamp")
+            }
+            // GetLocalScheduler - GET /local_schedulers/{id}
+            hyper::Method::GET if path.matched(paths::ID_LOCAL_SCHEDULERS_ID) => {
+                Some("GetLocalScheduler")
+            }
+            // GetReadyJobRequirements - GET /workflows/{id}/ready_job_requirements
+            hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_READY_JOB_REQUIREMENTS) => {
+                Some("GetReadyJobRequirements")
+            }
+            // GetResourceRequirements - GET /resource_requirements/{id}
+            hyper::Method::GET if path.matched(paths::ID_RESOURCE_REQUIREMENTS_ID) => {
+                Some("GetResourceRequirements")
+            }
+            // GetResult - GET /results/{id}
+            hyper::Method::GET if path.matched(paths::ID_RESULTS_ID) => Some("GetResult"),
+            // GetScheduledComputeNode - GET /scheduled_compute_nodes/{id}
+            hyper::Method::GET if path.matched(paths::ID_SCHEDULED_COMPUTE_NODES_ID) => {
+                Some("GetScheduledComputeNode")
+            }
+            // GetSlurmScheduler - GET /slurm_schedulers/{id}
+            hyper::Method::GET if path.matched(paths::ID_SLURM_SCHEDULERS_ID) => {
+                Some("GetSlurmScheduler")
+            }
+            // GetUserData - GET /user_data/{id}
+            hyper::Method::GET if path.matched(paths::ID_USER_DATA_ID) => Some("GetUserData"),
+            // GetWorkflow - GET /workflows/{id}
+            hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID) => Some("GetWorkflow"),
+            // GetWorkflowStatus - GET /workflows/{id}/status
+            hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_STATUS) => {
+                Some("GetWorkflowStatus")
+            }
+            // InitializeJobs - POST /workflows/{id}/initialize_jobs
+            hyper::Method::POST if path.matched(paths::ID_WORKFLOWS_ID_INITIALIZE_JOBS) => {
+                Some("InitializeJobs")
+            }
+            // IsWorkflowComplete - GET /workflows/{id}/is_complete
+            hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_IS_COMPLETE) => {
+                Some("IsWorkflowComplete")
+            }
+            // ListJobIds - GET /workflows/{id}/job_ids
+            hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_JOB_IDS) => {
+                Some("ListJobIds")
+            }
+            // ListMissingUserData - GET /workflows/{id}/missing_user_data
+            hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_MISSING_USER_DATA) => {
+                Some("ListMissingUserData")
+            }
+            // ListRequiredExistingFiles - GET /workflows/{id}/required_existing_files
+            hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_REQUIRED_EXISTING_FILES) => {
+                Some("ListRequiredExistingFiles")
+            }
+            // UpdateComputeNode - PUT /compute_nodes/{id}
+            hyper::Method::PUT if path.matched(paths::ID_COMPUTE_NODES_ID) => {
+                Some("UpdateComputeNode")
+            }
+            // UpdateEvent - PUT /events/{id}
+            hyper::Method::PUT if path.matched(paths::ID_EVENTS_ID) => Some("UpdateEvent"),
+            // UpdateFile - PUT /files/{id}
+            hyper::Method::PUT if path.matched(paths::ID_FILES_ID) => Some("UpdateFile"),
+            // UpdateJob - PUT /jobs/{id}
+            hyper::Method::PUT if path.matched(paths::ID_JOBS_ID) => Some("UpdateJob"),
+            // UpdateLocalScheduler - PUT /local_schedulers/{id}
+            hyper::Method::PUT if path.matched(paths::ID_LOCAL_SCHEDULERS_ID) => {
+                Some("UpdateLocalScheduler")
+            }
+            // UpdateResourceRequirements - PUT /resource_requirements/{id}
+            hyper::Method::PUT if path.matched(paths::ID_RESOURCE_REQUIREMENTS_ID) => {
+                Some("UpdateResourceRequirements")
+            }
+            // UpdateResult - PUT /results/{id}
+            hyper::Method::PUT if path.matched(paths::ID_RESULTS_ID) => Some("UpdateResult"),
+            // UpdateScheduledComputeNode - PUT /scheduled_compute_nodes/{id}
+            hyper::Method::PUT if path.matched(paths::ID_SCHEDULED_COMPUTE_NODES_ID) => {
+                Some("UpdateScheduledComputeNode")
+            }
+            // UpdateSlurmScheduler - PUT /slurm_schedulers/{id}
+            hyper::Method::PUT if path.matched(paths::ID_SLURM_SCHEDULERS_ID) => {
+                Some("UpdateSlurmScheduler")
+            }
+            // UpdateUserData - PUT /user_data/{id}
+            hyper::Method::PUT if path.matched(paths::ID_USER_DATA_ID) => Some("UpdateUserData"),
+            // UpdateWorkflow - PUT /workflows/{id}
+            hyper::Method::PUT if path.matched(paths::ID_WORKFLOWS_ID) => Some("UpdateWorkflow"),
+            // UpdateWorkflowStatus - PUT /workflows/{id}/status
+            hyper::Method::PUT if path.matched(paths::ID_WORKFLOWS_ID_STATUS) => {
+                Some("UpdateWorkflowStatus")
+            }
+            // PrepareJobsForSubmission - POST /workflows/{id}/claim_jobs_based_on_resources
+            hyper::Method::POST
+                if path.matched(paths::ID_WORKFLOWS_ID_PREPARE_JOBS_FOR_SUBMISSION) =>
+            {
+                Some("PrepareJobsForSubmission")
+            }
+            // PrepareNextJobsForSubmission - POST /workflows/{id}/claim_next_jobs
+            hyper::Method::POST if path.matched(paths::ID_WORKFLOWS_ID_CLAIM_NEXT_JOBS) => {
+                Some("PrepareNextJobsForSubmission")
+            }
+            // ProcessChangedJobInputs - POST /workflows/{id}/process_changed_job_inputs
+            hyper::Method::POST
+                if path.matched(paths::ID_WORKFLOWS_ID_PROCESS_CHANGED_JOB_INPUTS) =>
+            {
+                Some("ProcessChangedJobInputs")
+            }
+            // DeleteComputeNode - DELETE /compute_nodes/{id}
+            hyper::Method::DELETE if path.matched(paths::ID_COMPUTE_NODES_ID) => {
+                Some("DeleteComputeNode")
+            }
+            // DeleteEvent - DELETE /events/{id}
+            hyper::Method::DELETE if path.matched(paths::ID_EVENTS_ID) => Some("DeleteEvent"),
+            // DeleteFile - DELETE /files/{id}
+            hyper::Method::DELETE if path.matched(paths::ID_FILES_ID) => Some("DeleteFile"),
+            // DeleteJob - DELETE /jobs/{id}
+            hyper::Method::DELETE if path.matched(paths::ID_JOBS_ID) => Some("DeleteJob"),
+            // DeleteLocalScheduler - DELETE /local_schedulers/{id}
+            hyper::Method::DELETE if path.matched(paths::ID_LOCAL_SCHEDULERS_ID) => {
+                Some("DeleteLocalScheduler")
+            }
+            // DeleteResourceRequirements - DELETE /resource_requirements/{id}
+            hyper::Method::DELETE if path.matched(paths::ID_RESOURCE_REQUIREMENTS_ID) => {
+                Some("DeleteResourceRequirements")
+            }
+            // DeleteResult - DELETE /results/{id}
+            hyper::Method::DELETE if path.matched(paths::ID_RESULTS_ID) => Some("DeleteResult"),
+            // DeleteScheduledComputeNode - DELETE /scheduled_compute_nodes/{id}
+            hyper::Method::DELETE if path.matched(paths::ID_SCHEDULED_COMPUTE_NODES_ID) => {
+                Some("DeleteScheduledComputeNode")
+            }
+            // DeleteSlurmScheduler - DELETE /slurm_schedulers/{id}
+            hyper::Method::DELETE if path.matched(paths::ID_SLURM_SCHEDULERS_ID) => {
+                Some("DeleteSlurmScheduler")
+            }
+            // DeleteUserData - DELETE /user_data/{id}
+            hyper::Method::DELETE if path.matched(paths::ID_USER_DATA_ID) => Some("DeleteUserData"),
+            // DeleteWorkflow - DELETE /workflows/{id}
+            hyper::Method::DELETE if path.matched(paths::ID_WORKFLOWS_ID) => Some("DeleteWorkflow"),
+            // ResetJobStatus - POST /workflows/{id}/reset_job_status
+            hyper::Method::POST if path.matched(paths::ID_WORKFLOWS_ID_RESET_JOB_STATUS) => {
+                Some("ResetJobStatus")
+            }
+            // ResetWorkflowStatus - POST /workflows/{id}/reset_status
+            hyper::Method::POST if path.matched(paths::ID_WORKFLOWS_ID_RESET_STATUS) => {
+                Some("ResetWorkflowStatus")
+            }
+            // GetDotGraph - GET /workflows/{id}/dot_graph/{name}
+            hyper::Method::GET if path.matched(paths::ID_WORKFLOWS_ID_DOT_GRAPH_NAME) => {
+                Some("GetDotGraph")
+            }
+            // GetEventsAfterTimestamp - GET /workflows/{id}/events_after_timestamp/{timestamp}
+            hyper::Method::GET
+                if path.matched(paths::ID_WORKFLOWS_ID_EVENTS_AFTER_TIMESTAMP_TIMESTAMP) =>
+            {
+                Some("GetEventsAfterTimestamp")
+            }
+            // ManageStatusChange - PUT /jobs/{id}/manage_status_change/{status}//{run_id}
+            hyper::Method::PUT
+                if path.matched(paths::ID_JOBS_ID_MANAGE_STATUS_CHANGE_STATUS_REV_RUN_ID) =>
+            {
+                Some("ManageStatusChange")
+            }
+            // StartJob - PUT /jobs/{id}/start_job/{run_id}/{compute_node_id}
+            hyper::Method::PUT
+                if path.matched(paths::ID_JOBS_ID_START_JOB_REV_RUN_ID_COMPUTE_NODE_ID) =>
+            {
+                Some("StartJob")
+            }
+            // CompleteJob - POST /jobs/{id}/complete_job/{status}/{run_id}
+            hyper::Method::POST
+                if path.matched(paths::ID_JOBS_ID_COMPLETE_JOB_STATUS_REV_RUN_ID) =>
+            {
+                Some("CompleteJob")
+            }
+            _ => None,
+        }
+    }
+}

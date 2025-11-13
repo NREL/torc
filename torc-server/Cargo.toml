@@ -1,0 +1,31 @@
+[package]
+name = "torc-server"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+description = "Torc workflow orchestration server"
+
+[[bin]]
+name = "torc-server"
+path = "src/main.rs"
+
+[dependencies]
+torc = { path = "..", features = ["server"] }
+tokio.workspace = true
+env_logger.workspace = true
+dotenvy.workspace = true
+clap.workspace = true
+log.workspace = true
+sqlx.workspace = true
+anyhow.workspace = true
+serde_json.workspace = true
+swagger.workspace = true
+hyper.workspace = true
+futures.workspace = true
+async-trait.workspace = true
+chrono.workspace = true
+jsonwebtoken.workspace = true
+serde.workspace = true
+openssl.workspace = true
+tokio-openssl = "0.6.5"
