@@ -116,17 +116,17 @@ fn main() {
                 response.get("is_uninitialized").and_then(|v| v.as_bool())
             {
                 if is_uninitialized {
-                    info!(
+                    eprintln!(
                         "Workflow {} has all jobs uninitialized. Initializing workflow...",
                         workflow_id
                     );
                     let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
                     match workflow_manager.initialize(false) {
                         Ok(()) => {
-                            info!("Successfully initialized workflow {}", workflow_id);
+                            eprintln!("Successfully initialized workflow {}", workflow_id);
                         }
                         Err(e) => {
-                            error!("Error initializing workflow: {}", e);
+                            eprintln!("Error initializing workflow: {}", e);
                             std::process::exit(1);
                         }
                     }
