@@ -67,7 +67,7 @@ actions:
       - "echo 'Environment ready'"
 
   # Allocate resources for setup stage
-  - trigger_type: "on_jobs_ready"
+  - trigger_type: "on_workflow_start"
     action_type: "schedule_nodes"
     job_names: ["setup"]
     scheduler_name: "setup_scheduler"

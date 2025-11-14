@@ -24,10 +24,6 @@
       "name": "data_validation",
       "command": "python validate_data.py input_data.csv",
       // Multi-line invocation script with environment setup
-      "invocation_script": `#!/bin/bash
-set -e
-export PYTHONPATH=/opt/validation:$PYTHONPATH
-`,
       "cancel_on_blocking_job_failure": true,
       "supports_termination": true,
       "resource_requirements_name": "small_job",

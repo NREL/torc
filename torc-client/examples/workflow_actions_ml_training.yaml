@@ -1,3 +1,4 @@
+# TODO: this workflow is broken because regex is not supported in blocked_by_job_names yet
 name: "ML Training with Auto-Scaling"
 user: "ml_researcher"
 description: "Demonstrates on_jobs_ready action for dynamic resource allocation"

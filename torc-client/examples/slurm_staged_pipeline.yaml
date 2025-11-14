@@ -5,25 +5,37 @@ user: "pipeline_user"
 # Define three Slurm schedulers for different pipeline stages
 slurm_schedulers:
   - name: "setup_scheduler"
+    account: "my_account"
+    walltime: "04:00:00"
+    nodes: 1
   - name: "work_scheduler"
+    account: "my_account"
+    walltime: "04:00:00"
+    nodes: 1
   - name: "postprocess_scheduler"
+    account: "my_account"
+    walltime: "04:00:00"
+    nodes: 1
 
 # Define resource requirements for each stage
 resource_requirements:
   - name: "setup_resources"
     num_cpus: 16
+    num_gpus: 0
     memory: "64g"
     runtime: "PT4H"
     num_nodes: 1
 
   - name: "work_resources"
     num_cpus: 32
+    num_gpus: 0
     memory: "300g"
     runtime: "PT8H"
     num_nodes: 1
 
   - name: "postprocess_resources"
     num_cpus: 8
+    num_gpus: 0
     memory: "32g"
     runtime: "PT1H"
     num_nodes: 1
@@ -31,7 +43,9 @@ resource_requirements:
 # Enable time-series resource monitoring
 resource_monitor:
   enabled: true
-  poll_interval_seconds: 30
+  sample_interval_seconds: 5
+  granularity: "time_series"
+  generate_plots: false
   metrics:
     - cpu_percent
     - memory_bytes
