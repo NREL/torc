@@ -6,6 +6,8 @@
 Data model for Slurm scheduler
 
     SlurmSchedulerModel(;
+        id=nothing,
+        workflow_id=nothing,
         name=nothing,
         account=nothing,
         gres=nothing,
@@ -17,11 +19,10 @@ Data model for Slurm scheduler
         tmp=nothing,
         walltime=nothing,
         extra=nothing,
-        _key=nothing,
-        _id=nothing,
-        _rev=nothing,
     )
 
+    - id::Int64
+    - workflow_id::Int64 : Database ID of the workflow this scheduler is associated with.
     - name::String : Name of the scheduler
     - account::String : Slurm account ID
     - gres::String : Generic resource requirement
@@ -33,11 +34,10 @@ Data model for Slurm scheduler
     - tmp::String : Compute node local storage size requirement
     - walltime::String : Slurm runtime requirement, e.g., 04:00:00
     - extra::String : Extra Slurm parameters that torc will append to the sbatch command
-    - _key::String
-    - _id::String
-    - _rev::String
 """
 Base.@kwdef mutable struct SlurmSchedulerModel <: OpenAPI.APIModel
+    id::Union{Nothing, Int64} = nothing
+    workflow_id::Union{Nothing, Int64} = nothing
     name::Union{Nothing, String} = nothing
     account::Union{Nothing, String} = nothing
     gres::Union{Nothing, String} = nothing
@@ -49,27 +49,27 @@ Base.@kwdef mutable struct SlurmSchedulerModel <: OpenAPI.APIModel
     tmp::Union{Nothing, String} = nothing
     walltime::Union{Nothing, String} = nothing
     extra::Union{Nothing, String} = nothing
-    _key::Union{Nothing, String} = nothing
-    _id::Union{Nothing, String} = nothing
-    _rev::Union{Nothing, String} = nothing
 
-    function SlurmSchedulerModel(name, account, gres, mem, nodes, ntasks_per_node, partition, qos, tmp, walltime, extra, _key, _id, _rev, )
-        o = new(name, account, gres, mem, nodes, ntasks_per_node, partition, qos, tmp, walltime, extra, _key, _id, _rev, )
+    function SlurmSchedulerModel(id, workflow_id, name, account, gres, mem, nodes, ntasks_per_node, partition, qos, tmp, walltime, extra, )
+        o = new(id, workflow_id, name, account, gres, mem, nodes, ntasks_per_node, partition, qos, tmp, walltime, extra, )
         OpenAPI.validate_properties(o)
         return o
     end
 end # type SlurmSchedulerModel
 
-const _property_types_SlurmSchedulerModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("account")=>"String", Symbol("gres")=>"String", Symbol("mem")=>"String", Symbol("nodes")=>"Int64", Symbol("ntasks_per_node")=>"Int64", Symbol("partition")=>"String", Symbol("qos")=>"String", Symbol("tmp")=>"String", Symbol("walltime")=>"String", Symbol("extra")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
+const _property_types_SlurmSchedulerModel = Dict{Symbol,String}(Symbol("id")=>"Int64", Symbol("workflow_id")=>"Int64", Symbol("name")=>"String", Symbol("account")=>"String", Symbol("gres")=>"String", Symbol("mem")=>"String", Symbol("nodes")=>"Int64", Symbol("ntasks_per_node")=>"Int64", Symbol("partition")=>"String", Symbol("qos")=>"String", Symbol("tmp")=>"String", Symbol("walltime")=>"String", Symbol("extra")=>"String", )
 OpenAPI.property_type(::Type{ SlurmSchedulerModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_SlurmSchedulerModel[name]))}
 
 function OpenAPI.check_required(o::SlurmSchedulerModel)
+    o.workflow_id === nothing && (return false)
     o.account === nothing && (return false)
     o.nodes === nothing && (return false)
     true
 end
 
 function OpenAPI.validate_properties(o::SlurmSchedulerModel)
+    OpenAPI.validate_property(SlurmSchedulerModel, Symbol("id"), o.id)
+    OpenAPI.validate_property(SlurmSchedulerModel, Symbol("workflow_id"), o.workflow_id)
     OpenAPI.validate_property(SlurmSchedulerModel, Symbol("name"), o.name)
     OpenAPI.validate_property(SlurmSchedulerModel, Symbol("account"), o.account)
     OpenAPI.validate_property(SlurmSchedulerModel, Symbol("gres"), o.gres)
@@ -81,13 +81,9 @@ function OpenAPI.validate_properties(o::SlurmSchedulerModel)
     OpenAPI.validate_property(SlurmSchedulerModel, Symbol("tmp"), o.tmp)
     OpenAPI.validate_property(SlurmSchedulerModel, Symbol("walltime"), o.walltime)
     OpenAPI.validate_property(SlurmSchedulerModel, Symbol("extra"), o.extra)
-    OpenAPI.validate_property(SlurmSchedulerModel, Symbol("_key"), o._key)
-    OpenAPI.validate_property(SlurmSchedulerModel, Symbol("_id"), o._id)
-    OpenAPI.validate_property(SlurmSchedulerModel, Symbol("_rev"), o._rev)
 end
 
 function OpenAPI.validate_property(::Type{ SlurmSchedulerModel }, name::Symbol, val)
-
 
 
 

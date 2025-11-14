@@ -35,7 +35,8 @@ rm -rf ../python_client/src/torc/openapi_client/*
 rm -rf ../julia_client/Torc/src/api/*
 rm -rf ../julia_client/julia_client/docs/*
 rm -f ../julia_client/julia_client/README.md
-cp -r ${PYTHON_CLIENT}/torc/openapi_client/* ../torc_client/src/torc/openapi_client/
+cp -r ${PYTHON_CLIENT}/torc/openapi_client/* ../python_client/src/torc/openapi_client/
 cp -r ${JULIA_CLIENT}/src/* ../julia_client/Torc/src/api/
 cp -r ${JULIA_CLIENT}/docs/* ../julia_client/julia_client/docs/
 cp ${JULIA_CLIENT}/README.md ../julia_client/julia_client/
+rm -rf python_client julia_client

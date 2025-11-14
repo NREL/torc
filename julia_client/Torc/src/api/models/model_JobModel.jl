@@ -5,6 +5,8 @@
 @doc raw"""job_model
 
     JobModel(;
+        id=nothing,
+        workflow_id=nothing,
         name=nothing,
         command=nothing,
         invocation_script=nothing,
@@ -12,74 +14,70 @@
         schedule_compute_nodes=nothing,
         cancel_on_blocking_job_failure=true,
         supports_termination=false,
-        blocked_by=nothing,
-        input_files=nothing,
+        blocked_by_job_ids=nothing,
+        input_file_ids=nothing,
         output_files=nothing,
         input_user_data=nothing,
         output_user_data=nothing,
-        resource_requirements=nothing,
-        scheduler=nothing,
-        internal=nothing,
-        _key=nothing,
-        _id=nothing,
-        _rev=nothing,
+        resource_requirements_id=nothing,
+        scheduler_id=nothing,
     )
 
+    - id::Int64
+    - workflow_id::Int64
     - name::String : Name of the job; no requirements on uniqueness
     - command::String : CLI command to execute. Will not be executed in a shell and so must not include shell characters.
     - invocation_script::String : Wrapper script for command in case the environment needs customization.
-    - status::String : Status of job; managed by torc.
-    - schedule_compute_nodes::ComputeNodeScheduleParams
+    - status::Any
+    - schedule_compute_nodes::ComputeNodeSchedule
     - cancel_on_blocking_job_failure::Bool : Cancel this job if any of its blocking jobs fails.
     - supports_termination::Bool : Informs torc that the job can be terminated gracefully before a wall-time timeout.
-    - blocked_by::Vector{String} : Database IDs of jobs that block this job
-    - input_files::Vector{String} : Database IDs of files that this job needs
-    - output_files::Vector{String} : Database IDs of files that this job produces
-    - input_user_data::Vector{String} : Database IDs of user-data objects that this job needs
-    - output_user_data::Vector{String} : Database IDs of user-data objects that this job produces
-    - resource_requirements::String : Optional database ID of resources required by this job
-    - scheduler::String : Optional database ID of scheduler needed by this job
-    - internal::JobsInternal
-    - _key::String : Unique database identifier for the job. Does not include collection name.
-    - _id::String : Unique database identifier for the job. Includes collection name and _key.
-    - _rev::String : Database revision of the job
+    - blocked_by_job_ids::Vector{Int64} : Database IDs of jobs that block this job
+    - input_file_ids::Vector{Int64} : Database IDs of files that this job needs
+    - output_files::Vector{Int64} : Database IDs of files that this job produces
+    - input_user_data::Vector{Int64} : Database IDs of user-data objects that this job needs
+    - output_user_data::Vector{Int64} : Database IDs of user-data objects that this job produces
+    - resource_requirements_id::Int64 : Optional database ID of resources required by this job
+    - scheduler_id::Int64 : Optional database ID of scheduler needed by this job
 """
 Base.@kwdef mutable struct JobModel <: OpenAPI.APIModel
+    id::Union{Nothing, Int64} = nothing
+    workflow_id::Union{Nothing, Int64} = nothing
     name::Union{Nothing, String} = nothing
     command::Union{Nothing, String} = nothing
     invocation_script::Union{Nothing, String} = nothing
-    status::Union{Nothing, String} = nothing
-    schedule_compute_nodes = nothing # spec type: Union{ Nothing, ComputeNodeScheduleParams }
+    status::Union{Nothing, Any} = nothing
+    schedule_compute_nodes = nothing # spec type: Union{ Nothing, ComputeNodeSchedule }
     cancel_on_blocking_job_failure::Union{Nothing, Bool} = true
     supports_termination::Union{Nothing, Bool} = false
-    blocked_by::Union{Nothing, Vector{String}} = nothing
-    input_files::Union{Nothing, Vector{String}} = nothing
-    output_files::Union{Nothing, Vector{String}} = nothing
-    input_user_data::Union{Nothing, Vector{String}} = nothing
-    output_user_data::Union{Nothing, Vector{String}} = nothing
-    resource_requirements::Union{Nothing, String} = nothing
-    scheduler::Union{Nothing, String} = nothing
-    internal = nothing # spec type: Union{ Nothing, JobsInternal }
-    _key::Union{Nothing, String} = nothing
-    _id::Union{Nothing, String} = nothing
-    _rev::Union{Nothing, String} = nothing
+    blocked_by_job_ids::Union{Nothing, Vector{Int64}} = nothing
+    input_file_ids::Union{Nothing, Vector{Int64}} = nothing
+    output_files::Union{Nothing, Vector{Int64}} = nothing
+    input_user_data::Union{Nothing, Vector{Int64}} = nothing
+    output_user_data::Union{Nothing, Vector{Int64}} = nothing
+    resource_requirements_id::Union{Nothing, Int64} = nothing
+    scheduler_id::Union{Nothing, Int64} = nothing
 
-    function JobModel(name, command, invocation_script, status, schedule_compute_nodes, cancel_on_blocking_job_failure, supports_termination, blocked_by, input_files, output_files, input_user_data, output_user_data, resource_requirements, scheduler, internal, _key, _id, _rev, )
-        o = new(name, command, invocation_script, status, schedule_compute_nodes, cancel_on_blocking_job_failure, supports_termination, blocked_by, input_files, output_files, input_user_data, output_user_data, resource_requirements, scheduler, internal, _key, _id, _rev, )
+    function JobModel(id, workflow_id, name, command, invocation_script, status, schedule_compute_nodes, cancel_on_blocking_job_failure, supports_termination, blocked_by_job_ids, input_file_ids, output_files, input_user_data, output_user_data, resource_requirements_id, scheduler_id, )
+        o = new(id, workflow_id, name, command, invocation_script, status, schedule_compute_nodes, cancel_on_blocking_job_failure, supports_termination, blocked_by_job_ids, input_file_ids, output_files, input_user_data, output_user_data, resource_requirements_id, scheduler_id, )
         OpenAPI.validate_properties(o)
         return o
     end
 end # type JobModel
 
-const _property_types_JobModel = Dict{Symbol,String}(Symbol("name")=>"String", Symbol("command")=>"String", Symbol("invocation_script")=>"String", Symbol("status")=>"String", Symbol("schedule_compute_nodes")=>"ComputeNodeScheduleParams", Symbol("cancel_on_blocking_job_failure")=>"Bool", Symbol("supports_termination")=>"Bool", Symbol("blocked_by")=>"Vector{String}", Symbol("input_files")=>"Vector{String}", Symbol("output_files")=>"Vector{String}", Symbol("input_user_data")=>"Vector{String}", Symbol("output_user_data")=>"Vector{String}", Symbol("resource_requirements")=>"String", Symbol("scheduler")=>"String", Symbol("internal")=>"JobsInternal", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
+const _property_types_JobModel = Dict{Symbol,String}(Symbol("id")=>"Int64", Symbol("workflow_id")=>"Int64", Symbol("name")=>"String", Symbol("command")=>"String", Symbol("invocation_script")=>"String", Symbol("status")=>"Any", Symbol("schedule_compute_nodes")=>"ComputeNodeSchedule", Symbol("cancel_on_blocking_job_failure")=>"Bool", Symbol("supports_termination")=>"Bool", Symbol("blocked_by_job_ids")=>"Vector{Int64}", Symbol("input_file_ids")=>"Vector{Int64}", Symbol("output_files")=>"Vector{Int64}", Symbol("input_user_data")=>"Vector{Int64}", Symbol("output_user_data")=>"Vector{Int64}", Symbol("resource_requirements_id")=>"Int64", Symbol("scheduler_id")=>"Int64", )
 OpenAPI.property_type(::Type{ JobModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_JobModel[name]))}
 
 function OpenAPI.check_required(o::JobModel)
+    o.workflow_id === nothing && (return false)
+    o.name === nothing && (return false)
     o.command === nothing && (return false)
     true
 end
 
 function OpenAPI.validate_properties(o::JobModel)
+    OpenAPI.validate_property(JobModel, Symbol("id"), o.id)
+    OpenAPI.validate_property(JobModel, Symbol("workflow_id"), o.workflow_id)
     OpenAPI.validate_property(JobModel, Symbol("name"), o.name)
     OpenAPI.validate_property(JobModel, Symbol("command"), o.command)
     OpenAPI.validate_property(JobModel, Symbol("invocation_script"), o.invocation_script)
@@ -87,22 +85,16 @@ function OpenAPI.validate_properties(o::JobModel)
     OpenAPI.validate_property(JobModel, Symbol("schedule_compute_nodes"), o.schedule_compute_nodes)
     OpenAPI.validate_property(JobModel, Symbol("cancel_on_blocking_job_failure"), o.cancel_on_blocking_job_failure)
     OpenAPI.validate_property(JobModel, Symbol("supports_termination"), o.supports_termination)
-    OpenAPI.validate_property(JobModel, Symbol("blocked_by"), o.blocked_by)
-    OpenAPI.validate_property(JobModel, Symbol("input_files"), o.input_files)
+    OpenAPI.validate_property(JobModel, Symbol("blocked_by_job_ids"), o.blocked_by_job_ids)
+    OpenAPI.validate_property(JobModel, Symbol("input_file_ids"), o.input_file_ids)
     OpenAPI.validate_property(JobModel, Symbol("output_files"), o.output_files)
     OpenAPI.validate_property(JobModel, Symbol("input_user_data"), o.input_user_data)
     OpenAPI.validate_property(JobModel, Symbol("output_user_data"), o.output_user_data)
-    OpenAPI.validate_property(JobModel, Symbol("resource_requirements"), o.resource_requirements)
-    OpenAPI.validate_property(JobModel, Symbol("scheduler"), o.scheduler)
-    OpenAPI.validate_property(JobModel, Symbol("internal"), o.internal)
-    OpenAPI.validate_property(JobModel, Symbol("_key"), o._key)
-    OpenAPI.validate_property(JobModel, Symbol("_id"), o._id)
-    OpenAPI.validate_property(JobModel, Symbol("_rev"), o._rev)
+    OpenAPI.validate_property(JobModel, Symbol("resource_requirements_id"), o.resource_requirements_id)
+    OpenAPI.validate_property(JobModel, Symbol("scheduler_id"), o.scheduler_id)
 end
 
 function OpenAPI.validate_property(::Type{ JobModel }, name::Symbol, val)
-
-
 
 
 

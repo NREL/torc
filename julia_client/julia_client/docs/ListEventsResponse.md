@@ -4,8 +4,8 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**items** | **Vector{Any}** |  | [optional] [default to nothing]
-**skip** | **Int64** |  | [default to nothing]
+**items** | [**Vector{EventModel}**](EventModel.md) |  | [optional] [default to nothing]
+**offset** | **Int64** |  | [default to nothing]
 **max_limit** | **Int64** |  | [default to nothing]
 **count** | **Int64** |  | [default to nothing]
 **total_count** | **Int64** |  | [default to nothing]

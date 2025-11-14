@@ -5,51 +5,53 @@
 @doc raw"""result_model
 
     ResultModel(;
-        job_key=nothing,
+        id=nothing,
+        job_id=nothing,
+        workflow_id=nothing,
         run_id=nothing,
+        compute_node_id=nothing,
         return_code=nothing,
         exec_time_minutes=nothing,
         completion_time=nothing,
         status=nothing,
-        _key=nothing,
-        _id=nothing,
-        _rev=nothing,
     )
 
-    - job_key::String : Database key for the job tied to this result
+    - id::Int64
+    - job_id::Int64 : Database ID for the job tied to this result
+    - workflow_id::Int64 : Database ID for the workflow tied to this result
     - run_id::Int64 : ID of the workflow run. Incremements on every start and restart.
+    - compute_node_id::Int64 : Database ID for the compute node that ran this job
     - return_code::Int64 : Code returned by the job. Zero is success; non-zero is a failure.
     - exec_time_minutes::Float64 : Job execution time in minutes
     - completion_time::String : Timestamp of when the job completed.
-    - status::String : Status of the job; managed by torc.
-    - _key::String : Unique database identifier for the result. Does not include collection name.
-    - _id::String : Unique database identifier for the result. Includes collection name and _key.
-    - _rev::String : Database revision of the result
+    - status::Any
 """
 Base.@kwdef mutable struct ResultModel <: OpenAPI.APIModel
-    job_key::Union{Nothing, String} = nothing
+    id::Union{Nothing, Int64} = nothing
+    job_id::Union{Nothing, Int64} = nothing
+    workflow_id::Union{Nothing, Int64} = nothing
     run_id::Union{Nothing, Int64} = nothing
+    compute_node_id::Union{Nothing, Int64} = nothing
     return_code::Union{Nothing, Int64} = nothing
     exec_time_minutes::Union{Nothing, Float64} = nothing
     completion_time::Union{Nothing, String} = nothing
-    status::Union{Nothing, String} = nothing
-    _key::Union{Nothing, String} = nothing
-    _id::Union{Nothing, String} = nothing
-    _rev::Union{Nothing, String} = nothing
+    status::Union{Nothing, Any} = nothing
 
-    function ResultModel(job_key, run_id, return_code, exec_time_minutes, completion_time, status, _key, _id, _rev, )
-        o = new(job_key, run_id, return_code, exec_time_minutes, completion_time, status, _key, _id, _rev, )
+    function ResultModel(id, job_id, workflow_id, run_id, compute_node_id, return_code, exec_time_minutes, completion_time, status, )
+        o = new(id, job_id, workflow_id, run_id, compute_node_id, return_code, exec_time_minutes, completion_time, status, )
         OpenAPI.validate_properties(o)
         return o
     end
 end # type ResultModel
 
-const _property_types_ResultModel = Dict{Symbol,String}(Symbol("job_key")=>"String", Symbol("run_id")=>"Int64", Symbol("return_code")=>"Int64", Symbol("exec_time_minutes")=>"Float64", Symbol("completion_time")=>"String", Symbol("status")=>"String", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
+const _property_types_ResultModel = Dict{Symbol,String}(Symbol("id")=>"Int64", Symbol("job_id")=>"Int64", Symbol("workflow_id")=>"Int64", Symbol("run_id")=>"Int64", Symbol("compute_node_id")=>"Int64", Symbol("return_code")=>"Int64", Symbol("exec_time_minutes")=>"Float64", Symbol("completion_time")=>"String", Symbol("status")=>"Any", )
 OpenAPI.property_type(::Type{ ResultModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ResultModel[name]))}
 
 function OpenAPI.check_required(o::ResultModel)
-    o.job_key === nothing && (return false)
+    o.job_id === nothing && (return false)
+    o.workflow_id === nothing && (return false)
     o.run_id === nothing && (return false)
+    o.compute_node_id === nothing && (return false)
     o.return_code === nothing && (return false)
     o.exec_time_minutes === nothing && (return false)
     o.completion_time === nothing && (return false)
@@ -58,15 +60,15 @@ function OpenAPI.check_required(o::ResultModel)
 end
 
 function OpenAPI.validate_properties(o::ResultModel)
-    OpenAPI.validate_property(ResultModel, Symbol("job_key"), o.job_key)
+    OpenAPI.validate_property(ResultModel, Symbol("id"), o.id)
+    OpenAPI.validate_property(ResultModel, Symbol("job_id"), o.job_id)
+    OpenAPI.validate_property(ResultModel, Symbol("workflow_id"), o.workflow_id)
     OpenAPI.validate_property(ResultModel, Symbol("run_id"), o.run_id)
+    OpenAPI.validate_property(ResultModel, Symbol("compute_node_id"), o.compute_node_id)
     OpenAPI.validate_property(ResultModel, Symbol("return_code"), o.return_code)
     OpenAPI.validate_property(ResultModel, Symbol("exec_time_minutes"), o.exec_time_minutes)
     OpenAPI.validate_property(ResultModel, Symbol("completion_time"), o.completion_time)
     OpenAPI.validate_property(ResultModel, Symbol("status"), o.status)
-    OpenAPI.validate_property(ResultModel, Symbol("_key"), o._key)
-    OpenAPI.validate_property(ResultModel, Symbol("_id"), o._id)
-    OpenAPI.validate_property(ResultModel, Symbol("_rev"), o._rev)
 end
 
 function OpenAPI.validate_property(::Type{ ResultModel }, name::Symbol, val)

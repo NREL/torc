@@ -6,40 +6,40 @@
 
     ListEventsResponse(;
         items=nothing,
-        skip=nothing,
+        offset=nothing,
         max_limit=nothing,
         count=nothing,
         total_count=nothing,
         has_more=nothing,
     )
 
-    - items::Vector{Any}
-    - skip::Int64
+    - items::Vector{EventModel}
+    - offset::Int64
     - max_limit::Int64
     - count::Int64
     - total_count::Int64
     - has_more::Bool
 """
 Base.@kwdef mutable struct ListEventsResponse <: OpenAPI.APIModel
-    items::Union{Nothing, Vector{Any}} = nothing
-    skip::Union{Nothing, Int64} = nothing
+    items::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{EventModel} }
+    offset::Union{Nothing, Int64} = nothing
     max_limit::Union{Nothing, Int64} = nothing
     count::Union{Nothing, Int64} = nothing
     total_count::Union{Nothing, Int64} = nothing
     has_more::Union{Nothing, Bool} = nothing
 
-    function ListEventsResponse(items, skip, max_limit, count, total_count, has_more, )
-        o = new(items, skip, max_limit, count, total_count, has_more, )
+    function ListEventsResponse(items, offset, max_limit, count, total_count, has_more, )
+        o = new(items, offset, max_limit, count, total_count, has_more, )
         OpenAPI.validate_properties(o)
         return o
     end
 end # type ListEventsResponse
 
-const _property_types_ListEventsResponse = Dict{Symbol,String}(Symbol("items")=>"Vector{Any}", Symbol("skip")=>"Int64", Symbol("max_limit")=>"Int64", Symbol("count")=>"Int64", Symbol("total_count")=>"Int64", Symbol("has_more")=>"Bool", )
+const _property_types_ListEventsResponse = Dict{Symbol,String}(Symbol("items")=>"Vector{EventModel}", Symbol("offset")=>"Int64", Symbol("max_limit")=>"Int64", Symbol("count")=>"Int64", Symbol("total_count")=>"Int64", Symbol("has_more")=>"Bool", )
 OpenAPI.property_type(::Type{ ListEventsResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ListEventsResponse[name]))}
 
 function OpenAPI.check_required(o::ListEventsResponse)
-    o.skip === nothing && (return false)
+    o.offset === nothing && (return false)
     o.max_limit === nothing && (return false)
     o.count === nothing && (return false)
     o.total_count === nothing && (return false)
@@ -49,7 +49,7 @@ end
 
 function OpenAPI.validate_properties(o::ListEventsResponse)
     OpenAPI.validate_property(ListEventsResponse, Symbol("items"), o.items)
-    OpenAPI.validate_property(ListEventsResponse, Symbol("skip"), o.skip)
+    OpenAPI.validate_property(ListEventsResponse, Symbol("offset"), o.offset)
     OpenAPI.validate_property(ListEventsResponse, Symbol("max_limit"), o.max_limit)
     OpenAPI.validate_property(ListEventsResponse, Symbol("count"), o.count)
     OpenAPI.validate_property(ListEventsResponse, Symbol("total_count"), o.total_count)

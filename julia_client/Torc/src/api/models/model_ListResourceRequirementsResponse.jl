@@ -6,7 +6,7 @@
 
     ListResourceRequirementsResponse(;
         items=nothing,
-        skip=nothing,
+        offset=nothing,
         max_limit=nothing,
         count=nothing,
         total_count=nothing,
@@ -14,7 +14,7 @@
     )
 
     - items::Vector{ResourceRequirementsModel}
-    - skip::Int64
+    - offset::Int64
     - max_limit::Int64
     - count::Int64
     - total_count::Int64
@@ -22,24 +22,24 @@
 """
 Base.@kwdef mutable struct ListResourceRequirementsResponse <: OpenAPI.APIModel
     items::Union{Nothing, Vector} = nothing # spec type: Union{ Nothing, Vector{ResourceRequirementsModel} }
-    skip::Union{Nothing, Int64} = nothing
+    offset::Union{Nothing, Int64} = nothing
     max_limit::Union{Nothing, Int64} = nothing
     count::Union{Nothing, Int64} = nothing
     total_count::Union{Nothing, Int64} = nothing
     has_more::Union{Nothing, Bool} = nothing
 
-    function ListResourceRequirementsResponse(items, skip, max_limit, count, total_count, has_more, )
-        o = new(items, skip, max_limit, count, total_count, has_more, )
+    function ListResourceRequirementsResponse(items, offset, max_limit, count, total_count, has_more, )
+        o = new(items, offset, max_limit, count, total_count, has_more, )
         OpenAPI.validate_properties(o)
         return o
     end
 end # type ListResourceRequirementsResponse
 
-const _property_types_ListResourceRequirementsResponse = Dict{Symbol,String}(Symbol("items")=>"Vector{ResourceRequirementsModel}", Symbol("skip")=>"Int64", Symbol("max_limit")=>"Int64", Symbol("count")=>"Int64", Symbol("total_count")=>"Int64", Symbol("has_more")=>"Bool", )
+const _property_types_ListResourceRequirementsResponse = Dict{Symbol,String}(Symbol("items")=>"Vector{ResourceRequirementsModel}", Symbol("offset")=>"Int64", Symbol("max_limit")=>"Int64", Symbol("count")=>"Int64", Symbol("total_count")=>"Int64", Symbol("has_more")=>"Bool", )
 OpenAPI.property_type(::Type{ ListResourceRequirementsResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ListResourceRequirementsResponse[name]))}
 
 function OpenAPI.check_required(o::ListResourceRequirementsResponse)
-    o.skip === nothing && (return false)
+    o.offset === nothing && (return false)
     o.max_limit === nothing && (return false)
     o.count === nothing && (return false)
     o.total_count === nothing && (return false)
@@ -49,7 +49,7 @@ end
 
 function OpenAPI.validate_properties(o::ListResourceRequirementsResponse)
     OpenAPI.validate_property(ListResourceRequirementsResponse, Symbol("items"), o.items)
-    OpenAPI.validate_property(ListResourceRequirementsResponse, Symbol("skip"), o.skip)
+    OpenAPI.validate_property(ListResourceRequirementsResponse, Symbol("offset"), o.offset)
     OpenAPI.validate_property(ListResourceRequirementsResponse, Symbol("max_limit"), o.max_limit)
     OpenAPI.validate_property(ListResourceRequirementsResponse, Symbol("count"), o.count)
     OpenAPI.validate_property(ListResourceRequirementsResponse, Symbol("total_count"), o.total_count)

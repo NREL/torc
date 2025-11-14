@@ -5,73 +5,103 @@
 @doc raw"""compute_node_model
 
     ComputeNodeModel(;
+        id=nothing,
+        workflow_id=nothing,
         hostname=nothing,
         pid=nothing,
         start_time=nothing,
         duration_seconds=nothing,
         is_active=nothing,
-        resources=nothing,
+        num_cpus=nothing,
+        memory_gb=nothing,
+        num_gpus=nothing,
+        num_nodes=nothing,
+        time_limit=nothing,
+        scheduler_config_id=nothing,
+        compute_node_type=nothing,
         scheduler=nothing,
-        _key=nothing,
-        _id=nothing,
-        _rev=nothing,
     )
 
+    - id::Int64
+    - workflow_id::Int64
     - hostname::String
     - pid::Int64
     - start_time::String
     - duration_seconds::Float64
     - is_active::Bool
-    - resources::ComputeNodesResources
+    - num_cpus::Int64
+    - memory_gb::Float64
+    - num_gpus::Int64
+    - num_nodes::Int64
+    - time_limit::String
+    - scheduler_config_id::Int64
+    - compute_node_type::String
     - scheduler::Any
-    - _key::String
-    - _id::String
-    - _rev::String
 """
 Base.@kwdef mutable struct ComputeNodeModel <: OpenAPI.APIModel
+    id::Union{Nothing, Int64} = nothing
+    workflow_id::Union{Nothing, Int64} = nothing
     hostname::Union{Nothing, String} = nothing
     pid::Union{Nothing, Int64} = nothing
     start_time::Union{Nothing, String} = nothing
     duration_seconds::Union{Nothing, Float64} = nothing
     is_active::Union{Nothing, Bool} = nothing
-    resources = nothing # spec type: Union{ Nothing, ComputeNodesResources }
+    num_cpus::Union{Nothing, Int64} = nothing
+    memory_gb::Union{Nothing, Float64} = nothing
+    num_gpus::Union{Nothing, Int64} = nothing
+    num_nodes::Union{Nothing, Int64} = nothing
+    time_limit::Union{Nothing, String} = nothing
+    scheduler_config_id::Union{Nothing, Int64} = nothing
+    compute_node_type::Union{Nothing, String} = nothing
     scheduler::Union{Nothing, Any} = nothing
-    _key::Union{Nothing, String} = nothing
-    _id::Union{Nothing, String} = nothing
-    _rev::Union{Nothing, String} = nothing
 
-    function ComputeNodeModel(hostname, pid, start_time, duration_seconds, is_active, resources, scheduler, _key, _id, _rev, )
-        o = new(hostname, pid, start_time, duration_seconds, is_active, resources, scheduler, _key, _id, _rev, )
+    function ComputeNodeModel(id, workflow_id, hostname, pid, start_time, duration_seconds, is_active, num_cpus, memory_gb, num_gpus, num_nodes, time_limit, scheduler_config_id, compute_node_type, scheduler, )
+        o = new(id, workflow_id, hostname, pid, start_time, duration_seconds, is_active, num_cpus, memory_gb, num_gpus, num_nodes, time_limit, scheduler_config_id, compute_node_type, scheduler, )
         OpenAPI.validate_properties(o)
         return o
     end
 end # type ComputeNodeModel
 
-const _property_types_ComputeNodeModel = Dict{Symbol,String}(Symbol("hostname")=>"String", Symbol("pid")=>"Int64", Symbol("start_time")=>"String", Symbol("duration_seconds")=>"Float64", Symbol("is_active")=>"Bool", Symbol("resources")=>"ComputeNodesResources", Symbol("scheduler")=>"Any", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
+const _property_types_ComputeNodeModel = Dict{Symbol,String}(Symbol("id")=>"Int64", Symbol("workflow_id")=>"Int64", Symbol("hostname")=>"String", Symbol("pid")=>"Int64", Symbol("start_time")=>"String", Symbol("duration_seconds")=>"Float64", Symbol("is_active")=>"Bool", Symbol("num_cpus")=>"Int64", Symbol("memory_gb")=>"Float64", Symbol("num_gpus")=>"Int64", Symbol("num_nodes")=>"Int64", Symbol("time_limit")=>"String", Symbol("scheduler_config_id")=>"Int64", Symbol("compute_node_type")=>"String", Symbol("scheduler")=>"Any", )
 OpenAPI.property_type(::Type{ ComputeNodeModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ComputeNodeModel[name]))}
 
 function OpenAPI.check_required(o::ComputeNodeModel)
+    o.workflow_id === nothing && (return false)
     o.hostname === nothing && (return false)
     o.pid === nothing && (return false)
     o.start_time === nothing && (return false)
-    o.resources === nothing && (return false)
+    o.num_cpus === nothing && (return false)
+    o.memory_gb === nothing && (return false)
+    o.num_gpus === nothing && (return false)
+    o.num_nodes === nothing && (return false)
+    o.compute_node_type === nothing && (return false)
     true
 end
 
 function OpenAPI.validate_properties(o::ComputeNodeModel)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("id"), o.id)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("workflow_id"), o.workflow_id)
     OpenAPI.validate_property(ComputeNodeModel, Symbol("hostname"), o.hostname)
     OpenAPI.validate_property(ComputeNodeModel, Symbol("pid"), o.pid)
     OpenAPI.validate_property(ComputeNodeModel, Symbol("start_time"), o.start_time)
     OpenAPI.validate_property(ComputeNodeModel, Symbol("duration_seconds"), o.duration_seconds)
     OpenAPI.validate_property(ComputeNodeModel, Symbol("is_active"), o.is_active)
-    OpenAPI.validate_property(ComputeNodeModel, Symbol("resources"), o.resources)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("num_cpus"), o.num_cpus)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("memory_gb"), o.memory_gb)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("num_gpus"), o.num_gpus)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("num_nodes"), o.num_nodes)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("time_limit"), o.time_limit)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("scheduler_config_id"), o.scheduler_config_id)
+    OpenAPI.validate_property(ComputeNodeModel, Symbol("compute_node_type"), o.compute_node_type)
     OpenAPI.validate_property(ComputeNodeModel, Symbol("scheduler"), o.scheduler)
-    OpenAPI.validate_property(ComputeNodeModel, Symbol("_key"), o._key)
-    OpenAPI.validate_property(ComputeNodeModel, Symbol("_id"), o._id)
-    OpenAPI.validate_property(ComputeNodeModel, Symbol("_rev"), o._rev)
 end
 
 function OpenAPI.validate_property(::Type{ ComputeNodeModel }, name::Symbol, val)
+
+
+
+
+
 
 
 

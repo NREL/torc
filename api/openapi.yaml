@@ -1572,7 +1572,7 @@ paths:
   /resource_requirements/{id}:
     delete:
       description: Delete a resource requirements record.
-      operationId: delete_resource_requirements
+      operationId: delete_resource_requirement
       parameters:
       - description: Resource requirements ID
         explode: false
@@ -2506,7 +2506,7 @@ paths:
       x-codegen-request-body-name: body
     delete:
       description: Delete all user data records for one workflow.
-      operationId: delete_user_data
+      operationId: delete_all_user_data
       parameters:
       - description: Workflow ID
         explode: false
@@ -4503,6 +4503,23 @@ components:
       example:
         code: 2
         errorNum: 3
+        errorMessage: errorMessage
+        error: "{}"
+      properties:
+        error:
+          type: object
+        errorNum:
+          type: integer
+        errorMessage:
+          type: string
+        code:
+          type: integer
+      required:
+      - error
+    not_found_error_response:
+      example:
+        code: 404
+        errorNum: 404
         errorMessage: errorMessage
         error: "{}"
       properties:

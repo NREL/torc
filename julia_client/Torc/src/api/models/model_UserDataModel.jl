@@ -5,54 +5,51 @@
 @doc raw"""user_data_model
 
     UserDataModel(;
+        id=nothing,
+        workflow_id=nothing,
         is_ephemeral=false,
         name=nothing,
         data=nothing,
-        _key=nothing,
-        _id=nothing,
-        _rev=nothing,
     )
 
+    - id::Int64
+    - workflow_id::Int64 : Database ID of the workflow this record is associated with.
     - is_ephemeral::Bool : The data will only exist for the duration of one run. Torc will clear it before starting new runs.
     - name::String : Name of the data object
     - data::Any : User-defined data
-    - _key::String
-    - _id::String
-    - _rev::String
 """
 Base.@kwdef mutable struct UserDataModel <: OpenAPI.APIModel
+    id::Union{Nothing, Int64} = nothing
+    workflow_id::Union{Nothing, Int64} = nothing
     is_ephemeral::Union{Nothing, Bool} = false
     name::Union{Nothing, String} = nothing
     data::Union{Nothing, Any} = nothing
-    _key::Union{Nothing, String} = nothing
-    _id::Union{Nothing, String} = nothing
-    _rev::Union{Nothing, String} = nothing
 
-    function UserDataModel(is_ephemeral, name, data, _key, _id, _rev, )
-        o = new(is_ephemeral, name, data, _key, _id, _rev, )
+    function UserDataModel(id, workflow_id, is_ephemeral, name, data, )
+        o = new(id, workflow_id, is_ephemeral, name, data, )
         OpenAPI.validate_properties(o)
         return o
     end
 end # type UserDataModel
 
-const _property_types_UserDataModel = Dict{Symbol,String}(Symbol("is_ephemeral")=>"Bool", Symbol("name")=>"String", Symbol("data")=>"Any", Symbol("_key")=>"String", Symbol("_id")=>"String", Symbol("_rev")=>"String", )
+const _property_types_UserDataModel = Dict{Symbol,String}(Symbol("id")=>"Int64", Symbol("workflow_id")=>"Int64", Symbol("is_ephemeral")=>"Bool", Symbol("name")=>"String", Symbol("data")=>"Any", )
 OpenAPI.property_type(::Type{ UserDataModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_UserDataModel[name]))}
 
 function OpenAPI.check_required(o::UserDataModel)
+    o.workflow_id === nothing && (return false)
+    o.name === nothing && (return false)
     true
 end
 
 function OpenAPI.validate_properties(o::UserDataModel)
+    OpenAPI.validate_property(UserDataModel, Symbol("id"), o.id)
+    OpenAPI.validate_property(UserDataModel, Symbol("workflow_id"), o.workflow_id)
     OpenAPI.validate_property(UserDataModel, Symbol("is_ephemeral"), o.is_ephemeral)
     OpenAPI.validate_property(UserDataModel, Symbol("name"), o.name)
     OpenAPI.validate_property(UserDataModel, Symbol("data"), o.data)
-    OpenAPI.validate_property(UserDataModel, Symbol("_key"), o._key)
-    OpenAPI.validate_property(UserDataModel, Symbol("_id"), o._id)
-    OpenAPI.validate_property(UserDataModel, Symbol("_rev"), o._rev)
 end
 
 function OpenAPI.validate_property(::Type{ UserDataModel }, name::Symbol, val)
-
 
 
 
