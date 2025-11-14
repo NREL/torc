@@ -1,4 +1,3 @@
-//! Main binary entry point for torc implementation.
 // This is the amended version that adds Authorization via Inversion of Control.
 
 #![allow(missing_docs)]
@@ -6,10 +5,12 @@
 use anyhow::Result;
 use clap::Parser;
 use dotenvy::dotenv;
-use log::{self, info};
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
 use std::env;
 use std::str::FromStr;
+use tracing::info;
+use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
+use tracing_timing::{Builder, Histogram};
 
 mod server;
 
@@ -38,9 +39,54 @@ struct Args {
 /// and pass it to the web server.
 fn main() -> Result<()> {
     dotenv().ok();
-    env_logger::init();
 
     let args = Args::parse();
+
+    // Check if timing instrumentation should be enabled
+    let timing_enabled = env::var("TORC_TIMING_ENABLED")
+        .map(|v| v == "1" || v.to_lowercase() == "true")
+        .unwrap_or(false);
+
+    // Set up logging/tracing with optional timing
+    if timing_enabled {
+        // Set up tracing with timing layer
+        let timing_layer = Builder::default()
+            .no_span_recursion()
+            .layer(|| Histogram::new_with_max(60_000_000_000, 2).unwrap());
+
+        tracing_subscriber::registry()
+            .with(
+                tracing_subscriber::fmt::layer()
+                    .with_target(true)
+                    .with_level(true)
+                    .with_span_events(tracing_subscriber::fmt::format::FmtSpan::CLOSE),
+            )
+            .with(
+                tracing_subscriber::EnvFilter::try_from_default_env()
+                    .unwrap_or_else(|_| "info".into()),
+            )
+            .with(timing_layer)
+            .init();
+
+        info!("Timing instrumentation enabled - timing data is being collected");
+        info!(
+            "Use external tools like tokio-console or OpenTelemetry exporters to view timing data"
+        );
+    } else {
+        // When timing is disabled, use standard tracing with INFO level
+        // Instrumented functions use debug level, so they won't appear in INFO logs
+        tracing_subscriber::registry()
+            .with(
+                tracing_subscriber::fmt::layer()
+                    .with_target(true)
+                    .with_level(true),
+            )
+            .with(
+                tracing_subscriber::EnvFilter::try_from_default_env()
+                    .unwrap_or_else(|_| "info".into()),
+            )
+            .init();
+    }
 
     // Use database path from command line if provided, otherwise fall back to DATABASE_URL env var
     let database_url = if let Some(db_path) = &args.database {

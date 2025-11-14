@@ -5,6 +5,7 @@ use log::{debug, error, info};
 use sha2::{Digest, Sha256};
 use sqlx::Row;
 use swagger::{ApiError, Has, XSpanIdString};
+use tracing::instrument;
 
 use crate::server::api_types::{
     ClaimNextJobsResponse, CreateJobResponse, CreateJobsResponse, DeleteJobResponse,
@@ -228,7 +229,7 @@ impl JobsApiImpl {
         // Get basic job info
         let record = match sqlx::query(
             r#"
-                SELECT id, workflow_id, name, command, resource_requirements_id, invocation_script, 
+                SELECT id, workflow_id, name, command, resource_requirements_id, invocation_script,
                        status, cancel_on_blocking_job_failure, supports_termination, scheduler_id
                 FROM job
                 WHERE id = ?
@@ -526,17 +527,17 @@ impl JobsApiImpl {
             r#"
             WITH RECURSIVE downstream_jobs(job_id, level) AS (
                 -- Base case: find jobs directly blocked by the given job
-                SELECT 
+                SELECT
                     jbb.job_id,
                     0 as level
                 FROM job_blocked_by jbb
                 WHERE jbb.blocked_by_job_id = ?
                   AND jbb.workflow_id = ?
-                
+
                 UNION ALL
-                
+
                 -- Recursive case: find jobs blocked by any downstream job
-                SELECT 
+                SELECT
                     jbb.job_id,
                     dj.level + 1 as level
                 FROM downstream_jobs dj
@@ -544,9 +545,9 @@ impl JobsApiImpl {
                 WHERE jbb.workflow_id = ?
                   AND dj.level < 100  -- Prevent infinite loops
             )
-            UPDATE job 
+            UPDATE job
             SET status = ?
-            WHERE workflow_id = ? 
+            WHERE workflow_id = ?
               AND id IN (SELECT DISTINCT job_id FROM downstream_jobs)
             "#,
             job_id,
@@ -745,6 +746,7 @@ where
     ///
     /// This operation wraps job creation and relationship creation in a transaction
     /// to ensure atomicity. If any insert fails, all will be rolled back.
+    #[instrument(skip(self, job, context), fields(workflow_id = job.workflow_id))]
     async fn create_job(
         &self,
         mut job: models::JobModel,
@@ -911,6 +913,7 @@ where
     }
 
     /// Create jobs in bulk. Recommended max job count of 10,000.
+    #[instrument(skip(self, body, context), fields(job_count = body.jobs.len()))]
     async fn create_jobs(
         &self,
         body: models::JobsModel,
@@ -1157,6 +1160,7 @@ where
     }
 
     /// Retrieve a job.
+    #[instrument(skip(self, context), fields(job_id = id))]
     async fn get_job(&self, id: i64, context: &C) -> Result<GetJobResponse, ApiError> {
         debug!("get_job({}) - X-Span-ID: {:?}", id, context.get().0.clone());
         match self.get_job_with_relationships(id).await {
@@ -1172,6 +1176,7 @@ where
     }
 
     /// Return the resource requirements for jobs with a status of ready.
+    #[instrument(skip(self, context), fields(workflow_id = id))]
     async fn get_ready_job_requirements(
         &self,
         id: i64,
@@ -1227,6 +1232,7 @@ where
     }
 
     /// Retrieve all jobs for one workflow.
+    #[instrument(skip(self, context), fields(workflow_id, offset, limit))]
     async fn list_jobs(
         &self,
         workflow_id: i64,
@@ -1657,6 +1663,7 @@ where
     ///
     /// This function updates only the status field with no restrictions.
     /// All other job fields remain unchanged.
+    #[instrument(skip(self, context), fields(job_id = id, status = ?status))]
     async fn update_job_status(
         &self,
         id: i64,
@@ -1705,6 +1712,7 @@ where
     }
 
     /// Return user-requested number of jobs that are ready for submission. Sets status to pending.
+    #[instrument(skip(self, context), fields(workflow_id = id, requested_job_count))]
     async fn claim_next_jobs(
         &self,
         id: i64,
@@ -1723,6 +1731,7 @@ where
 
     /// Check for changed job inputs and update status accordingly.
     /// IMPORTANT: All status updates are performed within a transaction (all or none).
+    #[instrument(skip(self, context), fields(workflow_id = id, dry_run))]
     async fn process_changed_job_inputs(
         &self,
         id: i64,
@@ -1957,7 +1966,7 @@ where
 
         let result = match sqlx::query!(
             r#"
-            UPDATE job 
+            UPDATE job
             SET status = $1
             WHERE workflow_id = $2 AND status != $1
             "#,

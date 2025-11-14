@@ -25,8 +25,13 @@ serde_with = { version = "3.8", default-features = false, features = ["base64", 
 chrono = { version = "0.4", features = ["serde"] }
 log = "0.4.28"
 env_logger = "0.11"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+tracing-timing = "0.6"
+hdrhistogram = "7.5"
+signal-hook = "0.3"
 clap = { version = "4.4", features = ["derive", "env"] }
-tokio = { version = "1.47", features = ["rt-multi-thread", "macros", "net"] }
+tokio = { version = "1.47", features = ["rt-multi-thread", "macros", "net", "signal"] }
 url = "2.5"
 validator = { version = "0.16", features = ["derive"] }
 mime = "0.3"
@@ -40,6 +45,7 @@ serde_ignored = "0.1.1"
 percent-encoding = "2.1.0"
 regex = "1.3"
 lazy_static = "1.4"
+parking_lot = "0.12"
 anyhow = "1"
 sqlx = { version = "0.8.6", features = ["runtime-tokio", "sqlite"] }
 dotenvy = "0.15.7"
@@ -89,6 +95,7 @@ server = [
     "dep:dotenvy",
     "dep:jsonwebtoken",
     "dep:sha2",
+    "dep:tracing",
 ]
 client = [
     "dep:reqwest",
@@ -141,6 +148,7 @@ dotenvy = { workspace = true, optional = true }
 iso8601 = { workspace = true }
 jsonwebtoken = { workspace = true, optional = true }
 sha2 = { workspace = true, optional = true }
+tracing = { workspace = true, optional = true }
 
 # Client dependencies (optional)
 reqwest = { workspace = true, optional = true }

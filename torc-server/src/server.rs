@@ -35,6 +35,7 @@ use torc::server::api::WorkflowActionsApi;
 use torc::server::api::WorkflowsApi;
 use torc::server::api::database_error;
 use torc::server::api_types::*;
+use tracing::instrument;
 
 #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "ios")))]
 use openssl::ssl::{Ssl, SslAcceptor, SslAcceptorBuilder, SslFiletype, SslMethod};
@@ -246,7 +247,7 @@ impl<C> Server<C> {
         {
             Ok(_) => Ok(()),
             Err(e) => {
-                info!("Database error: {}", e);
+                error!("Database error: {}", e);
                 Err(ApiError("Database error".to_string()))
             }
         }
@@ -278,7 +279,7 @@ impl<C> Server<C> {
         {
             Ok(_) => Ok(()),
             Err(e) => {
-                info!("Database error: {}", e);
+                error!("Database error: {}", e);
                 Err(ApiError("Database error".to_string()))
             }
         }
@@ -359,7 +360,7 @@ impl<C> Server<C> {
         {
             Ok(_) => Ok(()),
             Err(e) => {
-                info!("Database error: {}", e);
+                error!("Database error: {}", e);
                 Err(ApiError("Database error".to_string()))
             }
         }
@@ -415,7 +416,7 @@ impl<C> Server<C> {
         match query.execute(executor).await {
             Ok(_) => Ok(()),
             Err(e) => {
-                info!("Database error: {}", e);
+                error!("Database error: {}", e);
                 Err(ApiError("Database error".to_string()))
             }
         }
@@ -509,7 +510,7 @@ impl<C> Server<C> {
         {
             Ok(_) => Ok(()),
             Err(e) => {
-                info!("Database error: {}", e);
+                error!("Database error: {}", e);
                 Err(ApiError("Database error".to_string()))
             }
         }
@@ -547,7 +548,7 @@ impl<C> Server<C> {
                 Ok(())
             }
             Err(e) => {
-                info!("Database error: {}", e);
+                error!("Database error: {}", e);
                 Err(ApiError("Database error".to_string()))
             }
         }
@@ -1060,7 +1061,7 @@ impl<C> Server<C> {
             SELECT DISTINCT jbb.job_id
             FROM job_blocked_by jbb
             JOIN job j ON jbb.job_id = j.id
-            WHERE jbb.blocked_by_job_id = ? 
+            WHERE jbb.blocked_by_job_id = ?
             AND jbb.workflow_id = ?
             AND j.status = ?
             "#,
@@ -1198,17 +1199,17 @@ impl<C> Server<C> {
             r#"
             WITH RECURSIVE downstream_jobs(job_id, level) AS (
                 -- Base case: find jobs directly blocked by the given job
-                SELECT 
+                SELECT
                     jbb.job_id,
                     0 as level
                 FROM job_blocked_by jbb
                 WHERE jbb.blocked_by_job_id = ?
                   AND jbb.workflow_id = ?
-                
+
                 UNION ALL
-                
+
                 -- Recursive case: find jobs blocked by any downstream job
-                SELECT 
+                SELECT
                     jbb.job_id,
                     dj.level + 1 as level
                 FROM downstream_jobs dj
@@ -1216,9 +1217,9 @@ impl<C> Server<C> {
                 WHERE jbb.workflow_id = ?
                   AND dj.level < 100  -- Prevent infinite loops
             )
-            UPDATE job 
+            UPDATE job
             SET status = ?
-            WHERE workflow_id = ? 
+            WHERE workflow_id = ?
               AND id IN (SELECT DISTINCT job_id FROM downstream_jobs)
             "#,
             job_id,
@@ -1719,6 +1720,7 @@ where
     }
 
     /// Get pending (unexecuted) workflow actions for a workflow.
+    #[instrument(level = "debug", skip(self, context), fields(workflow_id))]
     async fn get_pending_actions(
         &self,
         workflow_id: i64,
@@ -1743,6 +1745,11 @@ where
     }
 
     /// Atomically claim a workflow action for execution.
+    #[instrument(
+        level = "debug",
+        skip(self, body, context),
+        fields(workflow_id, action_id)
+    )]
     async fn claim_action(
         &self,
         workflow_id: i64,
@@ -2138,7 +2145,7 @@ where
         all_runs: Option<bool>,
         context: &C,
     ) -> Result<ListResultsResponse, ApiError> {
-        info!(
+        debug!(
             "list_results({}, {:?}, {:?}, {:?}, {:?}, {:?}, {:?}, {:?}, {:?}, all_runs={:?}) - X-Span-ID: {:?}",
             workflow_id,
             job_id,
@@ -2308,13 +2315,14 @@ where
     }
 
     /// Return the resource requirements for jobs with a status of ready.
+    #[instrument(level = "debug", skip(self, context), fields(workflow_id = id, scheduler_config_id = ?scheduler_config_id))]
     async fn get_ready_job_requirements(
         &self,
         id: i64,
         scheduler_config_id: Option<i64>,
         context: &C,
     ) -> Result<GetReadyJobRequirementsResponse, ApiError> {
-        info!(
+        debug!(
             "get_ready_job_requirements({}, {:?}) - X-Span-ID: {:?}",
             id,
             scheduler_config_id,
@@ -2694,6 +2702,7 @@ where
     }
 
     /// Return true if all jobs in the workflow are complete.
+    #[instrument(level = "debug", skip(self, context), fields(workflow_id = id))]
     async fn is_workflow_complete(
         &self,
         id: i64,
@@ -2870,6 +2879,7 @@ where
     }
 
     /// Return jobs that are ready for submission and meet worker resource requirements. Set status to pending.
+    #[instrument(level = "debug", skip(self, body, context), fields(workflow_id = id, limit))]
     async fn claim_jobs_based_on_resources(
         &self,
         id: i64,
@@ -2914,6 +2924,7 @@ where
     }
 
     /// Return user-requested number of jobs that are ready for submission. Sets status to pending.
+    #[instrument(level = "debug", skip(self, body, context), fields(workflow_id = id, limit = ?limit))]
     async fn claim_next_jobs(
         &self,
         id: i64,
@@ -3106,7 +3117,7 @@ where
                 })?;
             }
 
-            info!(
+            debug!(
                 "Updated {} jobs to pending status for workflow {}",
                 job_ids_to_update.len(),
                 workflow_id
@@ -3130,6 +3141,7 @@ where
     }
 
     /// Check for changed job inputs and update status accordingly.
+    #[instrument(level = "debug", skip(self, body, context), fields(workflow_id = id, dry_run = ?dry_run))]
     async fn process_changed_job_inputs(
         &self,
         id: i64,
@@ -3314,7 +3326,7 @@ where
         name: String,
         context: &C,
     ) -> Result<GetDotGraphResponse, ApiError> {
-        info!(
+        debug!(
             "get_dot_graph({}, \"{}\") - X-Span-ID: {:?}",
             id,
             name,
@@ -3325,6 +3337,7 @@ where
     }
 
     /// Change the status of a job and manage side effects.
+    #[instrument(level = "debug", skip(self, body, context), fields(job_id = id, status = ?status, run_id))]
     async fn manage_status_change(
         &self,
         id: i64,
@@ -3333,7 +3346,7 @@ where
         body: Option<serde_json::Value>,
         context: &C,
     ) -> Result<ManageStatusChangeResponse, ApiError> {
-        info!(
+        debug!(
             "manage_status_change({}, {:?}, {}, {:?}) - X-Span-ID: {:?}",
             id,
             status,
@@ -3506,7 +3519,7 @@ where
             }
         }
 
-        info!(
+        debug!(
             "manage_status_change: successfully changed job_id={} status from '{}' to '{}'",
             id, current_status, status
         );
@@ -3515,6 +3528,7 @@ where
     }
 
     /// Start a job and manage side effects.
+    #[instrument(level = "debug", skip(self, body, context), fields(job_id = id, run_id, compute_node_id))]
     async fn start_job(
         &self,
         id: i64,
@@ -3602,6 +3616,7 @@ where
     }
 
     /// Complete a job, connect it to a result, and manage side effects.
+    #[instrument(level = "debug", skip(self, result, context), fields(job_id = id, status = ?status, run_id))]
     async fn complete_job(
         &self,
         id: i64,
@@ -3769,7 +3784,7 @@ where
             }
         }
 
-        info!(
+        debug!(
             "complete_job: successfully completed job_id={} with status={}, result_id={:?}",
             id, status, result_id
         );
@@ -3855,7 +3870,7 @@ where
     /// - `sort_method`: Optional sorting method for job prioritization
     /// - `limit`: Maximum number of jobs to return
     ///
-    /// # Returns  
+    /// # Returns
     /// A `ClaimJobsBasedOnResources` containing the list of jobs that were selected and updated,
     /// or an error if the operation fails. The `reason` field is set to an empty string.
     ///
@@ -3865,6 +3880,11 @@ where
     /// - The lock prevents concurrent job selection and ensures consistent resource accounting
     /// - Leverages the time_utils::duration_string_to_seconds function for time parsing
     /// - All selected jobs are changed from "ready" to "pending" status atomically
+    #[instrument(
+        level = "debug",
+        skip(self, resources, context),
+        fields(workflow_id, limit)
+    )]
     async fn prepare_ready_jobs(
         &self,
         workflow_id: i64,
@@ -4159,7 +4179,7 @@ where
                 })?;
             }
 
-            info!(
+            debug!(
                 "Updated {} jobs to pending status for workflow {}",
                 job_ids_to_update.len(),
                 workflow_id
