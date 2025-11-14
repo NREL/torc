@@ -43,12 +43,6 @@
     //           "args": ["--login"]
     //         }
     //     }
-    "shell": {
-      "with_arguments": {
-        "program": "/opt/homebrew/bin/nu",
-        "args": ["--login"]
-      }
-    }
     // Represents the tags for inline runnable indicators, or spawning multiple tasks at once.
     // "tags": []
   }
