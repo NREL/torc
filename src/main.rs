@@ -110,8 +110,13 @@ fn main() {
     let cli = Cli::parse();
 
     // Initialize logger with CLI argument or RUST_LOG env var
-    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or(&cli.log_level))
-        .init();
+    // Skip initialization for commands that set up their own logging (e.g., RunJobs)
+    let skip_logger_init = matches!(cli.command, Commands::RunJobs(_));
+
+    if !skip_logger_init {
+        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or(&cli.log_level))
+            .init();
+    }
 
     // Validate format option for API commands
     if !matches!(cli.format.as_str(), "table" | "json") {

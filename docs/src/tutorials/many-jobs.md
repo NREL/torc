@@ -39,16 +39,16 @@ resource_requirements:
 export TORC_BASE_URL="http://localhost:8080/torc-service/v1"
 
 # Create workflow from spec
-WORKFLOW_ID=$(torc-client workflows create-from-spec hundred_jobs.yaml \
+WORKFLOW_ID=$(torc workflows create-from-spec hundred_jobs.yaml \
   | jq -r '.id')
 
 echo "Created workflow $WORKFLOW_ID"
 
 # Initialize jobs (marks them ready)
-torc-client workflows initialize-jobs $WORKFLOW_ID
+torc workflows initialize-jobs $WORKFLOW_ID
 
 # Check workflow status
-torc-client workflows status $WORKFLOW_ID
+torc workflows status $WORKFLOW_ID
 ```
 
 ## Step 3: Run Jobs Locally
@@ -69,10 +69,10 @@ In another terminal:
 
 ```bash
 # Watch job counts by status
-watch -n 5 'torc-client jobs list-by-status $WORKFLOW_ID | jq'
+watch -n 5 'torc jobs list-by-status $WORKFLOW_ID | jq'
 
 # View completed jobs
-torc-client jobs list $WORKFLOW_ID --status completed | jq '.jobs[] | {name, status}'
+torc jobs list $WORKFLOW_ID --status completed | jq '.jobs[] | {name, status}'
 ```
 
 ## Expected Behavior

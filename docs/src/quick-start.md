@@ -19,11 +19,11 @@ torc-server --database torc.db
 
 ## Test the client connection
 ```console
-torc-client workflows list
+torc workflows list
 ```
 If you changed the server URL, you can specify it with the `--url` flag.
 ```console
-torc-client --url http://localhost:8080/torc-service/v1 workflows list
+torc --url http://localhost:8080/torc-service/v1 workflows list
 ```
 
 ## Create a Workflow Specification
@@ -44,13 +44,13 @@ jobs:
 ## Create and Start the Workflow
 
 ```bash
-$ torc-client workflows create-from-spec workflow.yaml
+$ torc workflows create-from-spec workflow.yaml
 
 # Optional, list the jobs.
-$ torc-client jobs list
+$ torc jobs list
 
 # Optional, initialize jobs (build dependency graph).
-$ torc-client workflows initialize
+$ torc workflows initialize
 ```
 
 ## Run Jobs
@@ -65,10 +65,10 @@ torc run-jobs --poll-interval 1
 
 ```console
 # List all jobs
-torc-client jobs list
+torc jobs list
 
 # View job results
-torc-client results list
+torc results list
 ```
 
 # Or use the TUI to view the results in table.

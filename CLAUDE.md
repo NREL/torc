@@ -245,7 +245,7 @@ JobSpec and FileSpec support **parameterization** to automatically generate mult
   - Lists: `"[1,5,10]"` or `"['train','test','validation']"`
 - **Multi-dimensional**: Multiple parameters create Cartesian product (e.g., 3 learning rates × 3 batch sizes = 9 jobs)
 - **Implementation**: `parameter_expansion.rs` module with `ParameterValue` enum and expansion functions
-- **Examples**: See `torc-client/examples/hundred_jobs_parameterized.yaml`, `hyperparameter_sweep.yaml`, and `data_pipeline_parameterized.yaml`
+- **Examples**: See `examples/hundred_jobs_parameterized.yaml`, `hyperparameter_sweep.yaml`, and `data_pipeline_parameterized.yaml`
 
 ### Pagination
 List endpoints support `offset` and `limit` query parameters:

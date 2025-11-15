@@ -2,7 +2,7 @@
 
 When workflows fail or produce unexpected results, Torc provides comprehensive
 debugging tools to help you identify and resolve issues. The primary debugging
-tools are the commands `torc-client results list` and `torc-client reports
+tools are the commands `torc results list` and `torc reports
 results` commands. The first prints a table of return codes for each job
 execution (non-zero means failure). The second command generates a detailed JSON
 report containing job results and all associated log file paths.
@@ -24,7 +24,7 @@ debugging.
 View the job return codes in a table:
 
 ```bash
-torc-client results list <workflow_id>
+torc results list <workflow_id>
 ```
 ```
 Results for workflow ID 2:
@@ -42,7 +42,7 @@ Total: 3 results
 View only failed jobs:
 
 ```bash
-torc-client results list <workflow_id> --failed
+torc results list <workflow_id> --failed
 ```
 
 ```
@@ -58,22 +58,22 @@ Generate a debugging report for a workflow:
 
 ```bash
 # Generate report for a specific workflow
-torc-client reports results <workflow_id>
+torc reports results <workflow_id>
 
 # Specify custom output directory (default: "output")
-torc-client reports results <workflow_id> --output-dir /path/to/output
+torc reports results <workflow_id> --output-dir /path/to/output
 
 # Include all workflow runs (default: only latest run)
-torc-client reports results <workflow_id> --all-runs
+torc reports results <workflow_id> --all-runs
 
 # Interactive workflow selection (if workflow_id omitted)
-torc-client reports results
+torc reports results
 ```
 
 The command outputs a comprehensive JSON report to stdout. Redirect it to a file for easier analysis:
 
 ```bash
-torc-client reports results <workflow_id> > debug_report.json
+torc reports results <workflow_id> > debug_report.json
 ```
 
 ## Report Structure
@@ -210,7 +210,7 @@ When a job fails, follow these steps:
 
 1. **Generate the debug report**:
    ```bash
-   torc-client reports results <workflow_id> > debug_report.json
+   torc reports results <workflow_id> > debug_report.json
    ```
 
 2. **Find the failed job** using `jq` or similar tool:
@@ -247,7 +247,7 @@ When a job fails, follow these steps:
 
 ```bash
 # 1. Generate report
-torc-client reports results 123 > report.json
+torc reports results 123 > report.json
 
 # 2. Check overall success/failure counts
 echo "Total jobs: $(jq '.total_results' report.json)"
@@ -277,7 +277,7 @@ When a workflow has been reinitialized multiple times, compare runs to identify 
 
 ```bash
 # Generate report with all historical runs
-torc-client reports results <workflow_id> --all-runs > full_history.json
+torc reports results <workflow_id> --all-runs > full_history.json
 
 # Compare return codes across runs for a specific job
 jq -r '.results[] | select(.job_name == "flaky_job") | "Run \(.run_id): exit code \(.return_code)"' full_history.json
@@ -322,7 +322,7 @@ The `--output-dir` parameter must match the directory used during workflow execu
 torc run-jobs <workflow_id> /path/to/my_output
 
 # Generate report using the same directory
-torc-client reports results <workflow_id> --output-dir /path/to/my_output
+torc reports results <workflow_id> --output-dir /path/to/my_output
 ```
 
 ### Slurm Scheduler
@@ -332,7 +332,7 @@ torc-client reports results <workflow_id> --output-dir /path/to/my_output
 torc slurm schedule-nodes <workflow_id> --output-dir /path/to/my_output
 
 # Generate report using the same directory
-torc-client reports results <workflow_id> --output-dir /path/to/my_output
+torc reports results <workflow_id> --output-dir /path/to/my_output
 ```
 
 **Default behavior**: If `--output-dir` is not specified, both the runner and reports command default to `./output`.
@@ -343,7 +343,7 @@ torc-client reports results <workflow_id> --output-dir /path/to/my_output
 
 2. **Archive reports with logs**: Store the JSON report alongside log files for future reference
    ```bash
-   torc-client reports results "$WF_ID" > "output/report_${WF_ID}_$(date +%Y%m%d_%H%M%S).json"
+   torc reports results "$WF_ID" > "output/report_${WF_ID}_$(date +%Y%m%d_%H%M%S).json"
    ```
 
 3. **Use version control**: Commit debug reports for important workflow runs to track changes over time
@@ -355,8 +355,8 @@ torc-client reports results <workflow_id> --output-dir /path/to/my_output
 6. **Combine with resource monitoring**: Use `reports results` for log files and `reports check-resource-utilization` for performance issues
    ```bash
    # Check if job failed due to resource constraints
-   torc-client reports check-resource-utilization "$WF_ID"
-   torc-client reports results "$WF_ID" > report.json
+   torc reports check-resource-utilization "$WF_ID"
+   torc reports results "$WF_ID" > report.json
    ```
 
 7. **Filter large reports**: For workflows with many jobs, filter the report to focus on relevant jobs
@@ -374,7 +374,7 @@ torc-client reports results <workflow_id> --output-dir /path/to/my_output
 **Solution**: Verify the directory exists and the path is correct:
 ```bash
 ls -ld output/  # Check if directory exists
-torc-client reports results <workflow_id> --output-dir "$(pwd)/output"
+torc reports results <workflow_id> --output-dir "$(pwd)/output"
 ```
 
 ### Empty Results Array
@@ -383,8 +383,8 @@ torc-client reports results <workflow_id> --output-dir "$(pwd)/output"
 
 **Solution**: Check workflow status and ensure jobs have been completed:
 ```bash
-torc-client workflows status <workflow_id>
-torc-client results list <workflow_id>  # Verify results exist
+torc workflows status <workflow_id>
+torc results list <workflow_id>  # Verify results exist
 ```
 
 ### All Log Paths Show Warnings
@@ -397,14 +397,14 @@ torc-client results list <workflow_id>  # Verify results exist
 find . -name "job_*.o" -o -name "job_runner_*.log"
 
 # Use correct output directory in report
-torc-client reports results <workflow_id> --output-dir <correct_path>
+torc reports results <workflow_id> --output-dir <correct_path>
 ```
 
 ## Related Commands
 
-- **`torc-client results list`**: View summary of job results in table format
-- **`torc-client workflows status`**: Check overall workflow status
-- **`torc-client reports check-resource-utilization`**: Analyze resource usage and find over-utilized jobs
-- **`torc-client jobs list`**: View all jobs and their current status
+- **`torc results list`**: View summary of job results in table format
+- **`torc workflows status`**: Check overall workflow status
+- **`torc reports check-resource-utilization`**: Analyze resource usage and find over-utilized jobs
+- **`torc jobs list`**: View all jobs and their current status
 
 The `reports results` command complements these by providing complete log file paths for in-depth debugging when high-level views aren't sufficient.

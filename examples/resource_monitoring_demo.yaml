@@ -4,10 +4,10 @@
 #
 # To run this workflow:
 # 1. Start the torc server
-# 2. Create the workflow: torc-client workflows create-from-spec examples/resource_monitoring_demo.yaml
-# 3. Initialize and start: torc-client workflows start <workflow_id>
+# 2. Create the workflow: torc workflows create-from-spec examples/resource_monitoring_demo.yaml
+# 3. Initialize and start: torc workflows start <workflow_id>
 # 4. Run the job runner: torc-job-runner <workflow_id>
-# 5. Check results with resource metrics: torc-client results list <workflow_id>
+# 5. Check results with resource metrics: torc results list <workflow_id>
 
 name: resource_monitoring_demo
 user: demo_user
@@ -23,15 +23,15 @@ resource_monitor:
 # Three independent jobs that run concurrently
 jobs:
   - name: cpu_heavy_job
-    command: "python3 torc-client/examples/scripts/cpu_intensive.py"
+    command: "python3 examples/scripts/cpu_intensive.py"
     resource_requirements_name: medium
 
   - name: memory_heavy_job
-    command: "python3 torc-client/examples/scripts/memory_intensive.py"
+    command: "python3 examples/scripts/memory_intensive.py"
     resource_requirements_name: medium
 
   - name: mixed_workload_job
-    command: "python3 torc-client/examples/scripts/mixed_workload.py"
+    command: "python3 examples/scripts/mixed_workload.py"
     resource_requirements_name: medium
 
 # No files needed for this demo

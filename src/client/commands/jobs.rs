@@ -61,7 +61,7 @@ pub enum JobCommands {
     /// are automatically created and assigned.
     ///
     /// Example:
-    ///   torc-client jobs create-from-file 123 batch_jobs.txt --cpus-per-job 4 --memory-per-job 8g
+    ///   torc jobs create-from-file 123 batch_jobs.txt --cpus-per-job 4 --memory-per-job 8g
     #[command(name = "create-from-file")]
     CreateFromFile {
         /// Workflow ID to create jobs for

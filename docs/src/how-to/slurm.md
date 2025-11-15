@@ -54,7 +54,7 @@ slurm_schedulers:
 ```
 
 ```bash
-torc-client slurm schedule-nodes -n 10 $WORKFLOW_ID
+torc slurm schedule-nodes -n 10 $WORKFLOW_ID
 ```
 
 **When to use:**
@@ -87,7 +87,7 @@ slurm_schedulers:
 ```
 
 ```bash
-torc-client slurm schedule-nodes -n 1 $WORKFLOW_ID --start-one-worker-per-node
+torc slurm schedule-nodes -n 1 $WORKFLOW_ID --start-one-worker-per-node
 ```
 
 **Benefits:**
@@ -110,7 +110,7 @@ slurm_schedulers:
     walltime: "04:00:00"
 ```
 ```bash
-torc-client slurm schedule-nodes -n 1 $WORKFLOW_ID
+torc slurm schedule-nodes -n 1 $WORKFLOW_ID
 ```
 
 **Benefits:**
@@ -133,7 +133,7 @@ slurm_schedulers:
 ```
 
 ```bash
-torc-client slurm schedule-nodes <workflow_id> \
+torc slurm schedule-nodes <workflow_id> \
   --scheduler-config-id <config_id> \
   --num-hpc-jobs 1 \
   --start-server-on-head-node \

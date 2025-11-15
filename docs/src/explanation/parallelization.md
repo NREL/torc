@@ -193,7 +193,7 @@ torc run-jobs $WORKFLOW_ID \
 or with Slurm:
 
 ```bash
-torc-client slurm schedule-nodes $WORKFLOW_ID \
+torc slurm schedule-nodes $WORKFLOW_ID \
   --scheduler-config-id 1 \
   --num-hpc-jobs 4 \
   --max-parallel-jobs 8
@@ -300,7 +300,7 @@ System may: swap, OOM, or throttle performance
 
 ```bash
 # Schedule 4 Slurm nodes, each running up to 8 concurrent jobs
-torc-client slurm schedule-nodes $WORKFLOW_ID \
+torc slurm schedule-nodes $WORKFLOW_ID \
   --scheduler-config-id 1 \
   --num-hpc-jobs 4 \
   --max-parallel-jobs 8

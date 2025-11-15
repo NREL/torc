@@ -1169,7 +1169,7 @@ pub fn run_cli_with_json(
     args: &[&str],
     server: &ServerProcess,
 ) -> Result<Value, Box<dyn std::error::Error>> {
-    let mut cmd = Command::new("./target/debug/torc-client");
+    let mut cmd = Command::new("./target/debug/torc");
     cmd.args(&["--format", "json", "--url", &server.config.base_path]);
     cmd.args(args);
     cmd.env("TORC_API_URL", &server.config.base_path);
@@ -1191,7 +1191,7 @@ pub fn run_cli_command(
     args: &[&str],
     server: &ServerProcess,
 ) -> Result<String, Box<dyn std::error::Error>> {
-    let mut cmd = Command::new("./target/debug/torc-client");
+    let mut cmd = Command::new("./target/debug/torc");
     cmd.args(&["--url", &server.config.base_path]);
     cmd.args(args);
     cmd.env("TORC_API_URL", &server.config.base_path);

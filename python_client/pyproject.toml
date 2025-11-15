@@ -3,7 +3,7 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "torc-client"
+name = "torc"
 # Note: Do not update manually. Use bump-my-version, such as
 # $ bump-my-version bump minor
 # After running the command, rebuild the OpenAPI packages from /db_service.

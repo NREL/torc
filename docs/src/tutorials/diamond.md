@@ -101,20 +101,20 @@ echo -e "apple red\nbanana yellow\ncherry red\ndate brown" > /tmp/input.txt
 ## Step 3: Create and Initialize Workflow
 
 ```bash
-WORKFLOW_ID=$(torc-client workflows create-from-spec diamond.yaml | jq -r '.id')
+WORKFLOW_ID=$(torc workflows create-from-spec diamond.yaml | jq -r '.id')
 
 # Update input file timestamp so it's "ready"
 touch /tmp/input.txt
 
 # Initialize workflow
-torc-client workflows initialize-jobs $WORKFLOW_ID
+torc workflows initialize-jobs $WORKFLOW_ID
 ```
 
 ## Step 4: Observe Dependency Resolution
 
 ```bash
 # Check job statuses
-torc-client jobs list $WORKFLOW_ID | jq '.jobs[] | {name, status}'
+torc jobs list $WORKFLOW_ID | jq '.jobs[] | {name, status}'
 ```
 
 Expected output:

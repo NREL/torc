@@ -105,18 +105,18 @@ resource_requirements:
 ## Step 2: Create Workflow
 
 ```bash
-WORKFLOW_ID=$(torc-client workflows create-from-spec grid_search.yaml | jq -r '.id')
-torc-client workflows initialize-jobs $WORKFLOW_ID
+WORKFLOW_ID=$(torc workflows create-from-spec grid_search.yaml | jq -r '.id')
+torc workflows initialize-jobs $WORKFLOW_ID
 ```
 
 ## Step 3: Verify Expansion
 
 ```bash
 # Count jobs: 1 prepare + (3 * 3 * 2) training + 1 aggregate + 1 select = 21
-torc-client jobs list $WORKFLOW_ID | jq '.jobs | length'
+torc jobs list $WORKFLOW_ID | jq '.jobs | length'
 
 # View training job names
-torc-client jobs list $WORKFLOW_ID | jq '.jobs[] | select(.name | startswith("train_")) | .name' | sort
+torc jobs list $WORKFLOW_ID | jq '.jobs[] | select(.name | startswith("train_")) | .name' | sort
 ```
 
 Output (18 training jobs):
@@ -135,7 +135,7 @@ Output (18 training jobs):
 
 ```bash
 # Check blocked jobs
-torc-client jobs list $WORKFLOW_ID | jq -r '.jobs[] | "\(.name): \(.status)"' | grep blocked
+torc jobs list $WORKFLOW_ID | jq -r '.jobs[] | "\(.name): \(.status)"' | grep blocked
 ```
 
 Expected:
@@ -162,7 +162,7 @@ done
 
 ```bash
 # Watch job completion
-watch -n 10 'torc-client jobs list-by-status $WORKFLOW_ID | jq'
+watch -n 10 'torc jobs list-by-status $WORKFLOW_ID | jq'
 ```
 
 ## Step 7: Retrieve Results

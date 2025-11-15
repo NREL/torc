@@ -53,7 +53,7 @@ export TORC_BASE_URL="http://my-server:8080/torc-service/v1"
 
 Can also be set via `--url` flag:
 ```bash
-torc-client --url "http://my-server:8080/torc-service/v1" workflows list
+torc --url "http://my-server:8080/torc-service/v1" workflows list
 ```
 
 ### USER / USERNAME
@@ -127,7 +127,7 @@ torc run-jobs $WORKFLOW_ID \
 
 **Via compute node registration**:
 ```bash
-torc-client compute-nodes create \
+torc compute-nodes create \
   --workflow-id $WORKFLOW_ID \
   --hostname $(hostname) \
   --num-cpus 32 \

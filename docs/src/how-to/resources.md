@@ -111,7 +111,7 @@ When requesting jobs from the server, the runner only accepts jobs that fit with
 Register compute nodes with the server:
 
 ```bash
-torc-client compute-nodes create \
+torc compute-nodes create \
   --workflow-id $WORKFLOW_ID \
   --hostname $(hostname) \
   --num-cpus 32 \

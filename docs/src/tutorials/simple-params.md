@@ -74,18 +74,18 @@ resource_requirements:
 ## Step 2: Create Workflow
 
 ```bash
-WORKFLOW_ID=$(torc-client workflows create-from-spec learning_rate_sweep.yaml | jq -r '.id')
-torc-client workflows initialize-jobs $WORKFLOW_ID
+WORKFLOW_ID=$(torc workflows create-from-spec learning_rate_sweep.yaml | jq -r '.id')
+torc workflows initialize-jobs $WORKFLOW_ID
 ```
 
 ## Step 3: Verify Expansion
 
 ```bash
 # Count jobs (should be 11: 5 train + 5 evaluate + 1 compare)
-torc-client jobs list $WORKFLOW_ID | jq '.jobs | length'
+torc jobs list $WORKFLOW_ID | jq '.jobs | length'
 
 # View job names
-torc-client jobs list $WORKFLOW_ID | jq '.jobs[] | .name' | sort
+torc jobs list $WORKFLOW_ID | jq '.jobs[] | .name' | sort
 ```
 
 Output:
@@ -107,7 +107,7 @@ Output:
 
 ```bash
 # Check status - training jobs should be ready, evaluation blocked
-torc-client jobs list $WORKFLOW_ID | jq '.jobs[] | {name, status}'
+torc jobs list $WORKFLOW_ID | jq '.jobs[] | {name, status}'
 ```
 
 Expected:
