@@ -183,7 +183,10 @@ pub fn run(args: &Args) {
         "debug" => LevelFilter::Debug,
         "trace" => LevelFilter::Trace,
         _ => {
-            eprintln!("Invalid log level '{}', defaulting to 'info'", args.log_level);
+            eprintln!(
+                "Invalid log level '{}', defaulting to 'info'",
+                args.log_level
+            );
             LevelFilter::Info
         }
     };
