@@ -101,26 +101,20 @@ cargo build --release --bin torc --features "client,tui,plot_resources"
 # Set server URL (optional, defaults to localhost:8080)
 export TORC_BASE_URL="http://localhost:8080/torc-service/v1"
 
-# Create workflow from specification file
-./target/release/torc workflows create-from-spec examples/sample_workflow.yaml
+# Quick workflow execution (convenience commands)
+./target/release/torc run examples/sample_workflow.yaml    # Create and run locally
+./target/release/torc submit examples/sample_workflow.yaml # Create and submit to scheduler
 
-# Start workflow execution
-./target/release/torc workflows start <workflow_id>
+# Or use explicit workflow management
+./target/release/torc workflows create examples/sample_workflow.yaml
+./target/release/torc workflows submit <workflow_id>  # Submit to scheduler
+./target/release/torc workflows run <workflow_id>     # Run locally
 
-# Run workflow locally
-./target/release/torc job-runner <workflow_id>
-
-# Launch interactive TUI
-./target/release/torc tui
-
-# Generate resource usage plots
-./target/release/torc plot-resources output/resource_metrics.db
-
-# List workflows
-./target/release/torc workflows list
-
-# View job status
-./target/release/torc jobs list <workflow_id>
+# Other commands
+./target/release/torc tui                              # Launch interactive TUI
+./target/release/torc plot-resources output/resource_metrics.db # Generate plots
+./target/release/torc workflows list                   # List workflows
+./target/release/torc jobs list <workflow_id>          # View job status
 
 # Run tests
 cargo test
@@ -269,16 +263,30 @@ List endpoints support `offset` and `limit` query parameters:
 ### Creating a Workflow from Specification
 1. Write workflow spec file (JSON/JSON5/YAML) following `WorkflowSpec` format
 2. See `examples/sample_workflow.json` for complete example
-3. Run: `torc workflows create-from-spec <spec_file>`
+3. Run: `torc workflows create <spec_file>`
 4. The command creates all components (workflow, jobs, files, user_data, schedulers) atomically
 5. If any step fails, the entire workflow is rolled back
 
 ### Running a Workflow Locally
-1. Create and initialize workflow: `torc workflows start <workflow_id>`
-2. Run jobs locally: `torc job-runner <workflow_id>`
+**Quick method:**
+- `torc run <spec_file>` - Create from spec and run locally in one step
+- `torc run <workflow_id>` - Run existing workflow locally
+
+**Explicit method:**
+1. Create workflow: `torc workflows create <spec_file>`
+2. Run workflow: `torc workflows run <workflow_id>`
 3. Monitor progress: `torc workflows status <workflow_id>`
 4. View job results: `torc jobs list <workflow_id>`
 5. Launch interactive UI: `torc tui`
+
+### Submitting a Workflow to Scheduler
+**Quick method:**
+- `torc submit <spec_file>` - Create from spec and submit to scheduler (requires on_workflow_start/schedule_nodes action)
+- `torc submit <workflow_id>` - Submit existing workflow to scheduler
+
+**Explicit method:**
+1. Create workflow: `torc workflows create <spec_file>`
+2. Submit workflow: `torc workflows submit <workflow_id>`
 
 ### Debugging
 
@@ -312,18 +320,25 @@ sqlite3 server/db/sqlite/dev.db
 
 1. **Start Server** (standalone binary): `cargo run --bin torc-server`
 2. **Build Unified CLI**: `cargo build --release --bin torc --features "client,tui,plot_resources"`
-3. **Create Workflow**: `torc workflows create-from-spec examples/sample_workflow.yaml`
-4. **Run Workflow**: `torc workflows start <id> && torc job-runner <id>`
+3. **Quick Execution**: `torc run examples/sample_workflow.yaml` OR `torc submit examples/sample_workflow.yaml`
+4. **Or Explicit**: `torc workflows create examples/sample_workflow.yaml` → `torc workflows run <id>`
 5. **Monitor**: `torc workflows status <id>` or `torc tui`
 
 **Note**: The server is always run as a standalone binary (`torc-server`), not through the unified CLI.
 
 ## CLI Commands Quick Reference
 
+**Quick Workflow Execution** (convenience commands):
+- `torc run <spec_file|id>` - Create from spec and run locally, or run existing workflow
+- `torc submit <spec_file|id>` - Create from spec and submit to scheduler, or submit existing workflow
+
 **Workflow Management**:
-- `torc workflows create-from-spec <file>` - Create workflow from specification
+- `torc workflows create <file>` - Create workflow from specification
+- `torc workflows new` - Create empty workflow interactively
 - `torc workflows list` - List all workflows
-- `torc workflows start <id>` - Initialize and start workflow
+- `torc workflows submit <id>` - Submit workflow to scheduler (requires on_workflow_start/schedule_nodes action)
+- `torc workflows run <id>` - Run workflow locally
+- `torc workflows initialize <id>` - Initialize workflow (set up dependencies without execution)
 - `torc workflows status <id>` - Check workflow status
 - `torc workflows cancel <id>` - Cancel workflow
 
@@ -333,7 +348,8 @@ sqlite3 server/db/sqlite/dev.db
 - `torc jobs update <job_id>` - Update job status
 
 **Execution**:
-- `torc job-runner <workflow_id>` - Run jobs locally
+- `torc run <workflow_spec_or_id>` - Run workflow locally (top-level command)
+- `torc submit <workflow_spec_or_id>` - Submit workflow to scheduler (top-level command)
 - `torc tui` - Interactive terminal UI
 
 **Utilities**:
