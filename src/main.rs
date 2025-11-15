@@ -257,6 +257,7 @@ fn main() {
                 scheduler_config_id: None,
                 log_prefix: None,
                 cpu_affinity_cpus_per_job: None,
+                log_level: log_level.clone(),
             };
 
             run_jobs_cmd::run(&args);

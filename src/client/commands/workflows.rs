@@ -886,6 +886,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                 scheduler_config_id: None,
                 log_prefix: None,
                 cpu_affinity_cpus_per_job: None,
+                log_level: "info".to_string(),
             };
 
             crate::run_jobs_cmd::run(&args);

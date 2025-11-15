@@ -83,6 +83,9 @@ pub struct Args {
     /// CPU affinity CPUs per job
     #[arg(long)]
     pub cpu_affinity_cpus_per_job: Option<i64>,
+    /// Log level (error, warn, info, debug, trace)
+    #[arg(long, default_value = "info")]
+    pub log_level: String,
 }
 
 pub fn run(args: &Args) {
@@ -172,10 +175,23 @@ pub fn run(args: &Args) {
         file: log_file,
     };
 
+    // Parse log level string to LevelFilter
+    let log_level_filter = match args.log_level.to_lowercase().as_str() {
+        "error" => LevelFilter::Error,
+        "warn" => LevelFilter::Warn,
+        "info" => LevelFilter::Info,
+        "debug" => LevelFilter::Debug,
+        "trace" => LevelFilter::Trace,
+        _ => {
+            eprintln!("Invalid log level '{}', defaulting to 'info'", args.log_level);
+            LevelFilter::Info
+        }
+    };
+
     let mut builder = Builder::from_default_env();
     builder
         .target(env_logger::Target::Pipe(Box::new(multi_writer)))
-        .filter_level(LevelFilter::Info)
+        .filter_level(log_level_filter)
         .init();
 
     info!("Starting job runner");
