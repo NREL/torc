@@ -34,6 +34,8 @@ url = "2.5"
 validator = { version = "0.16", features = ["derive"] }
 mime = "0.3"
 futures = "0.3"
+bcrypt = "0.15"
+rpassword = "7.3"
 
 # TUI-specific
 ratatui = "0.29"
@@ -107,6 +109,7 @@ server = [
     "dep:jsonwebtoken",
     "dep:sha2",
     "dep:tracing",
+    "dep:bcrypt",
 ]
 client = [
     "dep:reqwest",
@@ -123,6 +126,7 @@ client = [
     "dep:anyhow",
     "dep:regex",
     "dep:rusqlite",
+    "dep:rpassword",
 ]
 tui = [
     "client",
@@ -171,6 +175,7 @@ iso8601 = { workspace = true }
 jsonwebtoken = { workspace = true, optional = true }
 sha2 = { workspace = true, optional = true }
 tracing = { workspace = true, optional = true }
+bcrypt = { workspace = true, optional = true }
 
 # Client dependencies (optional)
 reqwest = { workspace = true, optional = true }
@@ -186,6 +191,7 @@ clap = { workspace = true, optional = true }
 env_logger = { workspace = true, optional = true }
 tabled = { workspace = true, optional = true }
 rusqlite = { workspace = true, optional = true }
+rpassword = { workspace = true, optional = true }
 
 # TUI dependencies (optional)
 ratatui = { workspace = true, optional = true }

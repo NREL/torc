@@ -1,4 +1,5 @@
 use clap::{Parser, Subcommand};
+use rpassword;
 
 use torc::client::apis::configuration::Configuration;
 use torc::client::commands::compute_nodes::{ComputeNodeCommands, handle_compute_node_commands};
@@ -35,6 +36,12 @@ struct Cli {
         global = true
     )]
     url: String,
+    /// Username for basic authentication
+    #[arg(long, global = true, env = "TORC_USERNAME")]
+    username: Option<String>,
+    /// Password for basic authentication (will prompt if username provided but password not)
+    #[arg(long, global = true, env = "TORC_PASSWORD")]
+    password: Option<String>,
     #[command(subcommand)]
     command: Commands,
 }
@@ -115,6 +122,24 @@ fn main() {
     // Create configuration for API commands
     let mut config = Configuration::new();
     config.base_path = cli.url;
+
+    // Handle authentication
+    if let Some(username) = cli.username {
+        let password = match cli.password {
+            Some(pwd) => Some(pwd),
+            None => {
+                // Prompt for password if username provided but password not
+                match rpassword::prompt_password("Password: ") {
+                    Ok(pwd) => Some(pwd),
+                    Err(e) => {
+                        eprintln!("Error reading password: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            }
+        };
+        config.basic_auth = Some((username, password));
+    }
 
     match &cli.command {
         Commands::Workflows { command } => {

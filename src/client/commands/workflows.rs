@@ -202,7 +202,7 @@ pub enum WorkflowCommands {
         #[arg()]
         workflow_id: Option<i64>,
         /// Only reset failed jobs
-        #[arg(short, long, default_value = "false")]
+        #[arg(long, default_value = "false")]
         failed_only: bool,
         /// Restart the workflow after resetting status
         #[arg(short, long, default_value = "false")]

@@ -1,7 +1,7 @@
 # Rust build artifacts
 /target/
 /torc-server/target/
-/torc-client/target/
+/torc/target/
 Cargo.lock
 
 # Database files
