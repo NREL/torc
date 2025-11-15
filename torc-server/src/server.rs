@@ -23,8 +23,6 @@ use swagger::{Has, XSpanIdString};
 use tokio::net::TcpListener;
 use torc::models;
 use torc::server::api::ComputeNodesApi;
-use torc::server::auth::MakeHtpasswdAuthenticator;
-use torc::server::htpasswd::HtpasswdFile;
 use torc::server::api::EventsApi;
 use torc::server::api::FilesApi;
 use torc::server::api::JobsApi;
@@ -36,6 +34,8 @@ use torc::server::api::WorkflowActionsApi;
 use torc::server::api::WorkflowsApi;
 use torc::server::api::database_error;
 use torc::server::api_types::*;
+use torc::server::auth::MakeHtpasswdAuthenticator;
+use torc::server::htpasswd::HtpasswdFile;
 use tracing::instrument;
 
 #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "ios")))]
@@ -70,7 +70,13 @@ fn process_pagination_params(
 }
 
 /// Builds an SSL implementation for Simple HTTPS from some hard-coded file names
-pub async fn create(addr: &str, https: bool, pool: SqlitePool, htpasswd: Option<HtpasswdFile>, require_auth: bool) {
+pub async fn create(
+    addr: &str,
+    https: bool,
+    pool: SqlitePool,
+    htpasswd: Option<HtpasswdFile>,
+    require_auth: bool,
+) {
     // Resolve hostname to socket address (supports both hostnames and IP addresses)
     let addr = tokio::net::lookup_host(addr)
         .await

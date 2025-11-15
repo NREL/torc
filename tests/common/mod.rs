@@ -1170,7 +1170,8 @@ pub fn run_cli_with_json(
     server: &ServerProcess,
 ) -> Result<Value, Box<dyn std::error::Error>> {
     let mut cmd = Command::new("./target/debug/torc");
-    cmd.args(&["--format", "json", "--url", &server.config.base_path]);
+    cmd.arg("--format");
+    cmd.arg("json");
     cmd.args(args);
     cmd.env("TORC_API_URL", &server.config.base_path);
 
@@ -1219,10 +1220,9 @@ pub fn run_jobs_cli_command(
     args: &[&str],
     server: &ServerProcess,
 ) -> Result<String, Box<dyn std::error::Error>> {
-    let mut cmd = Command::new("./target/debug/torc run-jobs");
-    cmd.args(&["--url", &server.config.base_path]);
+    let mut cmd = Command::new("./target/debug/torc");
+    cmd.args(["run", "--url", &server.config.base_path]);
     cmd.args(args);
-    cmd.env("TORC_API_URL", &server.config.base_path);
 
     // Add target/debug to PATH so spawned binaries like torc-slurm-job-runner can be found
     let current_dir = std::env::current_dir()?;

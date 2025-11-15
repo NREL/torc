@@ -1,9 +1,9 @@
+use anyhow::{Context, Result};
+use bcrypt::verify;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufRead, BufReader};
 use std::path::Path;
-use anyhow::{Result, Context};
-use bcrypt::verify;
 
 /// Represents an htpasswd file with user credentials
 #[derive(Debug, Clone)]
@@ -17,8 +17,9 @@ impl HtpasswdFile {
     /// Format: username:bcrypt_hash (one entry per line)
     /// Lines starting with # are ignored as comments
     pub fn load<P: AsRef<Path>>(path: P) -> Result<Self> {
-        let file = File::open(path.as_ref())
-            .with_context(|| format!("Failed to open htpasswd file: {}", path.as_ref().display()))?;
+        let file = File::open(path.as_ref()).with_context(|| {
+            format!("Failed to open htpasswd file: {}", path.as_ref().display())
+        })?;
         let reader = BufReader::new(file);
 
         let mut users = HashMap::new();
@@ -45,10 +46,7 @@ impl HtpasswdFile {
             let hash = parts[1].trim().to_string();
 
             if username.is_empty() {
-                return Err(anyhow::anyhow!(
-                    "Empty username at line {}",
-                    line_num + 1
-                ));
+                return Err(anyhow::anyhow!("Empty username at line {}", line_num + 1));
             }
 
             // Validate that it looks like a bcrypt hash ($2b$, $2a$, or $2y$ followed by cost and hash)
@@ -131,10 +129,19 @@ mod tests {
     fn test_load_htpasswd_file() -> Result<()> {
         let mut file = NamedTempFile::new()?;
         writeln!(file, "# This is a comment")?;
-        writeln!(file, "user1:$2b$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP")?;
-        writeln!(file, "user2:$2a$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP")?;
+        writeln!(
+            file,
+            "user1:$2b$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP"
+        )?;
+        writeln!(
+            file,
+            "user2:$2a$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP"
+        )?;
         writeln!(file, "")?; // Empty line
-        writeln!(file, "user3:$2y$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP")?;
+        writeln!(
+            file,
+            "user3:$2y$10$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP"
+        )?;
         file.flush()?;
 
         let htpasswd = HtpasswdFile::load(file.path())?;

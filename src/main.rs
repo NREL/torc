@@ -28,18 +28,14 @@ use torc::tui_runner;
 #[command(author, version, about = "Torc workflow orchestration system", long_about = None)]
 struct Cli {
     /// Log level (error, warn, info, debug, trace)
-    #[arg(long, default_value = "info", global = true, env = "RUST_LOG")]
-    log_level: String,
+    #[arg(long, global = true, env = "RUST_LOG")]
+    log_level: Option<String>,
     /// Output format (table or json)
     #[arg(short, long, default_value = "table", global = true)]
     format: String,
     /// URL of torc server
-    #[arg(
-        long,
-        default_value = "http://localhost:8080/torc-service/v1",
-        global = true
-    )]
-    url: String,
+    #[arg(long, global = true, env = "TORC_API_URL")]
+    url: Option<String>,
     /// Username for basic authentication
     #[arg(long, global = true, env = "TORC_USERNAME")]
     username: Option<String>,
@@ -146,23 +142,25 @@ enum Commands {
 
 /// Helper function to determine if a string is a file path or workflow ID
 fn is_spec_file(arg: &str) -> bool {
-    arg.ends_with(".yaml") ||
-    arg.ends_with(".yml") ||
-    arg.ends_with(".json") ||
-    arg.ends_with(".json5") ||
-    std::path::Path::new(arg).is_file()
+    arg.ends_with(".yaml")
+        || arg.ends_with(".yml")
+        || arg.ends_with(".json")
+        || arg.ends_with(".json5")
+        || std::path::Path::new(arg).is_file()
 }
 
 fn main() {
     let cli = Cli::parse();
+
+    // Resolve log level with priority: CLI arg > env var > default
+    let log_level = cli.log_level.unwrap_or_else(|| "info".to_string());
 
     // Initialize logger with CLI argument or RUST_LOG env var
     // Skip initialization for commands that set up their own logging (e.g., RunJobs, Run)
     let skip_logger_init = matches!(cli.command, Commands::RunJobs(_) | Commands::Run { .. });
 
     if !skip_logger_init {
-        env_logger::Builder::from_env(env_logger::Env::default().default_filter_or(&cli.log_level))
-            .init();
+        env_logger::Builder::new().parse_filters(&log_level).init();
     }
 
     // Validate format option for API commands
@@ -171,9 +169,14 @@ fn main() {
         std::process::exit(1);
     }
 
+    // Resolve URL with priority: CLI arg > env var > default
+    let url = cli
+        .url
+        .unwrap_or_else(|| "http://localhost:8080/torc-service/v1".to_string());
+
     // Create configuration for API commands
     let mut config = Configuration::new();
-    config.base_path = cli.url.clone();
+    config.base_path = url.clone();
 
     // Handle authentication
     if let Some(username) = cli.username.clone() {
@@ -205,8 +208,15 @@ fn main() {
         } => {
             let workflow_id = if is_spec_file(workflow_spec_or_id) {
                 // Create workflow from spec file
-                let user = std::env::var("USER").or_else(|_| std::env::var("USERNAME")).unwrap_or_else(|_| "unknown".to_string());
-                match WorkflowSpec::create_workflow_from_spec(&config, workflow_spec_or_id, &user, true) {
+                let user = std::env::var("USER")
+                    .or_else(|_| std::env::var("USERNAME"))
+                    .unwrap_or_else(|_| "unknown".to_string());
+                match WorkflowSpec::create_workflow_from_spec(
+                    &config,
+                    workflow_spec_or_id,
+                    &user,
+                    true,
+                ) {
                     Ok(id) => {
                         println!("Created workflow {}", id);
                         id
@@ -221,7 +231,10 @@ fn main() {
                 match workflow_spec_or_id.parse::<i64>() {
                     Ok(id) => id,
                     Err(_) => {
-                        eprintln!("Error: '{}' is neither a valid workflow spec file nor a workflow ID", workflow_spec_or_id);
+                        eprintln!(
+                            "Error: '{}' is neither a valid workflow spec file nor a workflow ID",
+                            workflow_spec_or_id
+                        );
                         std::process::exit(1);
                     }
                 }
@@ -230,8 +243,10 @@ fn main() {
             // Build args for run_jobs_cmd
             let args = run_jobs_cmd::Args {
                 workflow_id: Some(workflow_id),
-                url: cli.url.clone(),
-                output_dir: output_dir.clone().unwrap_or_else(|| PathBuf::from("output")),
+                url: url.clone(),
+                output_dir: output_dir
+                    .clone()
+                    .unwrap_or_else(|| PathBuf::from("output")),
                 poll_interval: poll_interval.unwrap_or(60.0),
                 max_parallel_jobs: *max_parallel_jobs,
                 database_poll_interval: 30,
@@ -266,7 +281,9 @@ fn main() {
                 if !spec.has_schedule_nodes_action() {
                     eprintln!("Error: Cannot submit workflow");
                     eprintln!();
-                    eprintln!("The spec does not define an on_workflow_start action with schedule_nodes.");
+                    eprintln!(
+                        "The spec does not define an on_workflow_start action with schedule_nodes."
+                    );
                     eprintln!("To submit to a scheduler, add a workflow action like:");
                     eprintln!();
                     eprintln!("  actions:");
@@ -281,8 +298,15 @@ fn main() {
                 }
 
                 // Create workflow from spec
-                let user = std::env::var("USER").or_else(|_| std::env::var("USERNAME")).unwrap_or_else(|_| "unknown".to_string());
-                match WorkflowSpec::create_workflow_from_spec(&config, workflow_spec_or_id, &user, true) {
+                let user = std::env::var("USER")
+                    .or_else(|_| std::env::var("USERNAME"))
+                    .unwrap_or_else(|_| "unknown".to_string());
+                match WorkflowSpec::create_workflow_from_spec(
+                    &config,
+                    workflow_spec_or_id,
+                    &user,
+                    true,
+                ) {
                     Ok(id) => {
                         println!("Created workflow {}", id);
                         id
@@ -297,7 +321,10 @@ fn main() {
                 match workflow_spec_or_id.parse::<i64>() {
                     Ok(id) => id,
                     Err(_) => {
-                        eprintln!("Error: '{}' is neither a valid workflow spec file nor a workflow ID", workflow_spec_or_id);
+                        eprintln!(
+                            "Error: '{}' is neither a valid workflow spec file nor a workflow ID",
+                            workflow_spec_or_id
+                        );
                         std::process::exit(1);
                     }
                 }
@@ -308,14 +335,19 @@ fn main() {
                 match default_api::get_workflow_actions(&config, workflow_id) {
                     Ok(actions) => {
                         let has_schedule_nodes = actions.iter().any(|action| {
-                            action.trigger_type == "on_workflow_start" && action.action_type == "schedule_nodes"
+                            action.trigger_type == "on_workflow_start"
+                                && action.action_type == "schedule_nodes"
                         });
 
                         if !has_schedule_nodes {
                             eprintln!("Error: Cannot submit workflow {}", workflow_id);
                             eprintln!();
-                            eprintln!("The workflow does not define an on_workflow_start action with schedule_nodes.");
-                            eprintln!("To submit to a scheduler, the workflow must have an action configured.");
+                            eprintln!(
+                                "The workflow does not define an on_workflow_start action with schedule_nodes."
+                            );
+                            eprintln!(
+                                "To submit to a scheduler, the workflow must have an action configured."
+                            );
                             eprintln!();
                             eprintln!("Or run locally instead:");
                             eprintln!("  torc run {}", workflow_id);

@@ -113,9 +113,6 @@ pub enum WorkflowCommands {
         /// ID of the workflow to update (optional - will prompt if not provided)
         #[arg()]
         id: Option<i64>,
-        /// User to filter by (defaults to USER environment variable)
-        #[arg(short, long)]
-        filter_user: Option<String>,
         /// Name of the workflow
         #[arg(short, long)]
         name: Option<String>,
@@ -488,12 +485,11 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
         }
         WorkflowCommands::Update {
             id,
-            filter_user,
             name,
             description,
             owner_user,
         } => {
-            let user_name = get_user_name(filter_user);
+            let user_name = get_env_user_name();
 
             let selected_id = match id {
                 Some(workflow_id) => *workflow_id,
@@ -779,7 +775,8 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
             match default_api::get_workflow_actions(config, selected_workflow_id) {
                 Ok(actions) => {
                     let has_schedule_nodes = actions.iter().any(|action| {
-                        action.trigger_type == "on_workflow_start" && action.action_type == "schedule_nodes"
+                        action.trigger_type == "on_workflow_start"
+                            && action.action_type == "schedule_nodes"
                     });
 
                     if !has_schedule_nodes {
@@ -793,7 +790,9 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                         } else {
                             eprintln!("Error: Cannot submit workflow {}", selected_workflow_id);
                             eprintln!();
-                            eprintln!("The workflow does not define an on_workflow_start action with schedule_nodes.");
+                            eprintln!(
+                                "The workflow does not define an on_workflow_start action with schedule_nodes."
+                            );
                             eprintln!("To submit to a scheduler, add a workflow action like:");
                             eprintln!();
                             eprintln!("  actions:");
@@ -862,9 +861,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                 }
             }
         }
-        WorkflowCommands::Run {
-            workflow_id,
-        } => {
+        WorkflowCommands::Run { workflow_id } => {
             let user_name = get_env_user_name();
 
             let selected_workflow_id = match workflow_id {
@@ -875,7 +872,10 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
             // Call the run_jobs_cmd module with the workflow_id
             // We'll need to construct the Args for run_jobs
             eprintln!("Error: 'torc workflows run' is not yet fully implemented.");
-            eprintln!("Please use 'torc run-jobs {}' instead.", selected_workflow_id);
+            eprintln!(
+                "Please use 'torc run-jobs {}' instead.",
+                selected_workflow_id
+            );
             std::process::exit(1);
         }
         WorkflowCommands::Initialize {

@@ -68,7 +68,12 @@ fn main() {
     let cli = Cli::parse();
 
     match cli.command {
-        Commands::Add { file, username, password, cost } => {
+        Commands::Add {
+            file,
+            username,
+            password,
+            cost,
+        } => {
             if cost < 4 || cost > 31 {
                 eprintln!("Error: cost must be between 4 and 31");
                 std::process::exit(1);
@@ -226,7 +231,11 @@ fn main() {
             }
         }
 
-        Commands::Verify { file, username, password } => {
+        Commands::Verify {
+            file,
+            username,
+            password,
+        } => {
             if !file.exists() {
                 eprintln!("Error: file {:?} does not exist", file);
                 std::process::exit(1);

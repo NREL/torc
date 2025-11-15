@@ -1,10 +1,10 @@
+use super::htpasswd::HtpasswdFile;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use swagger::{
     ApiError,
     auth::{Authorization, Basic, Bearer},
 };
-use super::htpasswd::HtpasswdFile;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -88,7 +88,10 @@ impl AuthenticationApi for HtpasswdAuthenticator {
                 let password = match &basic.password {
                     Some(pwd) => pwd,
                     None => {
-                        log::warn!("Authentication failed for user '{}': no password provided", basic.username);
+                        log::warn!(
+                            "Authentication failed for user '{}': no password provided",
+                            basic.username
+                        );
                         return Err(Self::unauthorized_error());
                     }
                 };
@@ -118,12 +121,12 @@ impl AuthenticationApi for HtpasswdAuthenticator {
 }
 
 // Implement make service for HtpasswdAuthenticator to work with swagger middleware
-use hyper::service::Service;
+use futures::future::FutureExt;
 use hyper::Request;
+use hyper::service::Service;
 use std::marker::PhantomData;
 use std::task::{Context as TaskContext, Poll};
-use futures::future::FutureExt;
-use swagger::auth::{from_headers, RcBound, Scopes};
+use swagger::auth::{RcBound, Scopes, from_headers};
 
 /// MakeService wrapper for HtpasswdAuthenticator - creates HtpasswdAuthenticatorService
 #[derive(Debug)]
@@ -171,11 +174,13 @@ where
     fn call(&mut self, target: Target) -> Self::Future {
         let htpasswd = self.htpasswd.clone();
         let require_auth = self.require_auth;
-        Box::pin(
-            self.inner
-                .call(target)
-                .map(move |s| Ok(HtpasswdAuthenticatorService::new(s?, htpasswd, require_auth))),
-        )
+        Box::pin(self.inner.call(target).map(move |s| {
+            Ok(HtpasswdAuthenticatorService::new(
+                s?,
+                htpasswd,
+                require_auth,
+            ))
+        }))
     }
 }
 
@@ -231,7 +236,9 @@ where
     fn bearer_authorization(&self, _token: &Bearer) -> Result<Authorization, swagger::ApiError> {
         // Bearer tokens not supported in basic auth mode
         if self.require_auth {
-            Err(swagger::ApiError("Unauthorized: Authentication required".to_string()))
+            Err(swagger::ApiError(
+                "Unauthorized: Authentication required".to_string(),
+            ))
         } else {
             Ok(Authorization {
                 subject: "anonymous".to_string(),
@@ -244,7 +251,9 @@ where
     fn apikey_authorization(&self, _apikey: &str) -> Result<Authorization, swagger::ApiError> {
         // API keys not supported in basic auth mode
         if self.require_auth {
-            Err(swagger::ApiError("Unauthorized: Authentication required".to_string()))
+            Err(swagger::ApiError(
+                "Unauthorized: Authentication required".to_string(),
+            ))
         } else {
             Ok(Authorization {
                 subject: "anonymous".to_string(),
@@ -261,8 +270,13 @@ where
                 let password = match &basic.password {
                     Some(pwd) => pwd,
                     None => {
-                        log::warn!("Authentication failed for user '{}': no password provided", basic.username);
-                        return Err(swagger::ApiError("Unauthorized: Invalid username or password".to_string()));
+                        log::warn!(
+                            "Authentication failed for user '{}': no password provided",
+                            basic.username
+                        );
+                        return Err(swagger::ApiError(
+                            "Unauthorized: Invalid username or password".to_string(),
+                        ));
                     }
                 };
 
@@ -276,14 +290,18 @@ where
                     })
                 } else {
                     log::warn!("Authentication failed for user '{}'", basic.username);
-                    Err(swagger::ApiError("Unauthorized: Invalid username or password".to_string()))
+                    Err(swagger::ApiError(
+                        "Unauthorized: Invalid username or password".to_string(),
+                    ))
                 }
             }
             None => {
                 // No htpasswd file configured
                 if self.require_auth {
                     log::warn!("Authentication required but no htpasswd file configured");
-                    Err(swagger::ApiError("Unauthorized: Authentication required".to_string()))
+                    Err(swagger::ApiError(
+                        "Unauthorized: Authentication required".to_string(),
+                    ))
                 } else {
                     // Allow all (backward compatible mode)
                     log::debug!("No authentication configured, allowing request");
@@ -307,10 +325,8 @@ where
 {
     type Response = T::Response;
     type Error = T::Error;
-    type Future = futures::future::Either<
-        futures::future::Ready<Result<T::Response, T::Error>>,
-        T::Future,
-    >;
+    type Future =
+        futures::future::Either<futures::future::Ready<Result<T::Response, T::Error>>, T::Future>;
 
     fn poll_ready(&mut self, cx: &mut TaskContext<'_>) -> Poll<Result<(), Self::Error>> {
         self.inner.poll_ready(cx)
