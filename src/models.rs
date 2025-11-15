@@ -12,15 +12,15 @@ use crate::models;
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
 #[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
 pub struct CreateJobsResponse {
-    #[serde(rename = "items")]
+    #[serde(rename = "jobs")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub items: Option<Vec<models::JobModel>>,
+    pub jobs: Option<Vec<models::JobModel>>,
 }
 
 impl CreateJobsResponse {
     #[allow(clippy::new_without_default)]
     pub fn new() -> CreateJobsResponse {
-        CreateJobsResponse { items: None }
+        CreateJobsResponse { jobs: None }
     }
 }
 
@@ -30,7 +30,7 @@ impl CreateJobsResponse {
 impl std::string::ToString for CreateJobsResponse {
     fn to_string(&self) -> String {
         let params: Vec<Option<String>> = vec![
-            // Skipping non-primitive type items in query parameter serialization
+            // Skipping non-primitive type jobs in query parameter serialization
         ];
 
         params.into_iter().flatten().collect::<Vec<_>>().join(",")
@@ -48,7 +48,7 @@ impl std::str::FromStr for CreateJobsResponse {
         #[derive(Default)]
         #[allow(dead_code)]
         struct IntermediateRep {
-            pub items: Vec<Vec<models::JobModel>>,
+            pub jobs: Vec<Vec<models::JobModel>>,
         }
 
         let intermediate_rep = IntermediateRep::default();
@@ -61,7 +61,7 @@ impl std::str::FromStr for CreateJobsResponse {
             if let Some(key) = key_result {
                 #[allow(clippy::match_single_binding)]
                 match key {
-                    "items" => {
+                    "jobs" => {
                         return std::result::Result::Err(
                             "Parsing a container in this style is not supported in CreateJobsResponse"
                                 .to_string(),
@@ -81,7 +81,7 @@ impl std::str::FromStr for CreateJobsResponse {
 
         // Use the intermediate representation to return the struct
         std::result::Result::Ok(CreateJobsResponse {
-            items: intermediate_rep.items.into_iter().next(),
+            jobs: intermediate_rep.jobs.into_iter().next(),
         })
     }
 }

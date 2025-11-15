@@ -1049,7 +1049,7 @@ impl WorkflowSpec {
                 )
             })?;
 
-            let created_batch = response.items.ok_or("Create jobs response missing items")?;
+            let created_batch = response.jobs.ok_or("Create jobs response missing items")?;
 
             if created_batch.len() != batch.len() {
                 return Err(format!(

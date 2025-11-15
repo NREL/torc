@@ -99,7 +99,7 @@ torc-job-runner $WORKFLOW_ID \
   --num-gpus 8
 ```
 
-Uses the server's `prepare_jobs_for_submission` endpoint which filters jobs based on available compute resources. Jobs must have resource requirements defined.
+Uses the server's `claim_jobs_based_on_resources` endpoint which filters jobs based on available compute resources. Jobs must have resource requirements defined.
 
 #### Simple Queue-Based Allocation
 

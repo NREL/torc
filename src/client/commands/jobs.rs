@@ -762,11 +762,7 @@ pub fn create_jobs_from_file(
         let response = default_api::create_jobs(config, jobs_model)
             .map_err(|e| format!("Failed to create batch of jobs: {:?}", e))?;
 
-        total_created += response
-            .items
-            .as_ref()
-            .map(|items| items.len())
-            .unwrap_or(0);
+        total_created += response.jobs.as_ref().map(|jobs| jobs.len()).unwrap_or(0);
     }
 
     Ok(total_created)
