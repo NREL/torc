@@ -14,7 +14,7 @@ mod ui;
 
 use app::App;
 
-fn main() -> Result<()> {
+pub fn run() -> Result<()> {
     env_logger::init();
 
     // Setup terminal

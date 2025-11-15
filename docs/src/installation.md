@@ -53,7 +53,7 @@ cargo build --release --bin torc-server
 cargo build --release --bin torc-client
 
 # Local job runner
-cargo build --release --bin torc-job-runner
+cargo build --release -p torc
 
 # Slurm job runner
 cargo build --release --bin torc-slurm-job-runner

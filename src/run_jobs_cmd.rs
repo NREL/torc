@@ -6,14 +6,14 @@ use std::fs::File;
 use std::io::Write;
 use std::path::PathBuf;
 use sysinfo::{System, SystemExt};
-use torc::client::apis::configuration::Configuration;
-use torc::client::apis::default_api;
-use torc::client::commands::get_env_user_name;
-use torc::client::commands::select_workflow_interactively;
-use torc::client::job_runner::JobRunner;
-use torc::client::log_paths::get_job_runner_log_file;
-use torc::client::workflow_manager::WorkflowManager;
-use torc::models;
+use crate::client::apis::configuration::Configuration;
+use crate::client::apis::default_api;
+use crate::client::commands::get_env_user_name;
+use crate::client::commands::select_workflow_interactively;
+use crate::client::job_runner::JobRunner;
+use crate::client::log_paths::get_job_runner_log_file;
+use crate::client::workflow_manager::WorkflowManager;
+use crate::models;
 
 /// A writer that writes to both stdout and a file
 struct MultiWriter {
@@ -34,66 +34,64 @@ impl Write for MultiWriter {
 }
 
 #[derive(Parser, Debug)]
-#[command(name = "torc-job-runner")]
-#[command(about = "Job runner for Torc workflows", long_about = None)]
-struct Args {
+#[command(about = "Run jobs locally on the current node", long_about = None)]
+pub struct Args {
     /// Workflow ID
     #[arg()]
-    workflow_id: Option<i64>,
+    pub workflow_id: Option<i64>,
     /// URL of torc server
     #[arg(short, long, default_value = "http://localhost:8080/torc-service/v1")]
-    url: String,
+    pub url: String,
     /// Output directory for jobs
     #[arg(short, long, default_value = "output")]
-    output_dir: PathBuf,
+    pub output_dir: PathBuf,
     /// Job completion poll interval in seconds
     #[arg(short, long, default_value = "60.0")]
-    poll_interval: f64,
+    pub poll_interval: f64,
     /// Maximum number of parallel jobs to run concurrently.
     /// When NOT set: Uses resource-based job allocation (considers CPU, memory, GPU requirements).
     /// When set: Uses simple queue-based allocation with this parallel limit (ignores resource requirements).
     #[arg(long)]
-    max_parallel_jobs: Option<i64>,
+    pub max_parallel_jobs: Option<i64>,
     /// Database poll interval in seconds
     #[arg(long, default_value = "30")]
-    database_poll_interval: i64,
+    pub database_poll_interval: i64,
     /// Time limit for jobs
     #[arg(long)]
-    time_limit: Option<String>,
+    pub time_limit: Option<String>,
     /// End time for job execution
     #[arg(long)]
-    end_time: Option<String>,
+    pub end_time: Option<String>,
     /// Number of CPUs
     #[arg(long)]
-    num_cpus: Option<i64>,
+    pub num_cpus: Option<i64>,
     /// Memory in GB
     #[arg(long)]
-    memory_gb: Option<f64>,
+    pub memory_gb: Option<f64>,
     /// Number of GPUs
     #[arg(long)]
-    num_gpus: Option<i64>,
+    pub num_gpus: Option<i64>,
     /// Number of nodes
     #[arg(long)]
-    num_nodes: Option<i64>,
+    pub num_nodes: Option<i64>,
     /// Scheduler config ID
     #[arg(long)]
-    scheduler_config_id: Option<i64>,
+    pub scheduler_config_id: Option<i64>,
     /// Log prefix
     #[arg(long)]
-    log_prefix: Option<String>,
+    pub log_prefix: Option<String>,
     /// CPU affinity CPUs per job
     #[arg(long)]
-    cpu_affinity_cpus_per_job: Option<i64>,
+    pub cpu_affinity_cpus_per_job: Option<i64>,
 }
 
-fn main() {
-    let args = Args::parse();
+pub fn run(args: &Args) {
     let hostname = hostname::get()
         .expect("Failed to get hostname")
         .into_string()
         .expect("Hostname is not valid UTF-8");
     let mut config = Configuration::new();
-    config.base_path = args.url;
+    config.base_path = args.url.clone();
     let user = get_env_user_name();
     let workflow_id = args.workflow_id.unwrap_or_else(|| {
         select_workflow_interactively(&config, &user).unwrap_or_else(|e| {
@@ -131,12 +129,12 @@ fn main() {
                         }
                     }
                 } else {
-                    info!("Workflow {} already has initialized jobs", workflow_id);
+                    eprintln!("Workflow {} already has initialized jobs", workflow_id);
                 }
             }
         }
         Err(e) => {
-            error!("Error checking if workflow is uninitialized: {}", e);
+            eprintln!("Error checking if workflow is uninitialized: {}", e);
             std::process::exit(1);
         }
     }
@@ -185,7 +183,7 @@ fn main() {
     info!("Output directory: {}", args.output_dir.display());
     info!("Log file: {}", log_file_path);
 
-    let parsed_end_time = if let Some(end_time_str) = args.end_time {
+    let parsed_end_time = if let Some(end_time_str) = &args.end_time {
         match end_time_str.parse::<DateTime<Utc>>() {
             Ok(dt) => Some(dt),
             Err(e) => {
@@ -215,7 +213,7 @@ fn main() {
         &config,
         models::ComputeNodeModel::new(
             workflow_id,
-            hostname,
+            hostname.clone(),
             pid,
             Utc::now().to_rfc3339(),
             resources.num_cpus,

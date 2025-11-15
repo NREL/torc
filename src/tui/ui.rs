@@ -6,7 +6,7 @@ use ratatui::{
     widgets::{Block, Borders, Cell, Row, Table, Tabs},
 };
 
-use crate::app::{App, DetailViewType, Focus};
+use super::app::{App, DetailViewType, Focus};
 
 pub fn draw(f: &mut Frame, app: &mut App) {
     let main_chunks = Layout::default()
@@ -706,7 +706,7 @@ fn draw_dag(f: &mut Frame, area: Rect, app: &App) {
 
 // Helper function to compute layers for DAG visualization
 fn dag_compute_layers(
-    graph: &petgraph::Graph<crate::dag::JobNode, ()>,
+    graph: &petgraph::Graph<super::dag::JobNode, ()>,
 ) -> Vec<Vec<petgraph::graph::NodeIndex>> {
     use petgraph::visit::{EdgeRef, Topo};
     use std::collections::HashMap;

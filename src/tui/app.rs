@@ -1,9 +1,9 @@
 use anyhow::Result;
 use ratatui::widgets::TableState;
-use torc::models::{EventModel, FileModel, JobModel, ResultModel, WorkflowModel};
+use crate::models::{EventModel, FileModel, JobModel, ResultModel, WorkflowModel};
 
-use crate::api::TorcClient;
-use crate::dag::{DagLayout, JobNode};
+use super::api::TorcClient;
+use super::dag::{DagLayout, JobNode};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DetailViewType {

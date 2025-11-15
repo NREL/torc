@@ -9,23 +9,23 @@ use std::path::{Path, PathBuf};
 
 /// Tool for generating interactive HTML plots from Torc resource monitoring data
 #[derive(Parser, Debug)]
-#[command(author, version, about, long_about = None)]
-struct Args {
+#[command(about = "Generate interactive HTML plots from resource monitoring data", long_about = None)]
+pub struct Args {
     /// Path to the resource metrics database file(s)
     #[arg(required = true)]
-    db_paths: Vec<PathBuf>,
+    pub db_paths: Vec<PathBuf>,
 
     /// Output directory for generated plots (default: current directory)
     #[arg(short, long, default_value = ".")]
-    output_dir: PathBuf,
+    pub output_dir: PathBuf,
 
     /// Only plot specific job IDs (comma-separated)
     #[arg(short, long, value_delimiter = ',')]
-    job_ids: Vec<i64>,
+    pub job_ids: Vec<i64>,
 
     /// Prefix for output filenames
     #[arg(short = 'p', long, default_value = "resource_plot")]
-    prefix: String,
+    pub prefix: String,
 }
 
 #[derive(Debug, Clone)]
@@ -49,9 +49,7 @@ struct JobMetrics {
     duration_seconds: f64,
 }
 
-fn main() -> Result<()> {
-    let args = Args::parse();
-
+pub fn run(args: &Args) -> Result<()> {
     // Create output directory if it doesn't exist
     std::fs::create_dir_all(&args.output_dir).context("Failed to create output directory")?;
 

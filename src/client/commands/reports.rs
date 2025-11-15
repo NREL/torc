@@ -74,7 +74,7 @@ pub enum ReportCommands {
         /// Workflow ID to analyze (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
-        /// Output directory (where job logs are stored, passed in `torc slurm schedule-nodes` and `torc-job-runner`)
+        /// Output directory (where job logs are stored, passed in `torc slurm schedule-nodes` and `torc run-jobs`)
         #[arg(short, long, default_value = "output")]
         output_dir: std::path::PathBuf,
         /// Include all runs for each job (default: only latest run)

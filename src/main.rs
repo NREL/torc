@@ -14,14 +14,19 @@ use torc::client::commands::slurm::{SlurmCommands, handle_slurm_commands};
 use torc::client::commands::user_data::{UserDataCommands, handle_user_data_commands};
 use torc::client::commands::workflows::{WorkflowCommands, handle_workflow_commands};
 
+// Import the binary command modules from the library
+use torc::run_jobs_cmd;
+use torc::plot_resources_cmd;
+use torc::tui_runner;
+
 #[derive(Parser)]
-#[command(author, version, about, long_about = None)]
+#[command(author, version, about = "Torc workflow orchestration system", long_about = None)]
 struct Cli {
     /// Output format (table or json)
-    #[arg(short, long, default_value = "table")]
+    #[arg(short, long, default_value = "table", global = true)]
     format: String,
     /// URL of torc server
-    #[arg(short, long, default_value = "http://localhost:8080/torc-service/v1")]
+    #[arg(long, default_value = "http://localhost:8080/torc-service/v1", global = true)]
     url: String,
     #[command(subcommand)]
     command: Commands,
@@ -79,19 +84,25 @@ enum Commands {
         #[command(subcommand)]
         command: ReportCommands,
     },
+    /// Run jobs locally on the current node
+    RunJobs(run_jobs_cmd::Args),
+    /// Interactive terminal UI for managing workflows
+    Tui(tui_runner::Args),
+    /// Generate interactive HTML plots from resource monitoring data
+    PlotResources(plot_resources_cmd::Args),
 }
 
 fn main() {
     env_logger::init();
     let cli = Cli::parse();
 
-    // Validate format option
+    // Validate format option for API commands
     if !matches!(cli.format.as_str(), "table" | "json") {
         eprintln!("Error: format must be either 'table' or 'json'");
         std::process::exit(1);
     }
 
-    // Create default configuration (you may want to make this configurable)
+    // Create configuration for API commands
     let mut config = Configuration::new();
     config.base_path = cli.url;
 
@@ -125,6 +136,21 @@ fn main() {
         }
         Commands::Reports { command } => {
             handle_report_commands(&config, command, &cli.format);
+        }
+        Commands::RunJobs(args) => {
+            run_jobs_cmd::run(args);
+        }
+        Commands::Tui(args) => {
+            if let Err(e) = tui_runner::run(args) {
+                eprintln!("Error running TUI: {}", e);
+                std::process::exit(1);
+            }
+        }
+        Commands::PlotResources(args) => {
+            if let Err(e) = plot_resources_cmd::run(args) {
+                eprintln!("Error generating plots: {}", e);
+                std::process::exit(1);
+            }
         }
     }
 }

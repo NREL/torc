@@ -551,7 +551,7 @@ After running this workflow:
 ```bash
 # Create and run the workflow
 torc-client workflows create-from-spec ml_pipeline.yaml
-torc-job-runner <workflow_id>
+torc run-jobs <workflow_id>
 
 # Check for resource over-utilization
 torc-client reports check-resource-utilization <workflow_id>
