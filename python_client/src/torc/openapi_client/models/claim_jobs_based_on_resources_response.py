@@ -23,9 +23,9 @@ from torc.openapi_client.models.job_model import JobModel
 from typing import Optional, Set
 from typing_extensions import Self
 
-class PrepareJobsForSubmissionResponse(BaseModel):
+class ClaimJobsBasedOnResourcesResponse(BaseModel):
     """
-    PrepareJobsForSubmissionResponse
+    ClaimJobsBasedOnResourcesResponse
     """ # noqa: E501
     jobs: Optional[List[JobModel]] = None
     reason: Optional[StrictStr] = None
@@ -49,7 +49,7 @@ class PrepareJobsForSubmissionResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of PrepareJobsForSubmissionResponse from a JSON string"""
+        """Create an instance of ClaimJobsBasedOnResourcesResponse from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -81,7 +81,7 @@ class PrepareJobsForSubmissionResponse(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of PrepareJobsForSubmissionResponse from a dict"""
+        """Create an instance of ClaimJobsBasedOnResourcesResponse from a dict"""
         if obj is None:
             return None
 

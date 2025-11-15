@@ -72,9 +72,6 @@ dev = [
     "types-toml",
 ]
 
-[project.scripts]
-torc = "torc.cli.torc:cli"
-
 [tool.pytest.ini_options]
 pythonpath = "src"
 minversion = "6.0"

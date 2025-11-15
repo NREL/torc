@@ -168,8 +168,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **claim_jobs_based_on_resources**
-> claim_jobs_based_on_resources(_api::DefaultApi, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, _mediaType=nothing) -> PrepareJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse <br/>
-> claim_jobs_based_on_resources(_api::DefaultApi, response_stream::Channel, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, _mediaType=nothing) -> Channel{ PrepareJobsForSubmissionResponse }, OpenAPI.Clients.ApiResponse
+> claim_jobs_based_on_resources(_api::DefaultApi, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, _mediaType=nothing) -> ClaimJobsBasedOnResourcesResponse, OpenAPI.Clients.ApiResponse <br/>
+> claim_jobs_based_on_resources(_api::DefaultApi, response_stream::Channel, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, _mediaType=nothing) -> Channel{ ClaimJobsBasedOnResourcesResponse }, OpenAPI.Clients.ApiResponse
 
 Return jobs that are ready for submission and meet worker resource requirements. Set status to pending.
 
@@ -192,7 +192,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**PrepareJobsForSubmissionResponse**](PrepareJobsForSubmissionResponse.md)
+[**ClaimJobsBasedOnResourcesResponse**](ClaimJobsBasedOnResourcesResponse.md)
 
 ### Authorization
 
@@ -206,8 +206,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **claim_next_jobs**
-> claim_next_jobs(_api::DefaultApi, id::Int64; limit=nothing, body=nothing, _mediaType=nothing) -> PrepareNextJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse <br/>
-> claim_next_jobs(_api::DefaultApi, response_stream::Channel, id::Int64; limit=nothing, body=nothing, _mediaType=nothing) -> Channel{ PrepareNextJobsForSubmissionResponse }, OpenAPI.Clients.ApiResponse
+> claim_next_jobs(_api::DefaultApi, id::Int64; limit=nothing, body=nothing, _mediaType=nothing) -> ClaimNextJobsResponse, OpenAPI.Clients.ApiResponse <br/>
+> claim_next_jobs(_api::DefaultApi, response_stream::Channel, id::Int64; limit=nothing, body=nothing, _mediaType=nothing) -> Channel{ ClaimNextJobsResponse }, OpenAPI.Clients.ApiResponse
 
 Return user-requested number of jobs that are ready for submission. Sets status to pending.
 
@@ -229,7 +229,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**PrepareNextJobsForSubmissionResponse**](PrepareNextJobsForSubmissionResponse.md)
+[**ClaimNextJobsResponse**](ClaimNextJobsResponse.md)
 
 ### Authorization
 

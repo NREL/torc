@@ -604,7 +604,7 @@ class JobRunner:
         # until the user intervenes.
         # It's an unlikely corner case that could be handled.
         ready_jobs = send_api_command(
-            self._api.prepare_jobs_for_submission,
+            self._api.claim_jobs_based_on_resources,
             self._workflow.key,
             self._resources,
             sort_method=self._config.prepare_jobs_sort_method,

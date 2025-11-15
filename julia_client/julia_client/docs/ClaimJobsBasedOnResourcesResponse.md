@@ -1,4 +1,4 @@
-# PrepareJobsForSubmissionResponse
+# ClaimJobsBasedOnResourcesResponse
 
 
 ## Properties

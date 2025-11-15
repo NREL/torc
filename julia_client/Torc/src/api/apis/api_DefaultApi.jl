@@ -81,7 +81,7 @@ function claim_action(_api::DefaultApi, response_stream::Channel, id::Int64, act
 end
 
 const _returntypes_claim_jobs_based_on_resources_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => PrepareJobsForSubmissionResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ClaimJobsBasedOnResourcesResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -105,7 +105,7 @@ Params:
 - body::ComputeNodesResources (required)
 - sort_method::JobsSortMethod
 
-Return: PrepareJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse
+Return: ClaimJobsBasedOnResourcesResponse, OpenAPI.Clients.ApiResponse
 """
 function claim_jobs_based_on_resources(_api::DefaultApi, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, _mediaType=nothing)
     _ctx = _oacinternal_claim_jobs_based_on_resources(_api, id, limit, body; sort_method=sort_method, _mediaType=_mediaType)
@@ -118,7 +118,7 @@ function claim_jobs_based_on_resources(_api::DefaultApi, response_stream::Channe
 end
 
 const _returntypes_claim_next_jobs_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => PrepareNextJobsForSubmissionResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ClaimNextJobsResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -140,7 +140,7 @@ Params:
 - limit::Int64
 - body::Any
 
-Return: PrepareNextJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse
+Return: ClaimNextJobsResponse, OpenAPI.Clients.ApiResponse
 """
 function claim_next_jobs(_api::DefaultApi, id::Int64; limit=nothing, body=nothing, _mediaType=nothing)
     _ctx = _oacinternal_claim_next_jobs(_api, id; limit=limit, body=body, _mediaType=_mediaType)

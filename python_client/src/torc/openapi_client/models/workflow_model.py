@@ -19,6 +19,7 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from torc.openapi_client.models.jobs_sort_method import JobsSortMethod
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -35,7 +36,7 @@ class WorkflowModel(BaseModel):
     compute_node_wait_for_new_jobs_seconds: Optional[StrictInt] = Field(default=0, description="Inform all compute nodes to wait for new jobs for this time period before exiting. Does not apply if the workflow is complete.")
     compute_node_ignore_workflow_completion: Optional[StrictBool] = Field(default=False, description="Inform all compute nodes to ignore workflow completions and hold onto allocations indefinitely. Useful for debugging failed jobs and possibly dynamic workflows where jobs get added after starting.")
     compute_node_wait_for_healthy_database_minutes: Optional[StrictInt] = Field(default=20, description="Inform all compute nodes to wait this number of minutes if the database becomes unresponsive.")
-    jobs_sort_method: Optional[StrictInt] = JobsSortMethod.GPUS_RUNTIME_MEMORY
+    jobs_sort_method: Optional[JobsSortMethod] = JobsSortMethod.GPUS_RUNTIME_MEMORY
     status_id: Optional[StrictInt] = None
     __properties: ClassVar[List[str]] = ["id", "name", "user", "description", "timestamp", "compute_node_expiration_buffer_seconds", "compute_node_wait_for_new_jobs_seconds", "compute_node_ignore_workflow_completion", "compute_node_wait_for_healthy_database_minutes", "jobs_sort_method", "status_id"]
 

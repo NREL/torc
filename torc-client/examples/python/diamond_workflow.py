@@ -42,19 +42,61 @@ def build_workflow(api: DefaultApi, workflow: WorkflowModel):
     inputs_file = Path("inputs.json")
     inputs_file.write_text(json.dumps({"val": 5}), encoding="utf-8")
 
-    inputs = api.create_file(FileModel(workflow_id=workflow_id, name="inputs", path=str(inputs_file)))
-    f1 = api.create_file(FileModel(workflow_id=workflow_id, name="file1", path="f1.json"))
-    f2 = api.create_file(FileModel(workflow_id=workflow_id, name="file2", path="f2.json"))
-    f3 = api.create_file(FileModel(workflow_id=workflow_id, name="file3", path="f3.json"))
-    f4 = api.create_file(FileModel(workflow_id=workflow_id, name="file4", path="f4.json"))
-    f5 = api.create_file(FileModel(workflow_id=workflow_id, name="file5", path="f5.json"))
-    preprocess = api.create_file(FileModel(workflow_id=workflow_id, name="preprocess", path=str(PREPROCESS)))
-    work = api.create_file(FileModel(workflow_id=workflow_id, name="work", path=str(WORK)))
-    postprocess = api.create_file(FileModel(workflow_id=workflow_id, name="postprocess", path=str(POSTPROCESS)))
+    inputs = api.create_file(
+        FileModel(workflow_id=workflow_id, name="inputs", path=str(inputs_file))
+    )
+    f1 = api.create_file(
+        FileModel(workflow_id=workflow_id, name="file1", path="f1.json")
+    )
+    f2 = api.create_file(
+        FileModel(workflow_id=workflow_id, name="file2", path="f2.json")
+    )
+    f3 = api.create_file(
+        FileModel(workflow_id=workflow_id, name="file3", path="f3.json")
+    )
+    f4 = api.create_file(
+        FileModel(workflow_id=workflow_id, name="file4", path="f4.json")
+    )
+    f5 = api.create_file(
+        FileModel(workflow_id=workflow_id, name="file5", path="f5.json")
+    )
+    preprocess = api.create_file(
+        FileModel(workflow_id=workflow_id, name="preprocess", path=str(PREPROCESS))
+    )
+    work = api.create_file(
+        FileModel(workflow_id=workflow_id, name="work", path=str(WORK))
+    )
+    postprocess = api.create_file(
+        FileModel(workflow_id=workflow_id, name="postprocess", path=str(POSTPROCESS))
+    )
 
-    small = api.create_resource_requirements(ResourceRequirementsModel(workflow_id=workflow_id, name="small", num_cpus=1, memory="1g", runtime="P0DT1H"))
-    medium = api.create_resource_requirements(ResourceRequirementsModel(workflow_id=workflow_id, name="medium", num_cpus=4, memory="8g", runtime="P0DT8H"))
-    large = api.create_resource_requirements(ResourceRequirementsModel(workflow_id=workflow_id, name="large", num_cpus=8, memory="16g", runtime="P0DT12H"))
+    small = api.create_resource_requirements(
+        ResourceRequirementsModel(
+            workflow_id=workflow_id,
+            name="small",
+            num_cpus=1,
+            memory="1g",
+            runtime="P0DT1H",
+        )
+    )
+    medium = api.create_resource_requirements(
+        ResourceRequirementsModel(
+            workflow_id=workflow_id,
+            name="medium",
+            num_cpus=4,
+            memory="8g",
+            runtime="P0DT8H",
+        )
+    )
+    large = api.create_resource_requirements(
+        ResourceRequirementsModel(
+            workflow_id=workflow_id,
+            name="large",
+            num_cpus=8,
+            memory="16g",
+            runtime="P0DT12H",
+        )
+    )
     api.create_slurm_scheduler(
         SlurmSchedulerModel(
             workflow_id=workflow_id,

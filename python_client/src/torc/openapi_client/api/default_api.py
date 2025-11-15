@@ -22,6 +22,8 @@ from typing_extensions import Annotated
 from torc.openapi_client.models.add_jobs_response import AddJobsResponse
 from torc.openapi_client.models.claim_action200_response import ClaimAction200Response
 from torc.openapi_client.models.claim_action_request import ClaimActionRequest
+from torc.openapi_client.models.claim_jobs_based_on_resources_response import ClaimJobsBasedOnResourcesResponse
+from torc.openapi_client.models.claim_next_jobs_response import ClaimNextJobsResponse
 from torc.openapi_client.models.compute_node_model import ComputeNodeModel
 from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
 from torc.openapi_client.models.event_model import EventModel
@@ -48,8 +50,6 @@ from torc.openapi_client.models.list_slurm_schedulers_response import ListSlurmS
 from torc.openapi_client.models.list_user_data_response import ListUserDataResponse
 from torc.openapi_client.models.list_workflows_response import ListWorkflowsResponse
 from torc.openapi_client.models.local_scheduler_model import LocalSchedulerModel
-from torc.openapi_client.models.prepare_jobs_for_submission_response import PrepareJobsForSubmissionResponse
-from torc.openapi_client.models.prepare_next_jobs_for_submission_response import PrepareNextJobsForSubmissionResponse
 from torc.openapi_client.models.process_changed_job_inputs_response import ProcessChangedJobInputsResponse
 from torc.openapi_client.models.resource_requirements_model import ResourceRequirementsModel
 from torc.openapi_client.models.result_model import ResultModel
@@ -697,7 +697,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> PrepareJobsForSubmissionResponse:
+    ) -> ClaimJobsBasedOnResourcesResponse:
         """Return jobs that are ready for submission and meet worker resource requirements. Set status to pending.
 
         Return jobs that are ready for submission and meet worker resource requirements. Set status to pending.
@@ -744,7 +744,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PrepareJobsForSubmissionResponse",
+            '200': "ClaimJobsBasedOnResourcesResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -777,7 +777,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[PrepareJobsForSubmissionResponse]:
+    ) -> ApiResponse[ClaimJobsBasedOnResourcesResponse]:
         """Return jobs that are ready for submission and meet worker resource requirements. Set status to pending.
 
         Return jobs that are ready for submission and meet worker resource requirements. Set status to pending.
@@ -824,7 +824,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PrepareJobsForSubmissionResponse",
+            '200': "ClaimJobsBasedOnResourcesResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -904,7 +904,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PrepareJobsForSubmissionResponse",
+            '200': "ClaimJobsBasedOnResourcesResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -1019,7 +1019,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> PrepareNextJobsForSubmissionResponse:
+    ) -> ClaimNextJobsResponse:
         """Return user-requested number of jobs that are ready for submission. Sets status to pending.
 
         Return user-requested number of jobs that are ready for submission. Sets status to pending.
@@ -1063,7 +1063,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PrepareNextJobsForSubmissionResponse",
+            '200': "ClaimNextJobsResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -1095,7 +1095,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[PrepareNextJobsForSubmissionResponse]:
+    ) -> ApiResponse[ClaimNextJobsResponse]:
         """Return user-requested number of jobs that are ready for submission. Sets status to pending.
 
         Return user-requested number of jobs that are ready for submission. Sets status to pending.
@@ -1139,7 +1139,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PrepareNextJobsForSubmissionResponse",
+            '200': "ClaimNextJobsResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -1215,7 +1215,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "PrepareNextJobsForSubmissionResponse",
+            '200': "ClaimNextJobsResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
