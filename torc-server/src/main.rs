@@ -18,6 +18,9 @@ mod server;
 #[command(name = "server")]
 #[command(about = "Torc server")]
 struct Args {
+    /// Log level (error, warn, info, debug, trace)
+    #[arg(long, default_value = "info", env = "RUST_LOG")]
+    log_level: String,
     /// Whether to use HTTPS or not
     #[arg(long)]
     https: bool,
@@ -63,7 +66,7 @@ fn main() -> Result<()> {
             )
             .with(
                 tracing_subscriber::EnvFilter::try_from_default_env()
-                    .unwrap_or_else(|_| "info".into()),
+                    .unwrap_or_else(|_| args.log_level.clone().into()),
             )
             .with(timing_layer)
             .init();
@@ -73,7 +76,7 @@ fn main() -> Result<()> {
             "Use external tools like tokio-console or OpenTelemetry exporters to view timing data"
         );
     } else {
-        // When timing is disabled, use standard tracing with INFO level
+        // When timing is disabled, use standard tracing with configured log level
         // Instrumented functions use debug level, so they won't appear in INFO logs
         tracing_subscriber::registry()
             .with(
@@ -83,7 +86,7 @@ fn main() -> Result<()> {
             )
             .with(
                 tracing_subscriber::EnvFilter::try_from_default_env()
-                    .unwrap_or_else(|_| "info".into()),
+                    .unwrap_or_else(|_| args.log_level.clone().into()),
             )
             .init();
     }

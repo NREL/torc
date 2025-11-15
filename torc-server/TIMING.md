@@ -140,7 +140,7 @@ For production monitoring, export to Jaeger or another OpenTelemetry backend:
 
    # Run multiple workers
    for i in {1..10}; do
-       torc-job-runner http://localhost:8080/torc-service/v1 $WORKFLOW_ID ./output_$i &
+       torc run-jobs http://localhost:8080/torc-service/v1 $WORKFLOW_ID ./output_$i &
    done
    ```
 

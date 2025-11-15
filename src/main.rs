@@ -15,18 +15,25 @@ use torc::client::commands::user_data::{UserDataCommands, handle_user_data_comma
 use torc::client::commands::workflows::{WorkflowCommands, handle_workflow_commands};
 
 // Import the binary command modules from the library
-use torc::run_jobs_cmd;
 use torc::plot_resources_cmd;
+use torc::run_jobs_cmd;
 use torc::tui_runner;
 
 #[derive(Parser)]
 #[command(author, version, about = "Torc workflow orchestration system", long_about = None)]
 struct Cli {
+    /// Log level (error, warn, info, debug, trace)
+    #[arg(long, default_value = "info", global = true, env = "RUST_LOG")]
+    log_level: String,
     /// Output format (table or json)
     #[arg(short, long, default_value = "table", global = true)]
     format: String,
     /// URL of torc server
-    #[arg(long, default_value = "http://localhost:8080/torc-service/v1", global = true)]
+    #[arg(
+        long,
+        default_value = "http://localhost:8080/torc-service/v1",
+        global = true
+    )]
     url: String,
     #[command(subcommand)]
     command: Commands,
@@ -93,8 +100,11 @@ enum Commands {
 }
 
 fn main() {
-    env_logger::init();
     let cli = Cli::parse();
+
+    // Initialize logger with CLI argument or RUST_LOG env var
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or(&cli.log_level))
+        .init();
 
     // Validate format option for API commands
     if !matches!(cli.format.as_str(), "table" | "json") {

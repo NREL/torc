@@ -130,7 +130,7 @@ Only `preprocess` is ready because it has no dependencies. The others are blocke
 ## Step 5: Run Workflow
 
 ```bash
-torc-job-runner $WORKFLOW_ID
+torc run-jobs $WORKFLOW_ID
 ```
 
 Watch the execution:

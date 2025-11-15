@@ -118,7 +118,7 @@ Expected:
 ## Step 5: Run Workflow
 
 ```bash
-torc-job-runner $WORKFLOW_ID
+torc run-jobs $WORKFLOW_ID
 ```
 
 Execution flow:

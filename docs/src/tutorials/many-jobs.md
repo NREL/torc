@@ -55,7 +55,7 @@ torc-client workflows status $WORKFLOW_ID
 
 ```bash
 # Start local job runner
-torc-job-runner $WORKFLOW_ID
+torc run-jobs $WORKFLOW_ID
 ```
 
 The runner will:

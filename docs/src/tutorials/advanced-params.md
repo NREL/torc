@@ -153,7 +153,7 @@ for i in {1..4}; do
   sbatch --nodes=1 --gres=gpu:2 --time=8:00:00 \
     <<EOF
 #!/bin/bash
-torc-job-runner $WORKFLOW_ID
+torc run-jobs $WORKFLOW_ID
 EOF
 done
 ```

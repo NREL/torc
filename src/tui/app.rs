@@ -1,6 +1,6 @@
+use crate::models::{EventModel, FileModel, JobModel, ResultModel, WorkflowModel};
 use anyhow::Result;
 use ratatui::widgets::TableState;
-use crate::models::{EventModel, FileModel, JobModel, ResultModel, WorkflowModel};
 
 use super::api::TorcClient;
 use super::dag::{DagLayout, JobNode};

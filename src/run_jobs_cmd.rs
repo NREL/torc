@@ -1,11 +1,3 @@
-use chrono::{DateTime, Utc};
-use clap::Parser;
-use env_logger::Builder;
-use log::{LevelFilter, error, info};
-use std::fs::File;
-use std::io::Write;
-use std::path::PathBuf;
-use sysinfo::{System, SystemExt};
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::client::commands::get_env_user_name;
@@ -14,6 +6,14 @@ use crate::client::job_runner::JobRunner;
 use crate::client::log_paths::get_job_runner_log_file;
 use crate::client::workflow_manager::WorkflowManager;
 use crate::models;
+use chrono::{DateTime, Utc};
+use clap::Parser;
+use env_logger::Builder;
+use log::{LevelFilter, error, info};
+use std::fs::File;
+use std::io::Write;
+use std::path::PathBuf;
+use sysinfo::{System, SystemExt};
 
 /// A writer that writes to both stdout and a file
 struct MultiWriter {

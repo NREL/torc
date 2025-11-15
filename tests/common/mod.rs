@@ -1219,7 +1219,7 @@ pub fn run_jobs_cli_command(
     args: &[&str],
     server: &ServerProcess,
 ) -> Result<String, Box<dyn std::error::Error>> {
-    let mut cmd = Command::new("./target/debug/torc-job-runner");
+    let mut cmd = Command::new("./target/debug/torc run-jobs");
     cmd.args(&["--url", &server.config.base_path]);
     cmd.args(args);
     cmd.env("TORC_API_URL", &server.config.base_path);

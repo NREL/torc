@@ -1,10 +1,10 @@
-use anyhow::{Context, Result};
-use std::env;
 use crate::client::apis::configuration::Configuration;
 use crate::client::apis::default_api;
 use crate::models::{
     EventModel, FileModel, JobDependencyModel, JobModel, ResultModel, WorkflowModel,
 };
+use anyhow::{Context, Result};
+use std::env;
 
 pub struct TorcClient {
     config: Configuration,

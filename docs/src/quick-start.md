@@ -58,7 +58,7 @@ Run the jobs on the current computer. Use a short poll interval for demo purpose
 This will automatically initialize the jobs if you skipped that step.
 
 ```console
-torc-job-runner --poll-interval 1
+torc run-jobs --poll-interval 1
 ```
 
 ## View Results
