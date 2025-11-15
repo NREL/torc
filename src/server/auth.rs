@@ -303,10 +303,14 @@ where
     RC: RcBound,
     RC::Result: Send + 'static,
     T: Service<(Request<B>, RC::Result)>,
+    T::Response: From<hyper::Response<hyper::Body>>,
 {
     type Response = T::Response;
     type Error = T::Error;
-    type Future = T::Future;
+    type Future = futures::future::Either<
+        futures::future::Ready<Result<T::Response, T::Error>>,
+        T::Future,
+    >;
 
     fn poll_ready(&mut self, cx: &mut TaskContext<'_>) -> Poll<Result<(), Self::Error>> {
         self.inner.poll_ready(cx)
@@ -372,10 +376,20 @@ where
             }
         };
 
-        // Push authorization into context
+        // If require_auth is true and authorization failed, return 401 immediately
+        if self.require_auth && authorization.is_none() {
+            let response = hyper::Response::builder()
+                .status(hyper::StatusCode::UNAUTHORIZED)
+                .header("WWW-Authenticate", "Basic realm=\"Torc\"")
+                .body(hyper::Body::from("Unauthorized"))
+                .unwrap();
+            return futures::future::Either::Left(futures::future::ready(Ok(response.into())));
+        }
+
+        // Push authorization into context and continue
         let context = context.push(authorization);
 
-        self.inner.call((request, context))
+        futures::future::Either::Right(self.inner.call((request, context)))
     }
 }
 
