@@ -31,7 +31,7 @@ class ResourceRequirementsModel(BaseModel):
     name: StrictStr = Field(description="Name of the resource requirements")
     num_cpus: Optional[StrictInt] = Field(default=1, description="Number of CPUs required by a job")
     num_gpus: Optional[StrictInt] = Field(default=0, description="Number of GPUs required by a job")
-    num_nodes: Optional[StrictInt] = Field(default=None, description="Number of nodes required by a job")
+    num_nodes: Optional[StrictInt] = Field(default=1, description="Number of nodes required by a job")
     memory: Optional[StrictStr] = Field(default='1m', description="Amount of memory required by a job, e.g., 20g")
     runtime: Optional[StrictStr] = Field(default='P0DT1M', description="Maximum runtime for a job")
     __properties: ClassVar[List[str]] = ["id", "workflow_id", "name", "num_cpus", "num_gpus", "num_nodes", "memory", "runtime"]
@@ -92,7 +92,7 @@ class ResourceRequirementsModel(BaseModel):
             "name": obj.get("name"),
             "num_cpus": obj.get("num_cpus") if obj.get("num_cpus") is not None else 1,
             "num_gpus": obj.get("num_gpus") if obj.get("num_gpus") is not None else 0,
-            "num_nodes": obj.get("num_nodes"),
+            "num_nodes": obj.get("num_nodes") if obj.get("num_nodes") is not None else 1,
             "memory": obj.get("memory") if obj.get("memory") is not None else '1m',
             "runtime": obj.get("runtime") if obj.get("runtime") is not None else 'P0DT1M'
         })

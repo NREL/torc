@@ -405,7 +405,7 @@ impl JobRunner {
     }
 
     fn run_ready_jobs_based_on_resources(&mut self) {
-        let limit = self.max_parallel_jobs.unwrap_or(self.resources.num_cpus);
+        let limit = self.resources.num_cpus;
         match utils::send_with_retries(
             &self.config,
             || {
@@ -425,13 +425,16 @@ impl JobRunner {
                     debug!("No ready jobs found");
                     return;
                 }
+                if jobs.len() > limit as usize {
+                    panic!(
+                        "Bug in server: too many jobs returned. limit: {}, returned: {}",
+                        limit,
+                        jobs.len()
+                    );
+                }
                 debug!("Found {} ready jobs to execute", jobs.len());
 
                 for job in jobs {
-                    if self.running_jobs.len() >= limit as usize {
-                        break;
-                    }
-
                     let job_id = job.id.expect("Job must have an ID");
                     let rr_id = job
                         .resource_requirements_id
@@ -480,7 +483,7 @@ impl JobRunner {
 
                     match async_job.start(&self.output_dir, self.resource_monitor.as_ref()) {
                         Ok(()) => {
-                            info!("Started job {} asynchronously", job_id);
+                            info!("Started job {}", job_id);
                             self.running_jobs.insert(job_id, async_job);
                             self.decrement_resources(&job_rr);
                             self.job_resources.insert(job_id, job_rr);
@@ -524,7 +527,8 @@ impl JobRunner {
     fn run_ready_jobs_based_on_user_parallelism(&mut self) {
         let limit = self
             .max_parallel_jobs
-            .expect("max_parallel_jobs must be set");
+            .expect("max_parallel_jobs must be set")
+            - self.running_jobs.len() as i64;
         match utils::send_with_retries(
             &self.config,
             || default_api::claim_next_jobs(&self.config, self.workflow_id, Some(limit), None),
@@ -534,6 +538,13 @@ impl JobRunner {
                 let jobs = response.jobs.unwrap_or_default();
                 if jobs.is_empty() {
                     return;
+                }
+                if jobs.len() > limit as usize {
+                    panic!(
+                        "Bug in server: too many jobs returned. limit: {}, returned: {}",
+                        limit,
+                        jobs.len()
+                    );
                 }
                 info!("Found {} ready jobs to execute", jobs.len());
 

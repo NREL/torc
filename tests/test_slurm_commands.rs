@@ -1459,7 +1459,7 @@ fn test_cancel_workflow_with_slurm_scheduler(start_server: &ServerProcess) {
         .args(&[
             "run",
             "-p",
-            "torc-client",
+            "torc",
             "--",
             "--url",
             base_url,
@@ -1540,7 +1540,7 @@ fn test_cancel_workflow_with_slurm_scheduler(start_server: &ServerProcess) {
         .args(&[
             "run",
             "--bin",
-            "torc-client",
+            "torc",
             "--",
             "--url",
             base_url,

@@ -1,4 +1,4 @@
-OPENAPI_CLI_VERSION=v7.14.0
+OPENAPI_CLI_VERSION=v7.16.0
 
 set -x
 set -e

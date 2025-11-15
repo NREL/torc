@@ -10,7 +10,7 @@
         name=nothing,
         num_cpus=1,
         num_gpus=0,
-        num_nodes=nothing,
+        num_nodes=1,
         memory="1m",
         runtime="P0DT1M",
     )
@@ -30,7 +30,7 @@ Base.@kwdef mutable struct ResourceRequirementsModel <: OpenAPI.APIModel
     name::Union{Nothing, String} = nothing
     num_cpus::Union{Nothing, Int64} = 1
     num_gpus::Union{Nothing, Int64} = 0
-    num_nodes::Union{Nothing, Int64} = nothing
+    num_nodes::Union{Nothing, Int64} = 1
     memory::Union{Nothing, String} = "1m"
     runtime::Union{Nothing, String} = "P0DT1M"
 

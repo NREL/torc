@@ -15,6 +15,20 @@ pub mod server;
 #[cfg(feature = "client")]
 pub mod client;
 
+// TUI module (behind feature flag)
+#[cfg(feature = "tui")]
+pub mod tui;
+
+// Binary command modules (behind feature flags) - re-exported for standalone binaries
+#[cfg(feature = "client")]
+pub mod run_jobs_cmd;
+
+#[cfg(feature = "tui")]
+pub mod tui_runner;
+
+#[cfg(feature = "plot_resources")]
+pub mod plot_resources_cmd;
+
 // Re-export commonly used types
 pub use models::*;
 

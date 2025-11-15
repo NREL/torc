@@ -28,10 +28,11 @@ class ScheduledComputeNodesModel(BaseModel):
     """ # noqa: E501
     id: Optional[StrictInt] = None
     workflow_id: StrictInt
-    scheduler_id: Optional[StrictInt] = None
+    scheduler_id: StrictInt
     scheduler_config_id: StrictInt
+    scheduler_type: StrictStr
     status: StrictStr
-    __properties: ClassVar[List[str]] = ["id", "workflow_id", "scheduler_id", "scheduler_config_id", "status"]
+    __properties: ClassVar[List[str]] = ["id", "workflow_id", "scheduler_id", "scheduler_config_id", "scheduler_type", "status"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -88,6 +89,7 @@ class ScheduledComputeNodesModel(BaseModel):
             "workflow_id": obj.get("workflow_id"),
             "scheduler_id": obj.get("scheduler_id"),
             "scheduler_config_id": obj.get("scheduler_config_id"),
+            "scheduler_type": obj.get("scheduler_type"),
             "status": obj.get("status")
         })
         return _obj

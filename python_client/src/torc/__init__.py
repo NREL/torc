@@ -4,7 +4,7 @@ import warnings
 from importlib import metadata
 
 from torc.api import (
-    add_jobs,
+    create_jobs,
     iter_documents,
     make_api,
     make_job_label,
@@ -16,14 +16,14 @@ from torc.loggers import setup_logging
 from torc.workflow_manager import WorkflowManager
 
 
-__version__ = metadata.metadata("torc-client")["Version"]
+__version__ = metadata.metadata("torc")["Version"]
 
 warnings.filterwarnings("once", category=DeprecationWarning)
 
 
 __all__ = (
     "WorkflowManager",
-    "add_jobs",
+    "create_jobs",
     "iter_documents",
     "make_api",
     "make_job_label",

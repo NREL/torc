@@ -6,8 +6,9 @@ Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **Int64** |  | [optional] [default to nothing]
 **workflow_id** | **Int64** |  | [default to nothing]
-**scheduler_id** | **Int64** |  | [optional] [default to nothing]
+**scheduler_id** | **Int64** |  | [default to nothing]
 **scheduler_config_id** | **Int64** |  | [default to nothing]
+**scheduler_type** | **String** |  | [default to nothing]
 **status** | **String** |  | [default to nothing]
 
 

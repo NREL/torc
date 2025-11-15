@@ -393,7 +393,7 @@ fn test_prepare_next_jobs_various_counts(
 }
 
 /// Test claim_next_jobs ignores resource requirements
-/// This verifies that unlike prepare_jobs_for_submission, this function
+/// This verifies that unlike claim_jobs_based_on_resources, this function
 /// does not filter jobs based on resource constraints
 #[rstest]
 fn test_prepare_next_jobs_ignores_resources(start_server: &ServerProcess) {
@@ -415,7 +415,7 @@ fn test_prepare_next_jobs_ignores_resources(start_server: &ServerProcess) {
     let returned_jobs = result.jobs.expect("Server must return jobs array");
 
     // Should return both small and large resource jobs
-    // (unlike prepare_jobs_for_submission which would filter by resources)
+    // (unlike claim_jobs_based_on_resources which would filter by resources)
     assert!(
         !returned_jobs.is_empty(),
         "Should return jobs regardless of resource requirements"

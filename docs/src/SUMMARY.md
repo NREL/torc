@@ -33,6 +33,7 @@
   - [Managing Resources](./how-to/resources.md)
   - [Resource Monitoring](./how-to/resource-monitoring.md)
   - [Debugging Workflows](./how-to/debugging.md)
+  - [Authentication](./how-to/authentication.md)
 
 # Reference
 
@@ -40,6 +41,7 @@
   - [OpenAPI Specification](./reference/openapi.md)
   - [Job Parameterization](./reference/parameterization.md)
   - [Configuration](./reference/configuration.md)
+  - [Security](./reference/security.md)
 
 # Tutorials
 

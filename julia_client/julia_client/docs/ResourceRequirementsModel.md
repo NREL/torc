@@ -9,7 +9,7 @@ Name | Type | Description | Notes
 **name** | **String** | Name of the resource requirements | [default to nothing]
 **num_cpus** | **Int64** | Number of CPUs required by a job | [optional] [default to 1]
 **num_gpus** | **Int64** | Number of GPUs required by a job | [optional] [default to 0]
-**num_nodes** | **Int64** | Number of nodes required by a job | [optional] [default to nothing]
+**num_nodes** | **Int64** | Number of nodes required by a job | [optional] [default to 1]
 **memory** | **String** | Amount of memory required by a job, e.g., 20g | [optional] [default to "1m"]
 **runtime** | **String** | Maximum runtime for a job | [optional] [default to "P0DT1M"]
 

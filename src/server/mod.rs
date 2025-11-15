@@ -8,6 +8,7 @@ pub mod api_types;
 pub mod auth;
 pub mod context;
 pub mod header;
+pub mod htpasswd;
 pub mod routing;
 
 // Re-exports from api_types (OpenAPI-generated)

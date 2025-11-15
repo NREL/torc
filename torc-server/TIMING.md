@@ -130,17 +130,17 @@ For production monitoring, export to Jaeger or another OpenTelemetry backend:
 2. **Run your workflow with many jobs:**
    ```bash
    # Create workflow
-   torc-client workflows create-from-spec examples/hundred_jobs.yaml
+   torc workflows create-from-spec examples/hundred_jobs.yaml
 
    # Get workflow ID from output
    WORKFLOW_ID=<id>
 
    # Start workflow
-   torc-client workflows start $WORKFLOW_ID
+   torc workflows start $WORKFLOW_ID
 
    # Run multiple workers
    for i in {1..10}; do
-       torc-job-runner http://localhost:8080/torc-service/v1 $WORKFLOW_ID ./output_$i &
+       torc run-jobs http://localhost:8080/torc-service/v1 $WORKFLOW_ID ./output_$i &
    done
    ```
 

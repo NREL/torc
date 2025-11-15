@@ -62,7 +62,7 @@ Torc supports two different strategies for allocating jobs to runners:
 **Configuration**: Run the job runner WITHOUT `--max-parallel-jobs`:
 
 ```bash
-torc-job-runner $WORKFLOW_ID \
+torc run-jobs $WORKFLOW_ID \
   --num-cpus 32 \
   --memory-gb 256 \
   --num-gpus 4
@@ -83,7 +83,7 @@ torc-job-runner $WORKFLOW_ID \
 **Configuration**: Run the job runner WITH `--max-parallel-jobs`:
 
 ```bash
-torc-job-runner $WORKFLOW_ID \
+torc run-jobs $WORKFLOW_ID \
   --max-parallel-jobs 10 \
   --output-dir ./results
 ```
@@ -111,7 +111,7 @@ When requesting jobs from the server, the runner only accepts jobs that fit with
 Register compute nodes with the server:
 
 ```bash
-torc-client compute-nodes create \
+torc compute-nodes create \
   --workflow-id $WORKFLOW_ID \
   --hostname $(hostname) \
   --num-cpus 32 \

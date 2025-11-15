@@ -91,7 +91,7 @@ jobs:
 If you want to create a workflow without resource monitoring, use the `--no-resource-monitoring` flag:
 
 ```bash
-torc-client workflows create-from-spec my_workflow.yaml --no-resource-monitoring
+torc workflows create-from-spec my_workflow.yaml --no-resource-monitoring
 ```
 
 ## Viewing Resource Metrics
@@ -101,7 +101,7 @@ torc-client workflows create-from-spec my_workflow.yaml --no-resource-monitoring
 For workflows using summary mode, resource metrics are stored in the results table. View them with:
 
 ```bash
-torc-client results list <workflow_id>
+torc results list <workflow_id>
 ```
 
 The output includes columns for:
@@ -146,16 +146,16 @@ you:
 
 ```bash
 # Check resource utilization for a workflow (latest run)
-torc-client reports check-resource-utilization <workflow_id>
+torc reports check-resource-utilization <workflow_id>
 
 # Check a specific run
-torc-client reports check-resource-utilization <workflow_id> --run-id <run_id>
+torc reports check-resource-utilization <workflow_id> --run-id <run_id>
 
 # Show all jobs (including those within limits)
-torc-client reports check-resource-utilization <workflow_id> --all
+torc reports check-resource-utilization <workflow_id> --all
 
 # Output as JSON for programmatic analysis
-torc-client --format json reports check-resource-utilization <workflow_id>
+torc --format json reports check-resource-utilization <workflow_id>
 ```
 
 ### What Gets Checked
@@ -305,7 +305,7 @@ resource_requirements:
 5. **Combine with plots**: For jobs with violations, generate time series plots to understand behavior
    ```bash
    # First, identify violations
-   torc-client reports check-resource-utilization <workflow_id>
+   torc reports check-resource-utilization <workflow_id>
 
    # Then, plot detailed metrics for problematic jobs
    torc-plot-resources output/resource_utilization/resource_metrics_*.db \
@@ -317,7 +317,7 @@ resource_requirements:
 For automation and CI/CD integration, use JSON output:
 
 ```bash
-torc-client --format json reports check-resource-utilization <workflow_id>
+torc --format json reports check-resource-utilization <workflow_id>
 ```
 
 Example JSON output:
@@ -419,7 +419,7 @@ This ensures accurate resource accounting for parallel and distributed workloads
 Use monitoring data to right-size your job resource requests:
 
 1. Run workflow with monitoring enabled
-2. Use `torc-client reports check-resource-utilization <workflow_id>` to identify violations
+2. Use `torc reports check-resource-utilization <workflow_id>` to identify violations
 3. Review peak and average metrics for specific jobs
 4. Adjust `resource_requirements` in job specs:
    ```yaml
@@ -550,14 +550,14 @@ After running this workflow:
 
 ```bash
 # Create and run the workflow
-torc-client workflows create-from-spec ml_pipeline.yaml
-torc-job-runner <workflow_id>
+torc workflows create-from-spec ml_pipeline.yaml
+torc run-jobs <workflow_id>
 
 # Check for resource over-utilization
-torc-client reports check-resource-utilization <workflow_id>
+torc reports check-resource-utilization <workflow_id>
 
 # View detailed summary metrics
-torc-client results list <workflow_id>
+torc results list <workflow_id>
 
 # Generate interactive plots for problematic jobs
 torc-plot-resources output/resource_utilization/resource_metrics_*.db \

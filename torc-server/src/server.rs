@@ -19,7 +19,6 @@ use std::str::FromStr;
 use std::sync::Arc;
 use std::task::{Context, Poll};
 use swagger::EmptyContext;
-use swagger::auth::MakeAllowAllAuthenticator;
 use swagger::{Has, XSpanIdString};
 use tokio::net::TcpListener;
 use torc::models;
@@ -35,6 +34,8 @@ use torc::server::api::WorkflowActionsApi;
 use torc::server::api::WorkflowsApi;
 use torc::server::api::database_error;
 use torc::server::api_types::*;
+use torc::server::auth::MakeHtpasswdAuthenticator;
+use torc::server::htpasswd::HtpasswdFile;
 use tracing::instrument;
 
 #[cfg(not(any(target_os = "macos", target_os = "windows", target_os = "ios")))]
@@ -69,7 +70,13 @@ fn process_pagination_params(
 }
 
 /// Builds an SSL implementation for Simple HTTPS from some hard-coded file names
-pub async fn create(addr: &str, https: bool, pool: SqlitePool) {
+pub async fn create(
+    addr: &str,
+    https: bool,
+    pool: SqlitePool,
+    htpasswd: Option<HtpasswdFile>,
+    require_auth: bool,
+) {
     // Resolve hostname to socket address (supports both hostnames and IP addresses)
     let addr = tokio::net::lookup_host(addr)
         .await
@@ -81,7 +88,7 @@ pub async fn create(addr: &str, https: bool, pool: SqlitePool) {
 
     let service = MakeService::new(server);
 
-    let service = MakeAllowAllAuthenticator::new(service, "cosmo");
+    let service = MakeHtpasswdAuthenticator::new(service, htpasswd, require_auth);
 
     #[allow(unused_mut)]
     let mut service = torc::server::context::MakeAddContext::<_, EmptyContext>::new(service);

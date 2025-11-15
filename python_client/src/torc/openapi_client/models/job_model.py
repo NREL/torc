@@ -19,7 +19,6 @@ import json
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
-from torc.openapi_client.models.compute_node_schedule import ComputeNodeSchedule
 from typing import Optional, Set
 from typing_extensions import Self
 
@@ -33,17 +32,16 @@ class JobModel(BaseModel):
     command: StrictStr = Field(description="CLI command to execute. Will not be executed in a shell and so must not include shell characters.")
     invocation_script: Optional[StrictStr] = Field(default=None, description="Wrapper script for command in case the environment needs customization.")
     status: Optional[Any] = None
-    schedule_compute_nodes: Optional[ComputeNodeSchedule] = None
     cancel_on_blocking_job_failure: Optional[StrictBool] = Field(default=True, description="Cancel this job if any of its blocking jobs fails.")
     supports_termination: Optional[StrictBool] = Field(default=False, description="Informs torc that the job can be terminated gracefully before a wall-time timeout.")
     blocked_by_job_ids: Optional[List[StrictInt]] = Field(default=None, description="Database IDs of jobs that block this job")
     input_file_ids: Optional[List[StrictInt]] = Field(default=None, description="Database IDs of files that this job needs")
-    output_files: Optional[List[StrictInt]] = Field(default=None, description="Database IDs of files that this job produces")
-    input_user_data: Optional[List[StrictInt]] = Field(default=None, description="Database IDs of user-data objects that this job needs")
-    output_user_data: Optional[List[StrictInt]] = Field(default=None, description="Database IDs of user-data objects that this job produces")
+    output_file_ids: Optional[List[StrictInt]] = Field(default=None, description="Database IDs of files that this job produces")
+    input_user_data_ids: Optional[List[StrictInt]] = Field(default=None, description="Database IDs of user-data objects that this job needs")
+    output_user_data_ids: Optional[List[StrictInt]] = Field(default=None, description="Database IDs of user-data objects that this job produces")
     resource_requirements_id: Optional[StrictInt] = Field(default=None, description="Optional database ID of resources required by this job")
     scheduler_id: Optional[StrictInt] = Field(default=None, description="Optional database ID of scheduler needed by this job")
-    __properties: ClassVar[List[str]] = ["id", "workflow_id", "name", "command", "invocation_script", "status", "schedule_compute_nodes", "cancel_on_blocking_job_failure", "supports_termination", "blocked_by_job_ids", "input_file_ids", "output_files", "input_user_data", "output_user_data", "resource_requirements_id", "scheduler_id"]
+    __properties: ClassVar[List[str]] = ["id", "workflow_id", "name", "command", "invocation_script", "status", "cancel_on_blocking_job_failure", "supports_termination", "blocked_by_job_ids", "input_file_ids", "output_file_ids", "input_user_data_ids", "output_user_data_ids", "resource_requirements_id", "scheduler_id"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -84,9 +82,6 @@ class JobModel(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
-        # override the default output from pydantic by calling `to_dict()` of schedule_compute_nodes
-        if self.schedule_compute_nodes:
-            _dict['schedule_compute_nodes'] = self.schedule_compute_nodes.to_dict()
         # set to None if status (nullable) is None
         # and model_fields_set contains the field
         if self.status is None and "status" in self.model_fields_set:
@@ -110,14 +105,13 @@ class JobModel(BaseModel):
             "command": obj.get("command"),
             "invocation_script": obj.get("invocation_script"),
             "status": obj.get("status"),
-            "schedule_compute_nodes": ComputeNodeSchedule.from_dict(obj["schedule_compute_nodes"]) if obj.get("schedule_compute_nodes") is not None else None,
             "cancel_on_blocking_job_failure": obj.get("cancel_on_blocking_job_failure") if obj.get("cancel_on_blocking_job_failure") is not None else True,
             "supports_termination": obj.get("supports_termination") if obj.get("supports_termination") is not None else False,
             "blocked_by_job_ids": obj.get("blocked_by_job_ids"),
             "input_file_ids": obj.get("input_file_ids"),
-            "output_files": obj.get("output_files"),
-            "input_user_data": obj.get("input_user_data"),
-            "output_user_data": obj.get("output_user_data"),
+            "output_file_ids": obj.get("output_file_ids"),
+            "input_user_data_ids": obj.get("input_user_data_ids"),
+            "output_user_data_ids": obj.get("output_user_data_ids"),
             "resource_requirements_id": obj.get("resource_requirements_id"),
             "scheduler_id": obj.get("scheduler_id")
         })

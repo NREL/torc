@@ -1,0 +1,351 @@
+# Authentication
+
+Torc supports HTTP Basic authentication to secure access to your workflow orchestration server. This guide explains how to set up and use authentication.
+
+## Overview
+
+Torc's authentication system provides:
+
+- **Multi-user support** via htpasswd files
+- **Bcrypt password hashing** for secure credential storage
+- **Backward compatibility** - authentication is optional by default
+- **Flexible deployment** - can require authentication or allow mixed access
+- **CLI and environment variable** support for credentials
+
+## Server-Side Setup
+
+### 1. Create User Accounts
+
+Use the `torc-htpasswd` utility to manage user accounts:
+
+```bash
+# Add a user (will prompt for password)
+torc-htpasswd add --file /path/to/htpasswd username
+
+# Add a user with password on command line
+torc-htpasswd add --file /path/to/htpasswd --password mypassword username
+
+# Add a user with custom bcrypt cost (higher = more secure but slower)
+torc-htpasswd add --file /path/to/htpasswd --cost 14 username
+
+# List all users
+torc-htpasswd list --file /path/to/htpasswd
+
+# Verify a password
+torc-htpasswd verify --file /path/to/htpasswd username
+
+# Remove a user
+torc-htpasswd remove --file /path/to/htpasswd username
+```
+
+The htpasswd file format is simple:
+```
+# Torc htpasswd file
+# Format: username:bcrypt_hash
+alice:$2b$12$abcdefghijklmnopqrstuvwxyz1234567890ABCDEFGHIJKLMNOP
+bob:$2b$12$zyxwvutsrqponmlkjihgfedcba0987654321ZYXWVUTSRQPONMLK
+```
+
+### 2. Start Server with Authentication
+
+```bash
+# Optional authentication (backward compatible mode)
+torc-server --auth-file /path/to/htpasswd
+
+# Required authentication (all requests must authenticate)
+torc-server --auth-file /path/to/htpasswd --require-auth
+
+# Can also use environment variable
+export TORC_AUTH_FILE=/path/to/htpasswd
+torc-server
+```
+
+**Authentication Modes:**
+
+- **No `--auth-file`**: Authentication disabled, all requests allowed (default)
+- **`--auth-file` only**: Authentication optional - authenticated requests are logged, unauthenticated requests allowed
+- **`--auth-file --require-auth`**: Authentication required - unauthenticated requests are rejected
+
+### 3. Server Logs
+
+The server logs authentication events:
+
+```
+INFO  torc_server: Loading htpasswd file from: /path/to/htpasswd
+INFO  torc_server: Loaded 3 users from htpasswd file
+INFO  torc_server: Authentication is REQUIRED for all requests
+...
+DEBUG torc::server::auth: User 'alice' authenticated successfully
+WARN  torc::server::auth: Authentication failed for user 'bob'
+WARN  torc::server::auth: Authentication required but no credentials provided
+```
+
+## Client-Side Usage
+
+### Using Command-Line Flags
+
+```bash
+# Provide credentials via flags
+torc --username alice --password mypassword workflows list
+
+# Username via flag, password will be prompted
+torc --username alice workflows list
+Password: ****
+
+# All commands support authentication
+torc --username alice --password mypassword workflows create-from-spec workflow.yaml
+```
+
+### Using Environment Variables
+
+```bash
+# Set credentials in environment
+export TORC_USERNAME=alice
+export TORC_PASSWORD=mypassword
+
+# Run commands without flags
+torc workflows list
+torc jobs list my-workflow-id
+```
+
+### Mixed Approach
+
+```bash
+# Username from env, password prompted
+export TORC_USERNAME=alice
+torc workflows list
+Password: ****
+
+# Override env with flag
+export TORC_USERNAME=alice
+torc --username bob --password bobpass workflows list
+```
+
+## Security Best Practices
+
+### 1. Use HTTPS in Production
+
+Basic authentication sends base64-encoded credentials (easily decoded). **Always use HTTPS** when authentication is enabled:
+
+```bash
+# Start server with HTTPS
+torc-server --https --auth-file /path/to/htpasswd --require-auth
+
+# Client connects via HTTPS
+torc --url https://torc.example.com/torc-service/v1 --username alice workflows list
+```
+
+### 2. Secure Credential Storage
+
+**Do:**
+- Store htpasswd files with restrictive permissions: `chmod 600 /path/to/htpasswd`
+- Use environment variables for passwords in scripts
+- Use password prompting for interactive sessions
+- Rotate passwords periodically
+
+**Don't:**
+- Commit htpasswd files to version control
+- Share htpasswd files between environments
+- Pass passwords as command-line arguments in production (visible in process list)
+- Use weak passwords or low bcrypt costs
+
+### 3. Bcrypt Cost Factor
+
+The cost factor determines password hashing strength:
+
+- **Cost 4-8**: Fast but weaker (testing only)
+- **Cost 10-12**: Balanced (default: 12)
+- **Cost 13-15**: Strong (production systems)
+- **Cost 16+**: Very strong (high-security environments)
+
+```bash
+# Use higher cost for production
+torc-htpasswd add --file prod_htpasswd --cost 14 alice
+```
+
+### 4. Audit Logging
+
+Monitor authentication events in server logs:
+
+```bash
+# Run server with debug logging for auth events
+torc-server --log-level debug --auth-file /path/to/htpasswd
+
+# Or use RUST_LOG for granular control
+RUST_LOG=torc::server::auth=debug torc-server --auth-file /path/to/htpasswd
+```
+
+## Common Workflows
+
+### Development Environment
+
+```bash
+# 1. Create test user
+torc-htpasswd add --file dev_htpasswd --password devpass developer
+
+# 2. Start server (auth optional)
+torc-server --auth-file dev_htpasswd --database dev.db
+
+# 3. Use client without auth (still works)
+torc workflows list
+
+# 4. Or with auth
+torc --username developer --password devpass workflows list
+```
+
+### Production Deployment
+
+```bash
+# 1. Create production users with strong passwords and high cost
+torc-htpasswd add --file /etc/torc/htpasswd --cost 14 alice
+torc-htpasswd add --file /etc/torc/htpasswd --cost 14 bob
+
+# 2. Secure the file
+chmod 600 /etc/torc/htpasswd
+chown torc-server:torc-server /etc/torc/htpasswd
+
+# 3. Start server with required auth and HTTPS
+torc-server \
+  --https \
+  --auth-file /etc/torc/htpasswd \
+  --require-auth \
+  --database /var/lib/torc/production.db
+
+# 4. Clients must authenticate
+export TORC_USERNAME=alice
+torc --url https://torc.example.com/torc-service/v1 workflows list
+Password: ****
+```
+
+### CI/CD Pipeline
+
+```bash
+# Store credentials as CI secrets
+# TORC_USERNAME=ci-bot
+# TORC_PASSWORD=<secure-password>
+
+# Use in pipeline
+export TORC_USERNAME="${TORC_USERNAME}"
+export TORC_PASSWORD="${TORC_PASSWORD}"
+export TORC_API_URL=https://torc.example.com/torc-service/v1
+
+# Run workflow
+torc workflows create-from-spec pipeline.yaml
+torc workflows start "${WORKFLOW_ID}"
+```
+
+### Migrating from No Auth to Required Auth
+
+```bash
+# 1. Start: No authentication
+torc-server --database prod.db
+
+# 2. Add authentication file (optional mode)
+torc-server --auth-file /etc/torc/htpasswd --database prod.db
+
+# 3. Monitor logs, ensure clients are authenticating
+# Look for "User 'X' authenticated successfully" messages
+
+# 4. Once all clients authenticate, enable required auth
+torc-server --auth-file /etc/torc/htpasswd --require-auth --database prod.db
+```
+
+## Troubleshooting
+
+### "Authentication required but no credentials provided"
+
+**Cause:** Server has `--require-auth` but client didn't send credentials.
+
+**Solution:**
+```bash
+# Add username and password
+torc --username alice --password mypass workflows list
+```
+
+### "Authentication failed for user 'alice'"
+
+**Cause:** Wrong password or user doesn't exist in htpasswd file.
+
+**Solutions:**
+```bash
+# 1. Verify user exists
+torc-htpasswd list --file /path/to/htpasswd
+
+# 2. Verify password
+torc-htpasswd verify --file /path/to/htpasswd alice
+
+# 3. Reset password
+torc-htpasswd add --file /path/to/htpasswd alice
+```
+
+### "No credentials provided, allowing anonymous access"
+
+**Cause:** Server has `--auth-file` but not `--require-auth`, and client didn't authenticate.
+
+**Solution:** This is normal in optional auth mode. To require auth:
+```bash
+torc-server --auth-file /path/to/htpasswd --require-auth
+```
+
+### Password Prompting in Non-Interactive Sessions
+
+**Problem:** Scripts or CI/CD fail waiting for password prompt.
+
+**Solutions:**
+```bash
+# Use environment variable
+export TORC_PASSWORD=mypassword
+torc --username alice workflows list
+
+# Or pass as flag (less secure - visible in process list)
+torc --username alice --password mypassword workflows list
+```
+
+## Advanced Topics
+
+### Multiple Environments
+
+Maintain separate htpasswd files per environment:
+
+```bash
+# Development
+torc-htpasswd add --file ~/.torc/dev_htpasswd --password devpass developer
+
+# Staging
+torc-htpasswd add --file /etc/torc/staging_htpasswd --cost 12 alice
+
+# Production
+torc-htpasswd add --file /etc/torc/prod_htpasswd --cost 14 alice
+```
+
+### Programmatic Access
+
+When using Torc's Rust or Python clients programmatically:
+
+**Rust:**
+```rust
+use torc::client::apis::configuration::Configuration;
+
+let mut config = Configuration::new();
+config.base_path = "http://localhost:8080/torc-service/v1".to_string();
+config.basic_auth = Some(("alice".to_string(), Some("password".to_string())));
+```
+
+**Python:**
+```python
+from torc import Configuration, ApiClient
+
+config = Configuration(
+    host="http://localhost:8080/torc-service/v1",
+    username="alice",
+    password="password"
+)
+```
+
+### Load Balancer Considerations
+
+When running multiple Torc servers behind a load balancer:
+
+- Share the same htpasswd file across all servers (via NFS, S3, etc.)
+- Or use a configuration management tool to sync htpasswd files
+- Monitor for htpasswd file changes and reload if needed

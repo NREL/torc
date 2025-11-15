@@ -9,6 +9,7 @@
         workflow_id=nothing,
         scheduler_id=nothing,
         scheduler_config_id=nothing,
+        scheduler_type=nothing,
         status=nothing,
     )
 
@@ -16,6 +17,7 @@
     - workflow_id::Int64
     - scheduler_id::Int64
     - scheduler_config_id::Int64
+    - scheduler_type::String
     - status::String
 """
 Base.@kwdef mutable struct ScheduledComputeNodesModel <: OpenAPI.APIModel
@@ -23,21 +25,24 @@ Base.@kwdef mutable struct ScheduledComputeNodesModel <: OpenAPI.APIModel
     workflow_id::Union{Nothing, Int64} = nothing
     scheduler_id::Union{Nothing, Int64} = nothing
     scheduler_config_id::Union{Nothing, Int64} = nothing
+    scheduler_type::Union{Nothing, String} = nothing
     status::Union{Nothing, String} = nothing
 
-    function ScheduledComputeNodesModel(id, workflow_id, scheduler_id, scheduler_config_id, status, )
-        o = new(id, workflow_id, scheduler_id, scheduler_config_id, status, )
+    function ScheduledComputeNodesModel(id, workflow_id, scheduler_id, scheduler_config_id, scheduler_type, status, )
+        o = new(id, workflow_id, scheduler_id, scheduler_config_id, scheduler_type, status, )
         OpenAPI.validate_properties(o)
         return o
     end
 end # type ScheduledComputeNodesModel
 
-const _property_types_ScheduledComputeNodesModel = Dict{Symbol,String}(Symbol("id")=>"Int64", Symbol("workflow_id")=>"Int64", Symbol("scheduler_id")=>"Int64", Symbol("scheduler_config_id")=>"Int64", Symbol("status")=>"String", )
+const _property_types_ScheduledComputeNodesModel = Dict{Symbol,String}(Symbol("id")=>"Int64", Symbol("workflow_id")=>"Int64", Symbol("scheduler_id")=>"Int64", Symbol("scheduler_config_id")=>"Int64", Symbol("scheduler_type")=>"String", Symbol("status")=>"String", )
 OpenAPI.property_type(::Type{ ScheduledComputeNodesModel }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ScheduledComputeNodesModel[name]))}
 
 function OpenAPI.check_required(o::ScheduledComputeNodesModel)
     o.workflow_id === nothing && (return false)
+    o.scheduler_id === nothing && (return false)
     o.scheduler_config_id === nothing && (return false)
+    o.scheduler_type === nothing && (return false)
     o.status === nothing && (return false)
     true
 end
@@ -47,10 +52,12 @@ function OpenAPI.validate_properties(o::ScheduledComputeNodesModel)
     OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("workflow_id"), o.workflow_id)
     OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("scheduler_id"), o.scheduler_id)
     OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("scheduler_config_id"), o.scheduler_config_id)
+    OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("scheduler_type"), o.scheduler_type)
     OpenAPI.validate_property(ScheduledComputeNodesModel, Symbol("status"), o.status)
 end
 
 function OpenAPI.validate_property(::Type{ ScheduledComputeNodesModel }, name::Symbol, val)
+
 
 
 

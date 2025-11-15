@@ -2135,6 +2135,9 @@ pub fn get_compute_node(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -2194,6 +2197,9 @@ pub fn get_dot_graph(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -2245,6 +2251,9 @@ pub fn get_event(
 
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;
@@ -2320,6 +2329,9 @@ pub fn list_events_after_timestamp(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -2372,6 +2384,9 @@ pub fn get_file(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -2423,6 +2438,9 @@ pub fn get_job(
 
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;
@@ -2480,6 +2498,9 @@ pub fn get_latest_event_timestamp(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -2535,6 +2556,9 @@ pub fn get_local_scheduler(
 
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;
@@ -2597,6 +2621,9 @@ pub fn get_ready_job_requirements(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -2653,6 +2680,9 @@ pub fn get_resource_requirements(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -2704,6 +2734,9 @@ pub fn get_result(
 
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;
@@ -2761,6 +2794,9 @@ pub fn get_scheduled_compute_node(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -2817,6 +2853,9 @@ pub fn get_slurm_scheduler(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -2869,6 +2908,9 @@ pub fn get_user_data(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -2916,6 +2958,9 @@ pub fn get_version(
 
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;
@@ -2968,6 +3013,9 @@ pub fn get_workflow(
 
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;
@@ -3024,6 +3072,9 @@ pub fn get_workflow_status(
 
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;
@@ -3152,6 +3203,9 @@ pub fn is_workflow_complete(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -3207,6 +3261,9 @@ pub fn is_workflow_uninitialized(
 
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;
@@ -3291,6 +3348,9 @@ pub fn list_compute_nodes(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -3373,6 +3433,9 @@ pub fn list_events(
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;
@@ -3462,6 +3525,9 @@ pub fn list_files(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -3517,6 +3583,9 @@ pub fn list_job_ids(
 
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;
@@ -3606,6 +3675,9 @@ pub fn list_jobs(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -3670,6 +3742,9 @@ pub fn list_job_dependencies(
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;
@@ -3754,6 +3829,9 @@ pub fn list_local_schedulers(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -3810,6 +3888,9 @@ pub fn list_missing_user_data(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -3865,6 +3946,9 @@ pub fn list_required_existing_files(
 
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;
@@ -3974,6 +4058,9 @@ pub fn list_resource_requirements(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -4072,6 +4159,9 @@ pub fn list_results(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -4159,6 +4249,9 @@ pub fn list_scheduled_compute_nodes(
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;
@@ -4278,6 +4371,9 @@ pub fn list_slurm_schedulers(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -4371,6 +4467,9 @@ pub fn list_user_data(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -4460,6 +4559,9 @@ pub fn list_workflows(
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;
@@ -5253,6 +5355,9 @@ pub fn ping(
 
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;
@@ -6447,6 +6552,9 @@ pub fn get_workflow_actions(
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
+    }
 
     let req = req_builder.build()?;
     let resp = configuration.client.execute(req)?;
@@ -6522,6 +6630,9 @@ pub fn get_pending_actions(
 
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref auth) = configuration.basic_auth {
+        req_builder = req_builder.basic_auth(&auth.0, auth.1.as_ref());
     }
 
     let req = req_builder.build()?;

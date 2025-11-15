@@ -30,6 +30,48 @@ Please post new ideas for Torc in the [discussions](https://github.com/NREL/torc
 - **Resource Management** - Track CPU, memory, and GPU usage across all jobs
 - **RESTful API** - Complete OpenAPI-specified REST API for integration
 
+## Quick Start
+
+### Installation
+
+Download precompiled binaries from the [releases page](https://github.com/NREL/torc/releases) or build from source:
+
+```bash
+cargo build --release --bin torc --features "client,tui,plot_resources"
+```
+
+The unified `torc` CLI provides all workflow management, execution, and monitoring capabilities.
+
+### Basic Usage
+
+```bash
+# 1. Start the Torc server (standalone binary)
+torc-server
+# Or with options:
+torc-server --url localhost --port 8080 --threads 8 --database path/to/db.sqlite
+
+# 2. Use the unified CLI for all client operations
+# Create a workflow from a specification file
+torc workflows create-from-spec my_workflow.yaml
+
+# Run jobs locally
+torc job-runner <workflow_id>
+
+# Monitor workflows with the interactive TUI
+torc tui
+
+# List workflows
+torc workflows list
+
+# View job status
+torc jobs list <workflow_id>
+
+# Generate resource usage plots
+torc plot-resources output/resource_metrics.db
+```
+
+For detailed documentation, see the [docs](docs/) directory.
+
 ## Architecture
 
 ```
@@ -52,7 +94,7 @@ Please post new ideas for Torc in the [discussions](https://github.com/NREL/torc
         ┌────────────────────┼────────────────────┐
         │                    │                    │
 ┌───────▼────────┐  ┌────────▼────────┐  ┌───────▼────────┐
-│  Torc Client   │  │  Job Runner 1   │  │  Job Runner N  │
+│  Torc CLI      │  │  Job Runner 1   │  │  Job Runner N  │
 │                │  │  (compute-01)   │  │  (compute-nn)  │
 │ • Create       │  │                 │  │                │
 │   workflows    │  │ • Poll for jobs │  │ • Poll for jobs│
@@ -60,6 +102,26 @@ Please post new ideas for Torc in the [discussions](https://github.com/NREL/torc
 │ • Monitor      │  │ • Report results│  │ • Report results│
 └────────────────┘  └─────────────────┘  └────────────────┘
 ```
+
+## Command-Line Interface
+
+Torc provides a unified CLI with the following commands:
+
+- **Workflow Management**: `torc workflows <subcommand>`
+- **Job Management**: `torc jobs <subcommand>`
+- **File Management**: `torc files <subcommand>`
+- **Local Execution**: `torc job-runner <workflow_id>`
+- **Interactive TUI**: `torc tui`
+- **Resource Visualization**: `torc plot-resources <db_path>`
+- **Reports**: `torc reports <subcommand>`
+
+**Global Options**:
+- `--url <URL>` - Specify Torc server URL (or use `TORC_BASE_URL` env var)
+- `-f, --format <FORMAT>` - Output format: `table` or `json`
+
+Standalone binaries are also available for deployment scenarios:
+- `torc-server` - REST API server (**always run as standalone**, not in unified CLI)
+
 
 ## Why develop another workflow management tool?
 Since there are so many open source workflow management tools available, some may ask, "why develop

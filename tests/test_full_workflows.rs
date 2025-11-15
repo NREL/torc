@@ -1,8 +1,6 @@
 mod common;
 
-use common::{
-    ServerProcess, create_diamond_workflow, run_cli_command, run_jobs_cli_command, start_server,
-};
+use common::{ServerProcess, create_diamond_workflow, run_jobs_cli_command, start_server};
 use rstest::rstest;
 use std::collections::HashMap;
 use std::fs;
@@ -23,13 +21,7 @@ fn test_diamond_workflow(start_server: &ServerProcess, #[case] max_parallel_jobs
     let jobs = create_diamond_workflow(config, false, &work_dir);
     let preprocess = jobs.get("preprocess").expect("preprocess job not found");
     let workflow_id = preprocess.workflow_id;
-
     create_input_file(&work_dir);
-    run_cli_command(
-        &["workflows", "initialize", &workflow_id.to_string()],
-        start_server,
-    )
-    .expect("Failed to initialize workflow");
 
     // Build CLI arguments based on max_parallel_jobs parameter
     let mut cli_args = vec![
@@ -50,8 +42,6 @@ fn test_diamond_workflow(start_server: &ServerProcess, #[case] max_parallel_jobs
         cli_args.push("4".to_string());
         cli_args.push("--memory-gb".to_string());
         cli_args.push("8.0".to_string());
-        cli_args.push("--num-nodes".to_string());
-        cli_args.push("1".to_string());
     }
 
     // Convert Vec<String> to Vec<&str> for run_jobs_cli_command
@@ -105,8 +95,9 @@ fn verify_diamond_workflow_completion(
         assert_eq!(
             job.status.unwrap(),
             models::JobStatus::Done,
-            "Job {} should be done",
-            job.name
+            "Job {} should be done. actual status: {:?}",
+            job.name,
+            job.status
         );
     }
 

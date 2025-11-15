@@ -32,16 +32,16 @@ Use the `workflows archive` command to archive or unarchive workflows:
 
 ```bash
 # Archive a specific workflow
-torc-client workflows archive true <workflow_id>
+torc workflows archive true <workflow_id>
 
 # Archive multiple workflows
-torc-client workflows archive true 123 456 789
+torc workflows archive true 123 456 789
 
 # Interactive selection (prompts user to choose)
-torc-client workflows archive true
+torc workflows archive true
 
 # With JSON output
-torc-client --format json workflows archive true <workflow_id>
+torc --format json workflows archive true <workflow_id>
 ```
 
 The command will output confirmation messages:
@@ -58,13 +58,13 @@ To restore an archived workflow to active status, use the same command with `fal
 
 ```bash
 # Unarchive a specific workflow
-torc-client workflows archive false <workflow_id>
+torc workflows archive false <workflow_id>
 
 # Unarchive multiple workflows
-torc-client workflows archive false 123 456 789
+torc workflows archive false 123 456 789
 
 # Interactive selection
-torc-client workflows archive false
+torc workflows archive false
 ```
 
 Output:
@@ -81,10 +81,10 @@ By default, the `workflows list` command shows only non-archived workflows:
 
 ```bash
 # Shows active (non-archived) workflows only
-torc-client workflows list
+torc workflows list
 
 # Shows active workflows for a specific user
-torc-client workflows list --user alice
+torc workflows list --user alice
 ```
 
 ### Viewing Archived Workflows
@@ -93,10 +93,10 @@ Use the `--archived-only` flag to see archived workflows:
 
 ```bash
 # List only archived workflows for current user
-torc-client workflows list --archived-only
+torc workflows list --archived-only
 
 # List all archived workflows for all users
-torc-client workflows list --all-users --archived-only
+torc workflows list --all-users --archived-only
 ```
 
 ### Viewing All Workflows
@@ -104,7 +104,7 @@ torc-client workflows list --all-users --archived-only
 Use the `--include-archived` flag to see all workflows:
 
 ```bash
-torc-client workflows list --include-archived
+torc workflows list --include-archived
 ```
 
 ### Accessing Specific Workflows
@@ -113,10 +113,10 @@ You can always access a workflow directly by its ID, regardless of archive statu
 
 ```bash
 # Get details of any workflow (archived or not)
-torc-client workflows get <workflow_id>
+torc workflows get <workflow_id>
 
 # Check workflow status
-torc-client workflows status <workflow_id>
+torc workflows status <workflow_id>
 ```
 
 ## Impact on Workflow Operations
@@ -199,7 +199,7 @@ Regularly archive old workflows to keep lists manageable:
 torc-client workflows list
 
 # Archive workflows from completed projects
-torc-client workflows archive true 401 402 403 404 405
+torc workflows archive true 401 402 403 404 405
 ```
 
 ## Best Practices
@@ -218,9 +218,9 @@ Workflow archiving provides a simple, reversible way to hide completed or inacti
 
 **Key points:**
 
-- Archive workflows with: `torc-client workflows archive true <id>`
-- Unarchive workflows with: `torc-client workflows archive false <id>`
+- Archive workflows with: `torc workflows archive true <id>`
+- Unarchive workflows with: `torc workflows archive false <id>`
 - Archived workflows are hidden from default lists but remain fully functional
-- View archived workflows with: `torc-client workflows list --archived-only`
+- View archived workflows with: `torc workflows list --archived-only`
 - Archiving is reversible and does not affect data storage
 - Use archiving for completed workflows; use deletion for unwanted data

@@ -46,7 +46,7 @@ jobs:
 The job runner pulls jobs from the server by detecting its available resources automatically.
 
 ```bash
-torc-job-runner $WORKFLOW_ID
+torc run-jobs $WORKFLOW_ID
 ```
 
 The server's `GET /workflows/{id}/claim_jobs_based_on_resources` endpoint:
@@ -185,7 +185,7 @@ This strategy is ideal for workflows with homogeneous resource requirements wher
 Instead of tracking resources, you specify a maximum number of concurrent jobs:
 
 ```bash
-torc-job-runner $WORKFLOW_ID \
+torc run-jobs $WORKFLOW_ID \
   --max-parallel-jobs 10 \
   --output-dir ./results
 ```
@@ -193,7 +193,7 @@ torc-job-runner $WORKFLOW_ID \
 or with Slurm:
 
 ```bash
-torc-client slurm schedule-nodes $WORKFLOW_ID \
+torc slurm schedule-nodes $WORKFLOW_ID \
   --scheduler-config-id 1 \
   --num-hpc-jobs 4 \
   --max-parallel-jobs 8
@@ -300,7 +300,7 @@ System may: swap, OOM, or throttle performance
 
 ```bash
 # Schedule 4 Slurm nodes, each running up to 8 concurrent jobs
-torc-client slurm schedule-nodes $WORKFLOW_ID \
+torc slurm schedule-nodes $WORKFLOW_ID \
   --scheduler-config-id 1 \
   --num-hpc-jobs 4 \
   --max-parallel-jobs 8
@@ -328,12 +328,12 @@ You can even run multiple runners with different strategies:
 
 ```bash
 # Terminal 1: Resource-aware runner for large jobs
-torc-job-runner $WORKFLOW_ID \
+torc run-jobs $WORKFLOW_ID \
   --num-cpus 32 \
   --memory-gb 256
 
 # Terminal 2: Queue-depth runner for small jobs
-torc-job-runner $WORKFLOW_ID \
+torc run-jobs $WORKFLOW_ID \
   --max-parallel-jobs 50
 ```
 

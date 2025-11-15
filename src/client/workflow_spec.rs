@@ -453,6 +453,18 @@ impl WorkflowSpec {
         Ok(())
     }
 
+    /// Check if the workflow spec has an on_workflow_start action with schedule_nodes
+    /// Returns true if such an action exists, false otherwise
+    pub fn has_schedule_nodes_action(&self) -> bool {
+        if let Some(ref actions) = self.actions {
+            actions.iter().any(|action| {
+                action.trigger_type == "on_workflow_start" && action.action_type == "schedule_nodes"
+            })
+        } else {
+            false
+        }
+    }
+
     /// Create a WorkflowModel on the server from a JSON file
     /// Create a workflow from a specification file (JSON, JSON5, or YAML) with all associated data
     ///
@@ -1049,7 +1061,7 @@ impl WorkflowSpec {
                 )
             })?;
 
-            let created_batch = response.items.ok_or("Create jobs response missing items")?;
+            let created_batch = response.jobs.ok_or("Create jobs response missing items")?;
 
             if created_batch.len() != batch.len() {
                 return Err(format!(

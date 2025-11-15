@@ -50,10 +50,10 @@ cargo build --workspace --release
 cargo build --release --bin torc-server
 
 # Client CLI
-cargo build --release --bin torc-client
+cargo build --release --bin torc
 
 # Local job runner
-cargo build --release --bin torc-job-runner
+cargo build --release -p torc
 
 # Slurm job runner
 cargo build --release --bin torc-slurm-job-runner

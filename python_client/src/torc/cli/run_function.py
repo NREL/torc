@@ -24,18 +24,18 @@ def run_function(ctx, api):
         console_level="INFO",
         mode="w",
     )
-    job_key = os.environ.get("TORC_JOB_KEY")
-    if job_key is None:
+    job_id = os.environ.get("TORC_JOB_ID")
+    if job_id is None:
         logger.error("This command can only be called from the torc worker application.")
         sys.exit(1)
 
     check_database_url(api)
     workflow_key = get_workflow_key_from_context(ctx, api)
-    resp = api.list_job_user_data_consumes(workflow_key, job_key)
+    resp = api.list_job_user_data_consumes(workflow_key, job_id)
     if len(resp.items) != 1:
         logger.error(
-            "Received unexpected input user data from database job_key={} resp={}",
-            job_key,
+            "Received unexpected input user data from database job_id={} resp={}",
+            job_id,
             resp,
         )
         sys.exit(1)
@@ -59,11 +59,11 @@ def run_function(ctx, api):
         ret = 1
 
     if result is not None:
-        resp = api.list_job_user_data_stores(workflow_key, job_key)
+        resp = api.list_job_user_data_stores(workflow_key, job_id)
         if len(resp.items) != 1:
             logger.error(
-                "Received unexpected output data placeholder from database job_key={} resp={}",
-                job_key,
+                "Received unexpected output data placeholder from database job_id={} resp={}",
+                job_id,
                 resp,
             )
             sys.exit(1)

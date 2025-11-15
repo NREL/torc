@@ -1,4 +1,4 @@
-"""Tests for prepare_jobs_for_submission"""
+"""Tests for claim_jobs_based_on_resources"""
 
 from torc.openapi_client.models.compute_nodes_resources import (
     ComputeNodesResources,
@@ -16,7 +16,7 @@ def test_limited_by_cpu(job_requirement_uniform):
         num_nodes=1,
         time_limit="P0DT4H",
     )
-    response = api.prepare_jobs_for_submission(db.workflow.key, resources)
+    response = api.claim_jobs_based_on_resources(db.workflow.key, resources)
     assert len(response.jobs) == 9
 
 
@@ -31,7 +31,7 @@ def test_limited_by_memory(job_requirement_uniform):
         num_nodes=1,
         time_limit="P0DT4H",
     )
-    response = api.prepare_jobs_for_submission(db.workflow.key, resources)
+    response = api.claim_jobs_based_on_resources(db.workflow.key, resources)
     assert len(response.jobs) == 82 // 4
 
 
@@ -46,7 +46,7 @@ def test_limited_by_time(job_requirement_runtime):
         num_nodes=1,
         time_limit="P0DT45M",
     )
-    response = api.prepare_jobs_for_submission(db.workflow.key, resources)
+    response = api.claim_jobs_based_on_resources(db.workflow.key, resources)
     assert len(response.jobs) == 1
     assert response.jobs[0].name == "short_job"
 
@@ -62,7 +62,7 @@ def test_walltime_over_memory(job_requirement_variations):
         num_nodes=1,
         time_limit="P0DT24H",
     )
-    response = api.prepare_jobs_for_submission(db.workflow.key, resources)
+    response = api.claim_jobs_based_on_resources(db.workflow.key, resources)
     assert len(response.jobs) >= 1
     assert response.jobs[0].name == "long_job"
 
@@ -78,7 +78,7 @@ def test_memory_over_walltime(job_requirement_variations):
         num_nodes=1,
         time_limit="P0DT24H",
     )
-    response = api.prepare_jobs_for_submission(
+    response = api.claim_jobs_based_on_resources(
         db.workflow.key,
         resources,
         sort_method="gpus_memory_runtime",
@@ -98,7 +98,7 @@ def test_runtime_sorting(job_requirement_runtime):
         num_nodes=1,
         time_limit="P0DT24H",
     )
-    response = api.prepare_jobs_for_submission(
+    response = api.claim_jobs_based_on_resources(
         db.workflow.key,
         resources,
     )
@@ -118,7 +118,7 @@ def test_no_sorting(job_requirement_runtime):
         num_nodes=1,
         time_limit="P0DT24H",
     )
-    response = api.prepare_jobs_for_submission(
+    response = api.claim_jobs_based_on_resources(
         db.workflow.key,
         resources,
         sort_method="none",
@@ -139,7 +139,7 @@ def test_get_by_gpu(job_requirement_variations):
         num_nodes=1,
         time_limit="P0DT1H",
     )
-    response = api.prepare_jobs_for_submission(db.workflow.key, resources)
+    response = api.claim_jobs_based_on_resources(db.workflow.key, resources)
     assert len(response.jobs) == 1
     assert response.jobs[0].name == "gpu_job"
 
@@ -157,7 +157,7 @@ def test_get_jobs_by_scheduler(job_requirement_variations):
         time_limit="P0DT4H",
         scheduler_config_id=scheduler.id,
     )
-    response = api.prepare_jobs_for_submission(db.workflow.key, resources)
+    response = api.claim_jobs_based_on_resources(db.workflow.key, resources)
     assert len(response.jobs) == 2
     for job in response.jobs:
         assert job.name.startswith("large_job")

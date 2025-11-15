@@ -297,9 +297,9 @@ mod paths {
             )
             .expect("Unable to create regex for WORKFLOWS_ID_PREPARE_JOBS_FOR_SCHEDULING");
     }
-    pub(crate) static ID_WORKFLOWS_ID_PREPARE_JOBS_FOR_SUBMISSION: usize = 38;
+    pub(crate) static ID_WORKFLOWS_ID_CLAIM_JOBS_BASED_ON_RESOURCES: usize = 38;
     lazy_static! {
-        pub static ref REGEX_WORKFLOWS_ID_PREPARE_JOBS_FOR_SUBMISSION: regex::Regex =
+        pub static ref REGEX_WORKFLOWS_ID_claim_jobs_based_on_resources: regex::Regex =
             #[allow(clippy::invalid_regex)]
             regex::Regex::new(
                 r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/claim_jobs_based_on_resources/(?P<limit>[^/?#]*)$"
@@ -10574,15 +10574,15 @@ where
 
                 // PrepareJobsForSubmission - POST /workflows/{id}/claim_jobs_based_on_resources/{limit}
                 hyper::Method::POST
-                    if path.matched(paths::ID_WORKFLOWS_ID_PREPARE_JOBS_FOR_SUBMISSION) =>
+                    if path.matched(paths::ID_WORKFLOWS_ID_CLAIM_JOBS_BASED_ON_RESOURCES) =>
                 {
                     // Path parameters
                     let path: &str = uri.path();
                     let path_params =
-                    paths::REGEX_WORKFLOWS_ID_PREPARE_JOBS_FOR_SUBMISSION
+                    paths::REGEX_WORKFLOWS_ID_claim_jobs_based_on_resources
                     .captures(path)
                     .unwrap_or_else(||
-                        panic!("Path {} matched RE WORKFLOWS_ID_CLAIM_JOBS_BASED_ON_RESOURCES in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_PREPARE_JOBS_FOR_SUBMISSION.as_str())
+                        panic!("Path {} matched RE WORKFLOWS_ID_CLAIM_JOBS_BASED_ON_RESOURCES in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_claim_jobs_based_on_resources.as_str())
                     );
 
                     let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
@@ -13585,7 +13585,7 @@ where
                 _ if path.matched(paths::ID_WORKFLOWS_ID_PREPARE_JOBS_FOR_SCHEDULING) => {
                     method_not_allowed()
                 }
-                _ if path.matched(paths::ID_WORKFLOWS_ID_PREPARE_JOBS_FOR_SUBMISSION) => {
+                _ if path.matched(paths::ID_WORKFLOWS_ID_CLAIM_JOBS_BASED_ON_RESOURCES) => {
                     method_not_allowed()
                 }
                 _ if path.matched(paths::ID_WORKFLOWS_ID_CLAIM_NEXT_JOBS) => method_not_allowed(),
@@ -13821,7 +13821,7 @@ impl<T> RequestParser<T> for ApiRequestParser {
             }
             // PrepareJobsForSubmission - POST /workflows/{id}/claim_jobs_based_on_resources
             hyper::Method::POST
-                if path.matched(paths::ID_WORKFLOWS_ID_PREPARE_JOBS_FOR_SUBMISSION) =>
+                if path.matched(paths::ID_WORKFLOWS_ID_CLAIM_JOBS_BASED_ON_RESOURCES) =>
             {
                 Some("PrepareJobsForSubmission")
             }

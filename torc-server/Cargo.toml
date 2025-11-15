@@ -10,6 +10,10 @@ description = "Torc workflow orchestration server"
 name = "torc-server"
 path = "src/main.rs"
 
+[[bin]]
+name = "torc-htpasswd"
+path = "src/bin/torc-htpasswd.rs"
+
 [dependencies]
 torc = { path = "..", features = ["server"] }
 tokio.workspace = true
@@ -35,3 +39,5 @@ jsonwebtoken.workspace = true
 serde.workspace = true
 openssl.workspace = true
 tokio-openssl = "0.6.5"
+bcrypt.workspace = true
+rpassword.workspace = true
