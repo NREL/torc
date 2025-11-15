@@ -869,14 +869,26 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                 None => select_workflow_interactively(config, &user_name).unwrap(),
             };
 
-            // Call the run_jobs_cmd module with the workflow_id
-            // We'll need to construct the Args for run_jobs
-            eprintln!("Error: 'torc workflows run' is not yet fully implemented.");
-            eprintln!(
-                "Please use 'torc run-jobs {}' instead.",
-                selected_workflow_id
-            );
-            std::process::exit(1);
+            // Build args for run_jobs_cmd with sensible defaults
+            let args = crate::run_jobs_cmd::Args {
+                workflow_id: Some(selected_workflow_id),
+                url: config.base_path.clone(),
+                output_dir: std::path::PathBuf::from("output"),
+                poll_interval: 60.0,
+                max_parallel_jobs: None,
+                database_poll_interval: 30,
+                time_limit: None,
+                end_time: None,
+                num_cpus: None,
+                memory_gb: None,
+                num_gpus: None,
+                num_nodes: None,
+                scheduler_config_id: None,
+                log_prefix: None,
+                cpu_affinity_cpus_per_job: None,
+            };
+
+            crate::run_jobs_cmd::run(&args);
         }
         WorkflowCommands::Initialize {
             workflow_id,

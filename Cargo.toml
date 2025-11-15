@@ -93,7 +93,7 @@ path = "src/main.rs"
 required-features = ["client", "tui", "plot_resources"]
 
 [features]
-default = ["client"]
+default = ["client", "tui", "plot_resources"]
 server = [
     "dep:async-trait",
     "dep:swagger",

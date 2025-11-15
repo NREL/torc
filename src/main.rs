@@ -132,8 +132,6 @@ enum Commands {
         #[command(subcommand)]
         command: ReportCommands,
     },
-    /// Run jobs locally on the current node (deprecated: use 'torc run' instead)
-    RunJobs(run_jobs_cmd::Args),
     /// Interactive terminal UI for managing workflows
     Tui(tui_runner::Args),
     /// Generate interactive HTML plots from resource monitoring data
@@ -156,8 +154,8 @@ fn main() {
     let log_level = cli.log_level.unwrap_or_else(|| "info".to_string());
 
     // Initialize logger with CLI argument or RUST_LOG env var
-    // Skip initialization for commands that set up their own logging (e.g., RunJobs, Run)
-    let skip_logger_init = matches!(cli.command, Commands::RunJobs(_) | Commands::Run { .. });
+    // Skip initialization for commands that set up their own logging (e.g., Run)
+    let skip_logger_init = matches!(cli.command, Commands::Run { .. });
 
     if !skip_logger_init {
         env_logger::Builder::new().parse_filters(&log_level).init();
@@ -410,9 +408,6 @@ fn main() {
         }
         Commands::Reports { command } => {
             handle_report_commands(&config, command, &cli.format);
-        }
-        Commands::RunJobs(args) => {
-            run_jobs_cmd::run(args);
         }
         Commands::Tui(args) => {
             if let Err(e) = tui_runner::run(args) {
