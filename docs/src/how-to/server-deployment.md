@@ -2,6 +2,34 @@
 
 This guide covers deploying and operating the Torc server in production environments, including logging configuration, daemonization, and service management.
 
+## Quick Start
+
+### User Service (Development)
+
+For development, install as a user service (no root required):
+
+```bash
+# Install with automatic defaults (logs to ~/.torc/logs, db at ~/.torc/torc.db)
+torc-server service install --user
+
+# Start the service
+torc-server service start --user
+```
+
+### System Service (Production)
+
+For production deployment, install as a system service:
+
+```bash
+# Install with automatic defaults (logs to /var/log/torc, db at /var/lib/torc/torc.db)
+sudo torc-server service install
+
+# Start the service
+sudo torc-server service start
+```
+
+The service will automatically start on boot and restart on failure. Logs are automatically configured to rotate when they reach 10 MiB (keeping 5 files max). See the [Service Management](#service-management-recommended-for-production) section for customization options.
+
 ## Logging System
 
 Torc-server uses the `tracing` ecosystem for structured, high-performance logging with automatic size-based file rotation.
@@ -125,9 +153,93 @@ torc-server \
     --require-auth
 ```
 
-## Systemd Service (Recommended for Production)
+## Service Management (Recommended for Production)
 
-Instead of using `--daemon`, create a systemd service:
+### Automatic Installation
+
+The easiest way to install torc-server as a service is using the built-in service management commands.
+
+#### User Service (No Root Required)
+
+Install as a user service that runs under your user account (recommended for development):
+
+```bash
+# Install with defaults (logs to ~/.torc/logs, database at ~/.torc/torc.db)
+torc-server service install --user
+
+# Or customize the configuration
+torc-server service install --user \
+    --log-dir ~/custom/logs \
+    --database ~/custom/torc.db \
+    --url 0.0.0.0 \
+    --port 8080 \
+    --threads 4
+
+# Start the user service
+torc-server service start --user
+
+# Check status
+torc-server service status --user
+
+# Stop the service
+torc-server service stop --user
+
+# Uninstall the service
+torc-server service uninstall --user
+```
+
+**User Service Defaults:**
+- Log directory: `~/.torc/logs`
+- Database: `~/.torc/torc.db`
+- Listen address: `0.0.0.0:8080`
+- Worker threads: 4
+
+#### System Service (Requires Root)
+
+Install as a system-wide service (recommended for production):
+
+```bash
+# Install with defaults
+sudo torc-server service install
+
+# Or customize the configuration
+sudo torc-server service install \
+    --log-dir /var/log/torc \
+    --database /var/lib/torc/torc.db \
+    --url 0.0.0.0 \
+    --port 8080 \
+    --threads 8 \
+    --auth-file /etc/torc/htpasswd \
+    --require-auth \
+    --json-logs
+
+# Start the system service
+sudo torc-server service start
+
+# Check status
+torc-server service status
+
+# Stop the service
+sudo torc-server service stop
+
+# Uninstall the service
+sudo torc-server service uninstall
+```
+
+**System Service Defaults:**
+- Log directory: `/var/log/torc`
+- Database: `/var/lib/torc/torc.db`
+- Listen address: `0.0.0.0:8080`
+- Worker threads: 4
+
+This automatically creates the appropriate service configuration for your platform:
+- **Linux**: systemd service (user: `~/.config/systemd/user/`, system: `/etc/systemd/system/`)
+- **macOS**: launchd service (user: `~/Library/LaunchAgents/`, system: `/Library/LaunchDaemons/`)
+- **Windows**: Windows Service
+
+### Manual Systemd Service (Linux)
+
+Alternatively, you can manually create a systemd service:
 
 ```ini
 # /etc/systemd/system/torc-server.service
@@ -225,21 +337,3 @@ Log rotation happens automatically when a log file reaches 10 MiB. If you need t
 1. Check the log directory for numbered files (e.g., `torc-server.log.1`)
 2. Monitor disk usage - it should never exceed ~50 MiB for all log files
 3. For testing, you can generate large amounts of logs with `--log-level trace`
-
-## Migration from env_logger
-
-If you're upgrading from an older version using `env_logger`:
-
-**Before:**
-```bash
-RUST_LOG=debug torc-server
-```
-
-**After (equivalent):**
-```bash
-torc-server --log-level debug
-# or
-RUST_LOG=debug torc-server
-```
-
-The new system is backward compatible with `RUST_LOG`.

@@ -14,47 +14,96 @@ use tracing_timing::{Builder, Histogram};
 
 mod logging;
 mod server;
+mod service;
 
 #[derive(Parser)]
-#[command(name = "server")]
-#[command(about = "Torc server")]
+#[command(name = "torc-server")]
+#[command(about = "Torc workflow orchestration server")]
 struct Args {
+    #[command(subcommand)]
+    command: Option<Commands>,
+
     /// Log level (error, warn, info, debug, trace)
-    #[arg(long, default_value = "info", env = "RUST_LOG")]
+    #[arg(long, default_value = "info", env = "RUST_LOG", global = true)]
     log_level: String,
     /// Whether to use HTTPS or not
-    #[arg(long)]
+    #[arg(long, global = true)]
     https: bool,
     /// Defines the URL to use.
-    #[arg(short, long, default_value = "localhost")]
+    #[arg(short, long, default_value = "localhost", global = true)]
     url: String,
     /// Defines the port to listen on.
-    #[arg(short, long, default_value_t = 8080)]
+    #[arg(short, long, default_value_t = 8080, global = true)]
     port: u16,
     /// Defines the number of threads to use.
-    #[arg(short, long, default_value_t = 1)]
+    #[arg(short, long, default_value_t = 1, global = true)]
     threads: u32,
     /// Path to the SQLite database file. If not specified, uses DATABASE_URL environment variable.
-    #[arg(short, long)]
+    #[arg(short, long, global = true)]
     database: Option<String>,
     /// Path to htpasswd file for basic authentication (username:bcrypt_hash format, one per line)
-    #[arg(long, env = "TORC_AUTH_FILE")]
+    #[arg(long, env = "TORC_AUTH_FILE", global = true)]
     auth_file: Option<String>,
     /// Require authentication for all requests (if false, auth is optional for backward compatibility)
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = false, global = true)]
     require_auth: bool,
-    /// Directory for log files (enables file logging with daily rotation)
-    #[arg(long, env = "TORC_LOG_DIR")]
+    /// Directory for log files (enables file logging with size-based rotation)
+    #[arg(long, env = "TORC_LOG_DIR", global = true)]
     log_dir: Option<std::path::PathBuf>,
     /// Use JSON format for log files (useful for log aggregation systems)
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = false, global = true)]
     json_logs: bool,
     /// Run as daemon (Unix/Linux only)
-    #[arg(long, default_value_t = false)]
+    #[arg(long, default_value_t = false, global = true)]
     daemon: bool,
     /// PID file location (Unix only, used when running as daemon)
-    #[arg(long, default_value = "/var/run/torc-server.pid")]
+    #[arg(long, default_value = "/var/run/torc-server.pid", global = true)]
     pid_file: std::path::PathBuf,
+}
+
+#[derive(clap::Subcommand)]
+enum Commands {
+    /// Run the server (default if no subcommand specified)
+    Run,
+    /// Manage system service (install, uninstall, start, stop, status)
+    Service {
+        #[command(subcommand)]
+        action: ServiceAction,
+    },
+}
+
+#[derive(clap::Subcommand)]
+enum ServiceAction {
+    /// Install the server as a system service
+    Install {
+        /// Install as user service (no root required)
+        #[arg(long)]
+        user: bool,
+    },
+    /// Uninstall the system service
+    Uninstall {
+        /// Uninstall user service
+        #[arg(long)]
+        user: bool,
+    },
+    /// Start the system service
+    Start {
+        /// Start user service
+        #[arg(long)]
+        user: bool,
+    },
+    /// Stop the system service
+    Stop {
+        /// Stop user service
+        #[arg(long)]
+        user: bool,
+    },
+    /// Check the status of the system service
+    Status {
+        /// Check user service status
+        #[arg(long)]
+        user: bool,
+    },
 }
 
 /// Daemonize the process (Unix only)
@@ -85,6 +134,41 @@ fn main() -> Result<()> {
     dotenv().ok();
 
     let args = Args::parse();
+
+    // Handle service management commands
+    match args.command.as_ref().unwrap_or(&Commands::Run) {
+        Commands::Service { action } => {
+            let (command, user_level) = match action {
+                ServiceAction::Install { user } => (service::ServiceCommand::Install, *user),
+                ServiceAction::Uninstall { user } => (service::ServiceCommand::Uninstall, *user),
+                ServiceAction::Start { user } => (service::ServiceCommand::Start, *user),
+                ServiceAction::Stop { user } => (service::ServiceCommand::Stop, *user),
+                ServiceAction::Status { user } => (service::ServiceCommand::Status, *user),
+            };
+
+            // For install command, pass the configuration from args
+            let config = if matches!(command, service::ServiceCommand::Install) {
+                Some(service::ServiceConfig {
+                    log_dir: args.log_dir.clone(),
+                    database: args.database.clone(),
+                    url: args.url.clone(),
+                    port: args.port,
+                    threads: args.threads,
+                    auth_file: args.auth_file.clone(),
+                    require_auth: args.require_auth,
+                    log_level: args.log_level.clone(),
+                    json_logs: args.json_logs,
+                })
+            } else {
+                None
+            };
+
+            return service::execute_service_command(command, config.as_ref(), user_level);
+        }
+        Commands::Run => {
+            // Continue with normal server startup
+        }
+    }
 
     // Handle daemonization BEFORE initializing logging
     // This is important because daemonization forks the process
@@ -148,16 +232,16 @@ fn main() -> Result<()> {
 
         info!("Timing instrumentation enabled - timing data is being collected");
         if args.log_dir.is_some() {
-            info!("File logging configured with size-based rotation (10 MiB per file, 5 files max)");
+            info!(
+                "File logging configured with size-based rotation (10 MiB per file, 5 files max)"
+            );
         }
-        info!("Use external tools like tokio-console or OpenTelemetry exporters to view timing data");
+        info!(
+            "Use external tools like tokio-console or OpenTelemetry exporters to view timing data"
+        );
     } else {
         // Use the new logging module for standard (non-timing) logging
-        logging::init_logging(
-            args.log_dir.as_deref(),
-            &args.log_level,
-            args.json_logs,
-        )?;
+        logging::init_logging(args.log_dir.as_deref(), &args.log_level, args.json_logs)?;
     }
 
     // Use database path from command line if provided, otherwise fall back to DATABASE_URL env var

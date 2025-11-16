@@ -5,10 +5,10 @@ use rstest::rstest;
 use serde_json;
 use std::fs;
 use tempfile::NamedTempFile;
+use torc::client::default_api;
 use torc::client::workflow_spec::{
     FileSpec, JobSpec, ResourceRequirementsSpec, SlurmSchedulerSpec, UserDataSpec, WorkflowSpec,
 };
-use torc::client::default_api;
 
 #[test]
 fn test_job_specification_new() {
@@ -487,9 +487,8 @@ fn test_create_workflow_from_json_file_minimal(start_server: &ServerProcess) {
     assert!(workflow_id > 0);
 
     // Verify workflow was created by fetching it
-    let created_workflow =
-        default_api::get_workflow(&start_server.config, workflow_id)
-            .expect("Failed to get created workflow");
+    let created_workflow = default_api::get_workflow(&start_server.config, workflow_id)
+        .expect("Failed to get created workflow");
 
     assert_eq!(created_workflow.name, "integration_test_workflow");
     assert_eq!(created_workflow.user, "integration_user");
@@ -1813,32 +1812,19 @@ fn test_create_workflows_from_all_example_files(start_server: &ServerProcess) {
         let user = spec.user.unwrap_or_else(|| "test_user".to_string());
 
         // Create the workflow
-        let workflow_id = WorkflowSpec::create_workflow_from_spec(
-            &start_server.config,
-            &spec_file,
-            &user,
-            false,
-        )
-        .unwrap_or_else(|e| {
-            panic!(
-                "Failed to create workflow from {:?}: {}",
-                spec_file, e
-            )
-        });
+        let workflow_id =
+            WorkflowSpec::create_workflow_from_spec(&start_server.config, &spec_file, &user, false)
+                .unwrap_or_else(|e| {
+                    panic!("Failed to create workflow from {:?}: {}", spec_file, e)
+                });
 
         assert!(workflow_id > 0, "Invalid workflow ID for {:?}", spec_file);
 
         // Verify the workflow was created by fetching it
-        let created_workflow = default_api::get_workflow(
-            &start_server.config,
-            workflow_id,
-        )
-        .unwrap_or_else(|e| {
-            panic!(
-                "Failed to get created workflow from {:?}: {}",
-                spec_file, e
-            )
-        });
+        let created_workflow = default_api::get_workflow(&start_server.config, workflow_id)
+            .unwrap_or_else(|e| {
+                panic!("Failed to get created workflow from {:?}: {}", spec_file, e)
+            });
 
         assert_eq!(
             created_workflow.id,
@@ -1857,6 +1843,7 @@ fn test_create_workflows_from_all_example_files(start_server: &ServerProcess) {
             created_workflow.name, workflow_id
         );
 
-        default_api::delete_workflow(&start_server.config, workflow_id, None).expect("Warning: Failed to delete workflow");
+        default_api::delete_workflow(&start_server.config, workflow_id, None)
+            .expect("Warning: Failed to delete workflow");
     }
 }

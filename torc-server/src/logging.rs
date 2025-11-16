@@ -7,15 +7,11 @@
 //! - Both human-readable and JSON formats
 
 use anyhow::Result;
-use file_rotate::{
-    compression::Compression,
-    suffix::AppendCount,
-    ContentLimit, FileRotate,
-};
+use file_rotate::{ContentLimit, FileRotate, compression::Compression, suffix::AppendCount};
 use std::io::Write;
 use std::path::Path;
 use std::sync::{Arc, Mutex};
-use tracing_subscriber::{fmt, layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
+use tracing_subscriber::{EnvFilter, fmt, layer::SubscriberExt, util::SubscriberInitExt};
 
 /// Size-based rotating file writer for logging
 /// Rotates when file reaches 10 MiB and keeps 5 files
@@ -29,7 +25,7 @@ impl RotatingWriter {
 
         let file_rotate = FileRotate::new(
             log_path,
-            AppendCount::new(5), // Keep 5 rotated files
+            AppendCount::new(5),                   // Keep 5 rotated files
             ContentLimit::Bytes(10 * 1024 * 1024), // 10 MiB
             Compression::None,
             #[cfg(unix)]
@@ -82,11 +78,7 @@ impl Clone for RotatingWriter {
 /// // Console + JSON file logs for structured logging
 /// init_logging(Some(Path::new("/var/log/torc")), "info", true)?;
 /// ```
-pub fn init_logging(
-    log_dir: Option<&Path>,
-    log_level: &str,
-    json_format: bool,
-) -> Result<()> {
+pub fn init_logging(log_dir: Option<&Path>, log_level: &str, json_format: bool) -> Result<()> {
     // Create environment filter from log level
     let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
         // If RUST_LOG is not set, use the provided log_level

@@ -23,8 +23,7 @@ fn check_server_connection(client: &api::TorcClient) -> Result<()> {
         ..Default::default()
     };
 
-    default_api::ping(&config)
-        .map_err(|e| anyhow::anyhow!("Failed to ping server: {}", e))?;
+    default_api::ping(&config).map_err(|e| anyhow::anyhow!("Failed to ping server: {}", e))?;
 
     Ok(())
 }
