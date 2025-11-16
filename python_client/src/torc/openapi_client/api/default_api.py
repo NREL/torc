@@ -19,13 +19,13 @@ from typing_extensions import Annotated
 from pydantic import Field, StrictBool, StrictFloat, StrictInt, StrictStr
 from typing import Any, Dict, List, Optional, Union
 from typing_extensions import Annotated
-from torc.openapi_client.models.add_jobs_response import AddJobsResponse
 from torc.openapi_client.models.claim_action200_response import ClaimAction200Response
 from torc.openapi_client.models.claim_action_request import ClaimActionRequest
 from torc.openapi_client.models.claim_jobs_based_on_resources_response import ClaimJobsBasedOnResourcesResponse
 from torc.openapi_client.models.claim_next_jobs_response import ClaimNextJobsResponse
 from torc.openapi_client.models.compute_node_model import ComputeNodeModel
 from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
+from torc.openapi_client.models.create_jobs_response import CreateJobsResponse
 from torc.openapi_client.models.event_model import EventModel
 from torc.openapi_client.models.file_model import FileModel
 from torc.openapi_client.models.get_ready_job_requirements_response import GetReadyJobRequirementsResponse
@@ -2750,7 +2750,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> AddJobsResponse:
+    ) -> CreateJobsResponse:
         """Create jobs in bulk. Recommended max job count of 10,000.
 
         Create jobs in bulk. Recommended max job count of 10,000.
@@ -2788,7 +2788,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AddJobsResponse",
+            '200': "CreateJobsResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -2818,7 +2818,7 @@ class DefaultApi:
         _content_type: Optional[StrictStr] = None,
         _headers: Optional[Dict[StrictStr, Any]] = None,
         _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
-    ) -> ApiResponse[AddJobsResponse]:
+    ) -> ApiResponse[CreateJobsResponse]:
         """Create jobs in bulk. Recommended max job count of 10,000.
 
         Create jobs in bulk. Recommended max job count of 10,000.
@@ -2856,7 +2856,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AddJobsResponse",
+            '200': "CreateJobsResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -2924,7 +2924,7 @@ class DefaultApi:
         )
 
         _response_types_map: Dict[str, Optional[str]] = {
-            '200': "AddJobsResponse",
+            '200': "CreateJobsResponse",
             '500': "DefaultErrorResponse",
         }
         response_data = self.api_client.call_api(
@@ -24653,7 +24653,7 @@ class DefaultApi:
     def update_event(
         self,
         id: Annotated[StrictInt, Field(description="ID of the event.")],
-        body: Annotated[Dict[str, Any], Field(description="event to update in the table.")],
+        body: Annotated[EventModel, Field(description="event to update in the table.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -24674,7 +24674,7 @@ class DefaultApi:
         :param id: ID of the event. (required)
         :type id: int
         :param body: event to update in the table. (required)
-        :type body: object
+        :type body: EventModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -24725,7 +24725,7 @@ class DefaultApi:
     def update_event_with_http_info(
         self,
         id: Annotated[StrictInt, Field(description="ID of the event.")],
-        body: Annotated[Dict[str, Any], Field(description="event to update in the table.")],
+        body: Annotated[EventModel, Field(description="event to update in the table.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -24746,7 +24746,7 @@ class DefaultApi:
         :param id: ID of the event. (required)
         :type id: int
         :param body: event to update in the table. (required)
-        :type body: object
+        :type body: EventModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -24797,7 +24797,7 @@ class DefaultApi:
     def update_event_without_preload_content(
         self,
         id: Annotated[StrictInt, Field(description="ID of the event.")],
-        body: Annotated[Dict[str, Any], Field(description="event to update in the table.")],
+        body: Annotated[EventModel, Field(description="event to update in the table.")],
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -24818,7 +24818,7 @@ class DefaultApi:
         :param id: ID of the event. (required)
         :type id: int
         :param body: event to update in the table. (required)
-        :type body: object
+        :type body: EventModel
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of

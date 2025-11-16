@@ -1,18 +1,11 @@
 """Common functions for CLI commands"""
 
-import json
+import os
 import sys
 from pathlib import Path
-from typing import Any, Callable, Iterable, Optional
+from typing import Any
 
-import rich_click as click
 from loguru import logger
-from prettytable import PrettyTable
-
-from torc.api import iter_documents
-from torc.loggers import setup_logging
-from torc.openapi_client import DefaultApi
-from torc.openapi_client.models.workflow_model import WorkflowModel
 
 
 def check_output_path(path: Path, force: bool) -> None:
@@ -33,3 +26,29 @@ def check_output_path(path: Path, force: bool) -> None:
                 file=sys.stderr,
             )
             sys.exit(1)
+
+
+def get_job_env_vars() -> dict[str, Any]:
+    """Return the environment variables set by torc for a job."""
+    vars: dict[str, Any] = {}
+    url = os.getenv("TORC_API_URL")
+    if url is None:
+        logger.error("This command can only be called from the torc worker application.")
+        sys.exit(1)
+    vars["url"] = url
+
+    workflow_id_str = os.getenv("TORC_WORKFLOW_ID")
+    if workflow_id_str is None:
+        logger.error("This command can only be called from the torc worker application.")
+        sys.exit(1)
+    workflow_id = int(workflow_id_str)
+    vars["workflow_id"] = workflow_id
+
+    job_id_str = os.getenv("TORC_JOB_ID")
+    if job_id_str is None:
+        logger.error("This command can only be called from the torc worker application.")
+        sys.exit(1)
+    job_id = int(job_id_str)
+    vars["job_id"] = job_id
+
+    return vars

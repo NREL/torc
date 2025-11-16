@@ -159,12 +159,12 @@ def create_jobs(api: DefaultApi, jobs, max_transfer_size=10_000) -> list[JobMode
         batch.append(job)
         if len(batch) > max_transfer_size:
             res = send_api_command(api.create_jobs, JobsModel(jobs=batch))
-            added_jobs += res.items
+            added_jobs += res.jobs
             batch.clear()
 
     if batch:
         res = send_api_command(api.create_jobs, JobsModel(jobs=batch))
-        added_jobs += res.items
+        added_jobs += res.jobs
 
     return added_jobs
 
@@ -241,7 +241,7 @@ def map_function_to_jobs(
         job = JobModel(
             workflow_id=workflow_id,
             name=job_name,
-            command="torc jobs run-function",
+            command="pytorc jobs run-function",
             input_user_data_ids=[input_ud.id],
             output_user_data_ids=[output_ud.id],
             resource_requirements_id=resource_requirements_id,
@@ -270,7 +270,7 @@ def map_function_to_jobs(
             JobModel(
                 workflow_id=workflow_id,
                 name="postprocess",
-                command="torc jobs run-postprocess",
+                command="pytorc jobs run-postprocess",
                 input_user_data_ids=[input_ud.id] + output_data_ids,
                 output_user_data_ids=[output_ud.id],
                 resource_requirements_id=resource_requirements_id,

@@ -1,31 +1,26 @@
 """Run a function on one set of inputs stored in the workflow database."""
 
-import os
 import sys
 
 import rich_click as click
 from loguru import logger
 
+from torc.api import make_api
+from torc.cli.common import get_job_env_vars
 from torc.common import check_function
 from torc.loggers import setup_logging
 from torc.openapi_client import DefaultApi
 
 
 @click.command()
-@click.pass_obj
-@click.pass_context
-def run_function(workflow_id: int, api: DefaultApi):
+def run_function():
     """Run a function on one set of inputs stored in the workflow database. Only called by the
     torc worker application as part of the mapped-function workflow."""
-    setup_logging(
-        console_level="INFO",
-        mode="w",
-    )
-    job_id_str = os.getenv("TORC_JOB_ID")
-    if job_id_str is None:
-        logger.error("This command can only be called from the torc worker application.")
-        sys.exit(1)
-    job_id = int(job_id_str)
+    setup_logging(console_level="INFO")
+    vars = get_job_env_vars()
+    api = make_api(vars["url"])
+    workflow_id = vars["workflow_id"]
+    job_id = vars["job_id"]
 
     resp = api.list_user_data(workflow_id=workflow_id, consumer_job_id=job_id)
     assert resp is not None

@@ -38,6 +38,9 @@ dependencies = [
     "typing-extensions >= 4.7.1",
 ]
 
+[project.scripts]
+pytorc = "torc.cli.pytorc:cli"
+
 [tool.setuptools.packages.find]
 where = ["src"]
 

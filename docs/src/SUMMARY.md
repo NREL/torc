@@ -15,6 +15,7 @@
   - [Client](./explanation/client.md)
   - [Job Runners](./explanation/job-runners.md)
   - [Job State Transitions](./explanation/job-states.md)
+  - [Environment Variables](./explanation/environment-variables.md)
   - [Workflow Reinitialization](./explanation/reinitialization.md)
   - [Workflow Archiving](./explanation/archiving.md)
   - [Dependency Resolution](./explanation/dependencies.md)

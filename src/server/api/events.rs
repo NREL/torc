@@ -337,6 +337,7 @@ where
         body: serde_json::Value,
         context: &C,
     ) -> Result<UpdateEventResponse, ApiError> {
+        // TODO: this handler is incorrect. It embeds a new data item.
         debug!(
             "update_event({}, {:?}) - X-Span-ID: {:?}",
             id,

@@ -118,7 +118,6 @@ Class | Method
 
 ## Models
 
- - [AddJobsResponse](docs/AddJobsResponse.md)
  - [ClaimAction200Response](docs/ClaimAction200Response.md)
  - [ClaimActionRequest](docs/ClaimActionRequest.md)
  - [ClaimJobsBasedOnResourcesResponse](docs/ClaimJobsBasedOnResourcesResponse.md)
@@ -126,6 +125,7 @@ Class | Method
  - [ComputeNodeModel](docs/ComputeNodeModel.md)
  - [ComputeNodeSchedule](docs/ComputeNodeSchedule.md)
  - [ComputeNodesResources](docs/ComputeNodesResources.md)
+ - [CreateJobsResponse](docs/CreateJobsResponse.md)
  - [DefaultErrorResponse](docs/DefaultErrorResponse.md)
  - [EventModel](docs/EventModel.md)
  - [FileModel](docs/FileModel.md)

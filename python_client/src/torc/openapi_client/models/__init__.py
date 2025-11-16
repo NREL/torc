@@ -13,7 +13,6 @@
 """  # noqa: E501
 
 # import models into model package
-from torc.openapi_client.models.add_jobs_response import AddJobsResponse
 from torc.openapi_client.models.claim_action200_response import ClaimAction200Response
 from torc.openapi_client.models.claim_action_request import ClaimActionRequest
 from torc.openapi_client.models.claim_jobs_based_on_resources_response import ClaimJobsBasedOnResourcesResponse
@@ -21,6 +20,7 @@ from torc.openapi_client.models.claim_next_jobs_response import ClaimNextJobsRes
 from torc.openapi_client.models.compute_node_model import ComputeNodeModel
 from torc.openapi_client.models.compute_node_schedule import ComputeNodeSchedule
 from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources
+from torc.openapi_client.models.create_jobs_response import CreateJobsResponse
 from torc.openapi_client.models.default_error_response import DefaultErrorResponse
 from torc.openapi_client.models.event_model import EventModel
 from torc.openapi_client.models.file_model import FileModel

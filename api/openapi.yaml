@@ -456,7 +456,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: "#/components/schemas/event_model"
         description: event to update in the table.
         required: true
       responses:
@@ -736,7 +736,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/add_jobs_response"
+                $ref: "#/components/schemas/create_jobs_response"
           description: Successful response
         "500":
           content:
@@ -4537,7 +4537,7 @@ components:
           type: integer
       required:
       - error
-    add_jobs_response:
+    create_jobs_response:
       example:
         items:
         - output_user_data:
@@ -4601,7 +4601,7 @@ components:
           status: uninitialized
           supports_termination: false
       properties:
-        items:
+        jobs:
           items:
             $ref: "#/components/schemas/job_model"
           type: array
