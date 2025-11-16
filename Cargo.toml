@@ -212,6 +212,10 @@ frunk-enum-core = { version = "0.3.0", optional = true }
 tokio-openssl = "0.6"
 openssl = "0.10"
 
+# Windows testing support - vendored OpenSSL for CI
+[target.'cfg(windows)'.dev-dependencies]
+openssl-sys = { version = "0.9", features = ["vendored"] }
+
 [dev-dependencies]
 rstest = "0.26.1"
 tempfile = "3.22.0"

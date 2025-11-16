@@ -59,7 +59,7 @@ jobs:
 
       - name: Run tests (Windows - limited test set)
         if: matrix.os == 'windows-latest'
-        run: cargo test --features openssl/vendored --test test_full_workflows test_many_jobs_parameterized -- --test-threads 1
+        run: cargo test --test test_full_workflows test_many_jobs_parameterized -- --test-threads 1
         env:
           RUST_BACKTRACE: 1
 
