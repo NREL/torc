@@ -57,6 +57,13 @@ jobs:
         env:
           DATABASE_URL: sqlite:db/sqlite/dev.db
 
+      - name: Install OpenSSL for Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install openssl -y
+          echo "OPENSSL_DIR=C:/Program Files/OpenSSL-Win64" >> $GITHUB_ENV
+          echo "OPENSSL_ROOT_DIR=C:/Program Files/OpenSSL-Win64" >> $GITHUB_ENV
+
       - name: Run tests (Windows - limited test set)
         if: matrix.os == 'windows-latest'
         run: cargo test --test test_full_workflows test_many_jobs_parameterized -- --test-threads 1
