@@ -4654,6 +4654,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -4691,6 +4692,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -4730,6 +4732,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -4819,6 +4822,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -4889,6 +4893,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -4929,6 +4934,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -4974,6 +4980,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -5019,6 +5026,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -5058,6 +5066,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -5113,6 +5122,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -5152,6 +5162,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -5181,6 +5192,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit

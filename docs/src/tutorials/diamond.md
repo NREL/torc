@@ -27,7 +27,6 @@ Save as `diamond.yaml`:
 
 ```yaml
 name: diamond_workflow
-user: myuser
 description: Diamond workflow demonstrating fan-out and fan-in
 
 jobs:
@@ -129,8 +128,8 @@ Only `preprocess` is ready because it has no dependencies. The others are blocke
 
 ## Step 5: Run Workflow
 
-```bash
-torc run-jobs $WORKFLOW_ID
+```console
+torc run $WORKFLOW_ID
 ```
 
 Watch the execution:
@@ -141,6 +140,6 @@ Watch the execution:
 
 ## Step 6: Verify Results
 
-```bash
+```console
 cat /tmp/output.txt
 ```
