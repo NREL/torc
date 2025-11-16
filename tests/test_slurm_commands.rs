@@ -1691,7 +1691,7 @@ pub fn run_slurm_job_runner_cli_command(
 ) -> Result<String, Box<dyn std::error::Error>> {
     cleanup_fake_slurm_state();
     setup_fake_slurm_commands();
-    let mut cmd = Command::new("./target/debug/torc-slurm-job-runner");
+    let mut cmd = Command::new(common::get_exe_path("./target/debug/torc-slurm-job-runner"));
     cmd.args(&[
         server.config.base_path.clone(),
         workflow_id.to_string(),

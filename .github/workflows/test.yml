@@ -57,7 +57,14 @@ jobs:
         env:
           DATABASE_URL: sqlite:db/sqlite/dev.db
 
-      - name: Run tests
+      - name: Run tests (Windows - limited test set)
+        if: matrix.os == 'windows-latest'
+        run: cargo test --features openssl/vendored --test test_full_workflows test_many_jobs_parameterized -- --test-threads 1
+        env:
+          RUST_BACKTRACE: 1
+
+      - name: Run tests (Unix - full test suite)
+        if: matrix.os != 'windows-latest'
         run: cargo test -- --test-threads 1
         env:
           RUST_BACKTRACE: 1

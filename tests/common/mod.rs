@@ -15,6 +15,16 @@ const PREPROCESS: &str = "tests/scripts/preprocess.sh";
 const WORK: &str = "tests/scripts/work.sh";
 const POSTPROCESS: &str = "tests/scripts/postprocess.sh";
 
+/// Helper function to get the correct executable path for the current platform
+/// On Windows, appends .exe; on Unix, returns path as-is
+pub fn get_exe_path(base_path: &str) -> String {
+    if cfg!(windows) {
+        format!("{}.exe", base_path)
+    } else {
+        base_path.to_string()
+    }
+}
+
 pub struct ServerProcess {
     pub child: Child,
     pub db_file: NamedTempFile, // Keep the temp file alive
@@ -87,7 +97,7 @@ fn start_process(db_url: &str, db_file: NamedTempFile) -> ServerProcess {
     // The binary is built as part of --workspace but we need to ensure it's accessible
     let slurm_runner_path = std::env::current_dir()
         .expect("Failed to get current dir")
-        .join("target/debug/torc-slurm-job-runner");
+        .join(get_exe_path("target/debug/torc-slurm-job-runner"));
     if !slurm_runner_path.exists() {
         panic!(
             "torc-slurm-job-runner binary not found at {:?}",
@@ -95,7 +105,7 @@ fn start_process(db_url: &str, db_file: NamedTempFile) -> ServerProcess {
         );
     }
     eprintln!("Starting server on port {}", port);
-    let child = Command::new("./target/debug/torc-server")
+    let child = Command::new(get_exe_path("./target/debug/torc-server"))
         .arg("--port")
         .arg(port.to_string())
         .env("DATABASE_URL", db_url)
@@ -1169,7 +1179,7 @@ pub fn run_cli_with_json(
     args: &[&str],
     server: &ServerProcess,
 ) -> Result<Value, Box<dyn std::error::Error>> {
-    let mut cmd = Command::new("./target/debug/torc");
+    let mut cmd = Command::new(get_exe_path("./target/debug/torc"));
     cmd.arg("--format");
     cmd.arg("json");
     cmd.args(args);
@@ -1192,7 +1202,7 @@ pub fn run_cli_command(
     args: &[&str],
     server: &ServerProcess,
 ) -> Result<String, Box<dyn std::error::Error>> {
-    let mut cmd = Command::new("./target/debug/torc");
+    let mut cmd = Command::new(get_exe_path("./target/debug/torc"));
     cmd.args(&["--url", &server.config.base_path]);
     cmd.args(args);
     cmd.env("TORC_API_URL", &server.config.base_path);
@@ -1220,7 +1230,7 @@ pub fn run_jobs_cli_command(
     args: &[&str],
     server: &ServerProcess,
 ) -> Result<String, Box<dyn std::error::Error>> {
-    let mut cmd = Command::new("./target/debug/torc");
+    let mut cmd = Command::new(get_exe_path("./target/debug/torc"));
     cmd.args(["run", "--url", &server.config.base_path]);
     cmd.args(args);
 
