@@ -129,14 +129,17 @@ pub enum WorkflowCommands {
         #[arg()]
         workflow_id: Option<i64>,
     },
-    /// Delete a workflow
+    /// Delete one or more workflows
     Delete {
-        /// ID of the workflow to remove (optional - will prompt if not provided)
+        /// IDs of workflows to remove (optional - will prompt if not provided)
         #[arg()]
-        id: Option<i64>,
+        ids: Vec<i64>,
         /// Skip confirmation prompt
         #[arg(long)]
         no_prompts: bool,
+        /// Force deletion even if workflow belongs to a different user
+        #[arg(long)]
+        force: bool,
     },
     /// Archive or unarchive one or more workflows
     Archive {
@@ -554,111 +557,166 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                 }
             }
         }
-        WorkflowCommands::Delete { id, no_prompts } => {
+        WorkflowCommands::Delete {
+            ids,
+            no_prompts,
+            force,
+        } => {
             let user_name = get_env_user_name();
 
-            let selected_id = match id {
-                Some(workflow_id) => *workflow_id,
-                None => select_workflow_interactively(config, &user_name).unwrap(),
+            // Get list of workflow IDs to delete
+            let workflow_ids = if ids.is_empty() {
+                // No IDs provided - select one interactively
+                vec![select_workflow_interactively(config, &user_name).unwrap()]
+            } else {
+                ids.clone()
             };
 
-            // Fetch workflow details to show what will be deleted
-            let workflow = match default_api::get_workflow(config, selected_id) {
-                Ok(wf) => wf,
-                Err(e) => {
-                    print_error("getting workflow", &e);
-                    std::process::exit(1);
+            let mut deleted_workflows = Vec::new();
+            let mut failed_deletions = Vec::new();
+
+            for selected_id in workflow_ids {
+                // Fetch workflow details to show what will be deleted
+                let workflow = match default_api::get_workflow(config, selected_id) {
+                    Ok(wf) => wf,
+                    Err(e) => {
+                        failed_deletions
+                            .push((selected_id, format!("Failed to get workflow: {}", e)));
+                        continue;
+                    }
+                };
+
+                // Check if user owns the workflow
+                if workflow.user != user_name && !force {
+                    let error_msg = format!(
+                        "Cannot delete workflow owned by user '{}' (you are '{}'). Use --force to override.",
+                        workflow.user, user_name
+                    );
+                    failed_deletions.push((selected_id, error_msg));
+                    continue;
                 }
-            };
 
-            // Count jobs in this workflow
-            let job_count = match default_api::list_jobs(
-                config,
-                selected_id,
-                None,    // status
-                None,    // offset
-                Some(1), // limit (we just need the total count)
-                None,    // sort_by
-                None,    // reverse_sort
-                None,    // needs_file_id
-                None,    // upstream_job_id
-            ) {
-                Ok(response) => response.total_count,
-                Err(e) => {
-                    print_error("counting jobs", &e);
-                    std::process::exit(1);
-                }
-            };
+                // Count jobs in this workflow
+                let job_count = match default_api::list_jobs(
+                    config,
+                    selected_id,
+                    None,    // status
+                    None,    // needs_file_id
+                    None,    // upstream_job_id
+                    None,    // offset
+                    Some(1), // limit (we just need the total count)
+                    None,    // sort_by
+                    None,    // reverse_sort
+                ) {
+                    Ok(response) => response.total_count,
+                    Err(e) => {
+                        failed_deletions
+                            .push((selected_id, format!("Failed to count jobs: {}", e)));
+                        continue;
+                    }
+                };
 
-            // If not skipping prompts, show what will be deleted and ask for confirmation
-            if !no_prompts && format != "json" {
-                println!("\nWarning: You are about to delete the following workflow:");
-                println!("  ID: {}", workflow.id.unwrap_or(-1));
-                println!("  Name: {}", workflow.name);
-                println!("  User: {}", workflow.user);
-                if let Some(desc) = &workflow.description {
-                    println!("  Description: {}", desc);
-                }
-                println!("\nThis will also delete:");
-                println!("  - {} job(s)", job_count);
-                println!("  - All associated files, user data, and results");
-                println!("  - All job dependencies and relationships");
-                println!("\nThis action cannot be undone.");
-                print!("\nAre you sure you want to delete this workflow? (y/N): ");
+                // If not skipping prompts, show what will be deleted and ask for confirmation
+                if !no_prompts && format != "json" {
+                    println!("\nWarning: You are about to delete the following workflow:");
+                    println!("  ID: {}", workflow.id.unwrap_or(-1));
+                    println!("  Name: {}", workflow.name);
+                    println!("  User: {}", workflow.user);
+                    if let Some(desc) = &workflow.description {
+                        println!("  Description: {}", desc);
+                    }
+                    println!("\nThis will also delete:");
+                    println!("  - {} job(s)", job_count);
+                    println!("  - All associated files, user data, and results");
+                    println!("  - All job dependencies and relationships");
+                    println!("\nThis action cannot be undone.");
+                    print!("\nAre you sure you want to delete this workflow? (y/N): ");
 
-                use std::io::{self, Write};
-                io::stdout().flush().unwrap();
+                    use std::io::{self, Write};
+                    io::stdout().flush().unwrap();
 
-                let mut input = String::new();
-                match io::stdin().read_line(&mut input) {
-                    Ok(_) => {
-                        let response = input.trim().to_lowercase();
-                        if response != "y" && response != "yes" {
-                            println!("Deletion cancelled.");
-                            std::process::exit(0);
+                    let mut input = String::new();
+                    match io::stdin().read_line(&mut input) {
+                        Ok(_) => {
+                            let response = input.trim().to_lowercase();
+                            if response != "y" && response != "yes" {
+                                println!("Deletion cancelled for workflow {}.", selected_id);
+                                continue;
+                            }
+                        }
+                        Err(e) => {
+                            failed_deletions
+                                .push((selected_id, format!("Failed to read input: {}", e)));
+                            continue;
                         }
                     }
+                }
+
+                // Proceed with deletion
+                match default_api::delete_workflow(config, selected_id as i64, None) {
+                    Ok(removed_workflow) => {
+                        deleted_workflows.push(removed_workflow);
+                    }
                     Err(e) => {
-                        eprintln!("Failed to read input: {}", e);
-                        std::process::exit(1);
+                        failed_deletions.push((selected_id, format!("Failed to delete: {}", e)));
                     }
                 }
             }
 
-            // Proceed with deletion
-            match default_api::delete_workflow(config, selected_id as i64, None) {
-                Ok(removed_workflow) => {
-                    if format == "json" {
-                        // Convert workflow to JSON value, parsing resource_monitor_config if present
-                        let mut json = serde_json::to_value(&removed_workflow).unwrap();
-
+            // Output results
+            if format == "json" {
+                // For JSON output, return array of deleted workflows
+                let json_array: Vec<_> = deleted_workflows
+                    .iter()
+                    .map(|wf| {
+                        let mut json = serde_json::to_value(wf).unwrap();
                         // Parse resource_monitor_config from JSON string to object if present
-                        if let Some(config_str) = &removed_workflow.resource_monitor_config {
+                        if let Some(config_str) = &wf.resource_monitor_config {
                             if let Ok(config_obj) =
                                 serde_json::from_str::<serde_json::Value>(config_str)
                             {
                                 json["resource_monitor_config"] = config_obj;
                             }
                         }
+                        json
+                    })
+                    .collect();
 
-                        match serde_json::to_string_pretty(&json) {
-                            Ok(json_str) => println!("{}", json_str),
-                            Err(e) => {
-                                eprintln!("Error serializing workflow to JSON: {}", e);
-                                std::process::exit(1);
-                            }
-                        }
-                    } else {
-                        println!("\nSuccessfully deleted workflow:");
-                        println!("  ID: {}", removed_workflow.id.unwrap_or(-1));
-                        println!("  Name: {}", removed_workflow.name);
-                        println!("  User: {}", removed_workflow.user);
+                match serde_json::to_string_pretty(&json_array) {
+                    Ok(json_str) => println!("{}", json_str),
+                    Err(e) => {
+                        eprintln!("Error serializing workflows to JSON: {}", e);
+                        std::process::exit(1);
                     }
                 }
-                Err(e) => {
-                    print_error("deleting workflow", &e);
-                    std::process::exit(1);
+            } else {
+                // For table output, show summary
+                if !deleted_workflows.is_empty() {
+                    println!(
+                        "\nSuccessfully deleted {} workflow(s):",
+                        deleted_workflows.len()
+                    );
+                    for wf in &deleted_workflows {
+                        println!(
+                            "  - ID: {}, Name: {}, User: {}",
+                            wf.id.unwrap_or(-1),
+                            wf.name,
+                            wf.user
+                        );
+                    }
                 }
+
+                if !failed_deletions.is_empty() {
+                    eprintln!("\nFailed to delete {} workflow(s):", failed_deletions.len());
+                    for (id, error) in &failed_deletions {
+                        eprintln!("  - ID {}: {}", id, error);
+                    }
+                }
+            }
+
+            // Exit with error if any deletions failed
+            if !failed_deletions.is_empty() && deleted_workflows.is_empty() {
+                std::process::exit(1);
             }
         }
         WorkflowCommands::Archive {

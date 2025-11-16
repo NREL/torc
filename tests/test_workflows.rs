@@ -440,7 +440,7 @@ fn test_workflows_delete_command_json(start_server: &ServerProcess) {
     let workflow_id = workflow.id.unwrap();
 
     // Test the CLI delete command
-    let args = ["workflows", "delete", &workflow_id.to_string()];
+    let args = ["workflows", "delete", "--force", &workflow_id.to_string()];
 
     run_cli_with_json(&args, start_server).expect("Failed to run workflows delete command");
 

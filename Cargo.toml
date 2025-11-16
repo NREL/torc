@@ -31,6 +31,7 @@ hdrhistogram = "7.5"
 signal-hook = "0.3"
 file-rotate = "0.7"
 clap = { version = "4.4", features = ["derive", "env"] }
+clap_complete = "4.4"
 tokio = { version = "1.47", features = ["rt-multi-thread", "macros", "net", "signal"] }
 url = "2.5"
 validator = { version = "0.16", features = ["derive"] }
@@ -124,6 +125,7 @@ client = [
     "dep:serde_yaml",
     "dep:kdl",
     "dep:clap",
+    "dep:clap_complete",
     "dep:env_logger",
     "dep:serde_with",
     "dep:serde_repr",
@@ -193,6 +195,7 @@ serde_with = { workspace = true, optional = true }
 serde_repr = { workspace = true, optional = true }
 url = { workspace = true }
 clap = { workspace = true, optional = true }
+clap_complete = { workspace = true, optional = true }
 env_logger = { workspace = true, optional = true }
 tabled = { workspace = true, optional = true }
 rusqlite = { workspace = true, optional = true }

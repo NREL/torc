@@ -1,4 +1,5 @@
-use clap::{Parser, Subcommand};
+use clap::{CommandFactory, Parser, Subcommand};
+use clap_complete;
 use rpassword;
 use std::path::PathBuf;
 
@@ -136,6 +137,12 @@ enum Commands {
     Tui(tui_runner::Args),
     /// Generate interactive HTML plots from resource monitoring data
     PlotResources(plot_resources_cmd::Args),
+    /// Generate shell completions
+    Completions {
+        /// The shell to generate completions for
+        #[arg(value_enum)]
+        shell: clap_complete::Shell,
+    },
 }
 
 /// Helper function to determine if a string is a file path or workflow ID
@@ -155,7 +162,8 @@ fn main() {
 
     // Initialize logger with CLI argument or RUST_LOG env var
     // Skip initialization for commands that set up their own logging (e.g., Run, Tui)
-    let skip_logger_init = matches!(cli.command, Commands::Run { .. } | Commands::Tui(..));
+    // or output to stdout (e.g., Completions)
+    let skip_logger_init = matches!(cli.command, Commands::Run { .. } | Commands::Tui(..) | Commands::Completions { .. });
 
     if !skip_logger_init {
         env_logger::Builder::new().parse_filters(&log_level).init();
@@ -421,6 +429,15 @@ fn main() {
                 eprintln!("Error generating plots: {}", e);
                 std::process::exit(1);
             }
+        }
+        Commands::Completions { shell } => {
+            let mut cmd = Cli::command();
+            clap_complete::generate(
+                *shell,
+                &mut cmd,
+                "torc",
+                &mut std::io::stdout()
+            );
         }
     }
 }
