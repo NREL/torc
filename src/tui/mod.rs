@@ -14,8 +14,35 @@ mod ui;
 
 use app::App;
 
+/// Check if the Torc server is reachable by calling the ping endpoint
+fn check_server_connection(client: &api::TorcClient) -> Result<()> {
+    use crate::client::apis::default_api;
+
+    let config = crate::client::apis::configuration::Configuration {
+        base_path: client.get_base_url().to_string(),
+        ..Default::default()
+    };
+
+    default_api::ping(&config)
+        .map_err(|e| anyhow::anyhow!("Failed to ping server: {}", e))?;
+
+    Ok(())
+}
+
 pub fn run() -> Result<()> {
     env_logger::init();
+
+    // Check if server is running before setting up terminal
+    // This prevents terminal corruption if the server is unreachable
+    let client = api::TorcClient::new()?;
+    if let Err(e) = check_server_connection(&client) {
+        eprintln!("Error: Unable to connect to Torc server");
+        eprintln!("  {}", e);
+        eprintln!("\nPlease ensure the server is running and the URL is correct.");
+        eprintln!("Current server URL: {}", client.get_base_url());
+        eprintln!("\nYou can set a different URL using the TORC_API_URL environment variable.");
+        std::process::exit(1);
+    }
 
     // Setup terminal
     enable_raw_mode()?;

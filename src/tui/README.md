@@ -41,7 +41,7 @@ Then run the TUI:
 
 ```bash
 # Set the server URL (optional, defaults to localhost:8080)
-export TORC_BASE_URL="http://localhost:8080/torc-service/v1"
+export TORC_API_URL="http://localhost:8080/torc-service/v1"
 
 # Run the TUI
 cargo run --bin torc-tui

@@ -12,7 +12,7 @@ pub struct TorcClient {
 
 impl TorcClient {
     pub fn new() -> Result<Self> {
-        let base_url = env::var("TORC_BASE_URL")
+        let base_url = env::var("TORC_API_URL")
             .unwrap_or_else(|_| "http://localhost:8080/torc-service/v1".to_string());
 
         let config = Configuration {
