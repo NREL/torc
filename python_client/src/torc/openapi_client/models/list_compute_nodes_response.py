@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List
 from torc.openapi_client.models.compute_node_model import ComputeNodeModel
 from typing import Optional, Set
 from typing_extensions import Self
@@ -27,7 +27,7 @@ class ListComputeNodesResponse(BaseModel):
     """
     ListComputeNodesResponse
     """ # noqa: E501
-    items: Optional[List[ComputeNodeModel]] = None
+    items: List[ComputeNodeModel]
     offset: StrictInt
     max_limit: StrictInt
     count: StrictInt

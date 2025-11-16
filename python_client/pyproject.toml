@@ -24,20 +24,13 @@ classifiers = [
 ]
 dependencies = [
     "click >= 8.2, < 9",
-    "dynaconf",
-    "graphviz",
-    "json5",
     "isodate",
     "loguru",
-    "plotly >= 5.19, < 6",
-    "psutil >= 5.9, < 6",
     "prettytable >= 3.10, < 4",
     "pydantic >= 2.10, < 3",
-    "py-libnuma",
     "rmon",
     "rich",
     "rich_click",
-    "textual >= 3.2, < 4",
     "toml",
     # These are required by the openapi_client. Keep in sync with its setup.py.
     "urllib3 >= 2.1.0, < 3.0.0",
@@ -53,22 +46,13 @@ where = ["src"]
 
 [project.optional-dependencies]
 dev = [
-    "black",
-    "bump-my-version",
-    "filelock",
     "flake8",
-    "furo",
-    "ghp-import",
     "mypy",
     "myst_parser",
     "pre-commit",
     "pytest",
     "pytest-cov",
     "ruff",
-    "textual-dev",
-    "types-networkx",
-    "types-python-dateutil",
-    "types-psutil",
     "types-toml",
 ]
 
@@ -106,19 +90,7 @@ files = [
 
 [[tool.mypy.overrides]]
 ignore_missing_imports = true
-module = "graphviz.*"
-
-[[tool.mypy.overrides]]
-ignore_missing_imports = true
-module = "networkxgmml.*"
-
-[[tool.mypy.overrides]]
-ignore_missing_imports = true
 module = "isodate.*"
-
-[[tool.mypy.overrides]]
-ignore_missing_imports = true
-module = "numa.*"
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`)  codes by default.
@@ -154,5 +126,4 @@ docstring-code-line-length = "dynamic"
 omit = [
     "src/torc/openapi_client/*",
     "tests/*",
-    "docs/*",
 ]

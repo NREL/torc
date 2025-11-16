@@ -39,6 +39,7 @@ const _property_types_ListSlurmSchedulersResponse = Dict{Symbol,String}(Symbol("
 OpenAPI.property_type(::Type{ ListSlurmSchedulersResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ListSlurmSchedulersResponse[name]))}
 
 function OpenAPI.check_required(o::ListSlurmSchedulersResponse)
+    o.items === nothing && (return false)
     o.offset === nothing && (return false)
     o.max_limit === nothing && (return false)
     o.count === nothing && (return false)

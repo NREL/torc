@@ -39,6 +39,7 @@ const _property_types_ListFilesResponse = Dict{Symbol,String}(Symbol("items")=>"
 OpenAPI.property_type(::Type{ ListFilesResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ListFilesResponse[name]))}
 
 function OpenAPI.check_required(o::ListFilesResponse)
+    o.items === nothing && (return false)
     o.offset === nothing && (return false)
     o.max_limit === nothing && (return false)
     o.count === nothing && (return false)

@@ -40,7 +40,7 @@ torc-server --port 8080
 
 ## Client Configuration
 
-### TORC_BASE_URL
+### TORC_API_URL
 
 Torc server URL endpoint.
 
@@ -48,7 +48,7 @@ Torc server URL endpoint.
 
 **Example**:
 ```bash
-export TORC_BASE_URL="http://my-server:8080/torc-service/v1"
+export TORC_API_URL="http://my-server:8080/torc-service/v1"
 ```
 
 Can also be set via `--url` flag:

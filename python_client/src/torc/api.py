@@ -1,8 +1,7 @@
 """Functions to access the Torc Database API"""
 
-import itertools
 import time
-from typing import Any, Callable, Generator, Optional
+from typing import Any, Callable, Generator
 
 from loguru import logger
 from rmon.timing.timer_stats import Timer
@@ -89,24 +88,10 @@ def iter_documents(func: Callable, *args, skip=0, **kwargs) -> Generator[Any, No
 
 def make_job_label(job: JobModel, include_status: bool = False) -> str:
     """Return a user-friendly label for the job for log statements."""
-    base = f"Job name={job.name} key={job.key}"
+    base = f"Job name={job.name} id={job.id}"
     if include_status:
         return f"{base} status={job.status}"
     return base
-
-
-def map_job_keys_to_names(api: DefaultApi, workflow_id: int, filters=None) -> dict[str, str]:
-    """Return a mapping of job key to name."""
-    filters = filters or {}
-    return {x.key: x.name for x in iter_documents(api.list_jobs, workflow_id, **filters)}
-
-
-_DATABASE_KEYS = {"_id", "_key", "_rev", "_oldRev", "id", "key", "rev"}
-
-
-def remove_db_keys(data: dict) -> dict[str, Any]:
-    """Remove internal database keys from data."""
-    return {x: data[x] for x in set(data) - _DATABASE_KEYS}
 
 
 def send_api_command(func, *args, raise_on_error=True, timeout=120, **kwargs) -> Any:
@@ -294,40 +279,6 @@ def map_function_to_jobs(
         )
 
     return create_jobs(api, jobs)
-
-
-def sanitize_workflow(data: dict[str, Any]) -> dict[str, Any]:
-    """Sanitize a WorkflowSpecificationModel dictionary in place so that it can be loaded into
-    the database.
-    """
-    for item in itertools.chain(
-        [data.get("config")],
-        data.get("files", []),
-        data.get("resource_requirements", []),
-    ):
-        if item is not None:
-            for key in _DATABASE_KEYS:
-                item.pop(key, None)
-    _sanitize_collections(data)
-    _sanitize_schedulers(data)
-    return data
-
-
-def _sanitize_collections(data: dict[str, Any]) -> None:
-    for collection in ("jobs", "resource_requirements", "files", "schedulers"):
-        if collection in data and not data[collection]:
-            data.pop(collection)
-    for collection in ("jobs", "resource_requirements", "files"):
-        for item in data.get(collection, []):
-            for field in [k for k, v in item.items() if v is None]:
-                item.pop(field)
-
-
-def _sanitize_schedulers(data: dict[str, Any]) -> None:
-    for field in ("aws_schedulers", "local_schedulers", "slurm_schedulers"):
-        schedulers = data.get("schedulers", {})
-        if schedulers and field in schedulers and not schedulers[field]:
-            data["schedulers"].pop(field)
 
 
 def list_model_fields(cls) -> list[str]:

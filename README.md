@@ -116,7 +116,7 @@ Torc provides a unified CLI with the following commands:
 - **Reports**: `torc reports <subcommand>`
 
 **Global Options**:
-- `--url <URL>` - Specify Torc server URL (or use `TORC_BASE_URL` env var)
+- `--url <URL>` - Specify Torc server URL (or use `TORC_API_URL` env var)
 - `-f, --format <FORMAT>` - Output format: `table` or `json`
 
 Standalone binaries are also available for deployment scenarios:

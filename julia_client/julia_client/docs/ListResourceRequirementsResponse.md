@@ -4,7 +4,7 @@
 ## Properties
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
-**items** | [**Vector{ResourceRequirementsModel}**](ResourceRequirementsModel.md) |  | [optional] [default to nothing]
+**items** | [**Vector{ResourceRequirementsModel}**](ResourceRequirementsModel.md) |  | [default to nothing]
 **offset** | **Int64** |  | [default to nothing]
 **max_limit** | **Int64** |  | [default to nothing]
 **count** | **Int64** |  | [default to nothing]

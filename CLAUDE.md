@@ -99,7 +99,7 @@ sqlx migrate revert
 cargo build --release --bin torc --features "client,tui,plot_resources"
 
 # Set server URL (optional, defaults to localhost:8080)
-export TORC_BASE_URL="http://localhost:8080/torc-service/v1"
+export TORC_API_URL="http://localhost:8080/torc-service/v1"
 
 # Quick workflow execution (convenience commands)
 ./target/release/torc run examples/sample_workflow.yaml    # Create and run locally
@@ -312,7 +312,7 @@ sqlite3 server/db/sqlite/dev.db
 - Default: `sqlite:db/sqlite/dev.db`
 
 ### Client Configuration
-- `TORC_BASE_URL`: Torc service URL (env var or `--url` flag)
+- `TORC_API_URL`: Torc service URL (env var or `--url` flag)
 - Default: `http://localhost:8080/torc-service/v1`
 - `USER` or `USERNAME`: Workflow owner (auto-detected from environment)
 
@@ -357,7 +357,7 @@ sqlite3 server/db/sqlite/dev.db
 - `torc reports <subcommand>` - Generate reports
 
 **Global Options** (available on all commands):
-- `--url <URL>` - Torc server URL (can also use `TORC_BASE_URL` env var)
+- `--url <URL>` - Torc server URL (can also use `TORC_API_URL` env var)
 - `-f, --format <FORMAT>` - Output format (table or json)
 
 ## Additional Resources

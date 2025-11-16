@@ -39,6 +39,7 @@ const _property_types_ListComputeNodesResponse = Dict{Symbol,String}(Symbol("ite
 OpenAPI.property_type(::Type{ ListComputeNodesResponse }, name::Symbol) = Union{Nothing,eval(Base.Meta.parse(_property_types_ListComputeNodesResponse[name]))}
 
 function OpenAPI.check_required(o::ListComputeNodesResponse)
+    o.items === nothing && (return false)
     o.offset === nothing && (return false)
     o.max_limit === nothing && (return false)
     o.count === nothing && (return false)

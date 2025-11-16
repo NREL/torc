@@ -4328,6 +4328,7 @@ components:
       required:
       - account
       - nodes
+      - walltime
       - workflow_id
     user_data_model:
       example:
