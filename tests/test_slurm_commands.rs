@@ -346,6 +346,7 @@ fn test_create_submission_script() {
         &config,
         false,
         false,
+        None,
     );
 
     assert!(
@@ -423,6 +424,7 @@ fn test_create_submission_script_with_extra() {
         &config,
         false,
         false,
+        None,
     );
 
     assert!(
@@ -468,6 +470,7 @@ fn test_create_submission_script_with_srun() {
         &config,
         true, // start_one_worker_per_node
         false,
+        None,
     );
 
     assert!(
@@ -1316,13 +1319,13 @@ fn test_slurm_run_jobs(start_server: &ServerProcess) {
     let job_list = torc::client::default_api::list_jobs(
         config,
         workflow_id,
+        None, // status
+        None, // needs_file_id
+        None, // upstream_job_id
         None, // offset
         None, // limit
         None, // sort_by
         None, // reverse_sort
-        None, // name filter
-        None, // status filter
-        None, // resource_requirements_id filter
     )
     .expect("Failed to list jobs");
 

@@ -481,7 +481,11 @@ impl JobRunner {
                         }
                     }
 
-                    match async_job.start(&self.output_dir, self.resource_monitor.as_ref()) {
+                    match async_job.start(
+                        &self.output_dir,
+                        self.resource_monitor.as_ref(),
+                        &self.config.base_path,
+                    ) {
                         Ok(()) => {
                             info!("Started job {}", job_id);
                             self.running_jobs.insert(job_id, async_job);
@@ -580,7 +584,11 @@ impl JobRunner {
                         }
                     }
 
-                    match async_job.start(&self.output_dir, self.resource_monitor.as_ref()) {
+                    match async_job.start(
+                        &self.output_dir,
+                        self.resource_monitor.as_ref(),
+                        &self.config.base_path,
+                    ) {
                         Ok(()) => {
                             info!("Started job {}", job_id);
                             self.running_jobs.insert(job_id, async_job);

@@ -263,6 +263,41 @@ pub fn substitute_parameters(template: &str, params: &HashMap<String, ParameterV
     result
 }
 
+/// Substitute parameter values into a regex pattern string
+/// Escapes regex metacharacters in the parameter values to ensure literal matching
+/// Supports both {param_name} and {param_name:format} syntax
+pub fn substitute_parameters_regex(
+    template: &str,
+    params: &HashMap<String, ParameterValue>,
+) -> String {
+    let mut result = template.to_string();
+
+    for (param_name, param_value) in params {
+        // Look for {param_name:format} pattern
+        let pattern_with_format = format!("{{{}:", param_name);
+        if let Some(start_idx) = result.find(&pattern_with_format) {
+            // Find the closing brace
+            if let Some(end_idx) = result[start_idx..].find('}') {
+                let full_pattern = &result[start_idx..start_idx + end_idx + 1];
+                // Extract format specifier
+                let format_spec = &full_pattern[pattern_with_format.len()..full_pattern.len() - 1];
+                let value_str = param_value.format(Some(format_spec));
+                let escaped = regex::escape(&value_str);
+                result = result.replace(full_pattern, &escaped);
+                continue;
+            }
+        }
+
+        // Look for simple {param_name} pattern
+        let pattern = format!("{{{}}}", param_name);
+        let value_str = param_value.to_string();
+        let escaped = regex::escape(&value_str);
+        result = result.replace(&pattern, &escaped);
+    }
+
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

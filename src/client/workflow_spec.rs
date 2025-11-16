@@ -3,7 +3,6 @@ use crate::client::parameter_expansion::{
     ParameterValue, cartesian_product, parse_parameter_value, substitute_parameters,
 };
 use crate::models;
-use log::warn;
 use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -1033,12 +1032,13 @@ impl WorkflowSpec {
                     }
                 }
 
-                // Warn if regex didn't match anything (this might be intentional in some cases)
+                // Error if regex didn't match anything
                 if !found_match {
-                    warn!(
+                    return Err(format!(
                         "{} regex '{}' did not match any names for job '{}'",
                         resource_type, pattern_str, job_name
-                    );
+                    )
+                    .into());
                 }
             }
         }

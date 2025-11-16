@@ -119,8 +119,15 @@ fn validate_action_config(
 
                 // Validate that all fields are recognized torc-server flags
                 let valid_flags = [
-                    "log_level", "url", "port", "threads", "database",
-                    "auth_file", "require_auth", "log_dir", "json_logs",
+                    "log_level",
+                    "url",
+                    "port",
+                    "threads",
+                    "database",
+                    "auth_file",
+                    "require_auth",
+                    "log_dir",
+                    "json_logs",
                     // Note: daemon and pid_file are intentionally excluded
                 ];
 

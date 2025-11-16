@@ -476,21 +476,25 @@ impl WorkflowManager {
                                         // Database doesn't exist - check parent directory
                                         if let Some(parent) = db_path.parent() {
                                             if !parent.exists() {
-                                                return Err(TorcError::OperationNotAllowed(format!(
-                                                    "Database parent directory '{}' does not exist for database path '{}' (action ID: {}). \
+                                                return Err(TorcError::OperationNotAllowed(
+                                                    format!(
+                                                        "Database parent directory '{}' does not exist for database path '{}' (action ID: {}). \
                                                      Create the directory or use an existing path.",
-                                                    parent.display(),
-                                                    db_path_str,
-                                                    action.id.unwrap_or(0)
-                                                )));
+                                                        parent.display(),
+                                                        db_path_str,
+                                                        action.id.unwrap_or(0)
+                                                    ),
+                                                ));
                                             }
                                             if !parent.is_dir() {
-                                                return Err(TorcError::OperationNotAllowed(format!(
-                                                    "Database parent path '{}' exists but is not a directory for database path '{}' (action ID: {})",
-                                                    parent.display(),
-                                                    db_path_str,
-                                                    action.id.unwrap_or(0)
-                                                )));
+                                                return Err(TorcError::OperationNotAllowed(
+                                                    format!(
+                                                        "Database parent path '{}' exists but is not a directory for database path '{}' (action ID: {})",
+                                                        parent.display(),
+                                                        db_path_str,
+                                                        action.id.unwrap_or(0)
+                                                    ),
+                                                ));
                                             }
                                         } else {
                                             // No parent (shouldn't happen for most valid paths)
@@ -533,10 +537,7 @@ impl WorkflowManager {
     }
 
     /// Reinitialize jobs. Account for jobs that are new or have been reset.
-    pub fn reinitialize_jobs(
-        &self,
-        dry_run: bool,
-    ) -> Result<(), TorcError> {
+    pub fn reinitialize_jobs(&self, dry_run: bool) -> Result<(), TorcError> {
         self.process_changed_files(dry_run)?;
         self.update_jobs_if_output_files_are_missing(dry_run)?;
         self.process_changed_user_data(dry_run)?;

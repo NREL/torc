@@ -1530,7 +1530,7 @@ fn test_create_workflow_with_regex_file_dependencies(start_server: &ServerProces
             {
                 "name": "aggregate",
                 "command": "echo 'aggregate all data files'",
-                "input_file_name_regexes": ["data_.*\\.txt"],
+                "input_file_name_regexes": [r"data_\d+"],
             }
         ],
         "files": [
@@ -1596,7 +1596,7 @@ fn test_create_workflow_with_regex_file_dependencies(start_server: &ServerProces
     assert_eq!(
         input_files.len(),
         3,
-        "Expected 3 input files (data_1, data_2, data_3)"
+        "Expected 3 input files (data_1.txt, data_2.txt, data_3.txt)"
     );
 }
 
