@@ -68,6 +68,7 @@ pub trait HpcInterface: Send + Sync {
         config: &HashMap<String, String>,
         start_one_worker_per_node: bool,
         start_server_on_head_node: bool,
+        torc_server_args: Option<&serde_json::Value>,
     ) -> Result<()>;
 
     /// Get the current HPC job ID from environment variables

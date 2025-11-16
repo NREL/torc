@@ -1037,6 +1037,8 @@ impl JobRunner {
                     .and_then(|v| v.as_i64())
                     .map(|v| v as i32);
 
+                let torc_server_args = action_config.get("torc_server_args");
+
                 info!(
                     "Scheduling {} compute nodes (scheduler_type={}, scheduler_id={})",
                     num_allocations, scheduler_type, scheduler_id
@@ -1056,6 +1058,7 @@ impl JobRunner {
                         start_one_worker_per_node,
                         start_server_on_head_node,
                         false, // keep_submission_scripts
+                        torc_server_args,
                     ) {
                         Ok(()) => {
                             info!("Successfully scheduled {} Slurm job(s)", num_allocations);

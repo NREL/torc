@@ -35,6 +35,7 @@
   - [Debugging Workflows](./how-to/debugging.md)
   - [Authentication](./how-to/authentication.md)
   - [Server Deployment](./how-to/server-deployment.md)
+  - [Torc Server Arguments in Workflow Actions](./how-to/torc-server-args.md)
 
 # Reference
 

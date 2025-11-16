@@ -596,6 +596,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 *start_one_worker_per_node,
                 *start_server_on_head_node,
                 *keep_submission_scripts,
+                None, // torc_server_args - not available from CLI context
             ) {
                 Ok(()) => {
                     eprintln!("Successfully running {} Slurm job(s)", num_hpc_jobs);
@@ -638,6 +639,7 @@ pub fn schedule_slurm_nodes(
     start_one_worker_per_node: bool,
     start_server_on_head_node: bool,
     keep_submission_scripts: bool,
+    torc_server_args: Option<&serde_json::Value>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let scheduler = match default_api::get_slurm_scheduler(config, scheduler_config_id) {
         Ok(s) => s,
@@ -694,6 +696,7 @@ pub fn schedule_slurm_nodes(
             &config_map,
             start_one_worker_per_node,
             start_server_on_head_node,
+            torc_server_args,
         ) {
             error!("Error creating submission script: {}", e);
             return Err(e.into());

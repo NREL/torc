@@ -61,6 +61,7 @@ fn validate_action_config(
                 "start_one_worker_per_node",
                 "start_server_on_head_node",
                 "max_parallel_jobs",
+                "torc_server_args",
             ];
 
             // Check for unsupported fields
@@ -108,6 +109,31 @@ fn validate_action_config(
             if let Some(max_parallel_jobs) = config_obj.get("max_parallel_jobs") {
                 if !max_parallel_jobs.is_i64() && !max_parallel_jobs.is_u64() {
                     return Err("'max_parallel_jobs' must be an integer".to_string());
+                }
+            }
+
+            if let Some(torc_server_args) = config_obj.get("torc_server_args") {
+                if !torc_server_args.is_object() {
+                    return Err("'torc_server_args' must be an object".to_string());
+                }
+
+                // Validate that all fields are recognized torc-server flags
+                let valid_flags = [
+                    "log_level", "url", "port", "threads", "database",
+                    "auth_file", "require_auth", "log_dir", "json_logs",
+                    // Note: daemon and pid_file are intentionally excluded
+                ];
+
+                if let Some(args_obj) = torc_server_args.as_object() {
+                    for key in args_obj.keys() {
+                        if !valid_flags.contains(&key.as_str()) {
+                            return Err(format!(
+                                "Unsupported torc_server_args field '{}'. Supported fields: {}. Note: 'daemon' and 'pid_file' are not supported in scheduled node context.",
+                                key,
+                                valid_flags.join(", ")
+                            ));
+                        }
+                    }
                 }
             }
 

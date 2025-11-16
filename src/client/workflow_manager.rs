@@ -207,6 +207,8 @@ impl WorkflowManager {
                         .and_then(|v| v.as_i64())
                         .map(|v| v as i32);
 
+                    let torc_server_args = action_config.get("torc_server_args");
+
                     match crate::client::commands::slurm::schedule_slurm_nodes(
                         &self.config,
                         self.workflow_id,
@@ -219,6 +221,7 @@ impl WorkflowManager {
                         start_one_worker_per_node,
                         start_server_on_head_node,
                         false, // keep_submission_scripts
+                        torc_server_args,
                     ) {
                         Ok(()) => {
                             info!(
@@ -262,6 +265,7 @@ impl WorkflowManager {
 
     /// Reinitialize the workflow. Reset workflow status, bump run_id, and run startup script.
     pub fn reinitialize(&self, ignore_missing_data: bool, dry_run: bool) -> Result<(), TorcError> {
+        self.check_workflow(ignore_missing_data)?;
         if !dry_run {
             self.bump_run_id()?;
             match default_api::reset_workflow_status(&self.config, self.workflow_id, None, None) {
@@ -277,7 +281,7 @@ impl WorkflowManager {
                 }
             }
         }
-        self.reinitialize_jobs(ignore_missing_data, dry_run)?;
+        self.reinitialize_jobs(dry_run)?;
         let run_id = self.get_run_id()?;
         let event_data = serde_json::json!({
             "category": "workflow",
@@ -396,6 +400,7 @@ impl WorkflowManager {
         }
         self.check_workflow_files(ignore_missing_data)?;
         self.check_user_data()?;
+        self.check_workflow_action_database_paths()?;
         Ok(())
     }
 
@@ -424,6 +429,89 @@ impl WorkflowManager {
         }
     }
 
+    /// Check that database paths specified in workflow actions are valid and accessible
+    pub fn check_workflow_action_database_paths(&self) -> Result<(), TorcError> {
+        // Get all workflow actions
+        let actions = match default_api::get_workflow_actions(&self.config, self.workflow_id) {
+            Ok(actions) => actions,
+            Err(err) => {
+                return Err(TorcError::ApiError(format!(
+                    "Failed to get workflow actions: {}",
+                    err
+                )));
+            }
+        };
+
+        // Check each schedule_nodes action that starts a server on the head node
+        for action in actions {
+            if action.action_type == "schedule_nodes" {
+                let action_config = &action.action_config;
+
+                // Check if this action starts a server on the head node
+                let start_server_on_head_node = action_config
+                    .get("start_server_on_head_node")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+
+                if start_server_on_head_node {
+                    // Check for torc_server_args with database field
+                    if let Some(torc_server_args) = action_config.get("torc_server_args") {
+                        if let Some(args_obj) = torc_server_args.as_object() {
+                            if let Some(database_path) = args_obj.get("database") {
+                                if let Some(db_path_str) = database_path.as_str() {
+                                    let db_path = Path::new(db_path_str);
+
+                                    // Check if the database file exists OR its parent directory exists
+                                    // (torc-server will create the database if it doesn't exist)
+                                    if db_path.exists() {
+                                        // Database file already exists - verify it's a file
+                                        if !db_path.is_file() {
+                                            return Err(TorcError::OperationNotAllowed(format!(
+                                                "Database path '{}' exists but is not a file (action ID: {})",
+                                                db_path_str,
+                                                action.id.unwrap_or(0)
+                                            )));
+                                        }
+                                    } else {
+                                        // Database doesn't exist - check parent directory
+                                        if let Some(parent) = db_path.parent() {
+                                            if !parent.exists() {
+                                                return Err(TorcError::OperationNotAllowed(format!(
+                                                    "Database parent directory '{}' does not exist for database path '{}' (action ID: {}). \
+                                                     Create the directory or use an existing path.",
+                                                    parent.display(),
+                                                    db_path_str,
+                                                    action.id.unwrap_or(0)
+                                                )));
+                                            }
+                                            if !parent.is_dir() {
+                                                return Err(TorcError::OperationNotAllowed(format!(
+                                                    "Database parent path '{}' exists but is not a directory for database path '{}' (action ID: {})",
+                                                    parent.display(),
+                                                    db_path_str,
+                                                    action.id.unwrap_or(0)
+                                                )));
+                                            }
+                                        } else {
+                                            // No parent (shouldn't happen for most valid paths)
+                                            return Err(TorcError::OperationNotAllowed(format!(
+                                                "Database path '{}' has no parent directory (action ID: {})",
+                                                db_path_str,
+                                                action.id.unwrap_or(0)
+                                            )));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(())
+    }
+
     /// Change all uninitialized jobs to the ready state.
     pub fn initialize_jobs(&self, only_uninitialized: bool) -> Result<(), TorcError> {
         match default_api::initialize_jobs(
@@ -447,10 +535,8 @@ impl WorkflowManager {
     /// Reinitialize jobs. Account for jobs that are new or have been reset.
     pub fn reinitialize_jobs(
         &self,
-        ignore_missing_data: bool,
         dry_run: bool,
     ) -> Result<(), TorcError> {
-        self.check_workflow(ignore_missing_data)?;
         self.process_changed_files(dry_run)?;
         self.update_jobs_if_output_files_are_missing(dry_run)?;
         self.process_changed_user_data(dry_run)?;

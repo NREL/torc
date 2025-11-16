@@ -10,9 +10,6 @@ use std::ffi::OsString;
 use std::path::PathBuf;
 
 const SERVICE_NAME: &str = "torc-server";
-const SERVICE_DISPLAY_NAME: &str = "Torc Workflow Orchestration Server";
-const SERVICE_DESCRIPTION: &str =
-    "Distributed workflow orchestration system for managing complex computational pipelines";
 
 /// Service management commands
 #[derive(Debug, Clone)]
