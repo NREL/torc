@@ -24,10 +24,12 @@ chrono = { version = "0.4", features = ["serde"] }
 log = "0.4.28"
 env_logger = "0.11"
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt", "json"] }
+tracing-appender = "0.2"
 tracing-timing = "0.6"
 hdrhistogram = "7.5"
 signal-hook = "0.3"
+file-rotate = "0.7"
 clap = { version = "4.4", features = ["derive", "env"] }
 tokio = { version = "1.47", features = ["rt-multi-thread", "macros", "net", "signal"] }
 url = "2.5"
@@ -70,6 +72,9 @@ serde_yaml = "0.9"
 tabled = "0.17"
 kdl = "6.5"
 rusqlite = { version = "0.32", features = ["bundled"] }
+
+# Service management
+service-manager = "0.7"
 
 # Platform-specific (macOS/Windows/iOS)
 native-tls = "0.2"

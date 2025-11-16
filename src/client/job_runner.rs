@@ -1044,7 +1044,7 @@ impl JobRunner {
 
                 if scheduler_type == "slurm" {
                     // Use the same function as WorkflowManager for Slurm scheduling
-                    match crate::client::commands::slurm::schedule_slurm_nodes_for_action(
+                    match crate::client::commands::slurm::schedule_slurm_nodes(
                         &self.config,
                         self.workflow_id,
                         scheduler_id,

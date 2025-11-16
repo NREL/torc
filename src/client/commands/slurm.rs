@@ -584,7 +584,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 })
             });
 
-            match schedule_slurm_nodes_for_action(
+            match schedule_slurm_nodes(
                 config,
                 wf_id,
                 sched_config_id,
@@ -626,7 +626,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
 ///
 /// # Returns
 /// Result indicating success or failure
-pub fn schedule_slurm_nodes_for_action(
+pub fn schedule_slurm_nodes(
     config: &Configuration,
     workflow_id: i64,
     scheduler_config_id: i64,

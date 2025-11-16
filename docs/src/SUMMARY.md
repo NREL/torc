@@ -34,6 +34,7 @@
   - [Resource Monitoring](./how-to/resource-monitoring.md)
   - [Debugging Workflows](./how-to/debugging.md)
   - [Authentication](./how-to/authentication.md)
+  - [Server Deployment](./how-to/server-deployment.md)
 
 # Reference
 

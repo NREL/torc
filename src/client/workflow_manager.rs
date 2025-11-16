@@ -207,7 +207,7 @@ impl WorkflowManager {
                         .and_then(|v| v.as_i64())
                         .map(|v| v as i32);
 
-                    match crate::client::commands::slurm::schedule_slurm_nodes_for_action(
+                    match crate::client::commands::slurm::schedule_slurm_nodes(
                         &self.config,
                         self.workflow_id,
                         scheduler_id,
