@@ -1,4 +1,3 @@
-# TODO: this workflow is broken because regex is not supported in blocked_by_job_names yet
 name: "ML Training with Auto-Scaling"
 user: "ml_researcher"
 description: "Demonstrates on_jobs_ready action for dynamic resource allocation"
@@ -18,7 +17,7 @@ jobs:
   - name: "evaluate"
     command: "python scripts/evaluate.py --models models/ --output results/evaluation.json"
     resource_requirements_name: "medium"
-    blocked_by_job_names: ["train_model_.*"]
+    blocked_by_job_name_regexes: ["train_model_.*"]
 
 resource_requirements:
   - name: "small"

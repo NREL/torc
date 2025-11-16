@@ -298,7 +298,10 @@ fn check_diamond_workflow_init_job_statuses(
 #[rstest]
 #[case(None)] // Test with resource-based allocation
 #[case(Some(10))] // Test with simple queue-based allocation (max 10 jobs at a time)
-fn test_many_jobs_parameterized(start_server: &ServerProcess, #[case] max_parallel_jobs: Option<i64>) {
+fn test_many_jobs_parameterized(
+    start_server: &ServerProcess,
+    #[case] max_parallel_jobs: Option<i64>,
+) {
     assert!(start_server.child.id() > 0);
     let config = &start_server.config;
 
@@ -331,11 +334,7 @@ resource_requirements:
     fs::write(&yaml_path, yaml_content).expect("Failed to write YAML file");
 
     // Build CLI arguments based on max_parallel_jobs parameter
-    let mut cli_args = vec![
-        yaml_path.to_str().unwrap(),
-        "--poll-interval",
-        "0.1",
-    ];
+    let mut cli_args = vec![yaml_path.to_str().unwrap(), "--poll-interval", "0.1"];
 
     let max_jobs_str;
     if let Some(max_jobs) = max_parallel_jobs {
@@ -382,7 +381,11 @@ resource_requirements:
     default_api::delete_workflow(config, workflow_id, None).expect("Failed to delete workflow");
 }
 
-fn verify_many_jobs_completion(config: &torc::client::Configuration, workflow_id: i64, num_jobs: usize) {
+fn verify_many_jobs_completion(
+    config: &torc::client::Configuration,
+    workflow_id: i64,
+    num_jobs: usize,
+) {
     let jobs = default_api::list_jobs(
         config,
         workflow_id,

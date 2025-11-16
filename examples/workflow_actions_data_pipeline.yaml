@@ -1,4 +1,3 @@
-# TODO: this workflow is broken because regex is not supported in blocked_by_job_names yet
 name: "Data Processing Pipeline with Actions"
 user: "data_engineer"
 description: "Demonstrates multiple action types for different job groups"
@@ -27,7 +26,7 @@ jobs:
   - name: "aggregate_data"
     command: "python scripts/aggregate.py --input transformed/ --output aggregated/final.parquet"
     resource_requirements_name: "large"
-    blocked_by_job_names: ["transform_.*"]
+    blocked_by_job_name_regexes: ["transform_.*"]
 
   - name: "generate_report"
     command: "python scripts/report.py --data aggregated/final.parquet --output reports/summary.html"

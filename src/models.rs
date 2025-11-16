@@ -9001,8 +9001,7 @@ pub struct SlurmSchedulerModel {
 
     /// Slurm runtime requirement, e.g., 04:00:00
     #[serde(rename = "walltime")]
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub walltime: Option<String>,
+    pub walltime: String,
 
     /// Extra Slurm parameters that torc will append to the sbatch command
     #[serde(rename = "extra")]
@@ -9012,7 +9011,12 @@ pub struct SlurmSchedulerModel {
 
 impl SlurmSchedulerModel {
     #[allow(clippy::new_without_default)]
-    pub fn new(workflow_id: i64, account: String, nodes: i64) -> SlurmSchedulerModel {
+    pub fn new(
+        workflow_id: i64,
+        account: String,
+        nodes: i64,
+        walltime: String,
+    ) -> SlurmSchedulerModel {
         SlurmSchedulerModel {
             id: None,
             workflow_id,
@@ -9025,7 +9029,7 @@ impl SlurmSchedulerModel {
             partition: None,
             qos: Some("normal".to_string()),
             tmp: None,
-            walltime: None,
+            walltime,
             extra: None,
         }
     }
@@ -9067,9 +9071,7 @@ impl std::string::ToString for SlurmSchedulerModel {
             self.tmp
                 .as_ref()
                 .map(|tmp| ["tmp".to_string(), tmp.to_string()].join(",")),
-            self.walltime
-                .as_ref()
-                .map(|walltime| ["walltime".to_string(), walltime.to_string()].join(",")),
+            Some(["walltime".to_string(), self.walltime.to_string()].join(",")),
             self.extra
                 .as_ref()
                 .map(|extra| ["extra".to_string(), extra.to_string()].join(",")),
@@ -9213,7 +9215,11 @@ impl std::str::FromStr for SlurmSchedulerModel {
             partition: intermediate_rep.partition.into_iter().next(),
             qos: intermediate_rep.qos.into_iter().next(),
             tmp: intermediate_rep.tmp.into_iter().next(),
-            walltime: intermediate_rep.walltime.into_iter().next(),
+            walltime: intermediate_rep
+                .walltime
+                .into_iter()
+                .next()
+                .ok_or_else(|| "walltime missing in SlurmSchedulerModel".to_string())?,
             extra: intermediate_rep.extra.into_iter().next(),
         })
     }

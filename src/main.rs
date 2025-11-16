@@ -154,8 +154,8 @@ fn main() {
     let log_level = cli.log_level.unwrap_or_else(|| "info".to_string());
 
     // Initialize logger with CLI argument or RUST_LOG env var
-    // Skip initialization for commands that set up their own logging (e.g., Run)
-    let skip_logger_init = matches!(cli.command, Commands::Run { .. });
+    // Skip initialization for commands that set up their own logging (e.g., Run, Tui)
+    let skip_logger_init = matches!(cli.command, Commands::Run { .. } | Commands::Tui(..));
 
     if !skip_logger_init {
         env_logger::Builder::new().parse_filters(&log_level).init();

@@ -18,7 +18,7 @@ from torc.openapi_client import (
 )
 
 
-TORC_BASE_URL = os.getenv("TORC_BASE_URL", "http://localhost:8080/torc-service/v1")
+TORC_API_URL = os.getenv("TORC_API_URL", "http://localhost:8080/torc-service/v1")
 TEST_WORKFLOW = "test_workflow"
 PREPROCESS = Path("tests") / "scripts" / "preprocess.py"
 POSTPROCESS = Path("tests") / "scripts" / "postprocess.py"
@@ -149,7 +149,7 @@ def build_workflow(api: DefaultApi, workflow: WorkflowModel):
 def main():
     """Entry point"""
     setup_logging()
-    api = make_api(TORC_BASE_URL)
+    api = make_api(TORC_API_URL)
     workflow = create_workflow(api)
     try:
         build_workflow(api, workflow)
