@@ -67,8 +67,6 @@ actions:
     scheduler_name: "setup_scheduler"
     scheduler_type: "slurm"
     num_allocations: 1
-    start_one_worker_per_node: true
-    max_parallel_jobs: 1
 
   # Allocate resources for processing stage
   - trigger_type: "on_jobs_ready"
@@ -78,7 +76,6 @@ actions:
     scheduler_type: "slurm"
     num_allocations: 2
     start_one_worker_per_node: true
-    max_parallel_jobs: 2
 
   # Allocate resources for finalization stage
   - trigger_type: "on_jobs_ready"
@@ -87,8 +84,6 @@ actions:
     scheduler_name: "finalize_scheduler"
     scheduler_type: "slurm"
     num_allocations: 1
-    start_one_worker_per_node: true
-    max_parallel_jobs: 1
 
   # Run cleanup when the workflow completes
   - trigger_type: "on_workflow_complete"

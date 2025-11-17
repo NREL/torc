@@ -3935,7 +3935,7 @@ components:
       example:
         start_one_worker_per_node: false
         num_jobs: 5
-        max_parallel_jobs: 1
+        max_parallel_jobs: 32
         scheduler_id: scheduler_id
       properties:
         max_parallel_jobs:
@@ -4031,11 +4031,6 @@ components:
         workflow_id: 6
         cancel_on_blocking_job_failure: true
         command: command
-        schedule_compute_nodes:
-          start_one_worker_per_node: false
-          num_jobs: 5
-          max_parallel_jobs: 1
-          scheduler_id: scheduler_id
         input_user_data_ids:
         - 9
         - 9
@@ -4546,11 +4541,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9
@@ -4576,11 +4566,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9
@@ -4753,11 +4738,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9
@@ -4783,11 +4763,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9
@@ -5293,11 +5268,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9
@@ -5323,11 +5293,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9
@@ -5363,11 +5328,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9
@@ -5393,11 +5353,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9
