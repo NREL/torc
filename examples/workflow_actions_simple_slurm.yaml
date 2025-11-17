@@ -52,14 +52,6 @@ slurm_schedulers:
     walltime: "00:30:00"
 
 actions:
-  # Run setup commands when the workflow starts
-  - trigger_type: "on_workflow_start"
-    action_type: "run_commands"
-    commands:
-      - "echo 'Workflow started at $(date)' > workflow_log.txt"
-      - "mkdir -p output temp"
-      - "echo 'Environment ready'"
-
   # Allocate resources for setup stage
   - trigger_type: "on_workflow_start"
     action_type: "schedule_nodes"
@@ -76,6 +68,7 @@ actions:
     scheduler_type: "slurm"
     num_allocations: 2
     start_one_worker_per_node: true
+    start_server_on_head_node: true
 
   # Allocate resources for finalization stage
   - trigger_type: "on_jobs_ready"
@@ -84,14 +77,3 @@ actions:
     scheduler_name: "finalize_scheduler"
     scheduler_type: "slurm"
     num_allocations: 1
-
-  # Run cleanup when the workflow completes
-  - trigger_type: "on_workflow_complete"
-    action_type: "run_commands"
-    commands:
-      - "echo 'Workflow completed at $(date)' >> workflow_log.txt"
-      - "echo 'Cleaning up temporary files...'"
-      - "rm -rf temp"
-      - "echo 'Archiving results...'"
-      - "tar -czf output/results.tar.gz workflow_log.txt"
-      - "echo 'Workflow cleanup complete'"

@@ -1,0 +1,127 @@
+# Multi-Stage Workflow with Barrier Pattern
+#
+# This example demonstrates the EFFICIENT way to create multi-stage workflows
+# where you want to wait for all jobs in one stage to complete before starting
+# the next stage.
+#
+# PROBLEM: Without barriers
+# -------------------------
+# If stage2 has 1000 jobs that each depend on all 1000 jobs from stage1:
+#   - Creates 1,000,000 dependency relationships (1000 × 1000)
+#   - Very slow workflow creation
+#   - Large database overhead
+#   - Poor scalability
+#
+# SOLUTION: Use barrier jobs
+# ---------------------------
+# Insert a lightweight "barrier" job between stages that:
+#   - Waits for all jobs in the previous stage (using regex)
+#   - Subsequent stage jobs only depend on the barrier
+#   - Creates ~2000 dependencies instead of 1,000,000 (500x improvement!)
+#
+# Pattern:
+#   Stage 1 jobs (N jobs)
+#        ↓
+#   Barrier job (depends on all Stage 1 via regex)
+#        ↓
+#   Stage 2 jobs (M jobs, depend on barrier)
+#        ↓
+#   Barrier job (depends on all Stage 2 via regex)
+#        ↓
+#   Stage 3 jobs (K jobs, depend on barrier)
+#
+# Complexity:
+#   Without barriers: N×M + M×K dependencies
+#   With barriers:    N + M + K dependencies
+
+name: "Multi-Stage Barrier Pattern Example"
+description: "Demonstrates efficient multi-stage workflows using barrier jobs"
+
+jobs:
+  # ============================================================================
+  # STAGE 1: Initial data processing (1000 parallel jobs)
+  # ============================================================================
+  - name: "stage1_process_{i:03d}"
+    command: "python process_input.py --id {i} --output output/stage1_{i:03d}.dat"
+    resource_requirements_name: "medium"
+    parameters:
+      i: "0:999"
+
+  # ============================================================================
+  # BARRIER 1: Wait for all stage 1 jobs to complete
+  # ============================================================================
+  # This single job depends on ALL stage1 jobs via regex pattern
+  # Cost: 1000 dependencies (instead of 1,000,000 if stage2 depended on stage1 directly)
+  - name: "barrier_stage1_complete"
+    command: "echo 'Stage 1 complete: 1000 jobs finished' && date"
+    resource_requirements_name: "tiny"
+    blocked_by_job_name_regexes: ["^stage1_process_.*"]
+
+  # ============================================================================
+  # STAGE 2: Analysis (1000 parallel jobs)
+  # ============================================================================
+  # Each stage2 job only depends on the BARRIER, not individual stage1 jobs
+  # Cost: 1000 dependencies (each stage2 job → barrier)
+  - name: "stage2_analyze_{i:03d}"
+    command: "python analyze.py --input output/stage1_{i:03d}.dat --output output/stage2_{i:03d}.json"
+    resource_requirements_name: "large"
+    blocked_by_job_names: ["barrier_stage1_complete"]
+    parameters:
+      i: "0:999"
+
+  # ============================================================================
+  # BARRIER 2: Wait for all stage 2 jobs to complete
+  # ============================================================================
+  - name: "barrier_stage2_complete"
+    command: "echo 'Stage 2 complete: 1000 analyses finished' && date"
+    resource_requirements_name: "tiny"
+    blocked_by_job_name_regexes: ["^stage2_analyze_.*"]
+
+  # ============================================================================
+  # STAGE 3: Aggregation (100 parallel jobs)
+  # ============================================================================
+  # Aggregate results from stage 2
+  - name: "stage3_aggregate_{i:02d}"
+    command: "python aggregate.py --shard {i} --output output/stage3_{i:02d}.csv"
+    resource_requirements_name: "large"
+    blocked_by_job_names: ["barrier_stage2_complete"]
+    parameters:
+      i: "0:99"
+
+  # ============================================================================
+  # BARRIER 3: Wait for all stage 3 jobs to complete
+  # ============================================================================
+  - name: "barrier_stage3_complete"
+    command: "echo 'Stage 3 complete: 100 aggregations finished' && date"
+    resource_requirements_name: "tiny"
+    blocked_by_job_name_regexes: ["^stage3_aggregate_.*"]
+
+  # ============================================================================
+  # FINAL STAGE: Single job to produce final report
+  # ============================================================================
+  - name: "final_report"
+    command: "python generate_report.py --output final_report.html"
+    resource_requirements_name: "medium"
+    blocked_by_job_names: ["barrier_stage3_complete"]
+
+resource_requirements:
+  - name: "tiny"
+    num_cpus: 1
+    num_gpus: 0
+    num_nodes: 1
+    memory: "100m"
+    runtime: "PT1M"
+
+  - name: "medium"
+    num_cpus: 4
+    num_gpus: 0
+    num_nodes: 1
+    memory: "8g"
+    runtime: "PT30M"
+
+  - name: "large"
+    num_cpus: 16
+    num_gpus: 1
+    num_nodes: 1
+    memory: "32g"
+    runtime: "PT2H"
