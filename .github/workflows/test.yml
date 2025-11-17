@@ -63,12 +63,20 @@ jobs:
           choco install openssl -y
           echo "OPENSSL_DIR=C:/Program Files/OpenSSL-Win64" >> $GITHUB_ENV
           echo "OPENSSL_ROOT_DIR=C:/Program Files/OpenSSL-Win64" >> $GITHUB_ENV
+          echo "OPENSSL_INCLUDE_DIR=C:/Program Files/OpenSSL-Win64/include" >> $GITHUB_ENV
+          echo "OPENSSL_LIB_DIR=C:/Program Files/OpenSSL-Win64/lib" >> $GITHUB_ENV
+          echo "PATH=C:/Program Files/OpenSSL-Win64/bin;$PATH" >> $GITHUB_ENV
 
       - name: Run tests (Windows - limited test set)
         if: matrix.os == 'windows-latest'
         run: cargo test --test test_full_workflows test_many_jobs_parameterized -- --test-threads 1
         env:
           RUST_BACKTRACE: 1
+          OPENSSL_DIR: C:/Program Files/OpenSSL-Win64
+          OPENSSL_ROOT_DIR: C:/Program Files/OpenSSL-Win64
+          OPENSSL_INCLUDE_DIR: C:/Program Files/OpenSSL-Win64/include
+          OPENSSL_LIB_DIR: C:/Program Files/OpenSSL-Win64/lib
+          PATH: C:/Program Files/OpenSSL-Win64/bin;${{ env.PATH }}
 
       - name: Run tests (Unix - full test suite)
         if: matrix.os != 'windows-latest'
