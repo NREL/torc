@@ -51,6 +51,7 @@ impl AsyncCliCommand {
         &mut self,
         output_dir: &Path,
         resource_monitor: Option<&ResourceMonitor>,
+        api_url: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
         if self.is_running {
             return Err("Job is already running".into());
@@ -90,6 +91,7 @@ impl AsyncCliCommand {
             .arg(&command_str)
             .env("TORC_WORKFLOW_ID", workflow_id_str)
             .env("TORC_JOB_ID", job_id_str)
+            .env("TORC_API_URL", api_url)
             .stdout(Stdio::from(File::create(&stdout_path)?))
             .stderr(Stdio::from(File::create(&stderr_path)?))
             .spawn()?;

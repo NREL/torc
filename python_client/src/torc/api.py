@@ -1,8 +1,7 @@
 """Functions to access the Torc Database API"""
 
-import itertools
 import time
-from typing import Any, Callable, Generator, Optional
+from typing import Any, Callable, Generator
 
 from loguru import logger
 from rmon.timing.timer_stats import Timer
@@ -89,24 +88,10 @@ def iter_documents(func: Callable, *args, skip=0, **kwargs) -> Generator[Any, No
 
 def make_job_label(job: JobModel, include_status: bool = False) -> str:
     """Return a user-friendly label for the job for log statements."""
-    base = f"Job name={job.name} key={job.key}"
+    base = f"Job name={job.name} id={job.id}"
     if include_status:
         return f"{base} status={job.status}"
     return base
-
-
-def map_job_keys_to_names(api: DefaultApi, workflow_key, filters=None) -> dict[str, str]:
-    """Return a mapping of job key to name."""
-    filters = filters or {}
-    return {x.key: x.name for x in iter_documents(api.list_jobs, workflow_key, **filters)}
-
-
-_DATABASE_KEYS = {"_id", "_key", "_rev", "_oldRev", "id", "key", "rev"}
-
-
-def remove_db_keys(data: dict) -> dict[str, Any]:
-    """Remove internal database keys from data."""
-    return {x: data[x] for x in set(data) - _DATABASE_KEYS}
 
 
 def send_api_command(func, *args, raise_on_error=True, timeout=120, **kwargs) -> Any:
@@ -152,13 +137,12 @@ def send_api_command(func, *args, raise_on_error=True, timeout=120, **kwargs) ->
             return None
 
 
-def add_jobs(api: DefaultApi, workflow_key: str, jobs, max_transfer_size=10_000) -> list[JobModel]:
-    """Add an iterable of jobs to the workflow.
+def create_jobs(api: DefaultApi, jobs, max_transfer_size=10_000) -> list[JobModel]:
+    """Create and add an iterable of jobs to the workflow.
 
     Parameters
     ----------
     api : DefaultApi
-    workflow_key : str
     jobs : list
         Any iterable of JobModel
     max_transfer_size : int
@@ -174,37 +158,37 @@ def add_jobs(api: DefaultApi, workflow_key: str, jobs, max_transfer_size=10_000)
     for job in jobs:
         batch.append(job)
         if len(batch) > max_transfer_size:
-            res = send_api_command(api.add_jobs, workflow_key, JobsModel(jobs=batch))
-            added_jobs += res.items
+            res = send_api_command(api.create_jobs, JobsModel(jobs=batch))
+            added_jobs += res.jobs
             batch.clear()
 
     if batch:
-        res = send_api_command(api.add_jobs, workflow_key, JobsModel(jobs=batch))
-        added_jobs += res.items
+        res = send_api_command(api.create_jobs, JobsModel(jobs=batch))
+        added_jobs += res.jobs
 
     return added_jobs
 
 
 def map_function_to_jobs(
     api: DefaultApi,
-    workflow_key,
+    workflow_id,
     module: str,
     func: str,
     params: list[dict],
     postprocess_func: str | None = None,
-    module_directory=None,
-    resource_requirements=None,
-    scheduler=None,
-    start_index=1,
-    name_prefix="",
-    blocked_by: Optional[list[str]] = None,
+    module_directory: str | None = None,
+    resource_requirements_id: int | None = None,
+    scheduler_id: int | None = None,
+    start_index: int = 1,
+    name_prefix: str = "",
+    blocked_by_job_ids: list[int] | None = None,
 ) -> list[JobModel]:
     """Add a job that will call func for each item in params.
 
     Parameters
     ----------
     api : DefaultApi
-    workflow_key : str
+    workflow_id : str
     module : str
         Name of module that contains func. If it is not available in the Python path, specify
         the parent directory in module_directory.
@@ -217,16 +201,16 @@ def map_function_to_jobs(
         Optional name of the function in module to be called to postprocess all results.
     module_directory : str | None
         Required if module is not importable.
-    resource_requirements : str | None
+    resource_requirements_id : int | None
         Optional id of resource_requirements that should be used by each job.
-    scheduler : str | None
+    scheduler_id : int | None
         Optional id of scheduler that should be used by each job.
     start_index : int
         Starting index to use for job names.
     name_prefix : str
         Prepend job names with this prefix; defaults to an empty string. Names will be the
         index converted to a string.
-    blocked_by : None | list[str]
+    blocked_by_job_ids : None | list[int]
         Job IDs that should block all jobs created by this function.
 
     Returns
@@ -245,23 +229,24 @@ def map_function_to_jobs(
         if module_directory is not None:
             data["module_directory"] = module_directory
         job_name = f"{name_prefix}{i}"
-        input_ud = api.add_user_data(
-            workflow_key, UserDataModel(name=f"input_{job_name}", data=data)
+        input_ud = api.create_user_data(
+            UserDataModel(workflow_id=workflow_id, name=f"input_{job_name}", data=data)
         )
-        output_ud = api.add_user_data(
-            workflow_key, UserDataModel(name=f"output_{job_name}", data={})
+        output_ud = api.create_user_data(
+            UserDataModel(workflow_id=workflow_id, name=f"output_{job_name}", data={})
         )
         assert input_ud.id is not None
         assert output_ud.id is not None
         output_data_ids.append(output_ud.id)
         job = JobModel(
+            workflow_id=workflow_id,
             name=job_name,
-            command="torc jobs run-function",
-            input_user_data=[input_ud.id],
-            output_user_data=[output_ud.id],
-            resource_requirements=resource_requirements,
-            scheduler=scheduler,
-            blocked_by=blocked_by,
+            command="pytorc jobs run-function",
+            input_user_data_ids=[input_ud.id],
+            output_user_data_ids=[output_ud.id],
+            resource_requirements_id=resource_requirements_id,
+            scheduler_id=scheduler_id,
+            blocked_by_job_ids=blocked_by_job_ids,
         )
         jobs.append(job)
 
@@ -273,60 +258,27 @@ def map_function_to_jobs(
         }
         if module_directory is not None:
             data["module_directory"] = module_directory
-        input_ud = api.add_user_data(
-            workflow_key, UserDataModel(name="input_postprocess", data=data)
+        input_ud = api.create_user_data(
+            UserDataModel(workflow_id=workflow_id, name="input_postprocess", data=data)
         )
-        output_ud = api.add_user_data(
-            workflow_key, UserDataModel(name="postprocess_result", data=data)
+        output_ud = api.create_user_data(
+            UserDataModel(workflow_id=workflow_id, name="postprocess_result", data=data)
         )
         assert input_ud.id is not None
         assert output_ud.id is not None
         jobs.append(
             JobModel(
+                workflow_id=workflow_id,
                 name="postprocess",
-                command="torc jobs run-postprocess",
-                input_user_data=[input_ud.id] + output_data_ids,
-                output_user_data=[output_ud.id],
-                resource_requirements=resource_requirements,
-                scheduler=scheduler,
+                command="pytorc jobs run-postprocess",
+                input_user_data_ids=[input_ud.id] + output_data_ids,
+                output_user_data_ids=[output_ud.id],
+                resource_requirements_id=resource_requirements_id,
+                scheduler_id=scheduler_id,
             )
         )
 
-    return add_jobs(api, workflow_key, jobs)
-
-
-def sanitize_workflow(data: dict[str, Any]) -> dict[str, Any]:
-    """Sanitize a WorkflowSpecificationModel dictionary in place so that it can be loaded into
-    the database.
-    """
-    for item in itertools.chain(
-        [data.get("config")],
-        data.get("files", []),
-        data.get("resource_requirements", []),
-    ):
-        if item is not None:
-            for key in _DATABASE_KEYS:
-                item.pop(key, None)
-    _sanitize_collections(data)
-    _sanitize_schedulers(data)
-    return data
-
-
-def _sanitize_collections(data: dict[str, Any]) -> None:
-    for collection in ("jobs", "resource_requirements", "files", "schedulers"):
-        if collection in data and not data[collection]:
-            data.pop(collection)
-    for collection in ("jobs", "resource_requirements", "files"):
-        for item in data.get(collection, []):
-            for field in [k for k, v in item.items() if v is None]:
-                item.pop(field)
-
-
-def _sanitize_schedulers(data: dict[str, Any]) -> None:
-    for field in ("aws_schedulers", "local_schedulers", "slurm_schedulers"):
-        schedulers = data.get("schedulers", {})
-        if schedulers and field in schedulers and not schedulers[field]:
-            data["schedulers"].pop(field)
+    return create_jobs(api, jobs)
 
 
 def list_model_fields(cls) -> list[str]:

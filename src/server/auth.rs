@@ -1,3 +1,4 @@
+use super::htpasswd::HtpasswdFile;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use swagger::{
@@ -26,8 +27,390 @@ pub trait AuthenticationApi {
     fn basic_authorization(&self, basic: &Basic) -> Result<Authorization, ApiError>;
 }
 
+/// Custom authenticator that uses htpasswd file for basic authentication
+#[derive(Clone)]
+pub struct HtpasswdAuthenticator {
+    htpasswd: Option<HtpasswdFile>,
+    require_auth: bool,
+}
+
+impl HtpasswdAuthenticator {
+    /// Create a new authenticator with optional htpasswd file
+    /// If htpasswd is None and require_auth is false, all requests are allowed (backward compatible)
+    /// If require_auth is true, authentication is required
+    pub fn new(htpasswd: Option<HtpasswdFile>, require_auth: bool) -> Self {
+        HtpasswdAuthenticator {
+            htpasswd,
+            require_auth,
+        }
+    }
+
+    fn create_authorization(username: String) -> Authorization {
+        Authorization {
+            subject: username,
+            scopes: swagger::auth::Scopes::Some(BTreeSet::new()),
+            issuer: None,
+        }
+    }
+
+    fn unauthorized_error() -> ApiError {
+        ApiError("Unauthorized: Invalid username or password".to_string())
+    }
+
+    fn auth_required_error() -> ApiError {
+        ApiError("Unauthorized: Authentication required".to_string())
+    }
+}
+
+impl AuthenticationApi for HtpasswdAuthenticator {
+    fn bearer_authorization(&self, _token: &Bearer) -> Result<Authorization, ApiError> {
+        // Bearer tokens not supported in basic auth mode
+        if self.require_auth {
+            Err(Self::auth_required_error())
+        } else {
+            Ok(Self::create_authorization("anonymous".to_string()))
+        }
+    }
+
+    fn apikey_authorization(&self, _apikey: &str) -> Result<Authorization, ApiError> {
+        // API keys not supported in basic auth mode
+        if self.require_auth {
+            Err(Self::auth_required_error())
+        } else {
+            Ok(Self::create_authorization("anonymous".to_string()))
+        }
+    }
+
+    fn basic_authorization(&self, basic: &Basic) -> Result<Authorization, ApiError> {
+        match &self.htpasswd {
+            Some(htpasswd) => {
+                // Basic auth password is always required
+                let password = match &basic.password {
+                    Some(pwd) => pwd,
+                    None => {
+                        log::warn!(
+                            "Authentication failed for user '{}': no password provided",
+                            basic.username
+                        );
+                        return Err(Self::unauthorized_error());
+                    }
+                };
+
+                // Verify credentials against htpasswd file
+                if htpasswd.verify(&basic.username, password) {
+                    log::debug!("User '{}' authenticated successfully", basic.username);
+                    Ok(Self::create_authorization(basic.username.clone()))
+                } else {
+                    log::warn!("Authentication failed for user '{}'", basic.username);
+                    Err(Self::unauthorized_error())
+                }
+            }
+            None => {
+                // No htpasswd file configured
+                if self.require_auth {
+                    log::warn!("Authentication required but no htpasswd file configured");
+                    Err(Self::auth_required_error())
+                } else {
+                    // Allow all (backward compatible mode)
+                    log::debug!("No authentication configured, allowing request");
+                    Ok(Self::create_authorization("anonymous".to_string()))
+                }
+            }
+        }
+    }
+}
+
+// Implement make service for HtpasswdAuthenticator to work with swagger middleware
+use futures::future::FutureExt;
+use hyper::Request;
+use hyper::service::Service;
+use std::marker::PhantomData;
+use std::task::{Context as TaskContext, Poll};
+use swagger::auth::{RcBound, Scopes, from_headers};
+
+/// MakeService wrapper for HtpasswdAuthenticator - creates HtpasswdAuthenticatorService
+#[derive(Debug)]
+pub struct MakeHtpasswdAuthenticator<T, RC>
+where
+    RC: RcBound,
+    RC::Result: Send + 'static,
+{
+    inner: T,
+    htpasswd: Option<HtpasswdFile>,
+    require_auth: bool,
+    marker: PhantomData<RC>,
+}
+
+impl<T, RC> MakeHtpasswdAuthenticator<T, RC>
+where
+    RC: RcBound,
+    RC::Result: Send + 'static,
+{
+    pub fn new(inner: T, htpasswd: Option<HtpasswdFile>, require_auth: bool) -> Self {
+        MakeHtpasswdAuthenticator {
+            inner,
+            htpasswd,
+            require_auth,
+            marker: PhantomData,
+        }
+    }
+}
+
+impl<Inner, RC, Target> Service<Target> for MakeHtpasswdAuthenticator<Inner, RC>
+where
+    RC: RcBound,
+    RC::Result: Send + 'static,
+    Inner: Service<Target>,
+    Inner::Future: Send + 'static,
+{
+    type Error = Inner::Error;
+    type Response = HtpasswdAuthenticatorService<Inner::Response, RC>;
+    type Future = futures::future::BoxFuture<'static, Result<Self::Response, Self::Error>>;
+
+    fn poll_ready(&mut self, cx: &mut TaskContext<'_>) -> Poll<Result<(), Self::Error>> {
+        self.inner.poll_ready(cx)
+    }
+
+    fn call(&mut self, target: Target) -> Self::Future {
+        let htpasswd = self.htpasswd.clone();
+        let require_auth = self.require_auth;
+        Box::pin(self.inner.call(target).map(move |s| {
+            Ok(HtpasswdAuthenticatorService::new(
+                s?,
+                htpasswd,
+                require_auth,
+            ))
+        }))
+    }
+}
+
+/// Service that performs htpasswd authentication on each request
+#[derive(Debug)]
+pub struct HtpasswdAuthenticatorService<T, RC>
+where
+    RC: RcBound,
+    RC::Result: Send + 'static,
+{
+    inner: T,
+    htpasswd: Option<HtpasswdFile>,
+    require_auth: bool,
+    marker: PhantomData<RC>,
+}
+
+impl<T, RC> HtpasswdAuthenticatorService<T, RC>
+where
+    RC: RcBound,
+    RC::Result: Send + 'static,
+{
+    pub fn new(inner: T, htpasswd: Option<HtpasswdFile>, require_auth: bool) -> Self {
+        HtpasswdAuthenticatorService {
+            inner,
+            htpasswd,
+            require_auth,
+            marker: PhantomData,
+        }
+    }
+}
+
+impl<T, RC> Clone for HtpasswdAuthenticatorService<T, RC>
+where
+    T: Clone,
+    RC: RcBound,
+    RC::Result: Send + 'static,
+{
+    fn clone(&self) -> Self {
+        Self {
+            inner: self.inner.clone(),
+            htpasswd: self.htpasswd.clone(),
+            require_auth: self.require_auth,
+            marker: PhantomData,
+        }
+    }
+}
+
+impl<T, RC> AuthenticationApi for HtpasswdAuthenticatorService<T, RC>
+where
+    RC: RcBound,
+    RC::Result: Send + 'static,
+{
+    fn bearer_authorization(&self, _token: &Bearer) -> Result<Authorization, swagger::ApiError> {
+        // Bearer tokens not supported in basic auth mode
+        if self.require_auth {
+            Err(swagger::ApiError(
+                "Unauthorized: Authentication required".to_string(),
+            ))
+        } else {
+            Ok(Authorization {
+                subject: "anonymous".to_string(),
+                scopes: Scopes::All,
+                issuer: None,
+            })
+        }
+    }
+
+    fn apikey_authorization(&self, _apikey: &str) -> Result<Authorization, swagger::ApiError> {
+        // API keys not supported in basic auth mode
+        if self.require_auth {
+            Err(swagger::ApiError(
+                "Unauthorized: Authentication required".to_string(),
+            ))
+        } else {
+            Ok(Authorization {
+                subject: "anonymous".to_string(),
+                scopes: Scopes::All,
+                issuer: None,
+            })
+        }
+    }
+
+    fn basic_authorization(&self, basic: &Basic) -> Result<Authorization, swagger::ApiError> {
+        match &self.htpasswd {
+            Some(htpasswd) => {
+                // Basic auth password is always required
+                let password = match &basic.password {
+                    Some(pwd) => pwd,
+                    None => {
+                        log::warn!(
+                            "Authentication failed for user '{}': no password provided",
+                            basic.username
+                        );
+                        return Err(swagger::ApiError(
+                            "Unauthorized: Invalid username or password".to_string(),
+                        ));
+                    }
+                };
+
+                // Verify credentials against htpasswd file
+                if htpasswd.verify(&basic.username, password) {
+                    log::debug!("User '{}' authenticated successfully", basic.username);
+                    Ok(Authorization {
+                        subject: basic.username.clone(),
+                        scopes: Scopes::All,
+                        issuer: None,
+                    })
+                } else {
+                    log::warn!("Authentication failed for user '{}'", basic.username);
+                    Err(swagger::ApiError(
+                        "Unauthorized: Invalid username or password".to_string(),
+                    ))
+                }
+            }
+            None => {
+                // No htpasswd file configured
+                if self.require_auth {
+                    log::warn!("Authentication required but no htpasswd file configured");
+                    Err(swagger::ApiError(
+                        "Unauthorized: Authentication required".to_string(),
+                    ))
+                } else {
+                    // Allow all (backward compatible mode)
+                    log::debug!("No authentication configured, allowing request");
+                    Ok(Authorization {
+                        subject: "anonymous".to_string(),
+                        scopes: Scopes::All,
+                        issuer: None,
+                    })
+                }
+            }
+        }
+    }
+}
+
+impl<T, B, RC> Service<(Request<B>, RC)> for HtpasswdAuthenticatorService<T, RC>
+where
+    RC: RcBound,
+    RC::Result: Send + 'static,
+    T: Service<(Request<B>, RC::Result)>,
+    T::Response: From<hyper::Response<hyper::Body>>,
+{
+    type Response = T::Response;
+    type Error = T::Error;
+    type Future =
+        futures::future::Either<futures::future::Ready<Result<T::Response, T::Error>>, T::Future>;
+
+    fn poll_ready(&mut self, cx: &mut TaskContext<'_>) -> Poll<Result<(), Self::Error>> {
+        self.inner.poll_ready(cx)
+    }
+
+    fn call(&mut self, req: (Request<B>, RC)) -> Self::Future {
+        let (request, context) = req;
+
+        // Try to extract Basic auth from headers
+        let basic_auth: Option<Basic> = from_headers(request.headers());
+
+        let authorization = match &self.htpasswd {
+            Some(htpasswd) => {
+                // We have an htpasswd file, verify credentials
+                match basic_auth {
+                    Some(basic) => {
+                        // Get password, treating None as empty string
+                        let password = basic.password.as_deref().unwrap_or("");
+
+                        if htpasswd.verify(&basic.username, password) {
+                            log::debug!("User '{}' authenticated successfully", basic.username);
+                            Some(swagger::auth::Authorization {
+                                subject: basic.username.clone(),
+                                scopes: Scopes::All,
+                                issuer: None,
+                            })
+                        } else {
+                            log::warn!("Authentication failed for user '{}'", basic.username);
+                            None
+                        }
+                    }
+                    None => {
+                        // No credentials provided
+                        if self.require_auth {
+                            log::warn!("Authentication required but no credentials provided");
+                            None
+                        } else {
+                            // Allow anonymous access (backward compatible)
+                            log::debug!("No credentials provided, allowing anonymous access");
+                            Some(swagger::auth::Authorization {
+                                subject: "anonymous".to_string(),
+                                scopes: Scopes::All,
+                                issuer: None,
+                            })
+                        }
+                    }
+                }
+            }
+            None => {
+                // No htpasswd file configured
+                if self.require_auth {
+                    log::warn!("Authentication required but no htpasswd file configured");
+                    None
+                } else {
+                    // Allow all (backward compatible mode)
+                    log::debug!("No authentication configured, allowing request");
+                    Some(swagger::auth::Authorization {
+                        subject: "anonymous".to_string(),
+                        scopes: Scopes::All,
+                        issuer: None,
+                    })
+                }
+            }
+        };
+
+        // If require_auth is true and authorization failed, return 401 immediately
+        if self.require_auth && authorization.is_none() {
+            let response = hyper::Response::builder()
+                .status(hyper::StatusCode::UNAUTHORIZED)
+                .header("WWW-Authenticate", "Basic realm=\"Torc\"")
+                .body(hyper::Body::from("Unauthorized"))
+                .unwrap();
+            return futures::future::Either::Left(futures::future::ready(Ok(response.into())));
+        }
+
+        // Push authorization into context and continue
+        let context = context.push(authorization);
+
+        futures::future::Either::Right(self.inner.call((request, context)))
+    }
+}
+
 // Implement it for AllowAllAuthenticator (dummy is needed, but should not used as we have Bearer authorization)
-use swagger::auth::{AllowAllAuthenticator, RcBound, Scopes};
+use swagger::auth::AllowAllAuthenticator;
 
 fn dummy_authorization() -> Authorization {
     // Is called when MakeAllowAllAuthenticator is added to the stack. This is not needed as we have Bearer-authorization in the example-code.

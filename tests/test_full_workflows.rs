@@ -1,8 +1,6 @@
 mod common;
 
-use common::{
-    ServerProcess, create_diamond_workflow, run_cli_command, run_jobs_cli_command, start_server,
-};
+use common::{ServerProcess, create_diamond_workflow, run_jobs_cli_command, start_server};
 use rstest::rstest;
 use std::collections::HashMap;
 use std::fs;
@@ -23,13 +21,7 @@ fn test_diamond_workflow(start_server: &ServerProcess, #[case] max_parallel_jobs
     let jobs = create_diamond_workflow(config, false, &work_dir);
     let preprocess = jobs.get("preprocess").expect("preprocess job not found");
     let workflow_id = preprocess.workflow_id;
-
     create_input_file(&work_dir);
-    run_cli_command(
-        &["workflows", "initialize", &workflow_id.to_string()],
-        start_server,
-    )
-    .expect("Failed to initialize workflow");
 
     // Build CLI arguments based on max_parallel_jobs parameter
     let mut cli_args = vec![
@@ -50,8 +42,6 @@ fn test_diamond_workflow(start_server: &ServerProcess, #[case] max_parallel_jobs
         cli_args.push("4".to_string());
         cli_args.push("--memory-gb".to_string());
         cli_args.push("8.0".to_string());
-        cli_args.push("--num-nodes".to_string());
-        cli_args.push("1".to_string());
     }
 
     // Convert Vec<String> to Vec<&str> for run_jobs_cli_command
@@ -105,8 +95,9 @@ fn verify_diamond_workflow_completion(
         assert_eq!(
             job.status.unwrap(),
             models::JobStatus::Done,
-            "Job {} should be done",
-            job.name
+            "Job {} should be done. actual status: {:?}",
+            job.name,
+            job.status
         );
     }
 
@@ -302,4 +293,161 @@ fn check_diamond_workflow_init_job_statuses(
     let postprocess_post =
         default_api::get_job(&config, postprocess.id.unwrap()).expect("Failed to get postprocess");
     assert_eq!(postprocess_post.status.unwrap(), models::JobStatus::Blocked);
+}
+
+#[rstest]
+#[case(None)] // Test with resource-based allocation
+#[case(Some(10))] // Test with simple queue-based allocation (max 10 jobs at a time)
+fn test_many_jobs_parameterized(
+    start_server: &ServerProcess,
+    #[case] max_parallel_jobs: Option<i64>,
+) {
+    assert!(start_server.child.id() > 0);
+    let config = &start_server.config;
+
+    let temp_dir = tempfile::tempdir().expect("Failed to create temp dir");
+    let work_dir = temp_dir.path().to_path_buf();
+
+    // Create YAML workflow specification with 100 parameterized jobs
+    let yaml_content = r#"name: many_jobs_test
+user: test_user
+description: Test workflow with 100 parameterized jobs
+
+jobs:
+  - name: job_{i:03d}
+    command: echo {i}
+    resource_requirements_name: minimal
+    parameters:
+      i: "1:30"
+
+resource_requirements:
+  - name: minimal
+    num_cpus: 1
+    num_gpus: 0
+    num_nodes: 1
+    memory: 1m
+    runtime: P0DT1M
+"#;
+
+    // Write YAML to temp file
+    let yaml_path = work_dir.join("hundred_jobs_test.yaml");
+    fs::write(&yaml_path, yaml_content).expect("Failed to write YAML file");
+
+    // Build CLI arguments based on max_parallel_jobs parameter
+    let mut cli_args = vec![yaml_path.to_str().unwrap(), "--poll-interval", "0.1"];
+
+    let max_jobs_str;
+    if let Some(max_jobs) = max_parallel_jobs {
+        // Use simple queue-based allocation with claim_next_jobs
+        max_jobs_str = max_jobs.to_string();
+        cli_args.push("--max-parallel-jobs");
+        cli_args.push(&max_jobs_str);
+    } else {
+        // Use resource-based allocation with claim_jobs_based_on_resources
+        cli_args.push("--num-cpus");
+        cli_args.push("12");
+        cli_args.push("--memory-gb");
+        cli_args.push("64.0");
+    }
+
+    run_jobs_cli_command(&cli_args, start_server).expect("Failed to run jobs");
+
+    // Get the workflow that was created by 'torc run'
+    // List workflows and find the one with name "hundred_jobs_test"
+    let workflows = default_api::list_workflows(
+        config,
+        None,
+        None,
+        None,
+        None,
+        Some("many_jobs_test"),
+        None,
+        None,
+        None,
+    )
+    .expect("Failed to list workflows");
+
+    let workflow = workflows
+        .items
+        .as_ref()
+        .and_then(|items| items.first())
+        .expect("Workflow not found");
+    let workflow_id = workflow.id.unwrap();
+
+    // Verify all 100 jobs completed successfully
+    verify_many_jobs_completion(config, workflow_id, 30);
+
+    // Cleanup
+    default_api::delete_workflow(config, workflow_id, None).expect("Failed to delete workflow");
+}
+
+fn verify_many_jobs_completion(
+    config: &torc::client::Configuration,
+    workflow_id: i64,
+    num_jobs: usize,
+) {
+    let jobs = default_api::list_jobs(
+        config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .expect("Failed to list jobs");
+
+    let job_items = jobs.items.unwrap();
+    assert_eq!(
+        job_items.len(),
+        num_jobs,
+        "Expected {} jobs, but got {}",
+        num_jobs,
+        job_items.len()
+    );
+
+    for job in &job_items {
+        assert_eq!(
+            job.status.unwrap(),
+            models::JobStatus::Done,
+            "Job {} should be done. actual status: {:?}",
+            job.name,
+            job.status
+        );
+    }
+
+    // Get results for all jobs in the workflow and verify return codes
+    let results = default_api::list_results(
+        config,
+        workflow_id,
+        None, // job_id - get results for all jobs
+        None, // run_id
+        None, // offset
+        None, // limit
+        None, // sort_by
+        None, // reverse_sort
+        None, // return_code filter
+        None, // status filter
+        None, // all_runs
+    )
+    .expect("Failed to list results");
+
+    let result_items = results.items.unwrap();
+    assert_eq!(
+        result_items.len(),
+        num_jobs,
+        "Expected {} results, but got {}",
+        num_jobs,
+        result_items.len()
+    );
+
+    for result in &result_items {
+        assert_eq!(
+            result.return_code, 0,
+            "Job ID {} should have return code 0, but got {}",
+            result.job_id, result.return_code
+        );
+    }
 }

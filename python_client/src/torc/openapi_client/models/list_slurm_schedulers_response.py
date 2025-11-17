@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List
 from torc.openapi_client.models.slurm_scheduler_model import SlurmSchedulerModel
 from typing import Optional, Set
 from typing_extensions import Self
@@ -27,7 +27,7 @@ class ListSlurmSchedulersResponse(BaseModel):
     """
     ListSlurmSchedulersResponse
     """ # noqa: E501
-    items: Optional[List[SlurmSchedulerModel]] = None
+    items: List[SlurmSchedulerModel]
     offset: StrictInt
     max_limit: StrictInt
     count: StrictInt

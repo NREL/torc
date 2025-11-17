@@ -149,7 +149,7 @@ end
 
 """
 Inform all compute nodes to use this sort method when calling the
-prepare_jobs_for_submission command.
+claim_jobs_based_on_resources command.
 """
 function set_prepare_jobs_sort_method!(builder::WorkflowBuilder, val::Bool)
     builder.prepare_jobs_sort_method = val

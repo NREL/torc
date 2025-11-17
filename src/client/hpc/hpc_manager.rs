@@ -151,6 +151,7 @@ impl HpcManager {
             &self.config,
             start_one_worker_per_node,
             start_server_on_head_node,
+            None, // torc_server_args - not available in this context
         )?;
 
         trace!("Created submission script {:?}", filename);

@@ -5,6 +5,7 @@ use rstest::rstest;
 use serde_json;
 use std::fs;
 use tempfile::NamedTempFile;
+use torc::client::default_api;
 use torc::client::workflow_spec::{
     FileSpec, JobSpec, ResourceRequirementsSpec, SlurmSchedulerSpec, UserDataSpec, WorkflowSpec,
 };
@@ -161,7 +162,7 @@ fn test_workflow_specification_complete_serialization() {
             partition: Some("general".to_string()),
             qos: Some("normal".to_string()),
             tmp: Some("10G".to_string()),
-            walltime: Some("01:00:00".to_string()),
+            walltime: "01:00:00".to_string(),
             extra: None,
         },
         SlurmSchedulerSpec {
@@ -174,7 +175,7 @@ fn test_workflow_specification_complete_serialization() {
             partition: Some("gpu".to_string()),
             qos: Some("high".to_string()),
             tmp: Some("50G".to_string()),
-            walltime: Some("04:00:00".to_string()),
+            walltime: "04:00:00".to_string(),
             extra: Some("--constraint=v100".to_string()),
         },
     ];
@@ -486,9 +487,8 @@ fn test_create_workflow_from_json_file_minimal(start_server: &ServerProcess) {
     assert!(workflow_id > 0);
 
     // Verify workflow was created by fetching it
-    let created_workflow =
-        torc::client::default_api::get_workflow(&start_server.config, workflow_id)
-            .expect("Failed to get created workflow");
+    let created_workflow = default_api::get_workflow(&start_server.config, workflow_id)
+        .expect("Failed to get created workflow");
 
     assert_eq!(created_workflow.name, "integration_test_workflow");
     assert_eq!(created_workflow.user, "integration_user");
@@ -1028,7 +1028,7 @@ fn test_workflow_specification_with_all_resource_types() {
         partition: Some("test".to_string()),
         qos: Some("normal".to_string()),
         tmp: Some("20G".to_string()),
-        walltime: Some("02:00:00".to_string()),
+        walltime: "02:00:00".to_string(),
         extra: Some("--test-flag".to_string()),
     }];
 
@@ -1201,7 +1201,7 @@ fn test_specification_structs_serialization() {
         partition: Some("gpu".to_string()),
         qos: Some("high".to_string()),
         tmp: Some("50G".to_string()),
-        walltime: Some("04:00:00".to_string()),
+        walltime: "04:00:00".to_string(),
         extra: Some("--test-flag".to_string()),
     };
 
@@ -1263,7 +1263,7 @@ fn test_workflow_specification_with_new_structs() {
         partition: Some("cpu".to_string()),
         qos: Some("normal".to_string()),
         tmp: Some("10G".to_string()),
-        walltime: Some("02:00:00".to_string()),
+        walltime: "02:00:00".to_string(),
         extra: None,
     }];
 
@@ -1317,10 +1317,15 @@ fn test_json_field_name_compatibility() {
         supports_termination: Some(false),
         resource_requirements_name: Some("req".to_string()),
         blocked_by_job_names: Some(vec!["dep".to_string()]),
+        blocked_by_job_name_regexes: None,
         input_file_names: Some(vec!["in.txt".to_string()]),
+        input_file_name_regexes: None,
         output_file_names: Some(vec!["out.txt".to_string()]),
+        output_file_name_regexes: None,
         input_user_data_names: Some(vec!["in_data".to_string()]),
+        input_user_data_name_regexes: None,
         output_data_names: Some(vec!["out_data".to_string()]),
+        output_user_data_name_regexes: None,
         scheduler_name: Some("sched".to_string()),
         parameters: None,
     };
@@ -1395,7 +1400,7 @@ fn test_create_workflow_rollback_on_error(start_server: &ServerProcess) {
     );
 
     // Verify no workflow with this name exists (confirming rollback)
-    let workflows = torc::client::default_api::list_workflows(
+    let workflows = default_api::list_workflows(
         &start_server.config,
         None,
         None,
@@ -1409,4 +1414,436 @@ fn test_create_workflow_rollback_on_error(start_server: &ServerProcess) {
     .expect("Failed to list workflows");
 
     assert_eq!(workflows.items.unwrap_or_default().len(), 0);
+}
+
+#[rstest]
+fn test_create_workflow_with_regex_job_dependencies(start_server: &ServerProcess) {
+    use tempfile::TempDir;
+
+    // Create temp directory for files
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let input_path = temp_dir.path().join("input.txt");
+    fs::write(&input_path, "test input").expect("Failed to write input file");
+
+    let workflow_data = serde_json::json!({
+        "name": "regex_job_deps_workflow",
+        "user": "regex_user",
+        "description": "Test workflow with regex job dependencies",
+        "jobs": [
+            {
+                "name": "preprocess",
+                "command": "echo 'preprocess'",
+            },
+            {
+                "name": "work_1",
+                "command": "echo 'work 1'",
+                "blocked_by_job_names": ["preprocess"],
+            },
+            {
+                "name": "work_2",
+                "command": "echo 'work 2'",
+                "blocked_by_job_names": ["preprocess"],
+            },
+            {
+                "name": "work_3",
+                "command": "echo 'work 3'",
+                "blocked_by_job_names": ["preprocess"],
+            },
+            {
+                "name": "postprocess",
+                "command": "echo 'postprocess'",
+                "blocked_by_job_name_regexes": ["work_.*"],
+            }
+        ],
+        "files": null,
+        "user_data": null,
+        "resource_requirements": null,
+        "slurm_schedulers": null
+    });
+
+    let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let workflow_id = WorkflowSpec::create_workflow_from_spec(
+        &start_server.config,
+        &temp_file.path(),
+        "regex_user",
+        false,
+    )
+    .expect("Failed to create workflow with regex job dependencies");
+
+    assert!(workflow_id > 0);
+
+    // Verify that postprocess job has dependencies on all work_* jobs
+    let jobs = default_api::list_jobs(
+        &start_server.config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .expect("Failed to list jobs");
+
+    let job_items = jobs.items.unwrap();
+    let postprocess_job = job_items
+        .iter()
+        .find(|j| j.name == "postprocess")
+        .expect("Postprocess job not found");
+
+    let deps = postprocess_job
+        .blocked_by_job_ids
+        .as_ref()
+        .expect("No dependencies found");
+    assert_eq!(
+        deps.len(),
+        3,
+        "Expected 3 dependencies (work_1, work_2, work_3)"
+    );
+}
+
+#[rstest]
+fn test_create_workflow_with_regex_file_dependencies(start_server: &ServerProcess) {
+    use tempfile::TempDir;
+
+    // Create temp directory and files
+    let temp_dir = TempDir::new().expect("Failed to create temp dir");
+    let file1 = temp_dir.path().join("data_1.txt");
+    let file2 = temp_dir.path().join("data_2.txt");
+    let file3 = temp_dir.path().join("data_3.txt");
+    fs::write(&file1, "data 1").expect("Failed to write file1");
+    fs::write(&file2, "data 2").expect("Failed to write file2");
+    fs::write(&file3, "data 3").expect("Failed to write file3");
+
+    let workflow_data = serde_json::json!({
+        "name": "regex_file_deps_workflow",
+        "user": "regex_user",
+        "description": "Test workflow with regex file dependencies",
+        "jobs": [
+            {
+                "name": "aggregate",
+                "command": "echo 'aggregate all data files'",
+                "input_file_name_regexes": [r"data_\d+"],
+            }
+        ],
+        "files": [
+            {
+                "name": "data_1",
+                "path": file1.to_str().unwrap(),
+            },
+            {
+                "name": "data_2",
+                "path": file2.to_str().unwrap(),
+            },
+            {
+                "name": "data_3",
+                "path": file3.to_str().unwrap(),
+            }
+        ],
+        "user_data": null,
+        "resource_requirements": null,
+        "slurm_schedulers": null
+    });
+
+    let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let workflow_id = WorkflowSpec::create_workflow_from_spec(
+        &start_server.config,
+        &temp_file.path(),
+        "regex_user",
+        false,
+    )
+    .expect("Failed to create workflow with regex file dependencies");
+
+    assert!(workflow_id > 0);
+
+    // Verify that aggregate job has all 3 data files as inputs
+    let jobs = default_api::list_jobs(
+        &start_server.config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .expect("Failed to list jobs");
+
+    let job_items = jobs.items.unwrap();
+    let aggregate_job = job_items
+        .iter()
+        .find(|j| j.name == "aggregate")
+        .expect("Aggregate job not found");
+
+    let input_files = aggregate_job
+        .input_file_ids
+        .as_ref()
+        .expect("No input files found");
+    assert_eq!(
+        input_files.len(),
+        3,
+        "Expected 3 input files (data_1.txt, data_2.txt, data_3.txt)"
+    );
+}
+
+#[rstest]
+fn test_create_workflow_with_regex_user_data_dependencies(start_server: &ServerProcess) {
+    let workflow_data = serde_json::json!({
+        "name": "regex_user_data_deps_workflow",
+        "user": "regex_user",
+        "description": "Test workflow with regex user data dependencies",
+        "jobs": [
+            {
+                "name": "process_all_configs",
+                "command": "echo 'process all config data'",
+                "input_user_data_name_regexes": ["config_.*"],
+            }
+        ],
+        "files": null,
+        "user_data": [
+            {
+                "name": "config_dev",
+                "data": {"env": "development"},
+            },
+            {
+                "name": "config_test",
+                "data": {"env": "test"},
+            },
+            {
+                "name": "config_prod",
+                "data": {"env": "production"},
+            },
+            {
+                "name": "other_data",
+                "data": {"type": "other"},
+            }
+        ],
+        "resource_requirements": null,
+        "slurm_schedulers": null
+    });
+
+    let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let workflow_id = WorkflowSpec::create_workflow_from_spec(
+        &start_server.config,
+        &temp_file.path(),
+        "regex_user",
+        false,
+    )
+    .expect("Failed to create workflow with regex user data dependencies");
+
+    assert!(workflow_id > 0);
+
+    // Verify that process_all_configs job has only the config_* user data (not other_data)
+    let jobs = default_api::list_jobs(
+        &start_server.config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .expect("Failed to list jobs");
+
+    let job_items = jobs.items.unwrap();
+    let process_job = job_items
+        .iter()
+        .find(|j| j.name == "process_all_configs")
+        .expect("Process job not found");
+
+    let input_user_data = process_job
+        .input_user_data_ids
+        .as_ref()
+        .expect("No input user data found");
+    assert_eq!(
+        input_user_data.len(),
+        3,
+        "Expected 3 user data items (config_dev, config_test, config_prod, but not other_data)"
+    );
+}
+
+#[rstest]
+fn test_create_workflow_with_mixed_exact_and_regex_dependencies(start_server: &ServerProcess) {
+    let workflow_data = serde_json::json!({
+        "name": "mixed_deps_workflow",
+        "user": "regex_user",
+        "description": "Test workflow with both exact and regex dependencies",
+        "jobs": [
+            {
+                "name": "init",
+                "command": "echo 'init'",
+            },
+            {
+                "name": "process_1",
+                "command": "echo 'process 1'",
+                "blocked_by_job_names": ["init"],
+            },
+            {
+                "name": "process_2",
+                "command": "echo 'process 2'",
+                "blocked_by_job_names": ["init"],
+            },
+            {
+                "name": "special",
+                "command": "echo 'special'",
+                "blocked_by_job_names": ["init"],
+            },
+            {
+                "name": "finalize",
+                "command": "echo 'finalize'",
+                "blocked_by_job_names": ["special"],
+                "blocked_by_job_name_regexes": ["process_.*"],
+            }
+        ],
+        "files": null,
+        "user_data": null,
+        "resource_requirements": null,
+        "slurm_schedulers": null
+    });
+
+    let temp_file = NamedTempFile::new().expect("Failed to create temp file");
+    fs::write(
+        &temp_file.path(),
+        serde_json::to_string_pretty(&workflow_data).unwrap(),
+    )
+    .expect("Failed to write temp file");
+
+    let workflow_id = WorkflowSpec::create_workflow_from_spec(
+        &start_server.config,
+        &temp_file.path(),
+        "regex_user",
+        false,
+    )
+    .expect("Failed to create workflow with mixed dependencies");
+
+    assert!(workflow_id > 0);
+
+    // Verify that finalize job has dependencies on special + process_1 + process_2
+    let jobs = default_api::list_jobs(
+        &start_server.config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    )
+    .expect("Failed to list jobs");
+
+    let job_items = jobs.items.unwrap();
+    let finalize_job = job_items
+        .iter()
+        .find(|j| j.name == "finalize")
+        .expect("Finalize job not found");
+
+    let deps = finalize_job
+        .blocked_by_job_ids
+        .as_ref()
+        .expect("No dependencies found");
+    assert_eq!(
+        deps.len(),
+        3,
+        "Expected 3 dependencies (special, process_1, process_2)"
+    );
+}
+
+#[rstest]
+fn test_create_workflows_from_all_example_files(start_server: &ServerProcess) {
+    use std::path::PathBuf;
+
+    // Find all workflow spec files in the examples directory
+    let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples");
+    let spec_files: Vec<PathBuf> = fs::read_dir(&examples_dir)
+        .expect("Failed to read examples directory")
+        .filter_map(|entry| {
+            let entry = entry.ok()?;
+            let path = entry.path();
+            if path.is_file() {
+                let extension = path.extension()?.to_str()?;
+                if matches!(extension, "json" | "json5" | "yaml" | "kdl") {
+                    return Some(path);
+                }
+            }
+            None
+        })
+        .collect();
+
+    eprintln!(
+        "Found {} workflow spec files in examples directory",
+        spec_files.len()
+    );
+    assert!(
+        !spec_files.is_empty(),
+        "No workflow spec files found in examples directory"
+    );
+
+    // Test each spec file
+    for spec_file in spec_files {
+        eprintln!("Testing workflow spec: {:?}", spec_file.file_name());
+
+        // Read the spec to get the user field
+        let spec = WorkflowSpec::from_spec_file(&spec_file)
+            .unwrap_or_else(|e| panic!("Failed to read spec from {:?}: {}", spec_file, e));
+
+        let user = spec.user.unwrap_or_else(|| "test_user".to_string());
+
+        // Create the workflow
+        let workflow_id =
+            WorkflowSpec::create_workflow_from_spec(&start_server.config, &spec_file, &user, false)
+                .unwrap_or_else(|e| {
+                    panic!("Failed to create workflow from {:?}: {}", spec_file, e)
+                });
+
+        assert!(workflow_id > 0, "Invalid workflow ID for {:?}", spec_file);
+
+        // Verify the workflow was created by fetching it
+        let created_workflow = default_api::get_workflow(&start_server.config, workflow_id)
+            .unwrap_or_else(|e| {
+                panic!("Failed to get created workflow from {:?}: {}", spec_file, e)
+            });
+
+        assert_eq!(
+            created_workflow.id,
+            Some(workflow_id),
+            "Workflow ID mismatch for {:?}",
+            spec_file
+        );
+        assert_eq!(
+            created_workflow.user, user,
+            "Workflow user mismatch for {:?}",
+            spec_file
+        );
+
+        eprintln!(
+            "  ✓ Successfully created and verified workflow '{}' (ID: {})",
+            created_workflow.name, workflow_id
+        );
+
+        default_api::delete_workflow(&start_server.config, workflow_id, None)
+            .expect("Warning: Failed to delete workflow");
+    }
 }

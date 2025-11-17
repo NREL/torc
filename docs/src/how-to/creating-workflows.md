@@ -54,7 +54,7 @@ resource_requirements:
 
 Create workflow:
 ```bash
-torc-client workflows create-from-spec workflow.yaml
+torc workflows create-from-spec workflow.yaml
 ```
 
 ### JSON5 Format
@@ -137,7 +137,7 @@ To create a workflow with individual job creation:
 
 ```bash
 # Create workflow
-torc-client workflows create \
+torc workflows create \
   --name "my_workflow" \
   --user "$(whoami)" \
   --description "My test workflow"
@@ -154,7 +154,7 @@ Note the ID returned from the previous command. You will use it in the following
 
 ```bash
 # Create resource requirements
-torc-client resource-requirements create \
+torc resource-requirements create \
   --name "small" \
   --num-cpus 1 \
   --memory "1g" \
@@ -175,7 +175,7 @@ Successfully created resource requirements:
 
 # Create a file
 ```bash
-torc-client files create \
+torc files create \
   --name "input_file" \
   --path "/data/input.txt" \
   1
@@ -189,7 +189,7 @@ Successfully created file:
 ```
 
 # Create a job
-torc-client jobs create \
+torc jobs create \
   --name "process_data" \
   --command "python process.py" \
   --resource-requirements-id $RR_ID \

@@ -18,7 +18,7 @@ import re  # noqa: F401
 import json
 
 from pydantic import BaseModel, ConfigDict, StrictBool, StrictInt
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List
 from torc.openapi_client.models.file_model import FileModel
 from typing import Optional, Set
 from typing_extensions import Self
@@ -27,7 +27,7 @@ class ListFilesResponse(BaseModel):
     """
     ListFilesResponse
     """ # noqa: E501
-    items: Optional[List[FileModel]] = None
+    items: List[FileModel]
     offset: StrictInt
     max_limit: StrictInt
     count: StrictInt

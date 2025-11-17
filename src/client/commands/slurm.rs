@@ -81,7 +81,7 @@ fn select_slurm_scheduler_interactively(
                     scheduler.name.as_deref().unwrap_or(""),
                     &scheduler.account,
                     scheduler.nodes,
-                    scheduler.walltime.as_deref().unwrap_or("")
+                    &scheduler.walltime
                 );
             }
 
@@ -284,7 +284,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 partition: partition.clone(),
                 qos: Some(qos.clone()),
                 tmp: tmp.clone(),
-                walltime: Some(walltime.clone()),
+                walltime: walltime.clone(),
                 extra: extra.clone(),
             };
 
@@ -363,7 +363,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 changed = true;
             }
             if let Some(w) = walltime {
-                scheduler.walltime = Some(w.clone());
+                scheduler.walltime = w.clone();
                 changed = true;
             }
             if let Some(e) = extra {
@@ -432,7 +432,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                                 name: s.name.clone().unwrap_or_default(),
                                 account: s.account.clone(),
                                 nodes: s.nodes,
-                                walltime: s.walltime.clone().unwrap_or_default(),
+                                walltime: s.walltime.clone(),
                                 partition: s.partition.clone().unwrap_or_default(),
                                 qos: s.qos.clone().unwrap_or_default(),
                             })
@@ -464,7 +464,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                     eprintln!("  Workflow ID: {}", scheduler.workflow_id);
                     eprintln!("  Account: {}", scheduler.account);
                     eprintln!("  Nodes: {}", scheduler.nodes);
-                    eprintln!("  Walltime: {}", scheduler.walltime.unwrap_or_default());
+                    eprintln!("  Walltime: {}", scheduler.walltime);
                     eprintln!("  Partition: {}", scheduler.partition.unwrap_or_default());
                     eprintln!("  QOS: {}", scheduler.qos.unwrap_or_default());
                     eprintln!(
@@ -584,7 +584,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 })
             });
 
-            match schedule_slurm_nodes_for_action(
+            match schedule_slurm_nodes(
                 config,
                 wf_id,
                 sched_config_id,
@@ -596,6 +596,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 *start_one_worker_per_node,
                 *start_server_on_head_node,
                 *keep_submission_scripts,
+                None, // torc_server_args - not available from CLI context
             ) {
                 Ok(()) => {
                     eprintln!("Successfully running {} Slurm job(s)", num_hpc_jobs);
@@ -626,7 +627,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
 ///
 /// # Returns
 /// Result indicating success or failure
-pub fn schedule_slurm_nodes_for_action(
+pub fn schedule_slurm_nodes(
     config: &Configuration,
     workflow_id: i64,
     scheduler_config_id: i64,
@@ -638,6 +639,7 @@ pub fn schedule_slurm_nodes_for_action(
     start_one_worker_per_node: bool,
     start_server_on_head_node: bool,
     keep_submission_scripts: bool,
+    torc_server_args: Option<&serde_json::Value>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let scheduler = match default_api::get_slurm_scheduler(config, scheduler_config_id) {
         Ok(s) => s,
@@ -655,10 +657,7 @@ pub fn schedule_slurm_nodes_for_action(
 
     let mut config_map = HashMap::new();
     config_map.insert("account".to_string(), scheduler.account.clone());
-    config_map.insert(
-        "walltime".to_string(),
-        scheduler.walltime.unwrap_or_else(|| "04:00:00".to_string()),
-    );
+    config_map.insert("walltime".to_string(), scheduler.walltime.clone());
     config_map.insert("nodes".to_string(), scheduler.nodes.to_string());
 
     if let Some(partition) = &scheduler.partition {
@@ -697,6 +696,7 @@ pub fn schedule_slurm_nodes_for_action(
             &config_map,
             start_one_worker_per_node,
             start_server_on_head_node,
+            torc_server_args,
         ) {
             error!("Error creating submission script: {}", e);
             return Err(e.into());

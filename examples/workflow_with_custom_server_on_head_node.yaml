@@ -1,0 +1,92 @@
+name: "Workflow with Custom Server on Head Node"
+user: "demo"
+description: "Demonstrates starting torc-server on head node with custom configuration"
+
+jobs:
+  - name: "setup"
+    command: "echo 'Setting up environment...' && sleep 2"
+    resource_requirements_name: "small"
+
+  - name: "data_processing_1"
+    command: "echo 'Processing dataset 1...' && sleep 5"
+    blocked_by_job_names: ["setup"]
+    resource_requirements_name: "medium"
+
+  - name: "data_processing_2"
+    command: "echo 'Processing dataset 2...' && sleep 5"
+    blocked_by_job_names: ["setup"]
+    resource_requirements_name: "medium"
+
+  - name: "data_processing_3"
+    command: "echo 'Processing dataset 3...' && sleep 5"
+    blocked_by_job_names: ["setup"]
+    resource_requirements_name: "medium"
+
+  - name: "merge_results"
+    command: "echo 'Merging results...' && sleep 3"
+    blocked_by_job_names: ["data_processing_1", "data_processing_2", "data_processing_3"]
+    resource_requirements_name: "small"
+
+resource_requirements:
+  - name: "small"
+    num_cpus: 2
+    num_gpus: 0
+    num_nodes: 1
+    memory: "4g"
+    runtime: "PT30M"
+
+  - name: "medium"
+    num_cpus: 8
+    num_gpus: 0
+    num_nodes: 1
+    memory: "16g"
+    runtime: "PT2H"
+
+slurm_schedulers:
+  # Scheduler that will run torc-server on head node
+  # This allocation provides compute resources and hosts the workflow server
+  - name: "main_compute"
+    account: "demo_project"
+    nodes: 4
+    walltime: "04:00:00"
+    mem: "32G"
+
+actions:
+  # Initialize workflow with setup directories
+  - trigger_type: "on_workflow_start"
+    action_type: "run_commands"
+    commands:
+      - "echo 'Workflow started at $(date)' > workflow_log.txt"
+      - "mkdir -p /scratch/dthom/torc-logs"
+      - "mkdir -p /scratch/dthom/results"
+      - "echo 'Created log and results directories'"
+
+  # Allocate Slurm nodes and start torc-server on head node
+  # The server will run with custom configuration for logging, database, and authentication
+  - trigger_type: "on_workflow_start"
+    action_type: "schedule_nodes"
+    scheduler_name: "main_compute"
+    scheduler_type: "slurm"
+    num_allocations: 1
+    start_one_worker_per_node: true
+    start_server_on_head_node: true
+    max_parallel_jobs: 4
+    torc_server_args:
+      # Logging configuration
+      log_level: "debug"
+      log_dir: "/scratch/dthom/torc-logs"
+      # Database location (must be on shared filesystem)
+      database: "/scratch/dthom/torc.db"
+      threads: 1
+      # Authentication (optional - uncomment if using htpasswd)
+      # auth_file: "/etc/torc/htpasswd"
+      # require_auth: true
+
+  # Cleanup when workflow completes
+  - trigger_type: "on_workflow_complete"
+    action_type: "run_commands"
+    commands:
+      - "echo 'Workflow completed at $(date)' >> workflow_log.txt"
+      - "echo 'Archiving results and logs...'"
+      - "tar -czf /scratch/dthom/results/workflow_results.tar.gz workflow_log.txt"
+      - "echo 'Cleanup complete. Check /scratch/dthom/torc-logs for detailed logs.'"

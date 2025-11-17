@@ -3,6 +3,7 @@ use crate::client::parameter_expansion::{
     ParameterValue, cartesian_product, parse_parameter_value, substitute_parameters,
 };
 use crate::models;
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -159,7 +160,7 @@ pub struct SlurmSchedulerSpec {
     /// Temporary storage
     pub tmp: Option<String>,
     /// Wall time limit
-    pub walltime: Option<String>,
+    pub walltime: String,
     /// Extra parameters
     pub extra: Option<String>,
 }
@@ -179,16 +180,31 @@ pub struct JobSpec {
     pub supports_termination: Option<bool>,
     /// Name of the resource requirements configuration
     pub resource_requirements_name: Option<String>,
-    /// Names of jobs that must complete before this job can run
+    /// Names of jobs that must complete before this job can run (exact matches)
     pub blocked_by_job_names: Option<Vec<String>>,
-    /// Names of input files required by this job
+    /// Regex patterns for jobs that must complete before this job can run
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub blocked_by_job_name_regexes: Option<Vec<String>>,
+    /// Names of input files required by this job (exact matches)
     pub input_file_names: Option<Vec<String>>,
-    /// Names of output files produced by this job
+    /// Regex patterns for input files required by this job
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_file_name_regexes: Option<Vec<String>>,
+    /// Names of output files produced by this job (exact matches)
     pub output_file_names: Option<Vec<String>>,
-    /// Names of input user data required by this job
+    /// Regex patterns for output files produced by this job
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub output_file_name_regexes: Option<Vec<String>>,
+    /// Names of input user data required by this job (exact matches)
     pub input_user_data_names: Option<Vec<String>>,
-    /// Names of output data produced by this job
+    /// Regex patterns for input user data required by this job
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub input_user_data_name_regexes: Option<Vec<String>>,
+    /// Names of output data produced by this job (exact matches)
     pub output_data_names: Option<Vec<String>>,
+    /// Regex patterns for output data produced by this job
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub output_user_data_name_regexes: Option<Vec<String>>,
     /// Name of the scheduler to use for this job
     pub scheduler_name: Option<String>,
     /// Optional parameters for generating multiple jobs
@@ -210,10 +226,15 @@ impl JobSpec {
             supports_termination: Some(false),
             resource_requirements_name: None,
             blocked_by_job_names: None,
+            blocked_by_job_name_regexes: None,
             input_file_names: None,
+            input_file_name_regexes: None,
             output_file_names: None,
+            output_file_name_regexes: None,
             input_user_data_names: None,
+            input_user_data_name_regexes: None,
             output_data_names: None,
+            output_user_data_name_regexes: None,
             scheduler_name: None,
             parameters: None,
         }
@@ -301,6 +322,52 @@ impl JobSpec {
                     names
                         .iter()
                         .map(|n| substitute_parameters(n, &combo))
+                        .collect(),
+                );
+            }
+
+            // Substitute parameters in regex pattern vectors
+            if let Some(ref regexes) = self.blocked_by_job_name_regexes {
+                new_spec.blocked_by_job_name_regexes = Some(
+                    regexes
+                        .iter()
+                        .map(|r| substitute_parameters(r, &combo))
+                        .collect(),
+                );
+            }
+
+            if let Some(ref regexes) = self.input_file_name_regexes {
+                new_spec.input_file_name_regexes = Some(
+                    regexes
+                        .iter()
+                        .map(|r| substitute_parameters(r, &combo))
+                        .collect(),
+                );
+            }
+
+            if let Some(ref regexes) = self.output_file_name_regexes {
+                new_spec.output_file_name_regexes = Some(
+                    regexes
+                        .iter()
+                        .map(|r| substitute_parameters(r, &combo))
+                        .collect(),
+                );
+            }
+
+            if let Some(ref regexes) = self.input_user_data_name_regexes {
+                new_spec.input_user_data_name_regexes = Some(
+                    regexes
+                        .iter()
+                        .map(|r| substitute_parameters(r, &combo))
+                        .collect(),
+                );
+            }
+
+            if let Some(ref regexes) = self.output_user_data_name_regexes {
+                new_spec.output_user_data_name_regexes = Some(
+                    regexes
+                        .iter()
+                        .map(|r| substitute_parameters(r, &combo))
                         .collect(),
                 );
             }
@@ -451,6 +518,18 @@ impl WorkflowSpec {
             }
         }
         Ok(())
+    }
+
+    /// Check if the workflow spec has an on_workflow_start action with schedule_nodes
+    /// Returns true if such an action exists, false otherwise
+    pub fn has_schedule_nodes_action(&self) -> bool {
+        if let Some(ref actions) = self.actions {
+            actions.iter().any(|action| {
+                action.trigger_type == "on_workflow_start" && action.action_type == "schedule_nodes"
+            })
+        } else {
+            false
+        }
     }
 
     /// Create a WorkflowModel on the server from a JSON file
@@ -871,14 +950,18 @@ impl WorkflowSpec {
                             &0
                         };
 
-                        serde_json::json!({
+                        let mut config = serde_json::json!({
                             "scheduler_type": scheduler_type,
                             "scheduler_id": scheduler_id,
                             "num_allocations": action_spec.num_allocations.unwrap_or(1),
                             "start_server_on_head_node": action_spec.start_server_on_head_node.unwrap_or(false),
                             "start_one_worker_per_node": action_spec.start_one_worker_per_node.unwrap_or(true),
-                            "max_parallel_jobs": action_spec.max_parallel_jobs.unwrap_or(1),
-                        })
+                        });
+                        // Only include max_parallel_jobs if explicitly specified
+                        if let Some(max_parallel_jobs) = action_spec.max_parallel_jobs {
+                            config["max_parallel_jobs"] = serde_json::json!(max_parallel_jobs);
+                        }
+                        config
                     }
                     _ => {
                         return Err(
@@ -903,6 +986,68 @@ impl WorkflowSpec {
         }
 
         Ok(())
+    }
+
+    /// Helper function to resolve names and regex patterns to IDs
+    /// Returns a vector of IDs matching either the exact names or the regex patterns
+    fn resolve_names_and_regexes(
+        exact_names: &Option<Vec<String>>,
+        regex_patterns: &Option<Vec<String>>,
+        name_to_id: &HashMap<String, i64>,
+        resource_type: &str, // e.g., "Input file", "Job dependency"
+        job_name: &str,      // The job that needs this resource
+    ) -> Result<Vec<i64>, Box<dyn std::error::Error>> {
+        let mut ids = Vec::new();
+
+        // Add IDs for exact name matches
+        if let Some(names) = exact_names {
+            for name in names {
+                match name_to_id.get(name) {
+                    Some(&id) => ids.push(id),
+                    None => {
+                        return Err(format!(
+                            "{} '{}' not found for job '{}'",
+                            resource_type, name, job_name
+                        )
+                        .into());
+                    }
+                }
+            }
+        }
+
+        // Add IDs for regex pattern matches
+        if let Some(patterns) = regex_patterns {
+            for pattern_str in patterns {
+                let re = Regex::new(pattern_str).map_err(|e| {
+                    format!(
+                        "Invalid regex '{}' for {} in job '{}': {}",
+                        pattern_str,
+                        resource_type.to_lowercase(),
+                        job_name,
+                        e
+                    )
+                })?;
+
+                let mut found_match = false;
+                for (name, &id) in name_to_id {
+                    if re.is_match(name) && !ids.contains(&id) {
+                        ids.push(id);
+                        found_match = true;
+                    }
+                }
+
+                // Error if regex didn't match anything
+                if !found_match {
+                    return Err(format!(
+                        "{} regex '{}' did not match any names for job '{}'",
+                        resource_type, pattern_str, job_name
+                    )
+                    .into());
+                }
+            }
+        }
+
+        Ok(ids)
     }
 
     /// Create JobModels with proper ID mapping using bulk API in batches of 1000
@@ -932,73 +1077,49 @@ impl WorkflowSpec {
             job_model.cancel_on_blocking_job_failure = job_spec.cancel_on_blocking_job_failure;
             job_model.supports_termination = job_spec.supports_termination;
 
-            // Map file names to IDs
-            if let Some(input_file_names) = &job_spec.input_file_names {
-                let mut input_file_ids = Vec::new();
-                for file_name in input_file_names {
-                    match file_name_to_id.get(file_name) {
-                        Some(&file_id) => input_file_ids.push(file_id),
-                        None => {
-                            return Err(format!(
-                                "Input file '{}' not found for job '{}'",
-                                file_name, job_spec.name
-                            )
-                            .into());
-                        }
-                    }
-                }
+            // Map file names and regexes to IDs
+            let input_file_ids = Self::resolve_names_and_regexes(
+                &job_spec.input_file_names,
+                &job_spec.input_file_name_regexes,
+                file_name_to_id,
+                "Input file",
+                &job_spec.name,
+            )?;
+            if !input_file_ids.is_empty() {
                 job_model.input_file_ids = Some(input_file_ids);
             }
 
-            if let Some(output_file_names) = &job_spec.output_file_names {
-                let mut output_file_ids = Vec::new();
-                for file_name in output_file_names {
-                    match file_name_to_id.get(file_name) {
-                        Some(&file_id) => output_file_ids.push(file_id),
-                        None => {
-                            return Err(format!(
-                                "Output file '{}' not found for job '{}'",
-                                file_name, job_spec.name
-                            )
-                            .into());
-                        }
-                    }
-                }
+            let output_file_ids = Self::resolve_names_and_regexes(
+                &job_spec.output_file_names,
+                &job_spec.output_file_name_regexes,
+                file_name_to_id,
+                "Output file",
+                &job_spec.name,
+            )?;
+            if !output_file_ids.is_empty() {
                 job_model.output_file_ids = Some(output_file_ids);
             }
 
-            // Map user data names to IDs
-            if let Some(input_user_data_names) = &job_spec.input_user_data_names {
-                let mut input_user_data_ids = Vec::new();
-                for user_data_name in input_user_data_names {
-                    match user_data_name_to_id.get(user_data_name) {
-                        Some(&user_data_id) => input_user_data_ids.push(user_data_id),
-                        None => {
-                            return Err(format!(
-                                "Input user data '{}' not found for job '{}'",
-                                user_data_name, job_spec.name
-                            )
-                            .into());
-                        }
-                    }
-                }
+            // Map user data names and regexes to IDs
+            let input_user_data_ids = Self::resolve_names_and_regexes(
+                &job_spec.input_user_data_names,
+                &job_spec.input_user_data_name_regexes,
+                user_data_name_to_id,
+                "Input user data",
+                &job_spec.name,
+            )?;
+            if !input_user_data_ids.is_empty() {
                 job_model.input_user_data_ids = Some(input_user_data_ids);
             }
 
-            if let Some(output_data_names) = &job_spec.output_data_names {
-                let mut output_user_data_ids = Vec::new();
-                for user_data_name in output_data_names {
-                    match user_data_name_to_id.get(user_data_name) {
-                        Some(&user_data_id) => output_user_data_ids.push(user_data_id),
-                        None => {
-                            return Err(format!(
-                                "Output user data '{}' not found for job '{}'",
-                                user_data_name, job_spec.name
-                            )
-                            .into());
-                        }
-                    }
-                }
+            let output_user_data_ids = Self::resolve_names_and_regexes(
+                &job_spec.output_data_names,
+                &job_spec.output_user_data_name_regexes,
+                user_data_name_to_id,
+                "Output user data",
+                &job_spec.name,
+            )?;
+            if !output_user_data_ids.is_empty() {
                 job_model.output_user_data_ids = Some(output_user_data_ids);
             }
 
@@ -1049,7 +1170,7 @@ impl WorkflowSpec {
                 )
             })?;
 
-            let created_batch = response.items.ok_or("Create jobs response missing items")?;
+            let created_batch = response.jobs.ok_or("Create jobs response missing items")?;
 
             if created_batch.len() != batch.len() {
                 return Err(format!(
@@ -1082,22 +1203,17 @@ impl WorkflowSpec {
         created_jobs: &HashMap<String, models::JobModel>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         for job_spec in &spec.jobs {
-            if let Some(blocked_by_job_names) = &job_spec.blocked_by_job_names {
-                // Map job names to IDs for dependencies
-                let mut blocked_by_job_ids = Vec::new();
-                for job_name in blocked_by_job_names {
-                    match job_name_to_id.get(job_name) {
-                        Some(&job_id) => blocked_by_job_ids.push(job_id),
-                        None => {
-                            return Err(format!(
-                                "Blocking job '{}' not found for job '{}'",
-                                job_name, job_spec.name
-                            )
-                            .into());
-                        }
-                    }
-                }
+            // Resolve both exact names and regex patterns for job dependencies
+            let blocked_by_job_ids = Self::resolve_names_and_regexes(
+                &job_spec.blocked_by_job_names,
+                &job_spec.blocked_by_job_name_regexes,
+                job_name_to_id,
+                "Blocking job",
+                &job_spec.name,
+            )?;
 
+            // Only update if there are dependencies
+            if !blocked_by_job_ids.is_empty() {
                 // Get the current job ID and model
                 let current_job_id = job_name_to_id
                     .get(&job_spec.name)
@@ -1514,7 +1630,7 @@ impl WorkflowSpec {
             partition: None,
             qos: None,
             tmp: None,
-            walltime: None,
+            walltime: String::new(),
             extra: None,
         };
 
@@ -1584,7 +1700,8 @@ impl WorkflowSpec {
                             .entries()
                             .first()
                             .and_then(|e| e.value().as_string())
-                            .map(|s| s.to_string());
+                            .ok_or("walltime must have a string value")?
+                            .to_string();
                     }
                     "extra" => {
                         spec.extra = child
@@ -1596,6 +1713,11 @@ impl WorkflowSpec {
                     _ => {}
                 }
             }
+        }
+
+        // Validate required fields
+        if spec.walltime.is_empty() {
+            return Err("walltime is required for Slurm scheduler".into());
         }
 
         Ok(spec)

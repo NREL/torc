@@ -531,11 +531,11 @@ fn test_reinitialize_jobs(start_server: &ServerProcess) {
     assert!(result.is_ok());
 
     // Reinitialize should succeed
-    let result = manager.reinitialize_jobs(false, false);
+    let result = manager.reinitialize_jobs(false);
     assert!(result.is_ok());
 
     // Dry run should also succeed
-    let result_dry = manager.reinitialize_jobs(false, true);
+    let result_dry = manager.reinitialize_jobs(true);
     assert!(result_dry.is_ok());
 }
 

@@ -168,8 +168,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **claim_jobs_based_on_resources**
-> claim_jobs_based_on_resources(_api::DefaultApi, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, _mediaType=nothing) -> PrepareJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse <br/>
-> claim_jobs_based_on_resources(_api::DefaultApi, response_stream::Channel, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, _mediaType=nothing) -> Channel{ PrepareJobsForSubmissionResponse }, OpenAPI.Clients.ApiResponse
+> claim_jobs_based_on_resources(_api::DefaultApi, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, _mediaType=nothing) -> ClaimJobsBasedOnResourcesResponse, OpenAPI.Clients.ApiResponse <br/>
+> claim_jobs_based_on_resources(_api::DefaultApi, response_stream::Channel, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, _mediaType=nothing) -> Channel{ ClaimJobsBasedOnResourcesResponse }, OpenAPI.Clients.ApiResponse
 
 Return jobs that are ready for submission and meet worker resource requirements. Set status to pending.
 
@@ -192,7 +192,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**PrepareJobsForSubmissionResponse**](PrepareJobsForSubmissionResponse.md)
+[**ClaimJobsBasedOnResourcesResponse**](ClaimJobsBasedOnResourcesResponse.md)
 
 ### Authorization
 
@@ -206,8 +206,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **claim_next_jobs**
-> claim_next_jobs(_api::DefaultApi, id::Int64; limit=nothing, body=nothing, _mediaType=nothing) -> PrepareNextJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse <br/>
-> claim_next_jobs(_api::DefaultApi, response_stream::Channel, id::Int64; limit=nothing, body=nothing, _mediaType=nothing) -> Channel{ PrepareNextJobsForSubmissionResponse }, OpenAPI.Clients.ApiResponse
+> claim_next_jobs(_api::DefaultApi, id::Int64; limit=nothing, body=nothing, _mediaType=nothing) -> ClaimNextJobsResponse, OpenAPI.Clients.ApiResponse <br/>
+> claim_next_jobs(_api::DefaultApi, response_stream::Channel, id::Int64; limit=nothing, body=nothing, _mediaType=nothing) -> Channel{ ClaimNextJobsResponse }, OpenAPI.Clients.ApiResponse
 
 Return user-requested number of jobs that are ready for submission. Sets status to pending.
 
@@ -229,7 +229,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**PrepareNextJobsForSubmissionResponse**](PrepareNextJobsForSubmissionResponse.md)
+[**ClaimNextJobsResponse**](ClaimNextJobsResponse.md)
 
 ### Authorization
 
@@ -396,8 +396,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **create_jobs**
-> create_jobs(_api::DefaultApi, body::JobsModel; _mediaType=nothing) -> AddJobsResponse, OpenAPI.Clients.ApiResponse <br/>
-> create_jobs(_api::DefaultApi, response_stream::Channel, body::JobsModel; _mediaType=nothing) -> Channel{ AddJobsResponse }, OpenAPI.Clients.ApiResponse
+> create_jobs(_api::DefaultApi, body::JobsModel; _mediaType=nothing) -> CreateJobsResponse, OpenAPI.Clients.ApiResponse <br/>
+> create_jobs(_api::DefaultApi, response_stream::Channel, body::JobsModel; _mediaType=nothing) -> Channel{ CreateJobsResponse }, OpenAPI.Clients.ApiResponse
 
 Create jobs in bulk. Recommended max job count of 10,000.
 
@@ -412,7 +412,7 @@ Name | Type | Description  | Notes
 
 ### Return type
 
-[**AddJobsResponse**](AddJobsResponse.md)
+[**CreateJobsResponse**](CreateJobsResponse.md)
 
 ### Authorization
 
@@ -2927,8 +2927,8 @@ No authorization required
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
 # **update_event**
-> update_event(_api::DefaultApi, id::Int64, body::Any; _mediaType=nothing) -> EventModel, OpenAPI.Clients.ApiResponse <br/>
-> update_event(_api::DefaultApi, response_stream::Channel, id::Int64, body::Any; _mediaType=nothing) -> Channel{ EventModel }, OpenAPI.Clients.ApiResponse
+> update_event(_api::DefaultApi, id::Int64, body::EventModel; _mediaType=nothing) -> EventModel, OpenAPI.Clients.ApiResponse <br/>
+> update_event(_api::DefaultApi, response_stream::Channel, id::Int64, body::EventModel; _mediaType=nothing) -> Channel{ EventModel }, OpenAPI.Clients.ApiResponse
 
 Update an event.
 
@@ -2940,7 +2940,7 @@ Name | Type | Description  | Notes
 ------------- | ------------- | ------------- | -------------
  **_api** | **DefaultApi** | API context | 
 **id** | **Int64** | ID of the event. |
-**body** | **Any** | event to update in the table. |
+**body** | [**EventModel**](EventModel.md) | event to update in the table. |
 
 ### Return type
 

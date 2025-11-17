@@ -134,9 +134,9 @@ These indexes optimize the resource-based job allocation query:
 
 #### 11. `resource_requirements(num_gpus, runtime_s, memory_bytes)`
 **Impact**: Medium
-**Rationale**: Composite index for ORDER BY clause in `prepare_jobs_for_submission`. Enables efficient sorting of jobs by resource priority.
+**Rationale**: Composite index for ORDER BY clause in `claim_jobs_based_on_resources`. Enables efficient sorting of jobs by resource priority.
 **Queries affected**:
-- `prepare_jobs_for_submission` with sort_method = GpusRuntimeMemory
+- `claim_jobs_based_on_resources` with sort_method = GpusRuntimeMemory
 - Resource-based job scheduling
 
 Note: An alternative index for `GpusMemoryRuntime` sort order could be considered:

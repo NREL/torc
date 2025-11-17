@@ -18,7 +18,6 @@ MiB = KiB * KiB
 GiB = MiB * KiB
 TiB = GiB * KiB
 JOB_STDIO_DIR = "job-stdio"
-STATS_DIR = "stats"
 
 timer_stats_collector = TimerStatsCollector()
 
@@ -46,9 +45,8 @@ class JobStatus(str, enum.Enum):
     TERMINATED = "terminated"
     DONE = "done"
     READY = "ready"
-    SCHEDULED = "scheduled"
-    SUBMITTED = "submitted"
-    SUBMITTEDpENDING = "submitted_pending"
+    PENDING = "pending"
+    RUNNING = "running"
     DISABLED = "disabled"
 
 

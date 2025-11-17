@@ -27,7 +27,6 @@ Save as `diamond.yaml`:
 
 ```yaml
 name: diamond_workflow
-user: myuser
 description: Diamond workflow demonstrating fan-out and fan-in
 
 jobs:
@@ -101,20 +100,20 @@ echo -e "apple red\nbanana yellow\ncherry red\ndate brown" > /tmp/input.txt
 ## Step 3: Create and Initialize Workflow
 
 ```bash
-WORKFLOW_ID=$(torc-client workflows create-from-spec diamond.yaml | jq -r '.id')
+WORKFLOW_ID=$(torc workflows create-from-spec diamond.yaml | jq -r '.id')
 
 # Update input file timestamp so it's "ready"
 touch /tmp/input.txt
 
 # Initialize workflow
-torc-client workflows initialize-jobs $WORKFLOW_ID
+torc workflows initialize-jobs $WORKFLOW_ID
 ```
 
 ## Step 4: Observe Dependency Resolution
 
 ```bash
 # Check job statuses
-torc-client jobs list $WORKFLOW_ID | jq '.jobs[] | {name, status}'
+torc jobs list $WORKFLOW_ID | jq '.jobs[] | {name, status}'
 ```
 
 Expected output:
@@ -129,8 +128,8 @@ Only `preprocess` is ready because it has no dependencies. The others are blocke
 
 ## Step 5: Run Workflow
 
-```bash
-torc-job-runner $WORKFLOW_ID
+```console
+torc run $WORKFLOW_ID
 ```
 
 Watch the execution:
@@ -141,6 +140,6 @@ Watch the execution:
 
 ## Step 6: Verify Results
 
-```bash
+```console
 cat /tmp/output.txt
 ```

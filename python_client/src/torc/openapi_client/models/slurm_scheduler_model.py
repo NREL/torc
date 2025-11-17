@@ -37,7 +37,7 @@ class SlurmSchedulerModel(BaseModel):
     partition: Optional[StrictStr] = Field(default=None, description="Compute node partition; likely not necessary because Slurm should optimize it.")
     qos: Optional[StrictStr] = Field(default='normal', description="Priority of Slurm job")
     tmp: Optional[StrictStr] = Field(default=None, description="Compute node local storage size requirement")
-    walltime: Optional[StrictStr] = Field(default=None, description="Slurm runtime requirement, e.g., 04:00:00")
+    walltime: StrictStr = Field(description="Slurm runtime requirement, e.g., 04:00:00")
     extra: Optional[StrictStr] = Field(default=None, description="Extra Slurm parameters that torc will append to the sbatch command")
     __properties: ClassVar[List[str]] = ["id", "workflow_id", "name", "account", "gres", "mem", "nodes", "ntasks_per_node", "partition", "qos", "tmp", "walltime", "extra"]
 

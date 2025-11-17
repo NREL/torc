@@ -274,10 +274,15 @@ fn test_workflow_spec_expand_parameters() {
             resource_requirements_name: None,
             scheduler_name: None,
             blocked_by_job_names: None,
+            blocked_by_job_name_regexes: None,
             input_file_names: None,
+            input_file_name_regexes: None,
             output_file_names: None,
+            output_file_name_regexes: None,
             input_user_data_names: None,
+            input_user_data_name_regexes: None,
             output_data_names: None,
+            output_user_data_name_regexes: None,
             parameters: Some({
                 let mut params = HashMap::new();
                 params.insert("i".to_string(), "1:3".to_string());

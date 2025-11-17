@@ -81,7 +81,7 @@ function claim_action(_api::DefaultApi, response_stream::Channel, id::Int64, act
 end
 
 const _returntypes_claim_jobs_based_on_resources_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => PrepareJobsForSubmissionResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ClaimJobsBasedOnResourcesResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -105,7 +105,7 @@ Params:
 - body::ComputeNodesResources (required)
 - sort_method::JobsSortMethod
 
-Return: PrepareJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse
+Return: ClaimJobsBasedOnResourcesResponse, OpenAPI.Clients.ApiResponse
 """
 function claim_jobs_based_on_resources(_api::DefaultApi, id::Int64, limit::Int64, body::ComputeNodesResources; sort_method=nothing, _mediaType=nothing)
     _ctx = _oacinternal_claim_jobs_based_on_resources(_api, id, limit, body; sort_method=sort_method, _mediaType=_mediaType)
@@ -118,7 +118,7 @@ function claim_jobs_based_on_resources(_api::DefaultApi, response_stream::Channe
 end
 
 const _returntypes_claim_next_jobs_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => PrepareNextJobsForSubmissionResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => ClaimNextJobsResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -140,7 +140,7 @@ Params:
 - limit::Int64
 - body::Any
 
-Return: PrepareNextJobsForSubmissionResponse, OpenAPI.Clients.ApiResponse
+Return: ClaimNextJobsResponse, OpenAPI.Clients.ApiResponse
 """
 function claim_next_jobs(_api::DefaultApi, id::Int64; limit=nothing, body=nothing, _mediaType=nothing)
     _ctx = _oacinternal_claim_next_jobs(_api, id; limit=limit, body=body, _mediaType=_mediaType)
@@ -314,7 +314,7 @@ function create_job(_api::DefaultApi, response_stream::Channel, body::JobModel; 
 end
 
 const _returntypes_create_jobs_DefaultApi = Dict{Regex,Type}(
-    Regex("^" * replace("200", "x"=>".") * "\$") => AddJobsResponse,
+    Regex("^" * replace("200", "x"=>".") * "\$") => CreateJobsResponse,
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
@@ -332,7 +332,7 @@ Create jobs in bulk. Recommended max job count of 10,000.
 Params:
 - body::JobsModel (required)
 
-Return: AddJobsResponse, OpenAPI.Clients.ApiResponse
+Return: CreateJobsResponse, OpenAPI.Clients.ApiResponse
 """
 function create_jobs(_api::DefaultApi, body::JobsModel; _mediaType=nothing)
     _ctx = _oacinternal_create_jobs(_api, body; _mediaType=_mediaType)
@@ -2885,7 +2885,7 @@ const _returntypes_update_event_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
-function _oacinternal_update_event(_api::DefaultApi, id::Int64, body::Any; _mediaType=nothing)
+function _oacinternal_update_event(_api::DefaultApi, id::Int64, body::EventModel; _mediaType=nothing)
     _ctx = OpenAPI.Clients.Ctx(_api.client, "PUT", _returntypes_update_event_DefaultApi, "/events/{id}", [], body)
     OpenAPI.Clients.set_param(_ctx.path, "id", id)  # type Int64
     OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
@@ -2899,16 +2899,16 @@ Update an event.
 
 Params:
 - id::Int64 (required)
-- body::Any (required)
+- body::EventModel (required)
 
 Return: EventModel, OpenAPI.Clients.ApiResponse
 """
-function update_event(_api::DefaultApi, id::Int64, body::Any; _mediaType=nothing)
+function update_event(_api::DefaultApi, id::Int64, body::EventModel; _mediaType=nothing)
     _ctx = _oacinternal_update_event(_api, id, body; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx)
 end
 
-function update_event(_api::DefaultApi, response_stream::Channel, id::Int64, body::Any; _mediaType=nothing)
+function update_event(_api::DefaultApi, response_stream::Channel, id::Int64, body::EventModel; _mediaType=nothing)
     _ctx = _oacinternal_update_event(_api, id, body; _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end

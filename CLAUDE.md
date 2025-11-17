@@ -7,7 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 **Torc** is a distributed workflow orchestration system designed for managing complex computational pipelines with job dependencies, resource requirements, and distributed execution. The system uses a client-server architecture where:
 
 - **Server**: REST API service (Rust) that manages workflow state, job dependencies, and provides a SQLite database for persistence
-- **Rust Client**: CLI application and library for workflow management and local job execution
+- **Unified CLI**: Single `torc` binary providing all client functionality (workflow management, job execution, TUI, resource plotting)
+- **Standalone Binaries**: Optional specialized binaries (`torc`, `torc-server`, `torc-slurm-job-runner`) for deployment scenarios
 - **Python Client**: CLI and library for workflow management (primarily for Python-based workflows)
 
 **Core Concepts:**
@@ -22,27 +23,31 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```
 torc/
-├── server/              # Rust-based REST API server
-│   ├── src/
-│   │   ├── bin/server/  # Server implementation
-│   │   │   └── api/     # Modular API implementations
-│   │   └── lib.rs       # Generated OpenAPI types
-│   ├── migrations/      # SQLite database migrations
-│   └── CLAUDE.md        # Server-specific guidance
-├── rust-client/         # Rust CLI client and library
-│   ├── src/
+├── src/                 # Main torc library and unified CLI
+│   ├── client/          # Client modules
 │   │   ├── commands/    # CLI command handlers
 │   │   ├── apis/        # Generated API client
-│   │   ├── models/      # Generated data models
 │   │   ├── workflow_spec.rs    # Workflow specification system
 │   │   ├── workflow_manager.rs # Workflow lifecycle management
 │   │   ├── job_runner.rs       # Local job execution engine
 │   │   └── async_cli_command.rs # Non-blocking job execution
-│   ├── examples/        # Example workflow specifications
-│   └── CLAUDE.md        # Rust client-specific guidance
-└── python_client/       # Python CLI client and library
-    ├── src/torc/        # Python package
-    └── pyproject.toml   # Python project configuration
+│   ├── server/          # Server implementation modules
+│   │   └── api/         # Modular API implementations
+│   ├── tui/             # Interactive terminal UI modules
+│   ├── run_jobs_cmd.rs  # Job runner command module
+│   ├── tui_runner.rs    # TUI runner command module
+│   ├── plot_resources_cmd.rs # Plot resources command module
+│   ├── main.rs          # Unified CLI entry point
+│   ├── lib.rs           # Library root
+│   └── models.rs        # Shared data models
+├── torc-server/         # Standalone server binary
+├── torc-tui/            # Standalone TUI binary
+├── torc-plot-resources/ # Standalone plotting binary
+├── torc-slurm-job-runner/ # Slurm job runner binary
+├── python_client/       # Python CLI client and library
+│   ├── src/torc/        # Python package
+│   └── pyproject.toml   # Python project configuration
+└── examples/            # Example workflow specifications
 ```
 
 ## Component-Specific Guidance
@@ -54,12 +59,13 @@ torc/
 - Job status lifecycle and critical operations
 - Database schema and concurrency model
 
-**For Rust client development**, see `rust-client/CLAUDE.md` for:
-- Client build, test, and CLI usage
-- Workflow specification system (JSON/JSON5/YAML formats)
-- Workflow manager and job runner architecture
-- API client integration patterns
-- Resource management and job execution
+**For Rust client development**:
+- All client code is in `src/client/`
+- Unified CLI is built with: `cargo build --bin torc --features "client,tui,plot_resources"`
+- Workflow specification system in `src/client/workflow_spec.rs` (JSON/JSON5/YAML formats)
+- Workflow manager and job runner in `src/client/`
+- API client integration patterns in `src/client/apis/`
+- Resource management and job execution in `src/client/job_runner.rs`
 
 **For Python client development**:
 - Package is managed with setuptools and pyproject.toml
@@ -87,27 +93,40 @@ sqlx migrate run
 sqlx migrate revert
 ```
 
-### Rust Client Operations
+### Unified CLI Operations
 ```bash
-cd rust-client
+# Build unified torc CLI
+cargo build --release --bin torc --features "client,tui,plot_resources"
 
-# Build client
-cargo build --release
+# Set server URL (optional, defaults to localhost:8080)
+export TORC_API_URL="http://localhost:8080/torc-service/v1"
 
-# Set server URL
-export TORC_BASE_URL="http://localhost:8080/torc-service/v1"
+# Quick workflow execution (convenience commands)
+./target/release/torc run examples/sample_workflow.yaml    # Create and run locally
+./target/release/torc submit examples/sample_workflow.yaml # Create and submit to scheduler
 
-# Create workflow from specification file
-./target/release/torc-client workflows create-from-spec examples/sample_workflow.yaml
+# Or use explicit workflow management
+./target/release/torc workflows create examples/sample_workflow.yaml
+./target/release/torc workflows submit <workflow_id>  # Submit to scheduler
+./target/release/torc workflows run <workflow_id>     # Run locally
 
-# Start workflow execution
-./target/release/torc-client workflows start <workflow_id>
-
-# Run workflow locally
-./target/release/torc-job-runner <url> <workflow_id> <output_dir>
+# Other commands
+./target/release/torc tui                              # Launch interactive TUI
+./target/release/torc plot-resources output/resource_metrics.db # Generate plots
+./target/release/torc workflows list                   # List workflows
+./target/release/torc jobs list <workflow_id>          # View job status
 
 # Run tests
 cargo test
+```
+
+### Standalone Binaries (for deployment)
+```bash
+# Build individual binaries
+cargo build --release --bin torc
+cargo build --release --bin torc-server
+
+# Use standalone binaries
 ```
 
 ### Python Client Operations
@@ -141,15 +160,19 @@ The server uses a **modular API structure** where each resource type (workflows,
 
 ### Client Architecture
 
-The Rust client provides both a **CLI and library interface** with these key components:
+The Rust client provides a **unified CLI and library interface** with these key components:
 
-1. **Workflow Specification System** (`workflow_spec.rs`): Declarative workflow definitions in JSON/JSON5/YAML with automatic dependency resolution and name-to-ID mapping
+1. **Workflow Specification System** (`src/client/workflow_spec.rs`): Declarative workflow definitions in JSON/JSON5/YAML with automatic dependency resolution and name-to-ID mapping
 
-2. **Workflow Manager** (`workflow_manager.rs`): Handles workflow lifecycle (start, restart, initialization, validation)
+2. **Workflow Manager** (`src/client/workflow_manager.rs`): Handles workflow lifecycle (start, restart, initialization, validation)
 
-3. **Job Runner** (`job_runner.rs`): Local parallel job execution with resource management (CPU, memory, GPU tracking) and polling-based status updates
+3. **Job Runner** (`src/client/job_runner.rs`): Local parallel job execution with resource management (CPU, memory, GPU tracking) and polling-based status updates
 
-4. **Async CLI Command** (`async_cli_command.rs`): Non-blocking subprocess execution for running jobs without blocking the runner
+4. **Async CLI Command** (`src/client/async_cli_command.rs`): Non-blocking subprocess execution for running jobs without blocking the runner
+
+5. **Command Modules**: Binary-specific command modules (`src/run_jobs_cmd.rs`, `src/tui_runner.rs`, `src/plot_resources_cmd.rs`) that are re-used by both the unified CLI and standalone binaries
+
+6. **Interactive TUI** (`src/tui/`): Terminal-based UI for workflow monitoring and management
 
 ### Data Flow
 
@@ -216,7 +239,7 @@ JobSpec and FileSpec support **parameterization** to automatically generate mult
   - Lists: `"[1,5,10]"` or `"['train','test','validation']"`
 - **Multi-dimensional**: Multiple parameters create Cartesian product (e.g., 3 learning rates × 3 batch sizes = 9 jobs)
 - **Implementation**: `parameter_expansion.rs` module with `ParameterValue` enum and expansion functions
-- **Examples**: See `torc-client/examples/hundred_jobs_parameterized.yaml`, `hyperparameter_sweep.yaml`, and `data_pipeline_parameterized.yaml`
+- **Examples**: See `examples/hundred_jobs_parameterized.yaml`, `hyperparameter_sweep.yaml`, and `data_pipeline_parameterized.yaml`
 
 ### Pagination
 List endpoints support `offset` and `limit` query parameters:
@@ -233,23 +256,37 @@ List endpoints support `offset` and `limit` query parameters:
 ### Adding a New API Endpoint
 1. Update OpenAPI spec (external to this repo)
 2. Regenerate API code
-3. Add implementation in appropriate `server/src/bin/server/api/*.rs` module
-4. Update delegation in `server/src/bin/server/mod.rs`
-5. Update client API in `rust-client/src/apis/`
-6. Add CLI command handler if needed in `rust-client/src/commands/`
+3. Add implementation in appropriate `src/server/api/*.rs` module
+4. Update client API in `src/client/apis/`
+5. Add CLI command handler if needed in `src/client/commands/`
 
 ### Creating a Workflow from Specification
 1. Write workflow spec file (JSON/JSON5/YAML) following `WorkflowSpec` format
-2. See `rust-client/examples/sample_workflow.json` for complete example
-3. Run: `torc-client workflows create-from-spec <spec_file>`
+2. See `examples/sample_workflow.json` for complete example
+3. Run: `torc workflows create <spec_file>`
 4. The command creates all components (workflow, jobs, files, user_data, schedulers) atomically
 5. If any step fails, the entire workflow is rolled back
 
 ### Running a Workflow Locally
-1. Create and initialize workflow: `torc-client workflows start <workflow_id>`
-2. Run jobs locally: `torc-job-runner <workflow_id>`
-3. Monitor progress: `torc-client workflows status <workflow_id>`
-4. View job results: `torc-client jobs list <workflow_id>`
+**Quick method:**
+- `torc run <spec_file>` - Create from spec and run locally in one step
+- `torc run <workflow_id>` - Run existing workflow locally
+
+**Explicit method:**
+1. Create workflow: `torc workflows create <spec_file>`
+2. Run workflow: `torc workflows run <workflow_id>`
+3. Monitor progress: `torc workflows status <workflow_id>`
+4. View job results: `torc jobs list <workflow_id>`
+5. Launch interactive UI: `torc tui`
+
+### Submitting a Workflow to Scheduler
+**Quick method:**
+- `torc submit <spec_file>` - Create from spec and submit to scheduler (requires on_workflow_start/schedule_nodes action)
+- `torc submit <workflow_id>` - Submit existing workflow to scheduler
+
+**Explicit method:**
+1. Create workflow: `torc workflows create <spec_file>`
+2. Submit workflow: `torc workflows submit <workflow_id>`
 
 ### Debugging
 
@@ -260,7 +297,7 @@ RUST_LOG=sqlx=debug cargo run --bin torc-server
 
 **Client Verbose Output**:
 ```bash
-RUST_LOG=debug torc-client workflows list
+RUST_LOG=debug torc workflows list
 ```
 
 **Database Inspection**:
@@ -275,20 +312,55 @@ sqlite3 server/db/sqlite/dev.db
 - Default: `sqlite:db/sqlite/dev.db`
 
 ### Client Configuration
-- `TORC_BASE_URL`: Torc service URL (env var or `--url` flag)
+- `TORC_API_URL`: Torc service URL (env var or `--url` flag)
 - Default: `http://localhost:8080/torc-service/v1`
 - `USER` or `USERNAME`: Workflow owner (auto-detected from environment)
 
 ## Development Workflow
 
-1. **Start Server**: `cd server && cargo run --bin torc-server`
-2. **Build Client**: `cd rust-client && cargo build --release`
-3. **Create Workflow**: `torc-client workflows create-from-spec examples/sample_workflow.yaml`
-4. **Run Workflow**: `torc-client workflows start <id> && torc-job-runner <id>`
-5. **Monitor**: `torc-client workflows status <id>`
+1. **Start Server** (standalone binary): `cargo run --bin torc-server`
+2. **Build Unified CLI**: `cargo build --release --bin torc --features "client,tui,plot_resources"`
+3. **Quick Execution**: `torc run examples/sample_workflow.yaml` OR `torc submit examples/sample_workflow.yaml`
+4. **Or Explicit**: `torc workflows create examples/sample_workflow.yaml` → `torc workflows run <id>`
+5. **Monitor**: `torc workflows status <id>` or `torc tui`
+
+**Note**: The server is always run as a standalone binary (`torc-server`), not through the unified CLI.
+
+## CLI Commands Quick Reference
+
+**Quick Workflow Execution** (convenience commands):
+- `torc run <spec_file|id>` - Create from spec and run locally, or run existing workflow
+- `torc submit <spec_file|id>` - Create from spec and submit to scheduler, or submit existing workflow
+
+**Workflow Management**:
+- `torc workflows create <file>` - Create workflow from specification
+- `torc workflows new` - Create empty workflow interactively
+- `torc workflows list` - List all workflows
+- `torc workflows submit <id>` - Submit workflow to scheduler (requires on_workflow_start/schedule_nodes action)
+- `torc workflows run <id>` - Run workflow locally
+- `torc workflows initialize <id>` - Initialize workflow (set up dependencies without execution)
+- `torc workflows status <id>` - Check workflow status
+- `torc workflows cancel <id>` - Cancel workflow
+
+**Job Management**:
+- `torc jobs list <workflow_id>` - List jobs for workflow
+- `torc jobs get <job_id>` - Get job details
+- `torc jobs update <job_id>` - Update job status
+
+**Execution**:
+- `torc run <workflow_spec_or_id>` - Run workflow locally (top-level command)
+- `torc submit <workflow_spec_or_id>` - Submit workflow to scheduler (top-level command)
+- `torc tui` - Interactive terminal UI
+
+**Utilities**:
+- `torc plot-resources <db>` - Generate resource plots
+- `torc reports <subcommand>` - Generate reports
+
+**Global Options** (available on all commands):
+- `--url <URL>` - Torc server URL (can also use `TORC_API_URL` env var)
+- `-f, --format <FORMAT>` - Output format (table or json)
 
 ## Additional Resources
 
-- Server-specific implementation details: `server/CLAUDE.md`
-- Rust client CLI usage and examples: `rust-client/CLAUDE.md` and `rust-client/examples/README.md`
-- API documentation: `server/README.md` (endpoint reference)
+- Example workflow specifications: `examples/`
+- API documentation: Generated from OpenAPI spec

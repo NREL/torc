@@ -10,3 +10,6 @@ This section provides problem-oriented guides for accomplishing specific tasks w
 - Configuring resource requirements
 - Debugging workflow failures with log files
 - Monitoring workflow execution
+- Deploying and operating the server in production
+- Configuring logging and daemonization
+- Setting up authentication

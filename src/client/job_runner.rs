@@ -159,8 +159,9 @@ impl JobRunner {
         }
 
         info!("Starting torc job runner version={} workflow_id={} hostname={} output_dir={} resources={:?} rules={:?}
-            job_completion_poll_interval={}s",
-            version, self.workflow_id, hostname, self.output_dir.display(), self.resources, self.rules, self.job_completion_poll_interval);
+            job_completion_poll_interval={}s max_parallel_jobs={:?}",
+            version, self.workflow_id, hostname, self.output_dir.display(), self.resources,
+            self.rules, self.job_completion_poll_interval, self.max_parallel_jobs);
 
         // Check for and execute on_workflow_start and on_worker_start actions before entering main loop
         self.execute_workflow_start_actions();
@@ -405,7 +406,7 @@ impl JobRunner {
     }
 
     fn run_ready_jobs_based_on_resources(&mut self) {
-        let limit = self.max_parallel_jobs.unwrap_or(self.resources.num_cpus);
+        let limit = self.resources.num_cpus;
         match utils::send_with_retries(
             &self.config,
             || {
@@ -425,13 +426,16 @@ impl JobRunner {
                     debug!("No ready jobs found");
                     return;
                 }
+                if jobs.len() > limit as usize {
+                    panic!(
+                        "Bug in server: too many jobs returned. limit: {}, returned: {}",
+                        limit,
+                        jobs.len()
+                    );
+                }
                 debug!("Found {} ready jobs to execute", jobs.len());
 
                 for job in jobs {
-                    if self.running_jobs.len() >= limit as usize {
-                        break;
-                    }
-
                     let job_id = job.id.expect("Job must have an ID");
                     let rr_id = job
                         .resource_requirements_id
@@ -478,9 +482,13 @@ impl JobRunner {
                         }
                     }
 
-                    match async_job.start(&self.output_dir, self.resource_monitor.as_ref()) {
+                    match async_job.start(
+                        &self.output_dir,
+                        self.resource_monitor.as_ref(),
+                        &self.config.base_path,
+                    ) {
                         Ok(()) => {
-                            info!("Started job {} asynchronously", job_id);
+                            info!("Started job {}", job_id);
                             self.running_jobs.insert(job_id, async_job);
                             self.decrement_resources(&job_rr);
                             self.job_resources.insert(job_id, job_rr);
@@ -524,7 +532,8 @@ impl JobRunner {
     fn run_ready_jobs_based_on_user_parallelism(&mut self) {
         let limit = self
             .max_parallel_jobs
-            .expect("max_parallel_jobs must be set");
+            .expect("max_parallel_jobs must be set")
+            - self.running_jobs.len() as i64;
         match utils::send_with_retries(
             &self.config,
             || default_api::claim_next_jobs(&self.config, self.workflow_id, Some(limit), None),
@@ -534,6 +543,13 @@ impl JobRunner {
                 let jobs = response.jobs.unwrap_or_default();
                 if jobs.is_empty() {
                     return;
+                }
+                if jobs.len() > limit as usize {
+                    panic!(
+                        "Bug in server: too many jobs returned. limit: {}, returned: {}",
+                        limit,
+                        jobs.len()
+                    );
                 }
                 info!("Found {} ready jobs to execute", jobs.len());
 
@@ -569,7 +585,11 @@ impl JobRunner {
                         }
                     }
 
-                    match async_job.start(&self.output_dir, self.resource_monitor.as_ref()) {
+                    match async_job.start(
+                        &self.output_dir,
+                        self.resource_monitor.as_ref(),
+                        &self.config.base_path,
+                    ) {
                         Ok(()) => {
                             info!("Started job {}", job_id);
                             self.running_jobs.insert(job_id, async_job);
@@ -1026,6 +1046,8 @@ impl JobRunner {
                     .and_then(|v| v.as_i64())
                     .map(|v| v as i32);
 
+                let torc_server_args = action_config.get("torc_server_args");
+
                 info!(
                     "Scheduling {} compute nodes (scheduler_type={}, scheduler_id={})",
                     num_allocations, scheduler_type, scheduler_id
@@ -1033,7 +1055,7 @@ impl JobRunner {
 
                 if scheduler_type == "slurm" {
                     // Use the same function as WorkflowManager for Slurm scheduling
-                    match crate::client::commands::slurm::schedule_slurm_nodes_for_action(
+                    match crate::client::commands::slurm::schedule_slurm_nodes(
                         &self.config,
                         self.workflow_id,
                         scheduler_id,
@@ -1045,6 +1067,7 @@ impl JobRunner {
                         start_one_worker_per_node,
                         start_server_on_head_node,
                         false, // keep_submission_scripts
+                        torc_server_args,
                     ) {
                         Ok(()) => {
                             info!("Successfully scheduled {} Slurm job(s)", num_allocations);

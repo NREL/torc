@@ -4,13 +4,25 @@
 
 **Use Case**: Parameter sweeps, Monte Carlo simulations, batch processing.
 
+## Step 1: Start the Torc server
+```console
+torc-server
+```
+By default, the server will listen on port 8080, making the default API URL for the client
+`http://localhost:8080/torc-service/v1`. If you change the port, set the environment variable
+`TORC_API_URL` to the new URL.
+
+This step is unnecessary if you use default values. This assumes a custom port of 8100.
+```console
+export TORC_API_URL="http://localhost:8100/torc-service/v1"
+```
+
 ## Step 1: Create Workflow Specification
 
 Save as `hundred_jobs.yaml`:
 
 ```yaml
 name: hundred_jobs_parallel
-user: myuser
 description: 100 independent jobs that can run in parallel
 
 jobs:
@@ -32,52 +44,19 @@ resource_requirements:
     runtime: PT5M
 ```
 
-## Step 2: Create and Start Workflow
+## Step 2: Create and run the workflow
 
 ```bash
-# Set server URL
-export TORC_BASE_URL="http://localhost:8080/torc-service/v1"
+# Run the workflow
+torc workflows run hundred_jobs.yaml
 
-# Create workflow from spec
-WORKFLOW_ID=$(torc-client workflows create-from-spec hundred_jobs.yaml \
-  | jq -r '.id')
+# Note that it will print the workflow ID to the console.
 
-echo "Created workflow $WORKFLOW_ID"
-
-# Initialize jobs (marks them ready)
-torc-client workflows initialize-jobs $WORKFLOW_ID
-
-# Check workflow status
-torc-client workflows status $WORKFLOW_ID
-```
-
-## Step 3: Run Jobs Locally
-
-```bash
-# Start local job runner
-torc-job-runner $WORKFLOW_ID
+# When complete, check the results.
+torc results list <workflow_id>
 ```
 
 The runner will:
 - Pull ready jobs from the server
 - Execute them in parallel (respecting resource limits)
 - Report results back to the server
-
-## Step 4: Monitor Progress
-
-In another terminal:
-
-```bash
-# Watch job counts by status
-watch -n 5 'torc-client jobs list-by-status $WORKFLOW_ID | jq'
-
-# View completed jobs
-torc-client jobs list $WORKFLOW_ID --status completed | jq '.jobs[] | {name, status}'
-```
-
-## Expected Behavior
-
-- All 100 jobs start in `ready` state (no dependencies)
-- Runner executes jobs in parallel based on available CPUs
-- Jobs complete independently
-- Workflow finishes when all jobs reach `completed` status

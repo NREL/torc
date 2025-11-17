@@ -1,41 +1,33 @@
 """Run a function on one set of inputs stored in the workflow database."""
 
-import os
 import sys
 
 import rich_click as click
 from loguru import logger
 
+from torc.api import make_api
+from torc.cli.common import get_job_env_vars
 from torc.common import check_function
 from torc.loggers import setup_logging
-from .common import (
-    check_database_url,
-    get_workflow_key_from_context,
-)
+from torc.openapi_client import DefaultApi
 
 
 @click.command()
-@click.pass_obj
-@click.pass_context
-def run_function(ctx, api):
+def run_function():
     """Run a function on one set of inputs stored in the workflow database. Only called by the
     torc worker application as part of the mapped-function workflow."""
-    setup_logging(
-        console_level="INFO",
-        mode="w",
-    )
-    job_key = os.environ.get("TORC_JOB_KEY")
-    if job_key is None:
-        logger.error("This command can only be called from the torc worker application.")
-        sys.exit(1)
+    setup_logging(console_level="INFO")
+    vars = get_job_env_vars()
+    api = make_api(vars["url"])
+    workflow_id = vars["workflow_id"]
+    job_id = vars["job_id"]
 
-    check_database_url(api)
-    workflow_key = get_workflow_key_from_context(ctx, api)
-    resp = api.list_job_user_data_consumes(workflow_key, job_key)
+    resp = api.list_user_data(workflow_id=workflow_id, consumer_job_id=job_id)
+    assert resp is not None
     if len(resp.items) != 1:
         logger.error(
-            "Received unexpected input user data from database job_key={} resp={}",
-            job_key,
+            "Received unexpected input user data from database job_id={} resp={}",
+            job_id,
             resp,
         )
         sys.exit(1)
@@ -59,17 +51,18 @@ def run_function(ctx, api):
         ret = 1
 
     if result is not None:
-        resp = api.list_job_user_data_stores(workflow_key, job_key)
+        resp = api.list_user_data(workflow_id=workflow_id, producer_job_id=job_id)
+        assert resp is not None
         if len(resp.items) != 1:
             logger.error(
-                "Received unexpected output data placeholder from database job_key={} resp={}",
-                job_key,
+                "Received unexpected output data placeholder from database job_id={} resp={}",
+                job_id,
                 resp,
             )
             sys.exit(1)
         output = resp.items[0]
         output.data = result
-        api.modify_user_data(workflow_key, output.key, output)
+        api.update_user_data(output.id, output)
         logger.info("Stored result for {}", tag)
 
     sys.exit(ret)

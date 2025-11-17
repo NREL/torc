@@ -58,7 +58,11 @@ fn test_async_cli_command_start_simple_command(start_server: &ServerProcess) {
     let temp_dir = create_temp_output_dir();
     let output_dir = temp_dir.path().to_str().unwrap();
 
-    let result = async_cmd.start(temp_dir.path(), None);
+    let result = async_cmd.start(
+        temp_dir.path(),
+        None,
+        "http://localhost:8080/torc-service/v1",
+    );
     assert!(
         result.is_ok(),
         "Failed to start command: {:?}",
@@ -78,6 +82,7 @@ fn test_async_cli_command_start_simple_command(start_server: &ServerProcess) {
 }
 
 #[rstest]
+#[cfg(unix)]
 fn test_async_cli_command_start_already_running() {
     let job = create_test_job_model(1, 1, "sleep 1");
     let mut async_cmd = AsyncCliCommand::new(job);
@@ -85,12 +90,20 @@ fn test_async_cli_command_start_already_running() {
     let temp_dir = create_temp_output_dir();
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("First start should succeed");
     assert!(async_cmd.is_running);
 
     // Try to start again while already running
-    let result = async_cmd.start(temp_dir.path(), None);
+    let result = async_cmd.start(
+        temp_dir.path(),
+        None,
+        "http://localhost:8080/torc-service/v1",
+    );
     assert!(result.is_err());
     assert_eq!(result.unwrap_err().to_string(), "Job is already running");
 
@@ -100,6 +113,7 @@ fn test_async_cli_command_start_already_running() {
 }
 
 #[rstest]
+#[cfg(unix)]
 fn test_async_cli_command_start_invalid_directory() {
     let job = create_test_job_model(1, 1, "echo 'test'");
     let mut async_cmd = AsyncCliCommand::new(job);
@@ -108,6 +122,7 @@ fn test_async_cli_command_start_invalid_directory() {
     let result = async_cmd.start(
         std::path::Path::new("/nonexistent/invalid/path/that/does/not/exist"),
         None,
+        "http://localhost:8080/torc-service/v1",
     );
     assert!(result.is_err());
 }
@@ -120,7 +135,11 @@ fn test_async_cli_command_check_status_completion() {
     let temp_dir = create_temp_output_dir();
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start command");
     assert!(async_cmd.is_running);
 
@@ -154,7 +173,11 @@ fn test_async_cli_command_with_exit_code_success() {
     let temp_dir = create_temp_output_dir();
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start command");
 
     // Wait for completion
@@ -172,7 +195,11 @@ fn test_async_cli_command_with_exit_code_failure() {
     let temp_dir = create_temp_output_dir();
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start command");
 
     // Wait for completion
@@ -183,6 +210,7 @@ fn test_async_cli_command_with_exit_code_failure() {
 }
 
 #[rstest]
+#[cfg(unix)]
 fn test_async_cli_command_cancel() {
     let job = create_test_job_model(1, 1, "sleep 10");
     let mut async_cmd = AsyncCliCommand::new(job);
@@ -190,7 +218,11 @@ fn test_async_cli_command_cancel() {
     let temp_dir = create_temp_output_dir();
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start command");
     assert!(async_cmd.is_running);
 
@@ -214,6 +246,7 @@ fn test_async_cli_command_cancel_not_running() {
 }
 
 #[rstest]
+#[cfg(unix)]
 fn test_async_cli_command_terminate() {
     let job = create_test_job_model(1, 1, "sleep 10");
     let mut async_cmd = AsyncCliCommand::new(job);
@@ -221,7 +254,11 @@ fn test_async_cli_command_terminate() {
     let temp_dir = create_temp_output_dir();
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start command");
     assert!(async_cmd.is_running);
 
@@ -240,7 +277,11 @@ fn test_async_cli_command_wait_for_completion() {
     let temp_dir = create_temp_output_dir();
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start command");
 
     let result = async_cmd.wait_for_completion();
@@ -267,7 +308,11 @@ fn test_async_cli_command_get_result() {
     let temp_dir = create_temp_output_dir();
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start command");
     let _ = async_cmd.wait_for_completion();
 
@@ -292,6 +337,7 @@ fn test_async_cli_command_get_result_not_complete() {
 }
 
 #[rstest]
+#[cfg(unix)]
 fn test_async_cli_command_with_invocation_script() {
     let mut job = create_test_job_model(1, 1, "echo 'Hello'");
     job.invocation_script = Some("echo 'Prefix:';".to_string());
@@ -300,7 +346,11 @@ fn test_async_cli_command_with_invocation_script() {
 
     let temp_dir = create_temp_output_dir();
 
-    let result = async_cmd.start(temp_dir.path(), None);
+    let result = async_cmd.start(
+        temp_dir.path(),
+        None,
+        "http://localhost:8080/torc-service/v1",
+    );
     assert!(result.is_ok());
 
     let _ = async_cmd.wait_for_completion();
@@ -313,6 +363,7 @@ fn test_async_cli_command_with_invocation_script() {
 }
 
 #[rstest]
+#[cfg(unix)]
 fn test_async_cli_command_environment_variables() {
     let job = create_test_job_model(1, 123, "echo $TORC_WORKFLOW_ID $TORC_JOB_ID");
     let mut async_cmd = AsyncCliCommand::new(job);
@@ -320,7 +371,11 @@ fn test_async_cli_command_environment_variables() {
     let temp_dir = create_temp_output_dir();
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start command");
     let _ = async_cmd.wait_for_completion();
 
@@ -332,6 +387,7 @@ fn test_async_cli_command_environment_variables() {
 }
 
 #[rstest]
+#[cfg(unix)]
 fn test_async_cli_command_stdout_stderr_separation() {
     let job = create_test_job_model(1, 1, "echo 'stdout message'; echo 'stderr message' >&2");
     let mut async_cmd = AsyncCliCommand::new(job);
@@ -339,7 +395,11 @@ fn test_async_cli_command_stdout_stderr_separation() {
     let temp_dir = create_temp_output_dir();
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start command");
     let _ = async_cmd.wait_for_completion();
 
@@ -354,6 +414,7 @@ fn test_async_cli_command_stdout_stderr_separation() {
 }
 
 #[rstest]
+#[cfg(unix)]
 fn test_async_cli_command_multiple_jobs_same_workflow() {
     let temp_dir = create_temp_output_dir();
 
@@ -361,19 +422,31 @@ fn test_async_cli_command_multiple_jobs_same_workflow() {
     let job1 = create_test_job_model(1, 1, "echo 'Job 1'");
     let mut async_cmd1 = AsyncCliCommand::new(job1);
     async_cmd1
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start job 1");
 
     let job2 = create_test_job_model(1, 2, "echo 'Job 2'");
     let mut async_cmd2 = AsyncCliCommand::new(job2);
     async_cmd2
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start job 2");
 
     let job3 = create_test_job_model(1, 3, "echo 'Job 3'");
     let mut async_cmd3 = AsyncCliCommand::new(job3);
     async_cmd3
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start job 3");
 
     // Wait for all to complete
@@ -394,6 +467,7 @@ fn test_async_cli_command_multiple_jobs_same_workflow() {
 }
 
 #[rstest]
+#[cfg(unix)]
 fn test_async_cli_command_long_running_job() {
     let job = create_test_job_model(1, 1, "sleep 2; echo 'Done'");
     let mut async_cmd = AsyncCliCommand::new(job);
@@ -401,7 +475,11 @@ fn test_async_cli_command_long_running_job() {
     let temp_dir = create_temp_output_dir();
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start command");
     assert!(async_cmd.is_running);
 
@@ -429,6 +507,7 @@ fn test_async_cli_command_get_job_id() {
 }
 
 #[rstest]
+#[cfg(unix)]
 fn test_async_cli_command_complex_shell_command() {
     let job = create_test_job_model(1, 1, "for i in 1 2 3; do echo \"Number $i\"; done");
     let mut async_cmd = AsyncCliCommand::new(job);
@@ -436,7 +515,11 @@ fn test_async_cli_command_complex_shell_command() {
     let temp_dir = create_temp_output_dir();
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start command");
     let _ = async_cmd.wait_for_completion();
 
@@ -449,6 +532,7 @@ fn test_async_cli_command_complex_shell_command() {
 }
 
 #[rstest]
+#[cfg(unix)]
 fn test_async_cli_command_file_creation() {
     let temp_dir = create_temp_output_dir();
     let output_file = temp_dir.path().join("test_output.txt");
@@ -461,7 +545,11 @@ fn test_async_cli_command_file_creation() {
     let mut async_cmd = AsyncCliCommand::new(job);
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start command");
     let _ = async_cmd.wait_for_completion();
 
@@ -473,6 +561,7 @@ fn test_async_cli_command_file_creation() {
 }
 
 #[rstest]
+#[cfg(unix)]
 fn test_async_cli_command_drop_while_running() {
     let job = create_test_job_model(1, 1, "sleep 10");
     let mut async_cmd = AsyncCliCommand::new(job);
@@ -480,7 +569,11 @@ fn test_async_cli_command_drop_while_running() {
     let temp_dir = create_temp_output_dir();
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start command");
     assert!(async_cmd.is_running);
 
@@ -494,6 +587,7 @@ fn test_async_cli_command_drop_while_running() {
 }
 
 #[rstest]
+#[cfg(unix)]
 fn test_async_cli_command_execution_time() {
     let job = create_test_job_model(1, 1, "sleep 1");
     let mut async_cmd = AsyncCliCommand::new(job);
@@ -501,7 +595,11 @@ fn test_async_cli_command_execution_time() {
     let temp_dir = create_temp_output_dir();
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start command");
     let _ = async_cmd.wait_for_completion();
 
@@ -519,7 +617,11 @@ fn test_async_cli_command_empty_command() {
     let temp_dir = create_temp_output_dir();
 
     // Empty command should still start
-    let result = async_cmd.start(temp_dir.path(), None);
+    let result = async_cmd.start(
+        temp_dir.path(),
+        None,
+        "http://localhost:8080/torc-service/v1",
+    );
     assert!(result.is_ok());
 
     let _ = async_cmd.wait_for_completion();
@@ -534,7 +636,11 @@ fn test_async_cli_command_command_not_found() {
     let temp_dir = create_temp_output_dir();
 
     async_cmd
-        .start(temp_dir.path(), None)
+        .start(
+            temp_dir.path(),
+            None,
+            "http://localhost:8080/torc-service/v1",
+        )
         .expect("Failed to start command");
     let _ = async_cmd.wait_for_completion();
 

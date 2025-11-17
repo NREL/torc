@@ -23,7 +23,7 @@ fn create_test_slurm_scheduler(
         partition: Some("test_partition".to_string()),
         qos: Some("normal".to_string()),
         tmp: Some("100G".to_string()),
-        walltime: Some("04:00:00".to_string()),
+        walltime: "04:00:00".to_string(),
         extra: None,
     };
     default_api::create_slurm_scheduler(config, scheduler)

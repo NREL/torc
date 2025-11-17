@@ -1,7 +1,7 @@
 # Rust build artifacts
 /target/
 /torc-server/target/
-/torc-client/target/
+/torc/target/
 Cargo.lock
 
 # Database files
@@ -30,3 +30,5 @@ python_client/**/__pycache__/
 python_client/**/*.pyc
 python_client/**/*.pyo
 python_client/**/*.egg-info/
+torc-server/db/sqlite/dev.db-shm
+torc-server/db/sqlite/dev.db-wal

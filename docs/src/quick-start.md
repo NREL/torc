@@ -3,27 +3,16 @@
 This guide will walk you through creating and running your first Torc workflows. These examples
 rely on local execution. Refer to the Tutorials for HPC examples.
 
-## Enable logging
-We recommend setting the environment variable RUST_LOG=info so that server
-and client logs are displayed in the console.
-
 ## Start the server
 This will create a torc database in the current directory if it doesn't exist.
 
-It uses the URL `http://localhost:8080/torc-service/v1`. You can change the port by passing the
-`--port` flag.
-
-```bash
+```console
 torc-server --database torc.db
 ```
 
 ## Test the client connection
 ```console
-torc-client workflows list
-```
-If you changed the server URL, you can specify it with the `--url` flag.
-```console
-torc-client --url http://localhost:8080/torc-service/v1 workflows list
+torc workflows list
 ```
 
 ## Create a Workflow Specification
@@ -41,34 +30,19 @@ jobs:
     command: echo "Hello again from torc!"
 ```
 
-## Create and Start the Workflow
-
-```bash
-$ torc-client workflows create-from-spec workflow.yaml
-
-# Optional, list the jobs.
-$ torc-client jobs list
-
-# Optional, initialize jobs (build dependency graph).
-$ torc-client workflows initialize
-```
-
 ## Run Jobs
 Run the jobs on the current computer. Use a short poll interval for demo purposes.
 This will automatically initialize the jobs if you skipped that step.
 
 ```console
-torc-job-runner --poll-interval 1
+torc run --poll-interval 1
 ```
 
 ## View Results
 
 ```console
-# List all jobs
-torc-client jobs list
-
 # View job results
-torc-client results list
+torc results list
 ```
 
 # Or use the TUI to view the results in table.

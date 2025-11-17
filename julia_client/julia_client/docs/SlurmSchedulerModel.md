@@ -15,7 +15,7 @@ Name | Type | Description | Notes
 **partition** | **String** | Compute node partition; likely not necessary because Slurm should optimize it. | [optional] [default to nothing]
 **qos** | **String** | Priority of Slurm job | [optional] [default to "normal"]
 **tmp** | **String** | Compute node local storage size requirement | [optional] [default to nothing]
-**walltime** | **String** | Slurm runtime requirement, e.g., 04:00:00 | [optional] [default to nothing]
+**walltime** | **String** | Slurm runtime requirement, e.g., 04:00:00 | [default to nothing]
 **extra** | **String** | Extra Slurm parameters that torc will append to the sbatch command | [optional] [default to nothing]
 
 

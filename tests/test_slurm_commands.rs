@@ -346,6 +346,7 @@ fn test_create_submission_script() {
         &config,
         false,
         false,
+        None,
     );
 
     assert!(
@@ -423,6 +424,7 @@ fn test_create_submission_script_with_extra() {
         &config,
         false,
         false,
+        None,
     );
 
     assert!(
@@ -468,6 +470,7 @@ fn test_create_submission_script_with_srun() {
         &config,
         true, // start_one_worker_per_node
         false,
+        None,
     );
 
     assert!(
@@ -1316,13 +1319,13 @@ fn test_slurm_run_jobs(start_server: &ServerProcess) {
     let job_list = torc::client::default_api::list_jobs(
         config,
         workflow_id,
+        None, // status
+        None, // needs_file_id
+        None, // upstream_job_id
         None, // offset
         None, // limit
         None, // sort_by
         None, // reverse_sort
-        None, // name filter
-        None, // status filter
-        None, // resource_requirements_id filter
     )
     .expect("Failed to list jobs");
 
@@ -1402,7 +1405,7 @@ fn create_test_slurm_scheduler(
         partition: Some("test_partition".to_string()),
         qos: Some("normal".to_string()),
         tmp: Some("50G".to_string()),
-        walltime: Some("01:00:00".to_string()),
+        walltime: "01:00:00".to_string(),
         extra: None,
     };
     default_api::create_slurm_scheduler(config, scheduler)
@@ -1459,7 +1462,7 @@ fn test_cancel_workflow_with_slurm_scheduler(start_server: &ServerProcess) {
         .args(&[
             "run",
             "-p",
-            "torc-client",
+            "torc",
             "--",
             "--url",
             base_url,
@@ -1540,7 +1543,7 @@ fn test_cancel_workflow_with_slurm_scheduler(start_server: &ServerProcess) {
         .args(&[
             "run",
             "--bin",
-            "torc-client",
+            "torc",
             "--",
             "--url",
             base_url,
@@ -1691,7 +1694,7 @@ pub fn run_slurm_job_runner_cli_command(
 ) -> Result<String, Box<dyn std::error::Error>> {
     cleanup_fake_slurm_state();
     setup_fake_slurm_commands();
-    let mut cmd = Command::new("./target/debug/torc-slurm-job-runner");
+    let mut cmd = Command::new(common::get_exe_path("./target/debug/torc-slurm-job-runner"));
     cmd.args(&[
         server.config.base_path.clone(),
         workflow_id.to_string(),

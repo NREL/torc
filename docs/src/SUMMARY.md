@@ -15,6 +15,7 @@
   - [Client](./explanation/client.md)
   - [Job Runners](./explanation/job-runners.md)
   - [Job State Transitions](./explanation/job-states.md)
+  - [Environment Variables](./explanation/environment-variables.md)
   - [Workflow Reinitialization](./explanation/reinitialization.md)
   - [Workflow Archiving](./explanation/archiving.md)
   - [Dependency Resolution](./explanation/dependencies.md)
@@ -33,6 +34,10 @@
   - [Managing Resources](./how-to/resources.md)
   - [Resource Monitoring](./how-to/resource-monitoring.md)
   - [Debugging Workflows](./how-to/debugging.md)
+  - [Authentication](./how-to/authentication.md)
+  - [Shell Completions](./how-to/shell-completions.md)
+  - [Server Deployment](./how-to/server-deployment.md)
+  - [Torc Server Arguments in Workflow Actions](./how-to/torc-server-args.md)
 
 # Reference
 
@@ -40,6 +45,7 @@
   - [OpenAPI Specification](./reference/openapi.md)
   - [Job Parameterization](./reference/parameterization.md)
   - [Configuration](./reference/configuration.md)
+  - [Security](./reference/security.md)
 
 # Tutorials
 
@@ -49,6 +55,7 @@
   - [User Data Dependencies](./tutorials/user-data.md)
   - [Simple Parameterization](./tutorials/simple-params.md)
   - [Advanced Parameterization](./tutorials/advanced-params.md)
+  - [Map Python functions across workers](./tutorials/map_python_function_across_workers.md)
 
 ---
 

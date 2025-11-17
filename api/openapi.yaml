@@ -456,7 +456,7 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              $ref: "#/components/schemas/event_model"
         description: event to update in the table.
         required: true
       responses:
@@ -736,7 +736,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/add_jobs_response"
+                $ref: "#/components/schemas/create_jobs_response"
           description: Successful response
         "500":
           content:
@@ -3426,7 +3426,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/prepare_jobs_for_submission_response"
+                $ref: "#/components/schemas/claim_jobs_based_on_resources_response"
           description: Successful response
         "500":
           content:
@@ -3470,7 +3470,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/prepare_next_jobs_for_submission_response"
+                $ref: "#/components/schemas/claim_next_jobs_response"
           description: Successful response
         "500":
           content:
@@ -3935,7 +3935,7 @@ components:
       example:
         start_one_worker_per_node: false
         num_jobs: 5
-        max_parallel_jobs: 1
+        max_parallel_jobs: 32
         scheduler_id: scheduler_id
       properties:
         max_parallel_jobs:
@@ -4031,19 +4031,14 @@ components:
         workflow_id: 6
         cancel_on_blocking_job_failure: true
         command: command
-        schedule_compute_nodes:
-          start_one_worker_per_node: false
-          num_jobs: 5
-          max_parallel_jobs: 1
-          scheduler_id: scheduler_id
-        input_user_data:
+        input_user_data_ids:
         - 9
         - 9
         scheduler: 4
         input_file_ids:
         - 2
         - 2
-        output_files:
+        output_file_ids:
         - 7
         - 7
         blocked_by_job_ids:
@@ -4074,8 +4069,6 @@ components:
           description: Status of job; managed by torc.
           schema:
             $ref: "#/components/schemas/job_status"
-        schedule_compute_nodes:
-          $ref: "#/components/schemas/compute_node_schedule"
         cancel_on_blocking_job_failure:
           default: true
           description: Cancel this job if any of its blocking jobs fails.
@@ -4095,17 +4088,17 @@ components:
           items:
             type: integer
           type: array
-        output_files:
+        output_file_ids:
           description: Database IDs of files that this job produces
           items:
             type: integer
           type: array
-        input_user_data:
+        input_user_data_ids:
           description: Database IDs of user-data objects that this job needs
           items:
             type: integer
           type: array
-        output_user_data:
+        output_user_data_ids:
           description: Database IDs of user-data objects that this job produces
           items:
             type: integer
@@ -4182,6 +4175,7 @@ components:
         num_nodes:
           description: Number of nodes required by a job
           type: integer
+          default: 1
         memory:
           default: 1m
           description: "Amount of memory required by a job, e.g., 20g"
@@ -4247,6 +4241,7 @@ components:
         id: 0
         scheduler_config_id: 5
         scheduler_id: 1
+        scheduler_type: local
         status: status
       properties:
         id:
@@ -4257,10 +4252,14 @@ components:
           type: integer
         scheduler_config_id:
           type: integer
+        scheduler_type:
+          type: string
         status:
           type: string
       required:
       - scheduler_config_id
+      - scheduler_id
+      - scheduler_type
       - status
       - workflow_id
     slurm_scheduler_model:
@@ -4324,6 +4323,7 @@ components:
       required:
       - account
       - nodes
+      - walltime
       - workflow_id
     user_data_model:
       example:
@@ -4412,7 +4412,6 @@ components:
           type: integer
         jobs_sort_method:
           $ref: "#/components/schemas/jobs_sort_method"
-          type: integer
         status_id:
           type: integer
       required:
@@ -4533,7 +4532,7 @@ components:
           type: integer
       required:
       - error
-    add_jobs_response:
+    create_jobs_response:
       example:
         items:
         - output_user_data:
@@ -4542,11 +4541,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9
@@ -4572,11 +4566,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9
@@ -4597,7 +4586,7 @@ components:
           status: uninitialized
           supports_termination: false
       properties:
-        items:
+        jobs:
           items:
             $ref: "#/components/schemas/job_model"
           type: array
@@ -4651,6 +4640,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -4688,6 +4678,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -4727,6 +4718,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -4746,11 +4738,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9
@@ -4776,11 +4763,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9
@@ -4816,6 +4798,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -4886,6 +4869,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -4926,6 +4910,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -4971,6 +4956,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -5016,6 +5002,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -5055,6 +5042,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -5110,6 +5098,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -5149,6 +5138,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -5178,6 +5168,7 @@ components:
         has_more:
           type: boolean
       required:
+      - items
       - count
       - has_more
       - max_limit
@@ -5255,6 +5246,7 @@ components:
           items:
             type: integer
           type: array
+          default: []
     list_required_existing_files_response:
       example:
         files:
@@ -5265,7 +5257,8 @@ components:
           items:
             type: string
           type: array
-    prepare_jobs_for_submission_response:
+          default: []
+    claim_jobs_based_on_resources_response:
       example:
         reason: reason
         jobs:
@@ -5275,11 +5268,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9
@@ -5305,11 +5293,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9
@@ -5336,7 +5319,7 @@ components:
           type: array
         reason:
           type: string
-    prepare_next_jobs_for_submission_response:
+    claim_next_jobs_response:
       example:
         jobs:
         - output_user_data:
@@ -5345,11 +5328,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9
@@ -5375,11 +5353,6 @@ components:
           workflow_id: 6
           cancel_on_blocking_job_failure: true
           command: command
-          schedule_compute_nodes:
-            start_one_worker_per_node: false
-            num_jobs: 5
-            max_parallel_jobs: 1
-            scheduler_id: scheduler_id
           input_user_data:
           - 9
           - 9

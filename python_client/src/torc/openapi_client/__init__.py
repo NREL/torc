@@ -28,12 +28,14 @@ __all__ = [
     "ApiKeyError",
     "ApiAttributeError",
     "ApiException",
-    "AddJobsResponse",
     "ClaimAction200Response",
     "ClaimActionRequest",
+    "ClaimJobsBasedOnResourcesResponse",
+    "ClaimNextJobsResponse",
     "ComputeNodeModel",
     "ComputeNodeSchedule",
     "ComputeNodesResources",
+    "CreateJobsResponse",
     "DefaultErrorResponse",
     "EventModel",
     "FileModel",
@@ -61,8 +63,6 @@ __all__ = [
     "ListWorkflowsResponse",
     "LocalSchedulerModel",
     "NotFoundErrorResponse",
-    "PrepareJobsForSubmissionResponse",
-    "PrepareNextJobsForSubmissionResponse",
     "ProcessChangedJobInputsResponse",
     "ResourceRequirementsModel",
     "ResultModel",
@@ -89,12 +89,14 @@ from torc.openapi_client.exceptions import ApiAttributeError as ApiAttributeErro
 from torc.openapi_client.exceptions import ApiException as ApiException
 
 # import models into sdk package
-from torc.openapi_client.models.add_jobs_response import AddJobsResponse as AddJobsResponse
 from torc.openapi_client.models.claim_action200_response import ClaimAction200Response as ClaimAction200Response
 from torc.openapi_client.models.claim_action_request import ClaimActionRequest as ClaimActionRequest
+from torc.openapi_client.models.claim_jobs_based_on_resources_response import ClaimJobsBasedOnResourcesResponse as ClaimJobsBasedOnResourcesResponse
+from torc.openapi_client.models.claim_next_jobs_response import ClaimNextJobsResponse as ClaimNextJobsResponse
 from torc.openapi_client.models.compute_node_model import ComputeNodeModel as ComputeNodeModel
 from torc.openapi_client.models.compute_node_schedule import ComputeNodeSchedule as ComputeNodeSchedule
 from torc.openapi_client.models.compute_nodes_resources import ComputeNodesResources as ComputeNodesResources
+from torc.openapi_client.models.create_jobs_response import CreateJobsResponse as CreateJobsResponse
 from torc.openapi_client.models.default_error_response import DefaultErrorResponse as DefaultErrorResponse
 from torc.openapi_client.models.event_model import EventModel as EventModel
 from torc.openapi_client.models.file_model import FileModel as FileModel
@@ -122,8 +124,6 @@ from torc.openapi_client.models.list_user_data_response import ListUserDataRespo
 from torc.openapi_client.models.list_workflows_response import ListWorkflowsResponse as ListWorkflowsResponse
 from torc.openapi_client.models.local_scheduler_model import LocalSchedulerModel as LocalSchedulerModel
 from torc.openapi_client.models.not_found_error_response import NotFoundErrorResponse as NotFoundErrorResponse
-from torc.openapi_client.models.prepare_jobs_for_submission_response import PrepareJobsForSubmissionResponse as PrepareJobsForSubmissionResponse
-from torc.openapi_client.models.prepare_next_jobs_for_submission_response import PrepareNextJobsForSubmissionResponse as PrepareNextJobsForSubmissionResponse
 from torc.openapi_client.models.process_changed_job_inputs_response import ProcessChangedJobInputsResponse as ProcessChangedJobInputsResponse
 from torc.openapi_client.models.resource_requirements_model import ResourceRequirementsModel as ResourceRequirementsModel
 from torc.openapi_client.models.result_model import ResultModel as ResultModel
@@ -133,3 +133,4 @@ from torc.openapi_client.models.user_data_model import UserDataModel as UserData
 from torc.openapi_client.models.workflow_action_model import WorkflowActionModel as WorkflowActionModel
 from torc.openapi_client.models.workflow_model import WorkflowModel as WorkflowModel
 from torc.openapi_client.models.workflow_status_model import WorkflowStatusModel as WorkflowStatusModel
+

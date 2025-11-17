@@ -64,6 +64,7 @@ function OpenAPI.check_required(o::SlurmSchedulerModel)
     o.workflow_id === nothing && (return false)
     o.account === nothing && (return false)
     o.nodes === nothing && (return false)
+    o.walltime === nothing && (return false)
     true
 end
 

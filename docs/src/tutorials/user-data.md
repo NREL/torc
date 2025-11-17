@@ -17,21 +17,21 @@ jobs:
   - name: generate_config
     command: |
       echo '{"learning_rate": 0.001, "batch_size": 32, "epochs": 10}' > /tmp/config.json
-      torc-client user-data update ${user_data.output.ml_config} \
+      torc user-data update ${user_data.output.ml_config} \
         --data "$(cat /tmp/config.json)"
     resource_requirements_name: minimal
 
   - name: train_model
     command: |
       echo "Training with config:"
-      torc-client user-data get ${user_data.input.ml_config} | jq '.data'
+      torc user-data get ${user_data.input.ml_config} | jq '.data'
       python train.py --config="${user_data.input.ml_config}"
     resource_requirements_name: gpu_large
 
   - name: evaluate_model
     command: |
       echo "Evaluating with config:"
-      torc-client user-data get ${user_data.input.ml_config} | jq '.data'
+      torc user-data get ${user_data.input.ml_config} | jq '.data'
       python evaluate.py --config="${user_data.input.ml_config}"
     resource_requirements_name: gpu_small
 
@@ -61,15 +61,15 @@ resource_requirements:
 ## Step 2: Create Workflow
 
 ```bash
-WORKFLOW_ID=$(torc-client workflows create-from-spec user_data_workflow.yaml | jq -r '.id')
-torc-client workflows initialize-jobs $WORKFLOW_ID
+WORKFLOW_ID=$(torc workflows create-from-spec user_data_workflow.yaml | jq -r '.id')
+torc workflows initialize-jobs $WORKFLOW_ID
 ```
 
 ## Step 3: Check Initial State
 
 ```bash
 # Check user_data - should be null/empty
-torc-client user-data list $WORKFLOW_ID | jq '.user_data[] | {name, data}'
+torc user-data list $WORKFLOW_ID | jq '.user_data[] | {name, data}'
 ```
 
 Output:
@@ -80,7 +80,7 @@ Output:
 ## Step 4: Run Workflow
 
 ```bash
-torc-job-runner $WORKFLOW_ID
+torc run-jobs $WORKFLOW_ID
 ```
 
 ## Step 5: Observe Data Flow
@@ -89,7 +89,7 @@ After `generate_config` completes:
 
 ```bash
 # Check updated user_data
-torc-client user-data list $WORKFLOW_ID | jq '.user_data[] | {name, data}'
+torc user-data list $WORKFLOW_ID | jq '.user_data[] | {name, data}'
 ```
 
 Output:

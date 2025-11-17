@@ -1,0 +1,95 @@
+name: Test
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-registry-
+
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-index-
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-cargo-build-target-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-build-target-
+
+      - name: Install SQLx CLI
+        run: cargo install sqlx-cli --no-default-features --features sqlite
+
+      - name: Setup database
+        run: |
+          sqlx database setup
+        env:
+          DATABASE_URL: sqlite:db/sqlite/dev.db
+
+      - name: Install OpenSSL for Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install openssl -y
+          echo "OPENSSL_DIR=C:/Program Files/OpenSSL-Win64" >> $GITHUB_ENV
+          echo "OPENSSL_ROOT_DIR=C:/Program Files/OpenSSL-Win64" >> $GITHUB_ENV
+
+      - name: Run tests (Windows - limited test set)
+        if: matrix.os == 'windows-latest'
+        run: cargo test --test test_full_workflows test_many_jobs_parameterized -- --test-threads 1
+        env:
+          RUST_BACKTRACE: 1
+
+      - name: Run tests (Unix - full test suite)
+        if: matrix.os != 'windows-latest'
+        run: cargo test -- --test-threads 1
+        env:
+          RUST_BACKTRACE: 1
+
+      - name: Install cargo-llvm-cov
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo install cargo-llvm-cov
+
+      - name: Generate coverage
+        if: matrix.os == 'ubuntu-latest'
+        run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info -- --test-threads 1
+        env:
+          RUST_BACKTRACE: 1
+          DATABASE_URL: sqlite:db/sqlite/dev.db
+
+      - name: Upload coverage to Codecov
+        if: matrix.os == 'ubuntu-latest'
+        uses: codecov/codecov-action@v4
+        with:
+          files: lcov.info
+          fail_ci_if_error: false

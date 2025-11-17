@@ -13,7 +13,7 @@ fn test_workflows_add_command_json(start_server: &ServerProcess) {
     // Test the CLI create command with JSON output
     let args = [
         "workflows",
-        "create",
+        "new",
         "--name",
         "test_workflow",
         "--description",
@@ -40,7 +40,7 @@ fn test_workflows_add_minimal(start_server: &ServerProcess) {
     // Test with minimal arguments (no description)
     let args = [
         "workflows",
-        "create",
+        "new",
         "--name",
         "minimal_workflow",
         "--user",
@@ -77,7 +77,7 @@ fn test_workflows_add_various_names(start_server: &ServerProcess) {
     for name in &test_names {
         let args = [
             "workflows",
-            "create",
+            "new",
             "--name",
             name,
             "--user",
@@ -343,8 +343,6 @@ fn test_workflows_update_command_json(start_server: &ServerProcess) {
         "workflows",
         "update",
         &workflow_id.to_string(),
-        "--filter-user",
-        "update_user",
         "--name",
         "updated_workflow_name",
         "--description",
@@ -386,8 +384,6 @@ fn test_workflows_update_partial_fields(start_server: &ServerProcess) {
         "workflows",
         "update",
         &workflow_id.to_string(),
-        "--filter-user",
-        "partial_user",
         "--name",
         "only_name_updated",
     ];
@@ -412,8 +408,6 @@ fn test_workflows_update_partial_fields(start_server: &ServerProcess) {
         "workflows",
         "update",
         &workflow_id.to_string(),
-        "--filter-user",
-        "partial_user",
         "--description",
         "Only description updated",
     ];
@@ -446,7 +440,7 @@ fn test_workflows_delete_command_json(start_server: &ServerProcess) {
     let workflow_id = workflow.id.unwrap();
 
     // Test the CLI delete command
-    let args = ["workflows", "delete", &workflow_id.to_string()];
+    let args = ["workflows", "delete", "--force", &workflow_id.to_string()];
 
     run_cli_with_json(&args, start_server).expect("Failed to run workflows delete command");
 
@@ -937,7 +931,7 @@ fn test_workflows_special_characters(start_server: &ServerProcess) {
     for (test_name, workflow_name, description) in &special_cases {
         let args = [
             "workflows",
-            "create",
+            "new",
             "--name",
             workflow_name,
             "--user",
@@ -969,15 +963,7 @@ fn test_workflows_error_handling(start_server: &ServerProcess) {
     );
 
     // Test updating a non-existent workflow
-    let args = [
-        "workflows",
-        "update",
-        "999999",
-        "--filter-user",
-        "test_user",
-        "--name",
-        "should_fail",
-    ];
+    let args = ["workflows", "update", "999999", "--name", "should_fail"];
 
     let result = run_cli_with_json(&args, start_server);
     assert!(

@@ -40,7 +40,7 @@ torc-server --port 8080
 
 ## Client Configuration
 
-### TORC_BASE_URL
+### TORC_API_URL
 
 Torc server URL endpoint.
 
@@ -48,12 +48,12 @@ Torc server URL endpoint.
 
 **Example**:
 ```bash
-export TORC_BASE_URL="http://my-server:8080/torc-service/v1"
+export TORC_API_URL="http://my-server:8080/torc-service/v1"
 ```
 
 Can also be set via `--url` flag:
 ```bash
-torc-client --url "http://my-server:8080/torc-service/v1" workflows list
+torc --url "http://my-server:8080/torc-service/v1" workflows list
 ```
 
 ### USER / USERNAME
@@ -93,20 +93,20 @@ The job runner supports two allocation strategies controlled by the `--max-paral
 **When**: `--max-parallel-jobs` is NOT set
 
 ```bash
-torc-job-runner $WORKFLOW_ID \
+torc run-jobs $WORKFLOW_ID \
   --num-cpus 32 \
   --memory-gb 256 \
   --num-gpus 8
 ```
 
-Uses the server's `prepare_jobs_for_submission` endpoint which filters jobs based on available compute resources. Jobs must have resource requirements defined.
+Uses the server's `claim_jobs_based_on_resources` endpoint which filters jobs based on available compute resources. Jobs must have resource requirements defined.
 
 #### Simple Queue-Based Allocation
 
 **When**: `--max-parallel-jobs` IS set
 
 ```bash
-torc-job-runner $WORKFLOW_ID \
+torc run-jobs $WORKFLOW_ID \
   --max-parallel-jobs 10
 ```
 
@@ -118,7 +118,7 @@ Configure via compute node registration or command-line flags:
 
 **Via CLI**:
 ```bash
-torc-job-runner $WORKFLOW_ID \
+torc run-jobs $WORKFLOW_ID \
   --num-cpus 32 \
   --memory-gb 256 \
   --num-gpus 8 \
@@ -127,7 +127,7 @@ torc-job-runner $WORKFLOW_ID \
 
 **Via compute node registration**:
 ```bash
-torc-client compute-nodes create \
+torc compute-nodes create \
   --workflow-id $WORKFLOW_ID \
   --hostname $(hostname) \
   --num-cpus 32 \
@@ -144,7 +144,7 @@ Job runners poll the server for ready jobs. Configure via `--poll-interval`:
 
 **Example**:
 ```bash
-torc-job-runner $WORKFLOW_ID --poll-interval 30.0
+torc run-jobs $WORKFLOW_ID --poll-interval 30.0
 ```
 
 Shorter intervals provide faster job pickup but increase server load.
