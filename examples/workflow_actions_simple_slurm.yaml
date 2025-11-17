@@ -36,26 +36,20 @@ slurm_schedulers:
   # Small scheduler for setup stage
   - name: "setup_scheduler"
     account: "demo_project"
-    partition: "short"
     nodes: 1
     walltime: "00:30:00"
-    mem: "4G"
 
   # Larger scheduler for compute-intensive processing stage
   - name: "process_scheduler"
     account: "demo_project"
-    partition: "compute"
     nodes: 2
     walltime: "02:00:00"
-    mem: "16G"
 
   # Medium scheduler for finalization stage
   - name: "finalize_scheduler"
     account: "demo_project"
-    partition: "short"
     nodes: 1
     walltime: "00:30:00"
-    mem: "8G"
 
 actions:
   # Run setup commands when the workflow starts

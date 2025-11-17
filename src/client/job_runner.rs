@@ -159,8 +159,9 @@ impl JobRunner {
         }
 
         info!("Starting torc job runner version={} workflow_id={} hostname={} output_dir={} resources={:?} rules={:?}
-            job_completion_poll_interval={}s",
-            version, self.workflow_id, hostname, self.output_dir.display(), self.resources, self.rules, self.job_completion_poll_interval);
+            job_completion_poll_interval={}s max_parallel_jobs={:?}",
+            version, self.workflow_id, hostname, self.output_dir.display(), self.resources,
+            self.rules, self.job_completion_poll_interval, self.max_parallel_jobs);
 
         // Check for and execute on_workflow_start and on_worker_start actions before entering main loop
         self.execute_workflow_start_actions();

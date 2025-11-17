@@ -919,7 +919,7 @@ where
         body: models::JobsModel,
         context: &C,
     ) -> Result<CreateJobsResponse, ApiError> {
-        error!(
+        debug!(
             "create_jobs({} jobs) - X-Span-ID: {:?}",
             body.jobs.len(),
             context.get().0.clone()
@@ -1110,7 +1110,7 @@ where
             return Err(database_error(e));
         }
 
-        error!("Created {} jobs in bulk", added_jobs.len());
+        info!("Created {} jobs in bulk", added_jobs.len());
         Ok(CreateJobsResponse::SuccessfulResponse(
             models::CreateJobsResponse {
                 jobs: Some(added_jobs),

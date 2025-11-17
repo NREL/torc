@@ -55,6 +55,7 @@
   - [User Data Dependencies](./tutorials/user-data.md)
   - [Simple Parameterization](./tutorials/simple-params.md)
   - [Advanced Parameterization](./tutorials/advanced-params.md)
+  - [Map Python functions across workers](./tutorials/map_python_function_across_workers.md)
 
 ---
 

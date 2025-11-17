@@ -163,7 +163,10 @@ fn main() {
     // Initialize logger with CLI argument or RUST_LOG env var
     // Skip initialization for commands that set up their own logging (e.g., Run, Tui)
     // or output to stdout (e.g., Completions)
-    let skip_logger_init = matches!(cli.command, Commands::Run { .. } | Commands::Tui(..) | Commands::Completions { .. });
+    let skip_logger_init = matches!(
+        cli.command,
+        Commands::Run { .. } | Commands::Tui(..) | Commands::Completions { .. }
+    );
 
     if !skip_logger_init {
         env_logger::Builder::new().parse_filters(&log_level).init();
@@ -432,12 +435,7 @@ fn main() {
         }
         Commands::Completions { shell } => {
             let mut cmd = Cli::command();
-            clap_complete::generate(
-                *shell,
-                &mut cmd,
-                "torc",
-                &mut std::io::stdout()
-            );
+            clap_complete::generate(*shell, &mut cmd, "torc", &mut std::io::stdout());
         }
     }
 }

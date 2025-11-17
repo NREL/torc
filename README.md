@@ -78,7 +78,7 @@ For detailed documentation, see the [docs](docs/) directory.
 ┌─────────────────────────────────────────────────────────────┐
 │                         Torc Server                          │
 │  ┌────────────────────────────────────────────────────┐     │
-│  │            REST API (Tokio 8-thread)               │     │
+│  │            REST API (Tokio 1-thread)               │     │
 │  │  /workflows  /jobs  /files  /user_data  /results  │     │
 │  └───────────────────┬────────────────────────────────┘     │
 │                      │                                       │

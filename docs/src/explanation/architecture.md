@@ -16,7 +16,7 @@ Torc uses a client-server architecture where a central server manages workflow s
 ```mermaid
 graph TB
     subgraph Server["Torc Server"]
-        API["REST API (Tokio 8-thread)<br/>/workflows /jobs /files<br/>/user_data /results"]
+        API["REST API (Tokio 1-thread)<br/>/workflows /jobs /files<br/>/user_data /results"]
         DB["SQLite Database (WAL)<br/>• Workflow state<br/>• Job dependencies<br/>• Resource tracking<br/>• Execution results"]
         API --> DB
     end

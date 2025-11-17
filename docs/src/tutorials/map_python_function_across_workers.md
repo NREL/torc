@@ -1,5 +1,3 @@
-(map-python-function-tutorial)=
-
 # Map a Python function to compute nodes
 
 This tutorial will teach you how to build a workflow from Python functions instead of CLI

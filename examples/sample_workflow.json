@@ -124,11 +124,8 @@
       "name": "default_scheduler",
       "account": "project_account",
       "gres": null,
-      "mem": "8G",
       "nodes": 1,
-      "ntasks_per_node": 1,
       "partition": "general",
-      "qos": "normal",
       "tmp": "10G",
       "walltime": "01:00:00",
       "extra": "--constraint=haswell"
@@ -137,11 +134,8 @@
       "name": "gpu_scheduler",
       "account": "gpu_project", 
       "gres": "gpu:1",
-      "mem": "32G",
       "nodes": 1,
-      "ntasks_per_node": 1,
       "partition": "gpu",
-      "qos": "high",
       "tmp": "50G", 
       "walltime": "04:00:00",
       "extra": "--constraint=v100"

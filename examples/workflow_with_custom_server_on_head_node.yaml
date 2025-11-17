@@ -47,11 +47,9 @@ slurm_schedulers:
   # This allocation provides compute resources and hosts the workflow server
   - name: "main_compute"
     account: "demo_project"
-    partition: "compute"
     nodes: 4
     walltime: "04:00:00"
     mem: "32G"
-    qos: "normal"
 
 actions:
   # Initialize workflow with setup directories

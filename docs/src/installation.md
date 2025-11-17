@@ -14,23 +14,15 @@ cd torc
 
 ## Building All Components
 
-**Create environment configuration:**
-
-Update `.env` file in repository root:
-
-```bash
-DATABASE_URL=sqlite:torc.db
-```
-
-Alternatively, set the `DATABASE_URL` environment variable in your shell.
+Note that the file `.env` designates the database URL as `./db/sqlite/dev.db`
+Change as desired or set the environment variable `DATABASE_URL`.
 
 **Initialize the database**
 
 ```bash
 # Install sqlx-cli if needed
 cargo install sqlx-cli --no-default-features --features sqlite
-sqlx migrate create
-sqlx database reset
+sqlx database setup
 ```
 
 **Build everything (server, client, job runners):**
@@ -58,15 +50,8 @@ cargo build --release -p torc
 # Slurm job runner
 cargo build --release --bin torc-slurm-job-runner
 
-# TUI (Terminal UI)
-cargo build --release --bin torc-tui
-```
-
 Binaries will be in `target/release/`. We recommend adding this directory
 to your system path so that run all binaries without using the path.
-
-We also recommend setting the environment variable RUST_LOG=info so that server
-and client logs are displayed in the console.
 
 ## For Developers
 
@@ -74,12 +59,12 @@ and client logs are displayed in the console.
 
 ```bash
 # Run all tests
-cargo test
+cargo test -- --test-threads=1
 
 # Run specific test
 cargo test test_workflow_manager -- --nocapture
 
-# Run with logging
+# Run with debug logging
 RUST_LOG=info cargo test -- --nocapture
 ```
 
