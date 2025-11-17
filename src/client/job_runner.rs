@@ -1,8 +1,9 @@
 use chrono::{DateTime, Utc};
-use log::{self, debug, error, info};
+use log::{self, debug, error, info, warn};
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::fs;
+use std::path::{Path, PathBuf};
 use std::thread;
 use std::time::Duration;
 
@@ -340,7 +341,11 @@ impl JobRunner {
                             self.compute_node_id,
                             self.resource_monitor.as_ref(),
                         );
-                        job_results.push((*job_id, result));
+
+                        // Extract output_file_ids for validation
+                        let output_file_ids = async_job.job.output_file_ids.clone();
+
+                        job_results.push((*job_id, result, output_file_ids));
                     }
                 }
                 Err(e) => {
@@ -350,10 +355,139 @@ impl JobRunner {
             }
         }
 
-        // Second pass: complete jobs and update resources
-        for (job_id, result) in job_results {
+        // Second pass: validate output files and complete jobs
+        for (job_id, mut result, output_file_ids) in job_results {
+            // Validate output files if job completed successfully
+            if result.return_code == 0 {
+                if let Err(e) = self.validate_and_update_output_files(job_id, &output_file_ids) {
+                    error!("Output file validation failed for job {}: {}", job_id, e);
+                    // Mark job as failed
+                    result.return_code = 1;
+                }
+            }
+
             self.handle_job_completion(job_id, result);
         }
+    }
+
+    /// Validate that all expected output files exist and update their st_mtime
+    fn validate_and_update_output_files(
+        &self,
+        job_id: i64,
+        output_file_ids: &Option<Vec<i64>>,
+    ) -> Result<(), String> {
+        // Get output file IDs
+        let output_file_ids = match output_file_ids {
+            Some(ids) if !ids.is_empty() => ids,
+            _ => return Ok(()), // No output files to validate
+        };
+
+        debug!(
+            "Validating {} output files for job {}",
+            output_file_ids.len(),
+            job_id
+        );
+
+        let mut missing_files = Vec::new();
+        let mut files_to_update = Vec::new();
+
+        // Fetch file models and check existence
+        for file_id in output_file_ids {
+            let file_model = match utils::send_with_retries(
+                &self.config,
+                || default_api::get_file(&self.config, *file_id),
+                self.rules.compute_node_wait_for_healthy_database_minutes,
+            ) {
+                Ok(file) => file,
+                Err(e) => {
+                    return Err(format!("Failed to fetch file model for file_id {}: {}", file_id, e));
+                }
+            };
+
+            let file_path = Path::new(&file_model.path);
+
+            // Check if file exists
+            match fs::metadata(file_path) {
+                Ok(metadata) => {
+                    // File exists - get its modification time
+                    match metadata.modified() {
+                        Ok(modified) => {
+                            let st_mtime = modified
+                                .duration_since(std::time::UNIX_EPOCH)
+                                .map(|d| d.as_secs_f64())
+                                .unwrap_or(0.0);
+
+                            debug!(
+                                "Output file '{}' exists with mtime {}",
+                                file_model.path, st_mtime
+                            );
+                            files_to_update.push((*file_id, st_mtime));
+                        }
+                        Err(e) => {
+                            warn!(
+                                "Could not get modification time for file '{}': {}. Using current time.",
+                                file_model.path, e
+                            );
+                            // Use current time as fallback
+                            let st_mtime = Utc::now().timestamp() as f64;
+                            files_to_update.push((*file_id, st_mtime));
+                        }
+                    }
+                }
+                Err(_) => {
+                    // File does not exist
+                    missing_files.push(file_model.path.clone());
+                }
+            }
+        }
+
+        // If any files are missing, return error
+        if !missing_files.is_empty() {
+            return Err(format!(
+                "Job {} completed successfully but expected output files are missing: {}",
+                job_id,
+                missing_files.join(", ")
+            ));
+        }
+
+        // Update st_mtime for all files
+        for (file_id, st_mtime) in files_to_update {
+            // Fetch the file model again to get all fields
+            let mut file_model = match utils::send_with_retries(
+                &self.config,
+                || default_api::get_file(&self.config, file_id),
+                self.rules.compute_node_wait_for_healthy_database_minutes,
+            ) {
+                Ok(file) => file,
+                Err(e) => {
+                    error!("Failed to re-fetch file model for file_id {}: {}", file_id, e);
+                    continue;
+                }
+            };
+
+            file_model.st_mtime = Some(st_mtime);
+            match utils::send_with_retries(
+                &self.config,
+                || default_api::update_file(&self.config, file_id, file_model.clone()),
+                self.rules.compute_node_wait_for_healthy_database_minutes,
+            ) {
+                Ok(_) => {
+                    debug!("Updated st_mtime for file_id {} to {}", file_id, st_mtime);
+                }
+                Err(e) => {
+                    error!("Failed to update st_mtime for file_id {}: {}", file_id, e);
+                    // Don't fail the job for this, just log the error
+                }
+            }
+        }
+
+        info!(
+            "Successfully validated {} output files for job {}",
+            output_file_ids.len(),
+            job_id
+        );
+
+        Ok(())
     }
 
     fn handle_job_completion(&mut self, job_id: i64, result: ResultModel) {

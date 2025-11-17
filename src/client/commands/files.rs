@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use clap::Subcommand;
 use serde_json;
 
@@ -12,6 +13,18 @@ use crate::client::commands::{
 use crate::models;
 use tabled::Tabled;
 
+/// Format Unix timestamp to human-readable string
+fn format_mtime(st_mtime: Option<f64>) -> String {
+    match st_mtime {
+        Some(timestamp) => {
+            let dt = DateTime::from_timestamp(timestamp as i64, 0)
+                .unwrap_or_else(|| DateTime::<Utc>::default());
+            dt.format("%Y-%m-%d %H:%M:%S UTC").to_string()
+        }
+        None => "N/A".to_string(),
+    }
+}
+
 #[derive(Tabled)]
 struct FileTableRow {
     #[tabled(rename = "ID")]
@@ -20,6 +33,8 @@ struct FileTableRow {
     name: String,
     #[tabled(rename = "Path")]
     path: String,
+    #[tabled(rename = "Modified Time")]
+    st_mtime: String,
 }
 
 #[derive(Subcommand)]
@@ -175,6 +190,7 @@ pub fn handle_file_commands(config: &Configuration, command: &FileCommands, form
                                     id: file.id.unwrap_or(-1),
                                     name: file.name.clone(),
                                     path: file.path.clone(),
+                                    st_mtime: format_mtime(file.st_mtime),
                                 })
                                 .collect();
                             display_table_with_count(&rows, "files");
