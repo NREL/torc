@@ -609,8 +609,8 @@ impl WorkflowSpec {
                 }
             };
 
-        // Step 4: Create JobModels
-        let (job_name_to_id, created_jobs) = match Self::create_jobs(
+        // Step 4: Create JobModels (with dependencies set during creation)
+        let (job_name_to_id, _created_jobs) = match Self::create_jobs(
             config,
             workflow_id,
             &spec,
@@ -626,16 +626,7 @@ impl WorkflowSpec {
             }
         };
 
-        // Step 5: Update jobs with dependency IDs (blocked_by_job_ids)
-        match Self::update_jobs_with_dependencies(config, &spec, &job_name_to_id, &created_jobs) {
-            Ok(_) => {}
-            Err(e) => {
-                rollback(workflow_id);
-                return Err(e);
-            }
-        }
-
-        // Step 6: Create workflow actions
+        // Step 5: Create workflow actions
         match Self::create_actions(
             config,
             workflow_id,
@@ -1050,7 +1041,49 @@ impl WorkflowSpec {
         Ok(ids)
     }
 
+    /// Topologically sort jobs into levels based on dependencies
+    /// Returns a vector of levels, where each level contains jobs that can be created together
+    fn topological_sort_jobs<'a>(
+        jobs: &'a [JobSpec],
+        dependencies: &HashMap<String, Vec<String>>,
+    ) -> Result<Vec<Vec<&'a JobSpec>>, Box<dyn std::error::Error>> {
+        use std::collections::HashSet;
+
+        let mut levels = Vec::new();
+        let mut remaining: HashSet<String> = jobs.iter().map(|j| j.name.clone()).collect();
+        let mut processed = HashSet::new();
+
+        while !remaining.is_empty() {
+            let mut current_level = Vec::new();
+
+            // Find all jobs whose dependencies are satisfied
+            for job in jobs {
+                if remaining.contains(&job.name) {
+                    let deps = dependencies.get(&job.name).unwrap();
+                    if deps.iter().all(|d| processed.contains(d)) {
+                        current_level.push(job);
+                    }
+                }
+            }
+
+            if current_level.is_empty() {
+                return Err("Circular dependency detected in job graph".into());
+            }
+
+            // Mark these jobs as processed
+            for job in &current_level {
+                remaining.remove(&job.name);
+                processed.insert(job.name.clone());
+            }
+
+            levels.push(current_level);
+        }
+
+        Ok(levels)
+    }
+
     /// Create JobModels with proper ID mapping using bulk API in batches of 1000
+    /// Jobs are created in dependency order with blocked_by_job_ids set during initial creation
     fn create_jobs(
         config: &Configuration,
         workflow_id: i64,
@@ -1064,180 +1097,216 @@ impl WorkflowSpec {
         let mut job_name_to_id = HashMap::new();
         let mut created_jobs = HashMap::new();
 
-        // First, create all job models with proper ID mapping
-        let mut job_models = Vec::new();
-        let mut job_spec_mapping = Vec::new(); // Track job specs for name mapping
+        // Step 1: Build a set of all job names for validation
+        let all_job_names: std::collections::HashSet<String> =
+            spec.jobs.iter().map(|j| j.name.clone()).collect();
+
+        // Step 2: Build dependency graph (job_name -> Vec<dependency_job_names>)
+        let mut dependencies: HashMap<String, Vec<String>> = HashMap::new();
 
         for job_spec in &spec.jobs {
-            let mut job_model =
-                models::JobModel::new(workflow_id, job_spec.name.clone(), job_spec.command.clone());
+            let mut deps = Vec::new();
 
-            // Set optional fields
-            job_model.invocation_script = job_spec.invocation_script.clone();
-            job_model.cancel_on_blocking_job_failure = job_spec.cancel_on_blocking_job_failure;
-            job_model.supports_termination = job_spec.supports_termination;
-
-            // Map file names and regexes to IDs
-            let input_file_ids = Self::resolve_names_and_regexes(
-                &job_spec.input_file_names,
-                &job_spec.input_file_name_regexes,
-                file_name_to_id,
-                "Input file",
-                &job_spec.name,
-            )?;
-            if !input_file_ids.is_empty() {
-                job_model.input_file_ids = Some(input_file_ids);
-            }
-
-            let output_file_ids = Self::resolve_names_and_regexes(
-                &job_spec.output_file_names,
-                &job_spec.output_file_name_regexes,
-                file_name_to_id,
-                "Output file",
-                &job_spec.name,
-            )?;
-            if !output_file_ids.is_empty() {
-                job_model.output_file_ids = Some(output_file_ids);
-            }
-
-            // Map user data names and regexes to IDs
-            let input_user_data_ids = Self::resolve_names_and_regexes(
-                &job_spec.input_user_data_names,
-                &job_spec.input_user_data_name_regexes,
-                user_data_name_to_id,
-                "Input user data",
-                &job_spec.name,
-            )?;
-            if !input_user_data_ids.is_empty() {
-                job_model.input_user_data_ids = Some(input_user_data_ids);
-            }
-
-            let output_user_data_ids = Self::resolve_names_and_regexes(
-                &job_spec.output_data_names,
-                &job_spec.output_user_data_name_regexes,
-                user_data_name_to_id,
-                "Output user data",
-                &job_spec.name,
-            )?;
-            if !output_user_data_ids.is_empty() {
-                job_model.output_user_data_ids = Some(output_user_data_ids);
-            }
-
-            // Map resource requirements name to ID
-            if let Some(resource_req_name) = &job_spec.resource_requirements_name {
-                match resource_req_name_to_id.get(resource_req_name) {
-                    Some(&resource_req_id) => {
-                        job_model.resource_requirements_id = Some(resource_req_id)
-                    }
-                    None => {
+            // Add explicit dependencies
+            if let Some(ref names) = job_spec.blocked_by_job_names {
+                for dep_name in names {
+                    // Validate that the dependency exists
+                    if !all_job_names.contains(dep_name) {
                         return Err(format!(
-                            "Resource requirements '{}' not found for job '{}'",
-                            resource_req_name, job_spec.name
+                            "Blocking job '{}' not found for job '{}'",
+                            dep_name, job_spec.name
+                        )
+                        .into());
+                    }
+                    deps.push(dep_name.clone());
+                }
+            }
+
+            // Resolve regex dependencies
+            if let Some(ref regexes) = job_spec.blocked_by_job_name_regexes {
+                for regex_str in regexes {
+                    let re = Regex::new(regex_str).map_err(|e| {
+                        format!(
+                            "Invalid regex '{}' in job '{}': {}",
+                            regex_str, job_spec.name, e
+                        )
+                    })?;
+                    let mut found_match = false;
+                    for other_job in &spec.jobs {
+                        if re.is_match(&other_job.name) && !deps.contains(&other_job.name) {
+                            deps.push(other_job.name.clone());
+                            found_match = true;
+                        }
+                    }
+                    // Error if regex didn't match anything
+                    if !found_match {
+                        return Err(format!(
+                            "Blocking job regex '{}' did not match any jobs for job '{}'",
+                            regex_str, job_spec.name
                         )
                         .into());
                     }
                 }
             }
 
-            // Map scheduler name to ID
-            if let Some(scheduler_name) = &job_spec.scheduler_name {
-                match slurm_scheduler_name_to_id.get(scheduler_name) {
-                    Some(&scheduler_id) => job_model.scheduler_id = Some(scheduler_id),
-                    None => {
-                        return Err(format!(
-                            "Scheduler '{}' not found for job '{}'",
-                            scheduler_name, job_spec.name
-                        )
-                        .into());
-                    }
-                }
-            }
-
-            job_models.push(job_model);
-            job_spec_mapping.push(job_spec);
+            dependencies.insert(job_spec.name.clone(), deps);
         }
 
-        // Create jobs in batches of 1000
+        // Step 3: Topologically sort jobs into levels
+        let levels = Self::topological_sort_jobs(&spec.jobs, &dependencies)?;
+
+        // Step 4: Create jobs level by level
         const BATCH_SIZE: usize = 1000;
-        for (batch_index, batch) in job_models.chunks(BATCH_SIZE).enumerate() {
-            let jobs_model = models::JobsModel::new(batch.to_vec());
 
-            let response = default_api::create_jobs(config, jobs_model).map_err(|e| {
-                format!(
-                    "Failed to create batch {} of jobs: {:?}",
-                    batch_index + 1,
-                    e
-                )
-            })?;
+        for level in levels {
+            // Create job models for this level with blocked_by_job_ids resolved
+            let mut job_models = Vec::new();
+            let mut job_spec_mapping = Vec::new();
 
-            let created_batch = response.jobs.ok_or("Create jobs response missing items")?;
+            for job_spec in level {
+                let mut job_model = models::JobModel::new(
+                    workflow_id,
+                    job_spec.name.clone(),
+                    job_spec.command.clone(),
+                );
 
-            if created_batch.len() != batch.len() {
-                return Err(format!(
-                    "Batch {} returned {} jobs but expected {}",
-                    batch_index + 1,
-                    created_batch.len(),
-                    batch.len()
-                )
-                .into());
+                // Set optional fields
+                job_model.invocation_script = job_spec.invocation_script.clone();
+                job_model.cancel_on_blocking_job_failure = job_spec.cancel_on_blocking_job_failure;
+                job_model.supports_termination = job_spec.supports_termination;
+
+                // Map file names and regexes to IDs
+                let input_file_ids = Self::resolve_names_and_regexes(
+                    &job_spec.input_file_names,
+                    &job_spec.input_file_name_regexes,
+                    file_name_to_id,
+                    "Input file",
+                    &job_spec.name,
+                )?;
+                if !input_file_ids.is_empty() {
+                    job_model.input_file_ids = Some(input_file_ids);
+                }
+
+                let output_file_ids = Self::resolve_names_and_regexes(
+                    &job_spec.output_file_names,
+                    &job_spec.output_file_name_regexes,
+                    file_name_to_id,
+                    "Output file",
+                    &job_spec.name,
+                )?;
+                if !output_file_ids.is_empty() {
+                    job_model.output_file_ids = Some(output_file_ids);
+                }
+
+                // Map user data names and regexes to IDs
+                let input_user_data_ids = Self::resolve_names_and_regexes(
+                    &job_spec.input_user_data_names,
+                    &job_spec.input_user_data_name_regexes,
+                    user_data_name_to_id,
+                    "Input user data",
+                    &job_spec.name,
+                )?;
+                if !input_user_data_ids.is_empty() {
+                    job_model.input_user_data_ids = Some(input_user_data_ids);
+                }
+
+                let output_user_data_ids = Self::resolve_names_and_regexes(
+                    &job_spec.output_data_names,
+                    &job_spec.output_user_data_name_regexes,
+                    user_data_name_to_id,
+                    "Output user data",
+                    &job_spec.name,
+                )?;
+                if !output_user_data_ids.is_empty() {
+                    job_model.output_user_data_ids = Some(output_user_data_ids);
+                }
+
+                // Map resource requirements name to ID
+                if let Some(resource_req_name) = &job_spec.resource_requirements_name {
+                    match resource_req_name_to_id.get(resource_req_name) {
+                        Some(&resource_req_id) => {
+                            job_model.resource_requirements_id = Some(resource_req_id)
+                        }
+                        None => {
+                            return Err(format!(
+                                "Resource requirements '{}' not found for job '{}'",
+                                resource_req_name, job_spec.name
+                            )
+                            .into());
+                        }
+                    }
+                }
+
+                // Map scheduler name to ID
+                if let Some(scheduler_name) = &job_spec.scheduler_name {
+                    match slurm_scheduler_name_to_id.get(scheduler_name) {
+                        Some(&scheduler_id) => job_model.scheduler_id = Some(scheduler_id),
+                        None => {
+                            return Err(format!(
+                                "Scheduler '{}' not found for job '{}'",
+                                scheduler_name, job_spec.name
+                            )
+                            .into());
+                        }
+                    }
+                }
+
+                // NEW: Resolve blocked_by_job_ids using accumulated job_name_to_id
+                let dep_names = dependencies.get(&job_spec.name).unwrap();
+                if !dep_names.is_empty() {
+                    let mut blocked_ids = Vec::new();
+                    for dep_name in dep_names {
+                        let dep_id = job_name_to_id.get(dep_name).ok_or_else(|| {
+                            format!(
+                                "Dependency '{}' not found for job '{}' (not yet created)",
+                                dep_name, job_spec.name
+                            )
+                        })?;
+                        blocked_ids.push(*dep_id);
+                    }
+                    job_model.blocked_by_job_ids = Some(blocked_ids);
+                }
+
+                job_models.push(job_model);
+                job_spec_mapping.push(job_spec);
             }
 
-            // Map the created jobs back to their names
-            let batch_start = batch_index * BATCH_SIZE;
-            for (i, created_job) in created_batch.iter().enumerate() {
-                let job_spec = job_spec_mapping[batch_start + i];
-                let job_id = created_job.id.ok_or("Created job missing ID")?;
-                job_name_to_id.insert(job_spec.name.clone(), job_id);
-                created_jobs.insert(job_spec.name.clone(), created_job.clone());
+            // Create this level's jobs in batches of 1000
+            for (batch_index, batch) in job_models.chunks(BATCH_SIZE).enumerate() {
+                let jobs_model = models::JobsModel::new(batch.to_vec());
+
+                let response = default_api::create_jobs(config, jobs_model).map_err(|e| {
+                    format!(
+                        "Failed to create batch {} of jobs: {:?}",
+                        batch_index + 1,
+                        e
+                    )
+                })?;
+
+                let created_batch = response.jobs.ok_or("Create jobs response missing items")?;
+
+                if created_batch.len() != batch.len() {
+                    return Err(format!(
+                        "Batch {} returned {} jobs but expected {}",
+                        batch_index + 1,
+                        created_batch.len(),
+                        batch.len()
+                    )
+                    .into());
+                }
+
+                // Update mappings
+                let batch_start = batch_index * BATCH_SIZE;
+                for (i, created_job) in created_batch.iter().enumerate() {
+                    let job_spec = job_spec_mapping[batch_start + i];
+                    let job_id = created_job.id.ok_or("Created job missing ID")?;
+                    job_name_to_id.insert(job_spec.name.clone(), job_id);
+                    created_jobs.insert(job_spec.name.clone(), created_job.clone());
+                }
             }
         }
 
         Ok((job_name_to_id, created_jobs))
-    }
-
-    /// Update jobs with dependency IDs after all jobs are created
-    fn update_jobs_with_dependencies(
-        config: &Configuration,
-        spec: &WorkflowSpec,
-        job_name_to_id: &HashMap<String, i64>,
-        created_jobs: &HashMap<String, models::JobModel>,
-    ) -> Result<(), Box<dyn std::error::Error>> {
-        for job_spec in &spec.jobs {
-            // Resolve both exact names and regex patterns for job dependencies
-            let blocked_by_job_ids = Self::resolve_names_and_regexes(
-                &job_spec.blocked_by_job_names,
-                &job_spec.blocked_by_job_name_regexes,
-                job_name_to_id,
-                "Blocking job",
-                &job_spec.name,
-            )?;
-
-            // Only update if there are dependencies
-            if !blocked_by_job_ids.is_empty() {
-                // Get the current job ID and model
-                let current_job_id = job_name_to_id
-                    .get(&job_spec.name)
-                    .ok_or_else(|| format!("Job '{}' not found in created jobs", job_spec.name))?;
-
-                let current_job = created_jobs.get(&job_spec.name).ok_or_else(|| {
-                    format!("Job '{}' not found in created jobs map", job_spec.name)
-                })?;
-
-                // Update the job with dependency IDs
-                let mut updated_job = current_job.clone();
-                updated_job.blocked_by_job_ids = Some(blocked_by_job_ids);
-
-                // Send the update to the server
-                default_api::update_job(config, *current_job_id, updated_job).map_err(|e| {
-                    format!(
-                        "Failed to update job {} with dependencies: {:?}",
-                        job_spec.name, e
-                    )
-                })?;
-            }
-        }
-
-        Ok(())
     }
 
     /// Parse a WorkflowSpec from a KDL string
