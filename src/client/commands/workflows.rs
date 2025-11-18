@@ -607,6 +607,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                     Some(1), // limit (we just need the total count)
                     None,    // sort_by
                     None,    // reverse_sort
+                    None,    // include_relationships
                 ) {
                     Ok(response) => response.total_count,
                     Err(e) => {

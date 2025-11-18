@@ -400,7 +400,10 @@ impl JobRunner {
             ) {
                 Ok(file) => file,
                 Err(e) => {
-                    return Err(format!("Failed to fetch file model for file_id {}: {}", file_id, e));
+                    return Err(format!(
+                        "Failed to fetch file model for file_id {}: {}",
+                        file_id, e
+                    ));
                 }
             };
 
@@ -460,7 +463,10 @@ impl JobRunner {
             ) {
                 Ok(file) => file,
                 Err(e) => {
-                    error!("Failed to re-fetch file model for file_id {}: {}", file_id, e);
+                    error!(
+                        "Failed to re-fetch file model for file_id {}: {}",
+                        file_id, e
+                    );
                     continue;
                 }
             };
@@ -1170,17 +1176,10 @@ impl JobRunner {
                     .and_then(|v| v.as_bool())
                     .unwrap_or(false);
 
-                let start_server_on_head_node = action_config
-                    .get("start_server_on_head_node")
-                    .and_then(|v| v.as_bool())
-                    .unwrap_or(false);
-
                 let max_parallel_jobs = action_config
                     .get("max_parallel_jobs")
                     .and_then(|v| v.as_i64())
                     .map(|v| v as i32);
-
-                let torc_server_args = action_config.get("torc_server_args");
 
                 info!(
                     "Scheduling {} compute nodes (scheduler_type={}, scheduler_id={})",
@@ -1199,9 +1198,7 @@ impl JobRunner {
                         60, // poll_interval
                         max_parallel_jobs,
                         start_one_worker_per_node,
-                        start_server_on_head_node,
                         false, // keep_submission_scripts
-                        torc_server_args,
                     ) {
                         Ok(()) => {
                             info!("Successfully scheduled {} Slurm job(s)", num_allocations);

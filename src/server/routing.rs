@@ -4290,6 +4290,25 @@ where
                         }
                         None => None,
                     };
+                    let param_include_relationships = query_params
+                        .iter()
+                        .filter(|e| e.0 == "include_relationships")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_include_relationships = match param_include_relationships {
+                        Some(param_include_relationships) => {
+                            let param_include_relationships =
+                                <bool as std::str::FromStr>::from_str(&param_include_relationships);
+                            match param_include_relationships {
+                            Ok(param_include_relationships) => Some(param_include_relationships),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter include_relationships - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter include_relationships")),
+                        }
+                        }
+                        None => None,
+                    };
 
                     let result = api_impl
                         .list_jobs(
@@ -4301,6 +4320,7 @@ where
                             param_limit,
                             param_sort_by,
                             param_reverse_sort,
+                            param_include_relationships,
                             &context,
                         )
                         .await;

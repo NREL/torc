@@ -120,6 +120,9 @@ pub enum JobCommands {
         /// Reverse sort order
         #[arg(long)]
         reverse_sort: bool,
+        /// Include job relationships (blocked_by_job_ids, input/output file/user_data IDs) - slower but more complete
+        #[arg(long)]
+        include_relationships: bool,
     },
     /// Get a specific job by ID
     Get {
@@ -247,6 +250,7 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
             offset,
             sort_by,
             reverse_sort,
+            include_relationships,
         } => {
             let user_name = get_env_user_name();
             let selected_workflow_id = match workflow_id {
@@ -281,7 +285,8 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                 .with_offset(*offset)
                 .with_limit(*limit)
                 .with_sort_by(sort_by.clone().unwrap_or_default())
-                .with_reverse_sort(*reverse_sort);
+                .with_reverse_sort(*reverse_sort)
+                .with_include_relationships(*include_relationships);
 
             if let Some(job_status) = job_status {
                 params = params.with_status(job_status);
@@ -571,6 +576,7 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                 Some(1), // limit
                 None,    // sort_by
                 None,    // reverse_sort
+                None,    // include_relationships
             ) {
                 Ok(response) => {
                     let job_count = response.total_count;
@@ -783,6 +789,7 @@ pub fn get_current_job_count(
         Some(1), // limit (we only need the count)
         None,    // sort_by
         None,    // reverse_sort
+        None,    // include_relationships
     )
     .map_err(|e| format!("Failed to get job count: {:?}", e))?;
 
@@ -811,6 +818,7 @@ pub fn get_existing_job_names(
             Some(PAGE_SIZE),
             None, // sort_by
             None, // reverse_sort
+            None, // include_relationships
         )
         .map_err(|e| format!("Failed to get existing job names: {:?}", e))?;
 

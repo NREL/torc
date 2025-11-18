@@ -107,9 +107,6 @@ pub struct WorkflowActionSpec {
     /// For schedule_nodes action: number of node allocations to request
     #[serde(skip_serializing_if = "Option::is_none")]
     pub num_allocations: Option<i64>,
-    /// For schedule_nodes action: whether to start server on head node
-    #[serde(skip_serializing_if = "Option::is_none")]
-    pub start_server_on_head_node: Option<bool>,
     /// For schedule_nodes action: whether to start one worker per node
     #[serde(skip_serializing_if = "Option::is_none")]
     pub start_one_worker_per_node: Option<bool>,
@@ -945,7 +942,6 @@ impl WorkflowSpec {
                             "scheduler_type": scheduler_type,
                             "scheduler_id": scheduler_id,
                             "num_allocations": action_spec.num_allocations.unwrap_or(1),
-                            "start_server_on_head_node": action_spec.start_server_on_head_node.unwrap_or(false),
                             "start_one_worker_per_node": action_spec.start_one_worker_per_node.unwrap_or(true),
                         });
                         // Only include max_parallel_jobs if explicitly specified

@@ -221,14 +221,15 @@ def map_function_to_jobs(
     output_data_ids = []
     for i, job_params in enumerate(params, start=start_index):
         check_function(module, func, module_directory)
+        job_name = f"{name_prefix}{i}"
         data = {
             "module": module,
             "func": func,
             "params": job_params,
+            "job_name": job_name,
         }
         if module_directory is not None:
             data["module_directory"] = module_directory
-        job_name = f"{name_prefix}{i}"
         input_ud = api.create_user_data(
             UserDataModel(workflow_id=workflow_id, name=f"input_{job_name}", data=data)
         )
@@ -241,7 +242,7 @@ def map_function_to_jobs(
         job = JobModel(
             workflow_id=workflow_id,
             name=job_name,
-            command="pytorc jobs run-function",
+            command="pytorc run-function",
             input_user_data_ids=[input_ud.id],
             output_user_data_ids=[output_ud.id],
             resource_requirements_id=resource_requirements_id,
@@ -270,7 +271,7 @@ def map_function_to_jobs(
             JobModel(
                 workflow_id=workflow_id,
                 name="postprocess",
-                command="pytorc jobs run-postprocess",
+                command="pytorc run-postprocess",
                 input_user_data_ids=[input_ud.id] + output_data_ids,
                 output_user_data_ids=[output_ud.id],
                 resource_requirements_id=resource_requirements_id,

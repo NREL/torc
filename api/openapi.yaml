@@ -880,6 +880,15 @@ paths:
           default: false
           type: boolean
         style: form
+      - explode: true
+        in: query
+        name: include_relationships
+        required: false
+        schema:
+          default: false
+          type: boolean
+        style: form
+        description: Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
       responses:
         "200":
           content:

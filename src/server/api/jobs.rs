@@ -66,6 +66,7 @@ pub trait JobsApi<C> {
         limit: i64,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        include_relationships: Option<bool>,
         context: &C,
     ) -> Result<ListJobsResponse, ApiError>;
 
@@ -1241,10 +1242,11 @@ where
         limit: i64,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        include_relationships: Option<bool>,
         context: &C,
     ) -> Result<ListJobsResponse, ApiError> {
         debug!(
-            "list_jobs({}, {:?}, {:?}, {:?}, {}, {}, {:?}, {:?}) - X-Span-ID: {:?}",
+            "list_jobs({}, {:?}, {:?}, {:?}, {}, {}, {:?}, {:?}, {:?}) - X-Span-ID: {:?}",
             workflow_id,
             status,
             needs_file_id,
@@ -1253,6 +1255,7 @@ where
             limit,
             sort_by,
             reverse_sort,
+            include_relationships,
             context.get().0.clone()
         );
 
@@ -1318,16 +1321,54 @@ where
         };
 
         let mut items: Vec<models::JobModel> = Vec::new();
+        let should_include_relationships = include_relationships.unwrap_or(false);
+
         for record in records {
             let job_id: i64 = record.get("id");
 
-            // Fetch the complete job with all relationships
-            match self.get_job_with_relationships(job_id).await {
-                Ok(job) => items.push(job),
-                Err(e) => {
-                    error!("Failed to get job {} with relationships: {}", job_id, e);
-                    return Err(e);
+            if should_include_relationships {
+                // Fetch the complete job with all relationships
+                match self.get_job_with_relationships(job_id).await {
+                    Ok(job) => items.push(job),
+                    Err(e) => {
+                        error!("Failed to get job {} with relationships: {}", job_id, e);
+                        return Err(e);
+                    }
                 }
+            } else {
+                // Create job model without relationships for better performance
+                let status_int: i32 = record.get("status");
+                let status = match JobStatus::from_int(status_int) {
+                    Ok(s) => s,
+                    Err(e) => {
+                        error!(
+                            "Failed to parse job status '{}' for job {}: {}",
+                            status_int, job_id, e
+                        );
+                        return Err(ApiError(format!("Failed to parse job status: {}", e)));
+                    }
+                };
+
+                items.push(models::JobModel {
+                    id: Some(record.get("id")),
+                    workflow_id: record.get("workflow_id"),
+                    name: record.get("name"),
+                    command: record.get("command"),
+                    cancel_on_blocking_job_failure: record
+                        .try_get("cancel_on_blocking_job_failure")
+                        .ok(),
+                    supports_termination: record.try_get("supports_termination").ok(),
+                    blocked_by_job_ids: None,
+                    input_file_ids: None,
+                    output_file_ids: None,
+                    input_user_data_ids: None,
+                    output_user_data_ids: None,
+                    resource_requirements_id: record.try_get("resource_requirements_id").ok(),
+                    invocation_script: record.try_get("invocation_script").ok(),
+                    status: Some(status),
+                    scheduler_id: record.try_get("scheduler_id").ok(),
+                    schedule_compute_nodes: None,
+                });
             }
         }
 

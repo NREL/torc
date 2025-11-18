@@ -345,8 +345,6 @@ fn test_create_submission_script() {
         &script_path,
         &config,
         false,
-        false,
-        None,
     );
 
     assert!(
@@ -423,8 +421,6 @@ fn test_create_submission_script_with_extra() {
         &script_path,
         &config,
         false,
-        false,
-        None,
     );
 
     assert!(
@@ -469,8 +465,6 @@ fn test_create_submission_script_with_srun() {
         &script_path,
         &config,
         true, // start_one_worker_per_node
-        false,
-        None,
     );
 
     assert!(
@@ -1326,6 +1320,7 @@ fn test_slurm_run_jobs(start_server: &ServerProcess) {
         None, // limit
         None, // sort_by
         None, // reverse_sort
+        None, // include_relationships
     )
     .expect("Failed to list jobs");
 
@@ -1624,6 +1619,7 @@ fn test_cancel_workflow_with_slurm_scheduler(start_server: &ServerProcess) {
         Some(100), // limit
         None,      // sort_by
         None,      // reverse_sort
+        None,      // include_relationships
     )
     .expect("Failed to list jobs");
 

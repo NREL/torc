@@ -122,7 +122,6 @@ impl HpcManager {
     /// * `max_parallel_jobs` - Optional maximum number of parallel jobs
     /// * `keep_submission_script` - Whether to keep the submission script after submission
     /// * `start_one_worker_per_node` - If true, start a torc worker on each compute node
-    /// * `start_server_on_head_node` - If true, start the torc server on the head node
     ///
     /// # Returns
     /// The HPC job ID
@@ -136,7 +135,6 @@ impl HpcManager {
         max_parallel_jobs: Option<i32>,
         keep_submission_script: bool,
         start_one_worker_per_node: bool,
-        start_server_on_head_node: bool,
     ) -> Result<String> {
         let filename = directory.join(format!("{}.sh", name));
 
@@ -150,8 +148,6 @@ impl HpcManager {
             &filename,
             &self.config,
             start_one_worker_per_node,
-            start_server_on_head_node,
-            None, // torc_server_args - not available in this context
         )?;
 
         trace!("Created submission script {:?}", filename);

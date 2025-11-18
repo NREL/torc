@@ -1,4 +1,4 @@
-def run(input_params: dict) -> dict:
+def run(job_name: str, input_params: dict) -> dict:
     """Runs one simulation on a set of input parameters.
 
     Returns
@@ -6,7 +6,6 @@ def run(input_params: dict) -> dict:
     dict
         Result of the simulation.
     """
-    job_name = input_params["job_name"]
     return {
         "inputs": input_params,
         "result": 5,

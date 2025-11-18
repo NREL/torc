@@ -1043,6 +1043,7 @@ fn test_jobs_delete_all(start_server: &ServerProcess) {
         Some(100),
         None,
         None,
+        None, // include_relationships
     )
     .expect("Failed to list jobs before deletion");
     assert_eq!(
@@ -1072,6 +1073,7 @@ fn test_jobs_delete_all(start_server: &ServerProcess) {
         Some(100),
         None,
         None,
+        None, // include_relationships
     )
     .expect("Failed to list jobs after deletion");
     assert_eq!(

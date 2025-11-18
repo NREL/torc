@@ -13,15 +13,13 @@ from torc.loggers import setup_logging
 
 
 @click.command()
-@click.argument("url")
-def run_postprocess(url: str):
+def run_postprocess():
     """Run a postprocess function on the results of a mapped-function workflow."""
     setup_logging(console_level="INFO")
     vars = get_job_env_vars()
     api = make_api(vars["url"])
     workflow_id = vars["workflow_id"]
     job_id = vars["job_id"]
-    api = make_api(url)
     resp = api.list_user_data(workflow_id=workflow_id, consumer_job_id=job_id)
 
     results = []
