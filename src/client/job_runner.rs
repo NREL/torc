@@ -400,7 +400,10 @@ impl JobRunner {
             ) {
                 Ok(file) => file,
                 Err(e) => {
-                    return Err(format!("Failed to fetch file model for file_id {}: {}", file_id, e));
+                    return Err(format!(
+                        "Failed to fetch file model for file_id {}: {}",
+                        file_id, e
+                    ));
                 }
             };
 
@@ -460,7 +463,10 @@ impl JobRunner {
             ) {
                 Ok(file) => file,
                 Err(e) => {
-                    error!("Failed to re-fetch file model for file_id {}: {}", file_id, e);
+                    error!(
+                        "Failed to re-fetch file model for file_id {}: {}",
+                        file_id, e
+                    );
                     continue;
                 }
             };

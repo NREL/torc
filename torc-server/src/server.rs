@@ -2452,15 +2452,19 @@ where
             return Err(e);
         }
 
-        // Step 2: Uninitialize blocked jobs (safety net against bugs)
-        if let Err(e) = self.uninitialize_blocked_jobs(&mut *tx, id).await {
-            error!("Failed to uninitialize blocked jobs: {}", e);
-            let _ = tx.rollback().await;
-            return Err(e);
+        // Step 2: Uninitialize blocked jobs (only needed during reinitialization)
+        // This is skipped during initial workflow start because Step 3 will set all job statuses anyway.
+        // During reinitialization, this ensures jobs transitively blocked by reset jobs are also reset.
+        let only_uninit = only_uninitialized.unwrap_or(false);
+        if only_uninit {
+            if let Err(e) = self.uninitialize_blocked_jobs(&mut *tx, id).await {
+                error!("Failed to uninitialize blocked jobs: {}", e);
+                let _ = tx.rollback().await;
+                return Err(e);
+            }
         }
 
         // Step 3: Initialize blocked jobs to blocked status
-        let only_uninit = only_uninitialized.unwrap_or(false);
         if let Err(e) = self
             .initialize_blocked_jobs_to_blocked(&mut *tx, id, only_uninit)
             .await

@@ -67,7 +67,7 @@ enum Commands {
         #[arg(long)]
         num_gpus: Option<i64>,
         /// Job completion poll interval in seconds
-        #[arg(long)]
+        #[arg(short, long)]
         poll_interval: Option<f64>,
         /// Output directory for jobs
         #[arg(short, long)]
