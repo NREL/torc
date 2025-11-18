@@ -44,7 +44,7 @@ def run_function():
     ret = 0
     result = None
     try:
-        result = func(inputs["params"])
+        result = func(inputs["job_name"], inputs["params"])
         logger.info("Completed {}", tag)
     except Exception:
         logger.exception("Failed to run {}", tag)

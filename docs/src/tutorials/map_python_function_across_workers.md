@@ -20,15 +20,16 @@ pip install -e .
 Let's suppose that your code is in a module called `simulation.py` and looks something like this:
 
 ```python
-def run(input_params: dict) -> dict:
+def run(job_name: str, input_params: dict) -> dict:
     """Runs one simulation on a set of input parameters.
 
     Returns
     -------
+    job_name: str
+        Name of the job.
     dict
         Result of the simulation.
     """
-    job_name = input_params["job_name"]
     return {
         "inputs": input_params,
         "result": 5,

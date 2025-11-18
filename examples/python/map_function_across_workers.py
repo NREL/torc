@@ -5,7 +5,6 @@ from torc import make_api, map_function_to_jobs, setup_logging
 from torc.openapi_client import (
     DefaultApi,
     ResourceRequirementsModel,
-    SlurmSchedulerModel,
     WorkflowModel,
 )
 
@@ -42,16 +41,6 @@ def build_workflow(api: DefaultApi, workflow: WorkflowModel):
             runtime="P0DT1H",
         ),
     )
-    api.create_slurm_scheduler(
-        SlurmSchedulerModel(
-            workflow_id=workflow_id,
-            name="short",
-            account="my_account",
-            mem="180224",
-            walltime="04:00:00",
-            nodes=1,
-        ),
-    )
     jobs = map_function_to_jobs(
         api,
         workflow_id,
@@ -62,7 +51,7 @@ def build_workflow(api: DefaultApi, workflow: WorkflowModel):
         # Note that this is optional.
         postprocess_func="postprocess",
     )
-    print(f"Created workflow with ID {workflow_id} {len(jobs)} jobs.")
+    print(f"Created workflow with ID {workflow_id} with {len(jobs)} jobs.")
 
 
 def main():
