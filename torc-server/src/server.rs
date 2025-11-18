@@ -2054,6 +2054,7 @@ where
         limit: Option<i64>,
         sort_by: Option<String>,
         reverse_sort: Option<bool>,
+        include_relationships: Option<bool>,
         context: &C,
     ) -> Result<ListJobsResponse, ApiError> {
         let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
@@ -2067,6 +2068,7 @@ where
                 processed_limit,
                 sort_by,
                 reverse_sort,
+                include_relationships,
                 context,
             )
             .await

@@ -68,7 +68,6 @@ actions:
     scheduler_type: "slurm"
     num_allocations: 2
     start_one_worker_per_node: true
-    start_server_on_head_node: true
 
   # Allocate resources for finalization stage
   - trigger_type: "on_jobs_ready"

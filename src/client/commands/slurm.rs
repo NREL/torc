@@ -243,9 +243,6 @@ pub enum SlurmCommands {
         /// Start one worker per node
         #[arg(long, default_value = "false")]
         start_one_worker_per_node: bool,
-        /// Start torc-server on the head node of the allocation
-        #[arg(long, default_value = "false")]
-        start_server_on_head_node: bool,
     },
 }
 
@@ -523,7 +520,6 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
             poll_interval,
             scheduler_config_id,
             start_one_worker_per_node,
-            start_server_on_head_node,
         } => {
             let user_name = get_env_user_name();
             let wf_id = workflow_id.unwrap_or_else(|| {
@@ -594,9 +590,7 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
                 *poll_interval,
                 *max_parallel_jobs,
                 *start_one_worker_per_node,
-                *start_server_on_head_node,
                 *keep_submission_scripts,
-                None, // torc_server_args - not available from CLI context
             ) {
                 Ok(()) => {
                     eprintln!("Successfully running {} Slurm job(s)", num_hpc_jobs);
@@ -622,7 +616,6 @@ pub fn handle_slurm_commands(config: &Configuration, command: &SlurmCommands, fo
 /// * `poll_interval` - Poll interval in seconds
 /// * `max_parallel_jobs` - Maximum number of parallel jobs
 /// * `start_one_worker_per_node` - Start one worker per node
-/// * `start_server_on_head_node` - Start server on head node
 /// * `keep_submission_scripts` - Keep submission scripts after job submission
 ///
 /// # Returns
@@ -637,9 +630,7 @@ pub fn schedule_slurm_nodes(
     poll_interval: i32,
     max_parallel_jobs: Option<i32>,
     start_one_worker_per_node: bool,
-    start_server_on_head_node: bool,
     keep_submission_scripts: bool,
-    torc_server_args: Option<&serde_json::Value>,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let scheduler = match default_api::get_slurm_scheduler(config, scheduler_config_id) {
         Ok(s) => s,
@@ -695,8 +686,6 @@ pub fn schedule_slurm_nodes(
             Path::new(&script_path),
             &config_map,
             start_one_worker_per_node,
-            start_server_on_head_node,
-            torc_server_args,
         ) {
             error!("Error creating submission script: {}", e);
             return Err(e.into());

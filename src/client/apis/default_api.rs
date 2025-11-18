@@ -3636,6 +3636,7 @@ pub fn list_jobs(
     limit: Option<i64>,
     sort_by: Option<&str>,
     reverse_sort: Option<bool>,
+    include_relationships: Option<bool>,
 ) -> Result<models::ListJobsResponse, Error<ListJobsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_workflow_id = workflow_id;
@@ -3646,6 +3647,7 @@ pub fn list_jobs(
     let p_limit = limit;
     let p_sort_by = sort_by;
     let p_reverse_sort = reverse_sort;
+    let p_include_relationships = include_relationships;
 
     let uri_str = format!("{}/jobs", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -3671,6 +3673,9 @@ pub fn list_jobs(
     }
     if let Some(ref param_value) = p_reverse_sort {
         req_builder = req_builder.query(&[("reverse_sort", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_include_relationships {
+        req_builder = req_builder.query(&[("include_relationships", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());

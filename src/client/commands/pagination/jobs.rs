@@ -23,6 +23,7 @@ pub struct JobListParams {
     pub limit: Option<i64>,
     pub sort_by: Option<String>,
     pub reverse_sort: Option<bool>,
+    pub include_relationships: Option<bool>,
 }
 
 impl Default for JobListParams {
@@ -35,6 +36,7 @@ impl Default for JobListParams {
             limit: None,
             sort_by: None,
             reverse_sort: None,
+            include_relationships: None,
         }
     }
 }
@@ -77,6 +79,11 @@ impl JobListParams {
 
     pub fn with_reverse_sort(mut self, reverse: bool) -> Self {
         self.reverse_sort = Some(reverse);
+        self
+    }
+
+    pub fn with_include_relationships(mut self, include: bool) -> Self {
+        self.include_relationships = Some(include);
         self
     }
 }
@@ -127,6 +134,7 @@ impl JobsIterator {
             Some(page_limit),
             self.params.sort_by.as_deref(),
             self.params.reverse_sort,
+            self.params.include_relationships,
         )?;
 
         if let Some(items) = response.items {

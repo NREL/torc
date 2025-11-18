@@ -55,7 +55,6 @@ pub trait HpcInterface: Send + Sync {
     /// * `filename` - Path where the submission script should be written
     /// * `config` - Configuration parameters for the HPC scheduler
     /// * `start_one_worker_per_node` - If true, start a torc worker on each compute node
-    /// * `start_server_on_head_node` - If true, start the torc server on the head node
     fn create_submission_script(
         &self,
         name: &str,
@@ -67,8 +66,6 @@ pub trait HpcInterface: Send + Sync {
         filename: &Path,
         config: &HashMap<String, String>,
         start_one_worker_per_node: bool,
-        start_server_on_head_node: bool,
-        torc_server_args: Option<&serde_json::Value>,
     ) -> Result<()>;
 
     /// Get the current HPC job ID from environment variables

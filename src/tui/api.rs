@@ -81,6 +81,7 @@ impl TorcClient {
             None, // limit
             None, // sort_by
             None, // reverse_sort
+            None, // include_relationships
         )
         .context("Failed to list jobs")?;
 

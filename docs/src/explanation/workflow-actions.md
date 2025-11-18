@@ -238,7 +238,6 @@ Dynamically allocate compute resources from a Slurm scheduler.
 - `scheduler_type` (required) - Must be "slurm"
 - `num_allocations` (required) - Number of Slurm allocation requests to submit
 - `start_one_worker_per_node` (optional) - Start one job runner per node (default: false)
-- `start_server_on_head_node` (optional) - Start torc-server on head node (default: false)
 - `max_parallel_jobs` (optional) - Maximum concurrent jobs per runner
 
 **Use cases**:

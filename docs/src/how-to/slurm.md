@@ -10,10 +10,7 @@
   be minimal. However, if you allocate hundreds of nodes with many thousands of
   short jobs, the Torc server process may exceed allowed resource limits. Check
   with your operations team if you have doubts.
-- **Slurm head node**: Create the workflow while running the Torc server on the
-  login node. Start the workflow with `start_server_on_head_node` set to true.
-  Shut down the server. Torc will configure the job to start the server upon
-  being granted the allocation.
+
 
 ## Basic Slurm Configuration
 

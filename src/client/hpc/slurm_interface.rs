@@ -210,8 +210,6 @@ impl HpcInterface for SlurmInterface {
         filename: &Path,
         config: &HashMap<String, String>,
         start_one_worker_per_node: bool,
-        start_server_on_head_node: bool,
-        torc_server_args: Option<&serde_json::Value>,
     ) -> Result<()> {
         let mut script = format!(
             "#!/bin/bash\n\
@@ -247,101 +245,7 @@ impl HpcInterface for SlurmInterface {
         }
 
         script.push('\n');
-
-        // Add server startup logic if needed
-        if start_server_on_head_node {
-            // Build torc-server command with arguments from torc_server_args
-            let mut server_command = String::from("torc-server");
-
-            // Helper function to add a flag to the command
-            let mut add_flag = |flag: &str, value: &str| {
-                server_command.push_str(&format!(" --{} {}", flag, value));
-            };
-
-            // Apply defaults and user-provided arguments
-            let mut log_dir = String::from("./torc-server-logs");
-            let mut threads = String::from("1");
-            let mut log_level = String::from("info");
-            let mut port = String::from("8080");
-            let mut database: Option<String> = None;
-            let mut auth_file: Option<String> = None;
-            let mut require_auth = false;
-            let mut json_logs = false;
-
-            // Extract user-provided values if torc_server_args is present
-            if let Some(args) = torc_server_args {
-                if let Some(args_obj) = args.as_object() {
-                    // Extract each field, overriding defaults where provided
-                    if let Some(val) = args_obj.get("log_dir").and_then(|v| v.as_str()) {
-                        log_dir = val.to_string();
-                    }
-                    if let Some(val) = args_obj.get("threads").and_then(|v| v.as_i64()) {
-                        threads = val.to_string();
-                    }
-                    if let Some(val) = args_obj.get("log_level").and_then(|v| v.as_str()) {
-                        log_level = val.to_string();
-                    }
-                    if let Some(val) = args_obj.get("port").and_then(|v| v.as_i64()) {
-                        port = val.to_string();
-                    }
-                    if let Some(val) = args_obj.get("database").and_then(|v| v.as_str()) {
-                        database = Some(val.to_string());
-                    }
-                    if let Some(val) = args_obj.get("auth_file").and_then(|v| v.as_str()) {
-                        auth_file = Some(val.to_string());
-                    }
-                    if let Some(val) = args_obj.get("require_auth").and_then(|v| v.as_bool()) {
-                        require_auth = val;
-                    }
-                    if let Some(val) = args_obj.get("json_logs").and_then(|v| v.as_bool()) {
-                        json_logs = val;
-                    }
-                    // Note: url field is ignored since we construct it dynamically
-                    // Note: daemon and pid_file are intentionally not supported
-                }
-            }
-
-            // Build the command with all flags
-            add_flag("url", &format!("http://$(hostname):{}", port));
-            add_flag("port", &port);
-            add_flag("threads", &threads);
-            add_flag("log-level", &log_level);
-            add_flag("log-dir", &log_dir);
-
-            if let Some(ref db) = database {
-                add_flag("database", db);
-            }
-            if let Some(ref auth) = auth_file {
-                add_flag("auth-file", auth);
-            }
-            if require_auth {
-                server_command.push_str(" --require-auth");
-            }
-            if json_logs {
-                server_command.push_str(" --json-logs");
-            }
-
-            script.push_str(&format!(
-                "# Start torc-server on the head node\n\
-                 if [ \"${{SLURM_NODEID}}\" = \"0\" ]; then\n\
-                     echo \"Starting torc-server on head node $(hostname)\"\n\
-                     {} &\n\
-                     SERVER_PID=$!\n\
-                     echo \"torc-server started with PID $SERVER_PID\"\n\
-                     # Give the server time to start up\n\
-                     sleep 5\n\
-                 fi\n\
-                 \n\
-                 # Use the head node hostname for the server URL\n\
-                 TORC_URL=\"http://$(scontrol show hostnames $SLURM_JOB_NODELIST | head -n 1):{}/torc-service/v1\"\n\
-                 \n",
-                server_command,
-                port
-            ));
-        } else {
-            // Use the provided server URL
-            script.push_str(&format!("TORC_URL=\"{}\"\n\n", server_url));
-        }
+        script.push_str(&format!("TORC_URL=\"{}\"\n\n", server_url));
 
         // Build the torc-slurm-job-runner command
         let mut command = format!(

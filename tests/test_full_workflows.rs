@@ -88,6 +88,7 @@ fn verify_diamond_workflow_completion(
         None,
         None,
         None,
+        None, // include_relationships
     )
     .expect("Failed to list jobs");
 
@@ -396,6 +397,7 @@ fn verify_many_jobs_completion(
         None,
         None,
         None,
+        None, // include_relationships
     )
     .expect("Failed to list jobs");
 

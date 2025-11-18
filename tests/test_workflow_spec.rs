@@ -1489,6 +1489,7 @@ fn test_create_workflow_with_regex_job_dependencies(start_server: &ServerProcess
         None,
         None,
         None,
+        Some(true), // include_relationships - needed for tests that check dependencies/files
     )
     .expect("Failed to list jobs");
 
@@ -1580,6 +1581,7 @@ fn test_create_workflow_with_regex_file_dependencies(start_server: &ServerProces
         None,
         None,
         None,
+        Some(true), // include_relationships - needed for tests that check dependencies/files
     )
     .expect("Failed to list jobs");
 
@@ -1664,6 +1666,7 @@ fn test_create_workflow_with_regex_user_data_dependencies(start_server: &ServerP
         None,
         None,
         None,
+        Some(true), // include_relationships - needed for tests that check dependencies/files
     )
     .expect("Failed to list jobs");
 
@@ -1751,6 +1754,7 @@ fn test_create_workflow_with_mixed_exact_and_regex_dependencies(start_server: &S
         None,
         None,
         None,
+        Some(true), // include_relationships - needed for tests that check dependencies/files
     )
     .expect("Failed to list jobs");
 
