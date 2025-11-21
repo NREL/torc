@@ -131,9 +131,9 @@ pub fn run(args: &Args) {
                             std::process::exit(1);
                         }
                     }
-                } else {
-                    eprintln!("Workflow {} already has initialized jobs", workflow_id);
                 }
+                // If workflow is already initialized, proceed to run it
+                // (no action needed, just continue)
             }
         }
         Err(e) => {
@@ -195,7 +195,8 @@ pub fn run(args: &Args) {
     builder
         .target(env_logger::Target::Pipe(Box::new(multi_writer)))
         .filter_level(log_level_filter)
-        .init();
+        .try_init()
+        .ok(); // Ignore error if logger is already initialized
 
     info!("Starting job runner");
     info!("Hostname: {}", hostname);

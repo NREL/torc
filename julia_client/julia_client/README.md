@@ -85,7 +85,9 @@ Class | Method
 *DefaultApi* | [**list_events_after_timestamp**](docs/DefaultApi.md#list_events_after_timestamp)<br/>**GET** /workflows/{id}/events_after_timestamp/{timestamp}<br/>Return all events newer than the event with timestamp.
 *DefaultApi* | [**list_files**](docs/DefaultApi.md#list_files)<br/>**GET** /files<br/>Retrieve all files for one workflow.
 *DefaultApi* | [**list_job_dependencies**](docs/DefaultApi.md#list_job_dependencies)<br/>**GET** /workflows/{id}/job_dependencies<br/>Retrieve job blocking relationships for a workflow.
+*DefaultApi* | [**list_job_file_relationships**](docs/DefaultApi.md#list_job_file_relationships)<br/>**GET** /workflows/{id}/job_file_relationships<br/>Retrieve job-file relationships for a workflow.
 *DefaultApi* | [**list_job_ids**](docs/DefaultApi.md#list_job_ids)<br/>**GET** /workflows/{id}/job_ids<br/>Retrieve all job IDs for one workflow.
+*DefaultApi* | [**list_job_user_data_relationships**](docs/DefaultApi.md#list_job_user_data_relationships)<br/>**GET** /workflows/{id}/job_user_data_relationships<br/>Retrieve job-user_data relationships for a workflow.
 *DefaultApi* | [**list_jobs**](docs/DefaultApi.md#list_jobs)<br/>**GET** /jobs<br/>Retrieve all jobs for one workflow.
 *DefaultApi* | [**list_local_schedulers**](docs/DefaultApi.md#list_local_schedulers)<br/>**GET** /local_schedulers<br/>Retrieve local schedulers for one workflow.
 *DefaultApi* | [**list_missing_user_data**](docs/DefaultApi.md#list_missing_user_data)<br/>**GET** /workflows/{id}/missing_user_data<br/>List missing user data that should exist.
@@ -133,14 +135,18 @@ Class | Method
  - [IsCompleteResponse](docs/IsCompleteResponse.md)
  - [IsUninitializedResponse](docs/IsUninitializedResponse.md)
  - [JobDependencyModel](docs/JobDependencyModel.md)
+ - [JobFileRelationshipModel](docs/JobFileRelationshipModel.md)
  - [JobModel](docs/JobModel.md)
  - [JobStatus](docs/JobStatus.md)
+ - [JobUserDataRelationshipModel](docs/JobUserDataRelationshipModel.md)
  - [JobsModel](docs/JobsModel.md)
  - [JobsSortMethod](docs/JobsSortMethod.md)
  - [ListComputeNodesResponse](docs/ListComputeNodesResponse.md)
  - [ListEventsResponse](docs/ListEventsResponse.md)
  - [ListFilesResponse](docs/ListFilesResponse.md)
  - [ListJobDependenciesResponse](docs/ListJobDependenciesResponse.md)
+ - [ListJobFileRelationshipsResponse](docs/ListJobFileRelationshipsResponse.md)
+ - [ListJobUserDataRelationshipsResponse](docs/ListJobUserDataRelationshipsResponse.md)
  - [ListJobsResponse](docs/ListJobsResponse.md)
  - [ListLocalSchedulersResponse](docs/ListLocalSchedulersResponse.md)
  - [ListMissingUserDataResponse](docs/ListMissingUserDataResponse.md)

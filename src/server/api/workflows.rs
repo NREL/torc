@@ -9,7 +9,8 @@ use swagger::{ApiError, Has, XSpanIdString};
 use crate::server::api_types::{
     CancelWorkflowResponse, CreateWorkflowResponse, DeleteWorkflowResponse, GetWorkflowResponse,
     GetWorkflowStatusResponse, IsWorkflowCompleteResponse, IsWorkflowUninitializedResponse,
-    ListJobDependenciesResponse, ListWorkflowsResponse, ResetWorkflowStatusResponse,
+    ListJobDependenciesResponse, ListJobFileRelationshipsResponse,
+    ListJobUserDataRelationshipsResponse, ListWorkflowsResponse, ResetWorkflowStatusResponse,
     UpdateWorkflowResponse, UpdateWorkflowStatusResponse,
 };
 
@@ -84,6 +85,24 @@ pub trait WorkflowsApi<C> {
         limit: Option<i64>,
         context: &C,
     ) -> Result<ListJobDependenciesResponse, ApiError>;
+
+    /// Retrieve job-file relationships for a workflow.
+    async fn list_job_file_relationships(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        context: &C,
+    ) -> Result<ListJobFileRelationshipsResponse, ApiError>;
+
+    /// Retrieve job-user_data relationships for a workflow.
+    async fn list_job_user_data_relationships(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        context: &C,
+    ) -> Result<ListJobUserDataRelationshipsResponse, ApiError>;
 
     /// Update a workflow.
     async fn update_workflow(
@@ -1375,6 +1394,208 @@ where
         Ok(ListJobDependenciesResponse::SuccessfulResponse(
             models::ListJobDependenciesResponse {
                 items: Some(dependencies),
+                offset: offset_val,
+                max_limit: 100000,
+                count: current_count,
+                total_count,
+                has_more,
+            },
+        ))
+    }
+
+    /// Retrieve job-file relationships for a workflow.
+    async fn list_job_file_relationships(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        context: &C,
+    ) -> Result<ListJobFileRelationshipsResponse, ApiError> {
+        debug!(
+            "list_job_file_relationships({}, {:?}, {:?}) - X-Span-ID: {:?}",
+            workflow_id,
+            offset,
+            limit,
+            context.get().0.clone()
+        );
+
+        let offset_val = offset.unwrap_or(0);
+        let limit_val = limit.unwrap_or(100000).min(100000);
+
+        // Query job_input_file and job_output_file tables with JOINs
+        // UNION the input and output relationships
+        let relationships = match sqlx::query_as!(
+            models::JobFileRelationshipModel,
+            r#"
+            SELECT
+                f.id as file_id,
+                f.name as file_name,
+                f.path as file_path,
+                jof.job_id as "producer_job_id?",
+                producer.name as "producer_job_name?",
+                jif.job_id as "consumer_job_id?",
+                consumer.name as "consumer_job_name?",
+                f.workflow_id as workflow_id
+            FROM file f
+            LEFT JOIN job_output_file jof ON f.id = jof.file_id
+            LEFT JOIN job producer ON jof.job_id = producer.id
+            LEFT JOIN job_input_file jif ON f.id = jif.file_id
+            LEFT JOIN job consumer ON jif.job_id = consumer.id
+            WHERE f.workflow_id = ?
+                AND (jof.job_id IS NOT NULL OR jif.job_id IS NOT NULL)
+            LIMIT ? OFFSET ?
+            "#,
+            workflow_id,
+            limit_val,
+            offset_val
+        )
+        .fetch_all(self.context.pool.as_ref())
+        .await
+        {
+            Ok(rels) => rels,
+            Err(e) => {
+                return Err(database_error(e));
+            }
+        };
+
+        // Get total count
+        let total_count = match sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*)
+            FROM (
+                SELECT f.id, jof.job_id as producer, jif.job_id as consumer
+                FROM file f
+                LEFT JOIN job_output_file jof ON f.id = jof.file_id
+                LEFT JOIN job_input_file jif ON f.id = jif.file_id
+                WHERE f.workflow_id = ?
+                    AND (jof.job_id IS NOT NULL OR jif.job_id IS NOT NULL)
+            )
+            "#,
+        )
+        .bind(workflow_id)
+        .fetch_one(self.context.pool.as_ref())
+        .await
+        {
+            Ok(count) => count,
+            Err(e) => {
+                return Err(database_error(e));
+            }
+        };
+
+        let current_count = relationships.len() as i64;
+        let has_more = offset_val + current_count < total_count;
+
+        debug!(
+            "list_job_file_relationships({}) - returning {}/{} relationships - X-Span-ID: {:?}",
+            workflow_id,
+            current_count,
+            total_count,
+            context.get().0.clone()
+        );
+
+        Ok(ListJobFileRelationshipsResponse::SuccessfulResponse(
+            models::ListJobFileRelationshipsResponse {
+                items: Some(relationships),
+                offset: offset_val,
+                max_limit: 100000,
+                count: current_count,
+                total_count,
+                has_more,
+            },
+        ))
+    }
+
+    /// Retrieve job-user_data relationships for a workflow.
+    async fn list_job_user_data_relationships(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        context: &C,
+    ) -> Result<ListJobUserDataRelationshipsResponse, ApiError> {
+        debug!(
+            "list_job_user_data_relationships({}, {:?}, {:?}) - X-Span-ID: {:?}",
+            workflow_id,
+            offset,
+            limit,
+            context.get().0.clone()
+        );
+
+        let offset_val = offset.unwrap_or(0);
+        let limit_val = limit.unwrap_or(100000).min(100000);
+
+        // Query job_input_user_data and job_output_user_data tables with JOINs
+        let relationships = match sqlx::query_as!(
+            models::JobUserDataRelationshipModel,
+            r#"
+            SELECT
+                ud.id as user_data_id,
+                ud.name as user_data_name,
+                joud.job_id as "producer_job_id?",
+                producer.name as "producer_job_name?",
+                jiud.job_id as "consumer_job_id?",
+                consumer.name as "consumer_job_name?",
+                ud.workflow_id as workflow_id
+            FROM user_data ud
+            LEFT JOIN job_output_user_data joud ON ud.id = joud.user_data_id
+            LEFT JOIN job producer ON joud.job_id = producer.id
+            LEFT JOIN job_input_user_data jiud ON ud.id = jiud.user_data_id
+            LEFT JOIN job consumer ON jiud.job_id = consumer.id
+            WHERE ud.workflow_id = ?
+                AND (joud.job_id IS NOT NULL OR jiud.job_id IS NOT NULL)
+            LIMIT ? OFFSET ?
+            "#,
+            workflow_id,
+            limit_val,
+            offset_val
+        )
+        .fetch_all(self.context.pool.as_ref())
+        .await
+        {
+            Ok(rels) => rels,
+            Err(e) => {
+                return Err(database_error(e));
+            }
+        };
+
+        // Get total count
+        let total_count = match sqlx::query_scalar::<_, i64>(
+            r#"
+            SELECT COUNT(*)
+            FROM (
+                SELECT ud.id, joud.job_id as producer, jiud.job_id as consumer
+                FROM user_data ud
+                LEFT JOIN job_output_user_data joud ON ud.id = joud.user_data_id
+                LEFT JOIN job_input_user_data jiud ON ud.id = jiud.user_data_id
+                WHERE ud.workflow_id = ?
+                    AND (joud.job_id IS NOT NULL OR jiud.job_id IS NOT NULL)
+            )
+            "#,
+        )
+        .bind(workflow_id)
+        .fetch_one(self.context.pool.as_ref())
+        .await
+        {
+            Ok(count) => count,
+            Err(e) => {
+                return Err(database_error(e));
+            }
+        };
+
+        let current_count = relationships.len() as i64;
+        let has_more = offset_val + current_count < total_count;
+
+        debug!(
+            "list_job_user_data_relationships({}) - returning {}/{} relationships - X-Span-ID: {:?}",
+            workflow_id,
+            current_count,
+            total_count,
+            context.get().0.clone()
+        );
+
+        Ok(ListJobUserDataRelationshipsResponse::SuccessfulResponse(
+            models::ListJobUserDataRelationshipsResponse {
+                items: Some(relationships),
                 offset: offset_val,
                 max_limit: 100000,
                 count: current_count,

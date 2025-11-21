@@ -8,6 +8,9 @@ use torc::client::apis::default_api;
 use torc::client::commands::compute_nodes::{ComputeNodeCommands, handle_compute_node_commands};
 use torc::client::commands::events::{EventCommands, handle_event_commands};
 use torc::client::commands::files::{FileCommands, handle_file_commands};
+use torc::client::commands::job_dependencies::{
+    JobDependencyCommands, handle_job_dependency_commands,
+};
 use torc::client::commands::jobs::{JobCommands, handle_job_commands};
 use torc::client::commands::reports::{ReportCommands, handle_report_commands};
 use torc::client::commands::resource_requirements::{
@@ -102,6 +105,11 @@ enum Commands {
     Jobs {
         #[command(subcommand)]
         command: JobCommands,
+    },
+    /// Job dependency and relationship queries
+    JobDependencies {
+        #[command(subcommand)]
+        command: JobDependencyCommands,
     },
     /// Resource requirements management commands
     ResourceRequirements {
@@ -256,7 +264,7 @@ fn main() {
                 output_dir: output_dir
                     .clone()
                     .unwrap_or_else(|| PathBuf::from("output")),
-                poll_interval: poll_interval.unwrap_or(60.0),
+                poll_interval: poll_interval.unwrap_or(5.0),
                 max_parallel_jobs: *max_parallel_jobs,
                 database_poll_interval: 30,
                 time_limit: None,
@@ -402,6 +410,9 @@ fn main() {
         }
         Commands::Jobs { command } => {
             handle_job_commands(&config, command, &cli.format);
+        }
+        Commands::JobDependencies { command } => {
+            handle_job_dependency_commands(command, &config, &cli.format);
         }
         Commands::ResourceRequirements { command } => {
             handle_resource_requirements_commands(&config, command, &cli.format);

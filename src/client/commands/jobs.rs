@@ -22,6 +22,26 @@ struct JobTableRow {
     command: String,
 }
 
+#[derive(Tabled)]
+struct JobResourceRequirementsTableRow {
+    #[tabled(rename = "Job ID")]
+    job_id: i64,
+    #[tabled(rename = "Job Name")]
+    job_name: String,
+    #[tabled(rename = "RR Name")]
+    rr_name: String,
+    #[tabled(rename = "CPUs")]
+    num_cpus: i64,
+    #[tabled(rename = "GPUs")]
+    num_gpus: i64,
+    #[tabled(rename = "Nodes")]
+    num_nodes: i64,
+    #[tabled(rename = "Memory")]
+    memory: String,
+    #[tabled(rename = "Runtime")]
+    runtime: String,
+}
+
 #[derive(clap::Subcommand)]
 pub enum JobCommands {
     /// Create a new job
@@ -158,6 +178,16 @@ pub enum JobCommands {
         /// Workflow ID to delete all jobs from (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
+    },
+    /// List jobs with their resource requirements
+    #[command(name = "list-resource-requirements")]
+    ListResourceRequirements {
+        /// Workflow ID to list jobs from (optional - will prompt if not provided)
+        #[arg()]
+        workflow_id: Option<i64>,
+        /// Filter by specific job ID
+        #[arg(short, long)]
+        job_id: Option<i64>,
     },
 }
 
@@ -689,6 +719,141 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                 Err(e) => {
                     eprintln!("Error creating jobs from file '{}': {}", file, e);
                     std::process::exit(1);
+                }
+            }
+        }
+        JobCommands::ListResourceRequirements {
+            workflow_id,
+            job_id,
+        } => {
+            use std::collections::HashMap;
+
+            // Get jobs - either a single job or all jobs for a workflow
+            let jobs: Vec<models::JobModel> = if let Some(jid) = job_id {
+                // Get single job
+                match default_api::get_job(config, *jid) {
+                    Ok(job) => vec![job],
+                    Err(e) => {
+                        print_error("getting job", &e);
+                        std::process::exit(1);
+                    }
+                }
+            } else {
+                // Get all jobs for workflow
+                let user_name = get_env_user_name();
+                let selected_workflow_id = match workflow_id {
+                    Some(id) => *id,
+                    None => select_workflow_interactively(config, &user_name).unwrap_or_else(|e| {
+                        eprintln!("Error selecting workflow: {}", e);
+                        std::process::exit(1);
+                    }),
+                };
+
+                match default_api::list_jobs(
+                    config,
+                    selected_workflow_id,
+                    None,        // status
+                    None,        // needs_file_id
+                    None,        // upstream_job_id
+                    Some(0),     // offset
+                    Some(10000), // limit
+                    None,        // sort_by
+                    None,        // reverse_sort
+                ) {
+                    Ok(response) => response.items.unwrap_or_default(),
+                    Err(e) => {
+                        print_error("listing jobs", &e);
+                        std::process::exit(1);
+                    }
+                }
+            };
+
+            if jobs.is_empty() {
+                if format == "json" {
+                    println!("[]");
+                } else {
+                    println!("No jobs found");
+                }
+                return;
+            }
+
+            // Build HashMap of unique resource_requirements_id -> ResourceRequirementsModel
+            let mut rr_map: HashMap<i64, models::ResourceRequirementsModel> = HashMap::new();
+            for job in &jobs {
+                if let Some(rr_id) = job.resource_requirements_id {
+                    if !rr_map.contains_key(&rr_id) {
+                        match default_api::get_resource_requirements(config, rr_id) {
+                            Ok(rr) => {
+                                rr_map.insert(rr_id, rr);
+                            }
+                            Err(e) => {
+                                print_error(
+                                    &format!("getting resource requirements {}", rr_id),
+                                    &e,
+                                );
+                                std::process::exit(1);
+                            }
+                        }
+                    }
+                }
+            }
+
+            if format == "json" {
+                // Build JSON output - only include jobs with resource requirements
+                let output: Vec<serde_json::Value> = jobs
+                    .iter()
+                    .filter_map(|job| {
+                        job.resource_requirements_id.and_then(|rr_id| {
+                            rr_map.get(&rr_id).map(|rr| {
+                                serde_json::json!({
+                                    "job_id": job.id,
+                                    "job_name": &job.name,
+                                    "rr_name": &rr.name,
+                                    "workflow_id": rr.workflow_id,
+                                    "num_cpus": rr.num_cpus,
+                                    "num_gpus": rr.num_gpus,
+                                    "num_nodes": rr.num_nodes,
+                                    "memory": &rr.memory,
+                                    "runtime": &rr.runtime,
+                                })
+                            })
+                        })
+                    })
+                    .collect();
+
+                match serde_json::to_string_pretty(&output) {
+                    Ok(json) => println!("{}", json),
+                    Err(e) => {
+                        eprintln!("Error serializing JSON: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            } else {
+                // Build table rows
+                let rows: Vec<JobResourceRequirementsTableRow> = jobs
+                    .iter()
+                    .filter_map(|job| {
+                        job.resource_requirements_id.and_then(|rr_id| {
+                            rr_map
+                                .get(&rr_id)
+                                .map(|rr| JobResourceRequirementsTableRow {
+                                    job_id: job.id.unwrap_or(-1),
+                                    job_name: job.name.clone(),
+                                    rr_name: rr.name.clone(),
+                                    num_cpus: rr.num_cpus,
+                                    num_gpus: rr.num_gpus,
+                                    num_nodes: rr.num_nodes,
+                                    memory: rr.memory.clone(),
+                                    runtime: rr.runtime.clone(),
+                                })
+                        })
+                    })
+                    .collect();
+
+                if rows.is_empty() {
+                    println!("No jobs with resource requirements found");
+                } else {
+                    display_table_with_count(&rows, "jobs with resource requirements");
                 }
             }
         }

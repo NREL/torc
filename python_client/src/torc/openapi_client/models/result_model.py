@@ -35,7 +35,11 @@ class ResultModel(BaseModel):
     exec_time_minutes: Union[StrictFloat, StrictInt] = Field(description="Job execution time in minutes")
     completion_time: StrictStr = Field(description="Timestamp of when the job completed.")
     status: Optional[Any]
-    __properties: ClassVar[List[str]] = ["id", "job_id", "workflow_id", "run_id", "compute_node_id", "return_code", "exec_time_minutes", "completion_time", "status"]
+    peak_memory_bytes: Optional[StrictInt] = Field(default=None, description="Peak memory usage in bytes")
+    avg_memory_bytes: Optional[StrictInt] = Field(default=None, description="Average memory usage in bytes")
+    peak_cpu_percent: Optional[Union[StrictFloat, StrictInt]] = Field(default=None, description="Peak CPU usage as percentage (can exceed 100% for multi-core)")
+    avg_cpu_percent: Optional[Union[StrictFloat, StrictInt]] = Field(default=None, description="Average CPU usage as percentage (can exceed 100% for multi-core)")
+    __properties: ClassVar[List[str]] = ["id", "job_id", "workflow_id", "run_id", "compute_node_id", "return_code", "exec_time_minutes", "completion_time", "status", "peak_memory_bytes", "avg_memory_bytes", "peak_cpu_percent", "avg_cpu_percent"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -101,7 +105,11 @@ class ResultModel(BaseModel):
             "return_code": obj.get("return_code"),
             "exec_time_minutes": obj.get("exec_time_minutes"),
             "completion_time": obj.get("completion_time"),
-            "status": obj.get("status")
+            "status": obj.get("status"),
+            "peak_memory_bytes": obj.get("peak_memory_bytes"),
+            "avg_memory_bytes": obj.get("avg_memory_bytes"),
+            "peak_cpu_percent": obj.get("peak_cpu_percent"),
+            "avg_cpu_percent": obj.get("avg_cpu_percent")
         })
         return _obj
 

@@ -58,7 +58,7 @@ impl JobRunner {
         output_dir: PathBuf,
         job_completion_poll_interval: f64,
         max_parallel_jobs: Option<i64>,
-        database_poll_interval: i64,
+        database_poll_interval: i64, // TODO is this handled properly?
         time_limit: Option<String>,
         end_time: Option<DateTime<Utc>>,
         resources: ComputeNodesResources,
@@ -198,33 +198,14 @@ impl JobRunner {
                         }
                     }
                 }
-                Err(_) => {
-                    match utils::send_with_retries(
-                        &self.config,
-                        || default_api::is_workflow_complete(&self.config, self.workflow_id),
-                        self.rules.compute_node_wait_for_healthy_database_minutes,
-                    ) {
-                        Ok(is_complete) => {
-                            if is_complete.is_complete {
-                                info!(
-                                    "Workflow {} is complete. Exiting job runner.",
-                                    self.workflow_id
-                                );
-                                break;
-                            }
-                        }
-                        Err(retry_err) => {
-                            error!(
-                                "Failed to check workflow completion after retries: {}",
-                                retry_err
-                            );
-                            return Err(format!(
-                                "Unable to check workflow completion: {}",
-                                retry_err
-                            )
-                            .into());
-                        }
-                    }
+                Err(retry_err) => {
+                    error!(
+                        "Failed to check workflow completion after retries: {}",
+                        retry_err
+                    );
+                    return Err(
+                        format!("Unable to check workflow completion: {}", retry_err).into(),
+                    );
                 }
             }
 

@@ -33,12 +33,49 @@ fn format_cpu(percent: Option<f64>) -> String {
     }
 }
 
+/// Helper function to create a map of job IDs to job names for a workflow
+fn get_job_name_map(
+    config: &Configuration,
+    workflow_id: i64,
+) -> std::collections::HashMap<i64, String> {
+    let mut job_names = std::collections::HashMap::new();
+
+    match default_api::list_jobs(
+        config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+        None,
+    ) {
+        Ok(response) => {
+            if let Some(jobs) = response.items {
+                for job in jobs {
+                    if let Some(id) = job.id {
+                        job_names.insert(id, job.name);
+                    }
+                }
+            }
+        }
+        Err(_) => {
+            // If we can't fetch jobs, just continue without names
+        }
+    }
+
+    job_names
+}
+
 #[derive(Tabled)]
 struct ResultTableRow {
     #[tabled(rename = "ID")]
     id: i64,
     #[tabled(rename = "Job ID")]
     job_id: i64,
+    #[tabled(rename = "Job Name")]
+    job_name: String,
     #[tabled(rename = "WF ID")]
     workflow_id: i64,
     #[tabled(rename = "Run ID")]
@@ -215,11 +252,19 @@ pub fn handle_result_commands(config: &Configuration, command: &ResultCommands, 
                             } else {
                                 println!("Results for workflow ID {}:", selected_workflow_id);
                             }
+
+                            // Fetch job names for the workflow
+                            let job_names = get_job_name_map(config, selected_workflow_id);
+
                             let rows: Vec<ResultTableRow> = results
                                 .iter()
                                 .map(|result| ResultTableRow {
                                     id: result.id.unwrap_or(-1),
                                     job_id: result.job_id,
+                                    job_name: job_names
+                                        .get(&result.job_id)
+                                        .cloned()
+                                        .unwrap_or_else(|| "-".to_string()),
                                     workflow_id: result.workflow_id,
                                     run_id: result.run_id,
                                     return_code: result.return_code,

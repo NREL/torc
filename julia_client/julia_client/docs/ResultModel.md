@@ -13,6 +13,10 @@ Name | Type | Description | Notes
 **exec_time_minutes** | **Float64** | Job execution time in minutes | [default to nothing]
 **completion_time** | **String** | Timestamp of when the job completed. | [default to nothing]
 **status** | **Any** |  | [default to nothing]
+**peak_memory_bytes** | **Int64** | Peak memory usage in bytes | [optional] [default to nothing]
+**avg_memory_bytes** | **Int64** | Average memory usage in bytes | [optional] [default to nothing]
+**peak_cpu_percent** | **Float64** | Peak CPU usage as percentage (can exceed 100% for multi-core) | [optional] [default to nothing]
+**avg_cpu_percent** | **Float64** | Average CPU usage as percentage (can exceed 100% for multi-core) | [optional] [default to nothing]
 
 
 [[Back to Model list]](../README.md#models) [[Back to API list]](../README.md#api-endpoints) [[Back to README]](../README.md)
