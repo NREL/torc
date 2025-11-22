@@ -373,7 +373,9 @@ impl<C> Server<C> {
         }
     }
 
-    /// Set the status of all blocked jobs to blocked.
+    /// Set the status of blocked jobs to blocked.
+    /// Only sets a job to blocked if it has at least one incomplete blocking job.
+    /// Jobs blocked only by complete jobs will be left alone (to be marked ready later).
     async fn initialize_blocked_jobs_to_blocked<'e, E>(
         &self,
         executor: E,
@@ -385,6 +387,9 @@ impl<C> Server<C> {
     {
         let uninitialized_status = models::JobStatus::Uninitialized.to_int();
         let blocked_status = models::JobStatus::Blocked.to_int();
+        let done_status = models::JobStatus::Done.to_int();
+        let canceled_status = models::JobStatus::Canceled.to_int();
+        let terminated_status = models::JobStatus::Terminated.to_int();
 
         let sql = if only_uninitialized {
             r#"
@@ -393,9 +398,11 @@ impl<C> Server<C> {
             WHERE workflow_id = $2
             AND status = $3
             AND id IN (
-                SELECT DISTINCT job_id
-                FROM job_blocked_by
-                WHERE workflow_id = $2
+                SELECT DISTINCT jbb.job_id
+                FROM job_blocked_by jbb
+                JOIN job j ON jbb.blocked_by_job_id = j.id
+                WHERE jbb.workflow_id = $2
+                AND j.status NOT IN ($4, $5, $6)
             )
             "#
         } else {
@@ -404,9 +411,11 @@ impl<C> Server<C> {
             SET status = $1
             WHERE workflow_id = $2
             AND id IN (
-                SELECT DISTINCT job_id
-                FROM job_blocked_by
-                WHERE workflow_id = $2
+                SELECT DISTINCT jbb.job_id
+                FROM job_blocked_by jbb
+                JOIN job j ON jbb.blocked_by_job_id = j.id
+                WHERE jbb.workflow_id = $2
+                AND j.status NOT IN ($3, $4, $5)
             )
             "#
         };
@@ -416,8 +425,16 @@ impl<C> Server<C> {
                 .bind(blocked_status)
                 .bind(workflow_id)
                 .bind(uninitialized_status)
+                .bind(done_status)
+                .bind(canceled_status)
+                .bind(terminated_status)
         } else {
-            sqlx::query(sql).bind(blocked_status).bind(workflow_id)
+            sqlx::query(sql)
+                .bind(blocked_status)
+                .bind(workflow_id)
+                .bind(done_status)
+                .bind(canceled_status)
+                .bind(terminated_status)
         };
 
         match query.execute(executor).await {
@@ -2025,6 +2042,7 @@ where
         reverse_sort: Option<bool>,
         name: Option<String>,
         path: Option<String>,
+        is_output: Option<bool>,
         context: &C,
     ) -> Result<ListFilesResponse, ApiError> {
         let (processed_offset, processed_limit) = process_pagination_params(offset, limit)?;
@@ -2038,6 +2056,7 @@ where
                 reverse_sort,
                 name,
                 path,
+                is_output,
                 context,
             )
             .await
@@ -2586,9 +2605,18 @@ where
             return Err(e);
         }
 
+        // Commit the transaction
+        // Hash computation must happen AFTER this commit so that compute_job_input_hash
+        // can see the job_blocked_by relationships that were inserted in this transaction
+        if let Err(e) = tx.commit().await {
+            error!("Failed to commit transaction for initialize_jobs: {}", e);
+            return Err(ApiError("Database error".to_string()));
+        }
+
         // Step 8: Compute and store input hashes for all jobs in the workflow
         // This tracks the baseline hash for this run to detect future input changes
-        // Query job IDs within the transaction
+        // IMPORTANT: This must happen AFTER the transaction commits so that the hash
+        // computation sees the committed job_blocked_by relationships
         let job_ids = match sqlx::query!(
             r#"
             SELECT id
@@ -2598,13 +2626,12 @@ where
             "#,
             id
         )
-        .fetch_all(&mut *tx)
+        .fetch_all(self.pool.as_ref())
         .await
         {
             Ok(rows) => rows,
             Err(e) => {
                 error!("Failed to query job IDs for hash computation: {}", e);
-                let _ = tx.rollback().await;
                 return Err(ApiError("Database error".to_string()));
             }
         };
@@ -2618,10 +2645,10 @@ where
         for row in job_ids {
             let job_id = row.id;
 
-            // Compute hash (reads from pool, doesn't modify data)
+            // Compute hash (reads from pool with committed data)
             match self.jobs_api.compute_job_input_hash(job_id).await {
                 Ok(hash) => {
-                    // Store hash within the transaction
+                    // Store hash (using pool, not transaction)
                     match sqlx::query!(
                         r#"
                         INSERT INTO job_internal (job_id, input_hash)
@@ -2631,7 +2658,7 @@ where
                         job_id,
                         hash
                     )
-                    .execute(&mut *tx)
+                    .execute(self.pool.as_ref())
                     .await
                     {
                         Ok(_) => {
@@ -2639,14 +2666,12 @@ where
                         }
                         Err(e) => {
                             error!("Failed to store input hash for job {}: {}", job_id, e);
-                            let _ = tx.rollback().await;
                             return Err(ApiError("Database error".to_string()));
                         }
                     }
                 }
                 Err(e) => {
                     error!("Failed to compute input hash for job {}: {}", job_id, e);
-                    let _ = tx.rollback().await;
                     return Err(e);
                 }
             }
@@ -2656,12 +2681,6 @@ where
             "Completed computing and storing input hashes for {} jobs in workflow {}",
             job_count, id
         );
-
-        // Commit the transaction
-        if let Err(e) = tx.commit().await {
-            error!("Failed to commit transaction for initialize_jobs: {}", e);
-            return Err(ApiError("Database error".to_string()));
-        }
 
         debug!(
             "Successfully initialized jobs for workflow {} with transaction",
@@ -3125,6 +3144,65 @@ where
             };
 
             selected_jobs.push(job);
+        }
+
+        // Query output file and user_data relationships for all selected jobs
+        let mut output_files_map: std::collections::HashMap<i64, Vec<i64>> =
+            std::collections::HashMap::new();
+        let mut output_user_data_map: std::collections::HashMap<i64, Vec<i64>> =
+            std::collections::HashMap::new();
+
+        if !job_ids_to_update.is_empty() {
+            // Query output files
+            let output_files =
+                sqlx::query("SELECT job_id, file_id FROM job_output_file WHERE workflow_id = $1")
+                    .bind(workflow_id)
+                    .fetch_all(&mut *conn)
+                    .await
+                    .map_err(|e| {
+                        error!("Failed to query output files: {}", e);
+                        ApiError("Database query error".to_string())
+                    })?;
+
+            for row in output_files {
+                let job_id: i64 = row.get("job_id");
+                let file_id: i64 = row.get("file_id");
+                if job_ids_to_update.contains(&job_id) {
+                    output_files_map
+                        .entry(job_id)
+                        .or_insert_with(Vec::new)
+                        .push(file_id);
+                }
+            }
+
+            // Query output user_data
+            let output_user_data = sqlx::query("SELECT job_id, user_data_id FROM job_output_user_data WHERE job_id IN (SELECT id FROM job WHERE workflow_id = $1)")
+                .bind(workflow_id)
+                .fetch_all(&mut *conn)
+                .await
+                .map_err(|e| {
+                    error!("Failed to query output user_data: {}", e);
+                    ApiError("Database query error".to_string())
+                })?;
+
+            for row in output_user_data {
+                let job_id: i64 = row.get("job_id");
+                let user_data_id: i64 = row.get("user_data_id");
+                if job_ids_to_update.contains(&job_id) {
+                    output_user_data_map
+                        .entry(job_id)
+                        .or_insert_with(Vec::new)
+                        .push(user_data_id);
+                }
+            }
+        }
+
+        // Populate the output file and user_data IDs in the selected jobs
+        for job in &mut selected_jobs {
+            if let Some(job_id) = job.id {
+                job.output_file_ids = output_files_map.get(&job_id).cloned();
+                job.output_user_data_ids = output_user_data_map.get(&job_id).cloned();
+            }
         }
 
         // If we have jobs to update, update their status and remove from ready_queue
@@ -3978,7 +4056,6 @@ where
             })?;
 
         if workflow_exists.is_none() {
-            // Rollback the transaction since we're returning early
             let _ = sqlx::query("ROLLBACK").execute(&mut *conn).await;
 
             let error_response = models::ErrorResponse::new(serde_json::json!({
@@ -3989,12 +4066,10 @@ where
             ));
         }
 
-        // Convert resources.time_limit to seconds if provided
         let time_limit_seconds = if let Some(ref time_limit) = resources.time_limit {
             match duration_string_to_seconds(time_limit) {
                 Ok(seconds) => seconds,
                 Err(e) => {
-                    // Rollback the transaction since we're returning early
                     let _ = sqlx::query("ROLLBACK").execute(&mut *conn).await;
 
                     let error_response = models::ErrorResponse::new(serde_json::json!({
@@ -4014,10 +4089,8 @@ where
             i64::MAX
         };
 
-        // Convert memory_gb to bytes (1 GiB = 1024^3 bytes)
         let memory_bytes = (resources.memory_gb * 1024.0 * 1024.0 * 1024.0) as i64;
 
-        // Build the ORDER BY clause based on sort_method
         let order_by_clause = match actual_sort_method {
             models::ClaimJobsSortMethod::None => "",
             models::ClaimJobsSortMethod::GpusRuntimeMemory => {
@@ -4186,6 +4259,65 @@ where
                     resources.num_gpus,
                     node_limit_reason
                 );
+            }
+        }
+
+        // Query output file and user_data relationships for all selected jobs
+        let mut output_files_map: std::collections::HashMap<i64, Vec<i64>> =
+            std::collections::HashMap::new();
+        let mut output_user_data_map: std::collections::HashMap<i64, Vec<i64>> =
+            std::collections::HashMap::new();
+
+        if !job_ids_to_update.is_empty() {
+            // Query output files
+            let output_files =
+                sqlx::query("SELECT job_id, file_id FROM job_output_file WHERE workflow_id = $1")
+                    .bind(workflow_id)
+                    .fetch_all(&mut *conn)
+                    .await
+                    .map_err(|e| {
+                        error!("Failed to query output files: {}", e);
+                        ApiError("Database query error".to_string())
+                    })?;
+
+            for row in output_files {
+                let job_id: i64 = row.get("job_id");
+                let file_id: i64 = row.get("file_id");
+                if job_ids_to_update.contains(&job_id) {
+                    output_files_map
+                        .entry(job_id)
+                        .or_insert_with(Vec::new)
+                        .push(file_id);
+                }
+            }
+
+            // Query output user_data
+            let output_user_data = sqlx::query("SELECT job_id, user_data_id FROM job_output_user_data WHERE job_id IN (SELECT id FROM job WHERE workflow_id = $1)")
+                .bind(workflow_id)
+                .fetch_all(&mut *conn)
+                .await
+                .map_err(|e| {
+                    error!("Failed to query output user_data: {}", e);
+                    ApiError("Database query error".to_string())
+                })?;
+
+            for row in output_user_data {
+                let job_id: i64 = row.get("job_id");
+                let user_data_id: i64 = row.get("user_data_id");
+                if job_ids_to_update.contains(&job_id) {
+                    output_user_data_map
+                        .entry(job_id)
+                        .or_insert_with(Vec::new)
+                        .push(user_data_id);
+                }
+            }
+        }
+
+        // Populate the output file and user_data IDs in the selected jobs
+        for job in &mut selected_jobs {
+            if let Some(job_id) = job.id {
+                job.output_file_ids = output_files_map.get(&job_id).cloned();
+                job.output_user_data_ids = output_user_data_map.get(&job_id).cloned();
             }
         }
 

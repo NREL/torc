@@ -17808,6 +17808,7 @@ class DefaultApi:
         reverse_sort: Optional[StrictBool] = None,
         name: Optional[StrictStr] = None,
         path: Optional[StrictStr] = None,
+        is_output: Annotated[Optional[StrictBool], Field(description="Filter for files that are outputs of jobs (appear in job_output_file table)")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -17841,6 +17842,8 @@ class DefaultApi:
         :type name: str
         :param path:
         :type path: str
+        :param is_output: Filter for files that are outputs of jobs (appear in job_output_file table)
+        :type is_output: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -17872,6 +17875,7 @@ class DefaultApi:
             reverse_sort=reverse_sort,
             name=name,
             path=path,
+            is_output=is_output,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -17904,6 +17908,7 @@ class DefaultApi:
         reverse_sort: Optional[StrictBool] = None,
         name: Optional[StrictStr] = None,
         path: Optional[StrictStr] = None,
+        is_output: Annotated[Optional[StrictBool], Field(description="Filter for files that are outputs of jobs (appear in job_output_file table)")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -17937,6 +17942,8 @@ class DefaultApi:
         :type name: str
         :param path:
         :type path: str
+        :param is_output: Filter for files that are outputs of jobs (appear in job_output_file table)
+        :type is_output: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -17968,6 +17975,7 @@ class DefaultApi:
             reverse_sort=reverse_sort,
             name=name,
             path=path,
+            is_output=is_output,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -18000,6 +18008,7 @@ class DefaultApi:
         reverse_sort: Optional[StrictBool] = None,
         name: Optional[StrictStr] = None,
         path: Optional[StrictStr] = None,
+        is_output: Annotated[Optional[StrictBool], Field(description="Filter for files that are outputs of jobs (appear in job_output_file table)")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -18033,6 +18042,8 @@ class DefaultApi:
         :type name: str
         :param path:
         :type path: str
+        :param is_output: Filter for files that are outputs of jobs (appear in job_output_file table)
+        :type is_output: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -18064,6 +18075,7 @@ class DefaultApi:
             reverse_sort=reverse_sort,
             name=name,
             path=path,
+            is_output=is_output,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -18091,6 +18103,7 @@ class DefaultApi:
         reverse_sort,
         name,
         path,
+        is_output,
         _request_auth,
         _content_type,
         _headers,
@@ -18144,6 +18157,10 @@ class DefaultApi:
         if path is not None:
             
             _query_params.append(('path', path))
+            
+        if is_output is not None:
+            
+            _query_params.append(('is_output', is_output))
             
         # process the header parameters
         # process the form parameters

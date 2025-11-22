@@ -156,9 +156,9 @@ pub enum WorkflowCommands {
         /// ID of the workflow to submit (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
-        /// Ignore missing data (defaults to false)
-        #[arg(short, long, default_value = "false")]
-        ignore_missing_data: bool,
+        /// If false, fail the operation if missing data is present (defaults to false)
+        #[arg(long, default_value = "false")]
+        force: bool,
     },
     /// Run a workflow locally on the current node
     Run {
@@ -171,9 +171,9 @@ pub enum WorkflowCommands {
         /// ID of the workflow to start (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
-        /// Ignore missing data (defaults to false)
-        #[arg(short, long, default_value = "false")]
-        ignore_missing_data: bool,
+        /// If false, fail the operation if missing data is present (defaults to false)
+        #[arg(long, default_value = "false")]
+        force: bool,
         /// Skip confirmation prompt
         #[arg(long)]
         no_prompts: bool,
@@ -186,9 +186,9 @@ pub enum WorkflowCommands {
         /// ID of the workflow to reinitialize (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
-        /// Ignore missing data (defaults to false)
-        #[arg(short, long, default_value = "false")]
-        ignore_missing_data: bool,
+        /// If false, fail the operation if missing data is present (defaults to false)
+        #[arg(long, default_value = "false")]
+        force: bool,
         /// Perform a dry run without making changes
         #[arg(long)]
         dry_run: bool,
@@ -819,10 +819,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                 std::process::exit(1);
             }
         }
-        WorkflowCommands::Submit {
-            workflow_id,
-            ignore_missing_data,
-        } => {
+        WorkflowCommands::Submit { workflow_id, force } => {
             let user_name = get_env_user_name();
 
             let selected_workflow_id = match workflow_id {
@@ -876,7 +873,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
             match default_api::get_workflow(config, selected_workflow_id) {
                 Ok(workflow) => {
                     let workflow_manager = WorkflowManager::new(config.clone(), workflow);
-                    match workflow_manager.start(*ignore_missing_data) {
+                    match workflow_manager.start(*force) {
                         Ok(()) => {
                             if format == "json" {
                                 let success_response = serde_json::json!({
@@ -952,7 +949,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
         }
         WorkflowCommands::Initialize {
             workflow_id,
-            ignore_missing_data,
+            force,
             no_prompts,
         } => {
             let user_name = get_env_user_name();
@@ -1000,7 +997,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                             std::process::exit(1);
                         }
                     }
-                    match workflow_manager.initialize(*ignore_missing_data) {
+                    match workflow_manager.initialize(*force) {
                         Ok(()) => {
                             if format == "json" {
                                 let success_response = serde_json::json!({
@@ -1046,7 +1043,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
         }
         WorkflowCommands::Reinitialize {
             workflow_id,
-            ignore_missing_data,
+            force,
             dry_run,
         } => {
             let user_name = get_env_user_name();
@@ -1059,7 +1056,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
             match default_api::get_workflow(config, selected_workflow_id) {
                 Ok(workflow) => {
                     let workflow_manager = WorkflowManager::new(config.clone(), workflow);
-                    match workflow_manager.reinitialize(*ignore_missing_data, *dry_run) {
+                    match workflow_manager.reinitialize(*force, *dry_run) {
                         Ok(()) => {
                             if format == "json" {
                                 let success_response = serde_json::json!({

@@ -42,8 +42,15 @@ impl WorkflowManager {
     }
 
     /// Initialize the jobs and start the workflow.
-    pub fn initialize(&self, ignore_missing_data: bool) -> Result<(), TorcError> {
-        self.check_workflow(ignore_missing_data)?;
+    /// If force is false:
+    ///   - Return an error if required input files are missing.
+    ///   - Prompt the user to confirm deletion of any output files that already exist.
+    /// If force is true:
+    ///   - Ignore missing input files.
+    ///   - Delete any output files that already exist.
+    pub fn initialize(&self, force: bool) -> Result<(), TorcError> {
+        self.check_workflow(force)?;
+        self.cleanup_output_files(force)?;
         match default_api::reset_workflow_status(&self.config, self.workflow_id, None, None) {
             Ok(_) => {}
             Err(err) => {
@@ -80,7 +87,7 @@ impl WorkflowManager {
     }
 
     /// Start the workflow: initialize if needed and schedule nodes for on_workflow_start actions
-    pub fn start(&self, ignore_missing_data: bool) -> Result<(), TorcError> {
+    pub fn start(&self, force: bool) -> Result<(), TorcError> {
         // Check if workflow is uninitialized
         match default_api::is_workflow_uninitialized(&self.config, self.workflow_id) {
             Ok(response) => {
@@ -92,7 +99,7 @@ impl WorkflowManager {
                             "Workflow {} is uninitialized. Initializing...",
                             self.workflow_id
                         );
-                        self.initialize(ignore_missing_data)?;
+                        self.initialize(force)?;
                     } else {
                         info!("Workflow {} is already initialized", self.workflow_id);
                     }
@@ -256,8 +263,8 @@ impl WorkflowManager {
     }
 
     /// Reinitialize the workflow. Reset workflow status, bump run_id, and run startup script.
-    pub fn reinitialize(&self, ignore_missing_data: bool, dry_run: bool) -> Result<(), TorcError> {
-        self.check_workflow(ignore_missing_data)?;
+    pub fn reinitialize(&self, force: bool, dry_run: bool) -> Result<(), TorcError> {
+        self.check_workflow(force)?;
         if !dry_run {
             self.bump_run_id()?;
             match default_api::reset_workflow_status(&self.config, self.workflow_id, None, None) {
@@ -333,7 +340,7 @@ impl WorkflowManager {
 
                             // Update the file record if the mtime has changed or is not set
                             let needs_update = match file.st_mtime {
-                                Some(current_mtime) => (current_mtime - mtime).abs() > 0.001, // Allow for small floating point differences
+                                Some(current_mtime) => (current_mtime - mtime).abs() > 0.01, // Allow for filesystem timestamp precision differences (10ms)
                                 None => true, // Always update if no mtime is set
                             };
 
@@ -370,6 +377,126 @@ impl WorkflowManager {
         Ok(())
     }
 
+    /// Check for existing output files and offer to delete them.
+    /// This should be called before initializing a workflow to avoid stale outputs.
+    pub fn cleanup_output_files(&self, force: bool) -> Result<(), TorcError> {
+        info!(
+            "Checking for existing output files for workflow {}",
+            self.workflow_id
+        );
+
+        // Get all output files for this workflow
+        let params = FileListParams::new().with_is_output(true);
+        let files_iterator = iter_files(&self.config, self.workflow_id, params);
+
+        // Collect files that exist on filesystem
+        let mut existing_files = Vec::new();
+        for file_result in files_iterator {
+            match file_result {
+                Ok(file) => {
+                    let file_path = Path::new(&file.path);
+                    if file_path.exists() {
+                        existing_files.push(file);
+                    }
+                }
+                Err(err) => {
+                    warn!(
+                        "Failed to fetch file from API during cleanup check: {}",
+                        err
+                    );
+                }
+            }
+        }
+
+        if existing_files.is_empty() {
+            info!("No existing output files found");
+            return Ok(());
+        }
+
+        // Display list of files to user
+        eprintln!("\nFound {} existing output file(s):", existing_files.len());
+        for file in &existing_files {
+            eprintln!("  - {}", file.path);
+        }
+
+        // Confirm deletion (unless force flag is set)
+        let should_delete = if force {
+            true
+        } else {
+            eprintln!("\nDelete these files before initializing? [y/N]: ");
+            std::io::Write::flush(&mut std::io::stdout())
+                .map_err(|e| TorcError::CommandFailed(e.to_string()))?;
+
+            let mut input = String::new();
+            std::io::stdin()
+                .read_line(&mut input)
+                .map_err(|e| TorcError::CommandFailed(e.to_string()))?;
+
+            let trimmed = input.trim().to_lowercase();
+            trimmed == "y" || trimmed == "yes"
+        };
+
+        if !should_delete {
+            return Err(TorcError::OperationNotAllowed(
+                "User chose not to delete existing output files. Operation aborted.".to_string(),
+            ));
+        }
+
+        // Delete the files
+        let mut deleted_count = 0;
+        let mut failed_deletions = Vec::new();
+
+        for file in &existing_files {
+            let file_path = Path::new(&file.path);
+            match fs::remove_file(file_path) {
+                Ok(_) => {
+                    info!("Deleted output file: {}", file.path);
+                    deleted_count += 1;
+
+                    // Update database to reflect that file no longer exists
+                    if let Some(file_id) = file.id {
+                        let mut updated_file = file.clone();
+                        updated_file.st_mtime = None;
+
+                        match default_api::update_file(&self.config, file_id, updated_file) {
+                            Ok(_) => {
+                                debug!(
+                                    "Updated st_mtime to None for deleted file {} (id: {})",
+                                    file.path, file_id
+                                );
+                            }
+                            Err(err) => {
+                                warn!(
+                                    "Failed to update st_mtime for deleted file {} (id: {}): {}",
+                                    file.path, file_id, err
+                                );
+                            }
+                        }
+                    }
+                }
+                Err(err) => {
+                    error!("Failed to delete {}: {}", file.path, err);
+                    failed_deletions.push((file.path.clone(), err.to_string()));
+                }
+            }
+        }
+
+        info!(
+            "Deleted {} of {} output files",
+            deleted_count,
+            existing_files.len()
+        );
+
+        if !failed_deletions.is_empty() {
+            error!("Failed to delete {} file(s)", failed_deletions.len());
+            for (path, err) in failed_deletions {
+                error!("  - {}: {}", path, err);
+            }
+        }
+
+        Ok(())
+    }
+
     pub fn get_run_id(&self) -> Result<i64, TorcError> {
         match default_api::get_workflow_status(&self.config, self.workflow_id) {
             Ok(status) => Ok(status.run_id),
@@ -378,7 +505,7 @@ impl WorkflowManager {
     }
 
     /// Check the condtions of the workflow.
-    pub fn check_workflow(&self, ignore_missing_data: bool) -> Result<(), TorcError> {
+    pub fn check_workflow(&self, force: bool) -> Result<(), TorcError> {
         match default_api::get_workflow_status(&self.config, self.workflow_id) {
             Ok(status) => {
                 if status.is_archived.unwrap_or(false) {
@@ -390,7 +517,7 @@ impl WorkflowManager {
             }
             Err(err) => return Err(TorcError::ApiError(err.to_string())),
         }
-        self.check_workflow_files(ignore_missing_data)?;
+        self.check_workflow_files(force)?;
         self.check_user_data()?;
         Ok(())
     }
@@ -487,7 +614,7 @@ impl WorkflowManager {
                                     let mtime = Self::get_modified_file_time(&metadata);
                                     let current_mtime = file.st_mtime.unwrap();
 
-                                    if (current_mtime - mtime).abs() > 0.001 {
+                                    if (current_mtime - mtime).abs() > 0.01 {
                                         file_changed = true;
                                         change_reason = format!(
                                             "modified time changed from {} to {}",
@@ -827,9 +954,9 @@ impl WorkflowManager {
     }
 
     /// Check that all required existing files for the workflow exist on the filesystem.
-    /// If ignore_missing_data is true, log missing files as warnings but don't return an error.
-    /// If ignore_missing_data is false, return an error if any required files are missing.
-    pub fn check_workflow_files(&self, ignore_missing_data: bool) -> Result<(), TorcError> {
+    /// If force is true, log missing files as warnings but don't return an error.
+    /// If force is false, return an error if any required files are missing.
+    pub fn check_workflow_files(&self, force: bool) -> Result<(), TorcError> {
         // Get list of required existing file IDs
         let response =
             match default_api::list_required_existing_files(&self.config, self.workflow_id) {
@@ -860,7 +987,7 @@ impl WorkflowManager {
                     file.name, file_id, file.path
                 );
 
-                if ignore_missing_data {
+                if force {
                     error!("{}", missing_info);
                 } else {
                     missing_files.push(missing_info);
@@ -874,7 +1001,7 @@ impl WorkflowManager {
         }
 
         // If we have missing files and not ignoring them, return an error
-        if !missing_files.is_empty() && !ignore_missing_data {
+        if !missing_files.is_empty() && !force {
             return Err(TorcError::OperationNotAllowed(format!(
                 "Missing required files:\n{}",
                 missing_files.join("\n")
@@ -886,9 +1013,9 @@ impl WorkflowManager {
                 "All {} required existing files are present for workflow {}",
                 file_count, self.workflow_id
             );
-        } else if ignore_missing_data {
+        } else if force {
             error!(
-                "Found {} missing required files for workflow {} (ignored due to ignore_missing_data=true)",
+                "Found {} missing required files for workflow {} (ignored due to force=true)",
                 missing_files.len(),
                 self.workflow_id
             );

@@ -2072,7 +2072,7 @@ const _returntypes_list_files_DefaultApi = Dict{Regex,Type}(
     Regex("^" * replace("500", "x"=>".") * "\$") => DefaultErrorResponse,
 )
 
-function _oacinternal_list_files(_api::DefaultApi, workflow_id::Int64; produced_by_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, name=nothing, path=nothing, _mediaType=nothing)
+function _oacinternal_list_files(_api::DefaultApi, workflow_id::Int64; produced_by_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, name=nothing, path=nothing, is_output=nothing, _mediaType=nothing)
     _ctx = OpenAPI.Clients.Ctx(_api.client, "GET", _returntypes_list_files_DefaultApi, "/files", [])
     OpenAPI.Clients.set_param(_ctx.query, "workflow_id", workflow_id; style="simple", is_explode=false)  # type Int64
     OpenAPI.Clients.set_param(_ctx.query, "produced_by_job_id", produced_by_job_id; style="simple", is_explode=false)  # type Int64
@@ -2082,6 +2082,7 @@ function _oacinternal_list_files(_api::DefaultApi, workflow_id::Int64; produced_
     OpenAPI.Clients.set_param(_ctx.query, "reverse_sort", reverse_sort; style="form", is_explode=true)  # type Bool
     OpenAPI.Clients.set_param(_ctx.query, "name", name; style="form", is_explode=true)  # type String
     OpenAPI.Clients.set_param(_ctx.query, "path", path; style="form", is_explode=true)  # type String
+    OpenAPI.Clients.set_param(_ctx.query, "is_output", is_output; style="form", is_explode=true)  # type Bool
     OpenAPI.Clients.set_header_accept(_ctx, ["application/json", ])
     OpenAPI.Clients.set_header_content_type(_ctx, (_mediaType === nothing) ? [] : [_mediaType])
     return _ctx
@@ -2100,16 +2101,17 @@ Params:
 - reverse_sort::Bool
 - name::String
 - path::String
+- is_output::Bool
 
 Return: ListFilesResponse, OpenAPI.Clients.ApiResponse
 """
-function list_files(_api::DefaultApi, workflow_id::Int64; produced_by_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, name=nothing, path=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_list_files(_api, workflow_id; produced_by_job_id=produced_by_job_id, offset=offset, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, name=name, path=path, _mediaType=_mediaType)
+function list_files(_api::DefaultApi, workflow_id::Int64; produced_by_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, name=nothing, path=nothing, is_output=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_files(_api, workflow_id; produced_by_job_id=produced_by_job_id, offset=offset, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, name=name, path=path, is_output=is_output, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx)
 end
 
-function list_files(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; produced_by_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, name=nothing, path=nothing, _mediaType=nothing)
-    _ctx = _oacinternal_list_files(_api, workflow_id; produced_by_job_id=produced_by_job_id, offset=offset, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, name=name, path=path, _mediaType=_mediaType)
+function list_files(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; produced_by_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, name=nothing, path=nothing, is_output=nothing, _mediaType=nothing)
+    _ctx = _oacinternal_list_files(_api, workflow_id; produced_by_job_id=produced_by_job_id, offset=offset, limit=limit, sort_by=sort_by, reverse_sort=reverse_sort, name=name, path=path, is_output=is_output, _mediaType=_mediaType)
     return OpenAPI.Clients.exec(_ctx, response_stream)
 end
 

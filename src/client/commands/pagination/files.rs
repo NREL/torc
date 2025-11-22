@@ -23,6 +23,7 @@ pub struct FileListParams {
     pub reverse_sort: Option<bool>,
     pub name: Option<String>,
     pub path: Option<String>,
+    pub is_output: Option<bool>,
 }
 
 impl Default for FileListParams {
@@ -35,6 +36,7 @@ impl Default for FileListParams {
             reverse_sort: None,
             name: None,
             path: None,
+            is_output: None,
         }
     }
 }
@@ -67,6 +69,11 @@ impl FileListParams {
 
     pub fn with_reverse_sort(mut self, reverse: bool) -> Self {
         self.reverse_sort = Some(reverse);
+        self
+    }
+
+    pub fn with_is_output(mut self, is_output: bool) -> Self {
+        self.is_output = Some(is_output);
         self
     }
 }
@@ -117,6 +124,7 @@ impl FilesIterator {
             self.params.reverse_sort,
             self.params.name.as_deref(),
             self.params.path.as_deref(),
+            self.params.is_output,
         )?;
 
         if let Some(items) = response.items {

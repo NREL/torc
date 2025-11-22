@@ -1129,6 +1129,7 @@ fn test_workflow_manager_end_to_end(start_server: &ServerProcess) {
         None,
         None,
         None,
+        None, // is_output filter
     )
     .expect("Failed to list files");
     let file_items = files.items.as_ref().unwrap();
@@ -1187,17 +1188,10 @@ fn create_job_with_output_files(
     let rr = default_api::create_resource_requirements(config, resource_requirements)
         .expect("Failed to create resource requirements");
 
-    // Create output files first
+    // Create output file paths (don't create actual files on disk yet)
     let mut output_files = Vec::new();
-
-    // Create actual files on disk
     let output1_path = temp_dir.path().join(format!("output_{}_1.txt", job_name));
     let output2_path = temp_dir.path().join(format!("output_{}_2.txt", job_name));
-
-    fs::write(&output1_path, format!("Output 1 from {}", job_name))
-        .expect("Failed to write output file 1");
-    fs::write(&output2_path, format!("Output 2 from {}", job_name))
-        .expect("Failed to write output file 2");
 
     // Create file records in database
     let file1 = models::FileModel::new(
@@ -1228,6 +1222,40 @@ fn create_job_with_output_files(
     (job_id, output_files)
 }
 
+/// Helper function to complete a job and create its output files on disk
+/// This simulates a job successfully running and producing output files
+fn complete_job_and_create_files(
+    config: &Configuration,
+    job_id: i64,
+    workflow_id: i64,
+    run_id: i64,
+    compute_node_id: i64,
+    output_files: &[models::FileModel],
+) {
+    // Create job result
+    let job_result = models::ResultModel::new(
+        job_id,
+        workflow_id,
+        run_id,
+        compute_node_id,
+        0,   // return_code (success)
+        1.0, // exec_time_minutes
+        chrono::Utc::now().to_rfc3339(),
+        models::JobStatus::Done,
+    );
+
+    // Complete the job
+    default_api::complete_job(config, job_id, job_result.status, run_id, job_result)
+        .expect("Failed to complete job");
+
+    // Now create the output files on disk (simulating job execution)
+    for file in output_files {
+        let file_path = Path::new(&file.path);
+        fs::write(file_path, format!("Output from {}", file.name))
+            .expect("Failed to create output file");
+    }
+}
+
 #[rstest]
 fn test_update_jobs_if_output_files_are_missing_no_missing_files(start_server: &ServerProcess) {
     let config = start_server.config.clone();
@@ -1237,16 +1265,16 @@ fn test_update_jobs_if_output_files_are_missing_no_missing_files(start_server: &
 
     let temp_dir = TempDir::new().expect("Failed to create temp directory");
 
-    // Create a job with output files
-    let (job_id, _output_files) =
+    // Create a job with output files (files not created on disk yet)
+    let (job_id, output_files) =
         create_job_with_output_files(&config, workflow_id, "test_job", "echo 'test'", &temp_dir);
 
-    // Initialize workflow and complete the job
+    // Initialize workflow
     let result = manager.initialize(false);
     assert!(result.is_ok());
     let run_id = manager.get_run_id().expect("Failed to get run_id");
 
-    // Complete the job execution cycle
+    // Set job to running
     default_api::manage_status_change(&config, job_id, models::JobStatus::Running, run_id, None)
         .expect("Failed to set job to running");
 
@@ -1254,18 +1282,15 @@ fn test_update_jobs_if_output_files_are_missing_no_missing_files(start_server: &
     let compute_node = create_test_compute_node(&config, workflow_id);
     let compute_node_id = compute_node.id.unwrap();
 
-    let job_result = models::ResultModel::new(
+    // Complete the job and create output files (simulating job execution)
+    complete_job_and_create_files(
+        &config,
         job_id,
         workflow_id,
         run_id,
         compute_node_id,
-        0,
-        1.0,
-        "2020-01-01T00:00:00Z".to_string(),
-        models::JobStatus::Done,
+        &output_files,
     );
-    default_api::complete_job(&config, job_id, job_result.status, run_id, job_result)
-        .expect("Failed to complete job");
 
     // All output files exist, so no jobs should be reset
     let result = manager.update_jobs_if_output_files_are_missing(false);
@@ -1285,16 +1310,16 @@ fn test_update_jobs_if_output_files_are_missing_with_missing_files(start_server:
 
     let temp_dir = TempDir::new().expect("Failed to create temp directory");
 
-    // Create a job with output files
+    // Create a job with output files (files not created on disk yet)
     let (job_id, output_files) =
         create_job_with_output_files(&config, workflow_id, "test_job", "echo 'test'", &temp_dir);
 
-    // Initialize workflow and complete the job
+    // Initialize workflow
     let result = manager.initialize(false);
     assert!(result.is_ok());
     let run_id = manager.get_run_id().expect("Failed to get run_id");
 
-    // Complete the job execution cycle
+    // Set job to running
     default_api::manage_status_change(&config, job_id, models::JobStatus::Running, run_id, None)
         .expect("Failed to set job to running");
 
@@ -1302,18 +1327,15 @@ fn test_update_jobs_if_output_files_are_missing_with_missing_files(start_server:
     let compute_node = create_test_compute_node(&config, workflow_id);
     let compute_node_id = compute_node.id.unwrap();
 
-    let job_result = models::ResultModel::new(
+    // Complete the job and create output files (simulating job execution)
+    complete_job_and_create_files(
+        &config,
         job_id,
         workflow_id,
         run_id,
         compute_node_id,
-        0,
-        1.0,
-        "2020-01-01T00:00:00Z".to_string(),
-        models::JobStatus::Done,
+        &output_files,
     );
-    default_api::complete_job(&config, job_id, job_result.status, run_id, job_result)
-        .expect("Failed to complete job");
 
     // Delete one of the output files
     let file_path = Path::new(&output_files[0].path);
@@ -1341,16 +1363,16 @@ fn test_update_jobs_if_output_files_are_missing_dry_run_true(start_server: &Serv
 
     let temp_dir = TempDir::new().expect("Failed to create temp directory");
 
-    // Create a job with output files
+    // Create a job with output files (files not created on disk yet)
     let (job_id, output_files) =
         create_job_with_output_files(&config, workflow_id, "test_job", "echo 'test'", &temp_dir);
 
-    // Start workflow and complete the job
+    // Initialize workflow
     let result = manager.initialize(false);
     assert!(result.is_ok());
     let run_id = manager.get_run_id().expect("Failed to get run_id");
 
-    // Complete the job execution cycle
+    // Set job to running
     default_api::manage_status_change(&config, job_id, models::JobStatus::Running, run_id, None)
         .expect("Failed to set job to running");
 
@@ -1358,18 +1380,15 @@ fn test_update_jobs_if_output_files_are_missing_dry_run_true(start_server: &Serv
     let compute_node = create_test_compute_node(&config, workflow_id);
     let compute_node_id = compute_node.id.unwrap();
 
-    let job_result = models::ResultModel::new(
+    // Complete the job and create output files (simulating job execution)
+    complete_job_and_create_files(
+        &config,
         job_id,
         workflow_id,
         run_id,
         compute_node_id,
-        0,
-        1.0,
-        "2020-01-01T00:00:00Z".to_string(),
-        models::JobStatus::Done,
+        &output_files,
     );
-    default_api::complete_job(&config, job_id, job_result.status, run_id, job_result)
-        .expect("Failed to complete job");
 
     // Delete one of the output files
     let file_path = Path::new(&output_files[0].path);
@@ -1394,16 +1413,16 @@ fn test_update_jobs_if_output_files_are_missing_dry_run_false(start_server: &Ser
 
     let temp_dir = TempDir::new().expect("Failed to create temp directory");
 
-    // Create a job with output files
+    // Create a job with output files (files not created on disk yet)
     let (job_id, output_files) =
         create_job_with_output_files(&config, workflow_id, "test_job", "echo 'test'", &temp_dir);
 
-    // Initialize workflow and complete the job
+    // Initialize workflow
     let result = manager.initialize(false);
     assert!(result.is_ok());
     let run_id = manager.get_run_id().expect("Failed to get run_id");
 
-    // Complete the job execution cycle
+    // Set job to running
     default_api::manage_status_change(&config, job_id, models::JobStatus::Running, run_id, None)
         .expect("Failed to set job to running");
 
@@ -1411,18 +1430,15 @@ fn test_update_jobs_if_output_files_are_missing_dry_run_false(start_server: &Ser
     let compute_node = create_test_compute_node(&config, workflow_id);
     let compute_node_id = compute_node.id.unwrap();
 
-    let job_result = models::ResultModel::new(
+    // Complete the job and create output files (simulating job execution)
+    complete_job_and_create_files(
+        &config,
         job_id,
         workflow_id,
         run_id,
         compute_node_id,
-        0,
-        1.0,
-        "2020-01-01T00:00:00Z".to_string(),
-        models::JobStatus::Done,
+        &output_files,
     );
-    default_api::complete_job(&config, job_id, job_result.status, run_id, job_result)
-        .expect("Failed to complete job");
 
     // Delete one of the output files
     let file_path = Path::new(&output_files[0].path);
@@ -1450,17 +1466,17 @@ fn test_update_jobs_if_output_files_are_missing_multiple_jobs(start_server: &Ser
 
     let temp_dir = TempDir::new().expect("Failed to create temp directory");
 
-    // Create multiple jobs with output files
+    // Create multiple jobs with output files (files not created on disk yet)
     let (job1_id, output_files1) =
         create_job_with_output_files(&config, workflow_id, "job1", "echo 'job1'", &temp_dir);
 
     let (job2_id, output_files2) =
         create_job_with_output_files(&config, workflow_id, "job2", "echo 'job2'", &temp_dir);
 
-    let (job3_id, _output_files3) =
+    let (job3_id, output_files3) =
         create_job_with_output_files(&config, workflow_id, "job3", "echo 'job3'", &temp_dir);
 
-    // Start workflow and complete all jobs
+    // Initialize workflow
     let result = manager.initialize(false);
     assert!(result.is_ok());
     let run_id = manager.get_run_id().expect("Failed to get run_id");
@@ -1469,7 +1485,12 @@ fn test_update_jobs_if_output_files_are_missing_multiple_jobs(start_server: &Ser
     let compute_node = create_test_compute_node(&config, workflow_id);
     let compute_node_id = compute_node.id.unwrap();
 
-    for job_id in [job1_id, job2_id, job3_id] {
+    // Complete all jobs and create their output files
+    for (job_id, output_files) in [
+        (job1_id, &output_files1),
+        (job2_id, &output_files2),
+        (job3_id, &output_files3),
+    ] {
         default_api::manage_status_change(
             &config,
             job_id,
@@ -1479,18 +1500,14 @@ fn test_update_jobs_if_output_files_are_missing_multiple_jobs(start_server: &Ser
         )
         .expect("Failed to set job to running");
 
-        let job_result = models::ResultModel::new(
+        complete_job_and_create_files(
+            &config,
             job_id,
             workflow_id,
             run_id,
             compute_node_id,
-            0,
-            1.0,
-            "2020-01-01T00:00:00Z".to_string(),
-            models::JobStatus::Done,
+            output_files,
         );
-        default_api::complete_job(&config, job_id, job_result.status, run_id, job_result)
-            .expect("Failed to complete job");
     }
 
     // Delete output files from job1 and job2, but not job3
@@ -1531,19 +1548,15 @@ fn test_update_jobs_if_output_files_are_missing_no_done_jobs(start_server: &Serv
 
     let temp_dir = TempDir::new().expect("Failed to create temp directory");
 
-    // Create a job with output files but don't complete it
-    let (job_id, output_files) =
+    // Create a job with output files but don't complete it (files not created on disk)
+    let (job_id, _output_files) =
         create_job_with_output_files(&config, workflow_id, "test_job", "echo 'test'", &temp_dir);
 
     // Initialize workflow but don't complete the job (leave it Ready)
     let result = manager.initialize(false);
     assert!(result.is_ok());
 
-    // Delete one of the output files
-    let file_path = Path::new(&output_files[0].path);
-    fs::remove_file(file_path).expect("Failed to delete output file");
-    assert!(!file_path.exists(), "Output file should be deleted");
-
+    // Output files don't exist (job was never completed)
     // Function should not affect non-Done jobs
     let result = manager.update_jobs_if_output_files_are_missing(false);
     assert!(result.is_ok());
@@ -1564,7 +1577,7 @@ fn test_update_jobs_if_output_files_are_missing_with_upstream_jobs_dry_run(
 
     let temp_dir = TempDir::new().expect("Failed to create temp directory");
 
-    // Create a job with output files
+    // Create a job with output files (files not created on disk yet)
     let (job1_id, output_files1) =
         create_job_with_output_files(&config, workflow_id, "job1", "echo 'job1'", &temp_dir);
 
@@ -1585,7 +1598,7 @@ fn test_update_jobs_if_output_files_are_missing_with_upstream_jobs_dry_run(
         default_api::create_job(&config, upstream_job).expect("Failed to create upstream job");
     let upstream_job_id = created_upstream.id.unwrap();
 
-    // Initialize workflow and complete both jobs
+    // Initialize workflow
     let result = manager.initialize(false);
     assert!(result.is_ok());
     let run_id = manager.get_run_id().expect("Failed to get run_id");
@@ -1594,30 +1607,45 @@ fn test_update_jobs_if_output_files_are_missing_with_upstream_jobs_dry_run(
     let compute_node = create_test_compute_node(&config, workflow_id);
     let compute_node_id = compute_node.id.unwrap();
 
-    // Complete both jobs
-    for job_id in [job1_id, upstream_job_id] {
-        default_api::manage_status_change(
-            &config,
-            job_id,
-            models::JobStatus::Running,
-            run_id,
-            None,
-        )
-        .expect("Failed to set job to running");
+    // Complete job1 (with output files)
+    default_api::manage_status_change(&config, job1_id, models::JobStatus::Running, run_id, None)
+        .expect("Failed to set job1 to running");
+    complete_job_and_create_files(
+        &config,
+        job1_id,
+        workflow_id,
+        run_id,
+        compute_node_id,
+        &output_files1,
+    );
 
-        let job_result = models::ResultModel::new(
-            job_id,
-            workflow_id,
-            run_id,
-            compute_node_id,
-            0,
-            1.0,
-            "2020-01-01T00:00:00Z".to_string(),
-            models::JobStatus::Done,
-        );
-        default_api::complete_job(&config, job_id, job_result.status, run_id, job_result)
-            .expect("Failed to complete job");
-    }
+    // Complete upstream job (no output files to create)
+    default_api::manage_status_change(
+        &config,
+        upstream_job_id,
+        models::JobStatus::Running,
+        run_id,
+        None,
+    )
+    .expect("Failed to set upstream_job to running");
+    let upstream_result = models::ResultModel::new(
+        upstream_job_id,
+        workflow_id,
+        run_id,
+        compute_node_id,
+        0,
+        1.0,
+        chrono::Utc::now().to_rfc3339(),
+        models::JobStatus::Done,
+    );
+    default_api::complete_job(
+        &config,
+        upstream_job_id,
+        upstream_result.status,
+        run_id,
+        upstream_result,
+    )
+    .expect("Failed to complete upstream job");
 
     // Delete job1's output file
     let file_path = Path::new(&output_files1[0].path);
@@ -2289,5 +2317,302 @@ fn test_user_data_dependency_chain(start_server: &ServerProcess) {
         job3_after_reinit.status.unwrap(),
         models::JobStatus::Blocked,
         "job3 should be Blocked after reinitialize (waiting for job2)"
+    );
+}
+
+/// Test that reinitialization correctly sets jobs to Ready when they are only blocked by completed jobs.
+/// This test verifies the fix for the bug where jobs blocked only by Done jobs were incorrectly
+/// marked as Blocked instead of Ready during reinitialization.
+///
+/// Scenario:
+/// 1. Create diamond workflow: preprocess → (work1, work2) → postprocess
+/// 2. Complete all jobs (status = Done)
+/// 3. Modify an output file from preprocess (f2.json)
+/// 4. Reinitialize workflow
+/// 5. Verify work1 is set to Ready (not Blocked), since preprocess is already Done
+#[rstest]
+fn test_reinitialize_with_file_change_blocked_by_complete_job(start_server: &ServerProcess) {
+    use common::create_diamond_workflow;
+    use std::fs;
+    use std::thread;
+    use std::time::Duration;
+
+    let config = start_server.config.clone();
+
+    // Create a temporary directory for workflow files
+    let temp_dir = TempDir::new().expect("Failed to create temp directory");
+
+    // Create diamond workflow with files in temp directory
+    let jobs = create_diamond_workflow(&config, false, temp_dir.path());
+
+    let preprocess_job = jobs.get("preprocess").unwrap();
+    let work1_job = jobs.get("work1").unwrap();
+    let work2_job = jobs.get("work2").unwrap();
+    let postprocess_job = jobs.get("postprocess").unwrap();
+
+    let workflow_id = preprocess_job.workflow_id;
+    let preprocess_id = preprocess_job.id.unwrap();
+    let work1_id = work1_job.id.unwrap();
+    let work2_id = work2_job.id.unwrap();
+    let postprocess_id = postprocess_job.id.unwrap();
+
+    // Get workflow model for manager
+    let workflow = default_api::get_workflow(&config, workflow_id).expect("Failed to get workflow");
+
+    // Create workflow manager
+    let manager = WorkflowManager::new(config.clone(), workflow);
+
+    // Define file paths
+    let f1_path = temp_dir.path().join("f1.json");
+    let f2_path = temp_dir.path().join("f2.json");
+    let f3_path = temp_dir.path().join("f3.json");
+    let f4_path = temp_dir.path().join("f4.json");
+    let f5_path = temp_dir.path().join("f5.json");
+    let f6_path = temp_dir.path().join("f6.json");
+
+    // Create f1 (input to preprocess) BEFORE initialization
+    fs::write(&f1_path, r#"{"input": "data"}"#).expect("Failed to write f1");
+
+    // Initialize the workflow (force=true to auto-delete existing output files without prompting)
+    manager.initialize(true).expect("Failed to initialize");
+    let run_id = manager.get_run_id().expect("Failed to get run_id");
+
+    // Simulate successful execution of all jobs
+    let compute_node = create_test_compute_node(&config, workflow_id);
+    let compute_node_id = compute_node.id.unwrap();
+
+    // Execute preprocess job
+    default_api::manage_status_change(
+        &config,
+        preprocess_id,
+        models::JobStatus::Running,
+        run_id,
+        None,
+    )
+    .expect("Failed to set preprocess to Running");
+    fs::write(&f2_path, r#"{"preprocess": "output1"}"#).expect("Failed to write f2");
+    fs::write(&f3_path, r#"{"preprocess": "output2"}"#).expect("Failed to write f3");
+
+    let preprocess_result = models::ResultModel::new(
+        preprocess_id,
+        workflow_id,
+        run_id,
+        compute_node_id,
+        0,
+        1.0,
+        chrono::Utc::now().to_rfc3339(),
+        models::JobStatus::Done,
+    );
+    default_api::complete_job(
+        &config,
+        preprocess_id,
+        models::JobStatus::Done,
+        run_id,
+        preprocess_result,
+    )
+    .expect("Failed to complete preprocess");
+
+    // Execute work1 job
+    default_api::manage_status_change(&config, work1_id, models::JobStatus::Running, run_id, None)
+        .expect("Failed to set work1 to Running");
+    fs::write(&f4_path, r#"{"work1": "output"}"#).expect("Failed to write f4");
+
+    let work1_result = models::ResultModel::new(
+        work1_id,
+        workflow_id,
+        run_id,
+        compute_node_id,
+        0,
+        1.0,
+        chrono::Utc::now().to_rfc3339(),
+        models::JobStatus::Done,
+    );
+    default_api::complete_job(
+        &config,
+        work1_id,
+        models::JobStatus::Done,
+        run_id,
+        work1_result,
+    )
+    .expect("Failed to complete work1");
+
+    // Execute work2 job
+    default_api::manage_status_change(&config, work2_id, models::JobStatus::Running, run_id, None)
+        .expect("Failed to set work2 to Running");
+    fs::write(&f5_path, r#"{"work2": "output"}"#).expect("Failed to write f5");
+
+    // Update f5 mtime in database
+    let f5_metadata = fs::metadata(&f5_path).expect("Failed to get f5 metadata");
+    let f5_mtime = f5_metadata
+        .modified()
+        .expect("Failed to get f5 mtime")
+        .duration_since(std::time::SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs_f64();
+    let mut f5_model = default_api::list_files(
+        &config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some("f5"),
+        None,
+        None,
+    )
+    .expect("Failed to list f5")
+    .items
+    .unwrap()[0]
+        .clone();
+    f5_model.st_mtime = Some(f5_mtime);
+    default_api::update_file(&config, f5_model.id.unwrap(), f5_model).expect("Failed to update f5");
+
+    let work2_result = models::ResultModel::new(
+        work2_id,
+        workflow_id,
+        run_id,
+        compute_node_id,
+        0,
+        1.0,
+        chrono::Utc::now().to_rfc3339(),
+        models::JobStatus::Done,
+    );
+    default_api::complete_job(
+        &config,
+        work2_id,
+        models::JobStatus::Done,
+        run_id,
+        work2_result,
+    )
+    .expect("Failed to complete work2");
+
+    // Execute postprocess job
+    default_api::manage_status_change(
+        &config,
+        postprocess_id,
+        models::JobStatus::Running,
+        run_id,
+        None,
+    )
+    .expect("Failed to set postprocess to Running");
+    fs::write(&f6_path, r#"{"postprocess": "output"}"#).expect("Failed to write f6");
+
+    // Update f6 mtime in database
+    let f6_metadata = fs::metadata(&f6_path).expect("Failed to get f6 metadata");
+    let f6_mtime = f6_metadata
+        .modified()
+        .expect("Failed to get f6 mtime")
+        .duration_since(std::time::SystemTime::UNIX_EPOCH)
+        .unwrap()
+        .as_secs_f64();
+    let mut f6_model = default_api::list_files(
+        &config,
+        workflow_id,
+        None,
+        None,
+        None,
+        None,
+        None,
+        Some("f6"),
+        None,
+        None,
+    )
+    .expect("Failed to list f6")
+    .items
+    .unwrap()[0]
+        .clone();
+    f6_model.st_mtime = Some(f6_mtime);
+    default_api::update_file(&config, f6_model.id.unwrap(), f6_model).expect("Failed to update f6");
+
+    let postprocess_result = models::ResultModel::new(
+        postprocess_id,
+        workflow_id,
+        run_id,
+        compute_node_id,
+        0,
+        1.0,
+        chrono::Utc::now().to_rfc3339(),
+        models::JobStatus::Done,
+    );
+    default_api::complete_job(
+        &config,
+        postprocess_id,
+        models::JobStatus::Done,
+        run_id,
+        postprocess_result,
+    )
+    .expect("Failed to complete postprocess");
+
+    // Update all file mtimes in database by calling initialize_files
+    // This properly records all current file mtimes
+    manager
+        .initialize_files()
+        .expect("Failed to initialize file mtimes");
+
+    // Verify all jobs are Done
+    let preprocess_done =
+        default_api::get_job(&config, preprocess_id).expect("Failed to get preprocess");
+    let work1_done = default_api::get_job(&config, work1_id).expect("Failed to get work1");
+    let work2_done = default_api::get_job(&config, work2_id).expect("Failed to get work2");
+    let postprocess_done =
+        default_api::get_job(&config, postprocess_id).expect("Failed to get postprocess");
+
+    assert_eq!(preprocess_done.status.unwrap(), models::JobStatus::Done);
+    assert_eq!(work1_done.status.unwrap(), models::JobStatus::Done);
+    assert_eq!(work2_done.status.unwrap(), models::JobStatus::Done);
+    assert_eq!(postprocess_done.status.unwrap(), models::JobStatus::Done);
+
+    // Wait a moment to ensure file modification time is different
+    thread::sleep(Duration::from_millis(100));
+
+    // Modify f2.json (output of preprocess, input to work1)
+    fs::write(&f2_path, r#"{"preprocess": "modified_output"}"#).expect("Failed to modify f2");
+
+    // Reinitialize the workflow (this should detect the file change)
+    let reinit_result = manager.reinitialize(false, false);
+    assert!(reinit_result.is_ok(), "Failed to reinitialize workflow");
+
+    // Check job statuses after reinitialization
+    let preprocess_after = default_api::get_job(&config, preprocess_id)
+        .expect("Failed to get preprocess after reinit");
+    let work1_after =
+        default_api::get_job(&config, work1_id).expect("Failed to get work1 after reinit");
+    let work2_after =
+        default_api::get_job(&config, work2_id).expect("Failed to get work2 after reinit");
+    let postprocess_after = default_api::get_job(&config, postprocess_id)
+        .expect("Failed to get postprocess after reinit");
+
+    // Assertions to verify correct behavior:
+    // - preprocess should still be Done (not affected by f2 modification)
+    // - work1 should be Ready (not Blocked), since:
+    //   * f2 was modified, so work1 needs to re-run
+    //   * work1 is blocked by preprocess, but preprocess is Done
+    //   * Therefore work1 should be Ready to run
+    // - work2 should still be Done (f3 wasn't modified)
+    // - postprocess should be Blocked (waiting for work1 to complete)
+
+    assert_eq!(
+        preprocess_after.status.unwrap(),
+        models::JobStatus::Done,
+        "preprocess should remain Done (f2 is its output, not input)"
+    );
+
+    assert_eq!(
+        work1_after.status.unwrap(),
+        models::JobStatus::Ready,
+        "work1 should be Ready (not Blocked), since preprocess (which blocks work1) is Done"
+    );
+
+    assert_eq!(
+        work2_after.status.unwrap(),
+        models::JobStatus::Done,
+        "work2 should remain Done (f3 was not modified)"
+    );
+
+    assert_eq!(
+        postprocess_after.status.unwrap(),
+        models::JobStatus::Blocked,
+        "postprocess should be Blocked (waiting for work1 to complete)"
     );
 }

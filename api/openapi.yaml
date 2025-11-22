@@ -605,6 +605,14 @@ paths:
         schema:
           type: string
         style: form
+      - explode: true
+        in: query
+        name: is_output
+        required: false
+        schema:
+          type: boolean
+        description: Filter for files that are outputs of jobs (appear in job_output_file table)
+        style: form
       responses:
         "200":
           content:

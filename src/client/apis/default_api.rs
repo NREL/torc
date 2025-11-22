@@ -3502,6 +3502,7 @@ pub fn list_files(
     reverse_sort: Option<bool>,
     name: Option<&str>,
     path: Option<&str>,
+    is_output: Option<bool>,
 ) -> Result<models::ListFilesResponse, Error<ListFilesError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_workflow_id = workflow_id;
@@ -3512,6 +3513,7 @@ pub fn list_files(
     let p_reverse_sort = reverse_sort;
     let p_name = name;
     let p_path = path;
+    let p_is_output = is_output;
 
     let uri_str = format!("{}/files", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -3537,6 +3539,9 @@ pub fn list_files(
     }
     if let Some(ref param_value) = p_path {
         req_builder = req_builder.query(&[("path", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_is_output {
+        req_builder = req_builder.query(&[("is_output", &param_value.to_string())]);
     }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());

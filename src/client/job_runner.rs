@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use log::{self, debug, error, info, warn};
+use log::{self, debug, error, info};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
@@ -408,7 +408,7 @@ impl JobRunner {
                             files_to_update.push((*file_id, st_mtime));
                         }
                         Err(e) => {
-                            warn!(
+                            error!(
                                 "Could not get modification time for file '{}': {}. Using current time.",
                                 file_model.path, e
                             );
@@ -436,7 +436,6 @@ impl JobRunner {
 
         // Update st_mtime for all files
         for (file_id, st_mtime) in files_to_update {
-            // Fetch the file model again to get all fields
             let mut file_model = match utils::send_with_retries(
                 &self.config,
                 || default_api::get_file(&self.config, file_id),

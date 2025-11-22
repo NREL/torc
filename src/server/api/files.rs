@@ -46,6 +46,7 @@ pub trait FilesApi<C> {
         reverse_sort: Option<bool>,
         name: Option<String>,
         path: Option<String>,
+        is_output: Option<bool>,
         context: &C,
     ) -> Result<ListFilesResponse, ApiError>;
 
@@ -227,10 +228,11 @@ where
         reverse_sort: Option<bool>,
         name: Option<String>,
         path: Option<String>,
+        is_output: Option<bool>,
         context: &C,
     ) -> Result<ListFilesResponse, ApiError> {
         debug!(
-            "list_files({}, {:?}, {}, {}, {:?}, {:?}, {:?}, {:?}) - X-Span-ID: {:?}",
+            "list_files({}, {:?}, {}, {}, {:?}, {:?}, {:?}, {:?}, {:?}) - X-Span-ID: {:?}",
             workflow_id,
             produced_by_job_id,
             offset,
@@ -239,11 +241,13 @@ where
             reverse_sort,
             name,
             path,
+            is_output,
             context.get().0.clone()
         );
 
-        // Build base query - include JOIN if we need to filter by produced_by_job_id
-        let base_query = if produced_by_job_id.is_some() {
+        // Build base query - include JOIN if we need to filter by produced_by_job_id or is_output=true
+        let needs_join = produced_by_job_id.is_some() || is_output == Some(true);
+        let base_query = if needs_join {
             "
                 SELECT
                     DISTINCT f.id
@@ -262,30 +266,24 @@ where
         // Build WHERE clause conditions
         let mut where_conditions = vec![];
 
-        if produced_by_job_id.is_some() {
+        if needs_join {
             where_conditions.push("f.workflow_id = ?".to_string());
-            where_conditions.push("jof.job_id = ?".to_string());
+            if produced_by_job_id.is_some() {
+                where_conditions.push("jof.job_id = ?".to_string());
+            }
         } else {
             where_conditions.push("workflow_id = ?".to_string());
         }
 
         // Add name filter if provided
         if name.is_some() {
-            let name_column = if produced_by_job_id.is_some() {
-                "f.name"
-            } else {
-                "name"
-            };
+            let name_column = if needs_join { "f.name" } else { "name" };
             where_conditions.push(format!("{} = ?", name_column));
         }
 
         // Add path filter if provided
         if path.is_some() {
-            let path_column = if produced_by_job_id.is_some() {
-                "f.path"
-            } else {
-                "path"
-            };
+            let path_column = if needs_join { "f.path" } else { "path" };
             where_conditions.push(format!("{} = ?", path_column));
         }
 
@@ -293,11 +291,7 @@ where
 
         // Build the complete query with pagination and sorting
         // Use f.id for sorting when we have JOIN, otherwise just id
-        let sort_column = if produced_by_job_id.is_some() {
-            "f.id"
-        } else {
-            "id"
-        };
+        let sort_column = if needs_join { "f.id" } else { "id" };
         let query = SqlQueryBuilder::new(base_query)
             .with_where(where_clause.clone())
             .with_pagination_and_sorting(offset, limit, sort_by, reverse_sort, sort_column)
@@ -338,7 +332,7 @@ where
         }
 
         // For proper pagination, we should get the total count without LIMIT/OFFSET
-        let count_base_query = if produced_by_job_id.is_some() {
+        let count_base_query = if needs_join {
             "
                 SELECT
                     COUNT(DISTINCT f.id) as total

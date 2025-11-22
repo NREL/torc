@@ -1303,7 +1303,7 @@ fn test_slurm_run_jobs(start_server: &ServerProcess) {
         .expect("Failed to get workflow");
     let workflow_manager = WorkflowManager::new(config.clone(), workflow);
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to start workflow");
 
     run_slurm_job_runner_cli_command(start_server, workflow_id, work_dir.to_str().unwrap())
@@ -1448,7 +1448,7 @@ fn test_cancel_workflow_with_slurm_scheduler(start_server: &ServerProcess) {
     // Start the workflow using WorkflowManager
     let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to start workflow");
 
     setup_fake_slurm_commands();
