@@ -2087,6 +2087,32 @@ where
             .await
     }
 
+    /// Retrieve job-file relationships for one workflow.
+    async fn list_job_file_relationships(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        context: &C,
+    ) -> Result<ListJobFileRelationshipsResponse, ApiError> {
+        self.workflows_api
+            .list_job_file_relationships(workflow_id, offset, limit, context)
+            .await
+    }
+
+    /// Retrieve job-user_data relationships for one workflow.
+    async fn list_job_user_data_relationships(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        context: &C,
+    ) -> Result<ListJobUserDataRelationshipsResponse, ApiError> {
+        self.workflows_api
+            .list_job_user_data_relationships(workflow_id, offset, limit, context)
+            .await
+    }
+
     /// Retrieve local schedulers for one workflow.
     async fn list_local_schedulers(
         &self,

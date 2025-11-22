@@ -39,19 +39,19 @@ jobs:
 # File definitions - representing the data files in the workflow
 files:
   - name: f1
-    path: f1.json
+    path: /Users/dthom/repos/torc/f1.json
 
   - name: f2
-    path: f2.json
+    path: /Users/dthom/repos/torc/f2.json
 
   - name: f3
-    path: f3.json
+    path: /Users/dthom/repos/torc/f3.json
 
   - name: f4
-    path: f4.json
+    path: /Users/dthom/repos/torc/f4.json
 
   - name: f5
-    path: f5.json
+    path: /Users/dthom/repos/torc/f5.json
 
   - name: f6
-    path: f6.json
+    path: /Users/dthom/repos/torc/f6.json

@@ -36,10 +36,14 @@ dependencies = [
     "urllib3 >= 2.1.0, < 3.0.0",
     "python-dateutil >= 2.8.2",
     "typing-extensions >= 4.7.1",
+    # Dash dependencies for web UI
+    "dash >= 2.14, < 3",
+    "dash-bootstrap-components >= 1.5, < 2",
 ]
 
 [project.scripts]
 pytorc = "torc.cli.pytorc:cli"
+torc-dash = "torc.dash_app.run:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

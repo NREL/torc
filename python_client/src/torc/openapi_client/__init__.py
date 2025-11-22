@@ -43,14 +43,18 @@ __all__ = [
     "IsCompleteResponse",
     "IsUninitializedResponse",
     "JobDependencyModel",
+    "JobFileRelationshipModel",
     "JobModel",
     "JobStatus",
+    "JobUserDataRelationshipModel",
     "JobsModel",
     "JobsSortMethod",
     "ListComputeNodesResponse",
     "ListEventsResponse",
     "ListFilesResponse",
     "ListJobDependenciesResponse",
+    "ListJobFileRelationshipsResponse",
+    "ListJobUserDataRelationshipsResponse",
     "ListJobsResponse",
     "ListLocalSchedulersResponse",
     "ListMissingUserDataResponse",
@@ -104,14 +108,18 @@ from torc.openapi_client.models.get_ready_job_requirements_response import GetRe
 from torc.openapi_client.models.is_complete_response import IsCompleteResponse as IsCompleteResponse
 from torc.openapi_client.models.is_uninitialized_response import IsUninitializedResponse as IsUninitializedResponse
 from torc.openapi_client.models.job_dependency_model import JobDependencyModel as JobDependencyModel
+from torc.openapi_client.models.job_file_relationship_model import JobFileRelationshipModel as JobFileRelationshipModel
 from torc.openapi_client.models.job_model import JobModel as JobModel
 from torc.openapi_client.models.job_status import JobStatus as JobStatus
+from torc.openapi_client.models.job_user_data_relationship_model import JobUserDataRelationshipModel as JobUserDataRelationshipModel
 from torc.openapi_client.models.jobs_model import JobsModel as JobsModel
 from torc.openapi_client.models.jobs_sort_method import JobsSortMethod as JobsSortMethod
 from torc.openapi_client.models.list_compute_nodes_response import ListComputeNodesResponse as ListComputeNodesResponse
 from torc.openapi_client.models.list_events_response import ListEventsResponse as ListEventsResponse
 from torc.openapi_client.models.list_files_response import ListFilesResponse as ListFilesResponse
 from torc.openapi_client.models.list_job_dependencies_response import ListJobDependenciesResponse as ListJobDependenciesResponse
+from torc.openapi_client.models.list_job_file_relationships_response import ListJobFileRelationshipsResponse as ListJobFileRelationshipsResponse
+from torc.openapi_client.models.list_job_user_data_relationships_response import ListJobUserDataRelationshipsResponse as ListJobUserDataRelationshipsResponse
 from torc.openapi_client.models.list_jobs_response import ListJobsResponse as ListJobsResponse
 from torc.openapi_client.models.list_local_schedulers_response import ListLocalSchedulersResponse as ListLocalSchedulersResponse
 from torc.openapi_client.models.list_missing_user_data_response import ListMissingUserDataResponse as ListMissingUserDataResponse

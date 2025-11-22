@@ -39,7 +39,8 @@ use crate::server::api_types::{
     GetUserDataResponse, GetVersionResponse, GetWorkflowActionsResponse, GetWorkflowResponse,
     GetWorkflowStatusResponse, InitializeJobsResponse, IsWorkflowCompleteResponse,
     IsWorkflowUninitializedResponse, ListComputeNodesResponse, ListEventsResponse,
-    ListFilesResponse, ListJobDependenciesResponse, ListJobIdsResponse, ListJobsResponse,
+    ListFilesResponse, ListJobDependenciesResponse, ListJobFileRelationshipsResponse,
+    ListJobIdsResponse, ListJobUserDataRelationshipsResponse, ListJobsResponse,
     ListLocalSchedulersResponse, ListMissingUserDataResponse, ListRequiredExistingFilesResponse,
     ListResourceRequirementsResponse, ListResultsResponse, ListScheduledComputeNodesResponse,
     ListSlurmSchedulersResponse, ListUserDataResponse, ListWorkflowsResponse,
@@ -103,6 +104,8 @@ mod paths {
             r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/reset_status$",
             r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/status$",
             r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_dependencies$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_file_relationships$",
+            r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_user_data_relationships$",
             r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions$",
             r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions/pending$",
             r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions/(?P<action_id>[^/?#]*)/claim$"
@@ -368,21 +371,39 @@ mod paths {
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_dependencies$")
                 .expect("Unable to create regex for WORKFLOWS_ID_JOB_DEPENDENCIES");
     }
-    pub(crate) static ID_WORKFLOWS_ID_ACTIONS: usize = 47;
+    pub(crate) static ID_WORKFLOWS_ID_JOB_FILE_RELATIONSHIPS: usize = 47;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_JOB_FILE_RELATIONSHIPS: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(
+                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_file_relationships$"
+            )
+            .expect("Unable to create regex for WORKFLOWS_ID_JOB_FILE_RELATIONSHIPS");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_JOB_USER_DATA_RELATIONSHIPS: usize = 48;
+    lazy_static! {
+        pub static ref REGEX_WORKFLOWS_ID_JOB_USER_DATA_RELATIONSHIPS: regex::Regex =
+            #[allow(clippy::invalid_regex)]
+            regex::Regex::new(
+                r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/job_user_data_relationships$"
+            )
+            .expect("Unable to create regex for WORKFLOWS_ID_JOB_USER_DATA_RELATIONSHIPS");
+    }
+    pub(crate) static ID_WORKFLOWS_ID_ACTIONS: usize = 49;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_ACTIONS: regex::Regex =
             #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions$")
                 .expect("Unable to create regex for WORKFLOWS_ID_ACTIONS");
     }
-    pub(crate) static ID_WORKFLOWS_ID_ACTIONS_PENDING: usize = 48;
+    pub(crate) static ID_WORKFLOWS_ID_ACTIONS_PENDING: usize = 50;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_ACTIONS_PENDING: regex::Regex =
             #[allow(clippy::invalid_regex)]
             regex::Regex::new(r"^/torc-service/v1/workflows/(?P<id>[^/?#]*)/actions/pending$")
                 .expect("Unable to create regex for WORKFLOWS_ID_ACTIONS_PENDING");
     }
-    pub(crate) static ID_WORKFLOWS_ID_ACTIONS_ACTION_ID_CLAIM: usize = 49;
+    pub(crate) static ID_WORKFLOWS_ID_ACTIONS_ACTION_ID_CLAIM: usize = 51;
     lazy_static! {
         pub static ref REGEX_WORKFLOWS_ID_ACTIONS_ACTION_ID_CLAIM: regex::Regex =
             #[allow(clippy::invalid_regex)]
@@ -8197,6 +8218,261 @@ where
                                     *response.body_mut() = Body::from(body);
                                 }
                                 ListJobDependenciesResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListJobFileRelationships - GET /workflows/{id}/job_file_relationships
+                hyper::Method::GET
+                    if path.matched(paths::ID_WORKFLOWS_ID_JOB_FILE_RELATIONSHIPS) =>
+                {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_JOB_FILE_RELATIONSHIPS
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_JOB_FILE_RELATIONSHIPS in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_JOB_FILE_RELATIONSHIPS.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_offset = query_params
+                        .iter()
+                        .filter(|e| e.0 == "offset")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_offset = match param_offset {
+                        Some(param_offset) => {
+                            let param_offset = <i64 as std::str::FromStr>::from_str(&param_offset);
+                            match param_offset {
+                            Ok(param_offset) => Some(param_offset),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter offset - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter offset")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_limit = query_params
+                        .iter()
+                        .filter(|e| e.0 == "limit")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_limit = match param_limit {
+                        Some(param_limit) => {
+                            let param_limit = <i64 as std::str::FromStr>::from_str(&param_limit);
+                            match param_limit {
+                            Ok(param_limit) => Some(param_limit),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter limit - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter limit")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    let result = api_impl
+                        .list_job_file_relationships(param_id, param_offset, param_limit, &context)
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListJobFileRelationshipsResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListJobFileRelationshipsResponse::DefaultErrorResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(500)
+                                        .expect("Unable to turn 500 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                            }
+                        }
+                        Err(_) => {
+                            // Application code returned an error. This should not happen, as the implementation should
+                            // return a valid response.
+                            *response.status_mut() = StatusCode::INTERNAL_SERVER_ERROR;
+                            *response.body_mut() = Body::from("An internal error occurred");
+                        }
+                    }
+
+                    Ok(response)
+                }
+
+                // ListJobUserDataRelationships - GET /workflows/{id}/job_user_data_relationships
+                hyper::Method::GET
+                    if path.matched(paths::ID_WORKFLOWS_ID_JOB_USER_DATA_RELATIONSHIPS) =>
+                {
+                    // Path parameters
+                    let path: &str = uri.path();
+                    let path_params =
+                    paths::REGEX_WORKFLOWS_ID_JOB_USER_DATA_RELATIONSHIPS
+                    .captures(path)
+                    .unwrap_or_else(||
+                        panic!("Path {} matched RE WORKFLOWS_ID_JOB_USER_DATA_RELATIONSHIPS in set but failed match against \"{}\"", path, paths::REGEX_WORKFLOWS_ID_JOB_USER_DATA_RELATIONSHIPS.as_str())
+                    );
+
+                    let param_id = match percent_encoding::percent_decode(path_params["id"].as_bytes()).decode_utf8() {
+                    Ok(param_id) => match param_id.parse::<i64>() {
+                        Ok(param_id) => param_id,
+                        Err(e) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't parse path parameter id: {}", e)))
+                                        .expect("Unable to create Bad Request response for invalid path parameter")),
+                    },
+                    Err(_) => return Ok(Response::builder()
+                                        .status(StatusCode::BAD_REQUEST)
+                                        .body(Body::from(format!("Couldn't percent-decode path parameter as UTF-8: {}", &path_params["id"])))
+                                        .expect("Unable to create Bad Request response for invalid percent decode"))
+                };
+
+                    // Query parameters (note that non-required or collection query parameters will ignore garbage values, rather than causing a 400 response)
+                    let query_params =
+                        form_urlencoded::parse(uri.query().unwrap_or_default().as_bytes())
+                            .collect::<Vec<_>>();
+                    let param_offset = query_params
+                        .iter()
+                        .filter(|e| e.0 == "offset")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_offset = match param_offset {
+                        Some(param_offset) => {
+                            let param_offset = <i64 as std::str::FromStr>::from_str(&param_offset);
+                            match param_offset {
+                            Ok(param_offset) => Some(param_offset),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter offset - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter offset")),
+                        }
+                        }
+                        None => None,
+                    };
+                    let param_limit = query_params
+                        .iter()
+                        .filter(|e| e.0 == "limit")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_limit = match param_limit {
+                        Some(param_limit) => {
+                            let param_limit = <i64 as std::str::FromStr>::from_str(&param_limit);
+                            match param_limit {
+                            Ok(param_limit) => Some(param_limit),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter limit - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter limit")),
+                        }
+                        }
+                        None => None,
+                    };
+
+                    let result = api_impl
+                        .list_job_user_data_relationships(
+                            param_id,
+                            param_offset,
+                            param_limit,
+                            &context,
+                        )
+                        .await;
+                    let mut response = Response::new(Body::empty());
+                    response.headers_mut().insert(
+                        HeaderName::from_static("x-span-id"),
+                        HeaderValue::from_str(
+                            (&context as &dyn Has<XSpanIdString>)
+                                .get()
+                                .0
+                                .clone()
+                                .as_str(),
+                        )
+                        .expect("Unable to create X-Span-ID header value"),
+                    );
+
+                    match result {
+                        Ok(rsp) => {
+                            match rsp {
+                                ListJobUserDataRelationshipsResponse::SuccessfulResponse(body) => {
+                                    *response.status_mut() = StatusCode::from_u16(200)
+                                        .expect("Unable to turn 200 into a StatusCode");
+                                    response.headers_mut().insert(
+                                                        CONTENT_TYPE,
+                                                        HeaderValue::from_str("application/json")
+                                                            .expect("Unable to create Content-Type header for application/json"));
+                                    // JSON Body
+                                    let body = serde_json::to_string(&body)
+                                        .expect("impossible to fail to serialize");
+                                    *response.body_mut() = Body::from(body);
+                                }
+                                ListJobUserDataRelationshipsResponse::DefaultErrorResponse(
+                                    body,
+                                ) => {
                                     *response.status_mut() = StatusCode::from_u16(500)
                                         .expect("Unable to turn 500 into a StatusCode");
                                     response.headers_mut().insert(

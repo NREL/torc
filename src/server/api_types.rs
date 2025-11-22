@@ -373,6 +373,24 @@ pub enum ListJobDependenciesResponse {
 
 #[derive(Debug, PartialEq, Serialize, Deserialize)]
 #[must_use]
+pub enum ListJobFileRelationshipsResponse {
+    /// Successful response
+    SuccessfulResponse(models::ListJobFileRelationshipsResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
+pub enum ListJobUserDataRelationshipsResponse {
+    /// Successful response
+    SuccessfulResponse(models::ListJobUserDataRelationshipsResponse),
+    /// Default error response
+    DefaultErrorResponse(models::ErrorResponse),
+}
+
+#[derive(Debug, PartialEq, Serialize, Deserialize)]
+#[must_use]
 pub enum ListLocalSchedulersResponse {
     /// HTTP 200 OK.
     HTTP(models::ListLocalSchedulersResponse),
@@ -1294,6 +1312,24 @@ pub trait Api<C: Send + Sync> {
         context: &C,
     ) -> Result<ListJobDependenciesResponse, ApiError>;
 
+    /// Retrieve job-file relationships for one workflow.
+    async fn list_job_file_relationships(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        context: &C,
+    ) -> Result<ListJobFileRelationshipsResponse, ApiError>;
+
+    /// Retrieve job-user_data relationships for one workflow.
+    async fn list_job_user_data_relationships(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+        context: &C,
+    ) -> Result<ListJobUserDataRelationshipsResponse, ApiError>;
+
     /// Retrieve local schedulers for one workflow.
     async fn list_local_schedulers(
         &self,
@@ -2007,6 +2043,22 @@ pub trait ApiNoContext<C: Send + Sync> {
         offset: Option<i64>,
         limit: Option<i64>,
     ) -> Result<ListJobDependenciesResponse, ApiError>;
+
+    /// Retrieve job-file relationships for one workflow.
+    async fn list_job_file_relationships(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> Result<ListJobFileRelationshipsResponse, ApiError>;
+
+    /// Retrieve job-user_data relationships for one workflow.
+    async fn list_job_user_data_relationships(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> Result<ListJobUserDataRelationshipsResponse, ApiError>;
 
     /// Retrieve local schedulers for one workflow.
     async fn list_local_schedulers(
@@ -2804,6 +2856,32 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
         let context = self.context().clone();
         self.api()
             .list_job_dependencies(workflow_id, offset, limit, &context)
+            .await
+    }
+
+    /// Retrieve job-file relationships for one workflow.
+    async fn list_job_file_relationships(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> Result<ListJobFileRelationshipsResponse, ApiError> {
+        let context = self.context().clone();
+        self.api()
+            .list_job_file_relationships(workflow_id, offset, limit, &context)
+            .await
+    }
+
+    /// Retrieve job-user_data relationships for one workflow.
+    async fn list_job_user_data_relationships(
+        &self,
+        workflow_id: i64,
+        offset: Option<i64>,
+        limit: Option<i64>,
+    ) -> Result<ListJobUserDataRelationshipsResponse, ApiError> {
+        let context = self.context().clone();
+        self.api()
+            .list_job_user_data_relationships(workflow_id, offset, limit, &context)
             .await
     }
 

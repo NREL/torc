@@ -68,7 +68,9 @@ Method | HTTP request | Description
 [**list_events_after_timestamp**](DefaultApi.md#list_events_after_timestamp) | **GET** /workflows/{id}/events_after_timestamp/{timestamp} | Return all events newer than the event with timestamp.
 [**list_files**](DefaultApi.md#list_files) | **GET** /files | Retrieve all files for one workflow.
 [**list_job_dependencies**](DefaultApi.md#list_job_dependencies) | **GET** /workflows/{id}/job_dependencies | Retrieve job blocking relationships for a workflow.
+[**list_job_file_relationships**](DefaultApi.md#list_job_file_relationships) | **GET** /workflows/{id}/job_file_relationships | Retrieve job-file relationships for a workflow.
 [**list_job_ids**](DefaultApi.md#list_job_ids) | **GET** /workflows/{id}/job_ids | Retrieve all job IDs for one workflow.
+[**list_job_user_data_relationships**](DefaultApi.md#list_job_user_data_relationships) | **GET** /workflows/{id}/job_user_data_relationships | Retrieve job-user_data relationships for a workflow.
 [**list_jobs**](DefaultApi.md#list_jobs) | **GET** /jobs | Retrieve all jobs for one workflow.
 [**list_local_schedulers**](DefaultApi.md#list_local_schedulers) | **GET** /local_schedulers | Retrieve local schedulers for one workflow.
 [**list_missing_user_data**](DefaultApi.md#list_missing_user_data) | **GET** /workflows/{id}/missing_user_data | List missing user data that should exist.
@@ -2244,6 +2246,43 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
+# **list_job_file_relationships**
+> list_job_file_relationships(_api::DefaultApi, id::Int64; offset=nothing, limit=nothing, _mediaType=nothing) -> ListJobFileRelationshipsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_job_file_relationships(_api::DefaultApi, response_stream::Channel, id::Int64; offset=nothing, limit=nothing, _mediaType=nothing) -> Channel{ ListJobFileRelationshipsResponse }, OpenAPI.Clients.ApiResponse
+
+Retrieve job-file relationships for a workflow.
+
+Retrieve all job-file relationships for one workflow from the job_input_file and job_output_file tables.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | Workflow ID |
+
+### Optional Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **offset** | **Int64** |  | [default to 0]
+ **limit** | **Int64** |  | [default to 100000]
+
+### Return type
+
+[**ListJobFileRelationshipsResponse**](ListJobFileRelationshipsResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 # **list_job_ids**
 > list_job_ids(_api::DefaultApi, id::Int64; _mediaType=nothing) -> Any, OpenAPI.Clients.ApiResponse <br/>
 > list_job_ids(_api::DefaultApi, response_stream::Channel, id::Int64; _mediaType=nothing) -> Channel{ Any }, OpenAPI.Clients.ApiResponse
@@ -2274,9 +2313,46 @@ No authorization required
 
 [[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
 
+# **list_job_user_data_relationships**
+> list_job_user_data_relationships(_api::DefaultApi, id::Int64; offset=nothing, limit=nothing, _mediaType=nothing) -> ListJobUserDataRelationshipsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_job_user_data_relationships(_api::DefaultApi, response_stream::Channel, id::Int64; offset=nothing, limit=nothing, _mediaType=nothing) -> Channel{ ListJobUserDataRelationshipsResponse }, OpenAPI.Clients.ApiResponse
+
+Retrieve job-user_data relationships for a workflow.
+
+Retrieve all job-user_data relationships for one workflow from the job_input_user_data and job_output_user_data tables.
+
+### Required Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **_api** | **DefaultApi** | API context | 
+**id** | **Int64** | Workflow ID |
+
+### Optional Parameters
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **offset** | **Int64** |  | [default to 0]
+ **limit** | **Int64** |  | [default to 100000]
+
+### Return type
+
+[**ListJobUserDataRelationshipsResponse**](ListJobUserDataRelationshipsResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+[[Back to top]](#) [[Back to API list]](../README.md#api-endpoints) [[Back to Model list]](../README.md#models) [[Back to README]](../README.md)
+
 # **list_jobs**
-> list_jobs(_api::DefaultApi, workflow_id::Int64; status=nothing, needs_file_id=nothing, upstream_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, _mediaType=nothing) -> ListJobsResponse, OpenAPI.Clients.ApiResponse <br/>
-> list_jobs(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; status=nothing, needs_file_id=nothing, upstream_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, _mediaType=nothing) -> Channel{ ListJobsResponse }, OpenAPI.Clients.ApiResponse
+> list_jobs(_api::DefaultApi, workflow_id::Int64; status=nothing, needs_file_id=nothing, upstream_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, include_relationships=nothing, _mediaType=nothing) -> ListJobsResponse, OpenAPI.Clients.ApiResponse <br/>
+> list_jobs(_api::DefaultApi, response_stream::Channel, workflow_id::Int64; status=nothing, needs_file_id=nothing, upstream_job_id=nothing, offset=nothing, limit=nothing, sort_by=nothing, reverse_sort=nothing, include_relationships=nothing, _mediaType=nothing) -> Channel{ ListJobsResponse }, OpenAPI.Clients.ApiResponse
 
 Retrieve all jobs for one workflow.
 
@@ -2300,6 +2376,7 @@ Name | Type | Description  | Notes
  **limit** | **Int64** |  | [default to 100000]
  **sort_by** | **String** |  | [default to nothing]
  **reverse_sort** | **Bool** |  | [default to false]
+ **include_relationships** | **Bool** | Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance. | [default to false]
 
 ### Return type
 

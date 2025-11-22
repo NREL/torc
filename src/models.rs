@@ -10339,6 +10339,208 @@ impl ListJobDependenciesResponse {
     }
 }
 
+// JobFileRelationshipModel - Represents a job-file relationship showing producer and consumer jobs
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct JobFileRelationshipModel {
+    /// The file ID
+    #[serde(rename = "file_id")]
+    pub file_id: i64,
+
+    /// The name of the file
+    #[serde(rename = "file_name")]
+    pub file_name: String,
+
+    /// The path of the file
+    #[serde(rename = "file_path")]
+    pub file_path: String,
+
+    /// The job that produces this file (null for workflow inputs)
+    #[serde(rename = "producer_job_id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub producer_job_id: Option<i64>,
+
+    /// The name of the job that produces this file
+    #[serde(rename = "producer_job_name")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub producer_job_name: Option<String>,
+
+    /// The job that consumes this file (null for workflow outputs)
+    #[serde(rename = "consumer_job_id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub consumer_job_id: Option<i64>,
+
+    /// The name of the job that consumes this file
+    #[serde(rename = "consumer_job_name")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub consumer_job_name: Option<String>,
+
+    /// The workflow containing the file and jobs
+    #[serde(rename = "workflow_id")]
+    pub workflow_id: i64,
+}
+
+impl JobFileRelationshipModel {
+    pub fn new(
+        file_id: i64,
+        file_name: String,
+        file_path: String,
+        workflow_id: i64,
+    ) -> JobFileRelationshipModel {
+        JobFileRelationshipModel {
+            file_id,
+            file_name,
+            file_path,
+            producer_job_id: None,
+            producer_job_name: None,
+            consumer_job_id: None,
+            consumer_job_name: None,
+            workflow_id,
+        }
+    }
+}
+
+// ListJobFileRelationshipsResponse - Response for listing job-file relationships
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct ListJobFileRelationshipsResponse {
+    #[serde(rename = "items")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub items: Option<Vec<models::JobFileRelationshipModel>>,
+
+    #[serde(rename = "offset")]
+    pub offset: i64,
+
+    #[serde(rename = "max_limit")]
+    pub max_limit: i64,
+
+    #[serde(rename = "count")]
+    pub count: i64,
+
+    #[serde(rename = "total_count")]
+    pub total_count: i64,
+
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+}
+
+impl ListJobFileRelationshipsResponse {
+    pub fn new(
+        offset: i64,
+        max_limit: i64,
+        count: i64,
+        total_count: i64,
+        has_more: bool,
+    ) -> ListJobFileRelationshipsResponse {
+        ListJobFileRelationshipsResponse {
+            items: None,
+            offset,
+            max_limit,
+            count,
+            total_count,
+            has_more,
+        }
+    }
+}
+
+// JobUserDataRelationshipModel - Represents a job-user_data relationship showing producer and consumer jobs
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct JobUserDataRelationshipModel {
+    /// The user_data ID
+    #[serde(rename = "user_data_id")]
+    pub user_data_id: i64,
+
+    /// The name of the user_data
+    #[serde(rename = "user_data_name")]
+    pub user_data_name: String,
+
+    /// The job that produces this user_data (null for workflow inputs)
+    #[serde(rename = "producer_job_id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub producer_job_id: Option<i64>,
+
+    /// The name of the job that produces this user_data
+    #[serde(rename = "producer_job_name")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub producer_job_name: Option<String>,
+
+    /// The job that consumes this user_data (null for workflow outputs)
+    #[serde(rename = "consumer_job_id")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub consumer_job_id: Option<i64>,
+
+    /// The name of the job that consumes this user_data
+    #[serde(rename = "consumer_job_name")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub consumer_job_name: Option<String>,
+
+    /// The workflow containing the user_data and jobs
+    #[serde(rename = "workflow_id")]
+    pub workflow_id: i64,
+}
+
+impl JobUserDataRelationshipModel {
+    pub fn new(
+        user_data_id: i64,
+        user_data_name: String,
+        workflow_id: i64,
+    ) -> JobUserDataRelationshipModel {
+        JobUserDataRelationshipModel {
+            user_data_id,
+            user_data_name,
+            producer_job_id: None,
+            producer_job_name: None,
+            consumer_job_id: None,
+            consumer_job_name: None,
+            workflow_id,
+        }
+    }
+}
+
+// ListJobUserDataRelationshipsResponse - Response for listing job-user_data relationships
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
+#[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]
+pub struct ListJobUserDataRelationshipsResponse {
+    #[serde(rename = "items")]
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub items: Option<Vec<models::JobUserDataRelationshipModel>>,
+
+    #[serde(rename = "offset")]
+    pub offset: i64,
+
+    #[serde(rename = "max_limit")]
+    pub max_limit: i64,
+
+    #[serde(rename = "count")]
+    pub count: i64,
+
+    #[serde(rename = "total_count")]
+    pub total_count: i64,
+
+    #[serde(rename = "has_more")]
+    pub has_more: bool,
+}
+
+impl ListJobUserDataRelationshipsResponse {
+    pub fn new(
+        offset: i64,
+        max_limit: i64,
+        count: i64,
+        total_count: i64,
+        has_more: bool,
+    ) -> ListJobUserDataRelationshipsResponse {
+        ListJobUserDataRelationshipsResponse {
+            items: None,
+            offset,
+            max_limit,
+            count,
+            total_count,
+            has_more,
+        }
+    }
+}
+
 /// Represents a workflow action in the database
 #[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize, validator::Validate)]
 #[cfg_attr(feature = "conversion", derive(frunk::LabelledGeneric))]

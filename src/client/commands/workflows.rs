@@ -176,7 +176,7 @@ pub enum WorkflowCommands {
         ignore_missing_data: bool,
         /// Skip confirmation prompt
         #[arg(long)]
-        no_prompt: bool,
+        no_prompts: bool,
     },
     /// Reinitialize a workflow. This will reinitialize all jobs with a status of
     /// canceled, submitting, pending, or terminated. Jobs with a status of
@@ -218,7 +218,7 @@ pub enum WorkflowCommands {
         force: bool,
         /// Skip confirmation prompt
         #[arg(long)]
-        no_prompt: bool,
+        no_prompts: bool,
     },
 }
 
@@ -953,7 +953,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
         WorkflowCommands::Initialize {
             workflow_id,
             ignore_missing_data,
-            no_prompt,
+            no_prompts,
         } => {
             let user_name = get_env_user_name();
 
@@ -968,7 +968,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                     match default_api::is_workflow_uninitialized(&config, selected_workflow_id) {
                         Ok(is_initialized) => {
                             if is_initialized.as_bool().unwrap_or(false) {
-                                if !no_prompt && format != "json" {
+                                if !no_prompts && format != "json" {
                                     println!(
                                         "\nWarning: This workflow has already been initialized."
                                     );
@@ -1154,7 +1154,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
             failed_only,
             restart,
             force,
-            no_prompt,
+            no_prompts,
         } => {
             let user_name = get_env_user_name();
 
@@ -1164,7 +1164,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
             };
 
             // Show confirmation prompt unless --no-prompt or format is json
-            if !no_prompt && format != "json" {
+            if !no_prompts && format != "json" {
                 eprintln!(
                     "\nWarning: You are about to reset the status for workflow {}.",
                     selected_workflow_id

@@ -3691,6 +3691,96 @@ paths:
       security: []
       summary: Retrieve job blocking relationships for a workflow.
       tags: []
+  /workflows/{id}/job_file_relationships:
+    get:
+      description: Retrieve all job-file relationships for one workflow from the job_input_file and job_output_file tables.
+      operationId: list_job_file_relationships
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100000
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_job_file_relationships_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve job-file relationships for a workflow.
+      tags: []
+  /workflows/{id}/job_user_data_relationships:
+    get:
+      description: Retrieve all job-user_data relationships for one workflow from the job_input_user_data and job_output_user_data tables.
+      operationId: list_job_user_data_relationships
+      parameters:
+      - description: Workflow ID
+        explode: false
+        in: path
+        name: id
+        required: true
+        schema:
+          type: integer
+        style: simple
+      - explode: true
+        in: query
+        name: offset
+        required: false
+        schema:
+          default: 0
+          type: integer
+        style: form
+      - explode: true
+        in: query
+        name: limit
+        required: false
+        schema:
+          default: 100000
+          type: integer
+        style: form
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/list_job_user_data_relationships_response"
+          description: Successful response
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/default_error_response"
+          description: Default error response
+      security: []
+      summary: Retrieve job-user_data relationships for a workflow.
+      tags: []
   /workflows/{id}/actions:
     post:
       description: Create a workflow action.
@@ -4207,6 +4297,10 @@ components:
         return_code: 5
         status: status
         compute_node_id: 1
+        peak_memory_bytes: 524288000
+        avg_memory_bytes: 419430400
+        peak_cpu_percent: 150.5
+        avg_cpu_percent: 85.2
       properties:
         id:
           type: integer
@@ -4235,6 +4329,18 @@ components:
           description: Status of the job; managed by torc.
           schema:
             $ref: "#/components/schemas/job_status"
+        peak_memory_bytes:
+          description: Peak memory usage in bytes
+          type: integer
+        avg_memory_bytes:
+          description: Average memory usage in bytes
+          type: integer
+        peak_cpu_percent:
+          description: Peak CPU usage as percentage (can exceed 100% for multi-core)
+          type: number
+        avg_cpu_percent:
+          description: Average CPU usage as percentage (can exceed 100% for multi-core)
+          type: number
       required:
       - completion_time
       - compute_node_id
@@ -4866,6 +4972,170 @@ components:
         items:
           items:
             $ref: "#/components/schemas/job_dependency_model"
+          type: array
+        offset:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - items
+      - count
+      - has_more
+      - max_limit
+      - offset
+      - total_count
+      type: object
+    job_file_relationship_model:
+      description: Represents a job-file relationship showing producer and consumer jobs for a file.
+      example:
+        file_id: 42
+        file_name: "data.csv"
+        file_path: "/path/to/data.csv"
+        producer_job_id: 123
+        producer_job_name: "generate_data"
+        consumer_job_id: 456
+        consumer_job_name: "process_data"
+        workflow_id: 789
+      properties:
+        file_id:
+          description: The file ID
+          type: integer
+        file_name:
+          description: The name of the file
+          type: string
+        file_path:
+          description: The path of the file
+          type: string
+        producer_job_id:
+          description: The job that produces this file (null for workflow inputs)
+          type: integer
+          nullable: true
+        producer_job_name:
+          description: The name of the job that produces this file
+          type: string
+          nullable: true
+        consumer_job_id:
+          description: The job that consumes this file (null for workflow outputs)
+          type: integer
+          nullable: true
+        consumer_job_name:
+          description: The name of the job that consumes this file
+          type: string
+          nullable: true
+        workflow_id:
+          description: The workflow containing the file and jobs
+          type: integer
+      required:
+      - file_id
+      - file_name
+      - file_path
+      - workflow_id
+      type: object
+    list_job_file_relationships_response:
+      example:
+        max_limit: 100000
+        total_count: 42
+        count: 42
+        offset: 0
+        has_more: false
+        items:
+        - file_id: 42
+          file_name: "data.csv"
+          file_path: "/path/to/data.csv"
+          producer_job_id: 123
+          producer_job_name: "generate_data"
+          consumer_job_id: 456
+          consumer_job_name: "process_data"
+          workflow_id: 789
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/job_file_relationship_model"
+          type: array
+        offset:
+          type: integer
+        max_limit:
+          type: integer
+        count:
+          type: integer
+        total_count:
+          type: integer
+        has_more:
+          type: boolean
+      required:
+      - items
+      - count
+      - has_more
+      - max_limit
+      - offset
+      - total_count
+      type: object
+    job_user_data_relationship_model:
+      description: Represents a job-user_data relationship showing producer and consumer jobs for user_data.
+      example:
+        user_data_id: 42
+        user_data_name: "config"
+        producer_job_id: 123
+        producer_job_name: "generate_config"
+        consumer_job_id: 456
+        consumer_job_name: "use_config"
+        workflow_id: 789
+      properties:
+        user_data_id:
+          description: The user_data ID
+          type: integer
+        user_data_name:
+          description: The name of the user_data
+          type: string
+        producer_job_id:
+          description: The job that produces this user_data (null for workflow inputs)
+          type: integer
+          nullable: true
+        producer_job_name:
+          description: The name of the job that produces this user_data
+          type: string
+          nullable: true
+        consumer_job_id:
+          description: The job that consumes this user_data (null for workflow outputs)
+          type: integer
+          nullable: true
+        consumer_job_name:
+          description: The name of the job that consumes this user_data
+          type: string
+          nullable: true
+        workflow_id:
+          description: The workflow containing the user_data and jobs
+          type: integer
+      required:
+      - user_data_id
+      - user_data_name
+      - workflow_id
+      type: object
+    list_job_user_data_relationships_response:
+      example:
+        max_limit: 100000
+        total_count: 42
+        count: 42
+        offset: 0
+        has_more: false
+        items:
+        - user_data_id: 42
+          user_data_name: "config"
+          producer_job_id: 123
+          producer_job_name: "generate_config"
+          consumer_job_id: 456
+          consumer_job_name: "use_config"
+          workflow_id: 789
+      properties:
+        items:
+          items:
+            $ref: "#/components/schemas/job_user_data_relationship_model"
           type: array
         offset:
           type: integer

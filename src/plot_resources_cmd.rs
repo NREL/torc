@@ -26,6 +26,10 @@ pub struct Args {
     /// Prefix for output filenames
     #[arg(short = 'p', long, default_value = "resource_plot")]
     pub prefix: String,
+
+    /// Output format: html or json
+    #[arg(short = 'f', long, default_value = "html")]
+    pub format: String,
 }
 
 #[derive(Debug, Clone)]
@@ -119,15 +123,22 @@ pub fn run(args: &Args) -> Result<()> {
 
     job_metrics.sort_by_key(|m| m.job_id);
 
+    // Determine file extension based on format
+    let extension = match args.format.as_str() {
+        "json" => "json",
+        _ => "html",
+    };
+
     // Generate plots
     println!("\nGenerating plots...");
 
     // 1. Individual job plots
     for metrics in &job_metrics {
-        let output_path = args
-            .output_dir
-            .join(format!("{}_job_{}.html", args.prefix, metrics.job_id));
-        plot_job_timeline(metrics, &output_path)?;
+        let output_path = args.output_dir.join(format!(
+            "{}_job_{}.{}",
+            args.prefix, metrics.job_id, extension
+        ));
+        plot_job_timeline(metrics, &output_path, &args.format)?;
         println!("  Created: {}", output_path.display());
     }
 
@@ -135,22 +146,22 @@ pub fn run(args: &Args) -> Result<()> {
     if job_metrics.len() > 1 {
         let cpu_output_path = args
             .output_dir
-            .join(format!("{}_cpu_all_jobs.html", args.prefix));
-        plot_all_jobs_cpu_overview(&job_metrics, &cpu_output_path)?;
+            .join(format!("{}_cpu_all_jobs.{}", args.prefix, extension));
+        plot_all_jobs_cpu_overview(&job_metrics, &cpu_output_path, &args.format)?;
         println!("  Created: {}", cpu_output_path.display());
 
         let memory_output_path = args
             .output_dir
-            .join(format!("{}_memory_all_jobs.html", args.prefix));
-        plot_all_jobs_memory_overview(&job_metrics, &memory_output_path)?;
+            .join(format!("{}_memory_all_jobs.{}", args.prefix, extension));
+        plot_all_jobs_memory_overview(&job_metrics, &memory_output_path, &args.format)?;
         println!("  Created: {}", memory_output_path.display());
     }
 
     // 3. Summary dashboard
     let output_path = args
         .output_dir
-        .join(format!("{}_summary.html", args.prefix));
-    plot_summary_dashboard(&job_metrics, &output_path)?;
+        .join(format!("{}_summary.{}", args.prefix, extension));
+    plot_summary_dashboard(&job_metrics, &output_path, &args.format)?;
     println!("  Created: {}", output_path.display());
 
     let total_plots = if job_metrics.len() > 1 {
@@ -240,7 +251,21 @@ fn calculate_metrics(
     }
 }
 
-fn plot_job_timeline(metrics: &JobMetrics, output_path: &Path) -> Result<()> {
+fn write_plot(plot: &Plot, output_path: &Path, format: &str) -> Result<()> {
+    match format {
+        "json" => {
+            let json_str = plot.to_json();
+            std::fs::write(output_path, json_str)
+                .with_context(|| format!("Failed to write JSON to {}", output_path.display()))?;
+        }
+        "html" | _ => {
+            plot.write_html(output_path);
+        }
+    }
+    Ok(())
+}
+
+fn plot_job_timeline(metrics: &JobMetrics, output_path: &Path, format: &str) -> Result<()> {
     let mut plot = Plot::new();
 
     // Convert timestamps to relative seconds
@@ -316,12 +341,16 @@ fn plot_job_timeline(metrics: &JobMetrics, output_path: &Path) -> Result<()> {
         );
 
     plot.set_layout(layout);
-    plot.write_html(output_path);
+    write_plot(&plot, output_path, format)?;
 
     Ok(())
 }
 
-fn plot_all_jobs_cpu_overview(metrics: &[JobMetrics], output_path: &Path) -> Result<()> {
+fn plot_all_jobs_cpu_overview(
+    metrics: &[JobMetrics],
+    output_path: &Path,
+    format: &str,
+) -> Result<()> {
     let mut plot = Plot::new();
 
     for job_metrics in metrics {
@@ -353,12 +382,16 @@ fn plot_all_jobs_cpu_overview(metrics: &[JobMetrics], output_path: &Path) -> Res
         .y_axis(Axis::new().title("CPU %"));
 
     plot.set_layout(layout);
-    plot.write_html(output_path);
+    write_plot(&plot, output_path, format)?;
 
     Ok(())
 }
 
-fn plot_all_jobs_memory_overview(metrics: &[JobMetrics], output_path: &Path) -> Result<()> {
+fn plot_all_jobs_memory_overview(
+    metrics: &[JobMetrics],
+    output_path: &Path,
+    format: &str,
+) -> Result<()> {
     let mut plot = Plot::new();
 
     for job_metrics in metrics {
@@ -394,12 +427,12 @@ fn plot_all_jobs_memory_overview(metrics: &[JobMetrics], output_path: &Path) -> 
         .y_axis(Axis::new().title("Memory (GB)"));
 
     plot.set_layout(layout);
-    plot.write_html(output_path);
+    write_plot(&plot, output_path, format)?;
 
     Ok(())
 }
 
-fn plot_summary_dashboard(metrics: &[JobMetrics], output_path: &Path) -> Result<()> {
+fn plot_summary_dashboard(metrics: &[JobMetrics], output_path: &Path, format: &str) -> Result<()> {
     use plotly::Bar;
 
     let mut plot = Plot::new();
@@ -444,7 +477,7 @@ fn plot_summary_dashboard(metrics: &[JobMetrics], output_path: &Path) -> Result<
         .bar_mode(plotly::layout::BarMode::Group);
 
     plot.set_layout(layout);
-    plot.write_html(output_path);
+    write_plot(&plot, output_path, format)?;
 
     Ok(())
 }
