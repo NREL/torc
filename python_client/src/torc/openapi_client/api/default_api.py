@@ -19346,6 +19346,7 @@ class DefaultApi:
         limit: Optional[StrictInt] = None,
         sort_by: Optional[StrictStr] = None,
         reverse_sort: Optional[StrictBool] = None,
+        include_relationships: Annotated[Optional[StrictBool], Field(description="Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -19379,6 +19380,8 @@ class DefaultApi:
         :type sort_by: str
         :param reverse_sort:
         :type reverse_sort: bool
+        :param include_relationships: Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
+        :type include_relationships: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -19410,6 +19413,7 @@ class DefaultApi:
             limit=limit,
             sort_by=sort_by,
             reverse_sort=reverse_sort,
+            include_relationships=include_relationships,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -19442,6 +19446,7 @@ class DefaultApi:
         limit: Optional[StrictInt] = None,
         sort_by: Optional[StrictStr] = None,
         reverse_sort: Optional[StrictBool] = None,
+        include_relationships: Annotated[Optional[StrictBool], Field(description="Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -19475,6 +19480,8 @@ class DefaultApi:
         :type sort_by: str
         :param reverse_sort:
         :type reverse_sort: bool
+        :param include_relationships: Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
+        :type include_relationships: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -19506,6 +19513,7 @@ class DefaultApi:
             limit=limit,
             sort_by=sort_by,
             reverse_sort=reverse_sort,
+            include_relationships=include_relationships,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -19538,6 +19546,7 @@ class DefaultApi:
         limit: Optional[StrictInt] = None,
         sort_by: Optional[StrictStr] = None,
         reverse_sort: Optional[StrictBool] = None,
+        include_relationships: Annotated[Optional[StrictBool], Field(description="Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -19571,6 +19580,8 @@ class DefaultApi:
         :type sort_by: str
         :param reverse_sort:
         :type reverse_sort: bool
+        :param include_relationships: Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
+        :type include_relationships: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -19602,6 +19613,7 @@ class DefaultApi:
             limit=limit,
             sort_by=sort_by,
             reverse_sort=reverse_sort,
+            include_relationships=include_relationships,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -19629,6 +19641,7 @@ class DefaultApi:
         limit,
         sort_by,
         reverse_sort,
+        include_relationships,
         _request_auth,
         _content_type,
         _headers,
@@ -19682,6 +19695,10 @@ class DefaultApi:
         if reverse_sort is not None:
             
             _query_params.append(('reverse_sort', reverse_sort))
+            
+        if include_relationships is not None:
+            
+            _query_params.append(('include_relationships', include_relationships))
             
         # process the header parameters
         # process the form parameters

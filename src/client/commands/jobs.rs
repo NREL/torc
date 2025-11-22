@@ -759,6 +759,7 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                     Some(10000), // limit
                     None,        // sort_by
                     None,        // reverse_sort
+                    None,        // include_relationships
                 ) {
                     Ok(response) => response.items.unwrap_or_default(),
                     Err(e) => {

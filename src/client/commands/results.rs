@@ -50,6 +50,7 @@ fn get_job_name_map(
         None,
         None,
         None,
+        None,  // include_relationships
     ) {
         Ok(response) => {
             if let Some(jobs) = response.items {
