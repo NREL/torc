@@ -12,7 +12,7 @@ from dash import callback, Input, Output, State, html, no_update, ALL
 from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
 
-from .layouts import create_view_tab_layout, create_run_tab_layout, create_dag_tab_layout, create_monitor_tab_layout, create_resource_plots_tab_layout, create_data_table
+from .layouts import create_view_tab_layout, create_run_tab_layout, create_dag_tab_layout, create_monitor_tab_layout, create_resource_plots_tab_layout, create_data_table, create_execution_plan_view
 from .utils import TorcApiWrapper, TorcCliWrapper, format_table_columns, executor
 
 
@@ -1720,6 +1720,98 @@ def create_user_data_rels_graph(relationships: List[Dict[str, Any]]) -> html.Div
             },
         ],
     )
+
+
+# ============================================================================
+# Execution Plan Callbacks
+# ============================================================================
+
+@callback(
+    Output("execution-plan-modal", "is_open"),
+    Output("execution-plan-modal-body", "children"),
+    Input("show-execution-plan-button", "n_clicks"),
+    Input("execution-plan-close-btn", "n_clicks"),
+    State("execution-plan-modal", "is_open"),
+    State("selected-workflow-store", "data"),
+    State("uploaded-spec-store", "data"),
+    State("workflow-spec-path-input", "value"),
+    State("api-config-store", "data"),
+    prevent_initial_call=True,
+)
+def toggle_execution_plan_modal(
+    show_clicks: int,
+    close_clicks: int,
+    is_open: bool,
+    selected_workflow: Optional[Dict],
+    uploaded_spec: Optional[Dict],
+    spec_path: Optional[str],
+    config: Dict[str, str]
+) -> Tuple[bool, html.Div]:
+    """Open/close execution plan modal and load the plan when opened."""
+    from dash import ctx
+
+    # Determine which button was clicked
+    triggered_id = ctx.triggered_id
+
+    # Close button clicked
+    if triggered_id == "execution-plan-close-btn":
+        return False, html.Div()
+
+    # Show button clicked
+    if triggered_id == "show-execution-plan-button":
+        # Determine the spec or workflow ID to use
+        spec_or_id = None
+
+        # Priority 1: Selected workflow
+        if selected_workflow and "id" in selected_workflow:
+            spec_or_id = str(selected_workflow["id"])
+        # Priority 2: Uploaded spec file path
+        elif uploaded_spec and "file_path" in uploaded_spec:
+            spec_or_id = uploaded_spec["file_path"]
+        # Priority 3: Manually entered spec path
+        elif spec_path and spec_path.strip():
+            spec_or_id = spec_path.strip()
+
+        if not spec_or_id:
+            return True, dbc.Alert(
+                [
+                    html.I(className="fas fa-exclamation-triangle me-2"),
+                    "Please select a workflow or provide a workflow specification file."
+                ],
+                color="warning"
+            )
+
+        # Load execution plan
+        try:
+            cli_wrapper = TorcCliWrapper()
+            result = cli_wrapper.get_execution_plan(spec_or_id, api_url=config.get("url"))
+
+            if not result["success"]:
+                error_msg = result.get("error", "Unknown error")
+                return True, dbc.Alert(
+                    [
+                        html.I(className="fas fa-exclamation-triangle me-2"),
+                        f"Error generating execution plan: {error_msg}"
+                    ],
+                    color="danger"
+                )
+
+            plan_data = result["data"]
+            plan_view = create_execution_plan_view(plan_data)
+
+            return True, plan_view
+
+        except Exception as e:
+            return True, dbc.Alert(
+                [
+                    html.I(className="fas fa-exclamation-triangle me-2"),
+                    f"Unexpected error: {str(e)}"
+                ],
+                color="danger"
+            )
+
+    raise PreventUpdate
+
 
 # ============================================================================
 # Monitor Events Tab Callbacks

@@ -1008,6 +1008,62 @@ class TorcCliWrapper:
         except Exception:
             return None
 
+    def get_execution_plan(self, spec_or_id: str, api_url: Optional[str] = None) -> Dict[str, Any]:
+        """Get execution plan for a workflow spec or existing workflow.
+
+        Args:
+            spec_or_id: Path to workflow spec file OR workflow ID
+            api_url: Optional API URL to override the default
+
+        Returns:
+            Dictionary with execution plan data in JSON format
+        """
+        cmd = [self.torc_cli_path, "-f", "json", "workflows", "execution-plan", spec_or_id]
+        env = None
+
+        if api_url:
+            import os
+            env = os.environ.copy()
+            env["TORC_API_URL"] = api_url
+
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=60,
+            )
+
+            if result.returncode == 0:
+                import json
+                plan_data = json.loads(result.stdout)
+                return {
+                    "success": True,
+                    "data": plan_data
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": result.stderr or result.stdout,
+                    "stdout": result.stdout,
+                }
+        except subprocess.TimeoutExpired:
+            return {
+                "success": False,
+                "error": "Command timed out after 1 minute",
+            }
+        except json.JSONDecodeError as e:
+            return {
+                "success": False,
+                "error": f"Failed to parse JSON output: {str(e)}",
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+            }
+
 
 def format_table_columns(data: List[Dict[str, Any]]) -> List[Dict[str, str]]:
     """Generate column definitions for a Dash DataTable from data.
