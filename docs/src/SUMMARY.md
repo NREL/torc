@@ -33,6 +33,7 @@
   - [Working with Slurm](./how-to/slurm.md)
   - [Managing Resources](./how-to/resources.md)
   - [Resource Monitoring](./how-to/resource-monitoring.md)
+  - [Web Dashboard](./how-to/dashboard.md)
   - [Debugging Workflows](./how-to/debugging.md)
   - [Authentication](./how-to/authentication.md)
   - [Shell Completions](./how-to/shell-completions.md)

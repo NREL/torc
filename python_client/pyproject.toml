@@ -39,6 +39,7 @@ dependencies = [
     # Dash dependencies for web UI
     "dash >= 2.14, < 3",
     "dash-bootstrap-components >= 1.5, < 2",
+    "dash_cytoscape",
 ]
 
 [project.scripts]

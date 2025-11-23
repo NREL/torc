@@ -1,0 +1,131 @@
+{
+  // Workflow metadata
+  "name": "simulation_sweep",
+  "user": "scientist",
+  "description": "Molecular dynamics simulations across temperature and pressure ranges",
+
+  // Job definitions
+  "jobs": [
+    {
+      "name": "generate_config",
+      "command": "python scripts/generate_initial_config.py --output=/configs/initial_config.xyz",
+      "resource_requirements_name": "minimal",
+      "output_file_names": [
+        "initial_config"
+      ]
+    },
+    {
+      "name": "simulate_T{temp}_P{pressure:03d}",
+      "command": "./run_simulation \\\n  --config=/configs/initial_config.xyz \\\n  --temperature={temp} \\\n  --pressure={pressure} \\\n  --steps=1000000 \\\n  --output=/data/simulation_T{temp}_P{pressure:03d}.xyz \\\n  --log=/logs/simulation_T{temp}_P{pressure:03d}.log\n",
+      "resource_requirements_name": "simulation",
+      "blocked_by_job_names": [
+        "generate_config"
+      ],
+      "input_file_names": [
+        "initial_config"
+      ],
+      "output_file_names": [
+        "simulation_T{temp}_P{pressure:03d}",
+        "log_T{temp}_P{pressure:03d}"
+      ],
+      "parameters": {
+        "temp": "250:400:50",
+        "pressure": "1:100:25"
+      }
+    },
+    {
+      "name": "analyze_T{temp}_P{pressure:03d}",
+      "command": "python scripts/analyze.py \\\n  --input=/data/simulation_T{temp}_P{pressure:03d}.xyz \\\n  --output=/analysis/analysis_T{temp}_P{pressure:03d}.json \\\n  --temperature={temp} \\\n  --pressure={pressure}\n",
+      "resource_requirements_name": "analysis",
+      "blocked_by_job_names": [
+        "simulate_T{temp}_P{pressure:03d}"
+      ],
+      "input_file_names": [
+        "simulation_T{temp}_P{pressure:03d}"
+      ],
+      "output_file_names": [
+        "analysis_T{temp}_P{pressure:03d}"
+      ],
+      "parameters": {
+        "temp": "250:400:50",
+        "pressure": "1:100:25"
+      }
+    },
+    {
+      "name": "generate_phase_diagram",
+      "command": "python scripts/phase_diagram.py --input-dir=/analysis --output=/results/phase_diagram.png",
+      "resource_requirements_name": "minimal",
+      "blocked_by_job_names": [
+        "analyze_T{temp}_P{pressure:03d}"
+      ],
+      "input_file_names": [
+        "analysis_T{temp}_P{pressure:03d}"
+      ],
+      "parameters": {
+        "temp": "250:400:50",
+        "pressure": "1:100:25"
+      }
+    }
+  ],
+  
+  // File definitions
+  "files": [
+    {
+      "name": "initial_config",
+      "path": "/configs/initial_config.xyz"
+    },
+    {
+      "name": "simulation_T{temp}_P{pressure:03d}",
+      "path": "/data/simulation_T{temp}_P{pressure:03d}.xyz",
+      "parameters": {
+        "temp": "250:400:50",
+        "pressure": "1:100:25"
+      }
+    },
+    {
+      "name": "log_T{temp}_P{pressure:03d}",
+      "path": "/logs/simulation_T{temp}_P{pressure:03d}.log",
+      "parameters": {
+        "temp": "250:400:50",
+        "pressure": "1:100:25"
+      }
+    },
+    {
+      "name": "analysis_T{temp}_P{pressure:03d}",
+      "path": "/analysis/analysis_T{temp}_P{pressure:03d}.json",
+      "parameters": {
+        "temp": "250:400:50",
+        "pressure": "1:100:25"
+      }
+    }
+  ],
+  
+  // Resource requirements
+  "resource_requirements": [
+    {
+      "name": "minimal",
+      "num_cpus": 1,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "2g",
+      "runtime": "PT10M"
+    },
+    {
+      "name": "simulation",
+      "num_cpus": 16,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "64g",
+      "runtime": "PT4H"
+    },
+    {
+      "name": "analysis",
+      "num_cpus": 4,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "8g",
+      "runtime": "PT30M"
+    }
+  ],
+
+}

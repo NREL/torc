@@ -1,0 +1,43 @@
+// Simple Workflow with Actions in KDL format
+// Demonstrates workflow actions for different workflow stages
+
+name "Simple Workflow with Actions"
+user "demo"
+description "Demonstrates scheduler actions for different workflow stages"
+
+// No files needed for this simple workflow
+
+// Job definitions with dependency chain
+job "setup" {
+    command "echo 'Setting up...' && sleep 2"
+}
+
+job "process" {
+    command "echo 'Processing data...' && sleep 5"
+    blocked_by_job "setup"
+}
+
+job "finalize" {
+    command "echo 'Finalizing...' && sleep 2"
+    blocked_by_job "process"
+}
+
+// Workflow actions
+action {
+    trigger_type "on_workflow_start"
+    action_type "run_commands"
+    command "echo 'Workflow started at $(date)' > workflow_log.txt"
+    command "mkdir -p output temp"
+    command "echo 'Environment ready'"
+}
+
+action {
+    trigger_type "on_workflow_complete"
+    action_type "run_commands"
+    command "echo 'Workflow completed at $(date)' >> workflow_log.txt"
+    command "echo 'Cleaning up temporary files...'"
+    command "rm -rf temp"
+    command "echo 'Archiving results...'"
+    command "tar -czf output/results.tar.gz workflow_log.txt"
+    command "echo 'Workflow cleanup complete'"
+}

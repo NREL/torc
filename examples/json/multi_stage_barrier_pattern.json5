@@ -1,0 +1,100 @@
+{
+  // Workflow metadata
+  "name": "Multi-Stage Barrier Pattern Example",
+  "description": "Demonstrates efficient multi-stage workflows using barrier jobs",
+
+  // Job definitions
+  "jobs": [
+    {
+      "name": "stage1_process_{i:03d}",
+      "command": "python process_input.py --id {i} --output output/stage1_{i:03d}.dat",
+      "resource_requirements_name": "medium",
+      "parameters": {
+        "i": "0:999"
+      }
+    },
+    {
+      "name": "barrier_stage1_complete",
+      "command": "echo 'Stage 1 complete: 1000 jobs finished' && date",
+      "resource_requirements_name": "tiny",
+      "blocked_by_job_name_regexes": [
+        "^stage1_process_.*"
+      ]
+    },
+    {
+      "name": "stage2_analyze_{i:03d}",
+      "command": "python analyze.py --input output/stage1_{i:03d}.dat --output output/stage2_{i:03d}.json",
+      "resource_requirements_name": "large",
+      "blocked_by_job_names": [
+        "barrier_stage1_complete"
+      ],
+      "parameters": {
+        "i": "0:999"
+      }
+    },
+    {
+      "name": "barrier_stage2_complete",
+      "command": "echo 'Stage 2 complete: 1000 analyses finished' && date",
+      "resource_requirements_name": "tiny",
+      "blocked_by_job_name_regexes": [
+        "^stage2_analyze_.*"
+      ]
+    },
+    {
+      "name": "stage3_aggregate_{i:02d}",
+      "command": "python aggregate.py --shard {i} --output output/stage3_{i:02d}.csv",
+      "resource_requirements_name": "large",
+      "blocked_by_job_names": [
+        "barrier_stage2_complete"
+      ],
+      "parameters": {
+        "i": "0:99"
+      }
+    },
+    {
+      "name": "barrier_stage3_complete",
+      "command": "echo 'Stage 3 complete: 100 aggregations finished' && date",
+      "resource_requirements_name": "tiny",
+      "blocked_by_job_name_regexes": [
+        "^stage3_aggregate_.*"
+      ]
+    },
+    {
+      "name": "final_report",
+      "command": "python generate_report.py --output final_report.html",
+      "resource_requirements_name": "medium",
+      "blocked_by_job_names": [
+        "barrier_stage3_complete"
+      ]
+    }
+  ],
+  
+  // Resource requirements
+  "resource_requirements": [
+    {
+      "name": "tiny",
+      "num_cpus": 1,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "100m",
+      "runtime": "PT1M"
+    },
+    {
+      "name": "medium",
+      "num_cpus": 4,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "8g",
+      "runtime": "PT30M"
+    },
+    {
+      "name": "large",
+      "num_cpus": 16,
+      "num_gpus": 1,
+      "num_nodes": 1,
+      "memory": "32g",
+      "runtime": "PT2H"
+    }
+  ],
+
+}

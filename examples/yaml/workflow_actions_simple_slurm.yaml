@@ -7,14 +7,24 @@ jobs:
     command: "echo 'Setting up...' && sleep 2"
     resource_requirements_name: "small"
 
-  - name: "process"
+  - name: "process1"
+    command: "echo 'Processing data...' && sleep 5"
+    blocked_by_job_names: ["setup"]
+    resource_requirements_name: "medium"
+
+  - name: "process2"
+    command: "echo 'Processing data...' && sleep 5"
+    blocked_by_job_names: ["setup"]
+    resource_requirements_name: "medium"
+
+  - name: "process3"
     command: "echo 'Processing data...' && sleep 5"
     blocked_by_job_names: ["setup"]
     resource_requirements_name: "medium"
 
   - name: "finalize"
     command: "echo 'Finalizing...' && sleep 2"
-    blocked_by_job_names: ["process"]
+    blocked_by_job_names: ["process1", "process2", "process3"]
     resource_requirements_name: "small"
 
 resource_requirements:
@@ -42,7 +52,7 @@ slurm_schedulers:
   # Larger scheduler for compute-intensive processing stage
   - name: "process_scheduler"
     account: "demo_project"
-    nodes: 2
+    nodes: 1
     walltime: "02:00:00"
 
   # Medium scheduler for finalization stage
@@ -63,11 +73,10 @@ actions:
   # Allocate resources for processing stage
   - trigger_type: "on_jobs_ready"
     action_type: "schedule_nodes"
-    job_names: ["process"]
+    job_names: ["process1", "process2", "process3"]
     scheduler_name: "process_scheduler"
     scheduler_type: "slurm"
-    num_allocations: 2
-    start_one_worker_per_node: true
+    num_allocations: 3
 
   # Allocate resources for finalization stage
   - trigger_type: "on_jobs_ready"

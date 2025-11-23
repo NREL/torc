@@ -1,0 +1,123 @@
+{
+  // Workflow metadata
+  "name": "hyperparameter_sweep",
+  "user": "mluser",
+  "description": "Grid search over learning rate, batch size, and optimizer",
+
+  // Job definitions
+  "jobs": [
+    {
+      "name": "prepare_train_data",
+      "command": "python scripts/prepare_data.py --split=train --output=/data/train.pkl",
+      "resource_requirements_name": "data_prep",
+      "output_file_names": [
+        "train_data"
+      ]
+    },
+    {
+      "name": "prepare_val_data",
+      "command": "python scripts/prepare_data.py --split=validation --output=/data/validation.pkl",
+      "resource_requirements_name": "data_prep",
+      "output_file_names": [
+        "val_data"
+      ]
+    },
+    {
+      "name": "train_lr{lr:.4f}_bs{batch_size}_opt{optimizer}",
+      "command": "python train.py \\\n  --learning-rate={lr} \\\n  --batch-size={batch_size} \\\n  --optimizer={optimizer} \\\n  --train-data=/data/train.pkl \\\n  --val-data=/data/validation.pkl \\\n  --model-output=/models/model_lr{lr:.4f}_bs{batch_size}_opt{optimizer}.pt \\\n  --metrics-output=/results/metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}.json\n",
+      "resource_requirements_name": "gpu_training",
+      "blocked_by_job_names": [
+        "prepare_train_data",
+        "prepare_val_data"
+      ],
+      "input_file_names": [
+        "train_data",
+        "val_data"
+      ],
+      "output_file_names": [
+        "model_lr{lr:.4f}_bs{batch_size}_opt{optimizer}",
+        "metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}"
+      ],
+      "parameters": {
+        "lr": "[0.0001,0.001,0.01]",
+        "batch_size": "[16,32,64]",
+        "optimizer": "['adam','sgd']"
+      }
+    },
+    {
+      "name": "aggregate_results",
+      "command": "python scripts/aggregate_metrics.py --input-dir=/results --output=/results/summary.csv",
+      "resource_requirements_name": "minimal",
+      "blocked_by_job_names": [
+        "train_lr{lr:.4f}_bs{batch_size}_opt{optimizer}"
+      ],
+      "input_file_names": [
+        "metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}"
+      ],
+      "parameters": {
+        "lr": "[0.0001,0.001,0.01]",
+        "batch_size": "[16,32,64]",
+        "optimizer": "['adam','sgd']"
+      }
+    }
+  ],
+  
+  // File definitions
+  "files": [
+    {
+      "name": "train_data",
+      "path": "/data/train.pkl"
+    },
+    {
+      "name": "val_data",
+      "path": "/data/validation.pkl"
+    },
+    {
+      "name": "model_lr{lr:.4f}_bs{batch_size}_opt{optimizer}",
+      "path": "/models/model_lr{lr:.4f}_bs{batch_size}_opt{optimizer}.pt",
+      "parameters": {
+        "lr": "[0.0001,0.001,0.01]",
+        "batch_size": "[16,32,64]",
+        "optimizer": "['adam','sgd']"
+      }
+    },
+    {
+      "name": "metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}",
+      "path": "/results/metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}.json",
+      "parameters": {
+        "lr": "[0.0001,0.001,0.01]",
+        "batch_size": "[16,32,64]",
+        "optimizer": "['adam','sgd']"
+      }
+    }
+  ],
+  
+  // Resource requirements
+  "resource_requirements": [
+    {
+      "name": "minimal",
+      "num_cpus": 1,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "2g",
+      "runtime": "PT5M"
+    },
+    {
+      "name": "data_prep",
+      "num_cpus": 4,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "8g",
+      "runtime": "PT30M"
+    },
+    {
+      "name": "gpu_training",
+      "num_cpus": 8,
+      "num_gpus": 1,
+      "num_nodes": 1,
+      "memory": "32g",
+      "runtime": "PT2H"
+    }
+  ],
+
+}

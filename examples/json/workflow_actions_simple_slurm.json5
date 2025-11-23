@@ -1,0 +1,109 @@
+{
+  // Workflow metadata
+  "name": "Simple Workflow with Actions",
+  "user": "demo",
+  "description": "Demonstrates scheduler actions for different workflow stages",
+
+  // Job definitions
+  "jobs": [
+    {
+      "name": "setup",
+      "command": "echo 'Setting up...' && sleep 2",
+      "resource_requirements_name": "small"
+    },
+    {
+      "name": "process",
+      "command": "echo 'Processing data...' && sleep 5",
+      "blocked_by_job_names": [
+        "setup"
+      ],
+      "resource_requirements_name": "medium"
+    },
+    {
+      "name": "finalize",
+      "command": "echo 'Finalizing...' && sleep 2",
+      "blocked_by_job_names": [
+        "process"
+      ],
+      "resource_requirements_name": "small"
+    }
+  ],
+  
+  // Resource requirements
+  "resource_requirements": [
+    {
+      "name": "small",
+      "num_cpus": 2,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "4g",
+      "runtime": "PT30M"
+    },
+    {
+      "name": "medium",
+      "num_cpus": 8,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "16g",
+      "runtime": "PT2H"
+    }
+  ],
+  
+  // Slurm schedulers
+  "slurm_schedulers": [
+    {
+      "name": "setup_scheduler",
+      "account": "demo_project",
+      "nodes": 1,
+      "walltime": "00:30:00"
+    },
+    {
+      "name": "process_scheduler",
+      "account": "demo_project",
+      "nodes": 2,
+      "walltime": "02:00:00"
+    },
+    {
+      "name": "finalize_scheduler",
+      "account": "demo_project",
+      "nodes": 1,
+      "walltime": "00:30:00"
+    }
+  ],
+  
+  // Workflow actions
+  "actions": [
+    {
+      "trigger_type": "on_workflow_start",
+      "action_type": "schedule_nodes",
+      "job_names": [
+        "setup"
+      ],
+      "scheduler_name": "setup_scheduler",
+      "scheduler_type": "slurm",
+      "num_allocations": 1
+    },
+    {
+      "trigger_type": "on_jobs_ready",
+      "action_type": "schedule_nodes",
+      "job_names": [
+        "process"
+      ],
+      "scheduler_name": "process_scheduler",
+      "scheduler_type": "slurm",
+      "num_allocations": 2,
+      "start_one_worker_per_node": true
+    },
+    {
+      "trigger_type": "on_jobs_ready",
+      "action_type": "schedule_nodes",
+      "job_names": [
+        "finalize"
+      ],
+      "scheduler_name": "finalize_scheduler",
+      "scheduler_type": "slurm",
+      "num_allocations": 1
+    }
+  ],
+
+}

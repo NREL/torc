@@ -1,0 +1,39 @@
+// Resource Monitoring Demo Workflow in KDL format
+// This workflow demonstrates the resource monitoring feature
+
+name "resource_monitoring_demo"
+user "demo_user"
+description "Demonstrates resource monitoring with CPU and memory intensive Python jobs"
+
+// Enable resource monitoring with time-series data collection
+resource_monitor {
+    enabled #true
+    granularity "time_series"
+    sample_interval_seconds 2
+    generate_plots #false
+}
+
+// Resource requirements
+resource_requirements "medium" {
+    num_cpus 2
+    num_gpus 0
+    num_nodes 1
+    memory "2g"
+    runtime "PT5M"
+}
+
+// Three independent jobs that run concurrently
+job "cpu_heavy_job" {
+    command "python3 examples/scripts/cpu_intensive.py"
+    resource_requirements_name "medium"
+}
+
+job "memory_heavy_job" {
+    command "python3 examples/scripts/memory_intensive.py"
+    resource_requirements_name "medium"
+}
+
+job "mixed_workload_job" {
+    command "python3 examples/scripts/mixed_workload.py"
+    resource_requirements_name "medium"
+}

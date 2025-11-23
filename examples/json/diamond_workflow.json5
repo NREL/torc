@@ -1,0 +1,55 @@
+{
+  // Workflow metadata
+  "name": "diamond_workflow",
+  "user": "test_user",
+  "description": "A diamond-shaped workflow demonstrating fan-out and fan-in job dependencies",
+
+  // Job definitions
+  "jobs": [
+    {
+      "name": "preprocess",
+      "command": "bash tests/scripts/preprocess.sh -i ${files.input.f1} -o ${files.output.f2} -o ${files.output.f3}"
+    },
+    {
+      "name": "work1",
+      "command": "bash tests/scripts/work.sh -i ${files.input.f2} -o ${files.output.f4}"
+    },
+    {
+      "name": "work2",
+      "command": "bash tests/scripts/work.sh -i ${files.input.f3} -o ${files.output.f5}"
+    },
+    {
+      "name": "postprocess",
+      "command": "bash tests/scripts/postprocess.sh -i ${files.input.f4} -i ${files.input.f5} -o ${files.output.f6}"
+    }
+  ],
+  
+  // File definitions
+  "files": [
+    {
+      "name": "f1",
+      "path": "/Users/dthom/repos/torc/f1.json"
+    },
+    {
+      "name": "f2",
+      "path": "/Users/dthom/repos/torc/f2.json"
+    },
+    {
+      "name": "f3",
+      "path": "/Users/dthom/repos/torc/f3.json"
+    },
+    {
+      "name": "f4",
+      "path": "/Users/dthom/repos/torc/f4.json"
+    },
+    {
+      "name": "f5",
+      "path": "/Users/dthom/repos/torc/f5.json"
+    },
+    {
+      "name": "f6",
+      "path": "/Users/dthom/repos/torc/f6.json"
+    }
+  ],
+
+}

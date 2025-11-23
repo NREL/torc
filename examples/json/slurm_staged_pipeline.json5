@@ -1,0 +1,376 @@
+{
+  // Workflow metadata
+  "name": "slurm_staged_pipeline",
+  "user": "pipeline_user",
+  "description": "Multi-stage Slurm pipeline with automated scheduling and resource monitoring",
+
+  // Job definitions
+  "jobs": [
+    {
+      "name": "setup",
+      "command": "#!/bin/bash\nset -e\necho \"Starting setup stage at $(date)\"\n\n# Create scratch directory\nmkdir -p /scratch/pipeline\n\n# Generate 10 input data files\nfor i in $(seq -f \"%03g\" 1 10); do\n  echo \"Generating input_${i}.dat...\"\n  # Simulate data generation with random data\n  dd if=/dev/urandom of=/scratch/pipeline/input_${i}.dat bs=1M count=1024 2>/dev/null\n  echo \"Created input file $i with $(stat -f%z /scratch/pipeline/input_${i}.dat) bytes\"\ndone\n\necho \"Setup stage completed at $(date)\"\necho \"Generated 10 input files in /scratch/pipeline/\"\n",
+      "scheduler_name": "setup_scheduler",
+      "resource_requirements_name": "setup_resources",
+      "output_file_names": [
+        "input_001",
+        "input_002",
+        "input_003",
+        "input_004",
+        "input_005",
+        "input_006",
+        "input_007",
+        "input_008",
+        "input_009",
+        "input_010"
+      ]
+    },
+    {
+      "name": "work_001",
+      "command": "#!/bin/bash\nset -e\necho \"Starting work_001 at $(date)\"\necho \"Processing /scratch/pipeline/input_001.dat\"\n\n# Simulate compute-intensive processing\n# Allocate memory to demonstrate 300GB requirement\npython3 -c \"\nimport numpy as np\nimport time\nprint('Allocating large arrays for processing...')\n# Simulate heavy computation with large memory footprint\ndata = np.random.rand(1000000, 100)\nresult = np.fft.fft2(data)\ntime.sleep(60)  # Simulate long computation\nprint('Processing complete')\n\"\n\n# Generate output file\ndd if=/dev/urandom of=/scratch/pipeline/output_001.dat bs=1M count=512 2>/dev/null\necho \"Work_001 completed at $(date)\"\n",
+      "scheduler_name": "work_scheduler",
+      "resource_requirements_name": "work_resources",
+      "blocked_by_job_names": [
+        "setup"
+      ],
+      "input_file_names": [
+        "input_001"
+      ],
+      "output_file_names": [
+        "output_001"
+      ]
+    },
+    {
+      "name": "work_002",
+      "command": "#!/bin/bash\nset -e\necho \"Starting work_002 at $(date)\"\npython3 -c \"import numpy as np; import time; data = np.random.rand(1000000, 100); result = np.fft.fft2(data); time.sleep(60)\"\ndd if=/dev/urandom of=/scratch/pipeline/output_002.dat bs=1M count=512 2>/dev/null\necho \"Work_002 completed at $(date)\"\n",
+      "scheduler_name": "work_scheduler",
+      "resource_requirements_name": "work_resources",
+      "blocked_by_job_names": [
+        "setup"
+      ],
+      "input_file_names": [
+        "input_002"
+      ],
+      "output_file_names": [
+        "output_002"
+      ]
+    },
+    {
+      "name": "work_003",
+      "command": "#!/bin/bash\nset -e\necho \"Starting work_003 at $(date)\"\npython3 -c \"import numpy as np; import time; data = np.random.rand(1000000, 100); result = np.fft.fft2(data); time.sleep(60)\"\ndd if=/dev/urandom of=/scratch/pipeline/output_003.dat bs=1M count=512 2>/dev/null\necho \"Work_003 completed at $(date)\"\n",
+      "scheduler_name": "work_scheduler",
+      "resource_requirements_name": "work_resources",
+      "blocked_by_job_names": [
+        "setup"
+      ],
+      "input_file_names": [
+        "input_003"
+      ],
+      "output_file_names": [
+        "output_003"
+      ]
+    },
+    {
+      "name": "work_004",
+      "command": "#!/bin/bash\nset -e\necho \"Starting work_004 at $(date)\"\npython3 -c \"import numpy as np; import time; data = np.random.rand(1000000, 100); result = np.fft.fft2(data); time.sleep(60)\"\ndd if=/dev/urandom of=/scratch/pipeline/output_004.dat bs=1M count=512 2>/dev/null\necho \"Work_004 completed at $(date)\"\n",
+      "scheduler_name": "work_scheduler",
+      "resource_requirements_name": "work_resources",
+      "blocked_by_job_names": [
+        "setup"
+      ],
+      "input_file_names": [
+        "input_004"
+      ],
+      "output_file_names": [
+        "output_004"
+      ]
+    },
+    {
+      "name": "work_005",
+      "command": "#!/bin/bash\nset -e\necho \"Starting work_005 at $(date)\"\npython3 -c \"import numpy as np; import time; data = np.random.rand(1000000, 100); result = np.fft.fft2(data); time.sleep(60)\"\ndd if=/dev/urandom of=/scratch/pipeline/output_005.dat bs=1M count=512 2>/dev/null\necho \"Work_005 completed at $(date)\"\n",
+      "scheduler_name": "work_scheduler",
+      "resource_requirements_name": "work_resources",
+      "blocked_by_job_names": [
+        "setup"
+      ],
+      "input_file_names": [
+        "input_005"
+      ],
+      "output_file_names": [
+        "output_005"
+      ]
+    },
+    {
+      "name": "work_006",
+      "command": "#!/bin/bash\nset -e\necho \"Starting work_006 at $(date)\"\npython3 -c \"import numpy as np; import time; data = np.random.rand(1000000, 100); result = np.fft.fft2(data); time.sleep(60)\"\ndd if=/dev/urandom of=/scratch/pipeline/output_006.dat bs=1M count=512 2>/dev/null\necho \"Work_006 completed at $(date)\"\n",
+      "scheduler_name": "work_scheduler",
+      "resource_requirements_name": "work_resources",
+      "blocked_by_job_names": [
+        "setup"
+      ],
+      "input_file_names": [
+        "input_006"
+      ],
+      "output_file_names": [
+        "output_006"
+      ]
+    },
+    {
+      "name": "work_007",
+      "command": "#!/bin/bash\nset -e\necho \"Starting work_007 at $(date)\"\npython3 -c \"import numpy as np; import time; data = np.random.rand(1000000, 100); result = np.fft.fft2(data); time.sleep(60)\"\ndd if=/dev/urandom of=/scratch/pipeline/output_007.dat bs=1M count=512 2>/dev/null\necho \"Work_007 completed at $(date)\"\n",
+      "scheduler_name": "work_scheduler",
+      "resource_requirements_name": "work_resources",
+      "blocked_by_job_names": [
+        "setup"
+      ],
+      "input_file_names": [
+        "input_007"
+      ],
+      "output_file_names": [
+        "output_007"
+      ]
+    },
+    {
+      "name": "work_008",
+      "command": "#!/bin/bash\nset -e\necho \"Starting work_008 at $(date)\"\npython3 -c \"import numpy as np; import time; data = np.random.rand(1000000, 100); result = np.fft.fft2(data); time.sleep(60)\"\ndd if=/dev/urandom of=/scratch/pipeline/output_008.dat bs=1M count=512 2>/dev/null\necho \"Work_008 completed at $(date)\"\n",
+      "scheduler_name": "work_scheduler",
+      "resource_requirements_name": "work_resources",
+      "blocked_by_job_names": [
+        "setup"
+      ],
+      "input_file_names": [
+        "input_008"
+      ],
+      "output_file_names": [
+        "output_008"
+      ]
+    },
+    {
+      "name": "work_009",
+      "command": "#!/bin/bash\nset -e\necho \"Starting work_009 at $(date)\"\npython3 -c \"import numpy as np; import time; data = np.random.rand(1000000, 100); result = np.fft.fft2(data); time.sleep(60)\"\ndd if=/dev/urandom of=/scratch/pipeline/output_009.dat bs=1M count=512 2>/dev/null\necho \"Work_009 completed at $(date)\"\n",
+      "scheduler_name": "work_scheduler",
+      "resource_requirements_name": "work_resources",
+      "blocked_by_job_names": [
+        "setup"
+      ],
+      "input_file_names": [
+        "input_009"
+      ],
+      "output_file_names": [
+        "output_009"
+      ]
+    },
+    {
+      "name": "work_010",
+      "command": "#!/bin/bash\nset -e\necho \"Starting work_010 at $(date)\"\npython3 -c \"import numpy as np; import time; data = np.random.rand(1000000, 100); result = np.fft.fft2(data); time.sleep(60)\"\ndd if=/dev/urandom of=/scratch/pipeline/output_010.dat bs=1M count=512 2>/dev/null\necho \"Work_010 completed at $(date)\"\n",
+      "scheduler_name": "work_scheduler",
+      "resource_requirements_name": "work_resources",
+      "blocked_by_job_names": [
+        "setup"
+      ],
+      "input_file_names": [
+        "input_010"
+      ],
+      "output_file_names": [
+        "output_010"
+      ]
+    },
+    {
+      "name": "postprocess",
+      "command": "#!/bin/bash\nset -e\necho \"Starting postprocessing at $(date)\"\n\n# Verify all input files exist\nfor i in $(seq -f \"%03g\" 1 10); do\n  if [ ! -f \"/scratch/pipeline/output_${i}.dat\" ]; then\n    echo \"ERROR: Missing output file output_${i}.dat\"\n    exit 1\n  fi\n  echo \"Found output_${i}.dat: $(stat -f%z /scratch/pipeline/output_${i}.dat) bytes\"\ndone\n\n# Aggregate results\necho \"Aggregating results from 10 work jobs...\"\ncat /scratch/pipeline/output_*.dat > /scratch/pipeline/final_results.dat\n\n# Generate summary statistics\ntotal_size=$(stat -f%z /scratch/pipeline/final_results.dat)\nnum_files=$(ls -1 /scratch/pipeline/output_*.dat | wc -l)\n\necho \"Pipeline Summary:\" | tee -a /scratch/pipeline/final_results.dat\necho \"  Total output files processed: $num_files\" | tee -a /scratch/pipeline/final_results.dat\necho \"  Final results size: $total_size bytes\" | tee -a /scratch/pipeline/final_results.dat\necho \"  Completed at: $(date)\" | tee -a /scratch/pipeline/final_results.dat\n\necho \"Postprocessing completed successfully\"\n",
+      "scheduler_name": "postprocess_scheduler",
+      "resource_requirements_name": "postprocess_resources",
+      "blocked_by_job_names": [
+        "work_001",
+        "work_002",
+        "work_003",
+        "work_004",
+        "work_005",
+        "work_006",
+        "work_007",
+        "work_008",
+        "work_009",
+        "work_010"
+      ],
+      "input_file_names": [
+        "output_001",
+        "output_002",
+        "output_003",
+        "output_004",
+        "output_005",
+        "output_006",
+        "output_007",
+        "output_008",
+        "output_009",
+        "output_010"
+      ],
+      "output_file_names": [
+        "final_results"
+      ]
+    }
+  ],
+  
+  // File definitions
+  "files": [
+    {
+      "name": "input_001",
+      "path": "/scratch/pipeline/input_001.dat"
+    },
+    {
+      "name": "input_002",
+      "path": "/scratch/pipeline/input_002.dat"
+    },
+    {
+      "name": "input_003",
+      "path": "/scratch/pipeline/input_003.dat"
+    },
+    {
+      "name": "input_004",
+      "path": "/scratch/pipeline/input_004.dat"
+    },
+    {
+      "name": "input_005",
+      "path": "/scratch/pipeline/input_005.dat"
+    },
+    {
+      "name": "input_006",
+      "path": "/scratch/pipeline/input_006.dat"
+    },
+    {
+      "name": "input_007",
+      "path": "/scratch/pipeline/input_007.dat"
+    },
+    {
+      "name": "input_008",
+      "path": "/scratch/pipeline/input_008.dat"
+    },
+    {
+      "name": "input_009",
+      "path": "/scratch/pipeline/input_009.dat"
+    },
+    {
+      "name": "input_010",
+      "path": "/scratch/pipeline/input_010.dat"
+    },
+    {
+      "name": "output_001",
+      "path": "/scratch/pipeline/output_001.dat"
+    },
+    {
+      "name": "output_002",
+      "path": "/scratch/pipeline/output_002.dat"
+    },
+    {
+      "name": "output_003",
+      "path": "/scratch/pipeline/output_003.dat"
+    },
+    {
+      "name": "output_004",
+      "path": "/scratch/pipeline/output_004.dat"
+    },
+    {
+      "name": "output_005",
+      "path": "/scratch/pipeline/output_005.dat"
+    },
+    {
+      "name": "output_006",
+      "path": "/scratch/pipeline/output_006.dat"
+    },
+    {
+      "name": "output_007",
+      "path": "/scratch/pipeline/output_007.dat"
+    },
+    {
+      "name": "output_008",
+      "path": "/scratch/pipeline/output_008.dat"
+    },
+    {
+      "name": "output_009",
+      "path": "/scratch/pipeline/output_009.dat"
+    },
+    {
+      "name": "output_010",
+      "path": "/scratch/pipeline/output_010.dat"
+    },
+    {
+      "name": "final_results",
+      "path": "/scratch/pipeline/final_results.dat"
+    }
+  ],
+  
+  // Resource requirements
+  "resource_requirements": [
+    {
+      "name": "setup_resources",
+      "num_cpus": 16,
+      "num_gpus": 0,
+      "memory": "64g",
+      "runtime": "PT4H",
+      "num_nodes": 1
+    },
+    {
+      "name": "work_resources",
+      "num_cpus": 32,
+      "num_gpus": 0,
+      "memory": "300g",
+      "runtime": "PT8H",
+      "num_nodes": 1
+    },
+    {
+      "name": "postprocess_resources",
+      "num_cpus": 8,
+      "num_gpus": 0,
+      "memory": "32g",
+      "runtime": "PT1H",
+      "num_nodes": 1
+    }
+  ],
+  
+  // Slurm schedulers
+  "slurm_schedulers": [
+    {
+      "name": "setup_scheduler",
+      "account": "my_account",
+      "walltime": "04:00:00",
+      "nodes": 1
+    },
+    {
+      "name": "work_scheduler",
+      "account": "my_account",
+      "walltime": "04:00:00",
+      "nodes": 1
+    },
+    {
+      "name": "postprocess_scheduler",
+      "account": "my_account",
+      "walltime": "04:00:00",
+      "nodes": 1
+    }
+  ],
+  
+    "resource_monitor": {
+    "enabled": true,
+    "sample_interval_seconds": 5,
+    "granularity": "time_series",
+    "generate_plots": false,
+    "metrics": [
+      "cpu_percent",
+      "memory_bytes"
+    ]
+  },
+  
+    "scheduling_rules": [
+    {
+      "trigger_type": "on_workflow_start",
+      "start_one_worker_per_node": false
+    },
+    {
+      "trigger_type": "when_jobs_ready",
+      "start_one_worker_per_node": true
+    },
+    {
+      "trigger_type": "when_jobs_complete",
+      "start_one_worker_per_node": false
+    }
+  ],
+
+}

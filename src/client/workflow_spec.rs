@@ -1318,6 +1318,7 @@ impl WorkflowSpec {
         let mut user_data = Vec::new();
         let mut resource_requirements = Vec::new();
         let mut slurm_schedulers = Vec::new();
+        let mut actions = Vec::new();
 
         for node in doc.nodes() {
             match node.name().value() {
@@ -1411,6 +1412,14 @@ impl WorkflowSpec {
                     let scheduler_spec = Self::parse_kdl_slurm_scheduler(node)?;
                     slurm_schedulers.push(scheduler_spec);
                 }
+                "action" => {
+                    let action_spec = Self::parse_kdl_action(node)?;
+                    actions.push(action_spec);
+                }
+                "resource_monitor" => {
+                    let monitor_config = Self::parse_kdl_resource_monitor(node)?;
+                    spec.resource_monitor = Some(monitor_config);
+                }
                 _ => {
                     // Ignore unknown nodes
                 }
@@ -1422,6 +1431,7 @@ impl WorkflowSpec {
         spec.user_data = Some(user_data).filter(|v| !v.is_empty());
         spec.resource_requirements = Some(resource_requirements).filter(|v| !v.is_empty());
         spec.slurm_schedulers = Some(slurm_schedulers).filter(|v| !v.is_empty());
+        spec.actions = Some(actions).filter(|v| !v.is_empty());
 
         Ok(spec)
     }
@@ -1588,13 +1598,30 @@ impl WorkflowSpec {
             .and_then(|e| e.value().as_string())
             .map(|s| s.to_string());
 
-        let is_ephemeral = node.get("is_ephemeral").and_then(|e| e.as_bool());
+        let mut is_ephemeral = None;
+        let mut data_str: Option<&str> = None;
 
-        let data_str = node
-            .get("data")
-            .and_then(|e| e.as_string())
-            .ok_or("user_data must have a data property")?;
+        if let Some(children) = node.children() {
+            for child in children.nodes() {
+                match child.name().value() {
+                    "is_ephemeral" => {
+                        is_ephemeral = child
+                            .entries()
+                            .first()
+                            .and_then(|e| e.value().as_bool());
+                    }
+                    "data" => {
+                        data_str = child
+                            .entries()
+                            .first()
+                            .and_then(|e| e.value().as_string());
+                    }
+                    _ => {}
+                }
+            }
+        }
 
+        let data_str = data_str.ok_or("user_data must have a data property")?;
         let data: serde_json::Value = serde_json::from_str(data_str)?;
 
         Ok(UserDataSpec {
@@ -1783,6 +1810,184 @@ impl WorkflowSpec {
         // Validate required fields
         if spec.walltime.is_empty() {
             return Err("walltime is required for Slurm scheduler".into());
+        }
+
+        Ok(spec)
+    }
+
+    #[cfg(feature = "client")]
+    fn parse_kdl_resource_monitor(
+        node: &KdlNode,
+    ) -> Result<crate::client::resource_monitor::ResourceMonitorConfig, Box<dyn std::error::Error>>
+    {
+        let mut config = crate::client::resource_monitor::ResourceMonitorConfig::default();
+
+        if let Some(children) = node.children() {
+            for child in children.nodes() {
+                match child.name().value() {
+                    "enabled" => {
+                        config.enabled = child
+                            .entries()
+                            .first()
+                            .and_then(|e| e.value().as_bool())
+                            .ok_or("enabled must have a boolean value")?;
+                    }
+                    "granularity" => {
+                        if let Some(value_str) =
+                            child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            config.granularity = match value_str {
+                                "summary" => {
+                                    crate::client::resource_monitor::MonitorGranularity::Summary
+                                }
+                                "time_series" => {
+                                    crate::client::resource_monitor::MonitorGranularity::TimeSeries
+                                }
+                                _ => {
+                                    return Err(format!("Invalid granularity: {}", value_str).into());
+                                }
+                            };
+                        }
+                    }
+                    "sample_interval_seconds" => {
+                        config.sample_interval_seconds = child
+                            .entries()
+                            .first()
+                            .and_then(|e| e.value().as_integer())
+                            .and_then(|i| i.try_into().ok())
+                            .ok_or("sample_interval_seconds must have a valid integer value")?;
+                    }
+                    "generate_plots" => {
+                        config.generate_plots = child
+                            .entries()
+                            .first()
+                            .and_then(|e| e.value().as_bool())
+                            .ok_or("generate_plots must have a boolean value")?;
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        Ok(config)
+    }
+
+    #[cfg(feature = "client")]
+    fn parse_kdl_action(
+        node: &KdlNode,
+    ) -> Result<WorkflowActionSpec, Box<dyn std::error::Error>> {
+        let mut spec = WorkflowActionSpec {
+            trigger_type: String::new(),
+            action_type: String::new(),
+            job_names: None,
+            job_name_regexes: None,
+            commands: None,
+            scheduler_name: None,
+            scheduler_type: None,
+            num_allocations: None,
+            start_one_worker_per_node: None,
+            max_parallel_jobs: None,
+            persistent: None,
+        };
+
+        if let Some(children) = node.children() {
+            for child in children.nodes() {
+                match child.name().value() {
+                    "trigger_type" => {
+                        spec.trigger_type = child
+                            .entries()
+                            .first()
+                            .and_then(|e| e.value().as_string())
+                            .ok_or("trigger_type must have a string value")?
+                            .to_string();
+                    }
+                    "action_type" => {
+                        spec.action_type = child
+                            .entries()
+                            .first()
+                            .and_then(|e| e.value().as_string())
+                            .ok_or("action_type must have a string value")?
+                            .to_string();
+                    }
+                    "job_name" => {
+                        if spec.job_names.is_none() {
+                            spec.job_names = Some(Vec::new());
+                        }
+                        if let Some(job_name) =
+                            child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            spec.job_names.as_mut().unwrap().push(job_name.to_string());
+                        }
+                    }
+                    "job_name_regex" => {
+                        if spec.job_name_regexes.is_none() {
+                            spec.job_name_regexes = Some(Vec::new());
+                        }
+                        if let Some(regex) =
+                            child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            spec.job_name_regexes
+                                .as_mut()
+                                .unwrap()
+                                .push(regex.to_string());
+                        }
+                    }
+                    "command" => {
+                        if spec.commands.is_none() {
+                            spec.commands = Some(Vec::new());
+                        }
+                        if let Some(command) =
+                            child.entries().first().and_then(|e| e.value().as_string())
+                        {
+                            spec.commands.as_mut().unwrap().push(command.to_string());
+                        }
+                    }
+                    "scheduler_name" => {
+                        spec.scheduler_name = child
+                            .entries()
+                            .first()
+                            .and_then(|e| e.value().as_string())
+                            .map(|s| s.to_string());
+                    }
+                    "scheduler_type" => {
+                        spec.scheduler_type = child
+                            .entries()
+                            .first()
+                            .and_then(|e| e.value().as_string())
+                            .map(|s| s.to_string());
+                    }
+                    "num_allocations" => {
+                        spec.num_allocations = child
+                            .entries()
+                            .first()
+                            .and_then(|e| e.value().as_integer())
+                            .and_then(|i| i.try_into().ok());
+                    }
+                    "start_one_worker_per_node" => {
+                        spec.start_one_worker_per_node =
+                            child.entries().first().and_then(|e| e.value().as_bool());
+                    }
+                    "max_parallel_jobs" => {
+                        spec.max_parallel_jobs = child
+                            .entries()
+                            .first()
+                            .and_then(|e| e.value().as_integer())
+                            .and_then(|i| i.try_into().ok());
+                    }
+                    "persistent" => {
+                        spec.persistent = child.entries().first().and_then(|e| e.value().as_bool());
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        // Validate required fields
+        if spec.trigger_type.is_empty() {
+            return Err("trigger_type is required for action".into());
+        }
+        if spec.action_type.is_empty() {
+            return Err("action_type is required for action".into());
         }
 
         Ok(spec)

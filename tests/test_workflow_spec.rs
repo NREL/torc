@@ -1779,35 +1779,58 @@ fn test_create_workflow_with_mixed_exact_and_regex_dependencies(start_server: &S
 fn test_create_workflows_from_all_example_files(start_server: &ServerProcess) {
     use std::path::PathBuf;
 
-    // Find all workflow spec files in the examples directory
+    // Define the subdirectories to check
     let examples_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("examples");
-    let spec_files: Vec<PathBuf> = fs::read_dir(&examples_dir)
-        .expect("Failed to read examples directory")
-        .filter_map(|entry| {
-            let entry = entry.ok()?;
-            let path = entry.path();
-            if path.is_file() {
-                let extension = path.extension()?.to_str()?;
-                if matches!(extension, "json" | "json5" | "yaml" | "kdl") {
-                    return Some(path);
+    let subdirs = vec!["yaml", "json", "kdl"];
+
+    let mut all_spec_files = Vec::new();
+
+    // Iterate over each subdirectory and collect workflow spec files
+    for subdir in &subdirs {
+        let subdir_path = examples_dir.join(subdir);
+
+        // Skip if subdirectory doesn't exist
+        if !subdir_path.exists() {
+            eprintln!("Warning: Subdirectory {:?} does not exist, skipping", subdir);
+            continue;
+        }
+
+        let spec_files: Vec<PathBuf> = fs::read_dir(&subdir_path)
+            .unwrap_or_else(|e| panic!("Failed to read {} directory: {}", subdir, e))
+            .filter_map(|entry| {
+                let entry = entry.ok()?;
+                let path = entry.path();
+                if path.is_file() {
+                    let extension = path.extension()?.to_str()?;
+                    if matches!(extension, "json" | "json5" | "yaml" | "kdl" | "yml") {
+                        return Some(path);
+                    }
                 }
-            }
-            None
-        })
-        .collect();
+                None
+            })
+            .collect();
+
+        eprintln!(
+            "Found {} workflow spec files in examples/{}/",
+            spec_files.len(),
+            subdir
+        );
+
+        all_spec_files.extend(spec_files);
+    }
 
     eprintln!(
-        "Found {} workflow spec files in examples directory",
-        spec_files.len()
+        "\nTotal: {} workflow spec files across all subdirectories\n",
+        all_spec_files.len()
     );
     assert!(
-        !spec_files.is_empty(),
-        "No workflow spec files found in examples directory"
+        !all_spec_files.is_empty(),
+        "No workflow spec files found in examples subdirectories"
     );
 
     // Test each spec file
-    for spec_file in spec_files {
-        eprintln!("Testing workflow spec: {:?}", spec_file.file_name());
+    for spec_file in all_spec_files {
+        eprintln!("Testing workflow spec: {:?}", spec_file.strip_prefix(&examples_dir).unwrap_or(&spec_file));
 
         // Read the spec to get the user field
         let spec = WorkflowSpec::from_spec_file(&spec_file)
