@@ -37,7 +37,7 @@ resource_requirements:
 jobs:
   - name: "work1"
     command: bash my_script.sh
-    resource_requirements_name: work_resources  
+    resource_requirements: work_resources  
 ```
 
 ### Simple Queue-Based Allocation

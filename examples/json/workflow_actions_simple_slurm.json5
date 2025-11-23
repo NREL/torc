@@ -9,23 +9,23 @@
     {
       "name": "setup",
       "command": "echo 'Setting up...' && sleep 2",
-      "resource_requirements_name": "small"
+      "resource_requirements": "small"
     },
     {
       "name": "process",
       "command": "echo 'Processing data...' && sleep 5",
-      "blocked_by_job_names": [
+      "blocked_by": [
         "setup"
       ],
-      "resource_requirements_name": "medium"
+      "resource_requirements": "medium"
     },
     {
       "name": "finalize",
       "command": "echo 'Finalizing...' && sleep 2",
-      "blocked_by_job_names": [
+      "blocked_by": [
         "process"
       ],
-      "resource_requirements_name": "small"
+      "resource_requirements": "small"
     }
   ],
   
@@ -79,7 +79,7 @@
       "job_names": [
         "setup"
       ],
-      "scheduler_name": "setup_scheduler",
+      "scheduler": "setup_scheduler",
       "scheduler_type": "slurm",
       "num_allocations": 1
     },
@@ -89,7 +89,7 @@
       "job_names": [
         "process"
       ],
-      "scheduler_name": "process_scheduler",
+      "scheduler": "process_scheduler",
       "scheduler_type": "slurm",
       "num_allocations": 2,
       "start_one_worker_per_node": true
@@ -100,7 +100,7 @@
       "job_names": [
         "finalize"
       ],
-      "scheduler_name": "finalize_scheduler",
+      "scheduler": "finalize_scheduler",
       "scheduler_type": "slurm",
       "num_allocations": 1
     }

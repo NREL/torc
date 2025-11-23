@@ -30,8 +30,8 @@ Then reference it in jobs:
 jobs:
   - name: compute_job
     command: ./run_simulation
-    resource_requirements_name: gpu_node
-    slurm_scheduler_name: my_cluster
+    resource_requirements: gpu_node
+    slurm_scheduler: my_cluster
 ```
 
 ## Scheduling Compute Nodes

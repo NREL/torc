@@ -28,22 +28,22 @@ slurm_scheduler "default_slurm" {
 // Jobs
 job "download_data" {
     command "echo 'Downloading datasets...' && sleep 5"
-    resource_requirements_name "small_job"
-    scheduler_name "default_slurm"
+    resource_requirements "small_job"
+    scheduler "default_slurm"
 }
 
 job "process_data" {
     command "echo 'Processing data...' && sleep 10"
-    resource_requirements_name "small_job"
+    resource_requirements "small_job"
     blocked_by_job "download_data"
-    scheduler_name "default_slurm"
+    scheduler "default_slurm"
 }
 
 job "analyze_data" {
     command "echo 'Analyzing results...' && sleep 5"
-    resource_requirements_name "small_job"
+    resource_requirements "small_job"
     blocked_by_job "process_data"
-    scheduler_name "default_slurm"
+    scheduler "default_slurm"
 }
 
 // Actions - automatically schedule Slurm nodes when workflow starts
@@ -51,7 +51,7 @@ action {
     trigger_type "on_workflow_start"
     action_type "schedule_nodes"
     scheduler_type "slurm"
-    scheduler_name "default_slurm"
+    scheduler "default_slurm"
     num_allocations 1
     start_one_worker_per_node #true
 }

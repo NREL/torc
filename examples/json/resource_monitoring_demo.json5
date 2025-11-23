@@ -9,17 +9,17 @@
     {
       "name": "cpu_heavy_job",
       "command": "python3 examples/scripts/cpu_intensive.py",
-      "resource_requirements_name": "medium"
+      "resource_requirements": "medium"
     },
     {
       "name": "memory_heavy_job",
       "command": "python3 examples/scripts/memory_intensive.py",
-      "resource_requirements_name": "medium"
+      "resource_requirements": "medium"
     },
     {
       "name": "mixed_workload_job",
       "command": "python3 examples/scripts/mixed_workload.py",
-      "resource_requirements_name": "medium"
+      "resource_requirements": "medium"
     }
   ],
   

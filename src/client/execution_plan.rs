@@ -6,7 +6,7 @@ use std::collections::{HashMap, HashSet};
 /// Represents a scheduler allocation in the execution plan
 #[derive(Debug, Clone)]
 pub struct SchedulerAllocation {
-    pub scheduler_name: String,
+    pub scheduler: String,
     pub scheduler_type: String,
     pub num_allocations: i64,
     pub job_names: Vec<String>,
@@ -175,7 +175,7 @@ impl ExecutionPlan {
                 for alloc in &stage.scheduler_allocations {
                     println!(
                         "    • {} ({}) - {} allocation(s)",
-                        alloc.scheduler_name, alloc.scheduler_type, alloc.num_allocations
+                        alloc.scheduler, alloc.scheduler_type, alloc.num_allocations
                     );
                     let compact = compact_job_list(&alloc.job_names);
                     println!("      For jobs: {}", compact.join(", "));
@@ -210,13 +210,13 @@ fn build_dependency_graph(
     for job in &spec.jobs {
         let mut job_deps = Vec::new();
 
-        // Add explicit dependencies from blocked_by_job_names
-        if let Some(ref names) = job.blocked_by_job_names {
+        // Add explicit dependencies from blocked_by
+        if let Some(ref names) = job.blocked_by {
             job_deps.extend(names.clone());
         }
 
-        // Add dependencies from blocked_by_job_name_regexes
-        if let Some(ref regexes) = job.blocked_by_job_name_regexes {
+        // Add dependencies from blocked_by_regexes
+        if let Some(ref regexes) = job.blocked_by_regexes {
             for regex_str in regexes {
                 let re = Regex::new(regex_str)?;
                 for other_job in &spec.jobs {
@@ -228,11 +228,11 @@ fn build_dependency_graph(
         }
 
         // Add implicit dependencies from input files
-        if let Some(ref input_files) = job.input_file_names {
+        if let Some(ref input_files) = job.input_files {
             for input_file in input_files {
                 // Find jobs that produce this file
                 for other_job in &spec.jobs {
-                    if let Some(ref output_files) = other_job.output_file_names {
+                    if let Some(ref output_files) = other_job.output_files {
                         if output_files.contains(input_file) && !job_deps.contains(&other_job.name)
                         {
                             job_deps.push(other_job.name.clone());
@@ -243,12 +243,13 @@ fn build_dependency_graph(
         }
 
         // Add implicit dependencies from input user data
-        if let Some(ref input_data) = job.input_user_data_names {
+        if let Some(ref input_data) = job.input_user_data {
             for input_datum in input_data {
                 // Find jobs that produce this data
                 for other_job in &spec.jobs {
-                    if let Some(ref output_data) = other_job.output_data_names {
-                        if output_data.contains(input_datum) && !job_deps.contains(&other_job.name)
+                    if let Some(ref output_user_data) = other_job.output_user_data {
+                        if output_user_data.contains(input_datum)
+                            && !job_deps.contains(&other_job.name)
                         {
                             job_deps.push(other_job.name.clone());
                         }
@@ -459,10 +460,10 @@ fn build_scheduler_allocation(
         return Ok(None);
     }
 
-    let scheduler_name = action
-        .scheduler_name
+    let scheduler = action
+        .scheduler
         .as_ref()
-        .ok_or("schedule_nodes action missing scheduler_name")?
+        .ok_or("schedule_nodes action missing scheduler")?
         .clone();
 
     let scheduler_type = action
@@ -476,7 +477,7 @@ fn build_scheduler_allocation(
     let job_names = get_matching_jobs(spec, action)?;
 
     Ok(Some(SchedulerAllocation {
-        scheduler_name,
+        scheduler,
         scheduler_type,
         num_allocations,
         job_names,
@@ -659,12 +660,12 @@ fn build_scheduler_allocation_from_db_action(
         }
     }
 
-    // For scheduler_name, we'd need to look it up from the database
+    // For scheduler, we'd need to look it up from the database
     // For now, use a placeholder based on the scheduler_type
-    let scheduler_name = format!("{}_scheduler", scheduler_type);
+    let scheduler = format!("{}_scheduler", scheduler_type);
 
     Ok(Some(SchedulerAllocation {
-        scheduler_name,
+        scheduler,
         scheduler_type,
         num_allocations,
         job_names,

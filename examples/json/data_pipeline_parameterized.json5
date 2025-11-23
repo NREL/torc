@@ -9,8 +9,8 @@
     {
       "name": "download_{dataset}",
       "command": "wget https://example.com/data/{dataset}.csv -O /data/raw/{dataset}.csv",
-      "resource_requirements_name": "download",
-      "output_file_names": [
+      "resource_requirements": "download",
+      "output_files": [
         "raw_{dataset}"
       ],
       "parameters": {
@@ -20,14 +20,14 @@
     {
       "name": "preprocess_{dataset}",
       "command": "python scripts/preprocess.py --input=/data/raw/{dataset}.csv --output=/data/clean/{dataset}.csv",
-      "resource_requirements_name": "cpu_intensive",
-      "blocked_by_job_names": [
+      "resource_requirements": "cpu_intensive",
+      "blocked_by": [
         "download_{dataset}"
       ],
-      "input_file_names": [
+      "input_files": [
         "raw_{dataset}"
       ],
-      "output_file_names": [
+      "output_files": [
         "clean_{dataset}"
       ],
       "parameters": {
@@ -37,14 +37,14 @@
     {
       "name": "analyze_{dataset}_{analysis_type}",
       "command": "python scripts/analyze.py \\\n  --input=/data/clean/{dataset}.csv \\\n  --analysis={analysis_type} \\\n  --output=/results/{dataset}_{analysis_type}_results.json\n",
-      "resource_requirements_name": "cpu_intensive",
-      "blocked_by_job_names": [
+      "resource_requirements": "cpu_intensive",
+      "blocked_by": [
         "preprocess_{dataset}"
       ],
-      "input_file_names": [
+      "input_files": [
         "clean_{dataset}"
       ],
-      "output_file_names": [
+      "output_files": [
         "results_{dataset}_{analysis_type}"
       ],
       "parameters": {
@@ -55,11 +55,11 @@
     {
       "name": "report_{dataset}",
       "command": "python scripts/generate_report.py \\\n  --dataset={dataset} \\\n  --input-dir=/results \\\n  --output=/reports/{dataset}_report.html\n",
-      "resource_requirements_name": "minimal",
-      "blocked_by_job_names": [
+      "resource_requirements": "minimal",
+      "blocked_by": [
         "analyze_{dataset}_{analysis_type}"
       ],
-      "input_file_names": [
+      "input_files": [
         "results_{dataset}_{analysis_type}"
       ],
       "parameters": {
@@ -70,8 +70,8 @@
     {
       "name": "executive_summary",
       "command": "python scripts/executive_summary.py --input-dir=/reports --output=/reports/executive_summary.pdf",
-      "resource_requirements_name": "minimal",
-      "blocked_by_job_names": [
+      "resource_requirements": "minimal",
+      "blocked_by": [
         "report_{dataset}"
       ],
       "parameters": {

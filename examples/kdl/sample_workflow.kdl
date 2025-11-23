@@ -76,10 +76,10 @@ job "data_download" {
     command "wget https://example.com/data.csv -O ${files.output.raw_data}"
     cancel_on_blocking_job_failure #false
     supports_termination #true
-    resource_requirements_name "small_job"
+    resource_requirements "small_job"
     output_file "raw_data"
-    output_data "download_metadata"
-    scheduler_name "default_scheduler"
+    output_user_data "download_metadata"
+    scheduler "default_scheduler"
 }
 
 job "data_validation" {
@@ -87,26 +87,26 @@ job "data_validation" {
     invocation_script "#!/bin/bash\\nset -e\\nexport PYTHONPATH=/opt/validation:$PYTHONPATH"
     cancel_on_blocking_job_failure #true
     supports_termination #true
-    resource_requirements_name "small_job"
+    resource_requirements "small_job"
     blocked_by_job "data_download"
     input_file "raw_data"
     input_file "validation_script"
     output_file "validated_data"
     input_user_data "download_metadata"
-    output_data "validation_results"
-    scheduler_name "default_scheduler"
+    output_user_data "validation_results"
+    scheduler "default_scheduler"
 }
 
 job "data_analysis" {
     command "python ${files.input.analysis_script} ${files.input.validated_data} --output ${files.output.analysis_results}"
     cancel_on_blocking_job_failure #true
     supports_termination #false
-    resource_requirements_name "large_job"
+    resource_requirements "large_job"
     blocked_by_job "data_validation"
     input_file "validated_data"
     input_file "analysis_script"
     output_file "analysis_results"
     input_user_data "validation_results"
-    output_data "final_analysis"
-    scheduler_name "gpu_scheduler"
+    output_user_data "final_analysis"
+    scheduler "gpu_scheduler"
 }

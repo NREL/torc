@@ -31,7 +31,7 @@ jobs:
       echo "Running job {i}"
       sleep $((RANDOM % 10 + 1))
       echo "Job {i} completed"
-    resource_requirements_name: minimal
+    resource_requirements: minimal
     parameters:
       i: "1:100"
 

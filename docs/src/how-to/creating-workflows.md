@@ -25,11 +25,11 @@ description: Process data pipeline
 jobs:
   - name: preprocess
     command: bash preprocess.sh -o ${files.output.preprocessed_data}
-    resource_requirements_name: small
+    resource_requirements: small
 
   - name: analyze
     command: python analyze.py -i ${files.input.preprocessed_data} -o ${files.output.results}
-    resource_requirements_name: large
+    resource_requirements: large
 
 files:
   - name: preprocessed_data
@@ -71,12 +71,12 @@ JSON5 allows comments and trailing commas:
     {
       name: "preprocess",
       command: "bash preprocess.sh -o ${files.output.preprocessed_data}",
-      resource_requirements_name: "small",
+      resource_requirements: "small",
     },
     {
       name: "analyze",
       command: "python analyze.py -i ${files.input.preprocessed_data} -o ${files.output.results}",
-      resource_requirements_name: "small",
+      resource_requirements: "small",
     },
   ],
 
@@ -128,12 +128,12 @@ resource_requirements "large" {
 // Job definitions
 job "preprocess" {
     command "bash preprocess.sh -o ${files.output.preprocessed_data}"
-    resource_requirements_name "small"
+    resource_requirements "small"
 }
 
 job "analyze" {
     command "python analyze.py -i ${files.input.preprocessed_data} -o ${files.output.results}"
-    resource_requirements_name "large"
+    resource_requirements "large"
 }
 ```
 

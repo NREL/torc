@@ -267,7 +267,7 @@ fn validate_workflow_from_spec(file_path: &str, format: &str) {
                         "trigger": stage.trigger_description,
                         "scheduler_allocations": stage.scheduler_allocations.iter().map(|alloc| {
                             serde_json::json!({
-                                "scheduler_name": alloc.scheduler_name,
+                                "scheduler": alloc.scheduler,
                                 "scheduler_type": alloc.scheduler_type,
                                 "num_allocations": alloc.num_allocations,
                                 "job_names": alloc.job_names,
@@ -361,7 +361,7 @@ fn validate_workflow_from_database(config: &Configuration, workflow_id: i64, for
                         "trigger": stage.trigger_description,
                         "scheduler_allocations": stage.scheduler_allocations.iter().map(|alloc| {
                             serde_json::json!({
-                                "scheduler_name": alloc.scheduler_name,
+                                "scheduler": alloc.scheduler,
                                 "scheduler_type": alloc.scheduler_type,
                                 "num_allocations": alloc.num_allocations,
                                 "job_names": alloc.job_names,
@@ -1038,7 +1038,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                             eprintln!("    - trigger_type: on_workflow_start");
                             eprintln!("      action_type: schedule_nodes");
                             eprintln!("      scheduler_type: slurm");
-                            eprintln!("      scheduler_name: \"my-cluster\"");
+                            eprintln!("      scheduler: \"my-cluster\"");
                             eprintln!();
                             eprintln!("Or run locally instead:");
                             eprintln!("  torc workflows run {}", selected_workflow_id);

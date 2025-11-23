@@ -100,7 +100,7 @@ pub struct WorkflowActionSpec {
     pub commands: Option<Vec<String>>,
     /// For schedule_nodes action: scheduler name (will be translated to scheduler_id)
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub scheduler_name: Option<String>,
+    pub scheduler: Option<String>,
     /// For schedule_nodes action: scheduler type (e.g., "slurm", "local")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub scheduler_type: Option<String>,
@@ -176,34 +176,34 @@ pub struct JobSpec {
     /// Whether this job supports termination
     pub supports_termination: Option<bool>,
     /// Name of the resource requirements configuration
-    pub resource_requirements_name: Option<String>,
+    pub resource_requirements: Option<String>,
     /// Names of jobs that must complete before this job can run (exact matches)
-    pub blocked_by_job_names: Option<Vec<String>>,
+    pub blocked_by: Option<Vec<String>>,
     /// Regex patterns for jobs that must complete before this job can run
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub blocked_by_job_name_regexes: Option<Vec<String>>,
+    pub blocked_by_regexes: Option<Vec<String>>,
     /// Names of input files required by this job (exact matches)
-    pub input_file_names: Option<Vec<String>>,
+    pub input_files: Option<Vec<String>>,
     /// Regex patterns for input files required by this job
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub input_file_name_regexes: Option<Vec<String>>,
+    pub input_file_regexes: Option<Vec<String>>,
     /// Names of output files produced by this job (exact matches)
-    pub output_file_names: Option<Vec<String>>,
+    pub output_files: Option<Vec<String>>,
     /// Regex patterns for output files produced by this job
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub output_file_name_regexes: Option<Vec<String>>,
+    pub output_file_regexes: Option<Vec<String>>,
     /// Names of input user data required by this job (exact matches)
-    pub input_user_data_names: Option<Vec<String>>,
+    pub input_user_data: Option<Vec<String>>,
     /// Regex patterns for input user data required by this job
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub input_user_data_name_regexes: Option<Vec<String>>,
+    pub input_user_data_regexes: Option<Vec<String>>,
     /// Names of output data produced by this job (exact matches)
-    pub output_data_names: Option<Vec<String>>,
+    pub output_user_data: Option<Vec<String>>,
     /// Regex patterns for output data produced by this job
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub output_user_data_name_regexes: Option<Vec<String>>,
+    pub output_user_data_regexes: Option<Vec<String>>,
     /// Name of the scheduler to use for this job
-    pub scheduler_name: Option<String>,
+    pub scheduler: Option<String>,
     /// Optional parameters for generating multiple jobs
     /// Supports range notation (e.g., "1:100" or "1:100:5") and lists (e.g., "[1,5,10]")
     /// Multiple parameters create a Cartesian product of jobs
@@ -221,18 +221,18 @@ impl JobSpec {
             invocation_script: None,
             cancel_on_blocking_job_failure: Some(false),
             supports_termination: Some(false),
-            resource_requirements_name: None,
-            blocked_by_job_names: None,
-            blocked_by_job_name_regexes: None,
-            input_file_names: None,
-            input_file_name_regexes: None,
-            output_file_names: None,
-            output_file_name_regexes: None,
-            input_user_data_names: None,
-            input_user_data_name_regexes: None,
-            output_data_names: None,
-            output_user_data_name_regexes: None,
-            scheduler_name: None,
+            resource_requirements: None,
+            blocked_by: None,
+            blocked_by_regexes: None,
+            input_files: None,
+            input_file_regexes: None,
+            output_files: None,
+            output_file_regexes: None,
+            input_user_data: None,
+            input_user_data_regexes: None,
+            output_user_data: None,
+            output_user_data_regexes: None,
+            scheduler: None,
             parameters: None,
         }
     }
@@ -269,17 +269,17 @@ impl JobSpec {
                 new_spec.invocation_script = Some(substitute_parameters(script, &combo));
             }
 
-            if let Some(ref rr_name) = self.resource_requirements_name {
-                new_spec.resource_requirements_name = Some(substitute_parameters(rr_name, &combo));
+            if let Some(ref rr_name) = self.resource_requirements {
+                new_spec.resource_requirements = Some(substitute_parameters(rr_name, &combo));
             }
 
-            if let Some(ref sched_name) = self.scheduler_name {
-                new_spec.scheduler_name = Some(substitute_parameters(sched_name, &combo));
+            if let Some(ref sched_name) = self.scheduler {
+                new_spec.scheduler = Some(substitute_parameters(sched_name, &combo));
             }
 
             // Substitute parameters in name vectors
-            if let Some(ref names) = self.blocked_by_job_names {
-                new_spec.blocked_by_job_names = Some(
+            if let Some(ref names) = self.blocked_by {
+                new_spec.blocked_by = Some(
                     names
                         .iter()
                         .map(|n| substitute_parameters(n, &combo))
@@ -287,8 +287,8 @@ impl JobSpec {
                 );
             }
 
-            if let Some(ref names) = self.input_file_names {
-                new_spec.input_file_names = Some(
+            if let Some(ref names) = self.input_files {
+                new_spec.input_files = Some(
                     names
                         .iter()
                         .map(|n| substitute_parameters(n, &combo))
@@ -296,8 +296,8 @@ impl JobSpec {
                 );
             }
 
-            if let Some(ref names) = self.output_file_names {
-                new_spec.output_file_names = Some(
+            if let Some(ref names) = self.output_files {
+                new_spec.output_files = Some(
                     names
                         .iter()
                         .map(|n| substitute_parameters(n, &combo))
@@ -305,8 +305,8 @@ impl JobSpec {
                 );
             }
 
-            if let Some(ref names) = self.input_user_data_names {
-                new_spec.input_user_data_names = Some(
+            if let Some(ref names) = self.input_user_data {
+                new_spec.input_user_data = Some(
                     names
                         .iter()
                         .map(|n| substitute_parameters(n, &combo))
@@ -314,8 +314,8 @@ impl JobSpec {
                 );
             }
 
-            if let Some(ref names) = self.output_data_names {
-                new_spec.output_data_names = Some(
+            if let Some(ref names) = self.output_user_data {
+                new_spec.output_user_data = Some(
                     names
                         .iter()
                         .map(|n| substitute_parameters(n, &combo))
@@ -324,8 +324,8 @@ impl JobSpec {
             }
 
             // Substitute parameters in regex pattern vectors
-            if let Some(ref regexes) = self.blocked_by_job_name_regexes {
-                new_spec.blocked_by_job_name_regexes = Some(
+            if let Some(ref regexes) = self.blocked_by_regexes {
+                new_spec.blocked_by_regexes = Some(
                     regexes
                         .iter()
                         .map(|r| substitute_parameters(r, &combo))
@@ -333,8 +333,8 @@ impl JobSpec {
                 );
             }
 
-            if let Some(ref regexes) = self.input_file_name_regexes {
-                new_spec.input_file_name_regexes = Some(
+            if let Some(ref regexes) = self.input_file_regexes {
+                new_spec.input_file_regexes = Some(
                     regexes
                         .iter()
                         .map(|r| substitute_parameters(r, &combo))
@@ -342,8 +342,8 @@ impl JobSpec {
                 );
             }
 
-            if let Some(ref regexes) = self.output_file_name_regexes {
-                new_spec.output_file_name_regexes = Some(
+            if let Some(ref regexes) = self.output_file_regexes {
+                new_spec.output_file_regexes = Some(
                     regexes
                         .iter()
                         .map(|r| substitute_parameters(r, &combo))
@@ -351,8 +351,8 @@ impl JobSpec {
                 );
             }
 
-            if let Some(ref regexes) = self.input_user_data_name_regexes {
-                new_spec.input_user_data_name_regexes = Some(
+            if let Some(ref regexes) = self.input_user_data_regexes {
+                new_spec.input_user_data_regexes = Some(
                     regexes
                         .iter()
                         .map(|r| substitute_parameters(r, &combo))
@@ -360,8 +360,8 @@ impl JobSpec {
                 );
             }
 
-            if let Some(ref regexes) = self.output_user_data_name_regexes {
-                new_spec.output_user_data_name_regexes = Some(
+            if let Some(ref regexes) = self.output_user_data_regexes {
+                new_spec.output_user_data_regexes = Some(
                     regexes
                         .iter()
                         .map(|r| substitute_parameters(r, &combo))
@@ -486,11 +486,11 @@ impl WorkflowSpec {
                         .as_ref()
                         .ok_or("schedule_nodes action requires scheduler_type")?;
 
-                    // Ensure scheduler_name is provided
-                    let scheduler_name = action
-                        .scheduler_name
+                    // Ensure scheduler is provided
+                    let scheduler = action
+                        .scheduler
                         .as_ref()
-                        .ok_or("schedule_nodes action requires scheduler_name")?;
+                        .ok_or("schedule_nodes action requires scheduler")?;
 
                     // If scheduler_type is slurm, verify that a slurm_scheduler with that name exists
                     if scheduler_type == "slurm" {
@@ -501,12 +501,12 @@ impl WorkflowSpec {
 
                         let scheduler_exists = slurm_schedulers
                             .iter()
-                            .any(|s| s.name.as_ref() == Some(scheduler_name));
+                            .any(|s| s.name.as_ref() == Some(scheduler));
 
                         if !scheduler_exists {
                             return Err(format!(
                                 "schedule_nodes action references slurm_scheduler '{}' which does not exist",
-                                scheduler_name
+                                scheduler
                             )
                             .into());
                         }
@@ -597,14 +597,14 @@ impl WorkflowSpec {
                 }
             };
 
-        let slurm_scheduler_name_to_id =
-            match Self::create_slurm_schedulers(config, workflow_id, &spec) {
-                Ok(mapping) => mapping,
-                Err(e) => {
-                    rollback(workflow_id);
-                    return Err(e);
-                }
-            };
+        let slurm_scheduler_to_id = match Self::create_slurm_schedulers(config, workflow_id, &spec)
+        {
+            Ok(mapping) => mapping,
+            Err(e) => {
+                rollback(workflow_id);
+                return Err(e);
+            }
+        };
 
         // Step 4: Create JobModels (with dependencies set during creation)
         let (job_name_to_id, _created_jobs) = match Self::create_jobs(
@@ -614,7 +614,7 @@ impl WorkflowSpec {
             &file_name_to_id,
             &user_data_name_to_id,
             &resource_req_name_to_id,
-            &slurm_scheduler_name_to_id,
+            &slurm_scheduler_to_id,
         ) {
             Ok((mapping, jobs)) => (mapping, jobs),
             Err(e) => {
@@ -628,7 +628,7 @@ impl WorkflowSpec {
             config,
             workflow_id,
             &spec,
-            &slurm_scheduler_name_to_id,
+            &slurm_scheduler_to_id,
             &job_name_to_id,
         ) {
             Ok(_) => {}
@@ -810,13 +810,13 @@ impl WorkflowSpec {
         workflow_id: i64,
         spec: &WorkflowSpec,
     ) -> Result<HashMap<String, i64>, Box<dyn std::error::Error>> {
-        let mut slurm_scheduler_name_to_id = HashMap::new();
+        let mut slurm_scheduler_to_id = HashMap::new();
 
         if let Some(slurm_schedulers) = &spec.slurm_schedulers {
             for scheduler_spec in slurm_schedulers {
                 if let Some(name) = &scheduler_spec.name {
                     // Check for duplicate names
-                    if slurm_scheduler_name_to_id.contains_key(name) {
+                    if slurm_scheduler_to_id.contains_key(name) {
                         return Err(format!("Duplicate slurm scheduler name: {}", name).into());
                     }
 
@@ -844,12 +844,12 @@ impl WorkflowSpec {
                     let scheduler_id = created_scheduler
                         .id
                         .ok_or("Created slurm scheduler missing ID")?;
-                    slurm_scheduler_name_to_id.insert(name.clone(), scheduler_id);
+                    slurm_scheduler_to_id.insert(name.clone(), scheduler_id);
                 }
             }
         }
 
-        Ok(slurm_scheduler_name_to_id)
+        Ok(slurm_scheduler_to_id)
     }
 
     /// Create workflow actions
@@ -857,7 +857,7 @@ impl WorkflowSpec {
         config: &Configuration,
         workflow_id: i64,
         spec: &WorkflowSpec,
-        slurm_scheduler_name_to_id: &HashMap<String, i64>,
+        slurm_scheduler_to_id: &HashMap<String, i64>,
         job_name_to_id: &HashMap<String, i64>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(actions) = &spec.actions {
@@ -922,16 +922,16 @@ impl WorkflowSpec {
                             .scheduler_type
                             .as_ref()
                             .ok_or("schedule_nodes action requires 'scheduler_type' field")?;
-                        let scheduler_name = action_spec
-                            .scheduler_name
+                        let scheduler = action_spec
+                            .scheduler
                             .as_ref()
-                            .ok_or("schedule_nodes action requires 'scheduler_name' field")?;
+                            .ok_or("schedule_nodes action requires 'scheduler' field")?;
 
-                        // Translate scheduler_name to scheduler_id
+                        // Translate scheduler to scheduler_id
                         let scheduler_id = if scheduler_type == "slurm" {
-                            slurm_scheduler_name_to_id
-                                .get(scheduler_name)
-                                .ok_or(format!("Slurm scheduler '{}' not found", scheduler_name))?
+                            slurm_scheduler_to_id
+                                .get(scheduler)
+                                .ok_or(format!("Slurm scheduler '{}' not found", scheduler))?
                         } else {
                             // For other scheduler types, we might need a different lookup
                             // For now, just use 0 as placeholder
@@ -1087,7 +1087,7 @@ impl WorkflowSpec {
         file_name_to_id: &HashMap<String, i64>,
         user_data_name_to_id: &HashMap<String, i64>,
         resource_req_name_to_id: &HashMap<String, i64>,
-        slurm_scheduler_name_to_id: &HashMap<String, i64>,
+        slurm_scheduler_to_id: &HashMap<String, i64>,
     ) -> Result<(HashMap<String, i64>, HashMap<String, models::JobModel>), Box<dyn std::error::Error>>
     {
         let mut job_name_to_id = HashMap::new();
@@ -1104,7 +1104,7 @@ impl WorkflowSpec {
             let mut deps = Vec::new();
 
             // Add explicit dependencies
-            if let Some(ref names) = job_spec.blocked_by_job_names {
+            if let Some(ref names) = job_spec.blocked_by {
                 for dep_name in names {
                     // Validate that the dependency exists
                     if !all_job_names.contains(dep_name) {
@@ -1119,7 +1119,7 @@ impl WorkflowSpec {
             }
 
             // Resolve regex dependencies
-            if let Some(ref regexes) = job_spec.blocked_by_job_name_regexes {
+            if let Some(ref regexes) = job_spec.blocked_by_regexes {
                 for regex_str in regexes {
                     let re = Regex::new(regex_str).map_err(|e| {
                         format!(
@@ -1173,8 +1173,8 @@ impl WorkflowSpec {
 
                 // Map file names and regexes to IDs
                 let input_file_ids = Self::resolve_names_and_regexes(
-                    &job_spec.input_file_names,
-                    &job_spec.input_file_name_regexes,
+                    &job_spec.input_files,
+                    &job_spec.input_file_regexes,
                     file_name_to_id,
                     "Input file",
                     &job_spec.name,
@@ -1184,8 +1184,8 @@ impl WorkflowSpec {
                 }
 
                 let output_file_ids = Self::resolve_names_and_regexes(
-                    &job_spec.output_file_names,
-                    &job_spec.output_file_name_regexes,
+                    &job_spec.output_files,
+                    &job_spec.output_file_regexes,
                     file_name_to_id,
                     "Output file",
                     &job_spec.name,
@@ -1196,8 +1196,8 @@ impl WorkflowSpec {
 
                 // Map user data names and regexes to IDs
                 let input_user_data_ids = Self::resolve_names_and_regexes(
-                    &job_spec.input_user_data_names,
-                    &job_spec.input_user_data_name_regexes,
+                    &job_spec.input_user_data,
+                    &job_spec.input_user_data_regexes,
                     user_data_name_to_id,
                     "Input user data",
                     &job_spec.name,
@@ -1207,8 +1207,8 @@ impl WorkflowSpec {
                 }
 
                 let output_user_data_ids = Self::resolve_names_and_regexes(
-                    &job_spec.output_data_names,
-                    &job_spec.output_user_data_name_regexes,
+                    &job_spec.output_user_data,
+                    &job_spec.output_user_data_regexes,
                     user_data_name_to_id,
                     "Output user data",
                     &job_spec.name,
@@ -1218,7 +1218,7 @@ impl WorkflowSpec {
                 }
 
                 // Map resource requirements name to ID
-                if let Some(resource_req_name) = &job_spec.resource_requirements_name {
+                if let Some(resource_req_name) = &job_spec.resource_requirements {
                     match resource_req_name_to_id.get(resource_req_name) {
                         Some(&resource_req_id) => {
                             job_model.resource_requirements_id = Some(resource_req_id)
@@ -1234,13 +1234,13 @@ impl WorkflowSpec {
                 }
 
                 // Map scheduler name to ID
-                if let Some(scheduler_name) = &job_spec.scheduler_name {
-                    match slurm_scheduler_name_to_id.get(scheduler_name) {
+                if let Some(scheduler) = &job_spec.scheduler {
+                    match slurm_scheduler_to_id.get(scheduler) {
                         Some(&scheduler_id) => job_model.scheduler_id = Some(scheduler_id),
                         None => {
                             return Err(format!(
                                 "Scheduler '{}' not found for job '{}'",
-                                scheduler_name, job_spec.name
+                                scheduler, job_spec.name
                             )
                             .into());
                         }
@@ -1476,85 +1476,85 @@ impl WorkflowSpec {
                         job_spec.supports_termination =
                             child.entries().first().and_then(|e| e.value().as_bool());
                     }
-                    "resource_requirements_name" => {
-                        job_spec.resource_requirements_name = child
+                    "resource_requirements" => {
+                        job_spec.resource_requirements = child
                             .entries()
                             .first()
                             .and_then(|e| e.value().as_string())
                             .map(|s| s.to_string());
                     }
                     "blocked_by_job" => {
-                        if job_spec.blocked_by_job_names.is_none() {
-                            job_spec.blocked_by_job_names = Some(Vec::new());
+                        if job_spec.blocked_by.is_none() {
+                            job_spec.blocked_by = Some(Vec::new());
                         }
                         if let Some(job_name) =
                             child.entries().first().and_then(|e| e.value().as_string())
                         {
                             job_spec
-                                .blocked_by_job_names
+                                .blocked_by
                                 .as_mut()
                                 .unwrap()
                                 .push(job_name.to_string());
                         }
                     }
                     "input_file" => {
-                        if job_spec.input_file_names.is_none() {
-                            job_spec.input_file_names = Some(Vec::new());
+                        if job_spec.input_files.is_none() {
+                            job_spec.input_files = Some(Vec::new());
                         }
                         if let Some(file_name) =
                             child.entries().first().and_then(|e| e.value().as_string())
                         {
                             job_spec
-                                .input_file_names
+                                .input_files
                                 .as_mut()
                                 .unwrap()
                                 .push(file_name.to_string());
                         }
                     }
                     "output_file" => {
-                        if job_spec.output_file_names.is_none() {
-                            job_spec.output_file_names = Some(Vec::new());
+                        if job_spec.output_files.is_none() {
+                            job_spec.output_files = Some(Vec::new());
                         }
                         if let Some(file_name) =
                             child.entries().first().and_then(|e| e.value().as_string())
                         {
                             job_spec
-                                .output_file_names
+                                .output_files
                                 .as_mut()
                                 .unwrap()
                                 .push(file_name.to_string());
                         }
                     }
                     "input_user_data" => {
-                        if job_spec.input_user_data_names.is_none() {
-                            job_spec.input_user_data_names = Some(Vec::new());
+                        if job_spec.input_user_data.is_none() {
+                            job_spec.input_user_data = Some(Vec::new());
                         }
                         if let Some(data_name) =
                             child.entries().first().and_then(|e| e.value().as_string())
                         {
                             job_spec
-                                .input_user_data_names
+                                .input_user_data
                                 .as_mut()
                                 .unwrap()
                                 .push(data_name.to_string());
                         }
                     }
-                    "output_data" => {
-                        if job_spec.output_data_names.is_none() {
-                            job_spec.output_data_names = Some(Vec::new());
+                    "output_user_data" => {
+                        if job_spec.output_user_data.is_none() {
+                            job_spec.output_user_data = Some(Vec::new());
                         }
                         if let Some(data_name) =
                             child.entries().first().and_then(|e| e.value().as_string())
                         {
                             job_spec
-                                .output_data_names
+                                .output_user_data
                                 .as_mut()
                                 .unwrap()
                                 .push(data_name.to_string());
                         }
                     }
-                    "scheduler_name" => {
-                        job_spec.scheduler_name = child
+                    "scheduler" => {
+                        job_spec.scheduler = child
                             .entries()
                             .first()
                             .and_then(|e| e.value().as_string())
@@ -1876,7 +1876,7 @@ impl WorkflowSpec {
             job_names: None,
             job_name_regexes: None,
             commands: None,
-            scheduler_name: None,
+            scheduler: None,
             scheduler_type: None,
             num_allocations: None,
             start_one_worker_per_node: None,
@@ -1936,8 +1936,8 @@ impl WorkflowSpec {
                             spec.commands.as_mut().unwrap().push(command.to_string());
                         }
                     }
-                    "scheduler_name" => {
-                        spec.scheduler_name = child
+                    "scheduler" => {
+                        spec.scheduler = child
                             .entries()
                             .first()
                             .and_then(|e| e.value().as_string())
@@ -2032,10 +2032,10 @@ impl WorkflowSpec {
 
     /// Perform variable substitution on job commands and invocation scripts
     /// Supported variables:
-    /// - ${files.input.NAME} - input file (automatically adds to input_file_names)
-    /// - ${files.output.NAME} - output file (automatically adds to output_file_names)
-    /// - ${user_data.input.NAME} - input user data (automatically adds to input_user_data_names)
-    /// - ${user_data.output.NAME} - output user data (automatically adds to output_data_names)
+    /// - ${files.input.NAME} - input file (automatically adds to input_files)
+    /// - ${files.output.NAME} - output file (automatically adds to output_files)
+    /// - ${user_data.input.NAME} - input user data (automatically adds to input_user_data)
+    /// - ${user_data.output.NAME} - output user data (automatically adds to output_user_data)
     pub fn substitute_variables(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         // Build file name to path mapping
         let mut file_name_to_path = HashMap::new();
@@ -2069,16 +2069,16 @@ impl WorkflowSpec {
 
             // Set input/output file names from extracted dependencies
             if !input_files.is_empty() {
-                job.input_file_names = Some(input_files);
+                job.input_files = Some(input_files);
             }
             if !output_files.is_empty() {
-                job.output_file_names = Some(output_files);
+                job.output_files = Some(output_files);
             }
             if !input_user_data.is_empty() {
-                job.input_user_data_names = Some(input_user_data);
+                job.input_user_data = Some(input_user_data);
             }
             if !output_user_data.is_empty() {
-                job.output_data_names = Some(output_user_data);
+                job.output_user_data = Some(output_user_data);
             }
 
             // Process invocation script if present
@@ -2098,32 +2098,32 @@ impl WorkflowSpec {
 
                 // Merge dependencies from invocation script
                 if !script_input_files.is_empty() {
-                    let mut combined = job.input_file_names.clone().unwrap_or_default();
+                    let mut combined = job.input_files.clone().unwrap_or_default();
                     combined.extend(script_input_files);
                     combined.sort();
                     combined.dedup();
-                    job.input_file_names = Some(combined);
+                    job.input_files = Some(combined);
                 }
                 if !script_output_files.is_empty() {
-                    let mut combined = job.output_file_names.clone().unwrap_or_default();
+                    let mut combined = job.output_files.clone().unwrap_or_default();
                     combined.extend(script_output_files);
                     combined.sort();
                     combined.dedup();
-                    job.output_file_names = Some(combined);
+                    job.output_files = Some(combined);
                 }
                 if !script_input_user_data.is_empty() {
-                    let mut combined = job.input_user_data_names.clone().unwrap_or_default();
+                    let mut combined = job.input_user_data.clone().unwrap_or_default();
                     combined.extend(script_input_user_data);
                     combined.sort();
                     combined.dedup();
-                    job.input_user_data_names = Some(combined);
+                    job.input_user_data = Some(combined);
                 }
                 if !script_output_user_data.is_empty() {
-                    let mut combined = job.output_data_names.clone().unwrap_or_default();
+                    let mut combined = job.output_user_data.clone().unwrap_or_default();
                     combined.extend(script_output_user_data);
                     combined.sort();
                     combined.dedup();
-                    job.output_data_names = Some(combined);
+                    job.output_user_data = Some(combined);
                 }
             }
         }

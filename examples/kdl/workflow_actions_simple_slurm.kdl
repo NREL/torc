@@ -44,19 +44,19 @@ slurm_scheduler "finalize_scheduler" {
 // Jobs
 job "setup" {
     command "echo 'Setting up...' && sleep 2"
-    resource_requirements_name "small"
+    resource_requirements "small"
 }
 
 job "process" {
     command "echo 'Processing data...' && sleep 5"
     blocked_by_job "setup"
-    resource_requirements_name "medium"
+    resource_requirements "medium"
 }
 
 job "finalize" {
     command "echo 'Finalizing...' && sleep 2"
     blocked_by_job "process"
-    resource_requirements_name "small"
+    resource_requirements "small"
 }
 
 // Actions
@@ -66,7 +66,7 @@ action {
     trigger_type "on_workflow_start"
     action_type "schedule_nodes"
     job_name "setup"
-    scheduler_name "setup_scheduler"
+    scheduler "setup_scheduler"
     scheduler_type "slurm"
     num_allocations 1
 }
@@ -76,7 +76,7 @@ action {
     trigger_type "on_jobs_ready"
     action_type "schedule_nodes"
     job_name "process"
-    scheduler_name "process_scheduler"
+    scheduler "process_scheduler"
     scheduler_type "slurm"
     num_allocations 2
     start_one_worker_per_node #true
@@ -87,7 +87,7 @@ action {
     trigger_type "on_jobs_ready"
     action_type "schedule_nodes"
     job_name "finalize"
-    scheduler_name "finalize_scheduler"
+    scheduler "finalize_scheduler"
     scheduler_type "slurm"
     num_allocations 1
 }

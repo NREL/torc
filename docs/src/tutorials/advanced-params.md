@@ -17,8 +17,8 @@ jobs:
   # Data preparation (runs once)
   - name: prepare_data
     command: python prepare_data.py --output=/data/processed.pkl
-    resource_requirements_name: data_prep
-    output_file_names:
+    resource_requirements: data_prep
+    output_files:
       - training_data
 
   # Training jobs (one per parameter combination)
@@ -31,10 +31,10 @@ jobs:
         --optimizer={opt} \
         --output=/models/model_lr{lr:.4f}_bs{bs}_opt{opt}.pt \
         --metrics=/results/metrics_lr{lr:.4f}_bs{bs}_opt{opt}.json
-    resource_requirements_name: gpu_training
-    input_file_names:
+    resource_requirements: gpu_training
+    input_files:
       - training_data
-    output_file_names:
+    output_files:
       - model_lr{lr:.4f}_bs{bs}_opt{opt}
       - metrics_lr{lr:.4f}_bs{bs}_opt{opt}
     parameters:
@@ -48,8 +48,8 @@ jobs:
       python aggregate.py \
         --input-dir=/results \
         --output=/results/summary.csv
-    resource_requirements_name: minimal
-    input_file_names:
+    resource_requirements: minimal
+    input_files:
       - metrics_lr{lr:.4f}_bs{bs}_opt{opt}
     parameters:
       lr: "[0.0001,0.001,0.01]"
@@ -62,8 +62,8 @@ jobs:
       python select_best.py \
         --summary=/results/summary.csv \
         --output=/results/best_config.json
-    resource_requirements_name: minimal
-    blocked_by_job_names:
+    resource_requirements: minimal
+    blocked_by:
       - aggregate_results
 
 files:

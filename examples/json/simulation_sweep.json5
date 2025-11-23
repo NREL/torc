@@ -9,22 +9,22 @@
     {
       "name": "generate_config",
       "command": "python scripts/generate_initial_config.py --output=/configs/initial_config.xyz",
-      "resource_requirements_name": "minimal",
-      "output_file_names": [
+      "resource_requirements": "minimal",
+      "output_files": [
         "initial_config"
       ]
     },
     {
       "name": "simulate_T{temp}_P{pressure:03d}",
       "command": "./run_simulation \\\n  --config=/configs/initial_config.xyz \\\n  --temperature={temp} \\\n  --pressure={pressure} \\\n  --steps=1000000 \\\n  --output=/data/simulation_T{temp}_P{pressure:03d}.xyz \\\n  --log=/logs/simulation_T{temp}_P{pressure:03d}.log\n",
-      "resource_requirements_name": "simulation",
-      "blocked_by_job_names": [
+      "resource_requirements": "simulation",
+      "blocked_by": [
         "generate_config"
       ],
-      "input_file_names": [
+      "input_files": [
         "initial_config"
       ],
-      "output_file_names": [
+      "output_files": [
         "simulation_T{temp}_P{pressure:03d}",
         "log_T{temp}_P{pressure:03d}"
       ],
@@ -36,14 +36,14 @@
     {
       "name": "analyze_T{temp}_P{pressure:03d}",
       "command": "python scripts/analyze.py \\\n  --input=/data/simulation_T{temp}_P{pressure:03d}.xyz \\\n  --output=/analysis/analysis_T{temp}_P{pressure:03d}.json \\\n  --temperature={temp} \\\n  --pressure={pressure}\n",
-      "resource_requirements_name": "analysis",
-      "blocked_by_job_names": [
+      "resource_requirements": "analysis",
+      "blocked_by": [
         "simulate_T{temp}_P{pressure:03d}"
       ],
-      "input_file_names": [
+      "input_files": [
         "simulation_T{temp}_P{pressure:03d}"
       ],
-      "output_file_names": [
+      "output_files": [
         "analysis_T{temp}_P{pressure:03d}"
       ],
       "parameters": {
@@ -54,11 +54,11 @@
     {
       "name": "generate_phase_diagram",
       "command": "python scripts/phase_diagram.py --input-dir=/analysis --output=/results/phase_diagram.png",
-      "resource_requirements_name": "minimal",
-      "blocked_by_job_names": [
+      "resource_requirements": "minimal",
+      "blocked_by": [
         "analyze_T{temp}_P{pressure:03d}"
       ],
-      "input_file_names": [
+      "input_files": [
         "analysis_T{temp}_P{pressure:03d}"
       ],
       "parameters": {

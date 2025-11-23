@@ -41,14 +41,14 @@ jobs:
   # Stage 2: Each analysis job waits for ALL preprocessing jobs
   - name: "analyze_{i:03d}"
     command: "python analyze.py --id {i}"
-    blocked_by_job_name_regexes: ["^preprocess_.*"]  # ⚠️ Creates 1,000,000 dependencies!
+    blocked_by_regexes: ["^preprocess_.*"]  # ⚠️ Creates 1,000,000 dependencies!
     parameters:
       i: "0:999"
 
   # Stage 3: Final aggregation
   - name: "final_report"
     command: "python generate_report.py"
-    blocked_by_job_name_regexes: ["^analyze_.*"]  # ⚠️ Creates 1,000 more dependencies
+    blocked_by_regexes: ["^analyze_.*"]  # ⚠️ Creates 1,000 more dependencies
 ```
 
 ### Why This is Bad
@@ -79,7 +79,7 @@ jobs:
   # ═══════════════════════════════════════════════════════════
   - name: "preprocess_{i:03d}"
     command: "python preprocess.py --id {i} --output data/stage1_{i:03d}.json"
-    resource_requirements_name: "medium"
+    resource_requirements: "medium"
     parameters:
       i: "0:999"
 
@@ -88,16 +88,16 @@ jobs:
   # ═══════════════════════════════════════════════════════════
   - name: "barrier_stage1_complete"
     command: "echo 'Stage 1 complete: 1000 files preprocessed' && date"
-    resource_requirements_name: "tiny"
-    blocked_by_job_name_regexes: ["^preprocess_.*"]  # ✓ 1000 dependencies
+    resource_requirements: "tiny"
+    blocked_by_regexes: ["^preprocess_.*"]  # ✓ 1000 dependencies
 
   # ═══════════════════════════════════════════════════════════
   # STAGE 2: Analysis (1000 parallel jobs)
   # ═══════════════════════════════════════════════════════════
   - name: "analyze_{i:03d}"
     command: "python analyze.py --input data/stage1_{i:03d}.json --output data/stage2_{i:03d}.csv"
-    resource_requirements_name: "large"
-    blocked_by_job_names: ["barrier_stage1_complete"]  # ✓ 1000 dependencies (one per job)
+    resource_requirements: "large"
+    blocked_by: ["barrier_stage1_complete"]  # ✓ 1000 dependencies (one per job)
     parameters:
       i: "0:999"
 
@@ -106,16 +106,16 @@ jobs:
   # ═══════════════════════════════════════════════════════════
   - name: "barrier_stage2_complete"
     command: "echo 'Stage 2 complete: 1000 analyses finished' && date"
-    resource_requirements_name: "tiny"
-    blocked_by_job_name_regexes: ["^analyze_.*"]  # ✓ 1000 dependencies
+    resource_requirements: "tiny"
+    blocked_by_regexes: ["^analyze_.*"]  # ✓ 1000 dependencies
 
   # ═══════════════════════════════════════════════════════════
   # STAGE 3: Final report (single job)
   # ═══════════════════════════════════════════════════════════
   - name: "final_report"
     command: "python generate_report.py --output final_report.html"
-    resource_requirements_name: "medium"
-    blocked_by_job_names: ["barrier_stage2_complete"]  # ✓ 1 dependency
+    resource_requirements: "medium"
+    blocked_by: ["barrier_stage2_complete"]  # ✓ 1 dependency
 
 resource_requirements:
   - name: "tiny"
@@ -176,19 +176,19 @@ jobs:
   # Barrier: Wait for all data generation
   - name: "data_generation_complete"
     command: "echo 'All 100 data files generated' && ls -l output/ | wc -l"
-    blocked_by_job_name_regexes: ["^generate_data_.*"]
+    blocked_by_regexes: ["^generate_data_.*"]
 
   # Stage 2: Process each data file
   - name: "process_data_{i:02d}"
     command: "cat output/data_{i:02d}.txt | wc -w > output/processed_{i:02d}.txt"
-    blocked_by_job_names: ["data_generation_complete"]
+    blocked_by: ["data_generation_complete"]
     parameters:
       i: "0:99"
 
   # Final barrier and report
   - name: "processing_complete"
     command: "echo 'All 100 files processed' && cat output/processed_*.txt | awk '{sum+=$1} END {print sum}'"
-    blocked_by_job_name_regexes: ["^process_data_.*"]
+    blocked_by_regexes: ["^process_data_.*"]
 ```
 
 ### Step 2: Create the Output Directory
@@ -243,12 +243,12 @@ Barriers should be quick and cheap:
 ✓ GOOD - Lightweight logging
 - name: "stage1_complete"
   command: "echo 'Stage 1 done' && date"
-  resource_requirements_name: "tiny"
+  resource_requirements: "tiny"
 
 ✗ BAD - Heavy computation
 - name: "stage1_complete"
   command: "python expensive_validation.py"  # Don't do this!
-  resource_requirements_name: "large"
+  resource_requirements: "large"
 ```
 
 If you need validation, create a separate job:
@@ -257,19 +257,19 @@ If you need validation, create a separate job:
 # Barrier - lightweight
 - name: "stage1_complete"
   command: "echo 'Stage 1 done'"
-  resource_requirements_name: "tiny"
-  blocked_by_job_name_regexes: ["^stage1_.*"]
+  resource_requirements: "tiny"
+  blocked_by_regexes: ["^stage1_.*"]
 
 # Validation - heavier
 - name: "validate_stage1"
   command: "python validate_all_outputs.py"
-  resource_requirements_name: "medium"
-  blocked_by_job_names: ["stage1_complete"]
+  resource_requirements: "medium"
+  blocked_by: ["stage1_complete"]
 
 # Stage 2 depends on validation passing
 - name: "stage2_job_{i}"
   command: "python stage2.py {i}"
-  blocked_by_job_names: ["validate_stage1"]
+  blocked_by: ["validate_stage1"]
   parameters:
     i: "0:999"
 ```
@@ -303,7 +303,7 @@ Make barriers informative:
     echo "Total size: $(du -sh output/)"
     echo "Proceeding to analysis stage..."
     echo "════════════════════════════════════════"
-  blocked_by_job_name_regexes: ["^preprocess_.*"]
+  blocked_by_regexes: ["^preprocess_.*"]
 ```
 
 ### 4. Be Careful with Regex Patterns
@@ -312,12 +312,12 @@ Ensure your regex matches exactly what you intend:
 
 ```yaml
 ✓ GOOD - Anchored patterns
-blocked_by_job_name_regexes: ["^stage1_job_.*"]      # Matches "stage1_job_001", "stage1_job_042"
-blocked_by_job_name_regexes: ["^preprocess_\\d+$"]   # Matches "preprocess_0", "preprocess_999"
+blocked_by_regexes: ["^stage1_job_.*"]      # Matches "stage1_job_001", "stage1_job_042"
+blocked_by_regexes: ["^preprocess_\\d+$"]   # Matches "preprocess_0", "preprocess_999"
 
 ✗ BAD - Too broad
-blocked_by_job_name_regexes: ["stage1"]              # Matches "my_stage1_test" (unintended!)
-blocked_by_job_name_regexes: [".*"]                  # Matches EVERYTHING (disaster!)
+blocked_by_regexes: ["stage1"]              # Matches "my_stage1_test" (unintended!)
+blocked_by_regexes: [".*"]                  # Matches EVERYTHING (disaster!)
 ```
 
 Test your regex before deploying:
@@ -339,14 +339,14 @@ When each job in stage 2 only needs its corresponding stage 1 job:
 jobs:
   - name: "preprocess_{i}"
     command: "preprocess.py {i}"
-    output_file_names: ["data_{i}.json"]
+    output_files: ["data_{i}.json"]
     parameters:
       i: "0:99"
 
   # Each analysis only needs its own preprocessed file
   - name: "analyze_{i}"
     command: "analyze.py {i}"
-    input_file_names: ["data_{i}.json"]  # ✓ Automatic dependency via files
+    input_files: ["data_{i}.json"]  # ✓ Automatic dependency via files
     parameters:
       i: "0:99"
 ```
@@ -365,15 +365,15 @@ jobs:
 
   - name: "process_weather"
     command: "process_weather.py"
-    blocked_by_job_names: ["fetch_data"]
+    blocked_by: ["fetch_data"]
 
   - name: "process_traffic"
     command: "process_traffic.py"
-    blocked_by_job_names: ["fetch_data"]
+    blocked_by: ["fetch_data"]
 
   - name: "generate_report"
     command: "report.py"
-    blocked_by_job_names: ["process_weather", "process_traffic"]  # ✓ Specific dependencies
+    blocked_by: ["process_weather", "process_traffic"]  # ✓ Specific dependencies
 ```
 
 Don't force this into stages - the specific dependencies are clearer!
@@ -387,7 +387,7 @@ For small workflows (< 100 jobs), the overhead of barriers isn't worth it:
 jobs:
   - name: "job_{i}"
     command: "process.py {i}"
-    blocked_by_job_name_regexes: ["^prepare_.*"]  # This is fine for 10 jobs
+    blocked_by_regexes: ["^prepare_.*"]  # This is fine for 10 jobs
     parameters:
       i: "0:9"
 ```

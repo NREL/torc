@@ -50,12 +50,12 @@ resource_requirements:
 jobs:
   - name: download_data
     command: wget https://example.com/data.csv -O ${files.output.raw_data}
-    resource_requirements_name: small_job
+    resource_requirements: small_job
 
   - name: process_data
     command: python process.py ${files.input.raw_data} -o ${files.output.processed_data}
-    resource_requirements_name: small_job
-    blocked_by_job_names:
+    resource_requirements: small_job
+    blocked_by:
       - download_data
 
 # Workflow actions
@@ -114,13 +114,13 @@ actions:
     {
       name: "download_data",
       command: "wget https://example.com/data.csv -O ${files.output.raw_data}",
-      resource_requirements_name: "small_job",
+      resource_requirements: "small_job",
     },
     {
       name: "process_data",
       command: "python process.py ${files.input.raw_data} -o ${files.output.processed_data}",
-      resource_requirements_name: "small_job",
-      blocked_by_job_names: ["download_data"],
+      resource_requirements: "small_job",
+      blocked_by: ["download_data"],
     },
   ],
 
@@ -177,12 +177,12 @@ resource_requirements "small_job" {
 // Jobs
 job "download_data" {
     command "wget https://example.com/data.csv -O ${files.output.raw_data}"
-    resource_requirements_name "small_job"
+    resource_requirements "small_job"
 }
 
 job "process_data" {
     command "python process.py ${files.input.raw_data} -o ${files.output.processed_data}"
-    resource_requirements_name "small_job"
+    resource_requirements "small_job"
     blocked_by_job "download_data"
 }
 

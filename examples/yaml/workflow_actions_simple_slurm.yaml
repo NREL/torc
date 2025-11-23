@@ -5,27 +5,27 @@ description: "Demonstrates scheduler actions for different workflow stages"
 jobs:
   - name: "setup"
     command: "echo 'Setting up...' && sleep 2"
-    resource_requirements_name: "small"
+    resource_requirements: "small"
 
   - name: "process1"
     command: "echo 'Processing data...' && sleep 5"
-    blocked_by_job_names: ["setup"]
-    resource_requirements_name: "medium"
+    blocked_by: ["setup"]
+    resource_requirements: "medium"
 
   - name: "process2"
     command: "echo 'Processing data...' && sleep 5"
-    blocked_by_job_names: ["setup"]
-    resource_requirements_name: "medium"
+    blocked_by: ["setup"]
+    resource_requirements: "medium"
 
   - name: "process3"
     command: "echo 'Processing data...' && sleep 5"
-    blocked_by_job_names: ["setup"]
-    resource_requirements_name: "medium"
+    blocked_by: ["setup"]
+    resource_requirements: "medium"
 
   - name: "finalize"
     command: "echo 'Finalizing...' && sleep 2"
-    blocked_by_job_names: ["process1", "process2", "process3"]
-    resource_requirements_name: "small"
+    blocked_by: ["process1", "process2", "process3"]
+    resource_requirements: "small"
 
 resource_requirements:
   - name: "small"
@@ -66,7 +66,7 @@ actions:
   - trigger_type: "on_workflow_start"
     action_type: "schedule_nodes"
     job_names: ["setup"]
-    scheduler_name: "setup_scheduler"
+    scheduler: "setup_scheduler"
     scheduler_type: "slurm"
     num_allocations: 1
 
@@ -74,7 +74,7 @@ actions:
   - trigger_type: "on_jobs_ready"
     action_type: "schedule_nodes"
     job_names: ["process1", "process2", "process3"]
-    scheduler_name: "process_scheduler"
+    scheduler: "process_scheduler"
     scheduler_type: "slurm"
     num_allocations: 3
 
@@ -82,6 +82,6 @@ actions:
   - trigger_type: "on_jobs_ready"
     action_type: "schedule_nodes"
     job_names: ["finalize"]
-    scheduler_name: "finalize_scheduler"
+    scheduler: "finalize_scheduler"
     scheduler_type: "slurm"
     num_allocations: 1

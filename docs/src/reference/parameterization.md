@@ -151,7 +151,7 @@ jobs:
   # Generate data for each configuration
   - name: generate_{config}
     command: python generate.py --config={config}
-    output_file_names:
+    output_files:
       - data_{config}
     parameters:
       config: "['A','B','C']"
@@ -159,9 +159,9 @@ jobs:
   # Process each generated dataset
   - name: process_{config}
     command: python process.py --input=data_{config}.pkl
-    input_file_names:
+    input_files:
       - data_{config}
-    blocked_by_job_names:
+    blocked_by:
       - generate_{config}
     parameters:
       config: "['A','B','C']"

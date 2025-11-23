@@ -10,8 +10,8 @@ jobs:
   # Setup: Generate initial configurations
   - name: generate_config
     command: python scripts/generate_initial_config.py --output=/configs/initial_config.xyz
-    resource_requirements_name: minimal
-    output_file_names:
+    resource_requirements: minimal
+    output_files:
       - initial_config
 
   # Run simulations across parameter space
@@ -27,12 +27,12 @@ jobs:
         --steps=1000000 \
         --output=/data/simulation_T{temp}_P{pressure:03d}.xyz \
         --log=/logs/simulation_T{temp}_P{pressure:03d}.log
-    resource_requirements_name: simulation
-    blocked_by_job_names:
+    resource_requirements: simulation
+    blocked_by:
       - generate_config
-    input_file_names:
+    input_files:
       - initial_config
-    output_file_names:
+    output_files:
       - simulation_T{temp}_P{pressure:03d}
       - log_T{temp}_P{pressure:03d}
     parameters:
@@ -47,12 +47,12 @@ jobs:
         --output=/analysis/analysis_T{temp}_P{pressure:03d}.json \
         --temperature={temp} \
         --pressure={pressure}
-    resource_requirements_name: analysis
-    blocked_by_job_names:
+    resource_requirements: analysis
+    blocked_by:
       - simulate_T{temp}_P{pressure:03d}
-    input_file_names:
+    input_files:
       - simulation_T{temp}_P{pressure:03d}
-    output_file_names:
+    output_files:
       - analysis_T{temp}_P{pressure:03d}
     parameters:
       temp: "250:400:50"
@@ -61,10 +61,10 @@ jobs:
   # Generate phase diagram from all analysis results
   - name: generate_phase_diagram
     command: python scripts/phase_diagram.py --input-dir=/analysis --output=/results/phase_diagram.png
-    resource_requirements_name: minimal
-    blocked_by_job_names:
+    resource_requirements: minimal
+    blocked_by:
       - analyze_T{temp}_P{pressure:03d}
-    input_file_names:
+    input_files:
       - analysis_T{temp}_P{pressure:03d}
     parameters:
       temp: "250:400:50"

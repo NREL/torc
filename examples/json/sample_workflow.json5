@@ -12,17 +12,17 @@
       "invocation_script": null,
       "cancel_on_blocking_job_failure": false,
       "supports_termination": true,
-      "resource_requirements_name": "small_job",
-      "blocked_by_job_names": null,
-      "input_file_names": null,
-      "output_file_names": [
+      "resource_requirements": "small_job",
+      "blocked_by": null,
+      "input_files": null,
+      "output_files": [
         "raw_data"
       ],
-      "input_user_data_names": null,
-      "output_data_names": [
+      "input_user_data": null,
+      "output_user_data": [
         "download_metadata"
       ],
-      "scheduler_name": "default_scheduler"
+      "scheduler": "default_scheduler"
     },
     {
       "name": "data_validation",
@@ -30,24 +30,24 @@
       "invocation_script": "#!/bin/bash\nset -e\nexport PYTHONPATH=/opt/validation:$PYTHONPATH\n",
       "cancel_on_blocking_job_failure": true,
       "supports_termination": true,
-      "resource_requirements_name": "small_job",
-      "blocked_by_job_names": [
+      "resource_requirements": "small_job",
+      "blocked_by": [
         "data_download"
       ],
-      "input_file_names": [
+      "input_files": [
         "raw_data",
         "validation_script"
       ],
-      "output_file_names": [
+      "output_files": [
         "validated_data"
       ],
-      "input_user_data_names": [
+      "input_user_data": [
         "download_metadata"
       ],
-      "output_data_names": [
+      "output_user_data": [
         "validation_results"
       ],
-      "scheduler_name": "default_scheduler"
+      "scheduler": "default_scheduler"
     },
     {
       "name": "data_analysis",
@@ -55,24 +55,24 @@
       "invocation_script": null,
       "cancel_on_blocking_job_failure": true,
       "supports_termination": false,
-      "resource_requirements_name": "large_job",
-      "blocked_by_job_names": [
+      "resource_requirements": "large_job",
+      "blocked_by": [
         "data_validation"
       ],
-      "input_file_names": [
+      "input_files": [
         "validated_data",
         "analysis_script"
       ],
-      "output_file_names": [
+      "output_files": [
         "analysis_results"
       ],
-      "input_user_data_names": [
+      "input_user_data": [
         "validation_results"
       ],
-      "output_data_names": [
+      "output_user_data": [
         "final_analysis"
       ],
-      "scheduler_name": "gpu_scheduler"
+      "scheduler": "gpu_scheduler"
     }
   ],
   

@@ -71,8 +71,8 @@ file "final_results" path="/scratch/pipeline/final_results.dat"
 // Stage 1: Setup job - generates input files
 job "setup" {
     command "#!/bin/bash\nset -e\necho \"Starting setup stage at $(date)\"\nmkdir -p /scratch/pipeline\nfor i in 001 002 003; do\n  echo \"Generating input_${i}.dat...\"\n  dd if=/dev/urandom of=/scratch/pipeline/input_${i}.dat bs=1M count=1024 2>/dev/null\ndone\necho \"Setup stage completed at $(date)\""
-    scheduler_name "setup_scheduler"
-    resource_requirements_name "setup_resources"
+    scheduler "setup_scheduler"
+    resource_requirements "setup_resources"
     output_file "input_001"
     output_file "input_002"
     output_file "input_003"
@@ -81,8 +81,8 @@ job "setup" {
 // Stage 2: Work jobs - process input files in parallel (simplified - see YAML/JSON5 for 10 jobs)
 job "work_001" {
     command "#!/bin/bash\nset -e\necho \"Starting work_001 at $(date)\"\necho \"Processing /scratch/pipeline/input_001.dat\"\npython3 -c \"import numpy as np; import time; data = np.random.rand(1000000, 100); result = np.fft.fft2(data); time.sleep(60)\"\ndd if=/dev/urandom of=/scratch/pipeline/output_001.dat bs=1M count=512 2>/dev/null\necho \"Work_001 completed at $(date)\""
-    scheduler_name "work_scheduler"
-    resource_requirements_name "work_resources"
+    scheduler "work_scheduler"
+    resource_requirements "work_resources"
     blocked_by_job "setup"
     input_file "input_001"
     output_file "output_001"
@@ -90,8 +90,8 @@ job "work_001" {
 
 job "work_002" {
     command "#!/bin/bash\nset -e\necho \"Starting work_002 at $(date)\"\npython3 -c \"import numpy as np; import time; data = np.random.rand(1000000, 100); result = np.fft.fft2(data); time.sleep(60)\"\ndd if=/dev/urandom of=/scratch/pipeline/output_002.dat bs=1M count=512 2>/dev/null\necho \"Work_002 completed at $(date)\""
-    scheduler_name "work_scheduler"
-    resource_requirements_name "work_resources"
+    scheduler "work_scheduler"
+    resource_requirements "work_resources"
     blocked_by_job "setup"
     input_file "input_002"
     output_file "output_002"
@@ -99,8 +99,8 @@ job "work_002" {
 
 job "work_003" {
     command "#!/bin/bash\nset -e\necho \"Starting work_003 at $(date)\"\npython3 -c \"import numpy as np; import time; data = np.random.rand(1000000, 100); result = np.fft.fft2(data); time.sleep(60)\"\ndd if=/dev/urandom of=/scratch/pipeline/output_003.dat bs=1M count=512 2>/dev/null\necho \"Work_003 completed at $(date)\""
-    scheduler_name "work_scheduler"
-    resource_requirements_name "work_resources"
+    scheduler "work_scheduler"
+    resource_requirements "work_resources"
     blocked_by_job "setup"
     input_file "input_003"
     output_file "output_003"
@@ -109,8 +109,8 @@ job "work_003" {
 // Stage 3: Post-processing job - aggregates all work outputs
 job "postprocess" {
     command "#!/bin/bash\nset -e\necho \"Starting postprocessing at $(date)\"\nfor i in 001 002 003; do\n  if [ ! -f \"/scratch/pipeline/output_${i}.dat\" ]; then\n    echo \"ERROR: Missing output file output_${i}.dat\"\n    exit 1\n  fi\n  echo \"Found output_${i}.dat\"\ndone\necho \"Aggregating results...\"\ncat /scratch/pipeline/output_*.dat > /scratch/pipeline/final_results.dat\necho \"Postprocessing completed successfully\""
-    scheduler_name "postprocess_scheduler"
-    resource_requirements_name "postprocess_resources"
+    scheduler "postprocess_scheduler"
+    resource_requirements "postprocess_resources"
     blocked_by_job "work_001"
     blocked_by_job "work_002"
     blocked_by_job "work_003"

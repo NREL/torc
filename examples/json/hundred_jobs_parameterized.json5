@@ -9,7 +9,7 @@
     {
       "name": "job_{i:03d}",
       "command": "echo hello {i}",
-      "resource_requirements_name": "minimal",
+      "resource_requirements": "minimal",
       "parameters": {
         "i": "1:100"
       }

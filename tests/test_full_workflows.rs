@@ -317,7 +317,7 @@ description: Test workflow with 100 parameterized jobs
 jobs:
   - name: job_{i:03d}
     command: echo {i}
-    resource_requirements_name: minimal
+    resource_requirements: minimal
     parameters:
       i: "1:30"
 

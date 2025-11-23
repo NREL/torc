@@ -44,31 +44,31 @@ slurm_scheduler "gpu_cluster" {
 // Jobs
 job "preprocess_data" {
     command "python scripts/preprocess.py --input data/raw --output data/processed"
-    resource_requirements_name "small"
+    resource_requirements "small"
 }
 
 // Training jobs (simplified - see YAML/JSON5 for parameterized version with 8 models)
 job "train_model_1" {
     command "python scripts/train.py --model 1 --data data/processed --output models/model_1"
-    resource_requirements_name "gpu"
+    resource_requirements "gpu"
     blocked_by_job "preprocess_data"
 }
 
 job "train_model_2" {
     command "python scripts/train.py --model 2 --data data/processed --output models/model_2"
-    resource_requirements_name "gpu"
+    resource_requirements "gpu"
     blocked_by_job "preprocess_data"
 }
 
 job "train_model_3" {
     command "python scripts/train.py --model 3 --data data/processed --output models/model_3"
-    resource_requirements_name "gpu"
+    resource_requirements "gpu"
     blocked_by_job "preprocess_data"
 }
 
 job "evaluate" {
     command "python scripts/evaluate.py --models models/ --output results/evaluation.json"
-    resource_requirements_name "medium"
+    resource_requirements "medium"
     blocked_by_job "train_model_1"
     blocked_by_job "train_model_2"
     blocked_by_job "train_model_3"
@@ -91,7 +91,7 @@ action {
     trigger_type "on_jobs_ready"
     action_type "schedule_nodes"
     job_name_regex "train_model_.*"
-    scheduler_name "gpu_cluster"
+    scheduler "gpu_cluster"
     scheduler_type "slurm"
     num_allocations 2
     start_one_worker_per_node #true

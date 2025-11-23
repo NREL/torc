@@ -185,11 +185,11 @@ jobs:
 
   - name: "process_job_1"
     command: "echo 'Processing 1'"
-    blocked_by_job_names: ["setup_job"]
+    blocked_by: ["setup_job"]
 
   - name: "process_job_2"
     command: "echo 'Processing 2'"
-    blocked_by_job_names: ["setup_job"]
+    blocked_by: ["setup_job"]
 
 actions:
   - trigger_type: "on_jobs_ready"

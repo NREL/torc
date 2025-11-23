@@ -19,13 +19,13 @@ fn test_job_specification_new() {
     assert_eq!(job.invocation_script, None);
     assert_eq!(job.cancel_on_blocking_job_failure, Some(false));
     assert_eq!(job.supports_termination, Some(false));
-    assert_eq!(job.resource_requirements_name, None);
-    assert_eq!(job.blocked_by_job_names, None);
-    assert_eq!(job.input_file_names, None);
-    assert_eq!(job.output_file_names, None);
-    assert_eq!(job.input_user_data_names, None);
-    assert_eq!(job.output_data_names, None);
-    assert_eq!(job.scheduler_name, None);
+    assert_eq!(job.resource_requirements, None);
+    assert_eq!(job.blocked_by, None);
+    assert_eq!(job.input_files, None);
+    assert_eq!(job.output_files, None);
+    assert_eq!(job.input_user_data, None);
+    assert_eq!(job.output_user_data, None);
+    assert_eq!(job.scheduler, None);
 }
 
 #[test]
@@ -35,13 +35,13 @@ fn test_job_specification_all_fields() {
     job.invocation_script = Some("#!/bin/bash\nset -e\n".to_string());
     job.cancel_on_blocking_job_failure = Some(true);
     job.supports_termination = Some(true);
-    job.resource_requirements_name = Some("large_job".to_string());
-    job.blocked_by_job_names = Some(vec!["job1".to_string(), "job2".to_string()]);
-    job.input_file_names = Some(vec!["input.csv".to_string()]);
-    job.output_file_names = Some(vec!["output.json".to_string()]);
-    job.input_user_data_names = Some(vec!["config".to_string()]);
-    job.output_data_names = Some(vec!["results".to_string()]);
-    job.scheduler_name = Some("gpu_scheduler".to_string());
+    job.resource_requirements = Some("large_job".to_string());
+    job.blocked_by = Some(vec!["job1".to_string(), "job2".to_string()]);
+    job.input_files = Some(vec!["input.csv".to_string()]);
+    job.output_files = Some(vec!["output.json".to_string()]);
+    job.input_user_data = Some(vec!["config".to_string()]);
+    job.output_user_data = Some(vec!["results".to_string()]);
+    job.scheduler = Some("gpu_scheduler".to_string());
 
     assert_eq!(job.name, "complex_job");
     assert_eq!(job.command, "python script.py");
@@ -51,19 +51,16 @@ fn test_job_specification_all_fields() {
     );
     assert_eq!(job.cancel_on_blocking_job_failure, Some(true));
     assert_eq!(job.supports_termination, Some(true));
+    assert_eq!(job.resource_requirements, Some("large_job".to_string()));
     assert_eq!(
-        job.resource_requirements_name,
-        Some("large_job".to_string())
-    );
-    assert_eq!(
-        job.blocked_by_job_names,
+        job.blocked_by,
         Some(vec!["job1".to_string(), "job2".to_string()])
     );
-    assert_eq!(job.input_file_names, Some(vec!["input.csv".to_string()]));
-    assert_eq!(job.output_file_names, Some(vec!["output.json".to_string()]));
-    assert_eq!(job.input_user_data_names, Some(vec!["config".to_string()]));
-    assert_eq!(job.output_data_names, Some(vec!["results".to_string()]));
-    assert_eq!(job.scheduler_name, Some("gpu_scheduler".to_string()));
+    assert_eq!(job.input_files, Some(vec!["input.csv".to_string()]));
+    assert_eq!(job.output_files, Some(vec!["output.json".to_string()]));
+    assert_eq!(job.input_user_data, Some(vec!["config".to_string()]));
+    assert_eq!(job.output_user_data, Some(vec!["results".to_string()]));
+    assert_eq!(job.scheduler, Some("gpu_scheduler".to_string()));
 }
 
 #[test]
@@ -184,21 +181,21 @@ fn test_workflow_specification_complete_serialization() {
     let mut job1 = JobSpec::new("preprocess".to_string(), "python preprocess.py".to_string());
     job1.invocation_script = Some("#!/bin/bash\nexport PYTHONPATH=/opt/tools\n".to_string());
     job1.supports_termination = Some(true);
-    job1.resource_requirements_name = Some("small_job".to_string());
-    job1.input_file_names = Some(vec!["input.txt".to_string()]);
-    job1.output_file_names = Some(vec!["output.txt".to_string()]);
-    job1.input_user_data_names = Some(vec!["config".to_string()]);
-    job1.output_data_names = Some(vec!["results".to_string()]);
-    job1.scheduler_name = Some("default".to_string());
+    job1.resource_requirements = Some("small_job".to_string());
+    job1.input_files = Some(vec!["input.txt".to_string()]);
+    job1.output_files = Some(vec!["output.txt".to_string()]);
+    job1.input_user_data = Some(vec!["config".to_string()]);
+    job1.output_user_data = Some(vec!["results".to_string()]);
+    job1.scheduler = Some("default".to_string());
 
     let mut job2 = JobSpec::new("analyze".to_string(), "python analyze.py".to_string());
     job2.cancel_on_blocking_job_failure = Some(true);
     job2.supports_termination = Some(true);
-    job2.resource_requirements_name = Some("large_job".to_string());
-    job2.blocked_by_job_names = Some(vec!["preprocess".to_string()]);
-    job2.input_file_names = Some(vec!["output.txt".to_string()]);
-    job2.input_user_data_names = Some(vec!["results".to_string()]);
-    job2.scheduler_name = Some("gpu".to_string());
+    job2.resource_requirements = Some("large_job".to_string());
+    job2.blocked_by = Some(vec!["preprocess".to_string()]);
+    job2.input_files = Some(vec!["output.txt".to_string()]);
+    job2.input_user_data = Some(vec!["results".to_string()]);
+    job2.scheduler = Some("gpu".to_string());
 
     let jobs = vec![job1, job2];
 
@@ -241,13 +238,13 @@ fn test_from_json_file() {
                 "invocation_script": null,
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
-                "resource_requirements_name": null,
-                "blocked_by_job_names": null,
-                "input_file_names": null,
-                "output_file_names": null,
-                "input_user_data_names": null,
-                "output_data_names": null,
-                "scheduler_name": null
+                "resource_requirements": null,
+                "blocked_by": null,
+                "input_files": null,
+                "output_files": null,
+                "input_user_data": null,
+                "output_user_data": null,
+                "scheduler": null
             }
         ],
         "files": null,
@@ -335,13 +332,13 @@ fn test_job_with_all_optional_fields_none() {
         "invocation_script": null,
         "cancel_on_blocking_job_failure": false,
         "supports_termination": false,
-        "resource_requirements_name": null,
-        "blocked_by_job_names": null,
-        "input_file_names": null,
-        "output_file_names": null,
-        "input_user_data_names": null,
-        "output_data_names": null,
-        "scheduler_name": null
+        "resource_requirements": null,
+        "blocked_by": null,
+        "input_files": null,
+        "output_files": null,
+        "input_user_data": null,
+        "output_user_data": null,
+        "scheduler": null
     });
 
     let job: JobSpec = serde_json::from_value(job_data).expect("Failed to deserialize job");
@@ -351,13 +348,13 @@ fn test_job_with_all_optional_fields_none() {
     assert_eq!(job.invocation_script, None);
     assert_eq!(job.cancel_on_blocking_job_failure, Some(false));
     assert_eq!(job.supports_termination, Some(false));
-    assert_eq!(job.resource_requirements_name, None);
-    assert_eq!(job.blocked_by_job_names, None);
-    assert_eq!(job.input_file_names, None);
-    assert_eq!(job.output_file_names, None);
-    assert_eq!(job.input_user_data_names, None);
-    assert_eq!(job.output_data_names, None);
-    assert_eq!(job.scheduler_name, None);
+    assert_eq!(job.resource_requirements, None);
+    assert_eq!(job.blocked_by, None);
+    assert_eq!(job.input_files, None);
+    assert_eq!(job.output_files, None);
+    assert_eq!(job.input_user_data, None);
+    assert_eq!(job.output_user_data, None);
+    assert_eq!(job.scheduler, None);
 }
 
 #[test]
@@ -368,22 +365,22 @@ fn test_job_with_empty_arrays() {
         "invocation_script": null,
         "cancel_on_blocking_job_failure": false,
         "supports_termination": false,
-        "resource_requirements_name": null,
-        "blocked_by_job_names": [],
-        "input_file_names": [],
-        "output_file_names": [],
-        "input_user_data_names": [],
-        "output_data_names": [],
-        "scheduler_name": null
+        "resource_requirements": null,
+        "blocked_by": [],
+        "input_files": [],
+        "output_files": [],
+        "input_user_data": [],
+        "output_user_data": [],
+        "scheduler": null
     });
 
     let job: JobSpec = serde_json::from_value(job_data).expect("Failed to deserialize job");
 
-    assert_eq!(job.blocked_by_job_names, Some(vec![]));
-    assert_eq!(job.input_file_names, Some(vec![]));
-    assert_eq!(job.output_file_names, Some(vec![]));
-    assert_eq!(job.input_user_data_names, Some(vec![]));
-    assert_eq!(job.output_data_names, Some(vec![]));
+    assert_eq!(job.blocked_by, Some(vec![]));
+    assert_eq!(job.input_files, Some(vec![]));
+    assert_eq!(job.output_files, Some(vec![]));
+    assert_eq!(job.input_user_data, Some(vec![]));
+    assert_eq!(job.output_user_data, Some(vec![]));
 }
 
 #[test]
@@ -391,22 +388,22 @@ fn test_workflow_with_complex_dependencies() {
     let jobs = vec![
         {
             let mut job = JobSpec::new("job_a".to_string(), "echo a".to_string());
-            job.output_file_names = Some(vec!["file_a".to_string()]);
-            job.output_data_names = Some(vec!["data_a".to_string()]);
+            job.output_files = Some(vec!["file_a".to_string()]);
+            job.output_user_data = Some(vec!["data_a".to_string()]);
             job
         },
         {
             let mut job = JobSpec::new("job_b".to_string(), "echo b".to_string());
-            job.output_file_names = Some(vec!["file_b".to_string()]);
-            job.output_data_names = Some(vec!["data_b".to_string()]);
+            job.output_files = Some(vec!["file_b".to_string()]);
+            job.output_user_data = Some(vec!["data_b".to_string()]);
             job
         },
         {
             let mut job = JobSpec::new("job_c".to_string(), "echo c".to_string());
-            job.blocked_by_job_names = Some(vec!["job_a".to_string(), "job_b".to_string()]);
-            job.input_file_names = Some(vec!["file_a".to_string(), "file_b".to_string()]);
-            job.input_user_data_names = Some(vec!["data_a".to_string(), "data_b".to_string()]);
-            job.output_file_names = Some(vec!["file_c".to_string()]);
+            job.blocked_by = Some(vec!["job_a".to_string(), "job_b".to_string()]);
+            job.input_files = Some(vec!["file_a".to_string(), "file_b".to_string()]);
+            job.input_user_data = Some(vec!["data_a".to_string(), "data_b".to_string()]);
+            job.output_files = Some(vec!["file_c".to_string()]);
             job
         },
     ];
@@ -428,15 +425,15 @@ fn test_workflow_with_complex_dependencies() {
     let job_c = &deserialized.jobs[2];
     assert_eq!(job_c.name, "job_c");
     assert_eq!(
-        job_c.blocked_by_job_names,
+        job_c.blocked_by,
         Some(vec!["job_a".to_string(), "job_b".to_string()])
     );
     assert_eq!(
-        job_c.input_file_names,
+        job_c.input_files,
         Some(vec!["file_a".to_string(), "file_b".to_string()])
     );
     assert_eq!(
-        job_c.input_user_data_names,
+        job_c.input_user_data,
         Some(vec!["data_a".to_string(), "data_b".to_string()])
     );
 }
@@ -454,13 +451,13 @@ fn test_create_workflow_from_json_file_minimal(start_server: &ServerProcess) {
                 "invocation_script": null,
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
-                "resource_requirements_name": null,
-                "blocked_by_job_names": null,
-                "input_file_names": null,
-                "output_file_names": null,
-                "input_user_data_names": null,
-                "output_data_names": null,
-                "scheduler_name": null
+                "resource_requirements": null,
+                "blocked_by": null,
+                "input_files": null,
+                "output_files": null,
+                "input_user_data": null,
+                "output_user_data": null,
+                "scheduler": null
             }
         ],
         "files": null,
@@ -511,13 +508,13 @@ fn test_create_workflow_from_json_file_with_files(start_server: &ServerProcess) 
                 "invocation_script": null,
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
-                "resource_requirements_name": null,
-                "blocked_by_job_names": null,
-                "input_file_names": ["input_file"],
-                "output_file_names": ["output_file"],
-                "input_user_data_names": null,
-                "output_data_names": null,
-                "scheduler_name": null
+                "resource_requirements": null,
+                "blocked_by": null,
+                "input_files": ["input_file"],
+                "output_files": ["output_file"],
+                "input_user_data": null,
+                "output_user_data": null,
+                "scheduler": null
             }
         ],
         "files": [
@@ -566,13 +563,13 @@ fn test_create_workflow_from_json_file_with_dependencies(start_server: &ServerPr
                 "invocation_script": null,
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
-                "resource_requirements_name": null,
-                "blocked_by_job_names": null,
-                "input_file_names": null,
-                "output_file_names": null,
-                "input_user_data_names": null,
-                "output_data_names": null,
-                "scheduler_name": null
+                "resource_requirements": null,
+                "blocked_by": null,
+                "input_files": null,
+                "output_files": null,
+                "input_user_data": null,
+                "output_user_data": null,
+                "scheduler": null
             },
             {
                 "name": "second_job",
@@ -580,13 +577,13 @@ fn test_create_workflow_from_json_file_with_dependencies(start_server: &ServerPr
                 "invocation_script": null,
                 "cancel_on_blocking_job_failure": true,
                 "supports_termination": false,
-                "resource_requirements_name": null,
-                "blocked_by_job_names": ["first_job"],
-                "input_file_names": null,
-                "output_file_names": null,
-                "input_user_data_names": null,
-                "output_data_names": null,
-                "scheduler_name": null
+                "resource_requirements": null,
+                "blocked_by": ["first_job"],
+                "input_files": null,
+                "output_files": null,
+                "input_user_data": null,
+                "output_user_data": null,
+                "scheduler": null
             }
         ],
         "files": null,
@@ -626,13 +623,13 @@ fn test_create_workflow_from_json_file_duplicate_file_names(start_server: &Serve
                 "invocation_script": null,
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
-                "resource_requirements_name": null,
-                "blocked_by_job_names": null,
-                "input_file_names": null,
-                "output_file_names": null,
-                "input_user_data_names": null,
-                "output_data_names": null,
-                "scheduler_name": null
+                "resource_requirements": null,
+                "blocked_by": null,
+                "input_files": null,
+                "output_files": null,
+                "input_user_data": null,
+                "output_user_data": null,
+                "scheduler": null
             }
         ],
         "files": [
@@ -686,13 +683,13 @@ fn test_create_workflow_from_json_file_missing_file_reference(start_server: &Ser
                 "invocation_script": null,
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
-                "resource_requirements_name": null,
-                "blocked_by_job_names": null,
-                "input_file_names": ["nonexistent_file"],
-                "output_file_names": null,
-                "input_user_data_names": null,
-                "output_data_names": null,
-                "scheduler_name": null
+                "resource_requirements": null,
+                "blocked_by": null,
+                "input_files": ["nonexistent_file"],
+                "output_files": null,
+                "input_user_data": null,
+                "output_user_data": null,
+                "scheduler": null
             }
         ],
         "files": null,
@@ -737,13 +734,13 @@ fn test_create_workflow_from_json_file_missing_job_dependency(start_server: &Ser
                 "invocation_script": null,
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
-                "resource_requirements_name": null,
-                "blocked_by_job_names": ["nonexistent_job"],
-                "input_file_names": null,
-                "output_file_names": null,
-                "input_user_data_names": null,
-                "output_data_names": null,
-                "scheduler_name": null
+                "resource_requirements": null,
+                "blocked_by": ["nonexistent_job"],
+                "input_files": null,
+                "output_files": null,
+                "input_user_data": null,
+                "output_user_data": null,
+                "scheduler": null
             }
         ],
         "files": null,
@@ -789,13 +786,13 @@ fn test_create_workflow_from_json5_file(start_server: &ServerProcess) {
                 "invocation_script": null,
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
-                "resource_requirements_name": null,
-                "blocked_by_job_names": null,
-                "input_file_names": null,
-                "output_file_names": null,
-                "input_user_data_names": null,
-                "output_data_names": null,
-                "scheduler_name": null
+                "resource_requirements": null,
+                "blocked_by": null,
+                "input_files": null,
+                "output_files": null,
+                "input_user_data": null,
+                "output_user_data": null,
+                "scheduler": null
             }
         ],
         "files": null,
@@ -831,13 +828,13 @@ jobs:
     invocation_script: null
     cancel_on_blocking_job_failure: false
     supports_termination: false
-    resource_requirements_name: null
-    blocked_by_job_names: null
-    input_file_names: null
-    output_file_names: null
-    input_user_data_names: null
-    output_data_names: null
-    scheduler_name: null
+    resource_requirements: null
+    blocked_by: null
+    input_files: null
+    output_files: null
+    input_user_data: null
+    output_user_data: null
+    scheduler: null
 files: null
 user_data: null
 resource_requirements: null
@@ -871,13 +868,13 @@ jobs:
     invocation_script: null
     cancel_on_blocking_job_failure: false
     supports_termination: false
-    resource_requirements_name: null
-    blocked_by_job_names: null
-    input_file_names: null
-    output_file_names: null
-    input_user_data_names: null
-    output_data_names: null
-    scheduler_name: null
+    resource_requirements: null
+    blocked_by: null
+    input_files: null
+    output_files: null
+    input_user_data: null
+    output_user_data: null
+    scheduler: null
 files: null
 user_data: null
 resource_requirements: null
@@ -911,13 +908,13 @@ fn test_create_workflow_from_spec_auto_detect_json(start_server: &ServerProcess)
                 "invocation_script": null,
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
-                "resource_requirements_name": null,
-                "blocked_by_job_names": null,
-                "input_file_names": null,
-                "output_file_names": null,
-                "input_user_data_names": null,
-                "output_data_names": null,
-                "scheduler_name": null
+                "resource_requirements": null,
+                "blocked_by": null,
+                "input_files": null,
+                "output_files": null,
+                "input_user_data": null,
+                "output_user_data": null,
+                "scheduler": null
             }
         ],
         "files": null,
@@ -1039,10 +1036,10 @@ fn test_workflow_specification_with_all_resource_types() {
     job.invocation_script = Some("#!/bin/bash\nset -euo pipefail\n".to_string());
     job.cancel_on_blocking_job_failure = Some(true);
     job.supports_termination = Some(true);
-    job.resource_requirements_name = Some("test_resources".to_string());
-    job.input_file_names = Some(vec!["script.py".to_string()]);
-    job.input_user_data_names = Some(vec!["config_data".to_string()]);
-    job.scheduler_name = Some("test_scheduler".to_string());
+    job.resource_requirements = Some("test_resources".to_string());
+    job.input_files = Some(vec!["script.py".to_string()]);
+    job.input_user_data = Some(vec!["config_data".to_string()]);
+    job.scheduler = Some("test_scheduler".to_string());
 
     let mut workflow = WorkflowSpec::new(
         "comprehensive_workflow".to_string(),
@@ -1073,10 +1070,10 @@ fn test_workflow_specification_with_all_resource_types() {
     assert!(job.invocation_script.is_some());
     assert_eq!(job.cancel_on_blocking_job_failure, Some(true));
     assert_eq!(job.supports_termination, Some(true));
-    assert!(job.resource_requirements_name.is_some());
-    assert!(job.input_file_names.is_some());
-    assert!(job.input_user_data_names.is_some());
-    assert!(job.scheduler_name.is_some());
+    assert!(job.resource_requirements.is_some());
+    assert!(job.input_files.is_some());
+    assert!(job.input_user_data.is_some());
+    assert!(job.scheduler.is_some());
 }
 
 #[test]
@@ -1159,13 +1156,13 @@ fn test_job_specification_default_values() {
     assert_eq!(default_job.invocation_script, None);
     assert_eq!(default_job.cancel_on_blocking_job_failure, Some(false));
     assert_eq!(default_job.supports_termination, Some(false));
-    assert_eq!(default_job.resource_requirements_name, None);
-    assert_eq!(default_job.blocked_by_job_names, None);
-    assert_eq!(default_job.input_file_names, None);
-    assert_eq!(default_job.output_file_names, None);
-    assert_eq!(default_job.input_user_data_names, None);
-    assert_eq!(default_job.output_data_names, None);
-    assert_eq!(default_job.scheduler_name, None);
+    assert_eq!(default_job.resource_requirements, None);
+    assert_eq!(default_job.blocked_by, None);
+    assert_eq!(default_job.input_files, None);
+    assert_eq!(default_job.output_files, None);
+    assert_eq!(default_job.input_user_data, None);
+    assert_eq!(default_job.output_user_data, None);
+    assert_eq!(default_job.scheduler, None);
 }
 
 #[test]
@@ -1268,11 +1265,11 @@ fn test_workflow_specification_with_new_structs() {
     }];
 
     let mut job = JobSpec::new("process_data".to_string(), "python process.py".to_string());
-    job.input_file_names = Some(vec!["input.dat".to_string()]);
-    job.output_file_names = Some(vec!["output.dat".to_string()]);
-    job.input_user_data_names = Some(vec!["config".to_string()]);
-    job.resource_requirements_name = Some("medium_job".to_string());
-    job.scheduler_name = Some("cpu_scheduler".to_string());
+    job.input_files = Some(vec!["input.dat".to_string()]);
+    job.output_files = Some(vec!["output.dat".to_string()]);
+    job.input_user_data = Some(vec!["config".to_string()]);
+    job.resource_requirements = Some("medium_job".to_string());
+    job.scheduler = Some("cpu_scheduler".to_string());
 
     let mut workflow = WorkflowSpec::new(
         "data_processing".to_string(),
@@ -1315,18 +1312,18 @@ fn test_json_field_name_compatibility() {
         invocation_script: Some("script".to_string()),
         cancel_on_blocking_job_failure: Some(true),
         supports_termination: Some(false),
-        resource_requirements_name: Some("req".to_string()),
-        blocked_by_job_names: Some(vec!["dep".to_string()]),
-        blocked_by_job_name_regexes: None,
-        input_file_names: Some(vec!["in.txt".to_string()]),
-        input_file_name_regexes: None,
-        output_file_names: Some(vec!["out.txt".to_string()]),
-        output_file_name_regexes: None,
-        input_user_data_names: Some(vec!["in_data".to_string()]),
-        input_user_data_name_regexes: None,
-        output_data_names: Some(vec!["out_data".to_string()]),
-        output_user_data_name_regexes: None,
-        scheduler_name: Some("sched".to_string()),
+        resource_requirements: Some("req".to_string()),
+        blocked_by: Some(vec!["dep".to_string()]),
+        blocked_by_regexes: None,
+        input_files: Some(vec!["in.txt".to_string()]),
+        input_file_regexes: None,
+        output_files: Some(vec!["out.txt".to_string()]),
+        output_file_regexes: None,
+        input_user_data: Some(vec!["in_data".to_string()]),
+        input_user_data_regexes: None,
+        output_user_data: Some(vec!["out_data".to_string()]),
+        output_user_data_regexes: None,
+        scheduler: Some("sched".to_string()),
         parameters: None,
     };
 
@@ -1338,13 +1335,13 @@ fn test_json_field_name_compatibility() {
     assert!(json.get("invocation_script").is_some());
     assert!(json.get("cancel_on_blocking_job_failure").is_some());
     assert!(json.get("supports_termination").is_some());
-    assert!(json.get("resource_requirements_name").is_some());
-    assert!(json.get("blocked_by_job_names").is_some());
-    assert!(json.get("input_file_names").is_some());
-    assert!(json.get("output_file_names").is_some());
-    assert!(json.get("input_user_data_names").is_some());
-    assert!(json.get("output_data_names").is_some());
-    assert!(json.get("scheduler_name").is_some());
+    assert!(json.get("resource_requirements").is_some());
+    assert!(json.get("blocked_by").is_some());
+    assert!(json.get("input_files").is_some());
+    assert!(json.get("output_files").is_some());
+    assert!(json.get("input_user_data").is_some());
+    assert!(json.get("output_user_data").is_some());
+    assert!(json.get("scheduler").is_some());
 }
 
 #[rstest]
@@ -1361,13 +1358,13 @@ fn test_create_workflow_rollback_on_error(start_server: &ServerProcess) {
                 "invocation_script": null,
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
-                "resource_requirements_name": "nonexistent_resource", // This should cause failure
-                "blocked_by_job_names": null,
-                "input_file_names": null,
-                "output_file_names": null,
-                "input_user_data_names": null,
-                "output_data_names": null,
-                "scheduler_name": null
+                "resource_requirements": "nonexistent_resource", // This should cause failure
+                "blocked_by": null,
+                "input_files": null,
+                "output_files": null,
+                "input_user_data": null,
+                "output_user_data": null,
+                "scheduler": null
             }
         ],
         "files": null,
@@ -1437,22 +1434,22 @@ fn test_create_workflow_with_regex_job_dependencies(start_server: &ServerProcess
             {
                 "name": "work_1",
                 "command": "echo 'work 1'",
-                "blocked_by_job_names": ["preprocess"],
+                "blocked_by": ["preprocess"],
             },
             {
                 "name": "work_2",
                 "command": "echo 'work 2'",
-                "blocked_by_job_names": ["preprocess"],
+                "blocked_by": ["preprocess"],
             },
             {
                 "name": "work_3",
                 "command": "echo 'work 3'",
-                "blocked_by_job_names": ["preprocess"],
+                "blocked_by": ["preprocess"],
             },
             {
                 "name": "postprocess",
                 "command": "echo 'postprocess'",
-                "blocked_by_job_name_regexes": ["work_.*"],
+                "blocked_by_regexes": ["work_.*"],
             }
         ],
         "files": null,
@@ -1531,7 +1528,7 @@ fn test_create_workflow_with_regex_file_dependencies(start_server: &ServerProces
             {
                 "name": "aggregate",
                 "command": "echo 'aggregate all data files'",
-                "input_file_name_regexes": [r"data_\d+"],
+                "input_file_regexes": [r"data_\d+"],
             }
         ],
         "files": [
@@ -1612,7 +1609,7 @@ fn test_create_workflow_with_regex_user_data_dependencies(start_server: &ServerP
             {
                 "name": "process_all_configs",
                 "command": "echo 'process all config data'",
-                "input_user_data_name_regexes": ["config_.*"],
+                "input_user_data_regexes": ["config_.*"],
             }
         ],
         "files": null,
@@ -1701,23 +1698,23 @@ fn test_create_workflow_with_mixed_exact_and_regex_dependencies(start_server: &S
             {
                 "name": "process_1",
                 "command": "echo 'process 1'",
-                "blocked_by_job_names": ["init"],
+                "blocked_by": ["init"],
             },
             {
                 "name": "process_2",
                 "command": "echo 'process 2'",
-                "blocked_by_job_names": ["init"],
+                "blocked_by": ["init"],
             },
             {
                 "name": "special",
                 "command": "echo 'special'",
-                "blocked_by_job_names": ["init"],
+                "blocked_by": ["init"],
             },
             {
                 "name": "finalize",
                 "command": "echo 'finalize'",
-                "blocked_by_job_names": ["special"],
-                "blocked_by_job_name_regexes": ["process_.*"],
+                "blocked_by": ["special"],
+                "blocked_by_regexes": ["process_.*"],
             }
         ],
         "files": null,
