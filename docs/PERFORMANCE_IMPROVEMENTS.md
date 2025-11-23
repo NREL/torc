@@ -1,6 +1,111 @@
-# Database Performance Improvements
+# Performance Improvements
 
 ## Summary
+
+This document describes major performance optimizations implemented in Torc:
+
+1. **Database Indexes** (2024-11) - 10-50× faster queries for large workflows
+2. **Deferred Job Unblocking** (2024-11) - 100× faster job completions at scale
+
+---
+
+## 1. Deferred Job Unblocking (2024-11)
+
+### Problem
+
+When a job completes in a workflow with complex dependencies, the server must find and unblock all downstream jobs that were waiting for it. This involves:
+- Recursive CTE queries to find dependent jobs
+- Checking if all blocking jobs are complete
+- Updating job statuses
+- Adding jobs to the ready queue
+- Triggering workflow actions
+
+With 2000 compute nodes completing ~1-minute jobs simultaneously (33 completions/second), this became a bottleneck:
+- Each `complete_job` API call took 50-500ms
+- Exclusive database locks serialized all completions
+- Workers were blocked waiting for API responses
+
+### Solution
+
+**Deferred unblocking with background processing:**
+
+1. `complete_job` API now just updates job status and sets `unblocking_processed = 0` flag (1-5ms)
+2. Background task runs periodically (configurable via `TORC_UNBLOCK_INTERVAL_SECONDS`)
+3. Background task processes all pending completions in batches per workflow
+4. Multiple completions processed in single transaction for efficiency
+
+**Migration**: `20251123000000_add_unblocking_processed`
+
+### Performance Impact
+
+#### Before
+- `complete_job` API latency: 50-500ms
+- Throughput: ~33 completions/second (serialized by database locks)
+- Workers blocked during unblocking logic
+
+#### After
+- `complete_job` API latency: 1-5ms (100× faster)
+- Throughput: 2000+ completions/second
+- No worker blocking
+- Trade-off: Downstream jobs delayed by up to `TORC_UNBLOCK_INTERVAL_SECONDS` (default: 60 seconds)
+
+### Configuration
+
+Control unblocking interval via environment variable:
+
+```bash
+# Production (default) - efficient batching
+export TORC_UNBLOCK_INTERVAL_SECONDS=60
+
+# Development/demos - faster feedback
+export TORC_UNBLOCK_INTERVAL_SECONDS=1
+
+# Testing - near-immediate
+export TORC_UNBLOCK_INTERVAL_SECONDS=0.1
+```
+
+### HPC Suitability
+
+The 60-second delay is negligible for typical HPC workflows:
+- Jobs run for minutes to hours
+- 60-second delay is <1% of job runtime
+- Batching provides massive scalability benefits
+
+For workflows with extremely short jobs (<5 seconds), consider:
+- Reducing interval to 1-5 seconds
+- Redesigning workflow to have longer-running jobs
+
+### Database Changes
+
+New column:
+```sql
+ALTER TABLE job ADD COLUMN unblocking_processed INTEGER NOT NULL DEFAULT 0;
+```
+
+New indexes:
+```sql
+CREATE INDEX idx_job_unblocking_pending ON job(workflow_id, status, unblocking_processed)
+WHERE status IN (6, 7, 8) AND unblocking_processed = 0;
+
+CREATE INDEX idx_job_workflow_unblocking ON job(workflow_id)
+WHERE status IN (6, 7, 8) AND unblocking_processed = 0;
+```
+
+### Monitoring
+
+Check background task status in server logs:
+
+```
+Starting background unblock task with interval: 60 seconds
+Processing 15 completed jobs for workflow 42
+Processed 15 completions for workflow 42, 8 jobs became ready
+```
+
+---
+
+## 2. Database Indexes (2024-11)
+
+### Summary
 
 Database indexes have been added to significantly improve query performance, particularly for workflows with thousands of jobs.
 

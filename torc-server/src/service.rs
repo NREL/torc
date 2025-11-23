@@ -33,6 +33,7 @@ pub struct ServiceConfig {
     pub require_auth: bool,
     pub log_level: String,
     pub json_logs: bool,
+    pub unblock_interval_seconds: f64,
 }
 
 impl ServiceConfig {
@@ -48,6 +49,7 @@ impl ServiceConfig {
             require_auth: false,
             log_level: "info".to_string(),
             json_logs: false,
+            unblock_interval_seconds: 60.0,
         }
     }
 
@@ -66,6 +68,7 @@ impl ServiceConfig {
             require_auth: false,
             log_level: "info".to_string(),
             json_logs: false,
+            unblock_interval_seconds: 60.0,
         }
     }
 
@@ -89,6 +92,7 @@ impl ServiceConfig {
             require_auth: user_config.require_auth,
             log_level: user_config.log_level.clone(),
             json_logs: user_config.json_logs,
+            unblock_interval_seconds: user_config.unblock_interval_seconds,
         }
     }
 }
@@ -170,6 +174,9 @@ pub fn install_service(config: &ServiceConfig, user_level: bool) -> Result<()> {
     if config.require_auth {
         args.push("--require-auth".into());
     }
+
+    args.push("--unblock-interval-seconds".into());
+    args.push(config.unblock_interval_seconds.to_string().into());
 
     // Create service install context
     let install_ctx = ServiceInstallCtx {

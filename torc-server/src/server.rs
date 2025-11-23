@@ -76,6 +76,7 @@ pub async fn create(
     pool: SqlitePool,
     htpasswd: Option<HtpasswdFile>,
     require_auth: bool,
+    unblock_interval_seconds: f64,
 ) {
     // Resolve hostname to socket address (supports both hostnames and IP addresses)
     let addr = tokio::net::lookup_host(addr)
@@ -84,7 +85,13 @@ pub async fn create(
         .next()
         .expect("No addresses resolved for bind address");
 
-    let server = Server::new(pool);
+    let server = Server::new(pool.clone());
+
+    // Spawn background task for deferred job unblocking
+    let server_clone = server.clone();
+    tokio::spawn(async move {
+        background_unblock_task(server_clone, unblock_interval_seconds).await;
+    });
 
     let service = MakeService::new(server);
 
@@ -142,6 +149,237 @@ pub async fn create(
             .await
             .unwrap()
     }
+}
+
+/// Background task that periodically processes pending job unblocks
+async fn background_unblock_task<C>(server: Server<C>, interval_seconds: f64)
+where
+    C: Has<XSpanIdString> + Send + Sync,
+{
+    info!(
+        "Starting background unblock task with interval: {} seconds",
+        interval_seconds
+    );
+
+    let mut interval = tokio::time::interval(std::time::Duration::from_secs_f64(interval_seconds));
+
+    loop {
+        interval.tick().await;
+
+        if let Err(e) = process_pending_unblocks(&server).await {
+            error!("Error processing pending unblocks: {}", e);
+        }
+    }
+}
+
+/// Process all pending job unblocks across all workflows
+async fn process_pending_unblocks<C>(server: &Server<C>) -> Result<(), ApiError>
+where
+    C: Has<XSpanIdString> + Send + Sync,
+{
+    let done_status = models::JobStatus::Done.to_int();
+    let canceled_status = models::JobStatus::Canceled.to_int();
+    let terminated_status = models::JobStatus::Terminated.to_int();
+
+    // Find all workflows with unprocessed completions
+    let workflows = match sqlx::query!(
+        r#"
+        SELECT DISTINCT workflow_id
+        FROM job
+        WHERE status IN (?, ?, ?)
+          AND unblocking_processed = 0
+        "#,
+        done_status,
+        canceled_status,
+        terminated_status
+    )
+    .fetch_all(server.pool.as_ref())
+    .await
+    {
+        Ok(workflows) => workflows,
+        Err(e) => {
+            error!(
+                "Database error finding workflows with pending unblocks: {}",
+                e
+            );
+            return Err(ApiError("Database error".to_string()));
+        }
+    };
+
+    if workflows.is_empty() {
+        return Ok(());
+    }
+
+    debug!(
+        "Processing pending unblocks for {} workflows",
+        workflows.len()
+    );
+
+    for workflow in workflows {
+        if let Err(e) = process_workflow_unblocks(server, workflow.workflow_id).await {
+            error!(
+                "Error processing unblocks for workflow {}: {}",
+                workflow.workflow_id, e
+            );
+            // Continue processing other workflows even if one fails
+        }
+    }
+
+    Ok(())
+}
+
+/// Process all pending unblocks for a specific workflow
+async fn process_workflow_unblocks<C>(server: &Server<C>, workflow_id: i64) -> Result<(), ApiError>
+where
+    C: Has<XSpanIdString> + Send + Sync,
+{
+    let done_status = models::JobStatus::Done.to_int();
+    let canceled_status = models::JobStatus::Canceled.to_int();
+    let terminated_status = models::JobStatus::Terminated.to_int();
+
+    let mut tx = match server.pool.begin().await {
+        Ok(tx) => tx,
+        Err(e) => {
+            error!(
+                "Failed to begin transaction for workflow {}: {}",
+                workflow_id, e
+            );
+            return Err(ApiError("Database error".to_string()));
+        }
+    };
+
+    // Get all unprocessed completions for this workflow
+    let completed_jobs = match sqlx::query!(
+        r#"
+        SELECT j.id, r.return_code
+        FROM job j
+        JOIN result r ON j.id = r.job_id
+        JOIN workflow_status ws ON j.workflow_id = ws.id AND r.run_id = ws.run_id
+        WHERE j.workflow_id = ?
+          AND j.status IN (?, ?, ?)
+          AND j.unblocking_processed = 0
+        "#,
+        workflow_id,
+        done_status,
+        canceled_status,
+        terminated_status
+    )
+    .fetch_all(&mut *tx)
+    .await
+    {
+        Ok(jobs) => jobs,
+        Err(e) => {
+            error!(
+                "Database error fetching completed jobs for workflow {}: {}",
+                workflow_id, e
+            );
+            return Err(ApiError("Database error".to_string()));
+        }
+    };
+
+    if completed_jobs.is_empty() {
+        return Ok(());
+    }
+
+    debug!(
+        "Processing {} completed jobs for workflow {}",
+        completed_jobs.len(),
+        workflow_id
+    );
+
+    // Track all jobs that become ready for action triggering
+    let mut all_ready_job_ids = Vec::new();
+
+    // Process unblocking for each completed job
+    for job in &completed_jobs {
+        match Server::<EmptyContext>::unblock_jobs_waiting_for_tx(
+            &mut tx,
+            workflow_id,
+            job.id,
+            job.return_code,
+        )
+        .await
+        {
+            Ok(ready_job_ids) => {
+                all_ready_job_ids.extend(ready_job_ids);
+            }
+            Err(e) => {
+                error!(
+                    "Error unblocking jobs for completed job {} in workflow {}: {}",
+                    job.id, workflow_id, e
+                );
+                return Err(e);
+            }
+        }
+    }
+
+    // Mark all as processed
+    let job_ids: Vec<i64> = completed_jobs.iter().map(|j| j.id).collect();
+    let job_ids_str = job_ids
+        .iter()
+        .map(|id| id.to_string())
+        .collect::<Vec<_>>()
+        .join(",");
+
+    // SAFETY: job_ids are i64 from database query results (line 252-269).
+    // i64::to_string() only produces numeric strings - SQL injection impossible.
+    // Using string formatting because sqlx doesn't support parameterized IN clauses.
+    let sql = format!(
+        "UPDATE job SET unblocking_processed = 1 WHERE id IN ({})",
+        job_ids_str
+    );
+
+    if let Err(e) = sqlx::query(&sql).execute(&mut *tx).await {
+        error!(
+            "Database error marking jobs as processed for workflow {}: {}",
+            workflow_id, e
+        );
+        return Err(ApiError("Database error".to_string()));
+    }
+
+    // Commit the transaction
+    if let Err(e) = tx.commit().await {
+        error!(
+            "Failed to commit transaction for workflow {}: {}",
+            workflow_id, e
+        );
+        return Err(ApiError("Database error".to_string()));
+    }
+
+    info!(
+        "Processed {} completions for workflow {}, {} jobs became ready",
+        completed_jobs.len(),
+        workflow_id,
+        all_ready_job_ids.len()
+    );
+
+    // After committing, trigger on_jobs_ready actions for jobs that became ready
+    // This must be done AFTER the transaction commit to avoid SQLite database locks
+    if !all_ready_job_ids.is_empty() {
+        debug!(
+            "process_workflow_unblocks: checking on_jobs_ready actions for {} jobs that became ready",
+            all_ready_job_ids.len()
+        );
+
+        // Trigger on_jobs_ready actions that involve the newly ready jobs
+        if let Err(e) = server
+            .workflow_actions_api
+            .check_and_trigger_actions(
+                workflow_id,
+                "on_jobs_ready",
+                Some(all_ready_job_ids.clone()),
+            )
+            .await
+        {
+            error!(
+                "Failed to check_and_trigger_actions for on_jobs_ready: {}",
+                e
+            );
+            // Don't fail the entire operation, but log the error
+        }
+    }
+
+    Ok(())
 }
 
 #[derive(Clone)]
@@ -698,8 +936,8 @@ impl<C> Server<C> {
             )));
         }
 
-        // 3. For terminal statuses, check if result exists and get return_code
-        let return_code = if new_status.is_complete() {
+        // 3. For terminal statuses, check if result exists
+        if new_status.is_complete() {
             let result_record = match sqlx::query!(
                 "SELECT return_code FROM result WHERE job_id = ? AND run_id = ?",
                 job_id,
@@ -715,57 +953,86 @@ impl<C> Server<C> {
                 }
             };
 
-            match result_record {
-                Some(row) => row.return_code,
-                None => {
-                    error!(
-                        "No result found for job ID {} and run_id {}",
-                        job_id, run_id
-                    );
-                    return Err(ApiError(format!(
-                        "No result found for job ID {} and run_id {} when transitioning to terminal status '{}'",
-                        job_id, run_id, new_status
-                    )));
-                }
-            }
-        } else {
-            -1
-        };
-        // 4. Update the job status in the database
-        let new_status_int = new_status.to_int();
-
-        match sqlx::query!(
-            "UPDATE job SET status = ? WHERE id = ?",
-            new_status_int,
-            job_id
-        )
-        .execute(self.pool.as_ref())
-        .await
-        {
-            Ok(result) => {
-                if result.rows_affected() == 0 {
-                    error!(
-                        "No rows affected for job ID {} when updating status",
-                        job_id
-                    );
-                    return Err(ApiError(format!(
-                        "Failed to update job status: no rows affected for job ID {}",
-                        job_id
-                    )));
-                }
-            }
-            Err(e) => {
-                error!("Database error updating job status: {}", e);
+            if result_record.is_none() {
+                error!(
+                    "No result found for job ID {} and run_id {}",
+                    job_id, run_id
+                );
                 return Err(ApiError(format!(
-                    "Database error updating job status: {}",
-                    e
+                    "No result found for job ID {} and run_id {} when transitioning to terminal status '{}'",
+                    job_id, run_id, new_status
                 )));
             }
         }
-        // 5. If the new status is complete, check for jobs that can be unblocked
+
+        // 4. Update the job status in the database
+        // If transitioning to a complete status, mark as needing unblock processing
+        let new_status_int = new_status.to_int();
+
         if new_status.is_complete() {
-            self.unblock_jobs_waiting_for(job_id, current_job.workflow_id, return_code)
-                .await?;
+            // Set unblocking_processed = 0 so background task will process this
+            match sqlx::query!(
+                "UPDATE job SET status = ?, unblocking_processed = 0 WHERE id = ?",
+                new_status_int,
+                job_id
+            )
+            .execute(self.pool.as_ref())
+            .await
+            {
+                Ok(result) => {
+                    if result.rows_affected() == 0 {
+                        error!(
+                            "No rows affected for job ID {} when updating status",
+                            job_id
+                        );
+                        return Err(ApiError(format!(
+                            "Failed to update job status: no rows affected for job ID {}",
+                            job_id
+                        )));
+                    }
+                }
+                Err(e) => {
+                    error!("Database error updating job status: {}", e);
+                    return Err(ApiError(format!(
+                        "Database error updating job status: {}",
+                        e
+                    )));
+                }
+            }
+            debug!(
+                "Marked job {} as complete, unblocking will be processed by background task",
+                job_id
+            );
+        } else {
+            // For non-complete statuses, just update status
+            match sqlx::query!(
+                "UPDATE job SET status = ? WHERE id = ?",
+                new_status_int,
+                job_id
+            )
+            .execute(self.pool.as_ref())
+            .await
+            {
+                Ok(result) => {
+                    if result.rows_affected() == 0 {
+                        error!(
+                            "No rows affected for job ID {} when updating status",
+                            job_id
+                        );
+                        return Err(ApiError(format!(
+                            "Failed to update job status: no rows affected for job ID {}",
+                            job_id
+                        )));
+                    }
+                }
+                Err(e) => {
+                    error!("Database error updating job status: {}", e);
+                    return Err(ApiError(format!(
+                        "Database error updating job status: {}",
+                        e
+                    )));
+                }
+            }
         }
 
         // 6. If reverting from complete to non-complete status, reset downstream jobs
@@ -780,29 +1047,28 @@ impl<C> Server<C> {
         Ok(())
     }
 
-    /// Unblock jobs that were waiting for a completed job and add them to ready_queue if appropriate.
+    /// Unblock jobs using a provided transaction (for batch processing).
     ///
-    /// This function finds all jobs that were blocked by the completed job and checks if they
-    /// can now be unblocked. A job can be unblocked if it's no longer blocked by any incomplete jobs.
-    /// Uses a recursive CTE to handle cascading cancellations in a single database transaction with
-    /// an IMMEDIATE lock to prevent concurrent modifications.
+    /// This is the internal implementation that accepts a transaction parameter,
+    /// allowing the background task to process multiple completions in one transaction.
     ///
     /// # Arguments
+    /// * `tx` - The database transaction to use
     /// * `completed_job_id` - The ID of the job that just completed
     /// * `workflow_id` - The workflow ID containing the jobs
     /// * `return_code` - The return code of the completed job (0 = success, non-zero = failure)
     ///
     /// # Returns
-    /// * `Ok(())` if the operation succeeds
+    /// * `Ok(Vec<i64>)` - IDs of jobs that became ready (for triggering actions)
     /// * `Err(ApiError)` if there's a database error
-    async fn unblock_jobs_waiting_for(
-        &self,
-        completed_job_id: i64,
+    async fn unblock_jobs_waiting_for_tx(
+        tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
         workflow_id: i64,
+        completed_job_id: i64,
         return_code: i64,
-    ) -> Result<(), ApiError> {
+    ) -> Result<Vec<i64>, ApiError> {
         debug!(
-            "unblock_jobs_waiting_for: checking jobs blocked by job_id={} in workflow={} with return_code={}",
+            "unblock_jobs_waiting_for_tx: checking jobs blocked by job_id={} in workflow={} with return_code={}",
             completed_job_id, workflow_id, return_code
         );
 
@@ -811,16 +1077,6 @@ impl<C> Server<C> {
         let terminated_status = models::JobStatus::Terminated.to_int();
         let ready_status = models::JobStatus::Ready.to_int();
         let blocked_status = models::JobStatus::Blocked.to_int();
-
-        // Begin a transaction to ensure atomicity
-        // Note: SQLx automatically uses BEGIN IMMEDIATE for SQLite when the first write occurs
-        let mut tx = match self.pool.begin().await {
-            Ok(tx) => tx,
-            Err(e) => {
-                error!("Failed to begin transaction: {}", e);
-                return Err(ApiError("Database error".to_string()));
-            }
-        };
 
         // Use a recursive CTE to find all jobs that need status updates (including cascading cancellations)
         // The CTE propagates return codes through the dependency chain to determine final status
@@ -901,31 +1157,26 @@ impl<C> Server<C> {
         .bind(done_status)           // Recursive case: complete statuses
         .bind(canceled_status)
         .bind(terminated_status)
-        .fetch_all(&mut *tx)
+        .fetch_all(&mut **tx)
         .await
         {
             Ok(rows) => rows,
             Err(e) => {
                 error!("Database error finding jobs to unblock: {}", e);
-                let _ = tx.rollback().await;
                 return Err(ApiError("Database error".to_string()));
             }
         };
 
         if jobs_to_update.is_empty() {
             debug!(
-                "unblock_jobs_waiting_for: no jobs to unblock after completion of job_id={}",
+                "unblock_jobs_waiting_for_tx: no jobs to unblock after completion of job_id={}",
                 completed_job_id
             );
-            if let Err(e) = tx.commit().await {
-                error!("Failed to commit transaction: {}", e);
-                return Err(ApiError("Database error".to_string()));
-            }
-            return Ok(()); // No jobs to unblock
+            return Ok(Vec::new()); // No jobs to unblock
         }
 
         debug!(
-            "unblock_jobs_waiting_for: found {} jobs to update after completion of job_id={}",
+            "unblock_jobs_waiting_for_tx: found {} jobs to update after completion of job_id={}",
             jobs_to_update.len(),
             completed_job_id
         );
@@ -954,7 +1205,7 @@ impl<C> Server<C> {
                 workflow_id,
                 blocked_status
             )
-            .execute(&mut *tx)
+            .execute(&mut **tx)
             .await
             {
                 Ok(result) => {
@@ -968,7 +1219,7 @@ impl<C> Server<C> {
                         }
 
                         debug!(
-                            "unblock_jobs_waiting_for: updated job_id={} to status={}",
+                            "unblock_jobs_waiting_for_tx: updated job_id={} to status={}",
                             job_id,
                             if new_status == ready_status {
                                 "ready"
@@ -980,7 +1231,6 @@ impl<C> Server<C> {
                 }
                 Err(e) => {
                     error!("Database error updating job {} status: {}", job_id, e);
-                    let _ = tx.rollback().await;
                     return Err(ApiError("Database error".to_string()));
                 }
             }
@@ -996,23 +1246,65 @@ impl<C> Server<C> {
                     job_id,
                     resource_requirements_id
                 )
-                .execute(&mut *tx)
+                .execute(&mut **tx)
                 .await
                 {
                     Ok(_) => {
                         debug!(
-                            "unblock_jobs_waiting_for: added job_id={} to ready_queue",
+                            "unblock_jobs_waiting_for_tx: added job_id={} to ready_queue",
                             job_id
                         );
                     }
                     Err(e) => {
                         error!("Database error inserting into ready_queue: {}", e);
-                        let _ = tx.rollback().await;
                         return Err(ApiError("Database error".to_string()));
                     }
                 }
             }
         }
+
+        debug!(
+            "unblock_jobs_waiting_for_tx: successfully updated {} jobs ({} ready, {} canceled) after completion of job_id={}",
+            updated_count, ready_count, canceled_count, completed_job_id
+        );
+
+        Ok(ready_job_ids)
+    }
+
+    /// Unblock jobs that were waiting for a completed job and add them to ready_queue if appropriate.
+    ///
+    /// This function finds all jobs that were blocked by the completed job and checks if they
+    /// can now be unblocked. A job can be unblocked if it's no longer blocked by any incomplete jobs.
+    /// Uses a recursive CTE to handle cascading cancellations in a single database transaction with
+    /// an IMMEDIATE lock to prevent concurrent modifications.
+    ///
+    /// # Arguments
+    /// * `completed_job_id` - The ID of the job that just completed
+    /// * `workflow_id` - The workflow ID containing the jobs
+    /// * `return_code` - The return code of the completed job (0 = success, non-zero = failure)
+    ///
+    /// # Returns
+    /// * `Ok(())` if the operation succeeds
+    /// * `Err(ApiError)` if there's a database error
+    async fn unblock_jobs_waiting_for(
+        &self,
+        completed_job_id: i64,
+        workflow_id: i64,
+        return_code: i64,
+    ) -> Result<(), ApiError> {
+        // Begin a transaction
+        let mut tx = match self.pool.begin().await {
+            Ok(tx) => tx,
+            Err(e) => {
+                error!("Failed to begin transaction: {}", e);
+                return Err(ApiError("Database error".to_string()));
+            }
+        };
+
+        // Call the transaction-based helper
+        let ready_job_ids =
+            Self::unblock_jobs_waiting_for_tx(&mut tx, workflow_id, completed_job_id, return_code)
+                .await?;
 
         // Commit the transaction
         if let Err(e) = tx.commit().await {
@@ -1045,11 +1337,6 @@ impl<C> Server<C> {
                 // Don't fail the entire operation, but log the error
             }
         }
-
-        debug!(
-            "unblock_jobs_waiting_for: successfully updated {} jobs ({} ready, {} canceled) after completion of job_id={}",
-            updated_count, ready_count, canceled_count, completed_job_id
-        );
 
         Ok(())
     }

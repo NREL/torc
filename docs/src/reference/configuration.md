@@ -28,6 +28,27 @@ Logging level for server output.
 RUST_LOG=debug
 ```
 
+### TORC_UNBLOCK_INTERVAL_SECONDS
+
+Interval (in seconds) for the background task that processes job completions and unblocks downstream dependent jobs.
+
+**Default**: `60.0`
+
+**Recommended values**:
+- **Production**: `60` - Efficient batching, minimal overhead
+- **Development/Demos**: `1.0` to `5.0` - Faster feedback for short jobs
+- **Testing**: `0.1` - Near-immediate unblocking for integration tests
+
+**Example**:
+```bash
+TORC_UNBLOCK_INTERVAL_SECONDS=1.0
+```
+
+**Performance implications**:
+- Shorter intervals provide faster downstream job propagation but increase database load
+- Longer intervals batch more completions together for higher efficiency
+- For HPC workflows with minute-to-hour long jobs, the default 60 seconds is negligible
+
 ### Server Port
 
 Set via command-line flag:

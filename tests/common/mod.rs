@@ -108,6 +108,8 @@ fn start_process(db_url: &str, db_file: NamedTempFile) -> ServerProcess {
     let child = Command::new(get_exe_path("./target/debug/torc-server"))
         .arg("--port")
         .arg(port.to_string())
+        .arg("--unblock-interval-seconds")
+        .arg("0.1")
         .env("DATABASE_URL", db_url)
         .env("RUST_LOG", "info")
         .stdout(std::process::Stdio::inherit())
