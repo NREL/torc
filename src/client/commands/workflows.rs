@@ -220,15 +220,15 @@ pub enum WorkflowCommands {
         #[arg(long)]
         no_prompts: bool,
     },
-    /// Validate a workflow specification and show the execution plan
-    Validate {
-        /// Path to specification file OR workflow ID to validate
+    /// Show the execution plan for a workflow specification or existing workflow
+    ExecutionPlan {
+        /// Path to specification file OR workflow ID
         #[arg()]
         spec_or_id: String,
     },
 }
 
-fn validate_workflow_from_spec(file_path: &str, format: &str) {
+fn show_execution_plan_from_spec(file_path: &str, format: &str) {
     // Parse the workflow spec
     let mut spec = match WorkflowSpec::from_spec_file(file_path) {
         Ok(spec) => spec,
@@ -308,7 +308,7 @@ fn validate_workflow_from_spec(file_path: &str, format: &str) {
     }
 }
 
-fn validate_workflow_from_database(config: &Configuration, workflow_id: i64, format: &str) {
+fn show_execution_plan_from_database(config: &Configuration, workflow_id: i64, format: &str) {
     // Fetch workflow from database
     let workflow = match default_api::get_workflow(config, workflow_id) {
         Ok(wf) => wf,
@@ -1661,14 +1661,14 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                 }
             }
         }
-        WorkflowCommands::Validate { spec_or_id } => {
+        WorkflowCommands::ExecutionPlan { spec_or_id } => {
             // Try to parse as workflow ID first, otherwise treat as file path
             if let Ok(workflow_id) = spec_or_id.parse::<i64>() {
-                // Validate existing workflow from database
-                validate_workflow_from_database(config, workflow_id, format);
+                // Show execution plan for existing workflow from database
+                show_execution_plan_from_database(config, workflow_id, format);
             } else {
-                // Validate from spec file
-                validate_workflow_from_spec(spec_or_id, format);
+                // Show execution plan for workflow from spec file
+                show_execution_plan_from_spec(spec_or_id, format);
             }
         }
     }
