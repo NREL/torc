@@ -1791,7 +1791,10 @@ fn test_create_workflows_from_all_example_files(start_server: &ServerProcess) {
 
         // Skip if subdirectory doesn't exist
         if !subdir_path.exists() {
-            eprintln!("Warning: Subdirectory {:?} does not exist, skipping", subdir);
+            eprintln!(
+                "Warning: Subdirectory {:?} does not exist, skipping",
+                subdir
+            );
             continue;
         }
 
@@ -1830,7 +1833,10 @@ fn test_create_workflows_from_all_example_files(start_server: &ServerProcess) {
 
     // Test each spec file
     for spec_file in all_spec_files {
-        eprintln!("Testing workflow spec: {:?}", spec_file.strip_prefix(&examples_dir).unwrap_or(&spec_file));
+        eprintln!(
+            "Testing workflow spec: {:?}",
+            spec_file.strip_prefix(&examples_dir).unwrap_or(&spec_file)
+        );
 
         // Read the spec to get the user field
         let spec = WorkflowSpec::from_spec_file(&spec_file)

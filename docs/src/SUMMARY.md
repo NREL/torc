@@ -43,8 +43,9 @@
 # Reference
 
 - [Reference](./reference/README.md)
-  - [OpenAPI Specification](./reference/openapi.md)
+  - [Workflow Specification Formats](./reference/workflow-formats.md)
   - [Job Parameterization](./reference/parameterization.md)
+  - [OpenAPI Specification](./reference/openapi.md)
   - [Configuration](./reference/configuration.md)
   - [Security](./reference/security.md)
 

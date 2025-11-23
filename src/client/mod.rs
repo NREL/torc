@@ -7,6 +7,7 @@ pub mod apis;
 pub mod async_cli_command;
 pub mod commands;
 pub mod errors;
+pub mod execution_plan;
 pub mod hpc;
 pub mod job_runner;
 pub mod log_paths;

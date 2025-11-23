@@ -97,40 +97,88 @@ JSON5 allows comments and trailing commas:
 
 ### KDL Format
 
-Alternative configuration language:
+Alternative configuration language with a more modern syntax:
 
 ```kdl
 name "my_workflow"
 user "username"
 description "Process data pipeline"
 
-jobs {
-  job {
-    name "preprocess"
-    command "bash preprocess.sh -o ${files.output.results}"
-    resource_requirements_name "small"
-  }
-  job {
-    name "analyze"
-    command "python anaylyze.py -i ${files.input.preprocessed_data} -o ${files.output.results}"
-    resource_requirements_name "small"
-  }
-}
+// File definitions
+file "preprocessed_data" path="/tmp/preprocessed.json"
+file "results" path="/tmp/results.csv"
 
-files {
-  file name="preprocessed_data" path="/tmp/preprocessed.json"
-}
-
-resource_requirements {
-  requirement {
-    name "small"
+// Resource requirements
+resource_requirements "small" {
     num_cpus 2
+    num_gpus 0
+    num_nodes 1
     memory "4g"
     runtime "PT30M"
-  }
 }
 
+resource_requirements "large" {
+    num_cpus 16
+    num_gpus 1
+    num_nodes 1
+    memory "64g"
+    runtime "PT4H"
+}
+
+// Job definitions
+job "preprocess" {
+    command "bash preprocess.sh -o ${files.output.preprocessed_data}"
+    resource_requirements_name "small"
+}
+
+job "analyze" {
+    command "python analyze.py -i ${files.input.preprocessed_data} -o ${files.output.results}"
+    resource_requirements_name "large"
+}
 ```
+
+**Note**: In KDL, boolean values use `#true` and `#false` syntax (e.g., `enabled #true`).
+
+## Choosing a Format
+
+**Use YAML when:**
+- You need parameter expansion for job/file generation
+- You want the most widely supported format
+- You're creating complex workflows with many repeated patterns
+
+**Use JSON5 when:**
+- You need JSON compatibility
+- You want to programmatically generate or manipulate workflows
+- You prefer JSON-like structure with comment support
+
+**Use KDL when:**
+- You prefer minimal, clean syntax
+- Your workflow doesn't require parameterization
+- You want a more modern configuration language
+
+All three formats support the same core features (jobs, files, user_data, resource requirements, Slurm schedulers, actions, and resource monitoring), with **parameterization** being the main differentiator (only available in YAML and JSON5).
+
+## Example Workflows
+
+The Torc repository includes comprehensive examples in all three formats, organized by type:
+
+```
+examples/
+├── yaml/     # YAML format examples (all workflows)
+├── json/     # JSON5 format examples (all workflows)
+└── kdl/      # KDL format examples (non-parameterized workflows)
+```
+
+Browse the examples directory to find:
+- **Simple workflows**: `sample_workflow`, `diamond_workflow`, `three_stage_workflow`
+- **Resource monitoring**: `resource_monitoring_demo`
+- **Workflow actions**: `workflow_actions_*`
+- **Slurm integration**: `slurm_staged_pipeline`, `workflow_actions_simple_slurm`
+- **Parameterized workflows** (YAML/JSON5 only): `hundred_jobs_parameterized`, `hyperparameter_sweep`, `data_pipeline_parameterized`
+
+Each workflow is available in multiple formats so you can compare syntax and choose your preference.
+
+
 ## One Job at a Time via CLI
 
 To create a workflow with individual job creation:

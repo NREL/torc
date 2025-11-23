@@ -220,6 +220,189 @@ pub enum WorkflowCommands {
         #[arg(long)]
         no_prompts: bool,
     },
+    /// Validate a workflow specification and show the execution plan
+    Validate {
+        /// Path to specification file OR workflow ID to validate
+        #[arg()]
+        spec_or_id: String,
+    },
+}
+
+fn validate_workflow_from_spec(file_path: &str, format: &str) {
+    // Parse the workflow spec
+    let mut spec = match WorkflowSpec::from_spec_file(file_path) {
+        Ok(spec) => spec,
+        Err(e) => {
+            eprintln!("Error parsing workflow specification: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    // Expand parameters
+    if let Err(e) = spec.expand_parameters() {
+        eprintln!("Error expanding parameters: {}", e);
+        std::process::exit(1);
+    }
+
+    // Validate actions
+    if let Err(e) = spec.validate_actions() {
+        eprintln!("Error validating actions: {}", e);
+        std::process::exit(1);
+    }
+
+    // Perform variable substitution to extract file/data dependencies
+    if let Err(e) = spec.substitute_variables() {
+        eprintln!("Error substituting variables: {}", e);
+        std::process::exit(1);
+    }
+
+    // Build execution plan
+    match crate::client::execution_plan::ExecutionPlan::from_spec(&spec) {
+        Ok(plan) => {
+            if format == "json" {
+                // For JSON output, create a structured representation
+                let stages_json: Vec<serde_json::Value> = plan.stages.iter().map(|stage| {
+                    serde_json::json!({
+                        "stage_number": stage.stage_number + 1,  // Display as 1-based
+                        "trigger": stage.trigger_description,
+                        "scheduler_allocations": stage.scheduler_allocations.iter().map(|alloc| {
+                            serde_json::json!({
+                                "scheduler_name": alloc.scheduler_name,
+                                "scheduler_type": alloc.scheduler_type,
+                                "num_allocations": alloc.num_allocations,
+                                "job_names": alloc.job_names,
+                            })
+                        }).collect::<Vec<_>>(),
+                        "jobs_becoming_ready": stage.jobs_becoming_ready,
+                    })
+                }).collect();
+
+                let output = serde_json::json!({
+                    "status": "success",
+                    "source": "spec_file",
+                    "workflow_name": spec.name,
+                    "total_stages": plan.stages.len(),
+                    "total_jobs": spec.jobs.len(),
+                    "stages": stages_json,
+                });
+
+                match serde_json::to_string_pretty(&output) {
+                    Ok(json) => println!("{}", json),
+                    Err(e) => {
+                        eprintln!("Error serializing execution plan: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            } else {
+                // Display in human-readable format
+                println!("\nWorkflow: {}", spec.name);
+                println!("Description: {}", spec.description);
+                println!("Total Jobs: {}", spec.jobs.len());
+                plan.display();
+            }
+        }
+        Err(e) => {
+            eprintln!("Error building execution plan: {}", e);
+            std::process::exit(1);
+        }
+    }
+}
+
+fn validate_workflow_from_database(config: &Configuration, workflow_id: i64, format: &str) {
+    // Fetch workflow from database
+    let workflow = match default_api::get_workflow(config, workflow_id) {
+        Ok(wf) => wf,
+        Err(e) => {
+            eprintln!("Error fetching workflow {}: {}", workflow_id, e);
+            std::process::exit(1);
+        }
+    };
+
+    // Fetch all jobs for this workflow
+    let jobs_response = match default_api::list_jobs(
+        config,
+        workflow_id,
+        None,        // status
+        None,        // needs_file_id
+        None,        // upstream_job_id
+        None,        // offset
+        Some(10000), // limit - get all jobs
+        None,        // sort_by
+        None,        // reverse_sort
+        Some(true),  // include_relationships
+    ) {
+        Ok(response) => response,
+        Err(e) => {
+            eprintln!("Error fetching jobs for workflow {}: {}", workflow_id, e);
+            std::process::exit(1);
+        }
+    };
+
+    let jobs = jobs_response.items.unwrap_or_default();
+
+    // Fetch workflow actions
+    let actions = match default_api::get_workflow_actions(config, workflow_id) {
+        Ok(actions) => actions,
+        Err(e) => {
+            eprintln!("Error fetching actions for workflow {}: {}", workflow_id, e);
+            std::process::exit(1);
+        }
+    };
+
+    // Build execution plan from database models
+    match crate::client::execution_plan::ExecutionPlan::from_database_models(
+        &workflow, &jobs, &actions,
+    ) {
+        Ok(plan) => {
+            if format == "json" {
+                let stages_json: Vec<serde_json::Value> = plan.stages.iter().map(|stage| {
+                    serde_json::json!({
+                        "stage_number": stage.stage_number + 1,
+                        "trigger": stage.trigger_description,
+                        "scheduler_allocations": stage.scheduler_allocations.iter().map(|alloc| {
+                            serde_json::json!({
+                                "scheduler_name": alloc.scheduler_name,
+                                "scheduler_type": alloc.scheduler_type,
+                                "num_allocations": alloc.num_allocations,
+                                "job_names": alloc.job_names,
+                            })
+                        }).collect::<Vec<_>>(),
+                        "jobs_becoming_ready": stage.jobs_becoming_ready,
+                    })
+                }).collect();
+
+                let output = serde_json::json!({
+                    "status": "success",
+                    "source": "database",
+                    "workflow_id": workflow_id,
+                    "workflow_name": workflow.name,
+                    "total_stages": plan.stages.len(),
+                    "total_jobs": jobs.len(),
+                    "stages": stages_json,
+                });
+
+                match serde_json::to_string_pretty(&output) {
+                    Ok(json) => println!("{}", json),
+                    Err(e) => {
+                        eprintln!("Error serializing execution plan: {}", e);
+                        std::process::exit(1);
+                    }
+                }
+            } else {
+                println!("\nWorkflow ID: {}", workflow_id);
+                println!("Workflow: {}", workflow.name);
+                if let Some(desc) = &workflow.description {
+                    println!("Description: {}", desc);
+                }
+                println!("Total Jobs: {}", jobs.len());
+                plan.display();
+            }
+        }
+        Err(e) => {
+            eprintln!("Error building execution plan from database: {}", e);
+            std::process::exit(1);
+        }
+    }
 }
 
 pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowCommands, format: &str) {
@@ -1476,6 +1659,16 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                     }
                     std::process::exit(1);
                 }
+            }
+        }
+        WorkflowCommands::Validate { spec_or_id } => {
+            // Try to parse as workflow ID first, otherwise treat as file path
+            if let Ok(workflow_id) = spec_or_id.parse::<i64>() {
+                // Validate existing workflow from database
+                validate_workflow_from_database(config, workflow_id, format);
+            } else {
+                // Validate from spec file
+                validate_workflow_from_spec(spec_or_id, format);
             }
         }
     }

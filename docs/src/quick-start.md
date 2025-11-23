@@ -17,7 +17,7 @@ torc workflows list
 
 ## Create a Workflow Specification
 
-Save as `workflow.yaml`:
+Torc supports YAML, JSON5, and KDL formats. Save as `workflow.yaml`:
 
 ```yaml
 name: hello_world
@@ -29,6 +29,8 @@ jobs:
   - name: job 2
     command: echo "Hello again from torc!"
 ```
+
+> **Note:** Torc also accepts `.json5` and `.kdl` workflow specifications. See the [Workflow Specification Formats](./reference/workflow-formats.md) reference for details on all supported formats.
 
 ## Run Jobs
 Run the jobs on the current computer. Use a short poll interval for demo purposes.
@@ -52,11 +54,15 @@ torc-tui
 
 ## Example: Diamond Workflow
 
-A workflow with fan-out and fan-in dependencies:
+A workflow with fan-out and fan-in dependencies. You can find this example in the repository:
+- `examples/yaml/diamond_workflow.yaml`
+- `examples/json/diamond_workflow.json5`
+- `examples/kdl/diamond_workflow.kdl`
 
 ```yaml
-name: diamon_workflow
+name: diamond_workflow
 description: Example workflow with implicit dependencies
+
 jobs:
   - name: preprocess
     command: "bash tests/scripts/preprocess.sh -i ${files.input.f1} -o ${files.output.f2} -o ${files.output.f3}"
@@ -74,19 +80,14 @@ jobs:
 files:
   - name: f1
     path: f1.json
-
   - name: f2
     path: f2.json
-
   - name: f3
     path: f3.json
-
   - name: f4
     path: f4.json
-
   - name: f5
     path: f5.json
-
   - name: f6
     path: f6.json
 ```
@@ -94,3 +95,13 @@ files:
 Dependencies are automatically inferred:
 - `work1` and `work2` wait for `preprocess` (depend on its output files)
 - `postprocess` waits for both `work1` and `work2` to complete
+
+## More Examples
+
+The `examples/` directory contains many more workflow examples in all supported formats:
+- Simple workflows and resource monitoring
+- Workflow actions for automation
+- Slurm integration examples
+- Parameterized workflows (YAML/JSON5 only)
+
+Browse `examples/yaml/`, `examples/json/`, or `examples/kdl/` to explore the full collection.

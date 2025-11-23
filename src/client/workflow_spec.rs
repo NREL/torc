@@ -1605,16 +1605,10 @@ impl WorkflowSpec {
             for child in children.nodes() {
                 match child.name().value() {
                     "is_ephemeral" => {
-                        is_ephemeral = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_bool());
+                        is_ephemeral = child.entries().first().and_then(|e| e.value().as_bool());
                     }
                     "data" => {
-                        data_str = child
-                            .entries()
-                            .first()
-                            .and_then(|e| e.value().as_string());
+                        data_str = child.entries().first().and_then(|e| e.value().as_string());
                     }
                     _ => {}
                 }
@@ -1844,7 +1838,9 @@ impl WorkflowSpec {
                                     crate::client::resource_monitor::MonitorGranularity::TimeSeries
                                 }
                                 _ => {
-                                    return Err(format!("Invalid granularity: {}", value_str).into());
+                                    return Err(
+                                        format!("Invalid granularity: {}", value_str).into()
+                                    );
                                 }
                             };
                         }
@@ -1873,9 +1869,7 @@ impl WorkflowSpec {
     }
 
     #[cfg(feature = "client")]
-    fn parse_kdl_action(
-        node: &KdlNode,
-    ) -> Result<WorkflowActionSpec, Box<dyn std::error::Error>> {
+    fn parse_kdl_action(node: &KdlNode) -> Result<WorkflowActionSpec, Box<dyn std::error::Error>> {
         let mut spec = WorkflowActionSpec {
             trigger_type: String::new(),
             action_type: String::new(),
@@ -2042,7 +2036,7 @@ impl WorkflowSpec {
     /// - ${files.output.NAME} - output file (automatically adds to output_file_names)
     /// - ${user_data.input.NAME} - input user data (automatically adds to input_user_data_names)
     /// - ${user_data.output.NAME} - output user data (automatically adds to output_data_names)
-    fn substitute_variables(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn substitute_variables(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         // Build file name to path mapping
         let mut file_name_to_path = HashMap::new();
         if let Some(files) = &self.files {
