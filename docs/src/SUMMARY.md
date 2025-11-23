@@ -33,6 +33,7 @@
   - [Working with Slurm](./how-to/slurm.md)
   - [Managing Resources](./how-to/resources.md)
   - [Resource Monitoring](./how-to/resource-monitoring.md)
+  - [Web Dashboard](./how-to/dashboard.md)
   - [Debugging Workflows](./how-to/debugging.md)
   - [Authentication](./how-to/authentication.md)
   - [Shell Completions](./how-to/shell-completions.md)
@@ -42,8 +43,9 @@
 # Reference
 
 - [Reference](./reference/README.md)
-  - [OpenAPI Specification](./reference/openapi.md)
+  - [Workflow Specification Formats](./reference/workflow-formats.md)
   - [Job Parameterization](./reference/parameterization.md)
+  - [OpenAPI Specification](./reference/openapi.md)
   - [Configuration](./reference/configuration.md)
   - [Security](./reference/security.md)
 

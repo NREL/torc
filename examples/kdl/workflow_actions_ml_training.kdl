@@ -1,0 +1,122 @@
+// ML Training with Auto-Scaling in KDL format
+// Demonstrates on_jobs_ready action for dynamic resource allocation
+// Note: This is a simplified version. For parameterized jobs (train_model_1 through train_model_8),
+// see the YAML/JSON5 version which uses parameter expansion.
+
+name "ML Training with Auto-Scaling"
+user "ml_researcher"
+description "Demonstrates on_jobs_ready action for dynamic resource allocation"
+
+// Resource requirements
+resource_requirements "small" {
+    num_cpus 2
+    num_gpus 0
+    num_nodes 1
+    memory "4g"
+    runtime "PT30M"
+}
+
+resource_requirements "medium" {
+    num_cpus 4
+    num_gpus 0
+    num_nodes 1
+    memory "8g"
+    runtime "PT1H"
+}
+
+resource_requirements "gpu" {
+    num_cpus 8
+    num_gpus 1
+    num_nodes 1
+    memory "32g"
+    runtime "PT4H"
+}
+
+// Slurm scheduler
+slurm_scheduler "gpu_cluster" {
+    account "ml_project"
+    partition "gpu"
+    nodes 2
+    walltime "04:00:00"
+    gres "gpu:1"
+}
+
+// Jobs
+job "preprocess_data" {
+    command "python scripts/preprocess.py --input data/raw --output data/processed"
+    resource_requirements "small"
+}
+
+// Training jobs (simplified - see YAML/JSON5 for parameterized version with 8 models)
+job "train_model_1" {
+    command "python scripts/train.py --model 1 --data data/processed --output models/model_1"
+    resource_requirements "gpu"
+    blocked_by_job "preprocess_data"
+}
+
+job "train_model_2" {
+    command "python scripts/train.py --model 2 --data data/processed --output models/model_2"
+    resource_requirements "gpu"
+    blocked_by_job "preprocess_data"
+}
+
+job "train_model_3" {
+    command "python scripts/train.py --model 3 --data data/processed --output models/model_3"
+    resource_requirements "gpu"
+    blocked_by_job "preprocess_data"
+}
+
+job "evaluate" {
+    command "python scripts/evaluate.py --models models/ --output results/evaluation.json"
+    resource_requirements "medium"
+    blocked_by_job "train_model_1"
+    blocked_by_job "train_model_2"
+    blocked_by_job "train_model_3"
+}
+
+// Actions
+
+// Initialize workspace when workflow starts
+action {
+    trigger_type "on_workflow_start"
+    action_type "run_commands"
+    command "echo 'ML Training Pipeline Started' > pipeline.log"
+    command "mkdir -p data/processed models results checkpoints"
+    command "echo 'Checking CUDA availability...'"
+    command "python -c 'import torch; print(f\"CUDA available: {torch.cuda.is_available()}\")'"
+}
+
+// When training jobs become ready, allocate GPU nodes
+action {
+    trigger_type "on_jobs_ready"
+    action_type "schedule_nodes"
+    job_name_regex "train_model_.*"
+    scheduler "gpu_cluster"
+    scheduler_type "slurm"
+    num_allocations 2
+    start_one_worker_per_node #true
+    max_parallel_jobs 4
+}
+
+// Archive models when all training jobs complete
+action {
+    trigger_type "on_jobs_complete"
+    action_type "run_commands"
+    job_name_regex "train_model_.*"
+    command "echo 'All training jobs completed. Archiving models...'"
+    command "tar -czf results/trained_models.tar.gz models/"
+    command "echo 'Generating training summary...'"
+    command "python scripts/summarize_training.py --models models/ --output results/summary.json"
+    command "echo 'Training phase complete' >> pipeline.log"
+}
+
+// Final cleanup and notification
+action {
+    trigger_type "on_workflow_complete"
+    action_type "run_commands"
+    command "echo 'ML Pipeline Completed Successfully' >> pipeline.log"
+    command "python scripts/send_notification.py --status complete --results results/evaluation.json"
+    command "echo 'Uploading results to S3...'"
+    command "aws s3 cp results/ s3://ml-results/$(date +%Y%m%d_%H%M%S)/ --recursive"
+    command "echo 'All done!'"
+}

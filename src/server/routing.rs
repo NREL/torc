@@ -4081,6 +4081,25 @@ where
                         }
                         None => None,
                     };
+                    let param_is_output = query_params
+                        .iter()
+                        .filter(|e| e.0 == "is_output")
+                        .map(|e| e.1.clone())
+                        .next();
+                    let param_is_output = match param_is_output {
+                        Some(param_is_output) => {
+                            let param_is_output =
+                                <bool as std::str::FromStr>::from_str(&param_is_output);
+                            match param_is_output {
+                            Ok(param_is_output) => Some(param_is_output),
+                            Err(e) => return Ok(Response::builder()
+                                .status(StatusCode::BAD_REQUEST)
+                                .body(Body::from(format!("Couldn't parse query parameter is_output - doesn't match schema: {}", e)))
+                                .expect("Unable to create Bad Request response for invalid query parameter is_output")),
+                        }
+                        }
+                        None => None,
+                    };
 
                     let result = api_impl
                         .list_files(
@@ -4092,6 +4111,7 @@ where
                             param_reverse_sort,
                             param_name,
                             param_path,
+                            param_is_output,
                             &context,
                         )
                         .await;

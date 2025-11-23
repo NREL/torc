@@ -222,7 +222,7 @@ Job status values are stored as INTEGER (0-8) in the database, not strings:
 ### Dependencies
 - **Explicit**: Defined in `job_blocked_by` table
 - **Implicit**: Derived from file and user_data input/output relationships
-- **Resolution**: Job specifications use names (`blocked_by_job_names`), which are resolved to IDs during creation
+- **Resolution**: Job specifications use names (`blocked_by`), which are resolved to IDs during creation
 
 ### Job and File Parameterization
 JobSpec and FileSpec support **parameterization** to automatically generate multiple instances from a single specification:

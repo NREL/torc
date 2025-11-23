@@ -738,7 +738,7 @@ fn test_resource_requirements_error_handling(start_server: &ServerProcess) {
 }
 
 #[rstest]
-fn test_resource_requirements_name_variations(start_server: &ServerProcess) {
+fn test_resource_requirements_variations(start_server: &ServerProcess) {
     let config = &start_server.config;
 
     let workflow = create_test_workflow(config, "test_name_variations_workflow");

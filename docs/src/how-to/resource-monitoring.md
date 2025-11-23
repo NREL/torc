@@ -259,7 +259,7 @@ After identifying over-utilized jobs, update your workflow specification:
 jobs:
   - name: train_model
     command: python train.py
-    resource_requirements_name: initial_guess
+    resource_requirements: initial_guess
 
 resource_requirements:
   - name: initial_guess
@@ -273,7 +273,7 @@ resource_requirements:
 jobs:
   - name: train_model
     command: python train.py
-    resource_requirements_name: optimized
+    resource_requirements: optimized
 
 resource_requirements:
   - name: optimized
@@ -529,7 +529,7 @@ jobs:
 
   - name: "train_model"
     command: "python train.py --data processed.pkl --model model.pkl"
-    blocked_by_job_names:
+    blocked_by:
       - "preprocess_data"
     resource_requirements:
       cpus: 8
@@ -538,7 +538,7 @@ jobs:
 
   - name: "evaluate_model"
     command: "python evaluate.py --model model.pkl --output metrics.json"
-    blocked_by_job_names:
+    blocked_by:
       - "train_model"
     resource_requirements:
       cpus: 2

@@ -467,7 +467,7 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
     // Use WorkflowManager to initialize workflow for run 1
     let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to initialize workflow for run 1");
 
     // Get run_id for run 1
@@ -895,7 +895,7 @@ fn test_results_workflow_result_table_cleanup_on_reinitialize(start_server: &Ser
     // Use WorkflowManager to initialize workflow
     let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to initialize workflow for run 1");
 
     // Get run_id for run 1

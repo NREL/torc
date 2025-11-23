@@ -174,6 +174,7 @@ fn test_list_required_existing_files_missing_job_outputs(start_server: &ServerPr
         None, // reverse_sort
         None, // name
         None, // path
+        None, // is_output
     )
     .expect("Failed to list files");
 

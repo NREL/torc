@@ -1285,6 +1285,7 @@ pub trait Api<C: Send + Sync> {
         reverse_sort: Option<bool>,
         name: Option<String>,
         path: Option<String>,
+        is_output: Option<bool>,
         context: &C,
     ) -> Result<ListFilesResponse, ApiError>;
 
@@ -2020,6 +2021,7 @@ pub trait ApiNoContext<C: Send + Sync> {
         reverse_sort: Option<bool>,
         name: Option<String>,
         path: Option<String>,
+        is_output: Option<bool>,
     ) -> Result<ListFilesResponse, ApiError>;
 
     /// Retrieve all jobs for one workflow.
@@ -2799,6 +2801,7 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
         reverse_sort: Option<bool>,
         name: Option<String>,
         path: Option<String>,
+        is_output: Option<bool>,
     ) -> Result<ListFilesResponse, ApiError> {
         let context = self.context().clone();
         self.api()
@@ -2811,6 +2814,7 @@ impl<T: Api<C> + Send + Sync, C: Clone + Send + Sync> ApiNoContext<C> for Contex
                 reverse_sort,
                 name,
                 path,
+                is_output,
                 &context,
             )
             .await

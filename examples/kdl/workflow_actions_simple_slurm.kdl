@@ -1,0 +1,93 @@
+// Simple Workflow with Slurm Actions in KDL format
+// Demonstrates scheduler actions for different workflow stages
+
+name "Simple Workflow with Actions"
+user "demo"
+description "Demonstrates scheduler actions for different workflow stages"
+
+// Resource requirements
+resource_requirements "small" {
+    num_cpus 2
+    num_gpus 0
+    num_nodes 1
+    memory "4g"
+    runtime "PT30M"
+}
+
+resource_requirements "medium" {
+    num_cpus 8
+    num_gpus 0
+    num_nodes 1
+    memory "16g"
+    runtime "PT2H"
+}
+
+// Slurm schedulers
+slurm_scheduler "setup_scheduler" {
+    account "demo_project"
+    nodes 1
+    walltime "00:30:00"
+}
+
+slurm_scheduler "process_scheduler" {
+    account "demo_project"
+    nodes 2
+    walltime "02:00:00"
+}
+
+slurm_scheduler "finalize_scheduler" {
+    account "demo_project"
+    nodes 1
+    walltime "00:30:00"
+}
+
+// Jobs
+job "setup" {
+    command "echo 'Setting up...' && sleep 2"
+    resource_requirements "small"
+}
+
+job "process" {
+    command "echo 'Processing data...' && sleep 5"
+    blocked_by_job "setup"
+    resource_requirements "medium"
+}
+
+job "finalize" {
+    command "echo 'Finalizing...' && sleep 2"
+    blocked_by_job "process"
+    resource_requirements "small"
+}
+
+// Actions
+
+// Allocate resources for setup stage
+action {
+    trigger_type "on_workflow_start"
+    action_type "schedule_nodes"
+    job_name "setup"
+    scheduler "setup_scheduler"
+    scheduler_type "slurm"
+    num_allocations 1
+}
+
+// Allocate resources for processing stage
+action {
+    trigger_type "on_jobs_ready"
+    action_type "schedule_nodes"
+    job_name "process"
+    scheduler "process_scheduler"
+    scheduler_type "slurm"
+    num_allocations 2
+    start_one_worker_per_node #true
+}
+
+// Allocate resources for finalization stage
+action {
+    trigger_type "on_jobs_ready"
+    action_type "schedule_nodes"
+    job_name "finalize"
+    scheduler "finalize_scheduler"
+    scheduler_type "slurm"
+    num_allocations 1
+}

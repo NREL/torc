@@ -441,7 +441,7 @@ fn test_jobs_complete_command_json(start_server: &ServerProcess) {
     // Start the workflow
     let workflow_manager = WorkflowManager::new(config.clone(), workflow);
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to start workflow");
 
     let job = create_test_job(config, workflow_id, "test_complete_job");
@@ -489,7 +489,7 @@ fn test_jobs_complete_with_different_statuses(start_server: &ServerProcess) {
     // Start the workflow
     let workflow_manager = WorkflowManager::new(config.clone(), workflow);
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to start workflow");
 
     // Create a compute node
@@ -537,7 +537,7 @@ fn test_jobs_complete_return_codes(start_server: &ServerProcess) {
 
     let workflow_manager = WorkflowManager::new(config.clone(), workflow);
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to start workflow");
 
     // Create a compute node
@@ -773,7 +773,7 @@ fn test_jobs_update_restriction_status_must_be_uninitialized(start_server: &Serv
     // Start the workflow to change job status from Uninitialized
     let workflow_manager = WorkflowManager::new(config.clone(), workflow);
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to start workflow");
 
     // Get the job to verify it's no longer Uninitialized

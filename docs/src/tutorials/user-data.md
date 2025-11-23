@@ -19,21 +19,21 @@ jobs:
       echo '{"learning_rate": 0.001, "batch_size": 32, "epochs": 10}' > /tmp/config.json
       torc user-data update ${user_data.output.ml_config} \
         --data "$(cat /tmp/config.json)"
-    resource_requirements_name: minimal
+    resource_requirements: minimal
 
   - name: train_model
     command: |
       echo "Training with config:"
       torc user-data get ${user_data.input.ml_config} | jq '.data'
       python train.py --config="${user_data.input.ml_config}"
-    resource_requirements_name: gpu_large
+    resource_requirements: gpu_large
 
   - name: evaluate_model
     command: |
       echo "Evaluating with config:"
       torc user-data get ${user_data.input.ml_config} | jq '.data'
       python evaluate.py --config="${user_data.input.ml_config}"
-    resource_requirements_name: gpu_small
+    resource_requirements: gpu_small
 
 user_data:
   - name: ml_config

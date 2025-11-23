@@ -1,0 +1,65 @@
+// Data Pipeline with Actions in KDL format
+// Demonstrates a multi-stage data pipeline with automated Slurm node scheduling
+
+name "Data Pipeline with Auto-Scheduling"
+user "datauser"
+description "Multi-stage pipeline with workflow actions for automated resource management"
+
+// Resource requirements
+resource_requirements "small_job" {
+    num_cpus 1
+    num_gpus 0
+    num_nodes 1
+    memory "2g"
+    runtime "PT30M"
+}
+
+// Slurm scheduler configuration
+slurm_scheduler "default_slurm" {
+    account "data_project"
+    mem "16G"
+    nodes 1
+    ntasks_per_node 4
+    partition "standard"
+    qos "normal"
+    walltime "02:00:00"
+}
+
+// Jobs
+job "download_data" {
+    command "echo 'Downloading datasets...' && sleep 5"
+    resource_requirements "small_job"
+    scheduler "default_slurm"
+}
+
+job "process_data" {
+    command "echo 'Processing data...' && sleep 10"
+    resource_requirements "small_job"
+    blocked_by_job "download_data"
+    scheduler "default_slurm"
+}
+
+job "analyze_data" {
+    command "echo 'Analyzing results...' && sleep 5"
+    resource_requirements "small_job"
+    blocked_by_job "process_data"
+    scheduler "default_slurm"
+}
+
+// Actions - automatically schedule Slurm nodes when workflow starts
+action {
+    trigger_type "on_workflow_start"
+    action_type "schedule_nodes"
+    scheduler_type "slurm"
+    scheduler "default_slurm"
+    num_allocations 1
+    start_one_worker_per_node #true
+}
+
+// Cleanup action when workflow completes
+action {
+    trigger_type "on_workflow_complete"
+    action_type "run_commands"
+    command "echo 'Pipeline completed successfully'"
+    command "echo 'Cleaning up temporary files'"
+}

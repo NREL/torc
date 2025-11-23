@@ -21,6 +21,16 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install OpenSSL for Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          vcpkg install openssl:x64-windows-static-md
+          echo "OPENSSL_DIR=C:/vcpkg/installed/x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "OPENSSL_ROOT_DIR=C:/vcpkg/installed/x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "OPENSSL_INCLUDE_DIR=C:/vcpkg/installed/x64-windows-static-md/include" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "OPENSSL_LIB_DIR=C:/vcpkg/installed/x64-windows-static-md/lib" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "VCPKG_ROOT=C:/vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         
@@ -61,30 +71,16 @@ jobs:
         env:
           DATABASE_URL: sqlite:db/sqlite/dev.db
 
-      - name: Install Perl for Windows
-        if: matrix.os == 'windows-latest'
-        run: choco install strawberryperl -y
-
-      - name: Install OpenSSL for Windows
-        if: matrix.os == 'windows-latest'
-        run: |
-          choco install openssl -y
-          echo "OPENSSL_DIR=C:/Program Files/OpenSSL-Win64" >> $GITHUB_ENV
-          echo "OPENSSL_ROOT_DIR=C:/Program Files/OpenSSL-Win64" >> $GITHUB_ENV
-          echo "OPENSSL_INCLUDE_DIR=C:/Program Files/OpenSSL-Win64/include" >> $GITHUB_ENV
-          echo "OPENSSL_LIB_DIR=C:/Program Files/OpenSSL-Win64/lib" >> $GITHUB_ENV
-          echo "PATH=C:/Program Files/OpenSSL-Win64/bin;$PATH" >> $GITHUB_ENV
-
       - name: Run tests (Windows - limited test set)
         if: matrix.os == 'windows-latest'
         run: cargo test --test test_full_workflows test_many_jobs_parameterized -- --test-threads 1
         env:
           RUST_BACKTRACE: 1
-          OPENSSL_DIR: C:/Program Files/OpenSSL-Win64
-          OPENSSL_ROOT_DIR: C:/Program Files/OpenSSL-Win64
-          OPENSSL_INCLUDE_DIR: C:/Program Files/OpenSSL-Win64/include
-          OPENSSL_LIB_DIR: C:/Program Files/OpenSSL-Win64/lib
-          PATH: C:/Program Files/OpenSSL-Win64/bin;${{ env.PATH }}
+          OPENSSL_DIR: C:/vcpkg/installed/x64-windows-static-md
+          OPENSSL_ROOT_DIR: C:/vcpkg/installed/x64-windows-static-md
+          OPENSSL_INCLUDE_DIR: C:/vcpkg/installed/x64-windows-static-md/include
+          OPENSSL_LIB_DIR: C:/vcpkg/installed/x64-windows-static-md/lib
+          VCPKG_ROOT: C:/vcpkg
 
       - name: Run tests (Unix - full test suite)
         if: matrix.os != 'windows-latest'

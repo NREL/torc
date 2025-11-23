@@ -36,11 +36,11 @@ resource_requirements:
 jobs:
   - name: preprocessing
     command: ./preprocess.sh
-    resource_requirements_name: small
+    resource_requirements: small
 
   - name: model_training
     command: python train.py
-    resource_requirements_name: large
+    resource_requirements: large
 ```
 
 The job runner pulls jobs from the server by detecting its available resources automatically.
@@ -115,13 +115,13 @@ slurm_schedulers:
 jobs:
   - name: model_training
     command: python train.py
-    resource_requirements_name: large
-    slurm_scheduler_name: gpu_cluster     # Binds to specific scheduler
+    resource_requirements: large
+    slurm_scheduler: gpu_cluster     # Binds to specific scheduler
 
   - name: large_analysis
     command: ./analyze.sh
-    resource_requirements_name: highmem
-    slurm_scheduler_name: highmem_cluster
+    resource_requirements: highmem
+    slurm_scheduler: highmem_cluster
 ```
 
 **Example runner invocation:**

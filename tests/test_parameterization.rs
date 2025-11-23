@@ -158,8 +158,8 @@ fn test_job_with_input_output_files() {
         "process_{i}".to_string(),
         "process.sh input_{i}.txt output_{i}.txt".to_string(),
     );
-    job.input_file_names = Some(vec!["input_{i}".to_string()]);
-    job.output_file_names = Some(vec!["output_{i}".to_string()]);
+    job.input_files = Some(vec!["input_{i}".to_string()]);
+    job.output_files = Some(vec!["output_{i}".to_string()]);
 
     let mut params = HashMap::new();
     params.insert("i".to_string(), "1:3".to_string());
@@ -170,24 +170,12 @@ fn test_job_with_input_output_files() {
     assert_eq!(expanded.len(), 3);
 
     assert_eq!(expanded[0].name, "process_1");
-    assert_eq!(
-        expanded[0].input_file_names,
-        Some(vec!["input_1".to_string()])
-    );
-    assert_eq!(
-        expanded[0].output_file_names,
-        Some(vec!["output_1".to_string()])
-    );
+    assert_eq!(expanded[0].input_files, Some(vec!["input_1".to_string()]));
+    assert_eq!(expanded[0].output_files, Some(vec!["output_1".to_string()]));
 
     assert_eq!(expanded[2].name, "process_3");
-    assert_eq!(
-        expanded[2].input_file_names,
-        Some(vec!["input_3".to_string()])
-    );
-    assert_eq!(
-        expanded[2].output_file_names,
-        Some(vec!["output_3".to_string()])
-    );
+    assert_eq!(expanded[2].input_files, Some(vec!["input_3".to_string()]));
+    assert_eq!(expanded[2].output_files, Some(vec!["output_3".to_string()]));
 }
 
 #[test]
@@ -196,7 +184,7 @@ fn test_job_with_blocked_by_names() {
         "dependent_{i}".to_string(),
         "echo dependent {i}".to_string(),
     );
-    job.blocked_by_job_names = Some(vec!["upstream_{i}".to_string()]);
+    job.blocked_by = Some(vec!["upstream_{i}".to_string()]);
 
     let mut params = HashMap::new();
     params.insert("i".to_string(), "1:3".to_string());
@@ -206,15 +194,9 @@ fn test_job_with_blocked_by_names() {
 
     assert_eq!(expanded.len(), 3);
     assert_eq!(expanded[0].name, "dependent_1");
-    assert_eq!(
-        expanded[0].blocked_by_job_names,
-        Some(vec!["upstream_1".to_string()])
-    );
+    assert_eq!(expanded[0].blocked_by, Some(vec!["upstream_1".to_string()]));
     assert_eq!(expanded[2].name, "dependent_3");
-    assert_eq!(
-        expanded[2].blocked_by_job_names,
-        Some(vec!["upstream_3".to_string()])
-    );
+    assert_eq!(expanded[2].blocked_by, Some(vec!["upstream_3".to_string()]));
 }
 
 #[test]
@@ -271,18 +253,18 @@ fn test_workflow_spec_expand_parameters() {
             invocation_script: None,
             cancel_on_blocking_job_failure: Some(false),
             supports_termination: Some(false),
-            resource_requirements_name: None,
-            scheduler_name: None,
-            blocked_by_job_names: None,
-            blocked_by_job_name_regexes: None,
-            input_file_names: None,
-            input_file_name_regexes: None,
-            output_file_names: None,
-            output_file_name_regexes: None,
-            input_user_data_names: None,
-            input_user_data_name_regexes: None,
-            output_data_names: None,
-            output_user_data_name_regexes: None,
+            resource_requirements: None,
+            scheduler: None,
+            blocked_by: None,
+            blocked_by_regexes: None,
+            input_files: None,
+            input_file_regexes: None,
+            output_files: None,
+            output_file_regexes: None,
+            input_user_data: None,
+            input_user_data_regexes: None,
+            output_user_data: None,
+            output_user_data_regexes: None,
             parameters: Some({
                 let mut params = HashMap::new();
                 params.insert("i".to_string(), "1:3".to_string());
@@ -325,8 +307,8 @@ fn test_complex_multi_param_with_dependencies() {
         "train_lr{lr}_bs{bs}_epoch{epoch}".to_string(),
         "train.py --lr={lr} --bs={bs} --epochs={epoch}".to_string(),
     );
-    job.input_file_names = Some(vec!["data_{bs}".to_string()]);
-    job.output_file_names = Some(vec!["model_lr{lr}_bs{bs}_epoch{epoch}.pt".to_string()]);
+    job.input_files = Some(vec!["data_{bs}".to_string()]);
+    job.output_files = Some(vec!["model_lr{lr}_bs{bs}_epoch{epoch}.pt".to_string()]);
 
     let mut params = HashMap::new();
     params.insert("lr".to_string(), "[0.001,0.01]".to_string());
@@ -349,12 +331,9 @@ fn test_complex_multi_param_with_dependencies() {
         job_001_16_10.command,
         "train.py --lr=0.001 --bs=16 --epochs=10"
     );
+    assert_eq!(job_001_16_10.input_files, Some(vec!["data_16".to_string()]));
     assert_eq!(
-        job_001_16_10.input_file_names,
-        Some(vec!["data_16".to_string()])
-    );
-    assert_eq!(
-        job_001_16_10.output_file_names,
+        job_001_16_10.output_files,
         Some(vec!["model_lr0.001_bs16_epoch10.pt".to_string()])
     );
 }
@@ -383,8 +362,8 @@ fn test_invocation_script_substitution() {
 #[test]
 fn test_user_data_name_substitution() {
     let mut job = JobSpec::new("job_{stage}".to_string(), "process.sh {stage}".to_string());
-    job.input_user_data_names = Some(vec!["config_{stage}".to_string()]);
-    job.output_data_names = Some(vec!["results_{stage}".to_string()]);
+    job.input_user_data = Some(vec!["config_{stage}".to_string()]);
+    job.output_user_data = Some(vec!["results_{stage}".to_string()]);
 
     let mut params = HashMap::new();
     params.insert("stage".to_string(), "['train','test']".to_string());
@@ -394,19 +373,19 @@ fn test_user_data_name_substitution() {
 
     assert_eq!(expanded.len(), 2);
     assert_eq!(
-        expanded[0].input_user_data_names,
+        expanded[0].input_user_data,
         Some(vec!["config_train".to_string()])
     );
     assert_eq!(
-        expanded[0].output_data_names,
+        expanded[0].output_user_data,
         Some(vec!["results_train".to_string()])
     );
     assert_eq!(
-        expanded[1].input_user_data_names,
+        expanded[1].input_user_data,
         Some(vec!["config_test".to_string()])
     );
     assert_eq!(
-        expanded[1].output_data_names,
+        expanded[1].output_user_data,
         Some(vec!["results_test".to_string()])
     );
 }

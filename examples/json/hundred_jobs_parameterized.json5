@@ -1,0 +1,31 @@
+{
+  // Workflow metadata
+  "name": "hundred_jobs_parameterized",
+  "user": "testuser",
+  "description": "A workflow with 100 independent jobs using parameterization",
+
+  // Job definitions
+  "jobs": [
+    {
+      "name": "job_{i:03d}",
+      "command": "echo hello {i}",
+      "resource_requirements": "minimal",
+      "parameters": {
+        "i": "1:100"
+      }
+    }
+  ],
+  
+  // Resource requirements
+  "resource_requirements": [
+    {
+      "name": "minimal",
+      "num_cpus": 1,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "1g",
+      "runtime": "P0DT1M"
+    }
+  ],
+
+}

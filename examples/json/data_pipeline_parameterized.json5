@@ -1,0 +1,137 @@
+{
+  // Workflow metadata
+  "name": "data_pipeline",
+  "user": "datauser",
+  "description": "Multi-stage data processing pipeline for multiple datasets",
+
+  // Job definitions
+  "jobs": [
+    {
+      "name": "download_{dataset}",
+      "command": "wget https://example.com/data/{dataset}.csv -O /data/raw/{dataset}.csv",
+      "resource_requirements": "download",
+      "output_files": [
+        "raw_{dataset}"
+      ],
+      "parameters": {
+        "dataset": "['sales','inventory','customers','products']"
+      }
+    },
+    {
+      "name": "preprocess_{dataset}",
+      "command": "python scripts/preprocess.py --input=/data/raw/{dataset}.csv --output=/data/clean/{dataset}.csv",
+      "resource_requirements": "cpu_intensive",
+      "blocked_by": [
+        "download_{dataset}"
+      ],
+      "input_files": [
+        "raw_{dataset}"
+      ],
+      "output_files": [
+        "clean_{dataset}"
+      ],
+      "parameters": {
+        "dataset": "['sales','inventory','customers','products']"
+      }
+    },
+    {
+      "name": "analyze_{dataset}_{analysis_type}",
+      "command": "python scripts/analyze.py \\\n  --input=/data/clean/{dataset}.csv \\\n  --analysis={analysis_type} \\\n  --output=/results/{dataset}_{analysis_type}_results.json\n",
+      "resource_requirements": "cpu_intensive",
+      "blocked_by": [
+        "preprocess_{dataset}"
+      ],
+      "input_files": [
+        "clean_{dataset}"
+      ],
+      "output_files": [
+        "results_{dataset}_{analysis_type}"
+      ],
+      "parameters": {
+        "dataset": "['sales','inventory','customers','products']",
+        "analysis_type": "['summary','trends','anomalies']"
+      }
+    },
+    {
+      "name": "report_{dataset}",
+      "command": "python scripts/generate_report.py \\\n  --dataset={dataset} \\\n  --input-dir=/results \\\n  --output=/reports/{dataset}_report.html\n",
+      "resource_requirements": "minimal",
+      "blocked_by": [
+        "analyze_{dataset}_{analysis_type}"
+      ],
+      "input_files": [
+        "results_{dataset}_{analysis_type}"
+      ],
+      "parameters": {
+        "dataset": "['sales','inventory','customers','products']",
+        "analysis_type": "['summary','trends','anomalies']"
+      }
+    },
+    {
+      "name": "executive_summary",
+      "command": "python scripts/executive_summary.py --input-dir=/reports --output=/reports/executive_summary.pdf",
+      "resource_requirements": "minimal",
+      "blocked_by": [
+        "report_{dataset}"
+      ],
+      "parameters": {
+        "dataset": "['sales','inventory','customers','products']"
+      }
+    }
+  ],
+  
+  // File definitions
+  "files": [
+    {
+      "name": "raw_{dataset}",
+      "path": "/data/raw/{dataset}.csv",
+      "parameters": {
+        "dataset": "['sales','inventory','customers','products']"
+      }
+    },
+    {
+      "name": "clean_{dataset}",
+      "path": "/data/clean/{dataset}.csv",
+      "parameters": {
+        "dataset": "['sales','inventory','customers','products']"
+      }
+    },
+    {
+      "name": "results_{dataset}_{analysis_type}",
+      "path": "/results/{dataset}_{analysis_type}_results.json",
+      "parameters": {
+        "dataset": "['sales','inventory','customers','products']",
+        "analysis_type": "['summary','trends','anomalies']"
+      }
+    }
+  ],
+  
+  // Resource requirements
+  "resource_requirements": [
+    {
+      "name": "minimal",
+      "num_cpus": 1,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "2g",
+      "runtime": "PT10M"
+    },
+    {
+      "name": "download",
+      "num_cpus": 1,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "1g",
+      "runtime": "PT15M"
+    },
+    {
+      "name": "cpu_intensive",
+      "num_cpus": 8,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "16g",
+      "runtime": "PT1H"
+    }
+  ],
+
+}

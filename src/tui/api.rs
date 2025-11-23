@@ -99,6 +99,7 @@ impl TorcClient {
             None, // reverse_sort
             None, // name
             None, // path
+            None, // is_output
         )
         .context("Failed to list files")?;
 

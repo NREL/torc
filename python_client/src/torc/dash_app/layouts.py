@@ -225,14 +225,28 @@ def create_run_tab_layout():
 
                                             html.Div(id="workflow-dag-section", children=[
                                                 dbc.Label("Workflow Visualization", className="fw-bold mb-2"),
-                                                dbc.Button(
-                                                    [html.I(className="fas fa-project-diagram me-2"), "Show DAG"],
-                                                    id="show-dag-button",
-                                                    color="info",
-                                                    size="lg",
-                                                    className="w-100 mb-3",
-                                                    disabled=False,
-                                                ),
+                                                dbc.Row([
+                                                    dbc.Col(
+                                                        dbc.Button(
+                                                            [html.I(className="fas fa-project-diagram me-2"), "Show DAG"],
+                                                            id="show-dag-button",
+                                                            color="info",
+                                                            className="w-100",
+                                                            disabled=False,
+                                                        ),
+                                                        width=6,
+                                                    ),
+                                                    dbc.Col(
+                                                        dbc.Button(
+                                                            [html.I(className="fas fa-list-ol me-2"), "Show Execution Plan"],
+                                                            id="show-execution-plan-button",
+                                                            color="info",
+                                                            className="w-100",
+                                                            disabled=False,
+                                                        ),
+                                                        width=6,
+                                                    ),
+                                                ], className="mb-3"),
                                             ]),
 
                                             html.Hr(),
@@ -316,6 +330,24 @@ def create_run_tab_layout():
 
             # Store for uploaded file content
             dcc.Store(id="uploaded-spec-store"),
+
+            # Modal for execution plan
+            dbc.Modal(
+                [
+                    dbc.ModalHeader(dbc.ModalTitle([
+                        html.I(className="fas fa-list-ol me-2"),
+                        "Workflow Execution Plan"
+                    ])),
+                    dbc.ModalBody(id="execution-plan-modal-body"),
+                    dbc.ModalFooter(
+                        dbc.Button("Close", id="execution-plan-close-btn", className="ms-auto", color="secondary")
+                    ),
+                ],
+                id="execution-plan-modal",
+                is_open=False,
+                size="xl",  # Extra large modal for better visualization
+                scrollable=True,
+            ),
         ],
         fluid=True
     )
@@ -791,3 +823,131 @@ def create_resource_plots_tab_layout():
         ],
         fluid=True
     )
+
+
+def create_execution_plan_view(plan_data: dict):
+    """Create a visual representation of the execution plan.
+
+    Args:
+        plan_data: Dictionary containing execution plan data from the CLI
+
+    Returns:
+        Dash component displaying the execution plan
+    """
+    workflow_name = plan_data.get("workflow_name", "Unknown")
+    total_stages = plan_data.get("total_stages", 0)
+    total_jobs = plan_data.get("total_jobs", 0)
+    stages = plan_data.get("stages", [])
+
+    # Header with summary
+    header = dbc.Alert(
+        [
+            html.H5(
+                [
+                    html.I(className="fas fa-project-diagram me-2"),
+                    f"Execution Plan: {workflow_name}"
+                ],
+                className="mb-2"
+            ),
+            html.P(
+                [
+                    html.Strong(f"Total Stages: "), f"{total_stages}   |   ",
+                    html.Strong(f"Total Jobs: "), f"{total_jobs}"
+                ],
+                className="mb-0"
+            )
+        ],
+        color="info",
+        className="mb-3"
+    )
+
+    # Create stage cards
+    stage_cards = []
+    for stage in stages:
+        stage_number = stage.get("stage_number", 0)
+        trigger = stage.get("trigger", "")
+        scheduler_allocations = stage.get("scheduler_allocations", [])
+        jobs_becoming_ready = stage.get("jobs_becoming_ready", [])
+
+        # Stage icon based on stage number
+        stage_icon = "fa-play-circle" if stage_number == 1 else "fa-arrow-circle-right"
+        stage_color = "primary" if stage_number == 1 else "secondary"
+
+        # Build stage content
+        stage_content = []
+
+        # Scheduler allocations
+        if scheduler_allocations:
+            alloc_items = []
+            for alloc in scheduler_allocations:
+                scheduler = alloc.get("scheduler", "")
+                scheduler_type = alloc.get("scheduler_type", "")
+                num_allocations = alloc.get("num_allocations", 0)
+                job_names = alloc.get("job_names", [])
+
+                # Format job names
+                if len(job_names) <= 5:
+                    jobs_str = ", ".join(job_names)
+                else:
+                    jobs_str = f"{', '.join(job_names[:5])}... ({len(job_names)} total)"
+
+                alloc_items.append(
+                    html.Li([
+                        html.Strong(f"{scheduler} ({scheduler_type})"), " - ",
+                        html.Span(f"{num_allocations} allocation(s)", className="badge bg-info me-2"),
+                        html.Br(),
+                        html.Small(f"For jobs: {jobs_str}", className="text-muted")
+                    ], className="mb-2")
+                )
+
+            stage_content.append(html.Div([
+                html.H6([
+                    html.I(className="fas fa-server me-2"),
+                    "Scheduler Allocations"
+                ], className="mt-2"),
+                html.Ul(alloc_items, className="mb-2")
+            ]))
+
+        # Jobs becoming ready
+        if jobs_becoming_ready:
+            # Format job names
+            if len(jobs_becoming_ready) <= 10:
+                jobs_display = html.Ul([html.Li(job) for job in jobs_becoming_ready])
+            else:
+                jobs_display = html.Div([
+                    html.Ul([html.Li(job) for job in jobs_becoming_ready[:10]]),
+                    html.P(f"... and {len(jobs_becoming_ready) - 10} more", className="text-muted mb-0")
+                ])
+
+            stage_content.append(html.Div([
+                html.H6([
+                    html.I(className="fas fa-tasks me-2"),
+                    f"Jobs Becoming Ready ({len(jobs_becoming_ready)})"
+                ], className="mt-2"),
+                jobs_display
+            ]))
+
+        # No content message
+        if not stage_content:
+            stage_content.append(
+                html.P("(No actions or jobs in this stage)", className="text-muted")
+            )
+
+        # Create stage card
+        stage_card = dbc.Card(
+            [
+                dbc.CardHeader(
+                    html.H5([
+                        html.I(className=f"fas {stage_icon} me-2"),
+                        f"Stage {stage_number}: {trigger}"
+                    ], className="mb-0"),
+                    className=f"bg-{stage_color} text-white"
+                ),
+                dbc.CardBody(stage_content)
+            ],
+            className="mb-3"
+        )
+
+        stage_cards.append(stage_card)
+
+    return html.Div([header] + stage_cards)

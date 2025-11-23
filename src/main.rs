@@ -308,7 +308,7 @@ fn main() {
                     eprintln!("    - trigger_type: on_workflow_start");
                     eprintln!("      action_type: schedule_nodes");
                     eprintln!("      scheduler_type: slurm");
-                    eprintln!("      scheduler_name: \"my-cluster\"");
+                    eprintln!("      scheduler: \"my-cluster\"");
                     eprintln!();
                     eprintln!("Or run locally instead:");
                     eprintln!("  torc run {}", workflow_spec_or_id);

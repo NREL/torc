@@ -1,0 +1,126 @@
+{
+  // Workflow metadata
+  "name": "ML Training with Auto-Scaling",
+  "user": "ml_researcher",
+  "description": "Demonstrates on_jobs_ready action for dynamic resource allocation",
+
+  // Job definitions
+  "jobs": [
+    {
+      "name": "preprocess_data",
+      "command": "python scripts/preprocess.py --input data/raw --output data/processed",
+      "resource_requirements": "small"
+    },
+    {
+      "name": "train_model_{model_id}",
+      "command": "python scripts/train.py --model {model_id} --data data/processed --output models/model_{model_id}",
+      "resource_requirements": "gpu",
+      "blocked_by": [
+        "preprocess_data"
+      ],
+      "parameters": {
+        "model_id": "[1,2,3,4,5,6,7,8]"
+      }
+    },
+    {
+      "name": "evaluate",
+      "command": "python scripts/evaluate.py --models models/ --output results/evaluation.json",
+      "resource_requirements": "medium",
+      "blocked_by_regexes": [
+        "train_model_.*"
+      ]
+    }
+  ],
+  
+  // Resource requirements
+  "resource_requirements": [
+    {
+      "name": "small",
+      "num_cpus": 2,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "4g",
+      "runtime": "PT30M"
+    },
+    {
+      "name": "medium",
+      "num_cpus": 4,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "8g",
+      "runtime": "PT1H"
+    },
+    {
+      "name": "gpu",
+      "num_cpus": 8,
+      "num_gpus": 1,
+      "num_nodes": 1,
+      "memory": "32g",
+      "runtime": "PT4H"
+    }
+  ],
+  
+  // Slurm schedulers
+  "slurm_schedulers": [
+    {
+      "name": "gpu_cluster",
+      "account": "ml_project",
+      "partition": "gpu",
+      "nodes": 2,
+      "walltime": "04:00:00",
+      "gres": "gpu:1"
+    }
+  ],
+  
+  // Workflow actions
+  "actions": [
+    {
+      "trigger_type": "on_workflow_start",
+      "action_type": "run_commands",
+      "commands": [
+        "echo 'ML Training Pipeline Started' > pipeline.log",
+        "mkdir -p data/processed models results checkpoints",
+        "echo 'Checking CUDA availability...'",
+        "python -c 'import torch; print(f\"CUDA available: {torch.cuda.is_available()}\")'"
+      ]
+    },
+    {
+      "trigger_type": "on_jobs_ready",
+      "action_type": "schedule_nodes",
+      "job_name_regexes": [
+        "train_model_.*"
+      ],
+      "scheduler": "gpu_cluster",
+      "scheduler_type": "slurm",
+      "num_allocations": 2,
+      "start_one_worker_per_node": true,
+      "max_parallel_jobs": 4
+    },
+    {
+      "trigger_type": "on_jobs_complete",
+      "action_type": "run_commands",
+      "job_name_regexes": [
+        "train_model_.*"
+      ],
+      "commands": [
+        "echo 'All training jobs completed. Archiving models...'",
+        "tar -czf results/trained_models.tar.gz models/",
+        "echo 'Generating training summary...'",
+        "python scripts/summarize_training.py --models models/ --output results/summary.json",
+        "echo 'Training phase complete' >> pipeline.log"
+      ]
+    },
+    {
+      "trigger_type": "on_workflow_complete",
+      "action_type": "run_commands",
+      "commands": [
+        "echo 'ML Pipeline Completed Successfully' >> pipeline.log",
+        "python scripts/send_notification.py --status complete --results results/evaluation.json",
+        "echo 'Uploading results to S3...'",
+        "aws s3 cp results/ s3://ml-results/$(date +%Y%m%d_%H%M%S)/ --recursive",
+        "echo 'All done!'"
+      ]
+    }
+  ],
+
+}

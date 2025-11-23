@@ -82,7 +82,7 @@ actions:
     // Initialize workflow using WorkflowManager
     let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to initialize workflow");
 
     // Create compute node
@@ -185,11 +185,11 @@ jobs:
 
   - name: "process_job_1"
     command: "echo 'Processing 1'"
-    blocked_by_job_names: ["setup_job"]
+    blocked_by: ["setup_job"]
 
   - name: "process_job_2"
     command: "echo 'Processing 2'"
-    blocked_by_job_names: ["setup_job"]
+    blocked_by: ["setup_job"]
 
 actions:
   - trigger_type: "on_jobs_ready"
@@ -216,7 +216,7 @@ actions:
     let workflow = default_api::get_workflow(config, workflow_id).expect("Failed to get workflow");
     let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to initialize workflow");
 
     // Create job runner to check and execute actions
@@ -321,7 +321,7 @@ actions:
     let workflow = default_api::get_workflow(config, workflow_id).expect("Failed to get workflow");
     let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to initialize workflow");
 
     // Create and run job runner
@@ -437,7 +437,7 @@ actions:
     let workflow = default_api::get_workflow(config, workflow_id).expect("Failed to get workflow");
     let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to initialize workflow");
 
     let compute_node = torc::models::ComputeNodeModel::new(
@@ -548,7 +548,7 @@ actions:
     let workflow = default_api::get_workflow(config, workflow_id).expect("Failed to get workflow");
     let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to initialize workflow");
 
     let compute_node = torc::models::ComputeNodeModel::new(
@@ -664,7 +664,7 @@ actions:
     // Initialize workflow using WorkflowManager
     let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to initialize workflow");
 
     // Create two compute nodes and job runners (simulating concurrent execution)
@@ -795,7 +795,7 @@ actions:
     // Initialize workflow using WorkflowManager
     let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to initialize workflow");
 
     // Create three compute nodes and job runners
@@ -933,7 +933,7 @@ actions:
     // Initialize workflow using WorkflowManager
     let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to initialize workflow");
 
     // Create three compute nodes and job runners
@@ -1069,7 +1069,7 @@ actions:
     // Initialize workflow using WorkflowManager
     let workflow_manager = WorkflowManager::new(config.clone(), workflow.clone());
     workflow_manager
-        .initialize(false)
+        .initialize(true)
         .expect("Failed to initialize workflow");
 
     // Create three compute nodes and job runners

@@ -5,19 +5,19 @@ description: "Demonstrates on_jobs_ready action for dynamic resource allocation"
 jobs:
   - name: "preprocess_data"
     command: "python scripts/preprocess.py --input data/raw --output data/processed"
-    resource_requirements_name: "small"
+    resource_requirements: "small"
 
   - name: "train_model_{model_id}"
     command: "python scripts/train.py --model {model_id} --data data/processed --output models/model_{model_id}"
-    resource_requirements_name: "gpu"
-    blocked_by_job_names: ["preprocess_data"]
+    resource_requirements: "gpu"
+    blocked_by: ["preprocess_data"]
     parameters:
       model_id: "[1,2,3,4,5,6,7,8]"
 
   - name: "evaluate"
     command: "python scripts/evaluate.py --models models/ --output results/evaluation.json"
-    resource_requirements_name: "medium"
-    blocked_by_job_name_regexes: ["train_model_.*"]
+    resource_requirements: "medium"
+    blocked_by_regexes: ["train_model_.*"]
 
 resource_requirements:
   - name: "small"
@@ -63,7 +63,7 @@ actions:
   - trigger_type: "on_jobs_ready"
     action_type: "schedule_nodes"
     job_name_regexes: ["train_model_.*"]
-    scheduler_name: "gpu_cluster"
+    scheduler: "gpu_cluster"
     scheduler_type: "slurm"
     num_allocations: 2
     start_one_worker_per_node: true

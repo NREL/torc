@@ -1,0 +1,121 @@
+// Multi-stage Slurm pipeline with automated scheduling and resource monitoring
+// Note: This is a simplified version with 3 work jobs. The full YAML/JSON5 version has 10 work jobs.
+
+name "slurm_staged_pipeline"
+user "pipeline_user"
+description "Multi-stage Slurm pipeline with automated scheduling and resource monitoring"
+
+// Slurm schedulers for different pipeline stages
+slurm_scheduler "setup_scheduler" {
+    account "my_account"
+    walltime "04:00:00"
+    nodes 1
+}
+
+slurm_scheduler "work_scheduler" {
+    account "my_account"
+    walltime "04:00:00"
+    nodes 1
+}
+
+slurm_scheduler "postprocess_scheduler" {
+    account "my_account"
+    walltime "04:00:00"
+    nodes 1
+}
+
+// Resource requirements for each stage
+resource_requirements "setup_resources" {
+    num_cpus 16
+    num_gpus 0
+    num_nodes 1
+    memory "64g"
+    runtime "PT4H"
+}
+
+resource_requirements "work_resources" {
+    num_cpus 32
+    num_gpus 0
+    num_nodes 1
+    memory "300g"
+    runtime "PT8H"
+}
+
+resource_requirements "postprocess_resources" {
+    num_cpus 8
+    num_gpus 0
+    num_nodes 1
+    memory "32g"
+    runtime "PT1H"
+}
+
+// Enable time-series resource monitoring
+resource_monitor {
+    enabled #true
+    sample_interval_seconds 5
+    granularity "time_series"
+    generate_plots #false
+}
+
+// Input and output files
+file "input_001" path="/scratch/pipeline/input_001.dat"
+file "input_002" path="/scratch/pipeline/input_002.dat"
+file "input_003" path="/scratch/pipeline/input_003.dat"
+
+file "output_001" path="/scratch/pipeline/output_001.dat"
+file "output_002" path="/scratch/pipeline/output_002.dat"
+file "output_003" path="/scratch/pipeline/output_003.dat"
+
+file "final_results" path="/scratch/pipeline/final_results.dat"
+
+// Stage 1: Setup job - generates input files
+job "setup" {
+    command "#!/bin/bash\nset -e\necho \"Starting setup stage at $(date)\"\nmkdir -p /scratch/pipeline\nfor i in 001 002 003; do\n  echo \"Generating input_${i}.dat...\"\n  dd if=/dev/urandom of=/scratch/pipeline/input_${i}.dat bs=1M count=1024 2>/dev/null\ndone\necho \"Setup stage completed at $(date)\""
+    scheduler "setup_scheduler"
+    resource_requirements "setup_resources"
+    output_file "input_001"
+    output_file "input_002"
+    output_file "input_003"
+}
+
+// Stage 2: Work jobs - process input files in parallel (simplified - see YAML/JSON5 for 10 jobs)
+job "work_001" {
+    command "#!/bin/bash\nset -e\necho \"Starting work_001 at $(date)\"\necho \"Processing /scratch/pipeline/input_001.dat\"\npython3 -c \"import numpy as np; import time; data = np.random.rand(1000000, 100); result = np.fft.fft2(data); time.sleep(60)\"\ndd if=/dev/urandom of=/scratch/pipeline/output_001.dat bs=1M count=512 2>/dev/null\necho \"Work_001 completed at $(date)\""
+    scheduler "work_scheduler"
+    resource_requirements "work_resources"
+    blocked_by_job "setup"
+    input_file "input_001"
+    output_file "output_001"
+}
+
+job "work_002" {
+    command "#!/bin/bash\nset -e\necho \"Starting work_002 at $(date)\"\npython3 -c \"import numpy as np; import time; data = np.random.rand(1000000, 100); result = np.fft.fft2(data); time.sleep(60)\"\ndd if=/dev/urandom of=/scratch/pipeline/output_002.dat bs=1M count=512 2>/dev/null\necho \"Work_002 completed at $(date)\""
+    scheduler "work_scheduler"
+    resource_requirements "work_resources"
+    blocked_by_job "setup"
+    input_file "input_002"
+    output_file "output_002"
+}
+
+job "work_003" {
+    command "#!/bin/bash\nset -e\necho \"Starting work_003 at $(date)\"\npython3 -c \"import numpy as np; import time; data = np.random.rand(1000000, 100); result = np.fft.fft2(data); time.sleep(60)\"\ndd if=/dev/urandom of=/scratch/pipeline/output_003.dat bs=1M count=512 2>/dev/null\necho \"Work_003 completed at $(date)\""
+    scheduler "work_scheduler"
+    resource_requirements "work_resources"
+    blocked_by_job "setup"
+    input_file "input_003"
+    output_file "output_003"
+}
+
+// Stage 3: Post-processing job - aggregates all work outputs
+job "postprocess" {
+    command "#!/bin/bash\nset -e\necho \"Starting postprocessing at $(date)\"\nfor i in 001 002 003; do\n  if [ ! -f \"/scratch/pipeline/output_${i}.dat\" ]; then\n    echo \"ERROR: Missing output file output_${i}.dat\"\n    exit 1\n  fi\n  echo \"Found output_${i}.dat\"\ndone\necho \"Aggregating results...\"\ncat /scratch/pipeline/output_*.dat > /scratch/pipeline/final_results.dat\necho \"Postprocessing completed successfully\""
+    scheduler "postprocess_scheduler"
+    resource_requirements "postprocess_resources"
+    blocked_by_job "work_001"
+    blocked_by_job "work_002"
+    blocked_by_job "work_003"
+    input_file "output_001"
+    input_file "output_002"
+    input_file "output_003"
+    output_file "final_results"
+}

@@ -36,24 +36,24 @@ jobs:
       awk '{print $1}' > ${files.output.intermediate1}
       cat ${files.input.input_file} |
       awk '{print $2}' > ${files.output.intermediate2}
-    resource_requirements_name: small
+    resource_requirements: small
 
   - name: work1
     command: |
       cat ${files.input.intermediate1} |
       sort | uniq > ${files.output.result1}
-    resource_requirements_name: medium
+    resource_requirements: medium
 
   - name: work2
     command: |
       cat ${files.input.intermediate2} |
       sort | uniq > ${files.output.result2}
-    resource_requirements_name: medium
+    resource_requirements: medium
 
   - name: postprocess
     command: |
       paste ${files.input.result1} ${files.input.result2} > ${files.output.final_output}
-    resource_requirements_name: small
+    resource_requirements: small
 
 files:
   - name: input_file

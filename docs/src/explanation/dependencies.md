@@ -4,7 +4,7 @@ Torc supports two types of dependencies:
 
 ## 1. Explicit Dependencies
 
-Declared via `blocked_by_job_names`:
+Declared via `blocked_by`:
 
 ```yaml
 jobs:
@@ -12,7 +12,7 @@ jobs:
     command: preprocess.sh
   - name: analyze
     command: analyze.sh
-    blocked_by_job_names:
+    blocked_by:
       - job1
 ```
 
@@ -26,12 +26,12 @@ Inferred from file and user_data relationships.
 jobs:
   - name: preprocess
     command: process.sh
-    output_file_names:
+    output_files:
       - intermediate_data
 
   - name: analyze
     command: analyze.sh
-    input_file_names:
+    input_files:
       - intermediate_data  # Implicitly depends on preprocess
 ```
 
@@ -43,12 +43,12 @@ they are stored in the database AND user code must understand Torc's API.
 jobs:
   - name: generate_config
     command: make_config.py
-    output_user_data_names:
+    output_user_data:
       - config
 
   - name: run_simulation
     command: simulate.py
-    input_user_data_names:
+    input_user_data:
       - config  # Implicitly depends on generate_config
       
 user_data:

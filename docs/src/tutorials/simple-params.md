@@ -19,8 +19,8 @@ jobs:
       python train.py \
         --learning-rate={lr} \
         --output=/models/model_lr{lr:.4f}.pt
-    resource_requirements_name: gpu
-    output_file_names:
+    resource_requirements: gpu
+    output_files:
       - model_lr{lr:.4f}
     parameters:
       lr: "[0.0001,0.0005,0.001,0.005,0.01]"
@@ -30,10 +30,10 @@ jobs:
       python evaluate.py \
         --model=/models/model_lr{lr:.4f}.pt \
         --output=/results/metrics_lr{lr:.4f}.json
-    resource_requirements_name: gpu
-    input_file_names:
+    resource_requirements: gpu
+    input_files:
       - model_lr{lr:.4f}
-    output_file_names:
+    output_files:
       - metrics_lr{lr:.4f}
     parameters:
       lr: "[0.0001,0.0005,0.001,0.005,0.01]"
@@ -41,8 +41,8 @@ jobs:
   - name: compare_results
     command: |
       python compare.py --input-dir=/results --output=/results/comparison.csv
-    resource_requirements_name: minimal
-    input_file_names:
+    resource_requirements: minimal
+    input_files:
       - metrics_lr{lr:.4f}
     parameters:
       lr: "[0.0001,0.0005,0.001,0.005,0.01]"

@@ -418,7 +418,7 @@ fn test_list_job_user_data_relationships_workflow_outputs(start_server: &ServerP
     let workflow_id = workflow.id.unwrap();
 
     // Create workflow output user_data (no consumer)
-    let output_data = create_test_user_data(
+    let output_user_data = create_test_user_data(
         config,
         workflow_id,
         "final_result",
@@ -432,7 +432,7 @@ fn test_list_job_user_data_relationships_workflow_outputs(start_server: &ServerP
         "producer_job".to_string(),
         "echo '{\"result\": \"success\"}' > final_result".to_string(),
     );
-    job.output_user_data_ids = Some(vec![output_data.id.unwrap()]);
+    job.output_user_data_ids = Some(vec![output_user_data.id.unwrap()]);
     let job = default_api::create_job(config, job).expect("Failed to create job");
     let job_id = job.id.unwrap();
 

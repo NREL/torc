@@ -264,7 +264,7 @@ impl JobsApiImpl {
 
         // Get blocked_by relationships
         let blocked_by_records = match sqlx::query!(
-            "SELECT blocked_by_job_id FROM job_blocked_by WHERE job_id = $1",
+            "SELECT blocked_by_job_id FROM job_blocked_by WHERE job_id = $1 ORDER BY blocked_by_job_id",
             id
         )
         .fetch_all(self.context.pool.as_ref())
@@ -285,14 +285,16 @@ impl JobsApiImpl {
         };
 
         // Get input file relationships
-        let input_file_records =
-            match sqlx::query!("SELECT file_id FROM job_input_file WHERE job_id = $1", id)
-                .fetch_all(self.context.pool.as_ref())
-                .await
-            {
-                Ok(records) => records,
-                Err(e) => return Err(database_error(e)),
-            };
+        let input_file_records = match sqlx::query!(
+            "SELECT file_id FROM job_input_file WHERE job_id = $1 ORDER BY file_id",
+            id
+        )
+        .fetch_all(self.context.pool.as_ref())
+        .await
+        {
+            Ok(records) => records,
+            Err(e) => return Err(database_error(e)),
+        };
         let input_file_ids = if input_file_records.is_empty() {
             None
         } else {
@@ -300,14 +302,16 @@ impl JobsApiImpl {
         };
 
         // Get output file relationships
-        let output_file_records =
-            match sqlx::query!("SELECT file_id FROM job_output_file WHERE job_id = $1", id)
-                .fetch_all(self.context.pool.as_ref())
-                .await
-            {
-                Ok(records) => records,
-                Err(e) => return Err(database_error(e)),
-            };
+        let output_file_records = match sqlx::query!(
+            "SELECT file_id FROM job_output_file WHERE job_id = $1 ORDER BY file_id",
+            id
+        )
+        .fetch_all(self.context.pool.as_ref())
+        .await
+        {
+            Ok(records) => records,
+            Err(e) => return Err(database_error(e)),
+        };
         let output_file_ids = if output_file_records.is_empty() {
             None
         } else {
@@ -316,7 +320,7 @@ impl JobsApiImpl {
 
         // Get input user_data relationships
         let input_user_data_records = match sqlx::query!(
-            "SELECT user_data_id FROM job_input_user_data WHERE job_id = $1",
+            "SELECT user_data_id FROM job_input_user_data WHERE job_id = $1 ORDER BY user_data_id",
             id
         )
         .fetch_all(self.context.pool.as_ref())
@@ -338,7 +342,7 @@ impl JobsApiImpl {
 
         // Get output user_data relationships
         let output_user_data_records = match sqlx::query!(
-            "SELECT user_data_id FROM job_output_user_data WHERE job_id = $1",
+            "SELECT user_data_id FROM job_output_user_data WHERE job_id = $1 ORDER BY user_data_id",
             id
         )
         .fetch_all(self.context.pool.as_ref())

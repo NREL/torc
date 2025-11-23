@@ -80,7 +80,7 @@ Executes when **all** specified jobs transition to the "ready" state.
 - trigger_type: "on_jobs_ready"
   action_type: "schedule_nodes"
   job_names: ["train_model_001", "train_model_002", "train_model_003"]
-  scheduler_name: "gpu_cluster"
+  scheduler: "gpu_cluster"
   scheduler_type: "slurm"
   num_allocations: 2
 ```
@@ -174,7 +174,7 @@ For `on_jobs_ready` and `on_jobs_complete` triggers, specify which jobs to monit
 - trigger_type: "on_jobs_ready"
   action_type: "schedule_nodes"
   job_name_regexes: ["train_model_[0-9]+", "eval_.*"]
-  scheduler_name: "gpu_cluster"
+  scheduler: "gpu_cluster"
   scheduler_type: "slurm"
   num_allocations: 2
 ```
@@ -226,7 +226,7 @@ Dynamically allocate compute resources from a Slurm scheduler.
 - trigger_type: "on_jobs_ready"
   action_type: "schedule_nodes"
   job_names: ["train_model_1", "train_model_2"]
-  scheduler_name: "gpu_cluster"
+  scheduler: "gpu_cluster"
   scheduler_type: "slurm"
   num_allocations: 2
   start_one_worker_per_node: true
@@ -234,7 +234,7 @@ Dynamically allocate compute resources from a Slurm scheduler.
 ```
 
 **Parameters**:
-- `scheduler_name` (required) - Name of Slurm scheduler configuration (must exist in `slurm_schedulers`)
+- `scheduler` (required) - Name of Slurm scheduler configuration (must exist in `slurm_schedulers`)
 - `scheduler_type` (required) - Must be "slurm"
 - `num_allocations` (required) - Number of Slurm allocation requests to submit
 - `start_one_worker_per_node` (optional) - Start one job runner per node (default: false)
@@ -260,11 +260,11 @@ jobs:
 
   - name: "process_data"
     command: "python process.py"
-    blocked_by_job_names: ["download_data"]
+    blocked_by: ["download_data"]
 
   - name: "analyze_results"
     command: "python analyze.py"
-    blocked_by_job_names: ["process_data"]
+    blocked_by: ["process_data"]
 
 actions:
   - trigger_type: "on_workflow_start"
@@ -290,19 +290,19 @@ user: "ml_team"
 jobs:
   - name: "preprocess"
     command: "python preprocess.py"
-    resource_requirements_name: "cpu_small"
+    resource_requirements: "cpu_small"
 
   - name: "train_model_{model_id}"
     command: "python train.py --model {model_id}"
-    resource_requirements_name: "gpu_large"
-    blocked_by_job_names: ["preprocess"]
+    resource_requirements: "gpu_large"
+    blocked_by: ["preprocess"]
     parameters:
       model_id: "[1,2,3,4,5,6,7,8]"
 
   - name: "evaluate_{model_id}"
     command: "python evaluate.py --model {model_id}"
-    resource_requirements_name: "cpu_medium"
-    blocked_by_job_names: ["train_model_{model_id}"]
+    resource_requirements: "cpu_medium"
+    blocked_by: ["train_model_{model_id}"]
     parameters:
       model_id: "[1,2,3,4,5,6,7,8]"
 
@@ -332,7 +332,7 @@ actions:
   - trigger_type: "on_jobs_ready"
     action_type: "schedule_nodes"
     job_name_regexes: ["train_model_.*"]
-    scheduler_name: "gpu_cluster"
+    scheduler: "gpu_cluster"
     scheduler_type: "slurm"
     num_allocations: 2
     start_one_worker_per_node: true
@@ -368,13 +368,13 @@ jobs:
 
   - name: "transform_{source}"
     command: "python transform.py {source}"
-    blocked_by_job_names: ["extract_{source}"]
+    blocked_by: ["extract_{source}"]
     parameters:
       source: "['db1', 'db2', 'db3']"
 
   - name: "load_{source}"
     command: "python load.py {source}"
-    blocked_by_job_names: ["transform_{source}"]
+    blocked_by: ["transform_{source}"]
     parameters:
       source: "['db1', 'db2', 'db3']"
 

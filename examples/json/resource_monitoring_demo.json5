@@ -1,0 +1,54 @@
+{
+  // Workflow metadata
+  "name": "resource_monitoring_demo",
+  "user": "demo_user",
+  "description": "Demonstrates resource monitoring with CPU and memory intensive Python jobs",
+
+  // Job definitions
+  "jobs": [
+    {
+      "name": "cpu_heavy_job",
+      "command": "python3 examples/scripts/cpu_intensive.py",
+      "resource_requirements": "medium"
+    },
+    {
+      "name": "memory_heavy_job",
+      "command": "python3 examples/scripts/memory_intensive.py",
+      "resource_requirements": "medium"
+    },
+    {
+      "name": "mixed_workload_job",
+      "command": "python3 examples/scripts/mixed_workload.py",
+      "resource_requirements": "medium"
+    }
+  ],
+  
+  // File definitions
+  "files": [],
+  
+  // User data
+  "user_data": [],
+  
+  // Resource requirements
+  "resource_requirements": [
+    {
+      "name": "medium",
+      "num_cpus": 2,
+      "num_gpus": 0,
+      "num_nodes": 1,
+      "memory": "2g",
+      "runtime": "PT5M"
+    }
+  ],
+  
+  // Slurm schedulers
+  "slurm_schedulers": [],
+  
+    "resource_monitor": {
+    "enabled": true,
+    "granularity": "time_series",
+    "sample_interval_seconds": 2,
+    "generate_plots": false
+  },
+
+}
