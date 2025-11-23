@@ -21,6 +21,24 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Add Strawberry Perl to PATH
+        if: matrix.os == 'windows-latest'
+        run: echo "C:\\Strawberry\\perl\\bin" >> $GITHUB_PATH
+      
+      - name: Set PKG_CONFIG_PATH (Windows)
+        if: matrix.os == 'windows-latest'
+        run: echo "PKG_CONFIG_PATH=C:/Program Files/OpenSSL-Win64/lib/pkgconfig" >> $GITHUB_ENV
+      
+      - name: Install OpenSSL for Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          choco install openssl -y
+          echo "OPENSSL_DIR=C:/Program Files/OpenSSL-Win64" >> $GITHUB_ENV
+          echo "OPENSSL_ROOT_DIR=C:/Program Files/OpenSSL-Win64" >> $GITHUB_ENV
+          echo "OPENSSL_INCLUDE_DIR=C:/Program Files/OpenSSL-Win64/include" >> $GITHUB_ENV
+          echo "OPENSSL_LIB_DIR=C:/Program Files/OpenSSL-Win64/lib" >> $GITHUB_ENV
+          echo "PATH=C:/Program Files/OpenSSL-Win64/bin;$PATH" >> $GITHUB_ENV
+
       - name: Setup Rust
         uses: dtolnay/rust-toolchain@stable
         
@@ -60,20 +78,6 @@ jobs:
           sqlx database setup
         env:
           DATABASE_URL: sqlite:db/sqlite/dev.db
-
-      - name: Install Perl for Windows
-        if: matrix.os == 'windows-latest'
-        run: choco install strawberryperl -y
-
-      - name: Install OpenSSL for Windows
-        if: matrix.os == 'windows-latest'
-        run: |
-          choco install openssl -y
-          echo "OPENSSL_DIR=C:/Program Files/OpenSSL-Win64" >> $GITHUB_ENV
-          echo "OPENSSL_ROOT_DIR=C:/Program Files/OpenSSL-Win64" >> $GITHUB_ENV
-          echo "OPENSSL_INCLUDE_DIR=C:/Program Files/OpenSSL-Win64/include" >> $GITHUB_ENV
-          echo "OPENSSL_LIB_DIR=C:/Program Files/OpenSSL-Win64/lib" >> $GITHUB_ENV
-          echo "PATH=C:/Program Files/OpenSSL-Win64/bin;$PATH" >> $GITHUB_ENV
 
       - name: Run tests (Windows - limited test set)
         if: matrix.os == 'windows-latest'
