@@ -224,8 +224,8 @@ impl WorkflowManager {
                     ) {
                         Ok(()) => {
                             info!(
-                                "Successfully scheduled {} Slurm job(s) for action {}",
-                                num_allocations, action_id
+                                "Successfully scheduled {} Slurm allocation(s) for on_workflow_start",
+                                num_allocations
                             );
                         }
                         Err(err) => {

@@ -672,7 +672,7 @@ pub fn schedule_slurm_nodes(
 
     std::fs::create_dir_all(output)?;
 
-    for job_num in 0..num_hpc_jobs {
+    for job_num in 1..num_hpc_jobs + 1 {
         let job_name = format!("{}_{}", job_prefix, job_num);
         let script_path = format!("{}/{}.sh", output, job_name);
 
@@ -700,7 +700,10 @@ pub fn schedule_slurm_nodes(
                 let job_id_int = job_id
                     .parse()
                     .expect(&format!("Failed to parse Slurm job ID {}", job_id));
-                info!("running Slurm job {} with ID: {}", job_name, job_id_int);
+                info!(
+                    "Submitted Slurm job name={} with ID={}",
+                    job_name, job_id_int
+                );
 
                 let event_data = serde_json::json!({
                     "category": "scheduler",
@@ -710,6 +713,7 @@ pub fn schedule_slurm_nodes(
                     "num_nodes": scheduler.nodes,
                 });
 
+                // TODO: move this before submission and set the Slurm name to this ID.
                 let scheduled_compute_node = models::ScheduledComputeNodesModel::new(
                     workflow_id,
                     job_id_int,

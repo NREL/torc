@@ -1,7 +1,6 @@
 [book]
 authors = ["Torc Contributors"]
 language = "en"
-multilingual = false
 src = "src"
 title = "Torc Documentation"
 description = "Distributed workflow orchestration for complex computational pipelines"
