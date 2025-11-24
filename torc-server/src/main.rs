@@ -59,6 +59,14 @@ struct Args {
     /// PID file location (Unix only, used when running as daemon)
     #[arg(long, default_value = "/var/run/torc-server.pid", global = true)]
     pid_file: std::path::PathBuf,
+    /// Interval in seconds for background task that processes job completions and unblocks dependent jobs
+    #[arg(
+        long,
+        env = "TORC_UNBLOCK_INTERVAL_SECONDS",
+        default_value_t = 60.0,
+        global = true
+    )]
+    unblock_interval_seconds: f64,
 }
 
 #[derive(clap::Subcommand)]
@@ -158,6 +166,7 @@ fn main() -> Result<()> {
                     require_auth: args.require_auth,
                     log_level: args.log_level.clone(),
                     json_logs: args.json_logs,
+                    unblock_interval_seconds: args.unblock_interval_seconds,
                 })
             } else {
                 None
@@ -315,7 +324,15 @@ fn main() -> Result<()> {
         );
         info!("Listening on {}", addr);
 
-        server::create(&addr, args.https, pool, htpasswd, args.require_auth).await;
+        server::create(
+            &addr,
+            args.https,
+            pool,
+            htpasswd,
+            args.require_auth,
+            args.unblock_interval_seconds,
+        )
+        .await;
         Ok(())
     })
 }

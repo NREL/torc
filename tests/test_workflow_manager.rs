@@ -12,9 +12,31 @@ use common::{
 use rstest::rstest;
 use std::fs;
 use std::path::Path;
+use std::thread;
+use std::time::Duration;
 use tempfile::TempDir;
 use torc::client::{Configuration, default_api, workflow_manager::WorkflowManager};
 use torc::models;
+
+/// Helper to wait for a job to reach an expected status
+/// Returns true if the job reached the expected status within the timeout
+fn wait_for_job_status(
+    config: &Configuration,
+    job_id: i64,
+    expected_status: models::JobStatus,
+    timeout_secs: u64,
+) -> bool {
+    let start = std::time::Instant::now();
+    while start.elapsed().as_secs() < timeout_secs {
+        if let Ok(job) = default_api::get_job(config, job_id) {
+            if job.status.as_ref() == Some(&expected_status) {
+                return true;
+            }
+        }
+        thread::sleep(Duration::from_millis(50));
+    }
+    false
+}
 
 /// Helper function to create a WorkflowManager with a test workflow
 fn create_test_workflow_manager(
@@ -2196,6 +2218,12 @@ fn test_user_data_dependency_chain(start_server: &ServerProcess) {
     default_api::complete_job(&config, job1_id, job1_result.status, run_id, job1_result)
         .expect("Failed to complete job1");
 
+    // Wait for background unblocking task to process job1 completion and unblock job2
+    assert!(
+        wait_for_job_status(&config, job2_id, models::JobStatus::Ready, 5),
+        "job2 should become Ready after job1 completes and ud2 is populated"
+    );
+
     // Check job2 is now Ready
     let job2_after = default_api::get_job(&config, job2_id).expect("Failed to get job2 after job1");
     assert_eq!(
@@ -2234,6 +2262,12 @@ fn test_user_data_dependency_chain(start_server: &ServerProcess) {
     );
     default_api::complete_job(&config, job2_id, job2_result.status, run_id, job2_result)
         .expect("Failed to complete job2");
+
+    // Wait for background unblocking task to process job2 completion and unblock job3
+    assert!(
+        wait_for_job_status(&config, job3_id, models::JobStatus::Ready, 5),
+        "job3 should become Ready after job2 completes and ud3 is populated"
+    );
 
     // Check job3 is now Ready
     let job3_after_job2 =

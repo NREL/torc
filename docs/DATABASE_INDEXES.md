@@ -40,6 +40,25 @@ This document analyzes the Torc database query patterns and recommends indexes t
    - `SELECT * FROM result WHERE workflow_id = ? AND job_id = ?`
    - `SELECT * FROM result WHERE workflow_id = ? AND run_id = ?`
 
+## Implemented Indexes
+
+### Deferred Unblocking Indexes (2024-11)
+
+**Migration**: `20251123000000_add_unblocking_processed`
+
+#### `job(workflow_id, status, unblocking_processed)` WHERE unblocking_processed = 0
+**Impact**: Critical for background unblocking task
+**Rationale**: Enables efficient finding of completed jobs that need unblocking processing.
+**Queries affected**:
+- Background task finding workflows with pending completions
+- Batch processing of job completions
+
+#### `job(workflow_id)` WHERE status IN (6,7,8) AND unblocking_processed = 0
+**Impact**: High for background unblocking task
+**Rationale**: Allows quick filtering to active workflows needing unblock processing.
+**Queries affected**:
+- Finding workflows with unprocessed completions
+
 ## Recommended Indexes
 
 ### Priority 1: Critical Performance Impact
