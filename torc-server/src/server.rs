@@ -778,44 +778,6 @@ impl<C> Server<C> {
         }
     }
 
-    /// Add rows to the ready_queue table for each job in the "ready" status
-    async fn add_ready_jobs<'e, E>(&self, executor: E, workflow_id: i64) -> Result<(), ApiError>
-    where
-        E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
-    {
-        debug!(
-            "add_ready_jobs({}) - adding ready jobs to ready_queue",
-            workflow_id
-        );
-        let status = models::JobStatus::Ready.to_int();
-        match sqlx::query!(
-            r#"
-            INSERT INTO ready_queue (workflow_id, job_id, resource_requirements_id)
-            SELECT workflow_id, id, resource_requirements_id
-            FROM job
-            WHERE workflow_id = $1 AND status = $2
-            "#,
-            workflow_id,
-            status,
-        )
-        .execute(executor)
-        .await
-        {
-            Ok(result) => {
-                debug!(
-                    "Created {} ready jobs to ready_queue for workflow {}",
-                    result.rows_affected(),
-                    workflow_id
-                );
-                Ok(())
-            }
-            Err(e) => {
-                error!("Database error: {}", e);
-                Err(ApiError("Database error".to_string()))
-            }
-        }
-    }
-
     /// Manage job status change with validation and side effects.
     ///
     /// This function validates a job status change by:
@@ -1181,7 +1143,7 @@ impl<C> Server<C> {
             completed_job_id
         );
 
-        // Update job statuses and insert into ready_queue
+        // Update job statuses
         let mut updated_count = 0;
         let mut ready_count = 0;
         let mut canceled_count = 0;
@@ -1190,7 +1152,6 @@ impl<C> Server<C> {
         for row in jobs_to_update {
             let job_id: i64 = row.get("job_id");
             let should_cancel: i64 = row.get("should_cancel");
-            let resource_requirements_id: i64 = row.get("resource_requirements_id");
             let new_status = if should_cancel != 0 {
                 canceled_status
             } else {
@@ -1234,33 +1195,6 @@ impl<C> Server<C> {
                     return Err(ApiError("Database error".to_string()));
                 }
             }
-
-            // Add to ready_queue only if the job was set to Ready status
-            if new_status == ready_status {
-                match sqlx::query!(
-                    r#"
-                    INSERT INTO ready_queue (workflow_id, job_id, resource_requirements_id)
-                    VALUES (?, ?, ?)
-                    "#,
-                    workflow_id,
-                    job_id,
-                    resource_requirements_id
-                )
-                .execute(&mut **tx)
-                .await
-                {
-                    Ok(_) => {
-                        debug!(
-                            "unblock_jobs_waiting_for_tx: added job_id={} to ready_queue",
-                            job_id
-                        );
-                    }
-                    Err(e) => {
-                        error!("Database error inserting into ready_queue: {}", e);
-                        return Err(ApiError("Database error".to_string()));
-                    }
-                }
-            }
         }
 
         debug!(
@@ -1271,7 +1205,7 @@ impl<C> Server<C> {
         Ok(ready_job_ids)
     }
 
-    /// Unblock jobs that were waiting for a completed job and add them to ready_queue if appropriate.
+    /// Unblock jobs that were waiting for a completed job.
     ///
     /// This function finds all jobs that were blocked by the completed job and checks if they
     /// can now be unblocked. A job can be unblocked if it's no longer blocked by any incomplete jobs.
@@ -1427,30 +1361,6 @@ impl<C> Server<C> {
                 Err(e) => {
                     error!(
                         "Database error updating job {} status: {}",
-                        downstream_job_id, e
-                    );
-                    return Err(ApiError("Database error".to_string()));
-                }
-            }
-
-            // Remove from ready_queue if present
-            match sqlx::query!(
-                "DELETE FROM ready_queue WHERE job_id = ? AND workflow_id = ?",
-                downstream_job_id,
-                workflow_id
-            )
-            .execute(self.pool.as_ref())
-            .await
-            {
-                Ok(_) => {
-                    debug!(
-                        "reinitialize_downstream_jobs: removed job_id={} from ready_queue",
-                        downstream_job_id
-                    );
-                }
-                Err(e) => {
-                    error!(
-                        "Database error removing job {} from ready_queue: {}",
                         downstream_job_id, e
                     );
                     return Err(ApiError("Database error".to_string()));
@@ -2734,7 +2644,7 @@ where
     /// If any step fails, all changes will be rolled back.
     ///
     /// This function can be called multiple times (e.g., for workflow reruns). It will:
-    /// - Clear the ready_queue for the workflow
+    /// - Reset all job statuses to uninitialized
     /// - Delete workflow_result records for incomplete jobs
     /// - Re-initialize job statuses based on dependencies
     async fn initialize_jobs(
@@ -2858,40 +2768,6 @@ where
             }
         }
 
-        // TODO: helper function
-        // Step 6: Clear the ready queue for this workflow
-        // This allows initialize_jobs to be called multiple times (e.g., for workflow reruns)
-        match sqlx::query!(
-            r#"
-            DELETE FROM ready_queue
-            WHERE workflow_id = $1
-            "#,
-            id
-        )
-        .execute(&mut *tx)
-        .await
-        {
-            Ok(result) => {
-                debug!(
-                    "Cleared {} entries from ready_queue for workflow {}",
-                    result.rows_affected(),
-                    id
-                );
-            }
-            Err(e) => {
-                error!("Failed to clear ready_queue for workflow {}: {}", id, e);
-                let _ = tx.rollback().await;
-                return Err(ApiError("Database error".to_string()));
-            }
-        }
-
-        // Step 7: Add ready jobs to the ready queue
-        if let Err(e) = self.add_ready_jobs(&mut *tx, id).await {
-            error!("Failed to add ready jobs to queue: {}", e);
-            let _ = tx.rollback().await;
-            return Err(e);
-        }
-
         // Commit the transaction
         // Hash computation must happen AFTER this commit so that compute_job_input_hash
         // can see the job_blocked_by relationships that were inserted in this transaction
@@ -2900,7 +2776,7 @@ where
             return Err(ApiError("Database error".to_string()));
         }
 
-        // Step 8: Compute and store input hashes for all jobs in the workflow
+        // Step 7: Compute and store input hashes for all jobs in the workflow
         // This tracks the baseline hash for this run to detect future input changes
         // IMPORTANT: This must happen AFTER the transaction commits so that the hash
         // computation sees the committed job_blocked_by relationships
@@ -3314,7 +3190,7 @@ where
         // The IMMEDIATE mode acquires a reserved lock immediately, preventing other writers
         // and ensuring that concurrent reads see a consistent snapshot.
         // This prevents race conditions where multiple clients could:
-        // 1. Select the same jobs from ready_queue
+        // 1. Select the same ready jobs from the job table
         // 2. Double-allocate jobs to different clients
         // The lock is held for the entire transaction duration.
 
@@ -3357,25 +3233,26 @@ where
             return Ok(ClaimNextJobsResponse::DefaultErrorResponse(error_response));
         }
 
-        // Query the ready_queue for the next N jobs (no resource filtering)
+        // Query the job table directly for ready jobs using the indexed status column
+        let ready_status = models::JobStatus::Ready.to_int();
         let query = r#"
             SELECT
-                rq.workflow_id,
-                rq.job_id,
-                job.name,
-                job.command,
-                job.status,
-                job.cancel_on_blocking_job_failure,
-                job.supports_termination,
-                rq.resource_requirements_id
-            FROM ready_queue rq
-            JOIN job ON rq.job_id = job.id
-            WHERE rq.workflow_id = $1
-            LIMIT $2
+                id as job_id,
+                workflow_id,
+                name,
+                command,
+                status,
+                cancel_on_blocking_job_failure,
+                supports_termination,
+                resource_requirements_id
+            FROM job
+            WHERE workflow_id = $1 AND status = $2
+            LIMIT $3
             "#;
 
         let rows = sqlx::query(query)
             .bind(workflow_id)
+            .bind(ready_status)
             .bind(job_limit)
             .fetch_all(&mut *conn)
             .await
@@ -3393,23 +3270,10 @@ where
         let mut selected_jobs = Vec::new();
         let mut job_ids_to_update = Vec::new();
 
-        // Process all returned jobs
+        // Process all returned jobs (all are guaranteed to be in Ready status)
         for row in rows {
             let job_id: i64 = row.get("job_id");
             job_ids_to_update.push(job_id);
-
-            let status =
-                models::JobStatus::from_int(row.get::<i64, _>("status") as i32).map_err(|e| {
-                    error!("Failed to parse job status: {}", e);
-                    ApiError("Invalid job status".to_string())
-                })?;
-
-            if status != models::JobStatus::Ready {
-                error!("Expected job status to be Ready, but got: {}", status);
-                // Rollback the transaction since we're returning early
-                let _ = sqlx::query("ROLLBACK").execute(&mut *conn).await;
-                return Err(ApiError("Invalid job status in ready queue".to_string()));
-            }
 
             let job = models::JobModel {
                 id: Some(job_id),
@@ -3492,7 +3356,7 @@ where
             }
         }
 
-        // If we have jobs to update, update their status and remove from ready_queue
+        // If we have jobs to update, update their status to pending
         if !job_ids_to_update.is_empty() {
             // Update job status to pending
             let pending = models::JobStatus::Pending.to_int();
@@ -3504,21 +3368,6 @@ where
                         error!("Failed to update job status: {}", e);
                         ApiError("Database update error".to_string())
                     })?;
-            }
-
-            // Delete jobs from ready_queue
-            for job_id in &job_ids_to_update {
-                sqlx::query!(
-                    "DELETE FROM ready_queue WHERE job_id = $1 AND workflow_id = $2",
-                    job_id,
-                    workflow_id
-                )
-                .execute(&mut *conn)
-                .await
-                .map_err(|e| {
-                    error!("Failed to remove from ready_queue: {}", e);
-                    ApiError("Database delete error".to_string())
-                })?;
             }
 
             debug!(
@@ -4253,7 +4102,7 @@ where
     /// Get ready jobs that fit within the specified resource constraints.
     ///
     /// This function performs the following operations:
-    /// 1. Joins ready_queue, job, and resource_requirements tables
+    /// 1. Queries job and resource_requirements tables for ready jobs
     /// 2. Filters jobs based on resource constraints:
     ///    - memory_bytes <= resources.memory_gb (converted from GiB to bytes)
     ///    - num_cpus <= resources.num_cpus
@@ -4266,7 +4115,7 @@ where
     ///    - GpusMemoryRuntime: Sort by num_gpus DESC, memory_bytes DESC, runtime_s DESC
     /// 4. Loops through returned records and accumulates resource consumption
     /// 5. Selects jobs that can fit within total available resources
-    /// 6. Atomically updates selected jobs to "pending" status and removes them from ready_queue
+    /// 6. Atomically updates selected jobs to "pending" status
     ///
     /// # Parameters
     /// - `workflow_id`: ID of the workflow to get jobs for
@@ -4302,7 +4151,7 @@ where
         // The IMMEDIATE mode acquires a reserved lock immediately, preventing other writers
         // and ensuring that concurrent reads see a consistent snapshot.
         // This prevents race conditions where multiple clients could:
-        // 1. Select the same jobs from ready_queue
+        // 1. Select the same ready jobs from the job table
         // 2. Double-allocate jobs to different clients
         // 3. Create inconsistent resource counting
         // The lock is held for the entire transaction duration.
@@ -4378,6 +4227,7 @@ where
 
         let memory_bytes = (resources.memory_gb * 1024.0 * 1024.0 * 1024.0) as i64;
 
+        let ready_status = models::JobStatus::Ready.to_int();
         let order_by_clause = match actual_sort_method {
             models::ClaimJobsSortMethod::None => "",
             models::ClaimJobsSortMethod::GpusRuntimeMemory => {
@@ -4391,8 +4241,8 @@ where
         let query = format!(
             r#"
             SELECT
-                rq.workflow_id,
-                rq.job_id,
+                job.workflow_id,
+                job.id AS job_id,
                 job.name,
                 job.command,
                 job.invocation_script,
@@ -4405,24 +4255,25 @@ where
                 rr.num_gpus,
                 rr.num_nodes,
                 rr.runtime_s
-            FROM ready_queue rq
-            JOIN resource_requirements rr ON rq.resource_requirements_id = rr.id
-            JOIN job ON rq.job_id = job.id
-            WHERE rq.workflow_id = $1
-            AND rr.memory_bytes <= $2
-            AND rr.num_cpus <= $3
-            AND rr.num_gpus <= $4
-            AND rr.num_nodes <= $5
-            AND rr.runtime_s <= $6
-            AND (job.scheduler_id IS NULL OR job.scheduler_id = $7)
+            FROM job
+            JOIN resource_requirements rr ON job.resource_requirements_id = rr.id
+            WHERE job.workflow_id = $1
+            AND job.status = $2
+            AND rr.memory_bytes <= $3
+            AND rr.num_cpus <= $4
+            AND rr.num_gpus <= $5
+            AND rr.num_nodes <= $6
+            AND rr.runtime_s <= $7
+            AND (job.scheduler_id IS NULL OR job.scheduler_id = $8)
             {}
-            LIMIT $8
+            LIMIT $9
             "#,
             order_by_clause
         );
 
         let rows = sqlx::query(&query)
             .bind(workflow_id)
+            .bind(ready_status)
             .bind(memory_bytes)
             .bind(resources.num_cpus)
             .bind(resources.num_gpus)
@@ -4608,7 +4459,7 @@ where
             }
         }
 
-        // If we have jobs to update, update their status and remove from ready_queue
+        // If we have jobs to update, update their status to pending
         if !job_ids_to_update.is_empty() {
             // Update job status to pending
             let pending = models::JobStatus::Pending.to_int();
@@ -4620,21 +4471,6 @@ where
                         error!("Failed to update job status: {}", e);
                         ApiError("Database update error".to_string())
                     })?;
-            }
-
-            // Delete jobs from ready_queue
-            for job_id in &job_ids_to_update {
-                sqlx::query!(
-                    "DELETE FROM ready_queue WHERE job_id = $1 AND workflow_id = $2",
-                    job_id,
-                    workflow_id
-                )
-                .execute(&mut *conn)
-                .await
-                .map_err(|e| {
-                    error!("Failed to remove from ready_queue: {}", e);
-                    ApiError("Database delete error".to_string())
-                })?;
             }
 
             debug!(

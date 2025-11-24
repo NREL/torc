@@ -13,18 +13,16 @@ This document analyzes the Torc database query patterns and recommends indexes t
    - `SELECT * FROM result WHERE workflow_id = ?`
    - `SELECT * FROM event WHERE workflow_id = ?`
    - `SELECT * FROM compute_node WHERE workflow_id = ?`
-   - `SELECT * FROM ready_queue WHERE workflow_id = ?`
 
 2. **Filtering by workflow_id and status** - Common for finding jobs in specific states:
    - `SELECT * FROM job WHERE workflow_id = ? AND status = ?`
    - Used in workflow initialization, status checks, and job runner queries
 
-3. **Ready queue queries** - Critical for job allocation:
+3. **Ready job queries** - Critical for job allocation:
    ```sql
-   SELECT ... FROM ready_queue rq
-   JOIN resource_requirements rr ON rq.resource_requirements_id = rr.id
-   JOIN job ON rq.job_id = job.id
-   WHERE rq.workflow_id = ?
+   SELECT ... FROM job
+   JOIN resource_requirements rr ON job.resource_requirements_id = rr.id
+   WHERE job.workflow_id = ? AND job.status = ?
    ORDER BY rr.num_gpus DESC, rr.runtime_s DESC, rr.memory_bytes DESC
    ```
 
@@ -183,7 +181,6 @@ However, having both may not be necessary if one sort method is dominant.
 The following columns are already indexed via primary keys or unique constraints:
 
 - All `id` columns (PRIMARY KEY)
-- `ready_queue(workflow_id, job_id)` - PRIMARY KEY provides index on workflow_id prefix
 - `result(job_id, run_id)` - UNIQUE constraint provides index
 - `job_blocked_by(job_id, blocked_by_job_id)` - PRIMARY KEY provides index on job_id prefix
 - `job_input_file(job_id, file_id)` - PRIMARY KEY provides index on job_id prefix
@@ -267,7 +264,6 @@ SQLite's query planner is quite good at choosing indexes, but:
 ### WAL Mode Benefits
 - Since Torc uses SQLite in WAL mode, readers don't block writers
 - Indexes improve read performance without significantly affecting write concurrency
-- The ready_queue has high write frequency (jobs moving in/out), but already has a covering primary key
 
 ## Maintenance
 

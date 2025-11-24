@@ -1,7 +1,0 @@
-CREATE TABLE local_scheduler (
-  id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
-  workflow_id INTEGER NOT NULL,
-  memory TEXT NOT NULL,
-  num_cpus INTEGER NOT NULL,
-  FOREIGN KEY (workflow_id) REFERENCES workflow(id) ON DELETE CASCADE
-);
