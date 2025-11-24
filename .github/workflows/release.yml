@@ -1,0 +1,183 @@
+name: Build Release Binaries
+
+on:
+  push:
+    tags:
+      - 'v*'  # Triggers on version tags like v0.7.0
+  workflow_dispatch:  # Allows manual trigger from GitHub UI
+    inputs:
+      tag_name:
+        description: 'Tag name for the release'
+        required: false
+        default: 'manual-build'
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    name: Build ${{ matrix.target }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macOS Apple Silicon
+          - os: macos-14
+            target: aarch64-apple-darwin
+            use_cross: false
+
+          # Linux x86_64 (musl for static binaries - works on all distros)
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-musl
+            use_cross: true
+
+          # Linux x86_64 (glibc - for modern distros, better performance)
+          - os: ubuntu-20.04
+            target: x86_64-unknown-linux-gnu
+            use_cross: false
+
+          # Windows x86_64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            use_cross: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Install cross-compilation tool
+        if: matrix.use_cross
+        run: |
+          cargo install cross --git https://github.com/cross-rs/cross
+
+      - name: Install musl tools (Linux musl)
+        if: matrix.target == 'x86_64-unknown-linux-musl' && !matrix.use_cross
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y musl-tools
+
+      - name: Install OpenSSL for Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          vcpkg install openssl:x64-windows-static-md
+          echo "OPENSSL_DIR=C:/vcpkg/installed/x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "OPENSSL_ROOT_DIR=C:/vcpkg/installed/x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "OPENSSL_INCLUDE_DIR=C:/vcpkg/installed/x64-windows-static-md/include" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "OPENSSL_LIB_DIR=C:/vcpkg/installed/x64-windows-static-md/lib" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          echo "VCPKG_ROOT=C:/vcpkg" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/registry
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-registry-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-cargo-registry-
+
+      - name: Cache cargo index
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/git
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-index-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-cargo-index-
+
+      - name: Cache cargo build
+        uses: actions/cache@v4
+        with:
+          path: target
+          key: ${{ runner.os }}-${{ matrix.target }}-cargo-build-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-${{ matrix.target }}-cargo-build-
+
+      - name: Set binary extension
+        id: binary_ext
+        shell: bash
+        run: |
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            echo "ext=.exe" >> $GITHUB_OUTPUT
+          else
+            echo "ext=" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build binaries (with cross)
+        if: matrix.use_cross
+        run: |
+          cross build --release --target ${{ matrix.target }} --bin torc --features "client,tui,plot_resources"
+          cross build --release --target ${{ matrix.target }} --bin torc-server
+          cross build --release --target ${{ matrix.target }} --bin torc-slurm-job-runner
+
+      - name: Build binaries (native)
+        if: "!matrix.use_cross"
+        run: |
+          cargo build --release --target ${{ matrix.target }} --bin torc --features "client,tui,plot_resources"
+          cargo build --release --target ${{ matrix.target }} --bin torc-server
+          cargo build --release --target ${{ matrix.target }} --bin torc-slurm-job-runner
+        env:
+          OPENSSL_DIR: ${{ matrix.os == 'windows-latest' && 'C:/vcpkg/installed/x64-windows-static-md' || '' }}
+          OPENSSL_ROOT_DIR: ${{ matrix.os == 'windows-latest' && 'C:/vcpkg/installed/x64-windows-static-md' || '' }}
+          OPENSSL_INCLUDE_DIR: ${{ matrix.os == 'windows-latest' && 'C:/vcpkg/installed/x64-windows-static-md/include' || '' }}
+          OPENSSL_LIB_DIR: ${{ matrix.os == 'windows-latest' && 'C:/vcpkg/installed/x64-windows-static-md/lib' || '' }}
+          VCPKG_ROOT: ${{ matrix.os == 'windows-latest' && 'C:/vcpkg' || '' }}
+
+      - name: Create release archive
+        shell: bash
+        run: |
+          mkdir -p release
+          cd target/${{ matrix.target }}/release
+
+          # Determine archive name
+          if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+            ARCHIVE_NAME="torc-${{ matrix.target }}.zip"
+            7z a ../../../release/$ARCHIVE_NAME torc.exe torc-server.exe torc-slurm-job-runner.exe
+          else
+            ARCHIVE_NAME="torc-${{ matrix.target }}.tar.gz"
+            tar czf ../../../release/$ARCHIVE_NAME torc torc-server torc-slurm-job-runner
+          fi
+
+          cd ../../../release
+          ls -lh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: torc-${{ matrix.target }}
+          path: release/*
+          retention-days: 7
+
+  create-release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Display structure of downloaded files
+        run: ls -R artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          generate_release_notes: true
+          files: |
+            artifacts/torc-aarch64-apple-darwin/*.tar.gz
+            artifacts/torc-x86_64-unknown-linux-musl/*.tar.gz
+            artifacts/torc-x86_64-unknown-linux-gnu/*.tar.gz
+            artifacts/torc-x86_64-pc-windows-msvc/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
