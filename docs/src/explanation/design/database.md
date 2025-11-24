@@ -19,7 +19,6 @@ The SQLite database is the heart of Torc's coordination model. All workflow stat
 - `job_input_file`, `job_output_file` - Job-file relationships
 - `job_input_user_data`, `job_output_user_data` - Job-user_data relationships
 - `resource_requirements` - CPU, memory, GPU, runtime specifications
-- `ready_queue` - Optimized queue of jobs ready for execution
 - `compute_node` - Available compute resources
 - `scheduled_compute_node` - Compute nodes allocated to workflows
 - `local_scheduler`, `slurm_scheduler` - Execution environment configurations

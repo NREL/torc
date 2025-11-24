@@ -1258,7 +1258,7 @@ where
             }
         }
 
-        // Begin a transaction to ensure workflow status reset and ready_queue cleanup are atomic
+        // Begin a transaction to ensure workflow status reset is atomic
         let mut tx = match self.context.pool.begin().await {
             Ok(tx) => tx,
             Err(e) => {
