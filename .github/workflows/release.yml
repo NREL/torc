@@ -116,9 +116,7 @@ jobs:
       - name: Build binaries (native)
         if: "!matrix.use_cross"
         run: |
-          cargo build --release --target ${{ matrix.target }} --bin torc --features "client,tui,plot_resources"
-          cargo build --release --target ${{ matrix.target }} --bin torc-server
-          cargo build --release --target ${{ matrix.target }} --bin torc-slurm-job-runner
+          cargo build --workspace --release --target ${{ matrix.target }}
         env:
           OPENSSL_DIR: ${{ matrix.os == 'windows-latest' && 'C:/vcpkg/installed/x64-windows-static-md' || '' }}
           OPENSSL_ROOT_DIR: ${{ matrix.os == 'windows-latest' && 'C:/vcpkg/installed/x64-windows-static-md' || '' }}

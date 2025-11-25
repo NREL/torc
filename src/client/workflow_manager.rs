@@ -9,6 +9,13 @@ use std::fs;
 use std::path::Path;
 use std::time::UNIX_EPOCH;
 
+#[derive(Debug, serde::Serialize)]
+pub struct InitializationCheck {
+    pub safe: bool,
+    pub missing_input_files: Vec<String>,
+    pub existing_output_files: Vec<String>,
+}
+
 pub struct WorkflowManager {
     config: Configuration,
     pub workflow_id: i64,
@@ -39,6 +46,86 @@ impl WorkflowManager {
             .duration_since(UNIX_EPOCH)
             .expect("File has modification time before Unix epoch");
         duration.as_secs_f64()
+    }
+
+    /// Check if initialization is safe to run without executing.
+    /// Returns information about missing input files and existing output files.
+    pub fn check_initialization(&self) -> Result<InitializationCheck, TorcError> {
+        // Check for missing required input files
+        let missing_input_files = self.get_missing_required_files()?;
+
+        // Check for existing output files
+        let existing_output_files = self.get_existing_output_files()?;
+
+        // Safe if no missing input files (existing output files are just warnings)
+        let safe = missing_input_files.is_empty();
+
+        Ok(InitializationCheck {
+            safe,
+            missing_input_files,
+            existing_output_files,
+        })
+    }
+
+    /// Get list of missing required input files (file paths)
+    fn get_missing_required_files(&self) -> Result<Vec<String>, TorcError> {
+        let response =
+            match default_api::list_required_existing_files(&self.config, self.workflow_id) {
+                Ok(response) => response,
+                Err(err) => {
+                    return Err(TorcError::ApiError(format!(
+                        "Failed to list required existing files: {}",
+                        err
+                    )));
+                }
+            };
+
+        let mut missing_files = Vec::new();
+
+        for file_id in response.files {
+            let file = match default_api::get_file(&self.config, file_id) {
+                Ok(file) => file,
+                Err(err) => {
+                    return Err(TorcError::ApiError(format!(
+                        "Failed to get file details for ID {}: {}",
+                        file_id, err
+                    )));
+                }
+            };
+
+            let file_path = Path::new(&file.path);
+            if !file_path.exists() {
+                missing_files.push(file.path.clone());
+            }
+        }
+
+        Ok(missing_files)
+    }
+
+    /// Get list of existing output files (file paths)
+    fn get_existing_output_files(&self) -> Result<Vec<String>, TorcError> {
+        let params = FileListParams::new().with_is_output(true);
+        let files_iterator = iter_files(&self.config, self.workflow_id, params);
+
+        let mut existing_files = Vec::new();
+        for file_result in files_iterator {
+            match file_result {
+                Ok(file) => {
+                    let file_path = Path::new(&file.path);
+                    if file_path.exists() {
+                        existing_files.push(file.path.clone());
+                    }
+                }
+                Err(err) => {
+                    warn!(
+                        "Failed to fetch file from API during output file check: {}",
+                        err
+                    );
+                }
+            }
+        }
+
+        Ok(existing_files)
     }
 
     /// Initialize the jobs and start the workflow.
