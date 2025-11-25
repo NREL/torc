@@ -460,14 +460,14 @@ fn test_jobs_complete_command_json(start_server: &ServerProcess) {
         0,   // return_code
         5.5, // exec_time_minutes
         chrono::Utc::now().to_rfc3339(),
-        JobStatus::Done,
+        JobStatus::Completed,
     );
 
     // Test the API complete_job function
     let completed_job = default_api::complete_job(
         config,
         job_id,
-        JobStatus::Done,
+        JobStatus::Completed,
         1, // run_id
         result_model,
     )
@@ -476,7 +476,7 @@ fn test_jobs_complete_command_json(start_server: &ServerProcess) {
     // Verify the completed job
     assert_eq!(completed_job.id.unwrap(), job_id);
     assert_eq!(completed_job.name, "test_complete_job");
-    assert_eq!(completed_job.status.unwrap(), JobStatus::Done);
+    assert_eq!(completed_job.status.unwrap(), JobStatus::Completed);
 }
 
 #[rstest]
@@ -496,7 +496,11 @@ fn test_jobs_complete_with_different_statuses(start_server: &ServerProcess) {
     let compute_node = create_test_compute_node(config, workflow_id);
     let compute_node_id = compute_node.id.unwrap();
 
-    let statuses = [JobStatus::Done, JobStatus::Canceled, JobStatus::Terminated];
+    let statuses = [
+        JobStatus::Completed,
+        JobStatus::Canceled,
+        JobStatus::Terminated,
+    ];
     for status in &statuses {
         let status_str = status.to_string();
         let job = create_test_job(config, workflow_id, &format!("job_{}", &status_str));
@@ -551,7 +555,7 @@ fn test_jobs_complete_return_codes(start_server: &ServerProcess) {
         let job_id = job.id.unwrap();
 
         let expected_status = if return_code == 0 {
-            JobStatus::Done
+            JobStatus::Completed
         } else {
             JobStatus::Terminated
         };

@@ -733,7 +733,8 @@ impl WorkflowActionsApiImpl {
             let meets_condition = match trigger_type {
                 "on_jobs_ready" => job_status == JobStatus::Ready.to_int() as i64,
                 "on_jobs_complete" => {
-                    job_status == JobStatus::Done.to_int() as i64
+                    job_status == JobStatus::Completed.to_int() as i64
+                        || job_status == JobStatus::Failed.to_int() as i64
                         || job_status == JobStatus::Canceled.to_int() as i64
                         || job_status == JobStatus::Terminated.to_int() as i64
                 }

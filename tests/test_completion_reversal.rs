@@ -79,7 +79,7 @@ fn test_completion_reversal_resets_downstream_jobs(start_server: &ServerProcess)
         1,   // return_code (failure)
         1.0, // exec_time_minutes
         chrono::Utc::now().to_rfc3339(),
-        JobStatus::Done,
+        JobStatus::Completed,
     );
 
     default_api::complete_job(
@@ -103,7 +103,7 @@ fn test_completion_reversal_resets_downstream_jobs(start_server: &ServerProcess)
         0,   // return_code (success)
         1.0, // exec_time_minutes
         chrono::Utc::now().to_rfc3339(),
-        JobStatus::Done,
+        JobStatus::Completed,
     );
 
     default_api::complete_job(
@@ -124,7 +124,7 @@ fn test_completion_reversal_resets_downstream_jobs(start_server: &ServerProcess)
         0,   // return_code (success)
         1.0, // exec_time_minutes
         chrono::Utc::now().to_rfc3339(),
-        JobStatus::Done,
+        JobStatus::Completed,
     );
 
     default_api::complete_job(
@@ -141,9 +141,9 @@ fn test_completion_reversal_resets_downstream_jobs(start_server: &ServerProcess)
     let job2_completed = default_api::get_job(config, job2_id).expect("Failed to get job2");
     let job3_completed = default_api::get_job(config, job3_id).expect("Failed to get job3");
 
-    assert_eq!(job1_completed.status.unwrap(), JobStatus::Done);
-    assert_eq!(job2_completed.status.unwrap(), JobStatus::Done);
-    assert_eq!(job3_completed.status.unwrap(), JobStatus::Done);
+    assert_eq!(job1_completed.status.unwrap(), JobStatus::Completed);
+    assert_eq!(job2_completed.status.unwrap(), JobStatus::Completed);
+    assert_eq!(job3_completed.status.unwrap(), JobStatus::Completed);
 
     // Now call reset_job_status with failed_only = true
     // This should reset job1 (which failed) and trigger the completion reversal
@@ -263,7 +263,7 @@ fn test_completion_reversal_complex_dependencies(start_server: &ServerProcess) {
             return_code,
             1.0,
             chrono::Utc::now().to_rfc3339(),
-            JobStatus::Done,
+            JobStatus::Completed,
         );
 
         default_api::complete_job(config, job_id, result.status, 1, result)
@@ -273,7 +273,7 @@ fn test_completion_reversal_complex_dependencies(start_server: &ServerProcess) {
     // Verify all jobs are completed
     for job_id in [job1_id, job2_id, job3_id, job4_id] {
         let job = default_api::get_job(config, job_id).expect("Failed to get job");
-        assert_eq!(job.status.unwrap(), JobStatus::Done);
+        assert_eq!(job.status.unwrap(), JobStatus::Completed);
     }
 
     // Reset failed jobs only
@@ -373,7 +373,7 @@ fn test_completion_reversal_selective_reset(start_server: &ServerProcess) {
             return_code,
             1.0,
             chrono::Utc::now().to_rfc3339(),
-            JobStatus::Done,
+            JobStatus::Completed,
         );
 
         default_api::complete_job(config, job_id, result.status, 1, result)
@@ -403,12 +403,12 @@ fn test_completion_reversal_selective_reset(start_server: &ServerProcess) {
     let job4_final = default_api::get_job(config, job4_id).expect("Failed to get job4");
     assert_eq!(
         job3_final.status.unwrap(),
-        JobStatus::Done,
+        JobStatus::Completed,
         "job3 should remain Done (independent successful job)"
     );
     assert_eq!(
         job4_final.status.unwrap(),
-        JobStatus::Done,
+        JobStatus::Completed,
         "job4 should remain Done (downstream of successful job3)"
     );
 }

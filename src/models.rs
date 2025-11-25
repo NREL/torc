@@ -3140,18 +3140,20 @@ pub enum JobStatus {
     Uninitialized,
     #[serde(rename = "blocked")]
     Blocked,
+    #[serde(rename = "ready")]
+    Ready,
+    #[serde(rename = "pending")]
+    Pending,
+    #[serde(rename = "running")]
+    Running,
+    #[serde(rename = "completed")]
+    Completed,
+    #[serde(rename = "failed")]
+    Failed,
     #[serde(rename = "canceled")]
     Canceled,
     #[serde(rename = "terminated")]
     Terminated,
-    #[serde(rename = "done")]
-    Done,
-    #[serde(rename = "ready")]
-    Ready,
-    #[serde(rename = "running")]
-    Running,
-    #[serde(rename = "pending")]
-    Pending,
     #[serde(rename = "disabled")]
     Disabled,
 }
@@ -3161,12 +3163,13 @@ impl std::fmt::Display for JobStatus {
         match *self {
             JobStatus::Uninitialized => write!(f, "uninitialized"),
             JobStatus::Blocked => write!(f, "blocked"),
+            JobStatus::Ready => write!(f, "ready"),
+            JobStatus::Pending => write!(f, "pending"),
+            JobStatus::Running => write!(f, "running"),
+            JobStatus::Completed => write!(f, "completed"),
+            JobStatus::Failed => write!(f, "failed"),
             JobStatus::Canceled => write!(f, "canceled"),
             JobStatus::Terminated => write!(f, "terminated"),
-            JobStatus::Done => write!(f, "done"),
-            JobStatus::Ready => write!(f, "ready"),
-            JobStatus::Running => write!(f, "running"),
-            JobStatus::Pending => write!(f, "pending"),
             JobStatus::Disabled => write!(f, "disabled"),
         }
     }
@@ -3185,12 +3188,13 @@ impl std::str::FromStr for JobStatus {
         match s {
             "uninitialized" => std::result::Result::Ok(JobStatus::Uninitialized),
             "blocked" => std::result::Result::Ok(JobStatus::Blocked),
+            "ready" => std::result::Result::Ok(JobStatus::Ready),
+            "pending" => std::result::Result::Ok(JobStatus::Pending),
+            "running" => std::result::Result::Ok(JobStatus::Running),
+            "completed" => std::result::Result::Ok(JobStatus::Completed),
+            "failed" => std::result::Result::Ok(JobStatus::Failed),
             "canceled" => std::result::Result::Ok(JobStatus::Canceled),
             "terminated" => std::result::Result::Ok(JobStatus::Terminated),
-            "done" => std::result::Result::Ok(JobStatus::Done),
-            "ready" => std::result::Result::Ok(JobStatus::Ready),
-            "running" => std::result::Result::Ok(JobStatus::Running),
-            "pending" => std::result::Result::Ok(JobStatus::Pending),
             "disabled" => std::result::Result::Ok(JobStatus::Disabled),
             _ => std::result::Result::Err(format!("Value not valid: {}", s)),
         }
@@ -3206,12 +3210,13 @@ impl JobStatus {
         match *self {
             JobStatus::Uninitialized => 0,
             JobStatus::Blocked => 1,
-            JobStatus::Canceled => 2,
-            JobStatus::Terminated => 3,
-            JobStatus::Done => 4,
-            JobStatus::Ready => 5,
-            JobStatus::Running => 7,
-            JobStatus::Pending => 8,
+            JobStatus::Ready => 2,
+            JobStatus::Pending => 3,
+            JobStatus::Running => 4,
+            JobStatus::Completed => 5,
+            JobStatus::Failed => 6,
+            JobStatus::Canceled => 7,
+            JobStatus::Terminated => 8,
             JobStatus::Disabled => 9,
         }
     }
@@ -3221,12 +3226,13 @@ impl JobStatus {
         match value {
             0 => Ok(JobStatus::Uninitialized),
             1 => Ok(JobStatus::Blocked),
-            2 => Ok(JobStatus::Canceled),
-            3 => Ok(JobStatus::Terminated),
-            4 => Ok(JobStatus::Done),
-            5 => Ok(JobStatus::Ready),
-            7 => Ok(JobStatus::Running),
-            8 => Ok(JobStatus::Pending),
+            2 => Ok(JobStatus::Ready),
+            3 => Ok(JobStatus::Pending),
+            4 => Ok(JobStatus::Running),
+            5 => Ok(JobStatus::Completed),
+            6 => Ok(JobStatus::Failed),
+            7 => Ok(JobStatus::Canceled),
+            8 => Ok(JobStatus::Terminated),
             9 => Ok(JobStatus::Disabled),
             _ => Err(format!("Invalid JobStatus integer value: {}", value)),
         }
@@ -3249,12 +3255,13 @@ impl JobStatusMap {
             let mut map = HashMap::new();
             map.insert(JobStatus::Uninitialized, 0);
             map.insert(JobStatus::Blocked, 1);
-            map.insert(JobStatus::Canceled, 2);
-            map.insert(JobStatus::Terminated, 3);
-            map.insert(JobStatus::Done, 4);
-            map.insert(JobStatus::Ready, 5);
-            map.insert(JobStatus::Running, 7);
-            map.insert(JobStatus::Pending, 8);
+            map.insert(JobStatus::Ready, 2);
+            map.insert(JobStatus::Pending, 3);
+            map.insert(JobStatus::Running, 4);
+            map.insert(JobStatus::Completed, 5);
+            map.insert(JobStatus::Failed, 6);
+            map.insert(JobStatus::Canceled, 7);
+            map.insert(JobStatus::Terminated, 8);
             map.insert(JobStatus::Disabled, 9);
             map
         })
@@ -3267,12 +3274,13 @@ impl JobStatusMap {
             let mut map = HashMap::new();
             map.insert(0, JobStatus::Uninitialized);
             map.insert(1, JobStatus::Blocked);
-            map.insert(2, JobStatus::Canceled);
-            map.insert(3, JobStatus::Terminated);
-            map.insert(4, JobStatus::Done);
-            map.insert(5, JobStatus::Ready);
-            map.insert(7, JobStatus::Running);
-            map.insert(8, JobStatus::Pending);
+            map.insert(2, JobStatus::Ready);
+            map.insert(3, JobStatus::Pending);
+            map.insert(4, JobStatus::Running);
+            map.insert(5, JobStatus::Completed);
+            map.insert(6, JobStatus::Failed);
+            map.insert(7, JobStatus::Canceled);
+            map.insert(8, JobStatus::Terminated);
             map.insert(9, JobStatus::Disabled);
             map
         })
@@ -3396,11 +3404,11 @@ impl std::convert::TryFrom<hyper::header::HeaderValue> for header::IntoHeaderVal
 }
 
 impl JobStatus {
-    /// Returns true if the job status indicates the job is complete (Done, Canceled, or Terminated)
+    /// Returns true if the job status indicates the job is complete (Completed, Failed, Canceled, or Terminated)
     pub fn is_complete(&self) -> bool {
         matches!(
             self,
-            JobStatus::Done | JobStatus::Canceled | JobStatus::Terminated
+            JobStatus::Completed | JobStatus::Failed | JobStatus::Canceled | JobStatus::Terminated
         )
     }
 }
@@ -3412,7 +3420,8 @@ mod tests {
     #[test]
     fn test_job_status_is_complete() {
         // Test complete statuses
-        assert!(JobStatus::Done.is_complete());
+        assert!(JobStatus::Completed.is_complete());
+        assert!(JobStatus::Failed.is_complete());
         assert!(JobStatus::Canceled.is_complete());
         assert!(JobStatus::Terminated.is_complete());
 
@@ -3430,12 +3439,13 @@ mod tests {
         // Test all enum variants map to correct integers
         assert_eq!(JobStatus::Uninitialized.to_int(), 0);
         assert_eq!(JobStatus::Blocked.to_int(), 1);
-        assert_eq!(JobStatus::Canceled.to_int(), 2);
-        assert_eq!(JobStatus::Terminated.to_int(), 3);
-        assert_eq!(JobStatus::Done.to_int(), 4);
-        assert_eq!(JobStatus::Ready.to_int(), 5);
-        assert_eq!(JobStatus::Running.to_int(), 7);
-        assert_eq!(JobStatus::Pending.to_int(), 8);
+        assert_eq!(JobStatus::Ready.to_int(), 2);
+        assert_eq!(JobStatus::Pending.to_int(), 3);
+        assert_eq!(JobStatus::Running.to_int(), 4);
+        assert_eq!(JobStatus::Completed.to_int(), 5);
+        assert_eq!(JobStatus::Failed.to_int(), 6);
+        assert_eq!(JobStatus::Canceled.to_int(), 7);
+        assert_eq!(JobStatus::Terminated.to_int(), 8);
         assert_eq!(JobStatus::Disabled.to_int(), 9);
     }
 
@@ -3444,12 +3454,13 @@ mod tests {
         // Test all integers map back to correct enum variants
         assert_eq!(JobStatus::from_int(0).unwrap(), JobStatus::Uninitialized);
         assert_eq!(JobStatus::from_int(1).unwrap(), JobStatus::Blocked);
-        assert_eq!(JobStatus::from_int(2).unwrap(), JobStatus::Canceled);
-        assert_eq!(JobStatus::from_int(3).unwrap(), JobStatus::Terminated);
-        assert_eq!(JobStatus::from_int(4).unwrap(), JobStatus::Done);
-        assert_eq!(JobStatus::from_int(5).unwrap(), JobStatus::Ready);
-        assert_eq!(JobStatus::from_int(7).unwrap(), JobStatus::Running);
-        assert_eq!(JobStatus::from_int(8).unwrap(), JobStatus::Pending);
+        assert_eq!(JobStatus::from_int(2).unwrap(), JobStatus::Ready);
+        assert_eq!(JobStatus::from_int(3).unwrap(), JobStatus::Pending);
+        assert_eq!(JobStatus::from_int(4).unwrap(), JobStatus::Running);
+        assert_eq!(JobStatus::from_int(5).unwrap(), JobStatus::Completed);
+        assert_eq!(JobStatus::from_int(6).unwrap(), JobStatus::Failed);
+        assert_eq!(JobStatus::from_int(7).unwrap(), JobStatus::Canceled);
+        assert_eq!(JobStatus::from_int(8).unwrap(), JobStatus::Terminated);
         assert_eq!(JobStatus::from_int(9).unwrap(), JobStatus::Disabled);
 
         // Test invalid integer
@@ -3460,10 +3471,10 @@ mod tests {
     #[test]
     fn test_job_status_hashmap_mapping() {
         // Test HashMap-based conversions
-        assert_eq!(JobStatusMap::to_int(&JobStatus::Done), 4);
-        assert_eq!(JobStatusMap::from_int(4).unwrap(), JobStatus::Done);
-        assert_eq!(JobStatusMap::to_int(&JobStatus::Ready), 5);
-        assert_eq!(JobStatusMap::from_int(5).unwrap(), JobStatus::Ready);
+        assert_eq!(JobStatusMap::to_int(&JobStatus::Completed), 5);
+        assert_eq!(JobStatusMap::from_int(5).unwrap(), JobStatus::Completed);
+        assert_eq!(JobStatusMap::to_int(&JobStatus::Ready), 2);
+        assert_eq!(JobStatusMap::from_int(2).unwrap(), JobStatus::Ready);
 
         // Test invalid lookup
         assert!(JobStatusMap::from_int(99).is_none());
@@ -3475,12 +3486,13 @@ mod tests {
         let variants = [
             JobStatus::Uninitialized,
             JobStatus::Blocked,
+            JobStatus::Ready,
+            JobStatus::Pending,
+            JobStatus::Running,
+            JobStatus::Completed,
+            JobStatus::Failed,
             JobStatus::Canceled,
             JobStatus::Terminated,
-            JobStatus::Done,
-            JobStatus::Ready,
-            JobStatus::Running,
-            JobStatus::Pending,
             JobStatus::Disabled,
         ];
 

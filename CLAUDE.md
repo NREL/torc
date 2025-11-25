@@ -203,16 +203,17 @@ The Rust client provides a **unified CLI and library interface** with these key 
 ## Important Notes
 
 ### Job Status as Integer
-Job status values are stored as INTEGER (0-8) in the database, not strings:
+Job status values are stored as INTEGER (0-9) in the database, not strings:
 - 0 = uninitialized
-- 1 = ready
-- 2 = scheduled
+- 1 = blocked
+- 2 = ready
 - 3 = pending
 - 4 = running
-- 5 = running
-- 6 = completed
-- 7 = failed
-- 8 = canceled
+- 5 = completed
+- 6 = failed
+- 7 = canceled
+- 8 = terminated
+- 9 = disabled
 
 ### Resource Formats
 - **Memory**: String format like "1m", "2g", "512k"

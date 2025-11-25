@@ -191,16 +191,17 @@ pub fn handle_result_commands(config: &Configuration, command: &ResultCommands, 
                 let status_val = match status_str.as_str() {
                     "uninitialized" => models::JobStatus::Uninitialized,
                     "blocked" => models::JobStatus::Blocked,
+                    "ready" => models::JobStatus::Ready,
+                    "pending" => models::JobStatus::Pending,
+                    "running" => models::JobStatus::Running,
+                    "completed" => models::JobStatus::Completed,
+                    "failed" => models::JobStatus::Failed,
                     "canceled" => models::JobStatus::Canceled,
                     "terminated" => models::JobStatus::Terminated,
-                    "done" => models::JobStatus::Done,
-                    "ready" => models::JobStatus::Ready,
-                    "running" => models::JobStatus::Running,
-                    "pending" => models::JobStatus::Pending,
                     "disabled" => models::JobStatus::Disabled,
                     _ => {
                         eprintln!(
-                            "Invalid status: {}. Valid values are: uninitialized, blocked, canceled, terminated, done, ready, scheduled, running, pending, disabled",
+                            "Invalid status: {}. Valid values are: uninitialized, blocked, ready, pending, running, completed, failed, canceled, terminated, disabled",
                             status_str
                         );
                         std::process::exit(1);

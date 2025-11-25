@@ -129,7 +129,12 @@ impl AsyncCliCommand {
                 }
                 Some(exit_status) => {
                     let return_code = exit_status.code().unwrap_or(-1);
-                    return match self.handle_completion(return_code as i64, JobStatus::Done) {
+                    let status = if return_code == 0 {
+                        JobStatus::Completed
+                    } else {
+                        JobStatus::Failed
+                    };
+                    return match self.handle_completion(return_code as i64, status) {
                         Ok(_) => Ok(()),
                         Err(e) => Err(e),
                     };

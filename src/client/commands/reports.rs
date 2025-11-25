@@ -123,7 +123,7 @@ fn check_resource_utilization(
     };
 
     // Fetch results for the workflow using pagination
-    let mut params = pagination::ResultListParams::new().with_status(models::JobStatus::Done);
+    let mut params = pagination::ResultListParams::new().with_status(models::JobStatus::Completed);
     if let Some(rid) = run_id {
         params = params.with_run_id(rid);
     }

@@ -293,16 +293,17 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                 Some(status_str) => match status_str.to_lowercase().as_str() {
                     "uninitialized" => Some(models::JobStatus::Uninitialized),
                     "blocked" => Some(models::JobStatus::Blocked),
+                    "ready" => Some(models::JobStatus::Ready),
+                    "pending" => Some(models::JobStatus::Pending),
+                    "running" => Some(models::JobStatus::Running),
+                    "completed" => Some(models::JobStatus::Completed),
+                    "failed" => Some(models::JobStatus::Failed),
                     "canceled" => Some(models::JobStatus::Canceled),
                     "terminated" => Some(models::JobStatus::Terminated),
-                    "done" => Some(models::JobStatus::Done),
-                    "ready" => Some(models::JobStatus::Ready),
-                    "running" => Some(models::JobStatus::Running),
-                    "pending" => Some(models::JobStatus::Pending),
                     "disabled" => Some(models::JobStatus::Disabled),
                     _ => {
                         eprintln!(
-                            "Invalid status: {}. Valid values are: uninitialized, blocked, canceled, terminated, done, ready, scheduled, running, pending, disabled",
+                            "Invalid status: {}. Valid values are: uninitialized, blocked, ready, pending, running, completed, failed, canceled, terminated, disabled",
                             status_str
                         );
                         std::process::exit(1);
@@ -425,16 +426,17 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                         let job_status = match new_status_str.to_lowercase().as_str() {
                             "uninitialized" => models::JobStatus::Uninitialized,
                             "blocked" => models::JobStatus::Blocked,
+                            "ready" => models::JobStatus::Ready,
+                            "pending" => models::JobStatus::Pending,
+                            "running" => models::JobStatus::Running,
+                            "completed" => models::JobStatus::Completed,
+                            "failed" => models::JobStatus::Failed,
                             "canceled" | "cancelled" => models::JobStatus::Canceled,
                             "terminated" => models::JobStatus::Terminated,
-                            "done" => models::JobStatus::Done,
-                            "ready" => models::JobStatus::Ready,
-                            "running" => models::JobStatus::Running,
-                            "pending" => models::JobStatus::Pending,
                             "disabled" => models::JobStatus::Disabled,
                             _ => {
                                 eprintln!(
-                                    "Error: Invalid status '{}'. Valid options are: uninitialized, blocked, canceled, terminated, done, ready, scheduled, running, pending, disabled",
+                                    "Error: Invalid status '{}'. Valid options are: uninitialized, blocked, ready, pending, running, completed, failed, canceled, terminated, disabled",
                                     new_status_str
                                 );
                                 std::process::exit(1);
