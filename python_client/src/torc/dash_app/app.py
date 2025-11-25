@@ -263,6 +263,12 @@ app.layout = dbc.Container(
                             label_style={"cursor": "pointer"},
                             active_label_class_name="fw-bold",
                         ),
+                        dbc.Tab(
+                            label="Debugging",
+                            tab_id="debug-tab",
+                            label_style={"cursor": "pointer"},
+                            active_label_class_name="fw-bold",
+                        ),
                     ],
                     id="main-tabs",
                     active_tab="view-tab",
@@ -279,6 +285,7 @@ app.layout = dbc.Container(
                     html.Div(id="dag-tab-content", style={"display": "none"}),
                     html.Div(id="monitor-tab-content", style={"display": "none"}),
                     html.Div(id="plots-tab-content", style={"display": "none"}),
+                    html.Div(id="debug-tab-content", style={"display": "none"}),
                 ]
             )
         ),

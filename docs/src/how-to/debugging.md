@@ -2,10 +2,11 @@
 
 When workflows fail or produce unexpected results, Torc provides comprehensive
 debugging tools to help you identify and resolve issues. The primary debugging
-tools are the commands `torc results list` and `torc reports
-results` commands. The first prints a table of return codes for each job
-execution (non-zero means failure). The second command generates a detailed JSON
-report containing job results and all associated log file paths.
+tools are:
+
+- **`torc results list`**: Prints a table of return codes for each job execution (non-zero means failure)
+- **`torc reports results`**: Generates a detailed JSON report containing job results and all associated log file paths
+- **torc-dash Debug tab**: Interactive web interface for visual debugging with log file viewer
 
 ## Overview
 
@@ -201,6 +202,91 @@ In addition to the standard job logs, Slurm jobs include two additional log file
 
 **Note**: Slurm job runner logs include the Slurm job ID, node ID, and task PID
 in the filename for correlation with Slurm's own logs.
+
+## Using the torc-dash Debug Tab
+
+The torc-dash web interface provides an interactive Debug tab for visual debugging of workflow jobs. This is often the quickest way to investigate failed jobs without using command-line tools.
+
+### Accessing the Debug Tab
+
+1. Start the torc-dash server:
+   ```bash
+   torc-dash
+   ```
+
+2. Open your browser to `http://localhost:8050` (or the configured port)
+
+3. Select a workflow from the dropdown
+
+4. Click the **Debug** tab
+
+### Features
+
+#### Job Results Report
+
+The Debug tab provides a report generator with the following options:
+
+- **Output Directory**: Specify where job logs are stored (default: `output`). This must match the directory used during workflow execution.
+
+- **Include all runs**: Check this to see results from all workflow runs, not just the latest. Useful for comparing job behavior across reinitializations.
+
+- **Show only failed jobs**: Filter to display only jobs with non-zero return codes. This is checked by default to help you focus on problematic jobs.
+
+Click **Generate Report** to fetch job results from the server.
+
+#### Job Results Table
+
+After generating a report, the Debug tab displays an interactive table showing:
+
+- **Job ID**: Unique identifier for the job
+- **Job Name**: Human-readable name from the workflow spec
+- **Status**: Job completion status (Done, Terminated, etc.)
+- **Return Code**: Exit code (0 = success, non-zero = failure)
+- **Execution Time**: Duration in minutes
+- **Run ID**: Which workflow run the result is from
+
+Click any row to select a job and view its log files.
+
+#### Log File Viewer
+
+When you select a job from the table, the Log File Viewer displays:
+
+- **stdout tab**: Standard output from the job command
+  - Shows print statements and normal program output
+  - Useful for checking expected behavior and debugging logic
+
+- **stderr tab**: Standard error from the job command
+  - Shows error messages, warnings, and stack traces
+  - Primary location for investigating crashes and exceptions
+
+Each tab includes:
+- **Copy Path** button: Copy the full file path to clipboard
+- **File path display**: Shows where the log file is located
+- **Scrollable content viewer**: Dark-themed viewer for easy reading
+
+### Quick Debugging Workflow with torc-dash
+
+1. Open torc-dash and select your workflow
+2. Go to the **Debug** tab
+3. Ensure "Show only failed jobs" is checked
+4. Click **Generate Report**
+5. Click on a failed job in the results table
+6. Review the **stderr** tab for error messages
+7. Check the **stdout** tab for context about what the job was doing
+
+### When to Use torc-dash vs CLI
+
+**Use torc-dash Debug tab when:**
+- You want a visual, interactive debugging experience
+- You need to quickly scan multiple failed jobs
+- You're investigating jobs and want to easily switch between stdout/stderr
+- You prefer not to construct `jq` queries manually
+
+**Use CLI tools (`torc reports results`) when:**
+- You need to automate failure detection in CI/CD
+- You want to save reports for archival or version control
+- You're working on a remote server without browser access
+- You need to process results programmatically
 
 ## Common Debugging Workflows
 
@@ -406,5 +492,6 @@ torc reports results <workflow_id> --output-dir <correct_path>
 - **`torc workflows status`**: Check overall workflow status
 - **`torc reports check-resource-utilization`**: Analyze resource usage and find over-utilized jobs
 - **`torc jobs list`**: View all jobs and their current status
+- **`torc-dash`**: Launch web interface with interactive Debug tab
 
-The `reports results` command complements these by providing complete log file paths for in-depth debugging when high-level views aren't sufficient.
+The `reports results` command and torc-dash Debug tab complement these by providing complete log file paths and content viewing for in-depth debugging when high-level views aren't sufficient.

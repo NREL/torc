@@ -15,6 +15,7 @@ from dash.exceptions import PreventUpdate
 from .layouts import (
     create_dag_tab_layout,
     create_data_table,
+    create_debugging_tab_layout,
     create_execution_plan_view,
     create_monitor_tab_layout,
     create_resource_plots_tab_layout,
@@ -448,6 +449,7 @@ def handle_delete_workflow_modal(
     Output("dag-tab-content", "style"),
     Output("monitor-tab-content", "style"),
     Output("plots-tab-content", "style"),
+    Output("debug-tab-content", "style"),
     Input("main-tabs", "active_tab"),
 )
 def control_tab_visibility(active_tab: str):
@@ -458,6 +460,7 @@ def control_tab_visibility(active_tab: str):
         {"display": "block", "marginTop": "1rem"} if active_tab == "dag-tab" else {"display": "none"},
         {"display": "block", "marginTop": "1rem"} if active_tab == "monitor-tab" else {"display": "none"},
         {"display": "block", "marginTop": "1rem"} if active_tab == "plots-tab" else {"display": "none"},
+        {"display": "block", "marginTop": "1rem"} if active_tab == "debug-tab" else {"display": "none"},
     )
 
 
@@ -510,6 +513,16 @@ def initialize_monitor_tab(config):
 def initialize_plots_tab(config):
     """Initialize the Resource Plots tab content once."""
     return create_resource_plots_tab_layout()
+
+
+@callback(
+    Output("debug-tab-content", "children"),
+    Input("api-config-store", "data"),
+    prevent_initial_call=False,
+)
+def initialize_debug_tab(config):
+    """Initialize the Debugging tab content once."""
+    return create_debugging_tab_layout()
 
 
 # ============================================================================
@@ -2661,3 +2674,286 @@ def display_selected_plot(plot_file: str | None) -> dict[str, Any]:
     }
 
     return figure
+
+
+# ============================================================================
+# Debugging Tab Callbacks
+# ============================================================================
+
+@callback(
+    Output("debug-report-store", "data"),
+    Output("debug-report-status", "children"),
+    Output("debug-jobs-table-container", "children"),
+    Output("debug-job-count-badge", "children"),
+    Input("debug-generate-report-btn", "n_clicks"),
+    State("selected-workflow-store", "data"),
+    State("debug-output-dir", "value"),
+    State("debug-report-options", "value"),
+    State("api-config-store", "data"),
+    prevent_initial_call=True,
+)
+def generate_debug_report(
+    n_clicks: int,
+    selected_workflow: dict[str, Any] | None,
+    output_dir: str,
+    options: list[str],
+    config: dict[str, str],
+) -> tuple[dict | None, html.Div | None, html.Div, str]:
+    """Generate the job results report and display in table."""
+    if not n_clicks:
+        raise PreventUpdate
+
+    if not selected_workflow or "id" not in selected_workflow:
+        return (
+            None,
+            dbc.Alert(
+                [
+                    html.I(className="fas fa-exclamation-triangle me-2"),
+                    "Please select a workflow from the Workflow Selection panel first."
+                ],
+                color="warning",
+                dismissable=True,
+            ),
+            html.Div("No workflow selected", className="text-muted text-center p-3"),
+            "0",
+        )
+
+    workflow_id = selected_workflow["id"]
+    all_runs = "all_runs" in (options or [])
+    failed_only = "failed_only" in (options or [])
+
+    cli_wrapper = TorcCliWrapper()
+    result = cli_wrapper.get_job_results_report(
+        workflow_id,
+        api_url=config.get("url"),
+        output_dir=output_dir or "output",
+        all_runs=all_runs,
+    )
+
+    if not result["success"]:
+        error_msg = result.get("error", "Unknown error")
+        return (
+            None,
+            dbc.Alert(
+                [
+                    html.I(className="fas fa-exclamation-circle me-2"),
+                    f"Failed to generate report: {error_msg}"
+                ],
+                color="danger",
+                dismissable=True,
+            ),
+            html.Div("Error generating report", className="text-muted text-center p-3"),
+            "0",
+        )
+
+    report_data = result["data"]
+
+    # Filter for failed jobs if requested
+    # Note: CLI returns "results" not "jobs"
+    jobs = report_data.get("results", [])
+    if failed_only:
+        jobs = [j for j in jobs if j.get("return_code") != 0]
+
+    # Create table data
+    # Note: CLI uses "job_stdout"/"job_stderr" not "stdout_path"/"stderr_path"
+    table_data = []
+    for job in jobs:
+        return_code = job.get("return_code")
+
+        table_data.append({
+            "job_id": job.get("job_id", ""),
+            "job_name": job.get("job_name", ""),
+            "status": job.get("status", ""),
+            "return_code": return_code if return_code is not None else "N/A",
+            "run_id": job.get("run_id", ""),
+            "stdout_path": job.get("job_stdout", ""),
+            "stderr_path": job.get("job_stderr", ""),
+        })
+
+    if not table_data:
+        return (
+            report_data,
+            dbc.Alert(
+                [
+                    html.I(className="fas fa-info-circle me-2"),
+                    "Report generated but no matching jobs found."
+                ],
+                color="info",
+                dismissable=True,
+            ),
+            html.Div("No jobs match the filter criteria", className="text-muted text-center p-3"),
+            "0",
+        )
+
+    # Create the DataTable
+    from dash import dash_table
+
+    columns = [
+        {"name": "Job ID", "id": "job_id"},
+        {"name": "Job Name", "id": "job_name"},
+        {"name": "Status", "id": "status"},
+        {"name": "Return Code", "id": "return_code"},
+        {"name": "Run ID", "id": "run_id"},
+    ]
+
+    table = dash_table.DataTable(
+        id="debug-jobs-table",
+        columns=columns,
+        data=table_data,
+        row_selectable="single",
+        selected_rows=[],
+        page_size=15,
+        style_table={"overflowX": "auto"},
+        style_cell={
+            "textAlign": "left",
+            "padding": "10px",
+            "fontSize": "13px",
+        },
+        style_header={
+            "backgroundColor": "#f8f9fa",
+            "fontWeight": "bold",
+            "borderBottom": "2px solid #dee2e6",
+        },
+        style_data_conditional=[
+            {
+                "if": {"filter_query": "{return_code} != 0"},
+                "backgroundColor": "#f8d7da",
+                "color": "#721c24",
+            },
+            {
+                "if": {"filter_query": "{return_code} = 0"},
+                "backgroundColor": "#d4edda",
+                "color": "#155724",
+            },
+            {
+                "if": {"state": "selected"},
+                "backgroundColor": "#cce5ff",
+                "border": "1px solid #004085",
+            },
+        ],
+        filter_action="native",
+        sort_action="native",
+        sort_mode="multi",
+    )
+
+    job_count = len(table_data)
+    failed_count = len([j for j in table_data if j["return_code"] != 0 and j["return_code"] != "N/A"])
+
+    status_msg = f"Found {job_count} job(s)"
+    if failed_count > 0:
+        status_msg += f" ({failed_count} failed)"
+
+    return (
+        {"jobs": table_data, "raw": report_data},
+        dbc.Alert(
+            [
+                html.I(className="fas fa-check-circle me-2"),
+                status_msg
+            ],
+            color="success",
+            dismissable=True,
+        ),
+        table,
+        str(job_count),
+    )
+
+
+@callback(
+    Output("debug-selected-job-store", "data"),
+    Output("debug-selected-job-info", "children"),
+    Output("debug-stdout-path", "children"),
+    Output("debug-stderr-path", "children"),
+    Output("debug-stdout-content", "children"),
+    Output("debug-stderr-content", "children"),
+    Input("debug-jobs-table", "selected_rows"),
+    State("debug-report-store", "data"),
+    prevent_initial_call=True,
+)
+def select_debug_job(
+    selected_rows: list[int],
+    report_data: dict | None,
+) -> tuple[dict | None, str, str, str, str, str]:
+    """Handle job selection and load log file contents."""
+    if not selected_rows or not report_data:
+        return (
+            None,
+            "No job selected. Click on a row in the table above.",
+            "",
+            "",
+            "No stdout file loaded",
+            "No stderr file loaded",
+        )
+
+    jobs = report_data.get("jobs", [])
+    if not jobs or selected_rows[0] >= len(jobs):
+        return (
+            None,
+            "Invalid selection",
+            "",
+            "",
+            "No stdout file loaded",
+            "No stderr file loaded",
+        )
+
+    job = jobs[selected_rows[0]]
+    job_name = job.get("job_name", "Unknown")
+    job_id = job.get("job_id", "")
+    return_code = job.get("return_code", "N/A")
+    status = job.get("status", "")
+
+    # Build job info display
+    return_code_class = "text-success" if return_code == 0 else "text-danger"
+    job_info = html.Div([
+        html.Strong(f"{job_name}"),
+        html.Span(f" (ID: {job_id})", className="text-muted"),
+        html.Span(" | ", className="mx-2"),
+        html.Span(f"Status: {status}", className="me-2"),
+        html.Span(" | ", className="mx-2"),
+        html.Span(f"Return Code: ", className="me-1"),
+        html.Span(str(return_code), className=return_code_class + " fw-bold"),
+    ])
+
+    # Get file paths
+    stdout_path = job.get("stdout_path", "")
+    stderr_path = job.get("stderr_path", "")
+
+    # Load stdout content
+    stdout_content = "No stdout file available"
+    if stdout_path:
+        stdout_file = Path(stdout_path)
+        if stdout_file.exists():
+            try:
+                content = stdout_file.read_text()
+                if content.strip():
+                    stdout_content = content
+                else:
+                    stdout_content = "(empty file)"
+            except Exception as e:
+                stdout_content = f"Error reading file: {e}"
+        else:
+            stdout_content = f"File not found: {stdout_path}"
+
+    # Load stderr content
+    stderr_content = "No stderr file available"
+    if stderr_path:
+        stderr_file = Path(stderr_path)
+        if stderr_file.exists():
+            try:
+                content = stderr_file.read_text()
+                if content.strip():
+                    stderr_content = content
+                else:
+                    stderr_content = "(empty file)"
+            except Exception as e:
+                stderr_content = f"Error reading file: {e}"
+        else:
+            stderr_content = f"File not found: {stderr_path}"
+
+    return (
+        job,
+        job_info,
+        stdout_path or "N/A",
+        stderr_path or "N/A",
+        stdout_content,
+        stderr_content,
+    )

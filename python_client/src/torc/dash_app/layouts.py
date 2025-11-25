@@ -911,6 +911,272 @@ def create_resource_plots_tab_layout():
     )
 
 
+def create_debugging_tab_layout():
+    """Create the layout for the Debugging tab.
+
+    Returns
+    -------
+    dbc.Container
+        Layout component for the debugging tab.
+    """
+    return dbc.Container(
+        [
+            dbc.Row(
+                [
+                    dbc.Col(
+                        [
+                            html.H3("Job Debugging", className="mb-3"),
+                            html.P(
+                                "View stdout/stderr files and debug job execution issues",
+                                className="text-muted"
+                            ),
+                        ]
+                    )
+                ]
+            ),
+
+            # Job Results Report section
+            dbc.Row(
+                dbc.Col(
+                    dbc.Card(
+                        [
+                            dbc.CardHeader(
+                                [
+                                    html.I(className="fas fa-file-alt me-2"),
+                                    "Job Results Report"
+                                ]
+                            ),
+                            dbc.CardBody(
+                                [
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                [
+                                                    dbc.Label("Output Directory"),
+                                                    dbc.Input(
+                                                        id="debug-output-dir",
+                                                        type="text",
+                                                        value="output",
+                                                        placeholder="output",
+                                                    ),
+                                                    dbc.FormText(
+                                                        "Directory where job logs are stored"
+                                                    ),
+                                                ],
+                                                md=4,
+                                            ),
+                                            dbc.Col(
+                                                [
+                                                    dbc.Label("Options"),
+                                                    dbc.Checklist(
+                                                        id="debug-report-options",
+                                                        options=[
+                                                            {
+                                                                "label": " Include all runs (not just latest)",
+                                                                "value": "all_runs"
+                                                            },
+                                                            {
+                                                                "label": " Show only failed jobs (return code != 0)",
+                                                                "value": "failed_only"
+                                                            },
+                                                        ],
+                                                        value=["failed_only"],
+                                                        inline=False,
+                                                    ),
+                                                ],
+                                                md=4,
+                                            ),
+                                            dbc.Col(
+                                                [
+                                                    dbc.Label("\u00a0"),  # Non-breaking space for alignment
+                                                    html.Div(
+                                                        dbc.Button(
+                                                            [
+                                                                html.I(className="fas fa-search me-2"),
+                                                                "Generate Report"
+                                                            ],
+                                                            id="debug-generate-report-btn",
+                                                            color="primary",
+                                                            className="w-100",
+                                                        ),
+                                                    ),
+                                                ],
+                                                md=4,
+                                            ),
+                                        ],
+                                        className="mb-3",
+                                    ),
+                                    html.Div(id="debug-report-status"),
+                                ]
+                            ),
+                        ],
+                        className="mb-4"
+                    )
+                )
+            ),
+
+            # Job Results Table
+            dbc.Row(
+                dbc.Col(
+                    dbc.Card(
+                        [
+                            dbc.CardHeader(
+                                [
+                                    html.I(className="fas fa-list me-2"),
+                                    "Job Results",
+                                    html.Span(
+                                        id="debug-job-count-badge",
+                                        className="badge bg-secondary ms-2"
+                                    ),
+                                ]
+                            ),
+                            dbc.CardBody(
+                                [
+                                    html.Div(id="debug-jobs-table-container"),
+                                ]
+                            ),
+                        ],
+                        className="mb-4"
+                    )
+                )
+            ),
+
+            # Log File Viewer
+            dbc.Row(
+                dbc.Col(
+                    dbc.Card(
+                        [
+                            dbc.CardHeader(
+                                [
+                                    html.I(className="fas fa-terminal me-2"),
+                                    "Log File Viewer"
+                                ]
+                            ),
+                            dbc.CardBody(
+                                [
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                [
+                                                    dbc.Label("Selected Job"),
+                                                    html.Div(
+                                                        id="debug-selected-job-info",
+                                                        children="No job selected. Click on a row in the table above.",
+                                                        className="text-muted"
+                                                    ),
+                                                ],
+                                                md=12,
+                                            ),
+                                        ],
+                                        className="mb-3",
+                                    ),
+                                    dbc.Tabs(
+                                        [
+                                            dbc.Tab(
+                                                label="stdout",
+                                                tab_id="stdout-tab",
+                                                children=[
+                                                    html.Div(
+                                                        [
+                                                            dbc.Button(
+                                                                [
+                                                                    html.I(className="fas fa-copy me-2"),
+                                                                    "Copy Path"
+                                                                ],
+                                                                id="debug-copy-stdout-path-btn",
+                                                                color="secondary",
+                                                                size="sm",
+                                                                className="mb-2",
+                                                            ),
+                                                            html.Small(
+                                                                id="debug-stdout-path",
+                                                                className="text-muted ms-2"
+                                                            ),
+                                                        ]
+                                                    ),
+                                                    dcc.Loading(
+                                                        html.Pre(
+                                                            id="debug-stdout-content",
+                                                            style={
+                                                                "backgroundColor": "#1e1e1e",
+                                                                "color": "#d4d4d4",
+                                                                "padding": "1rem",
+                                                                "borderRadius": "4px",
+                                                                "maxHeight": "500px",
+                                                                "overflow": "auto",
+                                                                "whiteSpace": "pre-wrap",
+                                                                "wordWrap": "break-word",
+                                                                "fontFamily": "monospace",
+                                                                "fontSize": "12px",
+                                                            },
+                                                            children="No stdout file loaded",
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                            dbc.Tab(
+                                                label="stderr",
+                                                tab_id="stderr-tab",
+                                                children=[
+                                                    html.Div(
+                                                        [
+                                                            dbc.Button(
+                                                                [
+                                                                    html.I(className="fas fa-copy me-2"),
+                                                                    "Copy Path"
+                                                                ],
+                                                                id="debug-copy-stderr-path-btn",
+                                                                color="secondary",
+                                                                size="sm",
+                                                                className="mb-2",
+                                                            ),
+                                                            html.Small(
+                                                                id="debug-stderr-path",
+                                                                className="text-muted ms-2"
+                                                            ),
+                                                        ]
+                                                    ),
+                                                    dcc.Loading(
+                                                        html.Pre(
+                                                            id="debug-stderr-content",
+                                                            style={
+                                                                "backgroundColor": "#1e1e1e",
+                                                                "color": "#f48771",
+                                                                "padding": "1rem",
+                                                                "borderRadius": "4px",
+                                                                "maxHeight": "500px",
+                                                                "overflow": "auto",
+                                                                "whiteSpace": "pre-wrap",
+                                                                "wordWrap": "break-word",
+                                                                "fontFamily": "monospace",
+                                                                "fontSize": "12px",
+                                                            },
+                                                            children="No stderr file loaded",
+                                                        ),
+                                                    ),
+                                                ],
+                                            ),
+                                        ],
+                                        id="debug-log-tabs",
+                                        active_tab="stdout-tab",
+                                    ),
+                                ]
+                            ),
+                        ],
+                        className="mb-4"
+                    )
+                )
+            ),
+
+            # Store for report data
+            dcc.Store(id="debug-report-store"),
+            # Store for selected job
+            dcc.Store(id="debug-selected-job-store"),
+        ],
+        fluid=True
+    )
+
+
 def create_execution_plan_view(plan_data: dict):
     """Create a visual representation of the execution plan.
 

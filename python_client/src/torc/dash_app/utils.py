@@ -1447,6 +1447,84 @@ class TorcCliWrapper:
                 "error": str(e),
             }
 
+    def get_job_results_report(
+        self,
+        workflow_id: int,
+        api_url: str | None = None,
+        output_dir: str = "output",
+        all_runs: bool = False,
+    ) -> dict[str, Any]:
+        """Get job results report including log file paths.
+
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID to get results for.
+        api_url : str | None, optional
+            API URL to override the default, by default None.
+        output_dir : str, optional
+            Output directory where job logs are stored, by default "output".
+        all_runs : bool, optional
+            Include all runs for each job, not just the latest, by default False.
+
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with success status and job results data.
+        """
+        cmd = [
+            self.torc_cli_path,
+            "-f", "json",
+            "reports", "results",
+            str(workflow_id),
+            "--output-dir", output_dir,
+        ]
+        if all_runs:
+            cmd.append("--all-runs")
+
+        env = None
+        if api_url:
+            env = os.environ.copy()
+            env["TORC_API_URL"] = api_url
+
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=60,
+            )
+
+            if result.returncode == 0:
+                report_data = json.loads(result.stdout)
+                return {
+                    "success": True,
+                    "data": report_data,
+                }
+            else:
+                return {
+                    "success": False,
+                    "error": result.stderr or result.stdout,
+                    "stdout": result.stdout,
+                }
+        except subprocess.TimeoutExpired:
+            return {
+                "success": False,
+                "error": "Command timed out after 1 minute",
+            }
+        except json.JSONDecodeError as e:
+            msg = f"Failed to parse JSON output: {e}"
+            return {
+                "success": False,
+                "error": msg,
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": str(e),
+            }
+
 
 def format_table_columns(data: list[dict[str, Any]]) -> list[dict[str, str]]:
     """Generate column definitions for a Dash DataTable from data.
