@@ -1,5 +1,6 @@
 """Utility functions for the Torc Dash app."""
 
+import json
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any, Dict, List, Optional, Tuple
@@ -498,21 +499,25 @@ class TorcCliWrapper:
                 "stderr": "",
             }
 
-    def initialize_workflow(self, workflow_id: int, api_url: Optional[str] = None) -> Dict[str, Any]:
-        """Initialize a workflow.
+    def initialize_workflow_direct(self, workflow_id: int, api_url: Optional[str] = None, force: bool = False) -> Dict[str, Any]:
+        """Initialize a workflow directly without any checks or prompts.
 
         Args:
             workflow_id: The workflow ID to initialize
             api_url: Optional API URL to override the default
+            force: Whether to use --force flag (for intermediate files)
 
         Returns:
             Dictionary with command output and status
         """
-        cmd = [self.torc_cli_path, "workflows", "initialize", str(workflow_id)]
-        env = None
+        import os
 
+        cmd = [self.torc_cli_path, "workflows", "initialize", str(workflow_id)]
+        if force:
+            cmd.append("--force")
+
+        env = None
         if api_url:
-            import os
             env = os.environ.copy()
             env["TORC_API_URL"] = api_url
 
@@ -545,21 +550,223 @@ class TorcCliWrapper:
                 "stderr": "",
             }
 
-    def reinitialize_workflow(self, workflow_id: int, api_url: Optional[str] = None) -> Dict[str, Any]:
-        """Re-initialize a workflow.
+    def check_and_delete_files(self, workflow_id: int, existing_files: List[str]) -> Dict[str, Any]:
+        """Delete existing output files and return status.
 
         Args:
-            workflow_id: The workflow ID to re-initialize
+            workflow_id: The workflow ID
+            existing_files: List of file paths to delete
+
+        Returns:
+            Dictionary with:
+            - success: bool
+            - deleted_files: list of successfully deleted files
+            - failed_deletions: list of (file_path, error_msg) tuples
+        """
+        import os
+
+        deleted_files = []
+        failed_deletions = []
+
+        for file_path in existing_files:
+            try:
+                if os.path.exists(file_path):
+                    os.remove(file_path)
+                    deleted_files.append(file_path)
+            except Exception as e:
+                failed_deletions.append((file_path, str(e)))
+
+        return {
+            "success": len(failed_deletions) == 0,
+            "deleted_files": deleted_files,
+            "failed_deletions": failed_deletions,
+        }
+
+    def _check_initialization(self, workflow_id: int, api_url: Optional[str] = None) -> Dict[str, Any]:
+        """Check if initialization is safe to run (dry-run check).
+
+        Args:
+            workflow_id: The workflow ID to check
             api_url: Optional API URL to override the default
+
+        Returns:
+            Dictionary with check result including:
+            - success: bool - whether check succeeded
+            - data: dict - parsed JSON response from dry-run
+            - error: str - error message if check failed
+        """
+        return self._run_dry_run_check(workflow_id, "initialize", api_url)
+
+    def _check_reinitialize(self, workflow_id: int, api_url: Optional[str] = None) -> Dict[str, Any]:
+        """Check if reinitialization is safe to run (dry-run check).
+
+        Args:
+            workflow_id: The workflow ID to check
+            api_url: Optional API URL to override the default
+
+        Returns:
+            Dictionary with check result including:
+            - success: bool - whether check succeeded
+            - data: dict - parsed JSON response from dry-run
+            - error: str - error message if check failed
+        """
+        return self._run_dry_run_check(workflow_id, "reinitialize", api_url)
+
+    def _run_dry_run_check(self, workflow_id: int, command: str, api_url: Optional[str] = None) -> Dict[str, Any]:
+        """Run a dry-run check for initialize or reinitialize.
+
+        Args:
+            workflow_id: The workflow ID to check
+            command: Either "initialize" or "reinitialize"
+            api_url: Optional API URL to override the default
+
+        Returns:
+            Dictionary with check result including:
+            - success: bool - whether check succeeded
+            - data: dict - parsed JSON response from dry-run
+            - error: str - error message if check failed
+        """
+        import os
+
+        cmd = [
+            self.torc_cli_path,
+            "-f", "json",
+            "workflows", command,
+            str(workflow_id),
+            "--dry-run"
+        ]
+
+        env = None
+        if api_url:
+            env = os.environ.copy()
+            env["TORC_API_URL"] = api_url
+
+        try:
+            result = subprocess.run(
+                cmd,
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=30,
+            )
+
+            if result.returncode not in (0, 1):
+                # Unexpected error
+                return {
+                    "success": False,
+                    "error": f"Dry-run check failed: {result.stderr}",
+                }
+
+            # Parse JSON response
+            try:
+                data = json.loads(result.stdout)
+                return {
+                    "success": True,
+                    "data": data,
+                }
+            except json.JSONDecodeError as e:
+                return {
+                    "success": False,
+                    "error": f"Failed to parse dry-run response: {str(e)}",
+                }
+
+        except subprocess.TimeoutExpired:
+            return {
+                "success": False,
+                "error": "Dry-run check timed out after 30 seconds",
+            }
+        except Exception as e:
+            return {
+                "success": False,
+                "error": f"Dry-run check failed: {str(e)}",
+            }
+
+    def check_workflow_needs_initialization(self, workflow_id: int, api_url: Optional[str] = None) -> Dict[str, Any]:
+        """Check if a workflow needs initialization before running.
+
+        Args:
+            workflow_id: The workflow ID to check
+            api_url: Optional API URL to override the default
+
+        Returns:
+            Dictionary with:
+            - needs_init: bool - whether initialization is needed
+            - check_data: dict - dry-run check results (if needs init)
+            - error: str - error message if check failed
+        """
+        import os
+
+        # Check if workflow is uninitialized
+        cmd = [self.torc_cli_path, "-f", "json", "workflows", "get", str(workflow_id)]
+
+        env = None
+        if api_url:
+            env = os.environ.copy()
+            env["TORC_API_URL"] = api_url
+
+        try:
+            # First check if workflow needs initialization
+            result = subprocess.run(
+                ["curl", "-s", f"{api_url or 'http://localhost:8080/torc-service/v1'}/workflows/{workflow_id}/is_uninitialized"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            )
+
+            if result.returncode == 0:
+                try:
+                    response = json.loads(result.stdout)
+                    is_uninitialized = response.get("is_uninitialized", False)
+
+                    if is_uninitialized:
+                        # Run dry-run check
+                        check_result = self._check_initialization(workflow_id, api_url)
+                        if not check_result["success"]:
+                            return {
+                                "needs_init": False,
+                                "error": check_result.get("error", "Check failed"),
+                            }
+                        return {
+                            "needs_init": True,
+                            "check_data": check_result["data"],
+                        }
+                    else:
+                        return {
+                            "needs_init": False,
+                        }
+                except json.JSONDecodeError:
+                    pass
+
+            # Fallback: assume doesn't need init
+            return {
+                "needs_init": False,
+            }
+
+        except Exception as e:
+            return {
+                "needs_init": False,
+                "error": str(e),
+            }
+
+    def reinitialize_workflow_direct(self, workflow_id: int, api_url: Optional[str] = None, force: bool = False) -> Dict[str, Any]:
+        """Reinitialize a workflow directly without any checks or prompts.
+
+        Args:
+            workflow_id: The workflow ID to reinitialize
+            api_url: Optional API URL to override the default
+            force: Whether to use --force flag
 
         Returns:
             Dictionary with command output and status
         """
-        cmd = [self.torc_cli_path, "workflows", "reinitialize", str(workflow_id)]
-        env = None
+        import os
 
+        cmd = [self.torc_cli_path, "workflows", "reinitialize", str(workflow_id)]
+        if force:
+            cmd.append("--force")
+
+        env = None
         if api_url:
-            import os
             env = os.environ.copy()
             env["TORC_API_URL"] = api_url
 

@@ -177,6 +177,9 @@ pub enum WorkflowCommands {
         /// Skip confirmation prompt
         #[arg(long)]
         no_prompts: bool,
+        /// Perform a dry run without making changes
+        #[arg(long)]
+        dry_run: bool,
     },
     /// Reinitialize a workflow. This will reinitialize all jobs with a status of
     /// canceled, submitting, pending, or terminated. Jobs with a status of
@@ -1134,6 +1137,7 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
             workflow_id,
             force,
             no_prompts,
+            dry_run,
         } => {
             let user_name = get_env_user_name();
 
@@ -1141,80 +1145,162 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
                 Some(id) => *id,
                 None => select_workflow_interactively(config, &user_name).unwrap(),
             };
+
             // First get the workflow
             match default_api::get_workflow(config, selected_workflow_id) {
                 Ok(workflow) => {
                     let workflow_manager = WorkflowManager::new(config.clone(), workflow);
-                    match default_api::is_workflow_uninitialized(&config, selected_workflow_id) {
-                        Ok(is_initialized) => {
-                            if is_initialized.as_bool().unwrap_or(false) {
-                                if !no_prompts && format != "json" {
+
+                    // Handle dry-run mode
+                    if *dry_run {
+                        match workflow_manager.check_initialization() {
+                            Ok(check_result) => {
+                                if format == "json" {
+                                    let response = serde_json::json!({
+                                        "workflow_id": selected_workflow_id,
+                                        "safe": check_result.safe,
+                                        "missing_input_files": check_result.missing_input_files,
+                                        "missing_input_file_count": check_result.missing_input_files.len(),
+                                        "existing_output_files": check_result.existing_output_files,
+                                        "existing_output_file_count": check_result.existing_output_files.len(),
+                                    });
                                     println!(
-                                        "\nWarning: This workflow has already been initialized."
+                                        "{}",
+                                        serde_json::to_string_pretty(&response).unwrap()
                                     );
-                                    println!("Some jobs already have initialized status.");
-                                    print!("\nDo you want to continue? (y/N): ");
-
-                                    use std::io::{self, Write};
-                                    io::stdout().flush().unwrap();
-
-                                    let mut input = String::new();
-                                    match io::stdin().read_line(&mut input) {
-                                        Ok(_) => {
-                                            let response = input.trim().to_lowercase();
-                                            if response != "y" && response != "yes" {
-                                                println!("Initialization cancelled.");
-                                                std::process::exit(0);
-                                            }
+                                } else {
+                                    println!(
+                                        "Initialization check for workflow {}:",
+                                        selected_workflow_id
+                                    );
+                                    if !check_result.missing_input_files.is_empty() {
+                                        eprintln!(
+                                            "\n❌ Missing {} required input file(s):",
+                                            check_result.missing_input_files.len()
+                                        );
+                                        for file in &check_result.missing_input_files {
+                                            eprintln!("  - {}", file);
                                         }
-                                        Err(e) => {
-                                            eprintln!("Failed to read input: {}", e);
-                                            std::process::exit(1);
+                                    }
+                                    if !check_result.existing_output_files.is_empty() {
+                                        eprintln!(
+                                            "\n⚠️  Found {} existing output file(s):",
+                                            check_result.existing_output_files.len()
+                                        );
+                                        for file in &check_result.existing_output_files {
+                                            eprintln!("  - {}", file);
+                                        }
+                                    }
+                                    if check_result.safe {
+                                        println!(
+                                            "\n✅ Safe to initialize (no missing input files)"
+                                        );
+                                    } else {
+                                        eprintln!(
+                                            "\n❌ Cannot initialize: missing required input files"
+                                        );
+                                    }
+                                }
+
+                                // Exit with appropriate code
+                                if !check_result.safe {
+                                    std::process::exit(1);
+                                }
+                            }
+                            Err(e) => {
+                                if format == "json" {
+                                    let error_response = serde_json::json!({
+                                        "status": "error",
+                                        "message": format!("Failed to check initialization: {}", e),
+                                        "workflow_id": selected_workflow_id
+                                    });
+                                    println!(
+                                        "{}",
+                                        serde_json::to_string_pretty(&error_response).unwrap()
+                                    );
+                                } else {
+                                    eprintln!(
+                                        "Error checking initialization for workflow {}: {}",
+                                        selected_workflow_id, e
+                                    );
+                                }
+                                std::process::exit(1);
+                            }
+                        }
+                    } else {
+                        // Normal initialization (not dry-run)
+                        match default_api::is_workflow_uninitialized(&config, selected_workflow_id)
+                        {
+                            Ok(is_initialized) => {
+                                if is_initialized.as_bool().unwrap_or(false) {
+                                    if !no_prompts && format != "json" {
+                                        println!(
+                                            "\nWarning: This workflow has already been initialized."
+                                        );
+                                        println!("Some jobs already have initialized status.");
+                                        print!("\nDo you want to continue? (y/N): ");
+
+                                        use std::io::{self, Write};
+                                        io::stdout().flush().unwrap();
+
+                                        let mut input = String::new();
+                                        match io::stdin().read_line(&mut input) {
+                                            Ok(_) => {
+                                                let response = input.trim().to_lowercase();
+                                                if response != "y" && response != "yes" {
+                                                    println!("Initialization cancelled.");
+                                                    std::process::exit(0);
+                                                }
+                                            }
+                                            Err(e) => {
+                                                eprintln!("Failed to read input: {}", e);
+                                                std::process::exit(1);
+                                            }
                                         }
                                     }
                                 }
                             }
-                        }
-                        Err(e) => {
-                            print_error("checking workflow initialization status", &e);
-                            std::process::exit(1);
-                        }
-                    }
-                    match workflow_manager.initialize(*force) {
-                        Ok(()) => {
-                            if format == "json" {
-                                let success_response = serde_json::json!({
-                                    "status": "success",
-                                    "message": format!("Successfully started workflow {}", selected_workflow_id),
-                                    "workflow_id": selected_workflow_id
-                                });
-                                println!(
-                                    "{}",
-                                    serde_json::to_string_pretty(&success_response).unwrap()
-                                );
-                            } else {
-                                println!("Successfully started workflow:");
-                                println!("  Workflow ID: {}", selected_workflow_id);
+                            Err(e) => {
+                                print_error("checking workflow initialization status", &e);
+                                std::process::exit(1);
                             }
                         }
-                        Err(e) => {
-                            if format == "json" {
-                                let error_response = serde_json::json!({
-                                    "status": "error",
-                                    "message": format!("Failed to start workflow: {}", e),
-                                    "workflow_id": selected_workflow_id
-                                });
-                                println!(
-                                    "{}",
-                                    serde_json::to_string_pretty(&error_response).unwrap()
-                                );
-                            } else {
-                                eprintln!(
-                                    "Error starting workflow {}: {}",
-                                    selected_workflow_id, e
-                                );
+                        match workflow_manager.initialize(*force) {
+                            Ok(()) => {
+                                if format == "json" {
+                                    let success_response = serde_json::json!({
+                                        "status": "success",
+                                        "message": format!("Successfully started workflow {}", selected_workflow_id),
+                                        "workflow_id": selected_workflow_id
+                                    });
+                                    println!(
+                                        "{}",
+                                        serde_json::to_string_pretty(&success_response).unwrap()
+                                    );
+                                } else {
+                                    println!("Successfully started workflow:");
+                                    println!("  Workflow ID: {}", selected_workflow_id);
+                                }
                             }
-                            std::process::exit(1);
+                            Err(e) => {
+                                if format == "json" {
+                                    let error_response = serde_json::json!({
+                                        "status": "error",
+                                        "message": format!("Failed to start workflow: {}", e),
+                                        "workflow_id": selected_workflow_id
+                                    });
+                                    println!(
+                                        "{}",
+                                        serde_json::to_string_pretty(&error_response).unwrap()
+                                    );
+                                } else {
+                                    eprintln!(
+                                        "Error starting workflow {}: {}",
+                                        selected_workflow_id, e
+                                    );
+                                }
+                                std::process::exit(1);
+                            }
                         }
                     }
                 }
@@ -1239,51 +1325,121 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
             match default_api::get_workflow(config, selected_workflow_id) {
                 Ok(workflow) => {
                     let workflow_manager = WorkflowManager::new(config.clone(), workflow);
-                    match workflow_manager.reinitialize(*force, *dry_run) {
-                        Ok(()) => {
-                            if format == "json" {
-                                let success_response = serde_json::json!({
-                                    "status": "success",
-                                    "message": if *dry_run {
-                                        format!("Dry run: workflow {} would be reinitialized", selected_workflow_id)
-                                    } else {
-                                        format!("Successfully reinitialized workflow {}", selected_workflow_id)
-                                    },
-                                    "workflow_id": selected_workflow_id,
-                                    "dry_run": dry_run
-                                });
-                                println!(
-                                    "{}",
-                                    serde_json::to_string_pretty(&success_response).unwrap()
-                                );
-                            } else {
-                                if *dry_run {
-                                    eprintln!("Dry run: workflow would be reinitialized:");
+
+                    // Handle dry-run mode
+                    if *dry_run {
+                        match workflow_manager.check_initialization() {
+                            Ok(check_result) => {
+                                if format == "json" {
+                                    let response = serde_json::json!({
+                                        "workflow_id": selected_workflow_id,
+                                        "safe": check_result.safe,
+                                        "missing_input_files": check_result.missing_input_files,
+                                        "missing_input_file_count": check_result.missing_input_files.len(),
+                                        "existing_output_files": check_result.existing_output_files,
+                                        "existing_output_file_count": check_result.existing_output_files.len(),
+                                    });
+                                    println!(
+                                        "{}",
+                                        serde_json::to_string_pretty(&response).unwrap()
+                                    );
                                 } else {
-                                    eprintln!("Successfully reinitialized workflow:");
+                                    println!(
+                                        "Re-initialization check for workflow {}:",
+                                        selected_workflow_id
+                                    );
+                                    if !check_result.missing_input_files.is_empty() {
+                                        eprintln!(
+                                            "\n❌ Missing {} required input file(s):",
+                                            check_result.missing_input_files.len()
+                                        );
+                                        for file in &check_result.missing_input_files {
+                                            eprintln!("  - {}", file);
+                                        }
+                                    }
+                                    if !check_result.existing_output_files.is_empty() {
+                                        eprintln!(
+                                            "\n⚠️  Found {} existing output file(s):",
+                                            check_result.existing_output_files.len()
+                                        );
+                                        for file in &check_result.existing_output_files {
+                                            eprintln!("  - {}", file);
+                                        }
+                                    }
+                                    if check_result.safe {
+                                        println!(
+                                            "\n✅ Safe to reinitialize (no missing input files)"
+                                        );
+                                    } else {
+                                        eprintln!(
+                                            "\n❌ Cannot reinitialize: missing required input files"
+                                        );
+                                    }
                                 }
-                                println!("  Workflow ID: {}", selected_workflow_id);
+
+                                // Exit with appropriate code
+                                if !check_result.safe {
+                                    std::process::exit(1);
+                                }
+                            }
+                            Err(e) => {
+                                if format == "json" {
+                                    let error_response = serde_json::json!({
+                                        "status": "error",
+                                        "message": format!("Failed to check re-initialization: {}", e),
+                                        "workflow_id": selected_workflow_id
+                                    });
+                                    println!(
+                                        "{}",
+                                        serde_json::to_string_pretty(&error_response).unwrap()
+                                    );
+                                } else {
+                                    eprintln!(
+                                        "Error checking re-initialization for workflow {}: {}",
+                                        selected_workflow_id, e
+                                    );
+                                }
+                                std::process::exit(1);
                             }
                         }
-                        Err(e) => {
-                            if format == "json" {
-                                let error_response = serde_json::json!({
-                                    "status": "error",
-                                    "message": format!("Failed to reinitialize workflow: {}", e),
-                                    "workflow_id": selected_workflow_id,
-                                    "dry_run": dry_run
-                                });
-                                println!(
-                                    "{}",
-                                    serde_json::to_string_pretty(&error_response).unwrap()
-                                );
-                            } else {
-                                eprintln!(
-                                    "Error reinitializing workflow {}: {}",
-                                    selected_workflow_id, e
-                                );
+                    } else {
+                        // Normal reinitialization (not dry-run)
+                        match workflow_manager.reinitialize(*force, *dry_run) {
+                            Ok(()) => {
+                                if format == "json" {
+                                    let success_response = serde_json::json!({
+                                        "status": "success",
+                                        "message": format!("Successfully reinitialized workflow {}", selected_workflow_id),
+                                        "workflow_id": selected_workflow_id
+                                    });
+                                    println!(
+                                        "{}",
+                                        serde_json::to_string_pretty(&success_response).unwrap()
+                                    );
+                                } else {
+                                    eprintln!("Successfully reinitialized workflow:");
+                                    println!("  Workflow ID: {}", selected_workflow_id);
+                                }
                             }
-                            std::process::exit(1);
+                            Err(e) => {
+                                if format == "json" {
+                                    let error_response = serde_json::json!({
+                                        "status": "error",
+                                        "message": format!("Failed to reinitialize workflow: {}", e),
+                                        "workflow_id": selected_workflow_id
+                                    });
+                                    println!(
+                                        "{}",
+                                        serde_json::to_string_pretty(&error_response).unwrap()
+                                    );
+                                } else {
+                                    eprintln!(
+                                        "Error reinitializing workflow {}: {}",
+                                        selected_workflow_id, e
+                                    );
+                                }
+                                std::process::exit(1);
+                            }
                         }
                     }
                 }

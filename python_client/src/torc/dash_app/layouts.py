@@ -221,6 +221,64 @@ def create_run_tab_layout():
                                                 html.Div(id="workflow-management-status", className="mb-3"),
                                             ]),
 
+                                            # Modal for confirming file deletion during initialization
+                                            dbc.Modal(
+                                                [
+                                                    dbc.ModalHeader(dbc.ModalTitle("Confirm Initialization")),
+                                                    dbc.ModalBody([
+                                                        html.Div(id="initialize-modal-message"),
+                                                    ]),
+                                                    dbc.ModalFooter([
+                                                        dbc.Button(
+                                                            "Cancel",
+                                                            id="initialize-modal-cancel",
+                                                            className="me-2",
+                                                            color="secondary",
+                                                        ),
+                                                        dbc.Button(
+                                                            "Delete Files and Initialize",
+                                                            id="initialize-modal-confirm",
+                                                            color="danger",
+                                                        ),
+                                                    ]),
+                                                ],
+                                                id="initialize-confirmation-modal",
+                                                is_open=False,
+                                                backdrop="static",  # Prevent closing by clicking outside
+                                            ),
+
+                                            # Store for initialization check data
+                                            dcc.Store(id="initialize-check-store"),
+
+                                            # Modal for confirming file deletion during reinitialize
+                                            dbc.Modal(
+                                                [
+                                                    dbc.ModalHeader(dbc.ModalTitle("Confirm Re-initialization")),
+                                                    dbc.ModalBody([
+                                                        html.Div(id="reinitialize-modal-message"),
+                                                    ]),
+                                                    dbc.ModalFooter([
+                                                        dbc.Button(
+                                                            "Cancel",
+                                                            id="reinitialize-modal-cancel",
+                                                            className="me-2",
+                                                            color="secondary",
+                                                        ),
+                                                        dbc.Button(
+                                                            "Delete Files and Re-initialize",
+                                                            id="reinitialize-modal-confirm",
+                                                            color="danger",
+                                                        ),
+                                                    ]),
+                                                ],
+                                                id="reinitialize-confirmation-modal",
+                                                is_open=False,
+                                                backdrop="static",
+                                            ),
+
+                                            # Store for reinitialize check data
+                                            dcc.Store(id="reinitialize-check-store"),
+
                                             html.Hr(),
 
                                             html.Div(id="workflow-dag-section", children=[
@@ -280,6 +338,35 @@ def create_run_tab_layout():
                                                     disabled=True,
                                                 ),
                                             ]),
+
+                                            # Modal for confirming file deletion during execute
+                                            dbc.Modal(
+                                                [
+                                                    dbc.ModalHeader(dbc.ModalTitle("Confirm Workflow Execution")),
+                                                    dbc.ModalBody([
+                                                        html.Div(id="execute-modal-message"),
+                                                    ]),
+                                                    dbc.ModalFooter([
+                                                        dbc.Button(
+                                                            "Cancel",
+                                                            id="execute-modal-cancel",
+                                                            className="me-2",
+                                                            color="secondary",
+                                                        ),
+                                                        dbc.Button(
+                                                            "Delete Files and Execute",
+                                                            id="execute-modal-confirm",
+                                                            color="danger",
+                                                        ),
+                                                    ]),
+                                                ],
+                                                id="execute-confirmation-modal",
+                                                is_open=False,
+                                                backdrop="static",
+                                            ),
+
+                                            # Store for execute check data
+                                            dcc.Store(id="execute-check-store"),
                                         ]
                                     ),
                                 ],

@@ -1100,7 +1100,53 @@ def create_workflow_from_spec(
 
         # Initialize if checkbox is checked
         if "initialize" in initialize_checkbox:
-            init_result = cli_wrapper.initialize_workflow(workflow_id, api_url=config.get("url"))
+            # Run dry-run check
+            check_result = cli_wrapper._check_initialization(workflow_id, config.get("url"))
+            if not check_result["success"]:
+                workflow_data = {"id": workflow_id}
+                return dbc.Alert(
+                    [
+                        html.H6("Workflow created but initialization check failed", className="alert-heading"),
+                        html.P(f"Workflow ID: {workflow_id}"),
+                        html.P(f"Error: {check_result.get('error', 'Unknown error')}"),
+                    ],
+                    color="warning",
+                ), workflow_data, workflow_data
+
+            check_data = check_result["data"]
+
+            # Handle missing input files (always fail)
+            if not check_data["safe"]:
+                workflow_data = {"id": workflow_id}
+                missing_files = check_data["missing_input_files"]
+                return dbc.Alert(
+                    [
+                        html.H6("Workflow created but cannot initialize", className="alert-heading"),
+                        html.P(f"Workflow ID: {workflow_id}"),
+                        html.P(f"{check_data['missing_input_file_count']} required input file(s) are missing:"),
+                        html.Ul([html.Li(f) for f in missing_files]),
+                    ],
+                    color="warning",
+                ), workflow_data, workflow_data
+
+            # Auto-delete existing output files if present (user opted in with checkbox)
+            use_force = False
+            if check_data["existing_output_file_count"] > 0:
+                delete_result = cli_wrapper.check_and_delete_files(workflow_id, check_data["existing_output_files"])
+                if not delete_result["success"]:
+                    workflow_data = {"id": workflow_id}
+                    return dbc.Alert(
+                        [
+                            html.H6("Workflow created but failed to delete existing files", className="alert-heading"),
+                            html.P(f"Workflow ID: {workflow_id}"),
+                            html.P(f"Failed to delete {len(delete_result['failed_deletions'])} file(s)"),
+                        ],
+                        color="warning",
+                    ), workflow_data, workflow_data
+                use_force = True
+
+            # Initialize with --force if we deleted files
+            init_result = cli_wrapper.initialize_workflow_direct(workflow_id, config.get("url"), force=use_force)
             if not init_result["success"]:
                 # Still store the workflow even if init failed
                 workflow_data = {"id": workflow_id}
@@ -1155,6 +1201,9 @@ def create_workflow_from_spec(
     Output("cancel-execution-button", "disabled"),
     Output("execute-workflow-button", "disabled"),
     Output("execution-poll-interval", "disabled"),
+    Output("execute-confirmation-modal", "is_open"),
+    Output("execute-modal-message", "children"),
+    Output("execute-check-store", "data"),
     Input("execute-workflow-button", "n_clicks"),
     State("workflow-source-tabs", "active_tab"),
     State("selected-workflow-store", "data"),
@@ -1170,7 +1219,7 @@ def execute_workflow(
     created_workflow: Optional[Dict[str, Any]],
     execution_mode: str,
     config: Dict[str, str],
-):
+) -> Tuple[str, bool, bool, bool, bool, html.Div, Optional[Dict]]:
     """Execute or submit a workflow."""
     if not n_clicks:
         raise PreventUpdate
@@ -1185,23 +1234,56 @@ def execute_workflow(
         if created_workflow and "id" in created_workflow:
             workflow_id = created_workflow["id"]
         else:
-            return "Error: Please create the workflow first using the 'Create Workflow' button above.", True, False, True
+            return "Error: Please create the workflow first using the 'Create Workflow' button above.", True, False, True, False, None, None
     elif workflow_source_tab == "existing-workflow-tab":
         # Use selected workflow
         if selected_workflow and "id" in selected_workflow:
             workflow_id = selected_workflow["id"]
         else:
-            return "Error: No workflow selected. Please select a workflow from the 'View Resources' tab first.", True, False, True
+            return "Error: No workflow selected. Please select a workflow from the 'View Resources' tab first.", True, False, True, False, None, None
     else:
-        return "Error: Unknown workflow source", True, False, True
+        return "Error: Unknown workflow source", True, False, True, False, None, None
 
     try:
         if execution_mode == "run":
+            # Check if workflow needs initialization first
+            init_check = cli_wrapper.check_workflow_needs_initialization(workflow_id, config.get("url"))
+
+            if init_check.get("needs_init"):
+                check_data = init_check.get("check_data")
+
+                # Check for missing input files (always fail)
+                if not check_data.get("safe"):
+                    missing_files = check_data.get("missing_input_files", [])
+                    error_message = [
+                        html.P(f"Cannot execute workflow {workflow_id}: "
+                               f"{check_data.get('missing_input_file_count', len(missing_files))} required input file(s) are missing:"),
+                        html.Ul([html.Li(f) for f in missing_files])
+                    ]
+                    return dbc.Alert(error_message, color="danger", dismissable=True), True, False, True, False, None, None
+
+                # Check for existing output files (show modal)
+                if check_data.get("existing_output_file_count", 0) > 0:
+                    existing_files = check_data.get("existing_output_files", [])
+                    modal_message = [
+                        html.P(f"Workflow {workflow_id} needs initialization but found {len(existing_files)} existing output file(s):"),
+                        html.Ul([html.Li(f, style={"font-size": "0.9em"}) for f in existing_files]),
+                        html.P("Do you want to delete these files, initialize, and execute the workflow?",
+                               className="text-danger fw-bold mt-3"),
+                    ]
+                    store_data = {
+                        "workflow_id": workflow_id,
+                        "check_data": check_data,
+                        "api_url": config.get("url"),
+                        "execution_mode": execution_mode
+                    }
+                    return "", True, False, True, True, modal_message, store_data
+
             # Start process (non-blocking) with real-time output
             if cli_wrapper.start_workflow_process(workflow_id, api_url=config.get("url")):
-                return f"Starting workflow {workflow_id} execution...\n", False, True, False
+                return f"Starting workflow {workflow_id} execution...\n", False, True, False, False, None, None
             else:
-                return f"✗ Failed to start workflow {workflow_id}", True, False, True
+                return f"✗ Failed to start workflow {workflow_id}", True, False, True, False, None, None
         else:
             # Submit to scheduler (blocking, but usually fast)
             result = cli_wrapper.submit_workflow_by_id(
@@ -1221,10 +1303,10 @@ def execute_workflow(
                 output_lines.append(f"\nStdout:\n{result.get('stdout', '')}")
                 output_lines.append(f"\nStderr:\n{result.get('stderr', '')}")
 
-            return "\n".join(output_lines), True, False, True
+            return "\n".join(output_lines), True, False, True, False, None, None
 
     except Exception as e:
-        return f"Error: {str(e)}", True, False, True
+        return f"Error: {str(e)}", True, False, True, False, None, None
 
 
 @callback(
@@ -1284,6 +1366,12 @@ def poll_execution_output(n_intervals: int, current_output: Optional[str]) -> tu
 
 @callback(
     Output("workflow-management-status", "children"),
+    Output("initialize-confirmation-modal", "is_open"),
+    Output("initialize-modal-message", "children"),
+    Output("initialize-check-store", "data"),
+    Output("reinitialize-confirmation-modal", "is_open"),
+    Output("reinitialize-modal-message", "children"),
+    Output("reinitialize-check-store", "data"),
     Input("initialize-existing-workflow-button", "n_clicks"),
     Input("reinitialize-workflow-button", "n_clicks"),
     Input("reset-workflow-button", "n_clicks"),
@@ -1297,7 +1385,7 @@ def manage_workflow(
     reset_clicks: int,
     selected_workflow: Optional[Dict[str, Any]],
     config: Dict[str, str],
-) -> html.Div:
+) -> Tuple[html.Div, bool, html.Div, Optional[Dict], bool, html.Div, Optional[Dict]]:
     """Handle workflow management operations (initialize, reinitialize, reset)."""
     from dash import ctx
 
@@ -1305,10 +1393,18 @@ def manage_workflow(
         raise PreventUpdate
 
     if not selected_workflow or "id" not in selected_workflow:
-        return dbc.Alert(
-            "Please select a workflow from the 'View Workflows' tab first.",
-            color="warning",
-            dismissable=True,
+        return (
+            dbc.Alert(
+                "Please select a workflow from the 'View Workflows' tab first.",
+                color="warning",
+                dismissable=True,
+            ),
+            False,  # init modal closed
+            None,   # no init modal message
+            None,   # no init check data
+            False,  # reinit modal closed
+            None,   # no reinit modal message
+            None,   # no reinit check data
         )
 
     workflow_id = selected_workflow["id"]
@@ -1318,32 +1414,456 @@ def manage_workflow(
         button_id = ctx.triggered_id
 
         if button_id == "initialize-existing-workflow-button":
-            result = cli_wrapper.initialize_workflow(workflow_id, config.get("url"))
+            # Run dry-run check first
+            check_result = cli_wrapper._check_initialization(workflow_id, config.get("url"))
+
+            if not check_result["success"]:
+                return (
+                    dbc.Alert(
+                        f"Initialization check failed: {check_result.get('error', 'Unknown error')}",
+                        color="danger",
+                        dismissable=True,
+                    ),
+                    False, None, None, False, None, None,
+                )
+
+            check_data = check_result["data"]
+
+            # Handle missing input files (always fail)
+            if not check_data["safe"]:
+                missing_files = check_data["missing_input_files"]
+                error_message = [
+                    html.P(f"Cannot initialize workflow {workflow_id}: "
+                           f"{check_data['missing_input_file_count']} required input file(s) are missing:"),
+                    html.Ul([html.Li(f) for f in missing_files])
+                ]
+                return (
+                    dbc.Alert(error_message, color="danger", dismissable=True),
+                    False, None, None, False, None, None,
+                )
+
+            # Handle existing output files (prompt user)
+            if check_data["existing_output_file_count"] > 0:
+                existing_files = check_data["existing_output_files"]
+                modal_message = [
+                    html.P(f"Found {check_data['existing_output_file_count']} existing output file(s):"),
+                    html.Ul([html.Li(f, style={"font-size": "0.9em"}) for f in existing_files]),
+                    html.P("Do you want to delete these files and proceed with initialization?",
+                           className="text-danger fw-bold mt-3"),
+                ]
+                # Store check data and show modal
+                return (
+                    no_update,
+                    True,  # Open init modal
+                    modal_message,
+                    {"workflow_id": workflow_id, "check_data": check_data, "api_url": config.get("url")},
+                    False, None, None,  # Reinit modal closed
+                )
+
+            # No issues - proceed with initialization directly
+            result = cli_wrapper.initialize_workflow_direct(workflow_id, config.get("url"), force=False)
             operation = "Initialize"
+
+            if result["success"]:
+                message = f"{operation} workflow {workflow_id} successful"
+                if result.get("stdout"):
+                    message += f"\n{result['stdout']}"
+                return (
+                    dbc.Alert(message, color="success", dismissable=True),
+                    False, None, None, False, None, None,
+                )
+            else:
+                error_msg = result.get("error", "Unknown error")
+                stderr = result.get("stderr", "")
+                message = f"{operation} workflow {workflow_id} failed: {error_msg}"
+                if stderr:
+                    message += f"\n{stderr}"
+                return (
+                    dbc.Alert(message, color="danger", dismissable=True),
+                    False, None, None, False, None, None,
+                )
+
         elif button_id == "reinitialize-workflow-button":
-            result = cli_wrapper.reinitialize_workflow(workflow_id, config.get("url"))
+            # Run dry-run check first
+            check_result = cli_wrapper._check_reinitialize(workflow_id, config.get("url"))
+
+            if not check_result["success"]:
+                return (
+                    dbc.Alert(
+                        f"Re-initialization check failed: {check_result.get('error', 'Unknown error')}",
+                        color="danger",
+                        dismissable=True,
+                    ),
+                    False, None, None, False, None, None,
+                )
+
+            check_data = check_result["data"]
+
+            # Handle missing input files (always fail)
+            if not check_data["safe"]:
+                missing_files = check_data["missing_input_files"]
+                error_message = [
+                    html.P(f"Cannot re-initialize workflow {workflow_id}: "
+                           f"{check_data['missing_input_file_count']} required input file(s) are missing:"),
+                    html.Ul([html.Li(f) for f in missing_files])
+                ]
+                return (
+                    dbc.Alert(error_message, color="danger", dismissable=True),
+                    False, None, None, False, None, None,
+                )
+
+            # Handle existing output files (prompt user)
+            if check_data["existing_output_file_count"] > 0:
+                existing_files = check_data["existing_output_files"]
+                modal_message = [
+                    html.P(f"Found {check_data['existing_output_file_count']} existing output file(s):"),
+                    html.Ul([html.Li(f, style={"font-size": "0.9em"}) for f in existing_files]),
+                    html.P("Do you want to delete these files and proceed with re-initialization?",
+                           className="text-danger fw-bold mt-3"),
+                ]
+                # Store check data and show reinit modal
+                return (
+                    no_update,
+                    False, None, None,  # Init modal closed
+                    True,  # Open reinit modal
+                    modal_message,
+                    {"workflow_id": workflow_id, "check_data": check_data, "api_url": config.get("url")},
+                )
+
+            # No issues - proceed with reinitialization directly
+            result = cli_wrapper.reinitialize_workflow_direct(workflow_id, config.get("url"), force=False)
             operation = "Re-initialize"
+
+            if result["success"]:
+                message = f"{operation} workflow {workflow_id} successful"
+                if result.get("stdout"):
+                    message += f"\n{result['stdout']}"
+                return (
+                    dbc.Alert(message, color="success", dismissable=True),
+                    False, None, None, False, None, None,
+                )
+            else:
+                error_msg = result.get("error", "Unknown error")
+                stderr = result.get("stderr", "")
+                message = f"{operation} workflow {workflow_id} failed: {error_msg}"
+                if stderr:
+                    message += f"\n{stderr}"
+                return (
+                    dbc.Alert(message, color="danger", dismissable=True),
+                    False, None, None, False, None, None,
+                )
+
         elif button_id == "reset-workflow-button":
             result = cli_wrapper.reset_status_workflow(workflow_id, config.get("url"))
             operation = "Reset"
-        else:
-            return dbc.Alert("Unknown operation", color="danger", dismissable=True)
 
-        if result["success"]:
-            message = f"{operation} workflow {workflow_id} successful"
-            if result.get("stdout"):
-                message += f"\n{result['stdout']}"
-            return dbc.Alert(message, color="success", dismissable=True)
+            if result["success"]:
+                message = f"{operation} workflow {workflow_id} successful"
+                if result.get("stdout"):
+                    message += f"\n{result['stdout']}"
+                return (
+                    dbc.Alert(message, color="success", dismissable=True),
+                    False, None, None, False, None, None,
+                )
+            else:
+                error_msg = result.get("error", "Unknown error")
+                stderr = result.get("stderr", "")
+                message = f"{operation} workflow {workflow_id} failed: {error_msg}"
+                if stderr:
+                    message += f"\n{stderr}"
+                return (
+                    dbc.Alert(message, color="danger", dismissable=True),
+                    False, None, None, False, None, None,
+                )
         else:
-            error_msg = result.get("error", "Unknown error")
-            stderr = result.get("stderr", "")
-            message = f"{operation} workflow {workflow_id} failed: {error_msg}"
-            if stderr:
-                message += f"\n{stderr}"
-            return dbc.Alert(message, color="danger", dismissable=True)
+            return (
+                dbc.Alert("Unknown operation", color="danger", dismissable=True),
+                False, None, None, False, None, None,
+            )
 
     except Exception as e:
-        return dbc.Alert(f"Error: {str(e)}", color="danger", dismissable=True)
+        return (
+            dbc.Alert(f"Error: {str(e)}", color="danger", dismissable=True),
+            False, None, None, False, None, None,
+        )
+
+
+@callback(
+    Output("workflow-management-status", "children", allow_duplicate=True),
+    Output("initialize-confirmation-modal", "is_open", allow_duplicate=True),
+    Input("initialize-modal-confirm", "n_clicks"),
+    Input("initialize-modal-cancel", "n_clicks"),
+    State("initialize-check-store", "data"),
+    prevent_initial_call=True,
+)
+def handle_initialize_modal(
+    confirm_clicks: int,
+    cancel_clicks: int,
+    check_store_data: Optional[Dict],
+) -> Tuple[html.Div, bool]:
+    """Handle confirmation or cancellation of initialization with file deletion."""
+    from dash import ctx
+
+    if not ctx.triggered_id:
+        raise PreventUpdate
+
+    # User cancelled
+    if ctx.triggered_id == "initialize-modal-cancel":
+        return (
+            dbc.Alert("Initialization cancelled by user", color="info", dismissable=True),
+            False,  # Close modal
+        )
+
+    # User confirmed - proceed with deletion and initialization
+    if not check_store_data:
+        return (
+            dbc.Alert("Error: No workflow data found", color="danger", dismissable=True),
+            False,
+        )
+
+    workflow_id = check_store_data["workflow_id"]
+    check_data = check_store_data["check_data"]
+    api_url = check_store_data.get("api_url")
+
+    import os
+    cli_wrapper = TorcCliWrapper()
+
+    # Delete existing output files
+    existing_files = check_data["existing_output_files"]
+    warnings = []
+    warnings.append(f"Deleted {len(existing_files)} existing output file(s):")
+
+    deleted_count = 0
+    failed_deletions = []
+    for file_path in existing_files:
+        try:
+            if os.path.exists(file_path):
+                os.remove(file_path)
+                deleted_count += 1
+                warnings.append(f"  ✓ {file_path}")
+        except Exception as e:
+            failed_deletions.append(f"  ✗ {file_path}: {str(e)}")
+
+    if failed_deletions:
+        warnings.append(f"\nFailed to delete {len(failed_deletions)} file(s):")
+        warnings.extend(failed_deletions)
+        return (
+            dbc.Alert("\n".join(warnings), color="danger", dismissable=True),
+            False,
+        )
+
+    # Proceed with initialization using --force flag
+    result = cli_wrapper.initialize_workflow_direct(workflow_id, api_url, force=True)
+
+    if result["success"]:
+        success_message = "\n".join(warnings) + "\n\n" + result.get("stdout", "")
+        return (
+            dbc.Alert(
+                [html.Pre(success_message, style={"white-space": "pre-wrap"})],
+                color="success",
+                dismissable=True
+            ),
+            False,
+        )
+    else:
+        error_msg = result.get("error", "Unknown error")
+        stderr = result.get("stderr", "")
+        message = f"Initialization failed: {error_msg}"
+        if stderr:
+            message += f"\n{stderr}"
+        return (
+            dbc.Alert(message, color="danger", dismissable=True),
+            False,
+        )
+
+
+@callback(
+    Output("workflow-management-status", "children", allow_duplicate=True),
+    Output("reinitialize-confirmation-modal", "is_open", allow_duplicate=True),
+    Input("reinitialize-modal-confirm", "n_clicks"),
+    Input("reinitialize-modal-cancel", "n_clicks"),
+    State("reinitialize-check-store", "data"),
+    prevent_initial_call=True,
+)
+def handle_reinitialize_modal(
+    confirm_clicks: int,
+    cancel_clicks: int,
+    check_store_data: Optional[Dict],
+) -> Tuple[html.Div, bool]:
+    """Handle confirmation or cancellation of re-initialization with file deletion."""
+    from dash import ctx
+
+    if not ctx.triggered_id:
+        raise PreventUpdate
+
+    # User cancelled
+    if ctx.triggered_id == "reinitialize-modal-cancel":
+        return (
+            dbc.Alert("Re-initialization cancelled by user", color="info", dismissable=True),
+            False,  # Close modal
+        )
+
+    # User confirmed - proceed with deletion and reinitialization
+    if not check_store_data:
+        return (
+            dbc.Alert("Error: No workflow data found", color="danger", dismissable=True),
+            False,
+        )
+
+    workflow_id = check_store_data["workflow_id"]
+    check_data = check_store_data["check_data"]
+    api_url = check_store_data.get("api_url")
+
+    cli_wrapper = TorcCliWrapper()
+
+    # Delete existing output files
+    delete_result = cli_wrapper.check_and_delete_files(workflow_id, check_data["existing_output_files"])
+
+    if not delete_result["success"]:
+        warnings = [f"Failed to delete {len(delete_result['failed_deletions'])} file(s):"]
+        for file_path, error in delete_result['failed_deletions']:
+            warnings.append(f"  ✗ {file_path}: {error}")
+        return (
+            dbc.Alert("\n".join(warnings), color="danger", dismissable=True),
+            False,
+        )
+
+    # Build success message
+    warnings = [f"Deleted {len(delete_result['deleted_files'])} existing output file(s):"]
+    for file_path in delete_result['deleted_files']:
+        warnings.append(f"  ✓ {file_path}")
+
+    # Proceed with reinitialization using --force flag
+    result = cli_wrapper.reinitialize_workflow_direct(workflow_id, api_url, force=True)
+
+    if result["success"]:
+        success_message = "\n".join(warnings) + "\n\n" + result.get("stdout", "")
+        return (
+            dbc.Alert(
+                [html.Pre(success_message, style={"white-space": "pre-wrap"})],
+                color="success",
+                dismissable=True
+            ),
+            False,
+        )
+    else:
+        error_msg = result.get("error", "Unknown error")
+        stderr = result.get("stderr", "")
+        message = f"Re-initialization failed: {error_msg}"
+        if stderr:
+            message += f"\n{stderr}"
+        return (
+            dbc.Alert(message, color="danger", dismissable=True),
+            False,
+        )
+
+
+@callback(
+    Output("execution-output", "children", allow_duplicate=True),
+    Output("cancel-execution-button", "disabled", allow_duplicate=True),
+    Output("execute-workflow-button", "disabled", allow_duplicate=True),
+    Output("execution-poll-interval", "disabled", allow_duplicate=True),
+    Output("execute-confirmation-modal", "is_open", allow_duplicate=True),
+    Input("execute-modal-confirm", "n_clicks"),
+    Input("execute-modal-cancel", "n_clicks"),
+    State("execute-check-store", "data"),
+    prevent_initial_call=True,
+)
+def handle_execute_modal(
+    confirm_clicks: int,
+    cancel_clicks: int,
+    check_store_data: Optional[Dict],
+) -> Tuple[str, bool, bool, bool, bool]:
+    """Handle confirmation or cancellation of execution with file deletion and initialization."""
+    from dash import ctx
+
+    if not ctx.triggered_id:
+        raise PreventUpdate
+
+    # User cancelled
+    if ctx.triggered_id == "execute-modal-cancel":
+        return (
+            "⚠ Execution cancelled by user\n",
+            True,  # cancel button disabled
+            False, # execute button enabled
+            True,  # poll interval disabled
+            False, # Close modal
+        )
+
+    # User confirmed - proceed with deletion, initialization, and execution
+    if not check_store_data:
+        return (
+            "Error: No workflow data found\n",
+            True,
+            False,
+            True,
+            False,
+        )
+
+    workflow_id = check_store_data["workflow_id"]
+    check_data = check_store_data["check_data"]
+    api_url = check_store_data.get("api_url")
+
+    cli_wrapper = TorcCliWrapper()
+
+    # Delete existing output files
+    delete_result = cli_wrapper.check_and_delete_files(workflow_id, check_data["existing_output_files"])
+
+    if not delete_result["success"]:
+        warnings = [f"Failed to delete {len(delete_result['failed_deletions'])} file(s):"]
+        for file_path, error in delete_result['failed_deletions']:
+            warnings.append(f"  ✗ {file_path}: {error}")
+        return (
+            "\n".join(warnings) + "\n",
+            True,
+            False,
+            True,
+            False,
+        )
+
+    # Build deletion success message
+    output_lines = [f"Deleted {len(delete_result['deleted_files'])} existing output file(s):"]
+    for file_path in delete_result['deleted_files']:
+        output_lines.append(f"  ✓ {file_path}")
+
+    # Initialize workflow using --force flag
+    init_result = cli_wrapper.initialize_workflow_direct(workflow_id, api_url, force=True)
+
+    if not init_result["success"]:
+        error_msg = init_result.get("error", "Unknown error")
+        stderr = init_result.get("stderr", "")
+        output_lines.append(f"\n✗ Initialization failed: {error_msg}")
+        if stderr:
+            output_lines.append(f"Stderr: {stderr}")
+        return (
+            "\n".join(output_lines) + "\n",
+            True,
+            False,
+            True,
+            False,
+        )
+
+    output_lines.append(f"\n✓ Workflow {workflow_id} initialized successfully")
+
+    # Start workflow execution
+    if cli_wrapper.start_workflow_process(workflow_id, api_url=api_url):
+        output_lines.append(f"\nStarting workflow {workflow_id} execution...\n")
+        return (
+            "\n".join(output_lines) + "\n",
+            False, # cancel button enabled
+            True,  # execute button disabled
+            False, # poll interval enabled
+            False, # Close modal
+        )
+    else:
+        output_lines.append(f"\n✗ Failed to start workflow {workflow_id}")
+        return (
+            "\n".join(output_lines) + "\n",
+            True,
+            False,
+            True,
+            False,
+        )
 
 
 # ============================================================================
