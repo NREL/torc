@@ -1,23 +1,35 @@
-"""Functions to access the Torc Database API"""
+"""Functions to access the Torc Database API."""
 
 import time
-from typing import Any, Callable, Generator
+from collections.abc import Callable, Generator
+from typing import Any
 
 from loguru import logger
 from rmon.timing.timer_stats import Timer
 
+from torc.common import check_function, timer_stats_collector
+from torc.exceptions import DatabaseOffline
 from torc.openapi_client import ApiClient, DefaultApi
 from torc.openapi_client.configuration import Configuration
-from torc.openapi_client.rest import ApiException
 from torc.openapi_client.models.job_model import JobModel
 from torc.openapi_client.models.jobs_model import JobsModel
 from torc.openapi_client.models.user_data_model import UserDataModel
-from torc.common import timer_stats_collector, check_function
-from torc.exceptions import DatabaseOffline
+from torc.openapi_client.rest import ApiException
 
 
-def make_api(database_url) -> DefaultApi:
-    """Instantiate an OpenAPI client object from a database URL."""
+def make_api(database_url: str) -> DefaultApi:
+    """Instantiate an OpenAPI client object from a database URL.
+
+    Parameters
+    ----------
+    database_url : str
+        URL of the Torc database API.
+
+    Returns
+    -------
+    DefaultApi
+        OpenAPI client for the Torc database.
+    """
     configuration = Configuration()
     configuration.host = database_url
     return DefaultApi(ApiClient(configuration))
@@ -31,10 +43,11 @@ def wait_for_healthy_database(
     Parameters
     ----------
     api : DefaultApi
-    timeout_minutes : float
-        Number of minutes to wait for the database to become healthy.
-    poll_seconds : float
-        Number of seconds to wait in between each poll.
+        OpenAPI client for the Torc database.
+    timeout_minutes : float, optional
+        Number of minutes to wait for the database to become healthy, by default 20.
+    poll_seconds : float, optional
+        Number of seconds to wait in between each poll, by default 60.
 
     Raises
     ------
@@ -60,17 +73,24 @@ def wait_for_healthy_database(
     raise DatabaseOffline(msg)
 
 
-def iter_documents(func: Callable, *args, skip=0, **kwargs) -> Generator[Any, None, None]:
+def iter_documents(func: Callable, *args, skip: int = 0, **kwargs) -> Generator[Any, None, None]:
     """Return a generator of documents where the API service employs batching.
 
     Parameters
     ----------
-    func
-        API function
+    func : Callable
+        API function to call.
+    *args
+        Positional arguments to pass to the function.
+    skip : int, optional
+        Number of documents to skip, by default 0.
+    **kwargs
+        Keyword arguments to pass to the function.
 
     Yields
     ------
-    OpenAPI [pydantic] model or dict, depending on what the API function returns
+    Any
+        OpenAPI (pydantic) model or dict, depending on what the API function returns.
     """
     if "limit" in kwargs and kwargs["limit"] is None:
         kwargs.pop("limit")
@@ -87,26 +107,48 @@ def iter_documents(func: Callable, *args, skip=0, **kwargs) -> Generator[Any, No
 
 
 def make_job_label(job: JobModel, include_status: bool = False) -> str:
-    """Return a user-friendly label for the job for log statements."""
+    """Return a user-friendly label for the job for log statements.
+
+    Parameters
+    ----------
+    job : JobModel
+        The job model.
+    include_status : bool, optional
+        Whether to include the job status in the label, by default False.
+
+    Returns
+    -------
+    str
+        User-friendly label for the job.
+    """
     base = f"Job name={job.name} id={job.id}"
     if include_status:
         return f"{base} status={job.status}"
     return base
 
 
-def send_api_command(func, *args, raise_on_error=True, timeout=120, **kwargs) -> Any:
+def send_api_command(
+    func: Callable, *args, raise_on_error: bool = True, timeout: float = 120, **kwargs
+) -> Any:
     """Send an API command while tracking time, if timer_stats_collector is enabled.
 
     Parameters
     ----------
-    func : function
-        API function
-    args : arguments to forward to func
-    raise_on_error : bool
-        Raise an exception if there is an error, defaults to True.
-    timeout : float
-        Timeout in seconds
-    kwargs : keyword arguments to forward to func
+    func : Callable
+        API function to call.
+    *args
+        Positional arguments to pass to the function.
+    raise_on_error : bool, optional
+        Raise an exception if there is an error, by default True.
+    timeout : float, optional
+        Timeout in seconds, by default 120.
+    **kwargs
+        Keyword arguments to pass to the function.
+
+    Returns
+    -------
+    Any
+        Result from the API function.
 
     Raises
     ------
@@ -137,21 +179,22 @@ def send_api_command(func, *args, raise_on_error=True, timeout=120, **kwargs) ->
             return None
 
 
-def create_jobs(api: DefaultApi, jobs, max_transfer_size=10_000) -> list[JobModel]:
+def create_jobs(api: DefaultApi, jobs: list, max_transfer_size: int = 10_000) -> list[JobModel]:
     """Create and add an iterable of jobs to the workflow.
 
     Parameters
     ----------
     api : DefaultApi
+        OpenAPI client for the Torc database.
     jobs : list
-        Any iterable of JobModel
-    max_transfer_size : int
-        Maximum number of jobs to add per API call. 10,000 is recommended.
+        Any iterable of JobModel.
+    max_transfer_size : int, optional
+        Maximum number of jobs to add per API call, by default 10000.
 
     Returns
     -------
-    list
-        List of keys of created jobs. Provided in same order as jobs.
+    list[JobModel]
+        List of created jobs. Provided in same order as jobs.
     """
     added_jobs = []
     batch = []
@@ -171,7 +214,7 @@ def create_jobs(api: DefaultApi, jobs, max_transfer_size=10_000) -> list[JobMode
 
 def map_function_to_jobs(
     api: DefaultApi,
-    workflow_id,
+    workflow_id: int,
     module: str,
     func: str,
     params: list[dict],
@@ -188,34 +231,38 @@ def map_function_to_jobs(
     Parameters
     ----------
     api : DefaultApi
-    workflow_id : str
+        OpenAPI client for the Torc database.
+    workflow_id : int
+        ID of the workflow.
     module : str
-        Name of module that contains func. If it is not available in the Python path, specify
-        the parent directory in module_directory.
+        Name of module that contains func. If it is not available in the Python path,
+        specify the parent directory in module_directory.
     func : str
         Name of the function in module to be called.
     params : list[dict]
-        Each item in this list will be passed to func. The contents must be serializable to
-        JSON.
-    postprocess_func : str
-        Optional name of the function in module to be called to postprocess all results.
-    module_directory : str | None
-        Required if module is not importable.
-    resource_requirements_id : int | None
-        Optional id of resource_requirements that should be used by each job.
-    scheduler_id : int | None
-        Optional id of scheduler that should be used by each job.
-    start_index : int
-        Starting index to use for job names.
-    name_prefix : str
-        Prepend job names with this prefix; defaults to an empty string. Names will be the
+        Each item in this list will be passed to func. The contents must be
+        serializable to JSON.
+    postprocess_func : str | None, optional
+        Name of the function in module to be called to postprocess all results,
+        by default None.
+    module_directory : str | None, optional
+        Required if module is not importable, by default None.
+    resource_requirements_id : int | None, optional
+        ID of resource_requirements that should be used by each job, by default None.
+    scheduler_id : int | None, optional
+        ID of scheduler that should be used by each job, by default None.
+    start_index : int, optional
+        Starting index to use for job names, by default 1.
+    name_prefix : str, optional
+        Prepend job names with this prefix, by default "". Names will be the
         index converted to a string.
-    blocked_by_job_ids : None | list[int]
-        Job IDs that should block all jobs created by this function.
+    blocked_by_job_ids : list[int] | None, optional
+        Job IDs that should block all jobs created by this function, by default None.
 
     Returns
     -------
     list[JobModel]
+        List of created jobs.
     """
     jobs = []
     output_data_ids = []
@@ -282,6 +329,17 @@ def map_function_to_jobs(
     return create_jobs(api, jobs)
 
 
-def list_model_fields(cls) -> list[str]:
-    """Return a list of the model's fields."""
+def list_model_fields(cls: type) -> list[str]:
+    """Return a list of the model's fields.
+
+    Parameters
+    ----------
+    cls : type
+        Pydantic model class.
+
+    Returns
+    -------
+    list[str]
+        List of field names.
+    """
     return list(cls.model_json_schema()["properties"].keys())

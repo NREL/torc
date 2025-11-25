@@ -1,16 +1,18 @@
 """Utility functions for the Torc Dash app."""
 
 import json
+import os
+import select
 import subprocess
 from concurrent.futures import ThreadPoolExecutor
-from typing import Any, Dict, List, Optional, Tuple
-from functools import wraps
+from pathlib import Path
+from typing import Any
 
 from torc.openapi_client import (
     ApiClient,
+    ApiException,
     Configuration,
     DefaultApi,
-    ApiException,
 )
 
 # Thread pool for running API calls in the background
@@ -20,12 +22,15 @@ executor = ThreadPoolExecutor(max_workers=4)
 class TorcApiWrapper:
     """Wrapper for the Torc OpenAPI client with threading support."""
 
-    def __init__(self, api_url: str, username: Optional[str] = None):
+    def __init__(self, api_url: str, username: str | None = None):
         """Initialize the API wrapper.
 
-        Args:
-            api_url: The Torc server API URL
-            username: Optional username for workflow operations
+        Parameters
+        ----------
+        api_url : str
+            The Torc server API URL.
+        username : str | None, optional
+            Username for workflow operations, by default None.
         """
         self.api_url = api_url
         self.username = username
@@ -41,15 +46,20 @@ class TorcApiWrapper:
             self._api = DefaultApi(self._client)
         return self._api
 
-    def list_workflows(self, offset: int = 0, limit: int = 100) -> Dict[str, Any]:
+    def list_workflows(self, offset: int = 0, limit: int = 100) -> dict[str, Any]:
         """List all workflows.
 
-        Args:
-            offset: Starting offset for pagination
-            limit: Maximum number of workflows to return
+        Parameters
+        ----------
+        offset : int, optional
+            Starting offset for pagination, by default 0.
+        limit : int, optional
+            Maximum number of workflows to return, by default 100.
 
-        Returns:
-            Dictionary with workflow data
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with workflow data.
         """
         try:
             api = self._get_api()
@@ -62,18 +72,25 @@ class TorcApiWrapper:
         except ApiException as e:
             return {"success": False, "error": str(e), "data": []}
         except Exception as e:
-            return {"success": False, "error": f"Unexpected error: {str(e)}", "data": []}
+            msg = f"Unexpected error: {e}"
+            return {"success": False, "error": msg, "data": []}
 
-    def list_jobs(self, workflow_id: int, offset: int = 0, limit: int = 100) -> Dict[str, Any]:
+    def list_jobs(self, workflow_id: int, offset: int = 0, limit: int = 100) -> dict[str, Any]:
         """List jobs for a workflow.
 
-        Args:
-            workflow_id: The workflow ID
-            offset: Starting offset for pagination
-            limit: Maximum number of jobs to return
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID.
+        offset : int, optional
+            Starting offset for pagination, by default 0.
+        limit : int, optional
+            Maximum number of jobs to return, by default 100.
 
-        Returns:
-            Dictionary with job data
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with job data.
         """
         try:
             api = self._get_api()
@@ -86,18 +103,25 @@ class TorcApiWrapper:
         except ApiException as e:
             return {"success": False, "error": str(e), "data": []}
         except Exception as e:
-            return {"success": False, "error": f"Unexpected error: {str(e)}", "data": []}
+            msg = f"Unexpected error: {e}"
+            return {"success": False, "error": msg, "data": []}
 
-    def list_results(self, workflow_id: int, offset: int = 0, limit: int = 100) -> Dict[str, Any]:
+    def list_results(self, workflow_id: int, offset: int = 0, limit: int = 100) -> dict[str, Any]:
         """List results for a workflow.
 
-        Args:
-            workflow_id: The workflow ID
-            offset: Starting offset for pagination
-            limit: Maximum number of results to return
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID.
+        offset : int, optional
+            Starting offset for pagination, by default 0.
+        limit : int, optional
+            Maximum number of results to return, by default 100.
 
-        Returns:
-            Dictionary with result data
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with result data.
         """
         try:
             api = self._get_api()
@@ -110,18 +134,25 @@ class TorcApiWrapper:
         except ApiException as e:
             return {"success": False, "error": str(e), "data": []}
         except Exception as e:
-            return {"success": False, "error": f"Unexpected error: {str(e)}", "data": []}
+            msg = f"Unexpected error: {e}"
+            return {"success": False, "error": msg, "data": []}
 
-    def list_events(self, workflow_id: int, offset: int = 0, limit: int = 100) -> Dict[str, Any]:
+    def list_events(self, workflow_id: int, offset: int = 0, limit: int = 100) -> dict[str, Any]:
         """List events for a workflow.
 
-        Args:
-            workflow_id: The workflow ID
-            offset: Starting offset for pagination
-            limit: Maximum number of events to return
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID.
+        offset : int, optional
+            Starting offset for pagination, by default 0.
+        limit : int, optional
+            Maximum number of events to return, by default 100.
 
-        Returns:
-            Dictionary with event data
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with event data.
         """
         try:
             api = self._get_api()
@@ -134,18 +165,25 @@ class TorcApiWrapper:
         except ApiException as e:
             return {"success": False, "error": str(e), "data": []}
         except Exception as e:
-            return {"success": False, "error": f"Unexpected error: {str(e)}", "data": []}
+            msg = f"Unexpected error: {e}"
+            return {"success": False, "error": msg, "data": []}
 
-    def list_files(self, workflow_id: int, offset: int = 0, limit: int = 100) -> Dict[str, Any]:
+    def list_files(self, workflow_id: int, offset: int = 0, limit: int = 100) -> dict[str, Any]:
         """List files for a workflow.
 
-        Args:
-            workflow_id: The workflow ID
-            offset: Starting offset for pagination
-            limit: Maximum number of files to return
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID.
+        offset : int, optional
+            Starting offset for pagination, by default 0.
+        limit : int, optional
+            Maximum number of files to return, by default 100.
 
-        Returns:
-            Dictionary with file data
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with file data.
         """
         try:
             api = self._get_api()
@@ -158,18 +196,25 @@ class TorcApiWrapper:
         except ApiException as e:
             return {"success": False, "error": str(e), "data": []}
         except Exception as e:
-            return {"success": False, "error": f"Unexpected error: {str(e)}", "data": []}
+            msg = f"Unexpected error: {e}"
+            return {"success": False, "error": msg, "data": []}
 
-    def list_user_data(self, workflow_id: int, offset: int = 0, limit: int = 100) -> Dict[str, Any]:
+    def list_user_data(self, workflow_id: int, offset: int = 0, limit: int = 100) -> dict[str, Any]:
         """List user data for a workflow.
 
-        Args:
-            workflow_id: The workflow ID
-            offset: Starting offset for pagination
-            limit: Maximum number of user data items to return
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID.
+        offset : int, optional
+            Starting offset for pagination, by default 0.
+        limit : int, optional
+            Maximum number of user data items to return, by default 100.
 
-        Returns:
-            Dictionary with user data
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with user data.
         """
         try:
             api = self._get_api()
@@ -182,18 +227,25 @@ class TorcApiWrapper:
         except ApiException as e:
             return {"success": False, "error": str(e), "data": []}
         except Exception as e:
-            return {"success": False, "error": f"Unexpected error: {str(e)}", "data": []}
+            msg = f"Unexpected error: {e}"
+            return {"success": False, "error": msg, "data": []}
 
-    def list_compute_nodes(self, workflow_id: int, offset: int = 0, limit: int = 100) -> Dict[str, Any]:
+    def list_compute_nodes(self, workflow_id: int, offset: int = 0, limit: int = 100) -> dict[str, Any]:
         """List compute nodes for a workflow.
 
-        Args:
-            workflow_id: The workflow ID
-            offset: Starting offset for pagination
-            limit: Maximum number of compute nodes to return
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID.
+        offset : int, optional
+            Starting offset for pagination, by default 0.
+        limit : int, optional
+            Maximum number of compute nodes to return, by default 100.
 
-        Returns:
-            Dictionary with compute node data
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with compute node data.
         """
         try:
             api = self._get_api()
@@ -206,18 +258,25 @@ class TorcApiWrapper:
         except ApiException as e:
             return {"success": False, "error": str(e), "data": []}
         except Exception as e:
-            return {"success": False, "error": f"Unexpected error: {str(e)}", "data": []}
+            msg = f"Unexpected error: {e}"
+            return {"success": False, "error": msg, "data": []}
 
-    def list_resource_requirements(self, workflow_id: int, offset: int = 0, limit: int = 100) -> Dict[str, Any]:
+    def list_resource_requirements(self, workflow_id: int, offset: int = 0, limit: int = 100) -> dict[str, Any]:
         """List resource requirements for a workflow.
 
-        Args:
-            workflow_id: The workflow ID
-            offset: Starting offset for pagination
-            limit: Maximum number of resource requirements to return
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID.
+        offset : int, optional
+            Starting offset for pagination, by default 0.
+        limit : int, optional
+            Maximum number of resource requirements to return, by default 100.
 
-        Returns:
-            Dictionary with resource requirement data
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with resource requirement data.
         """
         try:
             api = self._get_api()
@@ -230,18 +289,25 @@ class TorcApiWrapper:
         except ApiException as e:
             return {"success": False, "error": str(e), "data": []}
         except Exception as e:
-            return {"success": False, "error": f"Unexpected error: {str(e)}", "data": []}
+            msg = f"Unexpected error: {e}"
+            return {"success": False, "error": msg, "data": []}
 
-    def list_job_dependencies(self, workflow_id: int, offset: int = 0, limit: int = 100) -> Dict[str, Any]:
+    def list_job_dependencies(self, workflow_id: int, offset: int = 0, limit: int = 100) -> dict[str, Any]:
         """List job dependencies for a workflow.
 
-        Args:
-            workflow_id: The workflow ID
-            offset: Starting offset for pagination
-            limit: Maximum number of dependencies to return
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID.
+        offset : int, optional
+            Starting offset for pagination, by default 0.
+        limit : int, optional
+            Maximum number of dependencies to return, by default 100.
 
-        Returns:
-            Dictionary with job dependency data
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with job dependency data.
         """
         try:
             api = self._get_api()
@@ -254,18 +320,25 @@ class TorcApiWrapper:
         except ApiException as e:
             return {"success": False, "error": str(e), "data": []}
         except Exception as e:
-            return {"success": False, "error": f"Unexpected error: {str(e)}", "data": []}
+            msg = f"Unexpected error: {e}"
+            return {"success": False, "error": msg, "data": []}
 
-    def list_job_file_relationships(self, workflow_id: int, offset: int = 0, limit: int = 100) -> Dict[str, Any]:
+    def list_job_file_relationships(self, workflow_id: int, offset: int = 0, limit: int = 100) -> dict[str, Any]:
         """List job-file relationships for a workflow.
 
-        Args:
-            workflow_id: The workflow ID
-            offset: Starting offset for pagination
-            limit: Maximum number of relationships to return
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID.
+        offset : int, optional
+            Starting offset for pagination, by default 0.
+        limit : int, optional
+            Maximum number of relationships to return, by default 100.
 
-        Returns:
-            Dictionary with job-file relationship data
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with job-file relationship data.
         """
         try:
             api = self._get_api()
@@ -278,18 +351,25 @@ class TorcApiWrapper:
         except ApiException as e:
             return {"success": False, "error": str(e), "data": []}
         except Exception as e:
-            return {"success": False, "error": f"Unexpected error: {str(e)}", "data": []}
+            msg = f"Unexpected error: {e}"
+            return {"success": False, "error": msg, "data": []}
 
-    def list_job_user_data_relationships(self, workflow_id: int, offset: int = 0, limit: int = 100) -> Dict[str, Any]:
+    def list_job_user_data_relationships(self, workflow_id: int, offset: int = 0, limit: int = 100) -> dict[str, Any]:
         """List job-user_data relationships for a workflow.
 
-        Args:
-            workflow_id: The workflow ID
-            offset: Starting offset for pagination
-            limit: Maximum number of relationships to return
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID.
+        offset : int, optional
+            Starting offset for pagination, by default 0.
+        limit : int, optional
+            Maximum number of relationships to return, by default 100.
 
-        Returns:
-            Dictionary with job-user_data relationship data
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with job-user_data relationship data.
         """
         try:
             api = self._get_api()
@@ -302,16 +382,21 @@ class TorcApiWrapper:
         except ApiException as e:
             return {"success": False, "error": str(e), "data": []}
         except Exception as e:
-            return {"success": False, "error": f"Unexpected error: {str(e)}", "data": []}
+            msg = f"Unexpected error: {e}"
+            return {"success": False, "error": msg, "data": []}
 
-    def delete_workflow(self, workflow_id: int) -> Dict[str, Any]:
+    def delete_workflow(self, workflow_id: int) -> dict[str, Any]:
         """Delete a workflow using the API.
 
-        Args:
-            workflow_id: The workflow ID to delete
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID to delete.
 
-        Returns:
-            Dictionary with success status
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with success status.
         """
         try:
             api = self._get_api()
@@ -320,17 +405,48 @@ class TorcApiWrapper:
         except ApiException as e:
             return {"success": False, "error": str(e)}
         except Exception as e:
-            return {"success": False, "error": f"Unexpected error: {str(e)}"}
+            msg = f"Unexpected error: {e}"
+            return {"success": False, "error": msg}
+
+    def is_workflow_uninitialized(self, workflow_id: int) -> dict[str, Any]:
+        """Check if a workflow is uninitialized.
+
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID to check.
+
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with success status and is_uninitialized flag.
+        """
+        try:
+            api = self._get_api()
+            response = api.is_workflow_uninitialized(workflow_id)
+            return {
+                "success": True,
+                "is_uninitialized": response.is_uninitialized,
+            }
+        except ApiException as e:
+            return {"success": False, "error": str(e), "is_uninitialized": False}
+        except Exception as e:
+            msg = f"Unexpected error: {e}"
+            return {"success": False, "error": msg, "is_uninitialized": False}
 
     @staticmethod
-    def _model_to_dict(model: Any) -> Dict[str, Any]:
+    def _model_to_dict(model: Any) -> dict[str, Any]:
         """Convert a Pydantic model to a dictionary.
 
-        Args:
-            model: The Pydantic model to convert
+        Parameters
+        ----------
+        model : Any
+            The Pydantic model to convert.
 
-        Returns:
-            Dictionary representation of the model
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary representation of the model.
         """
         if hasattr(model, "model_dump"):
             return model.model_dump()
@@ -346,32 +462,38 @@ class TorcCliWrapper:
 
     # Class variables for simple process tracking
     current_process = None
-    output_buffer = []
+    output_buffer: list[str] = []
 
     def __init__(self, torc_cli_path: str = "torc"):
         """Initialize the CLI wrapper.
 
-        Args:
-            torc_cli_path: Path to the torc CLI binary (default: "torc" in PATH)
+        Parameters
+        ----------
+        torc_cli_path : str, optional
+            Path to the torc CLI binary, by default "torc" in PATH.
         """
         self.torc_cli_path = torc_cli_path
 
-    def run_workflow(self, spec_path: str, api_url: Optional[str] = None) -> Dict[str, Any]:
+    def run_workflow(self, spec_path: str, api_url: str | None = None) -> dict[str, Any]:
         """Run a workflow locally using the torc CLI.
 
-        Args:
-            spec_path: Path to the workflow specification file or workflow ID
-            api_url: Optional API URL to override the default
+        Parameters
+        ----------
+        spec_path : str
+            Path to the workflow specification file or workflow ID.
+        api_url : str | None, optional
+            API URL to override the default, by default None.
 
-        Returns:
-            Dictionary with command output and status
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with command output and status.
         """
         # Note: We don't use -f json here because run command may have real-time output
         cmd = [self.torc_cli_path, "run", spec_path]
         env = None
 
         if api_url:
-            import os
             env = os.environ.copy()
             env["TORC_API_URL"] = api_url
 
@@ -404,22 +526,26 @@ class TorcCliWrapper:
                 "stderr": "",
             }
 
-    def submit_workflow(self, spec_path: str, api_url: Optional[str] = None) -> Dict[str, Any]:
+    def submit_workflow(self, spec_path: str, api_url: str | None = None) -> dict[str, Any]:
         """Submit a workflow to HPC/Slurm using the torc CLI.
 
-        Args:
-            spec_path: Path to the workflow specification file or workflow ID
-            api_url: Optional API URL to override the default
+        Parameters
+        ----------
+        spec_path : str
+            Path to the workflow specification file or workflow ID.
+        api_url : str | None, optional
+            API URL to override the default, by default None.
 
-        Returns:
-            Dictionary with command output and status
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with command output and status.
         """
         # Note: We don't use -f json here to preserve any submission details
         cmd = [self.torc_cli_path, "submit", spec_path]
         env = None
 
         if api_url:
-            import os
             env = os.environ.copy()
             env["TORC_API_URL"] = api_url
 
@@ -452,21 +578,25 @@ class TorcCliWrapper:
                 "stderr": "",
             }
 
-    def create_workflow(self, spec_path: str, api_url: Optional[str] = None) -> Dict[str, Any]:
+    def create_workflow(self, spec_path: str, api_url: str | None = None) -> dict[str, Any]:
         """Create a workflow from a specification file.
 
-        Args:
-            spec_path: Path to the workflow specification file
-            api_url: Optional API URL to override the default
+        Parameters
+        ----------
+        spec_path : str
+            Path to the workflow specification file.
+        api_url : str | None, optional
+            API URL to override the default, by default None.
 
-        Returns:
-            Dictionary with command output and status
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with command output and status.
         """
         cmd = [self.torc_cli_path, "-f", "json", "workflows", "create", spec_path]
         env = None
 
         if api_url:
-            import os
             env = os.environ.copy()
             env["TORC_API_URL"] = api_url
 
@@ -499,19 +629,25 @@ class TorcCliWrapper:
                 "stderr": "",
             }
 
-    def initialize_workflow_direct(self, workflow_id: int, api_url: Optional[str] = None, force: bool = False) -> Dict[str, Any]:
+    def initialize_workflow_direct(
+        self, workflow_id: int, api_url: str | None = None, force: bool = False
+    ) -> dict[str, Any]:
         """Initialize a workflow directly without any checks or prompts.
 
-        Args:
-            workflow_id: The workflow ID to initialize
-            api_url: Optional API URL to override the default
-            force: Whether to use --force flag (for intermediate files)
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID to initialize.
+        api_url : str | None, optional
+            API URL to override the default, by default None.
+        force : bool, optional
+            Whether to use --force flag (for intermediate files), by default False.
 
-        Returns:
-            Dictionary with command output and status
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with command output and status.
         """
-        import os
-
         cmd = [self.torc_cli_path, "workflows", "initialize", str(workflow_id)]
         if force:
             cmd.append("--force")
@@ -550,28 +686,32 @@ class TorcCliWrapper:
                 "stderr": "",
             }
 
-    def check_and_delete_files(self, workflow_id: int, existing_files: List[str]) -> Dict[str, Any]:
+    def check_and_delete_files(
+        self, workflow_id: int, existing_files: list[str]
+    ) -> dict[str, Any]:
         """Delete existing output files and return status.
 
-        Args:
-            workflow_id: The workflow ID
-            existing_files: List of file paths to delete
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID.
+        existing_files : list[str]
+            List of file paths to delete.
 
-        Returns:
-            Dictionary with:
-            - success: bool
-            - deleted_files: list of successfully deleted files
-            - failed_deletions: list of (file_path, error_msg) tuples
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with success status, deleted_files list, and
+            failed_deletions list of (file_path, error_msg) tuples.
         """
-        import os
-
         deleted_files = []
         failed_deletions = []
 
         for file_path in existing_files:
             try:
-                if os.path.exists(file_path):
-                    os.remove(file_path)
+                path = Path(file_path)
+                if path.exists():
+                    path.unlink()
                     deleted_files.append(file_path)
             except Exception as e:
                 failed_deletions.append((file_path, str(e)))
@@ -582,52 +722,59 @@ class TorcCliWrapper:
             "failed_deletions": failed_deletions,
         }
 
-    def _check_initialization(self, workflow_id: int, api_url: Optional[str] = None) -> Dict[str, Any]:
+    def _check_initialization(self, workflow_id: int, api_url: str | None = None) -> dict[str, Any]:
         """Check if initialization is safe to run (dry-run check).
 
-        Args:
-            workflow_id: The workflow ID to check
-            api_url: Optional API URL to override the default
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID to check.
+        api_url : str | None, optional
+            API URL to override the default, by default None.
 
-        Returns:
-            Dictionary with check result including:
-            - success: bool - whether check succeeded
-            - data: dict - parsed JSON response from dry-run
-            - error: str - error message if check failed
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with check result including success, data, and error keys.
         """
         return self._run_dry_run_check(workflow_id, "initialize", api_url)
 
-    def _check_reinitialize(self, workflow_id: int, api_url: Optional[str] = None) -> Dict[str, Any]:
+    def _check_reinitialize(self, workflow_id: int, api_url: str | None = None) -> dict[str, Any]:
         """Check if reinitialization is safe to run (dry-run check).
 
-        Args:
-            workflow_id: The workflow ID to check
-            api_url: Optional API URL to override the default
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID to check.
+        api_url : str | None, optional
+            API URL to override the default, by default None.
 
-        Returns:
-            Dictionary with check result including:
-            - success: bool - whether check succeeded
-            - data: dict - parsed JSON response from dry-run
-            - error: str - error message if check failed
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with check result including success, data, and error keys.
         """
         return self._run_dry_run_check(workflow_id, "reinitialize", api_url)
 
-    def _run_dry_run_check(self, workflow_id: int, command: str, api_url: Optional[str] = None) -> Dict[str, Any]:
+    def _run_dry_run_check(
+        self, workflow_id: int, command: str, api_url: str | None = None
+    ) -> dict[str, Any]:
         """Run a dry-run check for initialize or reinitialize.
 
-        Args:
-            workflow_id: The workflow ID to check
-            command: Either "initialize" or "reinitialize"
-            api_url: Optional API URL to override the default
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID to check.
+        command : str
+            Either "initialize" or "reinitialize".
+        api_url : str | None, optional
+            API URL to override the default, by default None.
 
-        Returns:
-            Dictionary with check result including:
-            - success: bool - whether check succeeded
-            - data: dict - parsed JSON response from dry-run
-            - error: str - error message if check failed
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with check result including success, data, and error keys.
         """
-        import os
-
         cmd = [
             self.torc_cli_path,
             "-f", "json",
@@ -652,12 +799,12 @@ class TorcCliWrapper:
 
             if result.returncode not in (0, 1):
                 # Unexpected error
+                msg = f"Dry-run check failed: {result.stderr}"
                 return {
                     "success": False,
-                    "error": f"Dry-run check failed: {result.stderr}",
+                    "error": msg,
                 }
 
-            # Parse JSON response
             try:
                 data = json.loads(result.stdout)
                 return {
@@ -665,9 +812,10 @@ class TorcCliWrapper:
                     "data": data,
                 }
             except json.JSONDecodeError as e:
+                msg = f"Failed to parse dry-run response: {e}"
                 return {
                     "success": False,
-                    "error": f"Failed to parse dry-run response: {str(e)}",
+                    "error": msg,
                 }
 
         except subprocess.TimeoutExpired:
@@ -676,71 +824,60 @@ class TorcCliWrapper:
                 "error": "Dry-run check timed out after 30 seconds",
             }
         except Exception as e:
+            msg = f"Dry-run check failed: {e}"
             return {
                 "success": False,
-                "error": f"Dry-run check failed: {str(e)}",
+                "error": msg,
             }
 
-    def check_workflow_needs_initialization(self, workflow_id: int, api_url: Optional[str] = None) -> Dict[str, Any]:
+    def check_workflow_needs_initialization(
+        self, workflow_id: int, api_url: str | None = None
+    ) -> dict[str, Any]:
         """Check if a workflow needs initialization before running.
 
-        Args:
-            workflow_id: The workflow ID to check
-            api_url: Optional API URL to override the default
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID to check.
+        api_url : str | None, optional
+            API URL to override the default, by default None.
 
-        Returns:
-            Dictionary with:
-            - needs_init: bool - whether initialization is needed
-            - check_data: dict - dry-run check results (if needs init)
-            - error: str - error message if check failed
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with needs_init flag, check_data, and error keys.
         """
-        import os
-
-        # Check if workflow is uninitialized
-        cmd = [self.torc_cli_path, "-f", "json", "workflows", "get", str(workflow_id)]
-
-        env = None
-        if api_url:
-            env = os.environ.copy()
-            env["TORC_API_URL"] = api_url
-
         try:
-            # First check if workflow needs initialization
-            result = subprocess.run(
-                ["curl", "-s", f"{api_url or 'http://localhost:8080/torc-service/v1'}/workflows/{workflow_id}/is_uninitialized"],
-                capture_output=True,
-                text=True,
-                timeout=10,
-            )
+            # Use API wrapper to check if workflow needs initialization
+            url = api_url or "http://localhost:8080/torc-service/v1"
+            api_wrapper = TorcApiWrapper(url)
+            result = api_wrapper.is_workflow_uninitialized(workflow_id)
 
-            if result.returncode == 0:
-                try:
-                    response = json.loads(result.stdout)
-                    is_uninitialized = response.get("is_uninitialized", False)
+            if result.get("success"):
+                is_uninitialized = result.get("is_uninitialized", False)
 
-                    if is_uninitialized:
-                        # Run dry-run check
-                        check_result = self._check_initialization(workflow_id, api_url)
-                        if not check_result["success"]:
-                            return {
-                                "needs_init": False,
-                                "error": check_result.get("error", "Check failed"),
-                            }
-                        return {
-                            "needs_init": True,
-                            "check_data": check_result["data"],
-                        }
-                    else:
+                if is_uninitialized:
+                    # Run dry-run check
+                    check_result = self._check_initialization(workflow_id, api_url)
+                    if not check_result["success"]:
                         return {
                             "needs_init": False,
+                            "error": check_result.get("error", "Check failed"),
                         }
-                except json.JSONDecodeError:
-                    pass
-
-            # Fallback: assume doesn't need init
-            return {
-                "needs_init": False,
-            }
+                    return {
+                        "needs_init": True,
+                        "check_data": check_result["data"],
+                    }
+                else:
+                    return {
+                        "needs_init": False,
+                    }
+            else:
+                # API call failed, return error but assume doesn't need init
+                return {
+                    "needs_init": False,
+                    "error": result.get("error", "API call failed"),
+                }
 
         except Exception as e:
             return {
@@ -748,19 +885,25 @@ class TorcCliWrapper:
                 "error": str(e),
             }
 
-    def reinitialize_workflow_direct(self, workflow_id: int, api_url: Optional[str] = None, force: bool = False) -> Dict[str, Any]:
+    def reinitialize_workflow_direct(
+        self, workflow_id: int, api_url: str | None = None, force: bool = False
+    ) -> dict[str, Any]:
         """Reinitialize a workflow directly without any checks or prompts.
 
-        Args:
-            workflow_id: The workflow ID to reinitialize
-            api_url: Optional API URL to override the default
-            force: Whether to use --force flag
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID to reinitialize.
+        api_url : str | None, optional
+            API URL to override the default, by default None.
+        force : bool, optional
+            Whether to use --force flag, by default False.
 
-        Returns:
-            Dictionary with command output and status
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with command output and status.
         """
-        import os
-
         cmd = [self.torc_cli_path, "workflows", "reinitialize", str(workflow_id)]
         if force:
             cmd.append("--force")
@@ -799,21 +942,25 @@ class TorcCliWrapper:
                 "stderr": "",
             }
 
-    def run_workflow_by_id(self, workflow_id: int, api_url: Optional[str] = None) -> Dict[str, Any]:
+    def run_workflow_by_id(self, workflow_id: int, api_url: str | None = None) -> dict[str, Any]:
         """Run an existing workflow by ID using the torc CLI.
 
-        Args:
-            workflow_id: The workflow ID to run
-            api_url: Optional API URL to override the default
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID to run.
+        api_url : str | None, optional
+            API URL to override the default, by default None.
 
-        Returns:
-            Dictionary with command output and status
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with command output and status.
         """
         cmd = [self.torc_cli_path, "workflows", "run", str(workflow_id)]
         env = None
 
         if api_url:
-            import os
             env = os.environ.copy()
             env["TORC_API_URL"] = api_url
 
@@ -846,21 +993,25 @@ class TorcCliWrapper:
                 "stderr": "",
             }
 
-    def submit_workflow_by_id(self, workflow_id: int, api_url: Optional[str] = None) -> Dict[str, Any]:
+    def submit_workflow_by_id(self, workflow_id: int, api_url: str | None = None) -> dict[str, Any]:
         """Submit an existing workflow by ID to HPC/Slurm using the torc CLI.
 
-        Args:
-            workflow_id: The workflow ID to submit
-            api_url: Optional API URL to override the default
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID to submit.
+        api_url : str | None, optional
+            API URL to override the default, by default None.
 
-        Returns:
-            Dictionary with command output and status
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with command output and status.
         """
         cmd = [self.torc_cli_path, "workflows", "submit", str(workflow_id)]
         env = None
 
         if api_url:
-            import os
             env = os.environ.copy()
             env["TORC_API_URL"] = api_url
 
@@ -893,21 +1044,25 @@ class TorcCliWrapper:
                 "stderr": "",
             }
 
-    def delete_workflow(self, workflow_id: int, api_url: Optional[str] = None) -> Dict[str, Any]:
+    def delete_workflow(self, workflow_id: int, api_url: str | None = None) -> dict[str, Any]:
         """Delete a workflow.
 
-        Args:
-            workflow_id: The workflow ID to delete
-            api_url: Optional API URL to override the default
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID to delete.
+        api_url : str | None, optional
+            API URL to override the default, by default None.
 
-        Returns:
-            Dictionary with command output and status
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with command output and status.
         """
         cmd = [self.torc_cli_path, "workflows", "delete", str(workflow_id)]
         env = None
 
         if api_url:
-            import os
             env = os.environ.copy()
             env["TORC_API_URL"] = api_url
 
@@ -940,21 +1095,25 @@ class TorcCliWrapper:
                 "stderr": "",
             }
 
-    def reset_status_workflow(self, workflow_id: int, api_url: Optional[str] = None) -> Dict[str, Any]:
+    def reset_status_workflow(self, workflow_id: int, api_url: str | None = None) -> dict[str, Any]:
         """Reset the status of a workflow.
 
-        Args:
-            workflow_id: The workflow ID to reset
-            api_url: Optional API URL to override the default
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID to reset.
+        api_url : str | None, optional
+            API URL to override the default, by default None.
 
-        Returns:
-            Dictionary with command output and status
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with command output and status.
         """
         cmd = [self.torc_cli_path, "workflows", "reset-status", str(workflow_id), "--no-prompts"]
         env = None
 
         if api_url:
-            import os
             env = os.environ.copy()
             env["TORC_API_URL"] = api_url
 
@@ -987,21 +1146,25 @@ class TorcCliWrapper:
                 "stderr": "",
             }
 
-    def start_workflow_process(self, workflow_id: int, api_url: Optional[str] = None) -> bool:
+    def start_workflow_process(self, workflow_id: int, api_url: str | None = None) -> bool:
         """Start workflow execution process (non-blocking).
 
-        Args:
-            workflow_id: The workflow ID to run
-            api_url: Optional API URL to override the default
+        Parameters
+        ----------
+        workflow_id : int
+            The workflow ID to run.
+        api_url : str | None, optional
+            API URL to override the default, by default None.
 
-        Returns:
-            True if process started successfully, False otherwise
+        Returns
+        -------
+        bool
+            True if process started successfully, False otherwise.
         """
         cmd = [self.torc_cli_path, "workflows", "run", str(workflow_id)]
         env = None
 
         if api_url:
-            import os
             env = os.environ.copy()
             env["TORC_API_URL"] = api_url
 
@@ -1023,11 +1186,13 @@ class TorcCliWrapper:
             TorcCliWrapper.current_process = None
             return False
 
-    def read_process_output(self) -> Tuple[str, bool]:
+    def read_process_output(self) -> tuple[str, bool]:
         """Read new output from current process.
 
-        Returns:
-            Tuple of (new_output, is_complete)
+        Returns
+        -------
+        tuple[str, bool]
+            Tuple of (new_output, is_complete).
         """
         if TorcCliWrapper.current_process is None:
             return "", True
@@ -1036,9 +1201,6 @@ class TorcCliWrapper:
 
         # Read available lines (non-blocking)
         try:
-            import select
-            import sys
-
             # Check if there's data to read (Unix-like systems)
             if hasattr(select, 'select'):
                 ready, _, _ = select.select([TorcCliWrapper.current_process.stdout], [], [], 0)
@@ -1053,7 +1215,7 @@ class TorcCliWrapper:
                 if line:
                     new_lines.append(line)
                     TorcCliWrapper.output_buffer.append(line)
-        except:
+        except Exception:
             pass
 
         # Check if process finished
@@ -1067,7 +1229,7 @@ class TorcCliWrapper:
                 if remaining:
                     new_lines.append(remaining)
                     TorcCliWrapper.output_buffer.append(remaining)
-            except:
+            except Exception:
                 pass
 
             # Add completion message
@@ -1083,8 +1245,10 @@ class TorcCliWrapper:
     def cancel_current_process(self) -> bool:
         """Cancel the currently running process.
 
-        Returns:
-            True if process was cancelled, False if no process was running
+        Returns
+        -------
+        bool
+            True if process was cancelled, False if no process was running.
         """
         if TorcCliWrapper.current_process is not None:
             try:
@@ -1095,24 +1259,27 @@ class TorcCliWrapper:
                     TorcCliWrapper.current_process.kill()
                 TorcCliWrapper.current_process = None
                 return True
-            except:
+            except Exception:
                 pass
         return False
 
-    def discover_resource_databases(self, base_dir: str = "output/resource_utilization") -> List[Dict[str, str]]:
+    def discover_resource_databases(
+        self, base_dir: str = "output/resource_utilization"
+    ) -> list[dict[str, str]]:
         """Discover resource monitoring database files.
 
-        Args:
-            base_dir: Directory to search for database files
+        Parameters
+        ----------
+        base_dir : str, optional
+            Directory to search for database files, by default "output/resource_utilization".
 
-        Returns:
-            List of dictionaries with 'path' and 'name' keys
+        Returns
+        -------
+        list[dict[str, str]]
+            List of dictionaries with 'path' and 'name' keys.
         """
-        import os
-        import pathlib
-
         databases = []
-        base_path = pathlib.Path(base_dir)
+        base_path = Path(base_dir)
 
         if not base_path.exists():
             return databases
@@ -1125,7 +1292,7 @@ class TorcCliWrapper:
             })
 
         # Sort by modification time (newest first)
-        databases.sort(key=lambda x: os.path.getmtime(x["path"]), reverse=True)
+        databases.sort(key=lambda x: Path(x["path"]).stat().st_mtime, reverse=True)
 
         return databases
 
@@ -1134,22 +1301,26 @@ class TorcCliWrapper:
         db_path: str,
         output_dir: str = "output/resource_plots",
         prefix: str = "resource_plot"
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Generate JSON plots from resource monitoring database.
 
-        Args:
-            db_path: Path to the resource monitoring database
-            output_dir: Directory to store generated JSON files
-            prefix: Prefix for output filenames
+        Parameters
+        ----------
+        db_path : str
+            Path to the resource monitoring database.
+        output_dir : str, optional
+            Directory to store generated JSON files, by default "output/resource_plots".
+        prefix : str, optional
+            Prefix for output filenames, by default "resource_plot".
 
-        Returns:
-            Dictionary with success status and plot file paths or error message
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with success status and plot file paths or error message.
         """
-        import os
-        import pathlib
-
         # Create output directory if it doesn't exist
-        pathlib.Path(output_dir).mkdir(parents=True, exist_ok=True)
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
 
         cmd = [
             self.torc_cli_path,
@@ -1170,7 +1341,6 @@ class TorcCliWrapper:
 
             if result.returncode == 0:
                 # Find generated JSON files
-                output_path = pathlib.Path(output_dir)
                 plot_files = list(output_path.glob(f"{prefix}*.json"))
 
                 return {
@@ -1179,9 +1349,10 @@ class TorcCliWrapper:
                     "plots": [str(f) for f in sorted(plot_files)]
                 }
             else:
+                msg = f"Command failed with return code {result.returncode}"
                 return {
                     "success": False,
-                    "error": f"Command failed with return code {result.returncode}",
+                    "error": msg,
                     "stdout": result.stdout,
                     "stderr": result.stderr
                 }
@@ -1197,39 +1368,44 @@ class TorcCliWrapper:
                 "error": str(e)
             }
 
-    def load_plot_json(self, json_path: str) -> Optional[Dict[str, Any]]:
+    def load_plot_json(self, json_path: str) -> dict[str, Any] | None:
         """Load a Plotly JSON file.
 
-        Args:
-            json_path: Path to the JSON file
+        Parameters
+        ----------
+        json_path : str
+            Path to the JSON file.
 
-        Returns:
-            Plotly figure dictionary or None if loading fails
+        Returns
+        -------
+        dict[str, Any] | None
+            Plotly figure dictionary or None if loading fails.
         """
-        import json
-        import pathlib
-
         try:
-            with open(json_path, 'r') as f:
-                return json.load(f)
+            path = Path(json_path)
+            return json.loads(path.read_text())
         except Exception:
             return None
 
-    def get_execution_plan(self, spec_or_id: str, api_url: Optional[str] = None) -> Dict[str, Any]:
+    def get_execution_plan(self, spec_or_id: str, api_url: str | None = None) -> dict[str, Any]:
         """Get execution plan for a workflow spec or existing workflow.
 
-        Args:
-            spec_or_id: Path to workflow spec file OR workflow ID
-            api_url: Optional API URL to override the default
+        Parameters
+        ----------
+        spec_or_id : str
+            Path to workflow spec file OR workflow ID.
+        api_url : str | None, optional
+            API URL to override the default, by default None.
 
-        Returns:
-            Dictionary with execution plan data in JSON format
+        Returns
+        -------
+        dict[str, Any]
+            Dictionary with execution plan data in JSON format.
         """
         cmd = [self.torc_cli_path, "-f", "json", "workflows", "execution-plan", spec_or_id]
         env = None
 
         if api_url:
-            import os
             env = os.environ.copy()
             env["TORC_API_URL"] = api_url
 
@@ -1243,7 +1419,6 @@ class TorcCliWrapper:
             )
 
             if result.returncode == 0:
-                import json
                 plan_data = json.loads(result.stdout)
                 return {
                     "success": True,
@@ -1261,9 +1436,10 @@ class TorcCliWrapper:
                 "error": "Command timed out after 1 minute",
             }
         except json.JSONDecodeError as e:
+            msg = f"Failed to parse JSON output: {e}"
             return {
                 "success": False,
-                "error": f"Failed to parse JSON output: {str(e)}",
+                "error": msg,
             }
         except Exception as e:
             return {
@@ -1272,14 +1448,18 @@ class TorcCliWrapper:
             }
 
 
-def format_table_columns(data: List[Dict[str, Any]]) -> List[Dict[str, str]]:
+def format_table_columns(data: list[dict[str, Any]]) -> list[dict[str, str]]:
     """Generate column definitions for a Dash DataTable from data.
 
-    Args:
-        data: List of dictionaries containing table data
+    Parameters
+    ----------
+    data : list[dict[str, Any]]
+        List of dictionaries containing table data.
 
-    Returns:
-        List of column definitions for DataTable
+    Returns
+    -------
+    list[dict[str, str]]
+        List of column definitions for DataTable.
     """
     if not data:
         return []

@@ -9,18 +9,19 @@ from torc.api import make_api
 from torc.cli.common import get_job_env_vars
 from torc.common import check_function
 from torc.loggers import setup_logging
-from torc.openapi_client import DefaultApi
 
 
 @click.command()
 def run_function():
-    """Run a function on one set of inputs stored in the workflow database. Only called by the
-    torc worker application as part of the mapped-function workflow."""
+    """Run a function on one set of inputs stored in the workflow database.
+
+    Only called by the torc worker application as part of the mapped-function workflow.
+    """
     setup_logging(console_level="INFO")
-    vars = get_job_env_vars()
-    api = make_api(vars["url"])
-    workflow_id = vars["workflow_id"]
-    job_id = vars["job_id"]
+    env_vars = get_job_env_vars()
+    api = make_api(env_vars["url"])
+    workflow_id = env_vars["workflow_id"]
+    job_id = env_vars["job_id"]
 
     resp = api.list_user_data(workflow_id=workflow_id, consumer_job_id=job_id)
     assert resp is not None

@@ -1,19 +1,27 @@
 """Callback functions for the Torc Dash app."""
 
 import base64
-import tempfile
-import os
 import json
-from concurrent.futures import Future
+import os
+import tempfile
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Tuple
+from pathlib import Path
+from typing import Any
 
-from dash import callback, Input, Output, State, html, no_update, ALL
-from dash.exceptions import PreventUpdate
 import dash_bootstrap_components as dbc
+from dash import ALL, Input, Output, State, callback, html, no_update
+from dash.exceptions import PreventUpdate
 
-from .layouts import create_view_tab_layout, create_run_tab_layout, create_dag_tab_layout, create_monitor_tab_layout, create_resource_plots_tab_layout, create_data_table, create_execution_plan_view
-from .utils import TorcApiWrapper, TorcCliWrapper, format_table_columns, executor
+from .layouts import (
+    create_dag_tab_layout,
+    create_data_table,
+    create_execution_plan_view,
+    create_monitor_tab_layout,
+    create_resource_plots_tab_layout,
+    create_run_tab_layout,
+    create_view_tab_layout,
+)
+from .utils import TorcApiWrapper, TorcCliWrapper, format_table_columns
 
 
 # ============================================================================
@@ -44,7 +52,7 @@ def save_configuration(
     n_clicks: int,
     api_url: str,
     username: str,
-) -> Tuple[Dict[str, str], html.Div]:
+) -> tuple[dict[str, str], html.Div]:
     """Save the API configuration."""
     if not n_clicks:
         raise PreventUpdate
@@ -96,9 +104,9 @@ def toggle_workflow_selection_collapse(n_clicks: int, is_open: bool) -> bool:
 def update_global_workflows_table(
     n_clicks: int,
     n_intervals: int,
-    config: Dict[str, str],
-    auto_refresh: List[str],
-) -> Tuple[html.Div, bool]:
+    config: dict[str, str],
+    auto_refresh: list[str],
+) -> tuple[html.Div, bool]:
     """Update the global workflows table."""
     # Only update on interval if auto-refresh is enabled
     from dash import ctx
@@ -185,9 +193,9 @@ def update_global_workflows_table(
     prevent_initial_call=True,
 )
 def store_global_selected_workflow(
-    n_clicks: List[int],
-    config: Dict[str, str],
-) -> Optional[Dict[str, Any]]:
+    n_clicks: list[int],
+    config: dict[str, str],
+) -> dict[str, Any] | None:
     """Store the selected workflow from global table row click."""
     from dash import ctx
 
@@ -236,7 +244,7 @@ def store_global_selected_workflow(
     Input("selected-workflow-store", "data"),
 )
 def update_selected_workflow_badge(
-    selected_workflow: Optional[Dict[str, Any]],
+    selected_workflow: dict[str, Any] | None,
 ) -> str:
     """Update the badge showing the currently selected workflow."""
     if selected_workflow and "id" in selected_workflow:
@@ -259,8 +267,8 @@ def update_selected_workflow_badge(
     prevent_initial_call=True,
 )
 def open_delete_workflow_modal(
-    n_clicks: List[int],
-    config: Dict[str, str],
+    n_clicks: list[int],
+    config: dict[str, str],
 ):
     """Open confirmation modal when delete button is clicked."""
     from dash import ctx
@@ -324,8 +332,8 @@ def handle_delete_workflow_modal(
     confirm_clicks: int,
     cancel_clicks: int,
     workflow_id: int,
-    config: Dict[str, str],
-    auto_refresh: List[str],
+    config: dict[str, str],
+    auto_refresh: list[str],
 ):
     """Handle delete confirmation or cancellation."""
     from dash import ctx
@@ -518,9 +526,9 @@ def initialize_plots_tab(config):
     State("api-config-store", "data"),
 )
 def show_workflow_details_panel(
-    workflow: Optional[Dict[str, Any]],
+    workflow: dict[str, Any] | None,
     n_clicks: int,
-    config: Dict[str, str],
+    config: dict[str, str],
 ) -> html.Div:
     """Show the workflow details panel on the right when a workflow is selected or refresh button is clicked."""
     if not workflow:
@@ -600,9 +608,9 @@ def show_workflow_details_panel(
 def update_resource_details(
     active_tab: str,
     n_intervals: int,
-    workflow: Optional[Dict[str, Any]],
-    config: Dict[str, str],
-    auto_refresh: List[str],
+    workflow: dict[str, Any] | None,
+    config: dict[str, str],
+    auto_refresh: list[str],
 ) -> html.Div:
     """Update the resource details based on selected tab."""
     # Only update on interval if auto-refresh is enabled
@@ -667,7 +675,6 @@ def update_resource_details(
             ]
         elif resource_type == "events":
             # Convert event data field to JSON string for display and filter to show only selected columns
-            import json
             filtered_data = []
             for item in data:
                 # Convert the 'data' field to a JSON string if it exists and is not already a string
@@ -749,7 +756,6 @@ def update_resource_details(
             ]
         elif resource_type == "files":
             # Format st_mtime as human-readable timestamp and reorder columns
-            from datetime import datetime
             filtered_data = []
             for item in data:
                 # Convert st_mtime from Unix timestamp to readable format
@@ -863,8 +869,8 @@ def update_resource_details(
     State("files-table", "data"),
 )
 def show_file_preview(
-    selected_rows: List[int],
-    table_data: List[Dict[str, Any]],
+    selected_rows: list[int],
+    table_data: list[dict[str, Any]],
 ) -> html.Div:
     """Show file preview when a file is selected."""
     if not selected_rows or not table_data:
@@ -952,9 +958,9 @@ def show_file_preview(
     State("upload-workflow-spec", "filename"),
 )
 def handle_file_upload(
-    contents: Optional[str],
-    filename: Optional[str],
-) -> Tuple[Optional[Dict[str, str]], Optional[html.Div]]:
+    contents: str | None,
+    filename: str | None,
+) -> tuple[dict[str, str] | None, html.Div | None]:
     """Handle workflow specification file upload."""
     if contents is None:
         raise PreventUpdate
@@ -981,8 +987,8 @@ def handle_file_upload(
     Input("selected-workflow-store", "data"),
 )
 def show_existing_workflow_info(
-    workflow: Optional[Dict[str, Any]],
-) -> Optional[html.Div]:
+    workflow: dict[str, Any] | None,
+) -> html.Div | None:
     """Show information about the selected workflow."""
     if not workflow:
         return dbc.Card(
@@ -1035,11 +1041,11 @@ def show_existing_workflow_info(
 def create_workflow_from_spec(
     n_clicks: int,
     workflow_source_tab: str,
-    uploaded_spec: Optional[Dict[str, str]],
-    spec_path: Optional[str],
-    initialize_checkbox: List[str],
-    config: Dict[str, str],
-) -> Tuple[html.Div, Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
+    uploaded_spec: dict[str, str] | None,
+    spec_path: str | None,
+    initialize_checkbox: list[str],
+    config: dict[str, str],
+) -> tuple[html.Div, dict[str, Any] | None, dict[str, Any] | None]:
     """Create a workflow from specification."""
     if not n_clicks:
         raise PreventUpdate
@@ -1215,11 +1221,11 @@ def create_workflow_from_spec(
 def execute_workflow(
     n_clicks: int,
     workflow_source_tab: str,
-    selected_workflow: Optional[Dict[str, Any]],
-    created_workflow: Optional[Dict[str, Any]],
+    selected_workflow: dict[str, Any] | None,
+    created_workflow: dict[str, Any] | None,
     execution_mode: str,
-    config: Dict[str, str],
-) -> Tuple[str, bool, bool, bool, bool, html.Div, Optional[Dict]]:
+    config: dict[str, str],
+) -> tuple[str, bool, bool, bool, bool, html.Div, dict | None]:
     """Execute or submit a workflow."""
     if not n_clicks:
         raise PreventUpdate
@@ -1316,7 +1322,7 @@ def execute_workflow(
     State("execution-output", "children"),
     prevent_initial_call=True,
 )
-def cancel_workflow_execution(n_clicks: int, current_output: Optional[str]) -> tuple:
+def cancel_workflow_execution(n_clicks: int, current_output: str | None) -> tuple:
     """Cancel an executing workflow."""
     if not n_clicks:
         raise PreventUpdate
@@ -1340,7 +1346,7 @@ def cancel_workflow_execution(n_clicks: int, current_output: Optional[str]) -> t
     State("execution-output", "children"),
     prevent_initial_call=True,
 )
-def poll_execution_output(n_intervals: int, current_output: Optional[str]) -> tuple:
+def poll_execution_output(n_intervals: int, current_output: str | None) -> tuple:
     """Poll for new output from running process."""
     if current_output is None:
         current_output = ""
@@ -1383,9 +1389,9 @@ def manage_workflow(
     init_clicks: int,
     reinit_clicks: int,
     reset_clicks: int,
-    selected_workflow: Optional[Dict[str, Any]],
-    config: Dict[str, str],
-) -> Tuple[html.Div, bool, html.Div, Optional[Dict], bool, html.Div, Optional[Dict]]:
+    selected_workflow: dict[str, Any] | None,
+    config: dict[str, str],
+) -> tuple[html.Div, bool, html.Div, dict | None, bool, html.Div, dict | None]:
     """Handle workflow management operations (initialize, reinitialize, reset)."""
     from dash import ctx
 
@@ -1599,8 +1605,8 @@ def manage_workflow(
 def handle_initialize_modal(
     confirm_clicks: int,
     cancel_clicks: int,
-    check_store_data: Optional[Dict],
-) -> Tuple[html.Div, bool]:
+    check_store_data: dict | None,
+) -> tuple[html.Div, bool]:
     """Handle confirmation or cancellation of initialization with file deletion."""
     from dash import ctx
 
@@ -1688,8 +1694,8 @@ def handle_initialize_modal(
 def handle_reinitialize_modal(
     confirm_clicks: int,
     cancel_clicks: int,
-    check_store_data: Optional[Dict],
-) -> Tuple[html.Div, bool]:
+    check_store_data: dict | None,
+) -> tuple[html.Div, bool]:
     """Handle confirmation or cancellation of re-initialization with file deletion."""
     from dash import ctx
 
@@ -1772,8 +1778,8 @@ def handle_reinitialize_modal(
 def handle_execute_modal(
     confirm_clicks: int,
     cancel_clicks: int,
-    check_store_data: Optional[Dict],
-) -> Tuple[str, bool, bool, bool, bool]:
+    check_store_data: dict | None,
+) -> tuple[str, bool, bool, bool, bool]:
     """Handle confirmation or cancellation of execution with file deletion and initialization."""
     from dash import ctx
 
@@ -1878,7 +1884,7 @@ def handle_execute_modal(
     State("selected-workflow-store", "data"),
     prevent_initial_call=True,
 )
-def show_dag_tab(n_clicks: int, uploaded_spec: Optional[Dict], selected_workflow: Optional[Dict]) -> Tuple[str, Optional[int]]:
+def show_dag_tab(n_clicks: int, uploaded_spec: dict | None, selected_workflow: dict | None) -> tuple[str, int | None]:
     """Switch to DAG tab and set workflow ID when Show DAG button is clicked."""
     if not n_clicks:
         raise PreventUpdate
@@ -1903,9 +1909,9 @@ def show_dag_tab(n_clicks: int, uploaded_spec: Optional[Dict], selected_workflow
     prevent_initial_call=True,
 )
 def load_dag_graphs(
-    workflow_data: Optional[Dict[str, Any]],
-    config: Dict[str, str]
-) -> Tuple[html.Div, html.Div, html.Div, html.Div]:
+    workflow_data: dict[str, Any] | None,
+    config: dict[str, str]
+) -> tuple[html.Div, html.Div, html.Div, html.Div]:
     """Load and display the three types of DAG graphs when a workflow is selected."""
     if workflow_data is None:
         raise PreventUpdate
@@ -1979,7 +1985,7 @@ def load_dag_graphs(
         )
 
 
-def create_job_deps_graph(dependencies: List[Dict[str, Any]]) -> html.Div:
+def create_job_deps_graph(dependencies: list[dict[str, Any]]) -> html.Div:
     """Create a Cytoscape graph for job dependencies."""
     import dash_cytoscape as cyto
 
@@ -2046,7 +2052,7 @@ def create_job_deps_graph(dependencies: List[Dict[str, Any]]) -> html.Div:
     )
 
 
-def create_file_rels_graph(relationships: List[Dict[str, Any]]) -> html.Div:
+def create_file_rels_graph(relationships: list[dict[str, Any]]) -> html.Div:
     """Create a Cytoscape graph for file relationships."""
     import dash_cytoscape as cyto
 
@@ -2144,7 +2150,7 @@ def create_file_rels_graph(relationships: List[Dict[str, Any]]) -> html.Div:
     )
 
 
-def create_user_data_rels_graph(relationships: List[Dict[str, Any]]) -> html.Div:
+def create_user_data_rels_graph(relationships: list[dict[str, Any]]) -> html.Div:
     """Create a Cytoscape graph for user data relationships."""
     import dash_cytoscape as cyto
 
@@ -2262,11 +2268,11 @@ def toggle_execution_plan_modal(
     show_clicks: int,
     close_clicks: int,
     is_open: bool,
-    selected_workflow: Optional[Dict],
-    uploaded_spec: Optional[Dict],
-    spec_path: Optional[str],
-    config: Dict[str, str]
-) -> Tuple[bool, html.Div]:
+    selected_workflow: dict | None,
+    uploaded_spec: dict | None,
+    spec_path: str | None,
+    config: dict[str, str]
+) -> tuple[bool, html.Div]:
     """Open/close execution plan modal and load the plan when opened."""
     from dash import ctx
 
@@ -2345,8 +2351,8 @@ def toggle_execution_plan_modal(
 )
 def populate_monitor_workflows(
     active_tab: str,
-    config: Dict[str, str],
-) -> List[Dict[str, Any]]:
+    config: dict[str, str],
+) -> list[dict[str, Any]]:
     """Populate the workflow dropdown when monitor tab is activated."""
     if active_tab != "monitor-tab":
         raise PreventUpdate
@@ -2371,9 +2377,9 @@ def populate_monitor_workflows(
     State("selected-workflow-store", "data"),
 )
 def display_selected_workflow(
-    use_selected: List[str],
-    selected_workflow: Optional[Dict[str, Any]],
-) -> Tuple[str, bool]:
+    use_selected: list[str],
+    selected_workflow: dict[str, Any] | None,
+) -> tuple[str, bool]:
     """Display the selected workflow from View Workflows tab."""
     if "use_selected" in use_selected:
         if selected_workflow and "id" in selected_workflow:
@@ -2402,11 +2408,11 @@ def display_selected_workflow(
 def control_monitoring(
     start_clicks: int,
     stop_clicks: int,
-    use_selected: List[str],
-    selected_workflow: Optional[Dict[str, Any]],
-    dropdown_workflow_id: Optional[int],
+    use_selected: list[str],
+    selected_workflow: dict[str, Any] | None,
+    dropdown_workflow_id: int | None,
     poll_interval: int,
-) -> Tuple[bool, bool, bool, bool, int]:
+) -> tuple[bool, bool, bool, bool, int]:
     """Start or stop event monitoring."""
     from dash import ctx
 
@@ -2453,14 +2459,14 @@ def control_monitoring(
 def update_events(
     n_intervals: int,
     clear_clicks: int,
-    use_selected: List[str],
-    selected_workflow: Optional[Dict[str, Any]],
-    dropdown_workflow_id: Optional[int],
+    use_selected: list[str],
+    selected_workflow: dict[str, Any] | None,
+    dropdown_workflow_id: int | None,
     is_active: bool,
-    last_event_id: Optional[int],
+    last_event_id: int | None,
     current_content: str,
-    config: Dict[str, str],
-) -> Tuple[str, str, Optional[int]]:
+    config: dict[str, str],
+) -> tuple[str, str, int | None]:
     """Fetch and display new events."""
     from dash import ctx
     import json
@@ -2532,7 +2538,7 @@ def update_events(
     Input("main-tabs", "active_tab"),
     prevent_initial_call=True,
 )
-def refresh_database_list(n_clicks: Optional[int], active_tab: str) -> List[Dict[str, str]]:
+def refresh_database_list(n_clicks: int | None, active_tab: str) -> list[dict[str, str]]:
     """Refresh the list of available resource monitoring databases."""
     # Only refresh when plots tab is active
     if active_tab != "plots-tab":
@@ -2551,7 +2557,7 @@ def refresh_database_list(n_clicks: Optional[int], active_tab: str) -> List[Dict
     Output("generate-plots-button", "disabled"),
     Input("db-select", "value"),
 )
-def enable_generate_button(db_path: Optional[str]) -> bool:
+def enable_generate_button(db_path: str | None) -> bool:
     """Enable the generate plots button when a database is selected."""
     return db_path is None or db_path == ""
 
@@ -2564,7 +2570,7 @@ def enable_generate_button(db_path: Optional[str]) -> bool:
     State("db-select", "value"),
     prevent_initial_call=True,
 )
-def generate_plots(n_clicks: Optional[int], db_path: Optional[str]) -> Tuple:
+def generate_plots(n_clicks: int | None, db_path: str | None) -> tuple:
     """Generate JSON plots from the selected database."""
     if not n_clicks or not db_path:
         raise PreventUpdate
@@ -2620,7 +2626,7 @@ def generate_plots(n_clicks: Optional[int], db_path: Optional[str]) -> Tuple:
     Input("plot-select", "value"),
     prevent_initial_call=True,
 )
-def display_selected_plot(plot_file: Optional[str]) -> Dict[str, Any]:
+def display_selected_plot(plot_file: str | None) -> dict[str, Any]:
     """Load and display the selected plot."""
     if not plot_file:
         raise PreventUpdate

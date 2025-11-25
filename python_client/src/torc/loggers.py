@@ -1,8 +1,8 @@
 """Contains logging functionality."""
 
 import sys
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Iterable
 
 from loguru import logger
 
@@ -24,22 +24,22 @@ def setup_logging(
     rotation: str | None = "10 MB",
     packages: Iterable[str] | None = None,
 ) -> None:
-    """Configures logging to file and console.
+    """Configure logging to file and console.
 
     Parameters
     ----------
-    filename
-        Log filename, defaults to None for no file logging.
-    console_level
-        Console logging level
-    file_level
-        File logging level
-    mode
-        Mode in which to open the file
-    rotation
-        Size in which to rotate file. Set to None for no rotation.
-    packages
-        Additional packages to enable logging
+    filename : str | Path | None, optional
+        Log filename, by default None for no file logging.
+    console_level : str, optional
+        Console logging level, by default "INFO".
+    file_level : str, optional
+        File logging level, by default "DEBUG".
+    mode : str, optional
+        Mode in which to open the file, by default "w".
+    rotation : str | None, optional
+        Size at which to rotate file, by default "10 MB". Set to None for no rotation.
+    packages : Iterable[str] | None, optional
+        Additional packages to enable logging, by default None.
     """
     logger.remove()
     logger.enable("torc")

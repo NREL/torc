@@ -1,6 +1,5 @@
 """Run a postprocess function on the results of a mapped-function workflow."""
 
-import os
 import sys
 
 import rich_click as click
@@ -16,10 +15,10 @@ from torc.loggers import setup_logging
 def run_postprocess():
     """Run a postprocess function on the results of a mapped-function workflow."""
     setup_logging(console_level="INFO")
-    vars = get_job_env_vars()
-    api = make_api(vars["url"])
-    workflow_id = vars["workflow_id"]
-    job_id = vars["job_id"]
+    env_vars = get_job_env_vars()
+    api = make_api(env_vars["url"])
+    workflow_id = env_vars["workflow_id"]
+    job_id = env_vars["job_id"]
     resp = api.list_user_data(workflow_id=workflow_id, consumer_job_id=job_id)
 
     results = []

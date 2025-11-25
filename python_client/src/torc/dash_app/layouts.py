@@ -1,9 +1,8 @@
 """Layout definitions for different tabs in the Torc Dash app."""
 
-from typing import Optional
-from dash import html, dcc, dash_table
 import dash_bootstrap_components as dbc
 import dash_cytoscape as cyto
+from dash import dash_table, dcc, html
 
 
 def create_view_tab_layout():
@@ -667,7 +666,7 @@ def create_monitor_tab_layout():
     )
 
 
-def create_dag_tab_layout(workflow_id: Optional[int] = None):
+def create_dag_tab_layout(workflow_id: int | None = None):
     """Create the layout for the DAG visualization tab.
 
     Args:

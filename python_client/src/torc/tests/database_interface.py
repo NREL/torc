@@ -1,22 +1,32 @@
-"""Helper code to run tests"""
+"""Helper code to run tests."""
 
 from collections import defaultdict
-
-from torc.openapi_client.api.default_api import DefaultApi
+from typing import Any
 
 from torc.api import iter_documents
+from torc.openapi_client.api.default_api import DefaultApi
 
 
 class DatabaseInterface:
     """Contains helper code to access objects from the database in tests."""
 
-    def __init__(self, api: DefaultApi, workflow):
+    def __init__(self, api: DefaultApi, workflow: Any):
+        """Initialize the database interface.
+
+        Parameters
+        ----------
+        api : DefaultApi
+            OpenAPI client for the Torc database.
+        workflow : Any
+            Workflow object.
+        """
         self._api = api
         self._workflow = workflow
         self._names_to_keys = self._map_names_to_keys(api, workflow.key)
 
     @staticmethod
-    def _map_names_to_keys(api: DefaultApi, workflow_key) -> dict[str, dict[str, str]]:
+    def _map_names_to_keys(api: DefaultApi, workflow_key: str) -> dict[str, dict[str, str]]:
+        """Map document names to keys for all document types."""
         doc_types = (
             "files",
             "jobs",
@@ -39,12 +49,25 @@ class DatabaseInterface:
         return self._api
 
     @property
-    def workflow(self):
+    def workflow(self) -> Any:
         """Return the workflow object."""
         return self._workflow
 
-    def get_document(self, document_type, name):
-        """Return the document from the API by first mapping the name."""
+    def get_document(self, document_type: str, name: str) -> Any:
+        """Return the document from the API by first mapping the name.
+
+        Parameters
+        ----------
+        document_type : str
+            Type of document.
+        name : str
+            Name of the document.
+
+        Returns
+        -------
+        Any
+            The document object.
+        """
         if document_type in {"resource_requirements", "user_data"}:
             get_one = f"get_{document_type}"
         else:
@@ -52,16 +75,40 @@ class DatabaseInterface:
         method = getattr(self._api, get_one)
         return method(self._workflow.key, self._names_to_keys[document_type][name])
 
-    def get_document_key(self, document_type, name):
-        """Return the key for name."""
+    def get_document_key(self, document_type: str, name: str) -> str:
+        """Return the key for name.
+
+        Parameters
+        ----------
+        document_type : str
+            Type of document.
+        name : str
+            Name of the document.
+
+        Returns
+        -------
+        str
+            Document key.
+        """
         return self._names_to_keys[document_type][name]
 
-    def list_documents(self, document_type):
-        """Return all documents of the givent type."""
+    def list_documents(self, document_type: str) -> list[Any]:
+        """Return all documents of the given type.
+
+        Parameters
+        ----------
+        document_type : str
+            Type of document.
+
+        Returns
+        -------
+        list[Any]
+            List of documents.
+        """
         method = getattr(self._api, f"list_{document_type}")
         return list(iter_documents(method, self._workflow.key))
 
     @property
-    def url(self):
+    def url(self) -> str:
         """Return the database URL."""
         return self._api.api_client.configuration.host

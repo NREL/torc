@@ -1,17 +1,14 @@
-"""Common definitions in this package"""
+"""Common definitions in this package."""
 
 import enum
 import importlib
-import os
 import sys
+from collections.abc import Callable
 from datetime import datetime
 from types import ModuleType
-from typing import Callable, Optional
 
 from pydantic import BaseModel, ConfigDict
-
 from rmon.timing.timer_stats import TimerStatsCollector
-
 
 KiB = 1024
 MiB = KiB * KiB
@@ -23,7 +20,7 @@ timer_stats_collector = TimerStatsCollector()
 
 
 class TorcBaseModel(BaseModel):
-    """Base model for the torc package"""
+    """Base model for the torc package."""
 
     model_config = ConfigDict(
         str_strip_whitespace=True,
@@ -35,9 +32,10 @@ class TorcBaseModel(BaseModel):
 
 
 class JobStatus(str, enum.Enum):
-    """Defines all job statuses."""
+    """Defines all job statuses.
 
-    # Keep in sync with the JobStatus definition in the torc-service.
+    Keep in sync with the JobStatus definition in the torc-service.
+    """
 
     UNINITIALIZED = "uninitialized"
     BLOCKED = "blocked"
@@ -51,11 +49,31 @@ class JobStatus(str, enum.Enum):
 
 
 def check_function(
-    module_name: str, func_name: str, module_directory: Optional[str] = None
+    module_name: str, func_name: str, module_directory: str | None = None
 ) -> tuple[ModuleType, Callable]:
-    """Check that func_name is importable from module name and returns the module and function
-    references.
+    """Check that func_name is importable from module name.
+
+    Parameters
+    ----------
+    module_name : str
+        Name of the module to import.
+    func_name : str
+        Name of the function to retrieve from the module.
+    module_directory : str | None, optional
+        Directory to add to sys.path for module import, by default None.
+
+    Returns
+    -------
+    tuple[ModuleType, Callable]
+        The module and function references.
+
+    Raises
+    ------
+    ValueError
+        If the function is not defined in the module.
     """
+    import os
+
     cur_dir = os.getcwd()
     added_cur_dir = False
     try:
@@ -64,6 +82,7 @@ def check_function(
         module = importlib.import_module(module_name)
     except ModuleNotFoundError:
         sys.path.append(cur_dir)
+        added_cur_dir = True
         module = importlib.import_module(module_name)
     finally:
         if module_directory is not None:
@@ -79,5 +98,16 @@ def check_function(
 
 
 def convert_timestamp(timestamp: int) -> datetime:
-    """Convert the timestamp stored in the database to a datetime."""
+    """Convert the timestamp stored in the database to a datetime.
+
+    Parameters
+    ----------
+    timestamp : int
+        Timestamp in milliseconds.
+
+    Returns
+    -------
+    datetime
+        Converted datetime object.
+    """
     return datetime.fromtimestamp(timestamp / 1000)
