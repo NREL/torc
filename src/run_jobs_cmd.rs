@@ -46,7 +46,7 @@ pub struct Args {
     #[arg(short, long, default_value = "output")]
     pub output_dir: PathBuf,
     /// Job completion poll interval in seconds
-    #[arg(short, long, default_value = "60.0")]
+    #[arg(short, long, default_value = "5.0")]
     pub poll_interval: f64,
     /// Maximum number of parallel jobs to run concurrently.
     /// When NOT set: Uses resource-based job allocation (considers CPU, memory, GPU requirements).

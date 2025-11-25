@@ -490,8 +490,8 @@ fn generate_results_report(
         });
 
         // Add job stdio log paths
-        let job_stdout = get_job_stdout_path(output_dir, job_id);
-        let job_stderr = get_job_stderr_path(output_dir, job_id);
+        let job_stdout = get_job_stdout_path(output_dir, wf_id, job_id, result.run_id);
+        let job_stderr = get_job_stderr_path(output_dir, wf_id, job_id, result.run_id);
         check_log_file_exists(&job_stdout, "job stdout", job_id);
         check_log_file_exists(&job_stderr, "job stderr", job_id);
         record["job_stdout"] = serde_json::json!(job_stdout);

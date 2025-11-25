@@ -732,6 +732,7 @@ def update_resource_details(
                 exec_time_str = f"{exec_time:.2f}"
 
                 filtered_data.append({
+                    "id": item.get("id", ""),
                     "job_id": job_id,
                     "job_name": job_name,
                     "run_id": item.get("run_id", ""),
@@ -745,6 +746,7 @@ def update_resource_details(
             data = filtered_data
             # Use explicit column order for results
             columns = [
+                {"name": "ID", "id": "id"},
                 {"name": "Job ID", "id": "job_id"},
                 {"name": "Job Name", "id": "job_name"},
                 {"name": "Run ID", "id": "run_id"},

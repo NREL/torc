@@ -153,12 +153,12 @@ For jobs executed by the local job runner (`compute_node_type: "local"`):
 
 **Log File Descriptions**:
 
-1. **job_stdout** (`output/job_stdio/job_<job_id>.o`):
+1. **job_stdout** (`output/job_stdio/job_<workflow_id>_<job_id>_<run_id>.o`):
    - Standard output from your job command
    - Contains print statements, normal program output
    - **Use for**: Checking expected output, debugging logic errors
 
-2. **job_stderr** (`output/job_stdio/job_<job_id>.e`):
+2. **job_stderr** (`output/job_stdio/job_<workflow_id>_<job_id>_<run_id>.e`):
    - Standard error from your job command
    - Contains error messages, warnings, stack traces
    - **Use for**: Investigating crashes, exceptions, error messages

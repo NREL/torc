@@ -165,6 +165,15 @@ pub enum WorkflowCommands {
         /// ID of the workflow to run (optional - will prompt if not provided)
         #[arg()]
         workflow_id: Option<i64>,
+        /// Poll interval in seconds for checking job completion
+        #[arg(short, long, default_value = "5.0")]
+        poll_interval: f64,
+        /// Maximum number of parallel jobs to run (defaults to available CPUs)
+        #[arg(long)]
+        max_parallel_jobs: Option<i64>,
+        /// Output directory for job logs and results
+        #[arg(long, default_value = "output")]
+        output_dir: std::path::PathBuf,
     },
     /// Initialize a workflow, including all job statuses.
     Initialize {
@@ -1068,7 +1077,13 @@ fn handle_initialize(
     }
 }
 
-fn handle_run(config: &Configuration, workflow_id: &Option<i64>) {
+fn handle_run(
+    config: &Configuration,
+    workflow_id: &Option<i64>,
+    poll_interval: f64,
+    max_parallel_jobs: Option<i64>,
+    output_dir: &std::path::PathBuf,
+) {
     let user_name = get_env_user_name();
 
     let selected_workflow_id = match workflow_id {
@@ -1080,9 +1095,9 @@ fn handle_run(config: &Configuration, workflow_id: &Option<i64>) {
     let args = crate::run_jobs_cmd::Args {
         workflow_id: Some(selected_workflow_id),
         url: config.base_path.clone(),
-        output_dir: std::path::PathBuf::from("output"),
-        poll_interval: 60.0,
-        max_parallel_jobs: None,
+        output_dir: output_dir.clone(),
+        poll_interval,
+        max_parallel_jobs,
         database_poll_interval: 30,
         time_limit: None,
         end_time: None,
@@ -1831,8 +1846,19 @@ pub fn handle_workflow_commands(config: &Configuration, command: &WorkflowComman
         WorkflowCommands::Submit { workflow_id, force } => {
             handle_submit(config, workflow_id, *force, format);
         }
-        WorkflowCommands::Run { workflow_id } => {
-            handle_run(config, workflow_id);
+        WorkflowCommands::Run {
+            workflow_id,
+            poll_interval,
+            max_parallel_jobs,
+            output_dir,
+        } => {
+            handle_run(
+                config,
+                workflow_id,
+                *poll_interval,
+                *max_parallel_jobs,
+                output_dir,
+            );
         }
         WorkflowCommands::Initialize {
             workflow_id,

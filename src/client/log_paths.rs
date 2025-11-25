@@ -33,13 +33,35 @@ pub fn get_slurm_job_runner_log_file(
 }
 
 /// Get the path to a job's stdout log file
-pub fn get_job_stdout_path(output_dir: &PathBuf, job_id: i64) -> String {
-    format!("{}/job_stdio/job_{}.o", output_dir.display(), job_id)
+pub fn get_job_stdout_path(
+    output_dir: &PathBuf,
+    workflow_id: i64,
+    job_id: i64,
+    run_id: i64,
+) -> String {
+    format!(
+        "{}/job_stdio/job_{}_{}_{}.o",
+        output_dir.display(),
+        workflow_id,
+        job_id,
+        run_id
+    )
 }
 
 /// Get the path to a job's stderr log file
-pub fn get_job_stderr_path(output_dir: &PathBuf, job_id: i64) -> String {
-    format!("{}/job_stdio/job_{}.e", output_dir.display(), job_id)
+pub fn get_job_stderr_path(
+    output_dir: &PathBuf,
+    workflow_id: i64,
+    job_id: i64,
+    run_id: i64,
+) -> String {
+    format!(
+        "{}/job_stdio/job_{}_{}_{}.e",
+        output_dir.display(),
+        workflow_id,
+        job_id,
+        run_id
+    )
 }
 
 /// Get the path to Slurm's stdout log file

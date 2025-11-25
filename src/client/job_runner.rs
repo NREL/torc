@@ -604,6 +604,8 @@ impl JobRunner {
 
                     match async_job.start(
                         &self.output_dir,
+                        self.workflow_id,
+                        self.run_id,
                         self.resource_monitor.as_ref(),
                         &self.config.base_path,
                     ) {
@@ -707,6 +709,8 @@ impl JobRunner {
 
                     match async_job.start(
                         &self.output_dir,
+                        self.workflow_id,
+                        self.run_id,
                         self.resource_monitor.as_ref(),
                         &self.config.base_path,
                     ) {

@@ -50,6 +50,8 @@ impl AsyncCliCommand {
     pub fn start(
         &mut self,
         output_dir: &Path,
+        workflow_id: i64,
+        run_id: i64,
         resource_monitor: Option<&ResourceMonitor>,
         api_url: &str,
     ) -> Result<(), Box<dyn std::error::Error>> {
@@ -58,14 +60,16 @@ impl AsyncCliCommand {
         }
 
         let job_id_str = self.job_id.to_string();
-        let workflow_id_str = self.job.workflow_id.to_string();
+        let workflow_id_str = workflow_id.to_string();
 
         // Create output file paths
         let stdio_dir = output_dir.join(JOB_STDIO_DIR);
         std::fs::create_dir_all(&stdio_dir)?;
 
-        let stdout_path = stdio_dir.join(format!("job_{}.o", self.job_id));
-        let stderr_path = stdio_dir.join(format!("job_{}.e", self.job_id));
+        let stdout_path =
+            stdio_dir.join(format!("job_{}_{}_{}.o", workflow_id, self.job_id, run_id));
+        let stderr_path =
+            stdio_dir.join(format!("job_{}_{}_{}.e", workflow_id, self.job_id, run_id));
 
         let stdout_file = File::create(&stdout_path)?;
         let stderr_file = File::create(&stderr_path)?;
