@@ -106,23 +106,24 @@ jobs:
             echo "ext=" >> $GITHUB_OUTPUT
           fi
 
+      - name: Install SQLx CLI
+        run: cargo install sqlx-cli --no-default-features --features sqlite
+
+      - name: Setup database
+        run: |
+          sqlx database setup
+        env:
+          DATABASE_URL: sqlite:db/sqlite/dev.db
+
       - name: Build binaries (with cross)
         if: matrix.use_cross
         run: |
-          cross build --release --target ${{ matrix.target }} --bin torc --features "client,tui,plot_resources"
-          cross build --release --target ${{ matrix.target }} --bin torc-server
-          cross build --release --target ${{ matrix.target }} --bin torc-slurm-job-runner
+          cross build --release --target ${{ matrix.target }} --workspace
 
       - name: Build binaries (native)
         if: "!matrix.use_cross"
         run: |
           cargo build --workspace --release --target ${{ matrix.target }}
-        env:
-          OPENSSL_DIR: ${{ matrix.os == 'windows-latest' && 'C:/vcpkg/installed/x64-windows-static-md' || '' }}
-          OPENSSL_ROOT_DIR: ${{ matrix.os == 'windows-latest' && 'C:/vcpkg/installed/x64-windows-static-md' || '' }}
-          OPENSSL_INCLUDE_DIR: ${{ matrix.os == 'windows-latest' && 'C:/vcpkg/installed/x64-windows-static-md/include' || '' }}
-          OPENSSL_LIB_DIR: ${{ matrix.os == 'windows-latest' && 'C:/vcpkg/installed/x64-windows-static-md/lib' || '' }}
-          VCPKG_ROOT: ${{ matrix.os == 'windows-latest' && 'C:/vcpkg' || '' }}
 
       - name: Create release archive
         shell: bash
