@@ -675,10 +675,10 @@ impl UserDataApiImpl {
 
     /// Find user_data record IDs that should have been created by a job but are missing.
     /// This includes user_data records that are referenced in job_output_user_data where
-    /// the job's status is JobStatus::Done (meaning the job completed and should have created
+    /// the job's status is JobStatus::Completed (meaning the job completed successfully and should have created
     /// the user_data) but the user_data field is NULL.
     async fn find_missing_job_created_data(&self, workflow_id: i64) -> Result<Vec<i64>, ApiError> {
-        let done_status = models::JobStatus::Done.to_int();
+        let completed_status = models::JobStatus::Completed.to_int();
 
         let rows = match sqlx::query!(
             r#"
@@ -691,7 +691,7 @@ impl UserDataApiImpl {
             AND ud.data IS NULL
             "#,
             workflow_id,
-            done_status
+            completed_status
         )
         .fetch_all(self.context.pool.as_ref())
         .await

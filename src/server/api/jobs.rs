@@ -388,13 +388,14 @@ impl JobsApiImpl {
         workflow_id: i64,
     ) -> Result<ResetJobStatusResponse, ApiError> {
         let uninitialized_status = JobStatus::Uninitialized.to_int();
-        let done_status = JobStatus::Done.to_int();
+        let completed_status = JobStatus::Completed.to_int();
+        let failed_status = JobStatus::Failed.to_int();
         let canceled_status = JobStatus::Canceled.to_int();
         let terminated_status = JobStatus::Terminated.to_int();
 
         // First, get the list of failed jobs that will be reset
         // Query workflow_result to get the current result for each job
-        // Only consider jobs with completion statuses (Done, Canceled, Terminated)
+        // Only consider jobs with completion statuses (Completed, Failed, Canceled, Terminated)
         let failed_jobs = match sqlx::query!(
             r#"
             SELECT j.id, j.status
@@ -403,10 +404,11 @@ impl JobsApiImpl {
             JOIN result r ON wr.result_id = r.id
             WHERE j.workflow_id = $1
               AND r.return_code != 0
-              AND j.status IN ($2, $3, $4)
+              AND j.status IN ($2, $3, $4, $5)
             "#,
             workflow_id,
-            done_status,
+            completed_status,
+            failed_status,
             canceled_status,
             terminated_status
         )

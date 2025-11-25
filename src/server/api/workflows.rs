@@ -584,7 +584,8 @@ where
         }
 
         // Check if any jobs exist that are NOT in complete states
-        let done_status = models::JobStatus::Done.to_int();
+        let completed_status = models::JobStatus::Completed.to_int();
+        let failed_status = models::JobStatus::Failed.to_int();
         let canceled_status = models::JobStatus::Canceled.to_int();
         let terminated_status = models::JobStatus::Terminated.to_int();
         let disabled_status = models::JobStatus::Disabled.to_int();
@@ -594,12 +595,13 @@ where
             SELECT 1 as found
             FROM job
             WHERE workflow_id = $1
-            AND status NOT IN ($2, $3, $4, $5)
+            AND status NOT IN ($2, $3, $4, $5, $6)
             LIMIT 1
             "#,
         )
         .bind(id)
-        .bind(done_status)
+        .bind(completed_status)
+        .bind(failed_status)
         .bind(canceled_status)
         .bind(terminated_status)
         .bind(disabled_status)

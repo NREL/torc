@@ -177,7 +177,8 @@ async fn process_pending_unblocks<C>(server: &Server<C>) -> Result<(), ApiError>
 where
     C: Has<XSpanIdString> + Send + Sync,
 {
-    let done_status = models::JobStatus::Done.to_int();
+    let completed_status = models::JobStatus::Completed.to_int();
+    let failed_status = models::JobStatus::Failed.to_int();
     let canceled_status = models::JobStatus::Canceled.to_int();
     let terminated_status = models::JobStatus::Terminated.to_int();
 
@@ -186,10 +187,11 @@ where
         r#"
         SELECT DISTINCT workflow_id
         FROM job
-        WHERE status IN (?, ?, ?)
+        WHERE status IN (?, ?, ?, ?)
           AND unblocking_processed = 0
         "#,
-        done_status,
+        completed_status,
+        failed_status,
         canceled_status,
         terminated_status
     )
@@ -233,7 +235,8 @@ async fn process_workflow_unblocks<C>(server: &Server<C>, workflow_id: i64) -> R
 where
     C: Has<XSpanIdString> + Send + Sync,
 {
-    let done_status = models::JobStatus::Done.to_int();
+    let completed_status = models::JobStatus::Completed.to_int();
+    let failed_status = models::JobStatus::Failed.to_int();
     let canceled_status = models::JobStatus::Canceled.to_int();
     let terminated_status = models::JobStatus::Terminated.to_int();
 
@@ -256,11 +259,12 @@ where
         JOIN result r ON j.id = r.job_id
         JOIN workflow_status ws ON j.workflow_id = ws.id AND r.run_id = ws.run_id
         WHERE j.workflow_id = ?
-          AND j.status IN (?, ?, ?)
+          AND j.status IN (?, ?, ?, ?)
           AND j.unblocking_processed = 0
         "#,
         workflow_id,
-        done_status,
+        completed_status,
+        failed_status,
         canceled_status,
         terminated_status
     )
@@ -625,7 +629,8 @@ impl<C> Server<C> {
     {
         let uninitialized_status = models::JobStatus::Uninitialized.to_int();
         let blocked_status = models::JobStatus::Blocked.to_int();
-        let done_status = models::JobStatus::Done.to_int();
+        let completed_status = models::JobStatus::Completed.to_int();
+        let failed_status = models::JobStatus::Failed.to_int();
         let canceled_status = models::JobStatus::Canceled.to_int();
         let terminated_status = models::JobStatus::Terminated.to_int();
 
@@ -640,7 +645,7 @@ impl<C> Server<C> {
                 FROM job_blocked_by jbb
                 JOIN job j ON jbb.blocked_by_job_id = j.id
                 WHERE jbb.workflow_id = $2
-                AND j.status NOT IN ($4, $5, $6)
+                AND j.status NOT IN ($4, $5, $6, $7)
             )
             "#
         } else {
@@ -653,7 +658,7 @@ impl<C> Server<C> {
                 FROM job_blocked_by jbb
                 JOIN job j ON jbb.blocked_by_job_id = j.id
                 WHERE jbb.workflow_id = $2
-                AND j.status NOT IN ($3, $4, $5)
+                AND j.status NOT IN ($3, $4, $5, $6)
             )
             "#
         };
@@ -663,14 +668,16 @@ impl<C> Server<C> {
                 .bind(blocked_status)
                 .bind(workflow_id)
                 .bind(uninitialized_status)
-                .bind(done_status)
+                .bind(completed_status)
+                .bind(failed_status)
                 .bind(canceled_status)
                 .bind(terminated_status)
         } else {
             sqlx::query(sql)
                 .bind(blocked_status)
                 .bind(workflow_id)
-                .bind(done_status)
+                .bind(completed_status)
+                .bind(failed_status)
                 .bind(canceled_status)
                 .bind(terminated_status)
         };
@@ -749,7 +756,8 @@ impl<C> Server<C> {
     {
         let disabled = models::JobStatus::Disabled.to_int();
         let blocked = models::JobStatus::Blocked.to_int();
-        let done = models::JobStatus::Done.to_int();
+        let completed = models::JobStatus::Completed.to_int();
+        let failed = models::JobStatus::Failed.to_int();
         let canceled = models::JobStatus::Canceled.to_int();
         let ready = models::JobStatus::Ready.to_int();
         match sqlx::query!(
@@ -757,13 +765,14 @@ impl<C> Server<C> {
             UPDATE job
             SET status = $1
             WHERE workflow_id = $2
-            AND status NOT IN ($3, $4, $5, $6, $7)
+            AND status NOT IN ($3, $4, $5, $6, $7, $8)
             "#,
             ready,
             workflow_id,
             disabled,
             blocked,
-            done,
+            completed,
+            failed,
             canceled,
             ready,
         )
@@ -1034,7 +1043,8 @@ impl<C> Server<C> {
             completed_job_id, workflow_id, return_code
         );
 
-        let done_status = models::JobStatus::Done.to_int();
+        let completed_status = models::JobStatus::Completed.to_int();
+        let failed_status = models::JobStatus::Failed.to_int();
         let canceled_status = models::JobStatus::Canceled.to_int();
         let terminated_status = models::JobStatus::Terminated.to_int();
         let ready_status = models::JobStatus::Ready.to_int();
@@ -1066,7 +1076,7 @@ impl<C> Server<C> {
                       JOIN job j2 ON jbb2.blocked_by_job_id = j2.id
                       WHERE jbb2.job_id = jbb.job_id
                         AND jbb2.blocked_by_job_id != ?
-                        AND j2.status NOT IN (?, ?, ?)
+                        AND j2.status NOT IN (?, ?, ?, ?)
                   )
 
                 UNION ALL
@@ -1094,7 +1104,7 @@ impl<C> Server<C> {
                       JOIN job j2 ON jbb2.blocked_by_job_id = j2.id
                       WHERE jbb2.job_id = jbb.job_id
                         AND jbb2.blocked_by_job_id != jtp.job_id
-                        AND j2.status NOT IN (?, ?, ?)
+                        AND j2.status NOT IN (?, ?, ?, ?)
                   )
             )
             SELECT
@@ -1111,12 +1121,14 @@ impl<C> Server<C> {
         .bind(workflow_id)           // Base case: workflow_id
         .bind(blocked_status)        // Base case: only process blocked jobs
         .bind(completed_job_id)      // Base case: exclude the completed job itself
-        .bind(done_status)           // Base case: complete statuses
+        .bind(completed_status)      // Base case: complete statuses
+        .bind(failed_status)
         .bind(canceled_status)
         .bind(terminated_status)
         .bind(workflow_id)           // Recursive case: workflow_id
         .bind(blocked_status)        // Recursive case: only process blocked jobs
-        .bind(done_status)           // Recursive case: complete statuses
+        .bind(completed_status)      // Recursive case: complete statuses
+        .bind(failed_status)
         .bind(canceled_status)
         .bind(terminated_status)
         .fetch_all(&mut **tx)
@@ -1297,8 +1309,9 @@ impl<C> Server<C> {
             job_id, workflow_id
         );
 
-        // Find all jobs that were blocked by this job and are currently done
-        let done_status = models::JobStatus::Done.to_int();
+        // Find all jobs that were blocked by this job and are currently completed/failed
+        let completed_status = models::JobStatus::Completed.to_int();
+        let failed_status = models::JobStatus::Failed.to_int();
         let uninitialized_status = models::JobStatus::Uninitialized.to_int();
 
         let affected_jobs = match sqlx::query!(
@@ -1308,11 +1321,12 @@ impl<C> Server<C> {
             JOIN job j ON jbb.job_id = j.id
             WHERE jbb.blocked_by_job_id = ?
             AND jbb.workflow_id = ?
-            AND j.status = ?
+            AND j.status IN (?, ?)
             "#,
             job_id,
             workflow_id,
-            done_status
+            completed_status,
+            failed_status
         )
         .fetch_all(self.pool.as_ref())
         .await
@@ -2728,8 +2742,9 @@ where
         // TODO: helper function
         // Step 5: Delete workflow_result records for jobs that are not complete
         // This is done after steps 1-4 to be future-proof in case those steps reset job completion statuses
-        // Complete statuses are: Done (4), Canceled (2), Terminated (3)
-        let done_status = models::JobStatus::Done.to_int();
+        // Complete statuses are: Completed (5), Failed (6), Canceled (7), Terminated (8)
+        let completed_status = models::JobStatus::Completed.to_int();
+        let failed_status = models::JobStatus::Failed.to_int();
         let canceled_status = models::JobStatus::Canceled.to_int();
         let terminated_status = models::JobStatus::Terminated.to_int();
 
@@ -2740,13 +2755,14 @@ where
               AND job_id IN (
                 SELECT id FROM job
                 WHERE workflow_id = $1
-                  AND status NOT IN ($2, $3, $4)
+                  AND status NOT IN ($2, $3, $4, $5)
               )
             "#,
             id,
+            completed_status,
+            failed_status,
             canceled_status,
-            terminated_status,
-            done_status
+            terminated_status
         )
         .execute(&mut *tx)
         .await

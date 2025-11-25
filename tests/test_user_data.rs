@@ -739,7 +739,7 @@ fn test_user_data_list_missing_command_json(start_server: &ServerProcess) {
         0,   // return_code (success)
         0.1, // exec_time_minutes
         chrono::Utc::now().to_rfc3339(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
 
     // Create the result to indicate job completion
@@ -995,7 +995,7 @@ fn test_api_list_missing_user_data(start_server: &ServerProcess) {
     );
 
     let mut job2_updated = default_api::get_job(config, job2_id).expect("Failed to get job2");
-    job2_updated.status = Some(models::JobStatus::Done);
+    job2_updated.status = Some(models::JobStatus::Completed);
     default_api::update_job(config, job2_id, job2_updated).expect("Failed to update job2 status");
 
     // Create a compute node for the results
@@ -1010,7 +1010,7 @@ fn test_api_list_missing_user_data(start_server: &ServerProcess) {
         0,
         0.5,
         chrono::Utc::now().to_rfc3339(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::create_result(config, result).expect("Failed to create result");
 
@@ -1048,7 +1048,7 @@ fn test_api_list_missing_user_data(start_server: &ServerProcess) {
     let job3_id = job3.id.unwrap();
 
     let mut job3_updated = default_api::get_job(config, job3_id).expect("Failed to get job3");
-    job3_updated.status = Some(models::JobStatus::Done);
+    job3_updated.status = Some(models::JobStatus::Completed);
     default_api::update_job(config, job3_id, job3_updated).expect("Failed to update job3 status");
 
     let result3 = models::ResultModel::new(
@@ -1059,7 +1059,7 @@ fn test_api_list_missing_user_data(start_server: &ServerProcess) {
         0,
         0.3,
         chrono::Utc::now().to_rfc3339(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::create_result(config, result3).expect("Failed to create result for job3");
 

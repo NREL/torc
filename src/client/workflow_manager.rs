@@ -894,9 +894,9 @@ impl WorkflowManager {
                 }
             };
 
-            // Check if job's status is Done or Canceled
+            // Check if job's status is Completed, Failed, or Canceled
             match job_status {
-                JobStatus::Done | JobStatus::Canceled => {
+                JobStatus::Completed | JobStatus::Failed | JobStatus::Canceled => {
                     if dry_run {
                         // If dry run is true, just log the change
                         info!(
@@ -928,7 +928,7 @@ impl WorkflowManager {
                     }
                 }
                 _ => {
-                    // Job is not Done or Canceled, no action needed
+                    // Job is not Completed, Failed, or Canceled, no action needed
                     debug!(
                         "Job {} (name: '{}') has status {:?}, no reset needed for file change in {} (id: {})",
                         job_id, &job.name, job_status, file.name, file_id
@@ -940,12 +940,12 @@ impl WorkflowManager {
         Ok(())
     }
 
-    /// Update the status of "done" jobs to "uninitialized" if their output files are now missing.
+    /// Update the status of "completed" jobs to "uninitialized" if their output files are now missing.
     /// If dry_run is true, log changes but don't apply them.
     pub fn update_jobs_if_output_files_are_missing(&self, dry_run: bool) -> Result<(), TorcError> {
         let run_id = self.get_run_id()?;
 
-        let job_params = JobListParams::new().with_status(JobStatus::Done);
+        let job_params = JobListParams::new().with_status(JobStatus::Completed);
         for job_result in iter_jobs(&self.config, self.workflow_id, job_params) {
             let job = match job_result {
                 Ok(job) => job,

@@ -95,7 +95,7 @@ fn verify_diamond_workflow_completion(
     for job in jobs.items.unwrap() {
         assert_eq!(
             job.status.unwrap(),
-            models::JobStatus::Done,
+            models::JobStatus::Completed,
             "Job {} should be done. actual status: {:?}",
             job.name,
             job.status
@@ -178,14 +178,14 @@ fn test_uninitialize_blocked_jobs(start_server: &ServerProcess) {
     // let bystander_id = bystander.id.unwrap();
 
     assert_eq!(job1.status, Some(models::JobStatus::Uninitialized));
-    job2.status = Some(models::JobStatus::Done);
-    bystander.status = Some(models::JobStatus::Done);
+    job2.status = Some(models::JobStatus::Completed);
+    bystander.status = Some(models::JobStatus::Completed);
     // TODO: Is this providing value? Updating status like this is no longer allowed.
     // let job2b = default_api::update_job(config, job2_id, job2).expect("Failed to update job2");
-    // assert_eq!(job2b.status, Some(models::JobStatus::Done));
+    // assert_eq!(job2b.status, Some(models::JobStatus::Completed));
     // let bystander_b = default_api::update_job(config, bystander_id, bystander)
     //     .expect("Failed to update bystander");
-    // assert_eq!(bystander_b.status, Some(models::JobStatus::Done));
+    // assert_eq!(bystander_b.status, Some(models::JobStatus::Completed));
 
     // default_api::initialize_jobs(config, workflow_id as i64, Some(false), None, None)
     //     .expect("Failed to initialize jobs");
@@ -195,7 +195,7 @@ fn test_uninitialize_blocked_jobs(start_server: &ServerProcess) {
     //     default_api::get_job(config, bystander_id).expect("Failed to get bystander");
     // assert_eq!(job1_post.status, Some(models::JobStatus::Ready));
     // assert_eq!(job2_post.status, Some(models::JobStatus::Blocked));
-    // assert_eq!(bystander_post.status, Some(models::JobStatus::Done));
+    // assert_eq!(bystander_post.status, Some(models::JobStatus::Completed));
 }
 
 #[rstest]
@@ -413,7 +413,7 @@ fn verify_many_jobs_completion(
     for job in &job_items {
         assert_eq!(
             job.status.unwrap(),
-            models::JobStatus::Done,
+            models::JobStatus::Completed,
             "Job {} should be done. actual status: {:?}",
             job.name,
             job.status

@@ -394,7 +394,7 @@ pub fn create_test_result(
         0,   // return_code (success)
         5.5, // exec_time_minutes
         "2024-01-01T12:00:00.000Z".to_string(), // completion_time
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
 
     default_api::create_result(config, result).expect("Failed to create test result")

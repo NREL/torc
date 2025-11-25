@@ -5669,13 +5669,13 @@ components:
       enum:
         - uninitialized
         - blocked
+        - ready
+        - pending
+        - running
+        - completed
+        - failed
         - canceled
         - terminated
-        - done
-        - ready
-        - scheduled
-        - running
-        - pending
         - disabled
       type: string
     jobs_sort_method:

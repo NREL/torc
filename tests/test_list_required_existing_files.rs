@@ -66,7 +66,7 @@ fn test_list_required_existing_files_missing_user_files(start_server: &ServerPro
 }
 
 /// Test that the server reports file record IDs that should have been created by a job but do not exist.
-/// These are file IDs that are produced by a job, the job has completed (JobStatus::Done),
+/// These are file IDs that are produced by a job, the job has completed (JobStatus::Completed),
 /// but the file IDs are not present in the list_files response.
 #[rstest]
 fn test_list_required_existing_files_missing_job_outputs(start_server: &ServerProcess) {
@@ -124,7 +124,7 @@ fn test_list_required_existing_files_missing_job_outputs(start_server: &ServerPr
         0,   // return_code (success)
         1.0, // exec_time_minutes
         chrono::Utc::now().to_rfc3339(),
-        JobStatus::Done,
+        JobStatus::Completed,
     );
 
     default_api::complete_job(
@@ -145,7 +145,7 @@ fn test_list_required_existing_files_missing_job_outputs(start_server: &ServerPr
         0,   // return_code (success)
         1.0, // exec_time_minutes
         chrono::Utc::now().to_rfc3339(),
-        JobStatus::Done,
+        JobStatus::Completed,
     );
 
     default_api::complete_job(
@@ -160,8 +160,8 @@ fn test_list_required_existing_files_missing_job_outputs(start_server: &ServerPr
     // Verify that both jobs are marked as Done
     let job1_status = default_api::get_job(config, job1_id).expect("Failed to get job1");
     let job2_status = default_api::get_job(config, job2_id).expect("Failed to get job2");
-    assert_eq!(job1_status.status.unwrap(), JobStatus::Done);
-    assert_eq!(job2_status.status.unwrap(), JobStatus::Done);
+    assert_eq!(job1_status.status.unwrap(), JobStatus::Completed);
+    assert_eq!(job2_status.status.unwrap(), JobStatus::Completed);
 
     // Get the list of files that actually exist in the system
     let files_response = default_api::list_files(
@@ -297,7 +297,7 @@ fn test_list_required_existing_files_combined_scenario(start_server: &ServerProc
         0,
         1.0,
         chrono::Utc::now().to_rfc3339(),
-        JobStatus::Done,
+        JobStatus::Completed,
     );
 
     default_api::complete_job(config, job1_id, job1_result.status, 1, job1_result)
@@ -312,7 +312,7 @@ fn test_list_required_existing_files_combined_scenario(start_server: &ServerProc
         0,
         1.0,
         chrono::Utc::now().to_rfc3339(),
-        JobStatus::Done,
+        JobStatus::Completed,
     );
 
     default_api::complete_job(config, job2_id, job2_result.status, 1, job2_result)

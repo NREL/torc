@@ -578,9 +578,9 @@ impl FilesApiImpl {
     }
 
     /// Find all file IDs produced by a job, as shown in the table job_output_file,
-    /// where the job status is JobStatus::Done.
+    /// where the job status is JobStatus::Completed.
     async fn find_job_produced_files(&self, workflow_id: i64) -> Result<Vec<i64>, ApiError> {
-        let done_status = models::JobStatus::Done.to_int();
+        let completed_status = models::JobStatus::Completed.to_int();
 
         let rows = match sqlx::query!(
             r#"
@@ -591,7 +591,7 @@ impl FilesApiImpl {
             AND j.status = $2
             "#,
             workflow_id,
-            done_status
+            completed_status
         )
         .fetch_all(self.context.pool.as_ref())
         .await

@@ -156,7 +156,7 @@ fn execute_workflow_with_job(
         0,
         1.0,
         "2020-01-01T00:00:00Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::complete_job(config, job_id, job_result.status, run_id, job_result)?;
 
@@ -343,7 +343,7 @@ fn test_start_workflow_basic(start_server: &ServerProcess) {
     assert!(job_items.len() > 0);
     assert_eq!(
         job_items[0].status.as_ref().unwrap(),
-        &models::JobStatus::Done
+        &models::JobStatus::Completed
     );
 }
 
@@ -798,7 +798,7 @@ fn test_update_jobs_on_file_change_with_dependent_jobs(start_server: &ServerProc
         0,
         1.0,
         "2020-01-01T00:00:00Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::complete_job(&config, job1_id, job1_result.status, run_id, job1_result)
         .expect("Failed to complete job1");
@@ -814,7 +814,7 @@ fn test_update_jobs_on_file_change_with_dependent_jobs(start_server: &ServerProc
         0,
         1.0,
         "2020-01-01T00:00:00Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::complete_job(&config, job2_id, job2_result.status, run_id, job2_result)
         .expect("Failed to complete job2");
@@ -947,7 +947,7 @@ fn test_update_jobs_on_file_change_dry_run(start_server: &ServerProcess) {
 
     // Job should still be Done (not reset due to dry run)
     let updated_job = default_api::get_job(&config, job_id).expect("Failed to get updated job");
-    assert_eq!(updated_job.status.unwrap(), models::JobStatus::Done);
+    assert_eq!(updated_job.status.unwrap(), models::JobStatus::Completed);
 }
 
 #[rstest]
@@ -1069,7 +1069,7 @@ fn test_process_changed_files_end_to_end(start_server: &ServerProcess) {
         0,
         1.0,
         "2020-01-01T00:00:00Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::complete_job(&config, job_id, job_result.status, run_id, job_result)
         .expect("Failed to complete job");
@@ -1138,7 +1138,7 @@ fn test_workflow_manager_end_to_end(start_server: &ServerProcess) {
     assert!(job_items.len() > 0);
     assert_eq!(
         job_items[0].status.as_ref().unwrap(),
-        &models::JobStatus::Done
+        &models::JobStatus::Completed
     );
 
     let files = default_api::list_files(
@@ -1263,7 +1263,7 @@ fn complete_job_and_create_files(
         0,   // return_code (success)
         1.0, // exec_time_minutes
         chrono::Utc::now().to_rfc3339(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
 
     // Complete the job
@@ -1320,7 +1320,7 @@ fn test_update_jobs_if_output_files_are_missing_no_missing_files(start_server: &
 
     // Job should still be Done
     let updated_job = default_api::get_job(&config, job_id).expect("Failed to get updated job");
-    assert_eq!(updated_job.status.unwrap(), models::JobStatus::Done);
+    assert_eq!(updated_job.status.unwrap(), models::JobStatus::Completed);
 }
 
 #[rstest]
@@ -1423,7 +1423,7 @@ fn test_update_jobs_if_output_files_are_missing_dry_run_true(start_server: &Serv
 
     // Job should still be Done (not reset due to dry run)
     let updated_job = default_api::get_job(&config, job_id).expect("Failed to get updated job");
-    assert_eq!(updated_job.status.unwrap(), models::JobStatus::Done);
+    assert_eq!(updated_job.status.unwrap(), models::JobStatus::Completed);
 }
 
 #[rstest]
@@ -1559,7 +1559,7 @@ fn test_update_jobs_if_output_files_are_missing_multiple_jobs(start_server: &Ser
         updated_job2.status.unwrap(),
         models::JobStatus::Uninitialized
     );
-    assert_eq!(updated_job3.status.unwrap(), models::JobStatus::Done);
+    assert_eq!(updated_job3.status.unwrap(), models::JobStatus::Completed);
 }
 
 #[rstest]
@@ -1658,7 +1658,7 @@ fn test_update_jobs_if_output_files_are_missing_with_upstream_jobs_dry_run(
         0,
         1.0,
         chrono::Utc::now().to_rfc3339(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::complete_job(
         &config,
@@ -1683,8 +1683,11 @@ fn test_update_jobs_if_output_files_are_missing_with_upstream_jobs_dry_run(
     let updated_upstream =
         default_api::get_job(&config, upstream_job_id).expect("Failed to get updated upstream job");
 
-    assert_eq!(updated_job1.status.unwrap(), models::JobStatus::Done);
-    assert_eq!(updated_upstream.status.unwrap(), models::JobStatus::Done);
+    assert_eq!(updated_job1.status.unwrap(), models::JobStatus::Completed);
+    assert_eq!(
+        updated_upstream.status.unwrap(),
+        models::JobStatus::Completed
+    );
 }
 
 #[rstest]
@@ -1859,7 +1862,7 @@ fn test_reinitialize_workflow_with_missing_files_ignore_missing_data_true(
         0,
         1.0,
         "2020-01-01T00:00:00Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::complete_job(&config, job_id, job_result.status, run_id, job_result)
         .expect("Failed to complete job");
@@ -1945,7 +1948,7 @@ fn test_reinitialize_workflow_with_missing_files_dry_run_true(start_server: &Ser
         0,
         1.0,
         "2020-01-01T00:00:00Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::complete_job(&config, job_id, job_result.status, run_id, job_result)
         .expect("Failed to complete job");
@@ -2038,7 +2041,7 @@ fn test_reinitialize_workflow_with_missing_files_ignore_missing_data_false(
         0,
         1.0,
         "2020-01-01T00:00:00Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::complete_job(&config, job_id, job_result.status, run_id, job_result)
         .expect("Failed to complete job");
@@ -2213,7 +2216,7 @@ fn test_user_data_dependency_chain(start_server: &ServerProcess) {
         0,
         1.0,
         "2020-01-01T00:00:00Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::complete_job(&config, job1_id, job1_result.status, run_id, job1_result)
         .expect("Failed to complete job1");
@@ -2258,7 +2261,7 @@ fn test_user_data_dependency_chain(start_server: &ServerProcess) {
         0,
         1.0,
         "2020-01-01T00:00:01Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::complete_job(&config, job2_id, job2_result.status, run_id, job2_result)
         .expect("Failed to complete job2");
@@ -2296,7 +2299,7 @@ fn test_user_data_dependency_chain(start_server: &ServerProcess) {
         0,
         1.0,
         "2020-01-01T00:00:02Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::complete_job(&config, job3_id, job3_result.status, run_id, job3_result)
         .expect("Failed to complete job3");
@@ -2306,9 +2309,9 @@ fn test_user_data_dependency_chain(start_server: &ServerProcess) {
     let job2_final = default_api::get_job(&config, job2_id).expect("Failed to get job2 final");
     let job3_final = default_api::get_job(&config, job3_id).expect("Failed to get job3 final");
 
-    assert_eq!(job1_final.status.unwrap(), models::JobStatus::Done);
-    assert_eq!(job2_final.status.unwrap(), models::JobStatus::Done);
-    assert_eq!(job3_final.status.unwrap(), models::JobStatus::Done);
+    assert_eq!(job1_final.status.unwrap(), models::JobStatus::Completed);
+    assert_eq!(job2_final.status.unwrap(), models::JobStatus::Completed);
+    assert_eq!(job3_final.status.unwrap(), models::JobStatus::Completed);
 
     // Verify all user_data has been populated
     let ud2_final = default_api::get_user_data(&config, ud2_id).expect("Failed to get ud2 final");
@@ -2435,12 +2438,12 @@ fn test_reinitialize_with_file_change_blocked_by_complete_job(start_server: &Ser
         0,
         1.0,
         chrono::Utc::now().to_rfc3339(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::complete_job(
         &config,
         preprocess_id,
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
         run_id,
         preprocess_result,
     )
@@ -2459,12 +2462,12 @@ fn test_reinitialize_with_file_change_blocked_by_complete_job(start_server: &Ser
         0,
         1.0,
         chrono::Utc::now().to_rfc3339(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::complete_job(
         &config,
         work1_id,
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
         run_id,
         work1_result,
     )
@@ -2510,12 +2513,12 @@ fn test_reinitialize_with_file_change_blocked_by_complete_job(start_server: &Ser
         0,
         1.0,
         chrono::Utc::now().to_rfc3339(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::complete_job(
         &config,
         work2_id,
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
         run_id,
         work2_result,
     )
@@ -2567,12 +2570,12 @@ fn test_reinitialize_with_file_change_blocked_by_complete_job(start_server: &Ser
         0,
         1.0,
         chrono::Utc::now().to_rfc3339(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::complete_job(
         &config,
         postprocess_id,
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
         run_id,
         postprocess_result,
     )
@@ -2592,10 +2595,16 @@ fn test_reinitialize_with_file_change_blocked_by_complete_job(start_server: &Ser
     let postprocess_done =
         default_api::get_job(&config, postprocess_id).expect("Failed to get postprocess");
 
-    assert_eq!(preprocess_done.status.unwrap(), models::JobStatus::Done);
-    assert_eq!(work1_done.status.unwrap(), models::JobStatus::Done);
-    assert_eq!(work2_done.status.unwrap(), models::JobStatus::Done);
-    assert_eq!(postprocess_done.status.unwrap(), models::JobStatus::Done);
+    assert_eq!(
+        preprocess_done.status.unwrap(),
+        models::JobStatus::Completed
+    );
+    assert_eq!(work1_done.status.unwrap(), models::JobStatus::Completed);
+    assert_eq!(work2_done.status.unwrap(), models::JobStatus::Completed);
+    assert_eq!(
+        postprocess_done.status.unwrap(),
+        models::JobStatus::Completed
+    );
 
     // Wait a moment to ensure file modification time is different
     thread::sleep(Duration::from_millis(100));
@@ -2628,7 +2637,7 @@ fn test_reinitialize_with_file_change_blocked_by_complete_job(start_server: &Ser
 
     assert_eq!(
         preprocess_after.status.unwrap(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
         "preprocess should remain Done (f2 is its output, not input)"
     );
 
@@ -2640,7 +2649,7 @@ fn test_reinitialize_with_file_change_blocked_by_complete_job(start_server: &Ser
 
     assert_eq!(
         work2_after.status.unwrap(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
         "work2 should remain Done (f3 was not modified)"
     );
 

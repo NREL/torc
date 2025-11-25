@@ -1330,7 +1330,7 @@ fn test_slurm_run_jobs(start_server: &ServerProcess) {
     for job in job_items {
         assert_eq!(
             job.status.unwrap(),
-            models::JobStatus::Done,
+            models::JobStatus::Completed,
             "Job {} should be done",
             job.name
         );
@@ -1524,7 +1524,7 @@ fn test_cancel_workflow_with_slurm_scheduler(start_server: &ServerProcess) {
         if i < 3 {
             // Complete only first 3 jobs
             let mut updated_job = job.clone();
-            updated_job.status = Some(models::JobStatus::Done);
+            updated_job.status = Some(models::JobStatus::Completed);
 
             let job_id = job.id.unwrap();
             default_api::update_job(config, job_id, updated_job)

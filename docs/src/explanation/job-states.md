@@ -20,19 +20,21 @@ stateDiagram-v2
     completed --> [*]
     failed --> [*]
     canceled --> [*]
+    terminated --> [*]
 ```
 
 ## State Descriptions
 
-- **uninitialized** - Job created but dependencies not evaluated
-- **ready** - All dependencies satisfied, ready for execution
-- **blocked** - Waiting for dependencies to complete
-- **pending** - Job claimed by runner
-- **running** - Currently executing
-- **done** - Finished (success or failure)
-- **canceled** - Explicitly canceled by user or system
-- **terminated** - Explicitly termintated by user or system
-- **disabled** - Explicitly disabled by user
+- **uninitialized** (0) - Job created but dependencies not evaluated
+- **blocked** (1) - Waiting for dependencies to complete
+- **ready** (2) - All dependencies satisfied, ready for execution
+- **pending** (3) - Job claimed by runner
+- **running** (4) - Currently executing
+- **completed** (5) - Finished successfully (exit code 0)
+- **failed** (6) - Finished with error (exit code != 0)
+- **canceled** (7) - Explicitly canceled by user or system
+- **terminated** (8) - Explicitly terminated by user or system
+- **disabled** (9) - Explicitly disabled by user
 
 ## Critical State Transitions
 

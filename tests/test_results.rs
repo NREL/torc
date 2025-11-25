@@ -111,7 +111,7 @@ fn test_results_get_command_json(start_server: &ServerProcess) {
 
     let result = create_test_result(config, workflow_id, job.id.unwrap());
     let result_id = result.id.unwrap();
-    let status_done = JobStatus::Done.to_string();
+    let status_done = JobStatus::Completed.to_string();
 
     // Test the CLI get command
     let args = ["results", "get", &result_id.to_string()];
@@ -230,7 +230,7 @@ fn test_results_list_sorting(start_server: &ServerProcess) {
             i, // Different return codes for sorting
             5.0,
             "2024-01-01T12:00:00.000Z".to_string(),
-            models::JobStatus::Done,
+            models::JobStatus::Completed,
         );
         let _created = default_api::create_result(config, result).expect("Failed to create result");
     }
@@ -341,7 +341,7 @@ fn test_results_list_with_return_code_filter(start_server: &ServerProcess) {
         0, // success return code
         2.5,
         "2024-01-01T10:00:00.000Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     let _result1 = default_api::create_result(config, success_result)
         .expect("Failed to create success result");
@@ -406,7 +406,7 @@ fn test_results_list_with_status_filter(start_server: &ServerProcess) {
         0,
         2.5,
         "2024-01-01T10:00:00.000Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     let _result1 =
         default_api::create_result(config, done_result).expect("Failed to create done result");
@@ -430,7 +430,7 @@ fn test_results_list_with_status_filter(start_server: &ServerProcess) {
         "list",
         &workflow_id.to_string(),
         "--status",
-        "done",
+        "completed",
     ];
 
     let json_output = run_cli_with_json(&args, start_server)
@@ -479,7 +479,7 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
     default_api::complete_job(
         config,
         job1_id,
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
         run_id_1,
         models::ResultModel::new(
             job1_id,
@@ -489,7 +489,7 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
             1, // failed return_code
             2.5,
             "2024-01-01T10:00:00.000Z".to_string(),
-            models::JobStatus::Done,
+            models::JobStatus::Completed,
         ),
     )
     .expect("Failed to complete job1 for run 1");
@@ -497,7 +497,7 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
     default_api::complete_job(
         config,
         job2_id,
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
         run_id_1,
         models::ResultModel::new(
             job2_id,
@@ -507,7 +507,7 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
             1, // failed return_code
             3.5,
             "2024-01-01T11:00:00.000Z".to_string(),
-            models::JobStatus::Done,
+            models::JobStatus::Completed,
         ),
     )
     .expect("Failed to complete job2 for run 1");
@@ -529,7 +529,7 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
     default_api::complete_job(
         config,
         job1_id,
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
         run_id_2,
         models::ResultModel::new(
             job1_id,
@@ -539,7 +539,7 @@ fn test_results_list_all_runs_default_behavior(start_server: &ServerProcess) {
             0,
             4.5,
             "2024-01-02T10:00:00.000Z".to_string(),
-            models::JobStatus::Done,
+            models::JobStatus::Completed,
         ),
     )
     .expect("Failed to complete job1 for run 2");
@@ -631,7 +631,7 @@ fn test_results_list_all_runs_true(start_server: &ServerProcess) {
         0,
         2.5,
         "2024-01-01T10:00:00.000Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::create_result(config, result1_run1).expect("Failed to create result1 for run 1");
 
@@ -643,7 +643,7 @@ fn test_results_list_all_runs_true(start_server: &ServerProcess) {
         0,
         3.5,
         "2024-01-01T11:00:00.000Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::create_result(config, result2_run1).expect("Failed to create result2 for run 1");
 
@@ -660,7 +660,7 @@ fn test_results_list_all_runs_true(start_server: &ServerProcess) {
         0,
         4.5,
         "2024-01-02T10:00:00.000Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::create_result(config, result1_run2).expect("Failed to create result1 for run 2");
 
@@ -689,7 +689,7 @@ fn test_results_list_all_runs_true(start_server: &ServerProcess) {
         0,
         6.5,
         "2024-01-03T10:00:00.000Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::create_result(config, result1_run3).expect("Failed to create result1 for run 3");
 
@@ -763,7 +763,7 @@ fn test_results_list_all_runs_with_filters(start_server: &ServerProcess) {
         0,
         2.5,
         "2024-01-01T10:00:00.000Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::create_result(config, result1_run1).expect("Failed to create result1 for run 1");
 
@@ -792,7 +792,7 @@ fn test_results_list_all_runs_with_filters(start_server: &ServerProcess) {
         0,
         4.5,
         "2024-01-02T10:00:00.000Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::create_result(config, result1_run2).expect("Failed to create result1 for run 2");
 
@@ -804,7 +804,7 @@ fn test_results_list_all_runs_with_filters(start_server: &ServerProcess) {
         0,
         5.5,
         "2024-01-02T11:00:00.000Z".to_string(),
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
     );
     default_api::create_result(config, result2_run2).expect("Failed to create result2 for run 2");
 
@@ -907,7 +907,7 @@ fn test_results_workflow_result_table_cleanup_on_reinitialize(start_server: &Ser
     default_api::complete_job(
         config,
         job1_id,
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
         run_id,
         models::ResultModel::new(
             job1_id,
@@ -917,7 +917,7 @@ fn test_results_workflow_result_table_cleanup_on_reinitialize(start_server: &Ser
             0,
             2.5,
             "2024-01-01T10:00:00.000Z".to_string(),
-            models::JobStatus::Done,
+            models::JobStatus::Completed,
         ),
     )
     .expect("Failed to complete job1 for run 1");
@@ -925,7 +925,7 @@ fn test_results_workflow_result_table_cleanup_on_reinitialize(start_server: &Ser
     default_api::complete_job(
         config,
         job2_id,
-        models::JobStatus::Done,
+        models::JobStatus::Completed,
         run_id,
         models::ResultModel::new(
             job2_id,
@@ -935,7 +935,7 @@ fn test_results_workflow_result_table_cleanup_on_reinitialize(start_server: &Ser
             0,
             3.5,
             "2024-01-01T11:00:00.000Z".to_string(),
-            models::JobStatus::Done,
+            models::JobStatus::Completed,
         ),
     )
     .expect("Failed to complete job2 for run 1");
