@@ -41,6 +41,7 @@ chrono.workspace = true
 jsonwebtoken.workspace = true
 serde.workspace = true
 openssl.workspace = true
+openssl-sys.workspace = true
 tokio-openssl = "0.6.5"
 bcrypt.workspace = true
 rpassword.workspace = true

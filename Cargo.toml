@@ -85,6 +85,9 @@ hyper-tls = "0.5"
 hyper-openssl = "0.9"
 openssl = "0.10"
 
+# Vendored OpenSSL for static musl builds
+openssl-sys = { version = "0.9", features = ["vendored"] }
+
 [package]
 name = "torc"
 version.workspace = true
