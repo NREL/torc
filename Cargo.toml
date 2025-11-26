@@ -85,9 +85,6 @@ hyper-tls = "0.5"
 hyper-openssl = "0.9"
 openssl = "0.10"
 
-# Vendored OpenSSL for static musl builds
-openssl-sys = { version = "0.9", features = ["vendored"] }
-
 [package]
 name = "torc"
 version.workspace = true
@@ -226,6 +223,10 @@ openssl = "0.10"
 # Windows testing support - vendored OpenSSL for CI
 [target.'cfg(windows)'.dev-dependencies]
 openssl-sys = { version = "0.9", features = ["vendored"] }
+
+# Musl static builds - vendored OpenSSL (compiles from source)
+[target.'cfg(target_env = "musl")'.dependencies]
+openssl = { version = "0.10", features = ["vendored"] }
 
 [dev-dependencies]
 rstest = "0.26.1"
