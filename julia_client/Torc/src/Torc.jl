@@ -77,7 +77,7 @@ Add one job to the workflow for each set of parameters.
 - `scheduler = nothing`: If set, Torc will use this scheduler.
 - `start_index = 1`: Torc will use this index for job names.
 - `name_prefix = "": Torc will use this prefix for job names.
-- `job_names = []: Use these names for jobs. Mutually exclusive with "name_prefix."
+- `jobs = []: Use these names for jobs. Mutually exclusive with "name_prefix."
 - `blocked_by::Union{Nothing, Vector{String}} = nothing`: Set these job IDs as blocking
    the jobs created by this function.
 - `cancel_on_blocking_job_failure::Bool = true`: Cancel each job if a blocking job fails.
@@ -93,13 +93,13 @@ function map_function_to_jobs(
     scheduler = nothing,
     start_index = 1,
     name_prefix = "",
-    job_names::Vector{String} = String[],
+    jobs::Vector{String} = String[],
     blocked_by::Union{Nothing, Vector{String}} = nothing,
     cancel_on_blocking_job_failure = true,
 )
     !isfile(file_path) && error("$file_path does not exist")
-    if !isempty(job_names) && length(job_names) != length(params)
-        error("If job_names is provided, it must be the same length as params.")
+    if !isempty(jobs) && length(jobs) != length(params)
+        error("If jobs is provided, it must be the same length as params.")
     end
     jobs = Vector{APIClient.JobModel}()
     output_data_ids = Vector{String}()
@@ -108,8 +108,8 @@ function map_function_to_jobs(
     command = "julia $ppath $(file_path) $(url)"
 
     for (i, job_params) in enumerate(params)
-        if !isempty(job_names)
-            job_name = job_names[i]
+        if !isempty(jobs)
+            job_name = jobs[i]
         else
             job_name = "$(name_prefix)$(start_index + i)"
         end

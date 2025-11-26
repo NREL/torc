@@ -398,17 +398,17 @@ fn test_completion_reversal_selective_reset(start_server: &ServerProcess) {
         "job2 should be Uninitialized (downstream of failed job1)"
     );
 
-    // Verify that Chain 2 jobs remain Done (they were successful and independent)
+    // Verify that Chain 2 jobs remain Completed (they were successful and independent)
     let job3_final = default_api::get_job(config, job3_id).expect("Failed to get job3");
     let job4_final = default_api::get_job(config, job4_id).expect("Failed to get job4");
     assert_eq!(
         job3_final.status.unwrap(),
         JobStatus::Completed,
-        "job3 should remain Done (independent successful job)"
+        "job3 should remain Completed (independent successful job)"
     );
     assert_eq!(
         job4_final.status.unwrap(),
         JobStatus::Completed,
-        "job4 should remain Done (downstream of successful job3)"
+        "job4 should remain Completed (downstream of successful job3)"
     );
 }

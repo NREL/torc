@@ -79,7 +79,7 @@ Executes when **all** specified jobs transition to the "ready" state.
 ```yaml
 - trigger_type: "on_jobs_ready"
   action_type: "schedule_nodes"
-  job_names: ["train_model_001", "train_model_002", "train_model_003"]
+  jobs: ["train_model_001", "train_model_002", "train_model_003"]
   scheduler: "gpu_cluster"
   scheduler_type: "slurm"
   num_allocations: 2
@@ -102,7 +102,7 @@ Executes when **all** specified jobs reach terminal states (completed, failed, o
 ```yaml
 - trigger_type: "on_jobs_complete"
   action_type: "run_commands"
-  job_names: ["preprocess_1", "preprocess_2", "preprocess_3"]
+  jobs: ["preprocess_1", "preprocess_2", "preprocess_3"]
   commands:
     - "echo 'Preprocessing phase complete' >> workflow.log"
     - "rm -rf raw_data/"
@@ -163,7 +163,7 @@ For `on_jobs_ready` and `on_jobs_complete` triggers, specify which jobs to monit
 ```yaml
 - trigger_type: "on_jobs_complete"
   action_type: "run_commands"
-  job_names: ["job1", "job2", "job3"]
+  jobs: ["job1", "job2", "job3"]
   commands:
     - "echo 'Specific jobs complete'"
 ```
@@ -190,7 +190,7 @@ For `on_jobs_ready` and `on_jobs_complete` triggers, specify which jobs to monit
 You can use both together - the action triggers when **all** matching jobs meet the condition:
 
 ```yaml
-job_names: ["critical_job"]
+jobs: ["critical_job"]
 job_name_regexes: ["batch_.*"]
 # Triggers when "critical_job" AND all "batch_*" jobs are ready/complete
 ```
@@ -225,7 +225,7 @@ Dynamically allocate compute resources from a Slurm scheduler.
 ```yaml
 - trigger_type: "on_jobs_ready"
   action_type: "schedule_nodes"
-  job_names: ["train_model_1", "train_model_2"]
+  jobs: ["train_model_1", "train_model_2"]
   scheduler: "gpu_cluster"
   scheduler_type: "slurm"
   num_allocations: 2

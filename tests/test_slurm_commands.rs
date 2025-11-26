@@ -1331,7 +1331,7 @@ fn test_slurm_run_jobs(start_server: &ServerProcess) {
         assert_eq!(
             job.status.unwrap(),
             models::JobStatus::Completed,
-            "Job {} should be done",
+            "Job {} should be Completed",
             job.name
         );
     }

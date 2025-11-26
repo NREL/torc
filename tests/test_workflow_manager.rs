@@ -838,7 +838,7 @@ fn test_update_jobs_on_file_change_with_dependent_jobs(start_server: &ServerProc
 }
 
 #[rstest]
-fn test_update_jobs_on_file_change_only_done_jobs_reset(start_server: &ServerProcess) {
+fn test_update_jobs_on_file_change_only_completed_jobs_reset(start_server: &ServerProcess) {
     let config = start_server.config.clone();
     let (manager, workflow) = create_test_workflow_manager(config.clone(), "test_only_done_reset");
     let workflow_id = workflow.id.unwrap();
@@ -847,16 +847,16 @@ fn test_update_jobs_on_file_change_only_done_jobs_reset(start_server: &ServerPro
     let files = create_test_files_with_disk_files(&config, workflow_id, &temp_dir);
     let file_id = files[0].id.unwrap();
 
-    // Execute workflow with a job that depends on the file (will end up Done)
+    // Execute workflow with a job that depends on the file (will end up Completed)
     let (done_id, run_id) = execute_workflow_with_job(
         &config,
         &manager,
         workflow_id,
         "done_job",
-        "echo 'done job'",
+        "echo 'completed job'",
         Some(vec![file_id]),
     )
-    .expect("Failed to execute done job");
+    .expect("Failed to execute completed job");
 
     // Create additional jobs with different statuses using resource requirements
     let resource_requirements = models::ResourceRequirementsModel::new(1, "small".to_string());
@@ -906,7 +906,7 @@ fn test_update_jobs_on_file_change_only_done_jobs_reset(start_server: &ServerPro
 
     // Only Done job should be reset
     let updated_done =
-        default_api::get_job(&config, done_id).expect("Failed to get updated done job");
+        default_api::get_job(&config, done_id).expect("Failed to get updated completed job");
     let updated_running =
         default_api::get_job(&config, running_id).expect("Failed to get updated running job");
     let updated_ready =
@@ -945,7 +945,7 @@ fn test_update_jobs_on_file_change_dry_run(start_server: &ServerProcess) {
     let result = manager.update_jobs_on_file_change(files[0].clone(), true);
     assert!(result.is_ok());
 
-    // Job should still be Done (not reset due to dry run)
+    // Job should still be Completed (not reset due to dry run)
     let updated_job = default_api::get_job(&config, job_id).expect("Failed to get updated job");
     assert_eq!(updated_job.status.unwrap(), models::JobStatus::Completed);
 }
@@ -1055,7 +1055,7 @@ fn test_process_changed_files_end_to_end(start_server: &ServerProcess) {
         models::JobStatus::Pending
     );
     default_api::manage_status_change(&config, job_id, models::JobStatus::Running, run_id, None)
-        .expect("Failed to set job to Done");
+        .expect("Failed to set job to Completed");
 
     // Create a compute node for the results
     let compute_node = create_test_compute_node(&config, workflow_id);
@@ -1318,7 +1318,7 @@ fn test_update_jobs_if_output_files_are_missing_no_missing_files(start_server: &
     let result = manager.update_jobs_if_output_files_are_missing(false);
     assert!(result.is_ok());
 
-    // Job should still be Done
+    // Job should still be Completed
     let updated_job = default_api::get_job(&config, job_id).expect("Failed to get updated job");
     assert_eq!(updated_job.status.unwrap(), models::JobStatus::Completed);
 }
@@ -1421,7 +1421,7 @@ fn test_update_jobs_if_output_files_are_missing_dry_run_true(start_server: &Serv
     let result = manager.update_jobs_if_output_files_are_missing(true);
     assert!(result.is_ok());
 
-    // Job should still be Done (not reset due to dry run)
+    // Job should still be Completed (not reset due to dry run)
     let updated_job = default_api::get_job(&config, job_id).expect("Failed to get updated job");
     assert_eq!(updated_job.status.unwrap(), models::JobStatus::Completed);
 }
@@ -1579,11 +1579,11 @@ fn test_update_jobs_if_output_files_are_missing_no_done_jobs(start_server: &Serv
     assert!(result.is_ok());
 
     // Output files don't exist (job was never completed)
-    // Function should not affect non-Done jobs
+    // Function should not affect non-Completed jobs
     let result = manager.update_jobs_if_output_files_are_missing(false);
     assert!(result.is_ok());
 
-    // Job should still be Ready (not affected since it wasn't Done)
+    // Job should still be Ready (not affected since it wasn't Completed)
     let updated_job = default_api::get_job(&config, job_id).expect("Failed to get updated job");
     assert_eq!(updated_job.status.unwrap(), models::JobStatus::Ready);
 }
@@ -1678,7 +1678,7 @@ fn test_update_jobs_if_output_files_are_missing_with_upstream_jobs_dry_run(
     let result = manager.update_jobs_if_output_files_are_missing(true);
     assert!(result.is_ok());
 
-    // Both jobs should still be Done (not reset due to dry run)
+    // Both jobs should still be Completed (not reset due to dry run)
     let updated_job1 = default_api::get_job(&config, job1_id).expect("Failed to get updated job1");
     let updated_upstream =
         default_api::get_job(&config, upstream_job_id).expect("Failed to get updated upstream job");
@@ -2304,7 +2304,7 @@ fn test_user_data_dependency_chain(start_server: &ServerProcess) {
     default_api::complete_job(&config, job3_id, job3_result.status, run_id, job3_result)
         .expect("Failed to complete job3");
 
-    // Verify all jobs are Done
+    // Verify all jobs are Completed
     let job1_final = default_api::get_job(&config, job1_id).expect("Failed to get job1 final");
     let job2_final = default_api::get_job(&config, job2_id).expect("Failed to get job2 final");
     let job3_final = default_api::get_job(&config, job3_id).expect("Failed to get job3 final");
@@ -2358,15 +2358,15 @@ fn test_user_data_dependency_chain(start_server: &ServerProcess) {
 }
 
 /// Test that reinitialization correctly sets jobs to Ready when they are only blocked by completed jobs.
-/// This test verifies the fix for the bug where jobs blocked only by Done jobs were incorrectly
+/// This test verifies the fix for the bug where jobs blocked only by Completed jobs were incorrectly
 /// marked as Blocked instead of Ready during reinitialization.
 ///
 /// Scenario:
 /// 1. Create diamond workflow: preprocess → (work1, work2) → postprocess
-/// 2. Complete all jobs (status = Done)
+/// 2. Complete all jobs (status = Completed)
 /// 3. Modify an output file from preprocess (f2.json)
 /// 4. Reinitialize workflow
-/// 5. Verify work1 is set to Ready (not Blocked), since preprocess is already Done
+/// 5. Verify work1 is set to Ready (not Blocked), since preprocess is already Completed
 #[rstest]
 fn test_reinitialize_with_file_change_blocked_by_complete_job(start_server: &ServerProcess) {
     use common::create_diamond_workflow;
@@ -2587,7 +2587,7 @@ fn test_reinitialize_with_file_change_blocked_by_complete_job(start_server: &Ser
         .initialize_files()
         .expect("Failed to initialize file mtimes");
 
-    // Verify all jobs are Done
+    // Verify all jobs are Completed
     let preprocess_done =
         default_api::get_job(&config, preprocess_id).expect("Failed to get preprocess");
     let work1_done = default_api::get_job(&config, work1_id).expect("Failed to get work1");
@@ -2627,30 +2627,30 @@ fn test_reinitialize_with_file_change_blocked_by_complete_job(start_server: &Ser
         .expect("Failed to get postprocess after reinit");
 
     // Assertions to verify correct behavior:
-    // - preprocess should still be Done (not affected by f2 modification)
+    // - preprocess should still be Completed (not affected by f2 modification)
     // - work1 should be Ready (not Blocked), since:
     //   * f2 was modified, so work1 needs to re-run
-    //   * work1 is blocked by preprocess, but preprocess is Done
+    //   * work1 is blocked by preprocess, but preprocess is Completed
     //   * Therefore work1 should be Ready to run
-    // - work2 should still be Done (f3 wasn't modified)
+    // - work2 should still be Completed (f3 wasn't modified)
     // - postprocess should be Blocked (waiting for work1 to complete)
 
     assert_eq!(
         preprocess_after.status.unwrap(),
         models::JobStatus::Completed,
-        "preprocess should remain Done (f2 is its output, not input)"
+        "preprocess should remain Completed (f2 is its output, not input)"
     );
 
     assert_eq!(
         work1_after.status.unwrap(),
         models::JobStatus::Ready,
-        "work1 should be Ready (not Blocked), since preprocess (which blocks work1) is Done"
+        "work1 should be Ready (not Blocked), since preprocess (which blocks work1) is Completed"
     );
 
     assert_eq!(
         work2_after.status.unwrap(),
         models::JobStatus::Completed,
-        "work2 should remain Done (f3 was not modified)"
+        "work2 should remain Completed (f3 was not modified)"
     );
 
     assert_eq!(

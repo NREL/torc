@@ -65,7 +65,7 @@ actions:
   # Allocate resources for setup stage
   - trigger_type: "on_workflow_start"
     action_type: "schedule_nodes"
-    job_names: ["setup"]
+    jobs: ["setup"]
     scheduler: "setup_scheduler"
     scheduler_type: "slurm"
     num_allocations: 1
@@ -73,7 +73,7 @@ actions:
   # Allocate resources for processing stage
   - trigger_type: "on_jobs_ready"
     action_type: "schedule_nodes"
-    job_names: ["process1", "process2", "process3"]
+    jobs: ["process1", "process2", "process3"]
     scheduler: "process_scheduler"
     scheduler_type: "slurm"
     num_allocations: 3
@@ -81,7 +81,7 @@ actions:
   # Allocate resources for finalization stage
   - trigger_type: "on_jobs_ready"
     action_type: "schedule_nodes"
-    job_names: ["finalize"]
+    jobs: ["finalize"]
     scheduler: "finalize_scheduler"
     scheduler_type: "slurm"
     num_allocations: 1

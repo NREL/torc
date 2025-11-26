@@ -76,7 +76,7 @@
     {
       "trigger_type": "on_workflow_start",
       "action_type": "schedule_nodes",
-      "job_names": [
+      "jobs": [
         "setup"
       ],
       "scheduler": "setup_scheduler",
@@ -86,7 +86,7 @@
     {
       "trigger_type": "on_jobs_ready",
       "action_type": "schedule_nodes",
-      "job_names": [
+      "jobs": [
         "process"
       ],
       "scheduler": "process_scheduler",
@@ -97,7 +97,7 @@
     {
       "trigger_type": "on_jobs_ready",
       "action_type": "schedule_nodes",
-      "job_names": [
+      "jobs": [
         "finalize"
       ],
       "scheduler": "finalize_scheduler",
