@@ -28,13 +28,13 @@ class JobStatus(str, Enum):
     """
     UNINITIALIZED = 'uninitialized'
     BLOCKED = 'blocked'
+    READY = 'ready'
+    PENDING = 'pending'
+    RUNNING = 'running'
+    COMPLETED = 'completed'
+    FAILED = 'failed'
     CANCELED = 'canceled'
     TERMINATED = 'terminated'
-    DONE = 'done'
-    READY = 'ready'
-    SCHEDULED = 'scheduled'
-    RUNNING = 'running'
-    PENDING = 'pending'
     DISABLED = 'disabled'
 
     @classmethod
