@@ -1903,17 +1903,18 @@ impl WorkflowSpec {
                             .ok_or("action_type must have a string value")?
                             .to_string();
                     }
-                    "job_name" => {
-                        if spec.jobs.is_none() {
-                            spec.jobs = Some(Vec::new());
-                        }
-                        if let Some(job_name) =
-                            child.entries().first().and_then(|e| e.value().as_string())
-                        {
-                            spec.jobs.as_mut().unwrap().push(job_name.to_string());
+                    "jobs" => {
+                        // Parse jobs as multiple string arguments: jobs "job1" "job2" "job3"
+                        let job_names: Vec<String> = child
+                            .entries()
+                            .iter()
+                            .filter_map(|e| e.value().as_string().map(|s| s.to_string()))
+                            .collect();
+                        if !job_names.is_empty() {
+                            spec.jobs = Some(job_names);
                         }
                     }
-                    "job_name_regex" => {
+                    "job_name_regexes" => {
                         if spec.job_name_regexes.is_none() {
                             spec.job_name_regexes = Some(Vec::new());
                         }
