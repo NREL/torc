@@ -9,7 +9,7 @@ pub struct SchedulerAllocation {
     pub scheduler: String,
     pub scheduler_type: String,
     pub num_allocations: i64,
-    pub job_names: Vec<String>,
+    pub jobs: Vec<String>,
 }
 
 /// Represents a stage in the workflow execution plan
@@ -177,7 +177,7 @@ impl ExecutionPlan {
                         "    • {} ({}) - {} allocation(s)",
                         alloc.scheduler, alloc.scheduler_type, alloc.num_allocations
                     );
-                    let compact = compact_job_list(&alloc.job_names);
+                    let compact = compact_job_list(&alloc.jobs);
                     println!("      For jobs: {}", compact.join(", "));
                 }
             }
@@ -432,7 +432,7 @@ fn get_matching_jobs(
     let mut matched = Vec::new();
 
     // Match exact names
-    if let Some(ref names) = action.job_names {
+    if let Some(ref names) = action.jobs {
         matched.extend(names.clone());
     }
 
@@ -474,13 +474,13 @@ fn build_scheduler_allocation(
 
     let num_allocations = action.num_allocations.unwrap_or(1);
 
-    let job_names = get_matching_jobs(spec, action)?;
+    let jobs = get_matching_jobs(spec, action)?;
 
     Ok(Some(SchedulerAllocation {
         scheduler,
         scheduler_type,
         num_allocations,
-        job_names,
+        jobs,
     }))
 }
 
@@ -634,7 +634,7 @@ fn build_job_completion_stage_from_db(
 /// Build a scheduler allocation from a database action model
 fn build_scheduler_allocation_from_db_action(
     action: &WorkflowActionModel,
-    jobs: &[JobModel],
+    workflow_jobs: &[JobModel],
 ) -> Result<Option<SchedulerAllocation>, Box<dyn std::error::Error>> {
     if action.action_type != "schedule_nodes" {
         return Ok(None);
@@ -653,10 +653,10 @@ fn build_scheduler_allocation_from_db_action(
     // Get job names from job IDs
     let empty_vec = vec![];
     let action_job_ids = action.job_ids.as_ref().unwrap_or(&empty_vec);
-    let mut job_names = Vec::new();
+    let mut jobs = Vec::new();
     for job_id in action_job_ids {
-        if let Some(job) = jobs.iter().find(|j| j.id == Some(*job_id)) {
-            job_names.push(job.name.clone());
+        if let Some(job) = workflow_jobs.iter().find(|j| j.id == Some(*job_id)) {
+            jobs.push(job.name.clone());
         }
     }
 
@@ -668,7 +668,7 @@ fn build_scheduler_allocation_from_db_action(
         scheduler,
         scheduler_type,
         num_allocations,
-        job_names,
+        jobs,
     }))
 }
 

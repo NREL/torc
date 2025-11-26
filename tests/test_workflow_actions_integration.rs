@@ -194,7 +194,7 @@ jobs:
 actions:
   - trigger_type: "on_jobs_ready"
     action_type: "run_commands"
-    job_names: ["process_job_1", "process_job_2"]
+    jobs: ["process_job_1", "process_job_2"]
     commands:
       - "echo 'Processing jobs are ready' > {}/ready.txt"
 "#,
@@ -301,7 +301,7 @@ jobs:
 actions:
   - trigger_type: "on_jobs_complete"
     action_type: "run_commands"
-    job_names: ["task_1", "task_2"]
+    jobs: ["task_1", "task_2"]
     commands:
       - "echo 'All tasks completed' > {}/complete.txt"
       - "date >> {}/complete.txt"
@@ -518,13 +518,13 @@ actions:
 
   - trigger_type: "on_jobs_ready"
     action_type: "run_commands"
-    job_names: ["job_1"]
+    jobs: ["job_1"]
     commands:
       - "echo 'Job ready' > {}/ready.txt"
 
   - trigger_type: "on_jobs_complete"
     action_type: "run_commands"
-    job_names: ["job_1"]
+    jobs: ["job_1"]
     commands:
       - "echo 'Job complete' > {}/complete.txt"
 "#,

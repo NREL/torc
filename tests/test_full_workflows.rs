@@ -96,7 +96,7 @@ fn verify_diamond_workflow_completion(
         assert_eq!(
             job.status.unwrap(),
             models::JobStatus::Completed,
-            "Job {} should be done. actual status: {:?}",
+            "Job {} should be completed. actual status: {:?}",
             job.name,
             job.status
         );
@@ -414,7 +414,7 @@ fn verify_many_jobs_completion(
         assert_eq!(
             job.status.unwrap(),
             models::JobStatus::Completed,
-            "Job {} should be done. actual status: {:?}",
+            "Job {} should be completed. actual status: {:?}",
             job.name,
             job.status
         );

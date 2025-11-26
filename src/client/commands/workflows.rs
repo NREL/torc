@@ -282,7 +282,7 @@ fn show_execution_plan_from_spec(file_path: &str, format: &str) {
                                 "scheduler": alloc.scheduler,
                                 "scheduler_type": alloc.scheduler_type,
                                 "num_allocations": alloc.num_allocations,
-                                "job_names": alloc.job_names,
+                                "job_names": alloc.jobs,
                             })
                         }).collect::<Vec<_>>(),
                         "jobs_becoming_ready": stage.jobs_becoming_ready,
@@ -376,7 +376,7 @@ fn show_execution_plan_from_database(config: &Configuration, workflow_id: i64, f
                                 "scheduler": alloc.scheduler,
                                 "scheduler_type": alloc.scheduler_type,
                                 "num_allocations": alloc.num_allocations,
-                                "job_names": alloc.job_names,
+                                "job_names": alloc.jobs,
                             })
                         }).collect::<Vec<_>>(),
                         "jobs_becoming_ready": stage.jobs_becoming_ready,

@@ -117,7 +117,7 @@ fn test_get_workflow_actions(start_server: &ServerProcess) {
             "trigger_type": "on_workflow_start",
             "action_type": "run_commands",
             "action_config": action_config,
-            "job_names": null,
+            "jobs": null,
             "job_name_regexes": null,
             "job_ids": null,
         });
@@ -420,7 +420,7 @@ fn test_multiple_actions_different_triggers(start_server: &ServerProcess) {
             "trigger_type": trigger,
             "action_type": "run_commands",
             "action_config": action_config,
-            "job_names": null,
+            "jobs": null,
             "job_name_regexes": null,
             "job_ids": null,
         });

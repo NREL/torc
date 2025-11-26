@@ -91,7 +91,7 @@ pub struct WorkflowActionSpec {
     pub action_type: String,
     /// For on_jobs_ready/on_jobs_complete: exact job names to match
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub job_names: Option<Vec<String>>,
+    pub jobs: Option<Vec<String>>,
     /// For on_jobs_ready/on_jobs_complete: regex patterns to match job names
     #[serde(skip_serializing_if = "Option::is_none")]
     pub job_name_regexes: Option<Vec<String>>,
@@ -864,11 +864,11 @@ impl WorkflowSpec {
             for action_spec in actions {
                 // Resolve job_names and job_name_regexes to job_ids
                 let job_ids =
-                    if action_spec.job_names.is_some() || action_spec.job_name_regexes.is_some() {
+                    if action_spec.jobs.is_some() || action_spec.job_name_regexes.is_some() {
                         let mut matched_job_ids = Vec::new();
 
                         // Match exact job names
-                        if let Some(ref patterns) = action_spec.job_names {
+                        if let Some(ref patterns) = action_spec.jobs {
                             for pattern in patterns {
                                 if let Some(job_id) = job_name_to_id.get(pattern) {
                                     matched_job_ids.push(*job_id);
@@ -1873,7 +1873,7 @@ impl WorkflowSpec {
         let mut spec = WorkflowActionSpec {
             trigger_type: String::new(),
             action_type: String::new(),
-            job_names: None,
+            jobs: None,
             job_name_regexes: None,
             commands: None,
             scheduler: None,
@@ -1903,17 +1903,18 @@ impl WorkflowSpec {
                             .ok_or("action_type must have a string value")?
                             .to_string();
                     }
-                    "job_name" => {
-                        if spec.job_names.is_none() {
-                            spec.job_names = Some(Vec::new());
-                        }
-                        if let Some(job_name) =
-                            child.entries().first().and_then(|e| e.value().as_string())
-                        {
-                            spec.job_names.as_mut().unwrap().push(job_name.to_string());
+                    "jobs" => {
+                        // Parse jobs as multiple string arguments: jobs "job1" "job2" "job3"
+                        let job_names: Vec<String> = child
+                            .entries()
+                            .iter()
+                            .filter_map(|e| e.value().as_string().map(|s| s.to_string()))
+                            .collect();
+                        if !job_names.is_empty() {
+                            spec.jobs = Some(job_names);
                         }
                     }
-                    "job_name_regex" => {
+                    "job_name_regexes" => {
                         if spec.job_name_regexes.is_none() {
                             spec.job_name_regexes = Some(Vec::new());
                         }
