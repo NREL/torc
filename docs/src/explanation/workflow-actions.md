@@ -296,6 +296,27 @@ Refer to this [example](https://github.com/NREL/torc/blob/main/examples/yaml/wor
 4. **No Inter-Action Dependencies**: Actions don't depend on other actions
 5. **Concurrent Workers**: Multiple workers can execute different actions simultaneously
 
+### Workflow Reinitialization
+
+When a workflow is reinitialized (e.g., after resetting failed jobs), actions are reset to allow them to trigger again:
+
+1. **Executed flags are cleared**: All actions can be claimed and executed again
+2. **Trigger counts are recalculated**: For `on_jobs_ready` and `on_jobs_complete` actions, the trigger count is set based on current job states
+
+**Example scenario**:
+- job1 and job2 are independent jobs
+- postprocess_job depends on both job1 and job2
+- An `on_jobs_ready` action triggers when postprocess_job becomes ready
+
+After first run completes:
+1. job1 fails, job2 succeeds
+2. User resets failed jobs and reinitializes
+3. job2 is already Completed, so it counts toward the trigger count
+4. When job1 completes in the second run, postprocess_job becomes ready
+5. The action triggers again because the trigger count reaches the required threshold
+
+This ensures actions properly re-trigger after workflow reinitialization, even when some jobs remain in their completed state.
+
 ## Limitations
 
 1. **No Action Dependencies**: Actions cannot depend on other actions completing

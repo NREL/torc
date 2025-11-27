@@ -706,32 +706,55 @@ impl WorkflowActionsApiImpl {
         job_ids: &[i64],
         trigger_type: &str,
     ) -> Result<bool, ApiError> {
+        Ok(self
+            .count_jobs_in_satisfied_state(workflow_id, job_ids, trigger_type)
+            .await?
+            == job_ids.len() as i64)
+    }
+
+    /// Count how many jobs currently satisfy the condition for the trigger type.
+    /// This is used to properly set trigger_count after reinitialize, when some jobs
+    /// may already be in a satisfied state (e.g., job2 is already Completed when job1
+    /// transitions to Ready after reinitialize).
+    async fn count_jobs_in_satisfied_state(
+        &self,
+        workflow_id: i64,
+        job_ids: &[i64],
+        trigger_type: &str,
+    ) -> Result<i64, ApiError> {
         use crate::models::JobStatus;
 
+        let mut count = 0i64;
+
         for job_id in job_ids {
-            // Fetch job status
-            let job_status = match sqlx::query_scalar::<_, i64>(
-                "SELECT status FROM job WHERE id = ? AND workflow_id = ?",
-            )
-            .bind(job_id)
-            .bind(workflow_id)
-            .fetch_optional(self.context.pool.as_ref())
-            .await
-            {
-                Ok(Some(status)) => status,
-                Ok(None) => {
-                    debug!("Job {} not found in workflow {}", job_id, workflow_id);
-                    return Ok(false);
-                }
-                Err(e) => {
-                    error!("Failed to fetch job status: {}", e);
-                    return Err(database_error(e));
-                }
-            };
+            let job_status =
+                match sqlx::query_scalar::<_, i64>("SELECT status FROM job WHERE id = ?")
+                    .bind(job_id)
+                    .fetch_optional(self.context.pool.as_ref())
+                    .await
+                {
+                    Ok(Some(status)) => status,
+                    Ok(None) => {
+                        debug!("Job {} not found in workflow {}", job_id, workflow_id);
+                        continue;
+                    }
+                    Err(e) => {
+                        error!("Failed to fetch job status: {}", e);
+                        return Err(database_error(e));
+                    }
+                };
 
             // Check if job meets the required state
+            // For on_jobs_ready: job must be Ready OR have already completed (passed through ready)
+            // For on_jobs_complete: job must be in a terminal state
             let meets_condition = match trigger_type {
-                "on_jobs_ready" => job_status == JobStatus::Ready.to_int() as i64,
+                "on_jobs_ready" => {
+                    job_status == JobStatus::Ready.to_int() as i64
+                        || job_status == JobStatus::Completed.to_int() as i64
+                        || job_status == JobStatus::Failed.to_int() as i64
+                        || job_status == JobStatus::Canceled.to_int() as i64
+                        || job_status == JobStatus::Terminated.to_int() as i64
+                }
                 "on_jobs_complete" => {
                     job_status == JobStatus::Completed.to_int() as i64
                         || job_status == JobStatus::Failed.to_int() as i64
@@ -741,11 +764,122 @@ impl WorkflowActionsApiImpl {
                 _ => false,
             };
 
-            if !meets_condition {
-                return Ok(false);
+            if meets_condition {
+                count += 1;
             }
         }
 
-        Ok(true)
+        Ok(count)
+    }
+
+    /// Reset workflow actions for reinitialization.
+    /// This resets executed flags and pre-computes trigger_count based on current job states.
+    /// For on_jobs_ready and on_jobs_complete actions, trigger_count is set to the number of jobs
+    /// already in a satisfied state (e.g., Completed jobs count toward on_jobs_ready).
+    /// For other action types, trigger_count is reset to 0.
+    pub async fn reset_actions_for_reinitialize(&self, workflow_id: i64) -> Result<(), ApiError> {
+        debug!(
+            "reset_actions_for_reinitialize(workflow_id={})",
+            workflow_id
+        );
+
+        // First, reset executed flags for all actions
+        match sqlx::query(
+            "UPDATE workflow_action SET executed = 0, executed_by = NULL WHERE workflow_id = ?",
+        )
+        .bind(workflow_id)
+        .execute(self.context.pool.as_ref())
+        .await
+        {
+            Ok(_) => {
+                debug!(
+                    "Reset executed flags for all actions in workflow {}",
+                    workflow_id
+                );
+            }
+            Err(e) => {
+                error!(
+                    "Failed to reset executed flags for workflow {}: {}",
+                    workflow_id, e
+                );
+                return Err(database_error(e));
+            }
+        }
+
+        // Get all actions for this workflow
+        let actions = match sqlx::query(
+            "SELECT id, trigger_type, job_ids FROM workflow_action WHERE workflow_id = ?",
+        )
+        .bind(workflow_id)
+        .fetch_all(self.context.pool.as_ref())
+        .await
+        {
+            Ok(actions) => actions,
+            Err(e) => {
+                error!(
+                    "Failed to fetch actions for workflow {}: {}",
+                    workflow_id, e
+                );
+                return Err(database_error(e));
+            }
+        };
+
+        for action_row in actions {
+            let action_id: i64 = action_row.get("id");
+            let trigger_type: String = action_row.get("trigger_type");
+            let job_ids_str: Option<String> = action_row.get("job_ids");
+
+            // For on_jobs_ready and on_jobs_complete, compute trigger_count based on current job states
+            let trigger_count = match trigger_type.as_str() {
+                "on_jobs_ready" | "on_jobs_complete" => {
+                    if let Some(job_ids_str) = job_ids_str {
+                        let job_ids: Vec<i64> = match serde_json::from_str(&job_ids_str) {
+                            Ok(ids) => ids,
+                            Err(e) => {
+                                error!(
+                                    "Failed to parse job_ids JSON '{}' for action {}: {}",
+                                    job_ids_str, action_id, e
+                                );
+                                vec![]
+                            }
+                        };
+
+                        if job_ids.is_empty() {
+                            0
+                        } else {
+                            self.count_jobs_in_satisfied_state(workflow_id, &job_ids, &trigger_type)
+                                .await?
+                        }
+                    } else {
+                        0
+                    }
+                }
+                // For other trigger types (on_workflow_start, etc.), reset to 0
+                _ => 0,
+            };
+
+            // Update the trigger_count for this action
+            match sqlx::query("UPDATE workflow_action SET trigger_count = ? WHERE id = ?")
+                .bind(trigger_count)
+                .bind(action_id)
+                .execute(self.context.pool.as_ref())
+                .await
+            {
+                Ok(_) => {
+                    debug!(
+                        "Set trigger_count to {} for action {} (trigger_type={}) in workflow {}",
+                        trigger_count, action_id, trigger_type, workflow_id
+                    );
+                }
+                Err(e) => {
+                    error!(
+                        "Failed to set trigger_count for action {}: {}",
+                        action_id, e
+                    );
+                }
+            }
+        }
+
+        Ok(())
     }
 }

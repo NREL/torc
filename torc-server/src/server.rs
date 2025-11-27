@@ -2903,20 +2903,20 @@ where
             id
         );
 
-        // Trigger workflow actions after initialization
-        // First, reset all trigger counts to 0 for this workflow (in case of re-initialization)
-        match sqlx::query("UPDATE workflow_action SET trigger_count = 0 WHERE workflow_id = ?")
-            .bind(id)
-            .execute(self.pool.as_ref())
+        // Reset workflow actions for reinitialization
+        // This resets executed flags and pre-computes trigger_count based on current job states.
+        // For on_jobs_ready/on_jobs_complete actions, trigger_count is set to the number of jobs
+        // already in a satisfied state (e.g., job2 is Completed, so it counts toward trigger_count).
+        if let Err(e) = self
+            .workflow_actions_api
+            .reset_actions_for_reinitialize(id)
             .await
         {
-            Ok(_) => {
-                debug!("Reset trigger counts for all actions in workflow {}", id);
-            }
-            Err(e) => {
-                error!("Failed to reset trigger counts for workflow {}: {}", id, e);
-                // Don't fail the request, just log the error
-            }
+            error!(
+                "Failed to reset workflow actions for workflow {}: {}",
+                id, e
+            );
+            // Don't fail the request, just log the error
         }
 
         // Activate on_workflow_start actions (workflow has started with initialization)

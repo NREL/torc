@@ -500,3 +500,270 @@ fn test_action_status_lifecycle(start_server: &ServerProcess) {
         .expect("Failed to get pending actions");
     assert_eq!(pending_actions.len(), 0);
 }
+
+/// Test that workflow actions are properly reset when a workflow is reinitialized.
+///
+/// This test matches the user's scenario:
+/// - job1 produces output, job2 produces output independently
+/// - postprocess_job depends on both job1 and job2 outputs
+/// - There is a workflow action set to trigger on on_jobs_ready with jobs = ["postprocess_job"]
+/// - First run: all jobs complete, postprocess_job becomes ready, action triggers and is claimed
+/// - job1's input changes, requiring job1 to be reset and rerun (but job2 stays completed)
+/// - We reset job1 and reinitialize the workflow
+/// - After reinitialize: job2 remains completed, postprocess_job is blocked (waiting for job1)
+/// - The action's trigger_count should account for completed jobs when checking on_jobs_ready
+/// - Second run: job1 completes again, postprocess_job becomes ready
+/// - Expected: The workflow action should trigger again when postprocess_job becomes ready
+#[rstest]
+fn test_action_executed_flag_reset_on_reinitialize(start_server: &ServerProcess) {
+    use std::thread;
+    use std::time::Duration;
+    use torc::client::workflow_manager::WorkflowManager;
+
+    let config = &start_server.config;
+    let workflow = create_test_workflow(config, "action_reinit_test_workflow");
+    let workflow_id = workflow.id.unwrap();
+    let manager = WorkflowManager::new(config.clone(), workflow);
+
+    // Create job1 (independent, will fail in first run and be reset)
+    let job1 =
+        torc::models::JobModel::new(workflow_id, "job1".to_string(), "echo 'job1'".to_string());
+    let job1 = default_api::create_job(config, job1).expect("Failed to create job1");
+    let job1_id = job1.id.unwrap();
+
+    // Create job2 (independent, will succeed and stay completed)
+    let job2 =
+        torc::models::JobModel::new(workflow_id, "job2".to_string(), "echo 'job2'".to_string());
+    let job2 = default_api::create_job(config, job2).expect("Failed to create job2");
+    let job2_id = job2.id.unwrap();
+
+    // Create postprocess_job that depends on BOTH job1 and job2
+    let mut postprocess_job = torc::models::JobModel::new(
+        workflow_id,
+        "postprocess_job".to_string(),
+        "echo 'postprocess'".to_string(),
+    );
+    postprocess_job.blocked_by_job_ids = Some(vec![job1_id, job2_id]);
+    postprocess_job.cancel_on_blocking_job_failure = Some(false);
+    let postprocess_job =
+        default_api::create_job(config, postprocess_job).expect("Failed to create postprocess_job");
+    let postprocess_job_id = postprocess_job.id.unwrap();
+
+    // Create workflow action: trigger on_jobs_ready for postprocess_job
+    let action_config = json!({
+        "commands": ["echo 'postprocess_job is ready'"]
+    });
+    let action_body = json!({
+        "workflow_id": workflow_id,
+        "trigger_type": "on_jobs_ready",
+        "action_type": "run_commands",
+        "action_config": action_config,
+        "job_ids": [postprocess_job_id],
+    });
+    let created_action = default_api::create_workflow_action(config, workflow_id, action_body)
+        .expect("Failed to create workflow action");
+    let action_id = created_action.id.unwrap();
+
+    // Initialize workflow using WorkflowManager
+    manager
+        .initialize(true)
+        .expect("Failed to initialize workflow");
+    let run_id = manager.get_run_id().expect("Failed to get run_id");
+
+    // Create compute node for completing jobs
+    let compute_node_id =
+        create_test_compute_node(config, workflow_id).expect("Failed to create compute node");
+
+    // === First run: Complete job1 with FAILURE ===
+    default_api::manage_status_change(
+        config,
+        job1_id,
+        torc::models::JobStatus::Running,
+        run_id,
+        None,
+    )
+    .expect("Failed to set job1 to running");
+    let result1 = torc::models::ResultModel::new(
+        job1_id,
+        workflow_id,
+        run_id,
+        compute_node_id,
+        1,
+        1.0,
+        chrono::Utc::now().to_rfc3339(),
+        torc::models::JobStatus::Completed,
+    );
+    default_api::complete_job(config, job1_id, result1.status, run_id, result1)
+        .expect("Failed to complete job1 with failure");
+
+    // === First run: Complete job2 with SUCCESS ===
+    default_api::manage_status_change(
+        config,
+        job2_id,
+        torc::models::JobStatus::Running,
+        run_id,
+        None,
+    )
+    .expect("Failed to set job2 to running");
+    let result2 = torc::models::ResultModel::new(
+        job2_id,
+        workflow_id,
+        run_id,
+        compute_node_id,
+        0,
+        1.0,
+        chrono::Utc::now().to_rfc3339(),
+        torc::models::JobStatus::Completed,
+    );
+    default_api::complete_job(config, job2_id, result2.status, run_id, result2)
+        .expect("Failed to complete job2 with success");
+
+    // Wait for unblock processing
+    thread::sleep(Duration::from_millis(500));
+
+    // After both jobs complete, postprocess_job becomes ready and action becomes pending
+    let pending_actions = default_api::get_pending_actions(config, workflow_id, None)
+        .expect("Failed to get pending actions");
+    assert_eq!(
+        pending_actions.len(),
+        1,
+        "Action should be pending after postprocess_job becomes ready"
+    );
+
+    // Claim the action
+    let claim_body = json!({ "compute_node_id": compute_node_id });
+    default_api::claim_action(config, workflow_id, action_id, claim_body)
+        .expect("Failed to claim action");
+
+    // Verify action is executed
+    let actions = default_api::get_workflow_actions(config, workflow_id)
+        .expect("Failed to get workflow actions");
+    let action = actions.iter().find(|a| a.id.unwrap() == action_id).unwrap();
+    assert!(action.executed, "Action should be executed after claiming");
+    assert_eq!(action.trigger_count, 1);
+
+    // === Reset failed job and reinitialize using WorkflowManager ===
+    default_api::reset_job_status(config, workflow_id, Some(true), None)
+        .expect("Failed to reset failed jobs");
+
+    // Reinitialize workflow using WorkflowManager (this gets a new run_id)
+    manager
+        .reinitialize(true, false)
+        .expect("Failed to reinitialize workflow");
+    let run_id2 = manager
+        .get_run_id()
+        .expect("Failed to get run_id after reinit");
+
+    // Verify job statuses after reinitialize
+    let job1_after = default_api::get_job(config, job1_id).expect("Failed to get job1");
+    let job2_after = default_api::get_job(config, job2_id).expect("Failed to get job2");
+    let postprocess_after =
+        default_api::get_job(config, postprocess_job_id).expect("Failed to get postprocess_job");
+
+    assert_eq!(
+        job1_after.status.unwrap(),
+        torc::models::JobStatus::Ready,
+        "job1 should be Ready"
+    );
+    assert_eq!(
+        job2_after.status.unwrap(),
+        torc::models::JobStatus::Completed,
+        "job2 should still be Completed"
+    );
+    assert_eq!(
+        postprocess_after.status.unwrap(),
+        torc::models::JobStatus::Blocked,
+        "postprocess_job should be Blocked"
+    );
+
+    // Check action state after reinitialize - should be reset
+    let actions_after = default_api::get_workflow_actions(config, workflow_id)
+        .expect("Failed to get workflow actions");
+    let action_after = actions_after
+        .iter()
+        .find(|a| a.id.unwrap() == action_id)
+        .unwrap();
+    assert_eq!(
+        action_after.trigger_count, 0,
+        "trigger_count should be 0 after reinitialize"
+    );
+    assert!(
+        !action_after.executed,
+        "executed should be false after reinitialize"
+    );
+    assert!(
+        action_after.executed_by.is_none(),
+        "executed_by should be None after reinitialize"
+    );
+
+    // Action should not be pending yet (postprocess_job is blocked)
+    let pending_after = default_api::get_pending_actions(config, workflow_id, None)
+        .expect("Failed to get pending actions");
+    assert_eq!(
+        pending_after.len(),
+        0,
+        "No actions should be pending while postprocess_job is blocked"
+    );
+
+    // === Second run: Complete job1 with SUCCESS ===
+    default_api::manage_status_change(
+        config,
+        job1_id,
+        torc::models::JobStatus::Running,
+        run_id2,
+        None,
+    )
+    .expect("Failed to set job1 to running");
+    let result1_second = torc::models::ResultModel::new(
+        job1_id,
+        workflow_id,
+        run_id2,
+        compute_node_id,
+        0,
+        1.0,
+        chrono::Utc::now().to_rfc3339(),
+        torc::models::JobStatus::Completed,
+    );
+    default_api::complete_job(
+        config,
+        job1_id,
+        result1_second.status,
+        run_id2,
+        result1_second,
+    )
+    .expect("Failed to complete job1");
+
+    // Wait for unblock processing
+    thread::sleep(Duration::from_millis(500));
+
+    // postprocess_job should now be Ready
+    let postprocess_final =
+        default_api::get_job(config, postprocess_job_id).expect("Failed to get postprocess_job");
+    assert_eq!(
+        postprocess_final.status.unwrap(),
+        torc::models::JobStatus::Ready,
+        "postprocess_job should be Ready"
+    );
+
+    // Action should be pending again!
+    let pending_final = default_api::get_pending_actions(config, workflow_id, None)
+        .expect("Failed to get pending actions");
+    assert_eq!(
+        pending_final.len(),
+        1,
+        "Action should be pending again after postprocess_job becomes ready"
+    );
+
+    // Verify action state
+    let actions_final = default_api::get_workflow_actions(config, workflow_id)
+        .expect("Failed to get workflow actions");
+    let action_final = actions_final
+        .iter()
+        .find(|a| a.id.unwrap() == action_id)
+        .unwrap();
+    assert_eq!(action_final.trigger_count, 1, "trigger_count should be 1");
+    assert!(
+        !action_final.executed,
+        "executed should be false (pending, not claimed)"
+    );
+}

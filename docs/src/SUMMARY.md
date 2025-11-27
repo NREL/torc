@@ -37,7 +37,6 @@
   - [Authentication](./how-to/authentication.md)
   - [Shell Completions](./how-to/shell-completions.md)
   - [Server Deployment](./how-to/server-deployment.md)
-  - [Torc Server Arguments in Workflow Actions](./how-to/torc-server-args.md)
 
 # Reference
 
