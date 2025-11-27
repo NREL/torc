@@ -25,7 +25,6 @@ pub struct FileSpec {
     pub parameters: Option<HashMap<String, String>>,
     /// Names of workflow-level parameters to use for this file
     /// If set, only these parameters from the workflow will be used
-    /// If not set and parameters is also not set, all workflow parameters will be used
     #[serde(skip_serializing_if = "Option::is_none")]
     pub use_parameters: Option<Vec<String>>,
 }
@@ -217,7 +216,6 @@ pub struct JobSpec {
     pub parameters: Option<HashMap<String, String>>,
     /// Names of workflow-level parameters to use for this job
     /// If set, only these parameters from the workflow will be used
-    /// If not set and parameters is also not set, all workflow parameters will be used
     #[serde(skip_serializing_if = "Option::is_none")]
     pub use_parameters: Option<Vec<String>>,
 }
@@ -400,7 +398,6 @@ pub struct WorkflowSpec {
     pub description: String,
     /// Shared parameters that can be used by jobs and files
     /// Jobs/files can reference these by setting use_parameters to parameter names
-    /// or by not specifying their own parameters (will inherit all workflow parameters)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parameters: Option<HashMap<String, String>>,
     /// Inform all compute nodes to shut down this number of seconds before the expiration time
@@ -470,7 +467,6 @@ impl WorkflowSpec {
     /// Parameter resolution order:
     /// 1. If job/file has its own `parameters`, use those (local params override workflow params)
     /// 2. If job/file has `use_parameters`, select only those from workflow-level params
-    /// 3. If job/file has neither, inherit all workflow-level parameters
     pub fn expand_parameters(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let workflow_params = self.parameters.clone();
 

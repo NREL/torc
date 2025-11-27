@@ -28,7 +28,7 @@ jobs:
     output_files:
       - val_data
 
-  # Training jobs - uses all shared parameters automatically
+  # Training jobs - uses all shared parameters
   # This single job spec expands to 18 jobs
   - name: train_lr{lr:.4f}_bs{batch_size}_opt{optimizer}
     command: |
@@ -50,7 +50,6 @@ jobs:
     output_files:
       - model_lr{lr:.4f}_bs{batch_size}_opt{optimizer}
       - metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}
-    # Inherit all workflow parameters - no need to repeat them!
     use_parameters:
       - lr
       - batch_size
@@ -66,7 +65,6 @@ jobs:
     input_files:
       # Wait for all metrics files
       - metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}
-    # Inherit all workflow parameters
     use_parameters:
       - lr
       - batch_size

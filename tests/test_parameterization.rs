@@ -1,8 +1,9 @@
 use std::collections::HashMap;
 use std::path::PathBuf;
+use rstest::rstest;
 use torc::client::workflow_spec::{FileSpec, JobSpec, WorkflowSpec};
 
-#[test]
+#[rstest]
 fn test_kdl_job_parameterization() {
     let kdl_content = r#"
 name "test_parameterized"
@@ -40,7 +41,7 @@ job "job_{i:03d}" {
     }
 }
 
-#[test]
+#[rstest]
 fn test_kdl_file_parameterization() {
     let kdl_content = r#"
 name "test_parameterized_files"
@@ -83,7 +84,7 @@ job "process" {
     }
 }
 
-#[test]
+#[rstest]
 fn test_kdl_multi_dimensional_parameterization() {
     let kdl_content = r#"
 name "test_multi_param"
@@ -116,7 +117,7 @@ job "train_lr{lr:.4f}_bs{batch_size}" {
     assert!(names.contains(&"train_lr0.0100_bs32"));
 }
 
-#[test]
+#[rstest]
 fn test_kdl_example_file_hundred_jobs() {
     // Test parsing the actual KDL example file
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
@@ -138,7 +139,7 @@ fn test_kdl_example_file_hundred_jobs() {
     assert_eq!(spec.jobs[99].name, "job_100");
 }
 
-#[test]
+#[rstest]
 fn test_kdl_example_file_hyperparameter_sweep() {
     // Test parsing the actual KDL hyperparameter sweep example
     let manifest_dir = env!("CARGO_MANIFEST_DIR");
@@ -174,7 +175,7 @@ fn test_kdl_example_file_hyperparameter_sweep() {
     assert_eq!(spec.files.as_ref().unwrap().len(), 38);
 }
 
-#[test]
+#[rstest]
 fn test_integer_range_expansion() {
     let mut job = JobSpec::new("job_{i}".to_string(), "echo {i}".to_string());
 
@@ -191,7 +192,7 @@ fn test_integer_range_expansion() {
     assert_eq!(expanded[4].command, "echo 5");
 }
 
-#[test]
+#[rstest]
 fn test_integer_range_with_step() {
     let mut job = JobSpec::new("job_{i}".to_string(), "echo {i}".to_string());
 
@@ -207,7 +208,7 @@ fn test_integer_range_with_step() {
     assert_eq!(expanded[5].name, "job_10");
 }
 
-#[test]
+#[rstest]
 fn test_float_range_expansion() {
     let mut job = JobSpec::new("job_{lr}".to_string(), "train.py --lr={lr}".to_string());
 
@@ -223,7 +224,7 @@ fn test_float_range_expansion() {
     assert_eq!(expanded[2].command, "train.py --lr=1");
 }
 
-#[test]
+#[rstest]
 fn test_list_expansion() {
     let mut job = JobSpec::new(
         "job_{dataset}".to_string(),
@@ -245,7 +246,7 @@ fn test_list_expansion() {
     assert_eq!(expanded[2].name, "job_validation");
 }
 
-#[test]
+#[rstest]
 fn test_multi_dimensional_parameter_sweep() {
     let mut job = JobSpec::new(
         "job_lr{lr}_bs{batch_size}".to_string(),
@@ -272,7 +273,7 @@ fn test_multi_dimensional_parameter_sweep() {
     assert!(commands.contains(&"train.py --lr=0.1 --batch-size=64"));
 }
 
-#[test]
+#[rstest]
 fn test_format_specifier_zero_padding() {
     let mut job = JobSpec::new("job_{i:03d}".to_string(), "echo {i:03d}".to_string());
 
@@ -287,7 +288,7 @@ fn test_format_specifier_zero_padding() {
     assert_eq!(expanded[4].name, "job_005");
 }
 
-#[test]
+#[rstest]
 fn test_format_specifier_float_precision() {
     let mut job = JobSpec::new(
         "job_{lr:.2f}".to_string(),
@@ -305,7 +306,7 @@ fn test_format_specifier_float_precision() {
     assert_eq!(expanded[2].name, "job_0.20");
 }
 
-#[test]
+#[rstest]
 fn test_file_parameterization() {
     let mut file = FileSpec::new(
         "output_{run_id}".to_string(),
@@ -325,7 +326,7 @@ fn test_file_parameterization() {
     assert_eq!(expanded[2].path, "/data/output_3.txt");
 }
 
-#[test]
+#[rstest]
 fn test_job_with_input_output_files() {
     let mut job = JobSpec::new(
         "process_{i}".to_string(),
@@ -351,7 +352,7 @@ fn test_job_with_input_output_files() {
     assert_eq!(expanded[2].output_files, Some(vec!["output_3".to_string()]));
 }
 
-#[test]
+#[rstest]
 fn test_job_with_blocked_by_names() {
     let mut job = JobSpec::new(
         "dependent_{i}".to_string(),
@@ -372,7 +373,7 @@ fn test_job_with_blocked_by_names() {
     assert_eq!(expanded[2].blocked_by, Some(vec!["upstream_3".to_string()]));
 }
 
-#[test]
+#[rstest]
 fn test_no_parameters_returns_original() {
     let job = JobSpec::new("simple_job".to_string(), "echo hello".to_string());
 
@@ -383,7 +384,7 @@ fn test_no_parameters_returns_original() {
     assert_eq!(expanded[0].command, "echo hello");
 }
 
-#[test]
+#[rstest]
 fn test_invalid_range_format() {
     let mut job = JobSpec::new("job_{i}".to_string(), "echo {i}".to_string());
 
@@ -396,7 +397,7 @@ fn test_invalid_range_format() {
     assert!(result.unwrap_err().contains("Invalid range format"));
 }
 
-#[test]
+#[rstest]
 fn test_zero_step_error() {
     let mut job = JobSpec::new("job_{i}".to_string(), "echo {i}".to_string());
 
@@ -409,7 +410,7 @@ fn test_zero_step_error() {
     assert!(result.unwrap_err().contains("Step cannot be zero"));
 }
 
-#[test]
+#[rstest]
 fn test_workflow_spec_expand_parameters() {
     let mut spec = WorkflowSpec {
         name: "test_workflow".to_string(),
@@ -476,7 +477,7 @@ fn test_workflow_spec_expand_parameters() {
     assert_eq!(spec.files.as_ref().unwrap()[2].name, "file_3");
 }
 
-#[test]
+#[rstest]
 fn test_complex_multi_param_with_dependencies() {
     let mut job = JobSpec::new(
         "train_lr{lr}_bs{bs}_epoch{epoch}".to_string(),
@@ -513,7 +514,7 @@ fn test_complex_multi_param_with_dependencies() {
     );
 }
 
-#[test]
+#[rstest]
 fn test_invocation_script_substitution() {
     let mut job = JobSpec::new("job_{i}".to_string(), "python train.py".to_string());
     job.invocation_script = Some("#!/bin/bash\nexport RUN_ID={i}\n".to_string());
@@ -534,7 +535,7 @@ fn test_invocation_script_substitution() {
     );
 }
 
-#[test]
+#[rstest]
 fn test_user_data_name_substitution() {
     let mut job = JobSpec::new("job_{stage}".to_string(), "process.sh {stage}".to_string());
     job.input_user_data = Some(vec!["config_{stage}".to_string()]);
@@ -567,7 +568,7 @@ fn test_user_data_name_substitution() {
 
 // ==================== Shared Parameters Tests ====================
 
-#[test]
+#[rstest]
 fn test_shared_parameters_yaml() {
     let yaml_content = r#"
 name: shared_params_test
@@ -615,7 +616,7 @@ jobs:
     assert!(names.contains(&"job_3_b"));
 }
 
-#[test]
+#[rstest]
 fn test_shared_parameters_kdl() {
     let kdl_content = r#"
 name "shared_params_test"
@@ -657,7 +658,7 @@ job "job_{i}_{prefix}" {
     assert!(names.contains(&"job_3_b"));
 }
 
-#[test]
+#[rstest]
 fn test_shared_parameters_json5() {
     let json5_content = r#"
 {
@@ -693,7 +694,7 @@ fn test_shared_parameters_json5() {
     assert_eq!(spec.jobs.len(), 6);
 }
 
-#[test]
+#[rstest]
 fn test_shared_parameters_selective_inheritance() {
     // Test that use_parameters only inherits specified parameters
     let yaml_content = r#"
@@ -731,7 +732,7 @@ jobs:
     assert!(names.contains(&"job_2_4"));
 }
 
-#[test]
+#[rstest]
 fn test_shared_parameters_with_files() {
     let yaml_content = r#"
 name: file_params_test
@@ -777,7 +778,7 @@ jobs:
     assert_eq!(spec.jobs.len(), 2);
 }
 
-#[test]
+#[rstest]
 fn test_local_parameters_override_shared() {
     // Test that local parameters take precedence over shared parameters
     let yaml_content = r#"
@@ -811,7 +812,7 @@ jobs:
     assert!(names.contains(&"job_12"));
 }
 
-#[test]
+#[rstest]
 fn test_example_file_hyperparameter_sweep_shared_params_yaml() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("examples/yaml/hyperparameter_sweep_shared_params.yaml");
@@ -845,7 +846,7 @@ fn test_example_file_hyperparameter_sweep_shared_params_yaml() {
     assert_eq!(spec.files.as_ref().unwrap().len(), 38);
 }
 
-#[test]
+#[rstest]
 fn test_example_file_hyperparameter_sweep_shared_params_kdl() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("examples/kdl/hyperparameter_sweep_shared_params.kdl");
@@ -864,10 +865,10 @@ fn test_example_file_hyperparameter_sweep_shared_params_kdl() {
     assert_eq!(spec.files.as_ref().unwrap().len(), 38);
 }
 
-#[test]
+#[rstest]
 fn test_example_file_hyperparameter_sweep_shared_params_json5() {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("examples/json5/hyperparameter_sweep_shared_params.json5");
+        .join("examples/json/hyperparameter_sweep_shared_params.json5");
 
     let mut spec = WorkflowSpec::from_spec_file(&path)
         .expect("Failed to load hyperparameter_sweep_shared_params.json5");
