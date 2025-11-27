@@ -160,3 +160,39 @@ pub fn claim_action(
 
     Ok(claimed)
 }
+
+/// Detect the number of NVIDIA GPUs available on the system.
+///
+/// Uses NVML (NVIDIA Management Library) to query the number of GPU devices.
+/// Returns 0 if NVML fails to initialize (e.g., no NVIDIA drivers installed,
+/// no NVIDIA GPUs present, or NVML library not available).
+///
+/// # Returns
+/// The number of NVIDIA GPUs detected, or 0 if detection fails.
+///
+/// # Example
+/// ```ignore
+/// let num_gpus = detect_nvidia_gpus();
+/// println!("Detected {} NVIDIA GPU(s)", num_gpus);
+/// ```
+pub fn detect_nvidia_gpus() -> i64 {
+    match nvml_wrapper::Nvml::init() {
+        Ok(nvml) => match nvml.device_count() {
+            Ok(count) => {
+                info!("Detected {} NVIDIA GPU(s)", count);
+                count as i64
+            }
+            Err(e) => {
+                debug!("Failed to get NVIDIA GPU count: {}", e);
+                0
+            }
+        },
+        Err(e) => {
+            debug!(
+                "NVML initialization failed (no NVIDIA GPUs or drivers): {}",
+                e
+            );
+            0
+        }
+    }
+}

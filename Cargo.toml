@@ -74,6 +74,7 @@ serde_yaml = "0.9"
 tabled = "0.17"
 kdl = "6.5"
 rusqlite = { version = "0.32", features = ["bundled"] }
+nvml-wrapper = "0.10"
 
 # Service management
 service-manager = "0.7"
@@ -137,6 +138,7 @@ client = [
     "dep:rpassword",
     "dep:signal-hook",
     "dep:libc",
+    "dep:nvml-wrapper",
 ]
 tui = [
     "client",
@@ -205,6 +207,7 @@ rusqlite = { workspace = true, optional = true }
 rpassword = { workspace = true, optional = true }
 signal-hook = { workspace = true, optional = true }
 libc = { workspace = true, optional = true }
+nvml-wrapper = { workspace = true, optional = true }
 
 # TUI dependencies (optional)
 ratatui = { workspace = true, optional = true }
