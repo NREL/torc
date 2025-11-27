@@ -20,7 +20,7 @@ The job runner supports two different strategies for retrieving and executing jo
 - Server filters jobs based on available compute node resources (CPU, memory, GPU)
 - Only returns jobs that fit within the current resource capacity
 - Prevents resource over-subscription and ensures jobs have required resources
-- Defaults to requiring one CPU an 1 MB of memory for each job.
+- Defaults to requiring one CPU and 1 MB of memory for each job.
 
 **Use cases**:
 - When you want parallelization based on one CPU per job.
@@ -30,11 +30,12 @@ intelligent resource management.
 **Example 1: Run jobs at queue depth of num_cpus**:
 ```yaml
 parameters:
-  i: "1..100"
+  i: "1:100"
 jobs:
   - name: "work_{i}"
     command: bash my_script.sh {i}
-    use_parameters: {i}
+    use_parameters:
+    - i
 ```
 
 **Example 2: Resource-based parallelization**:
@@ -47,12 +48,13 @@ resource_requirements:
     num_nodes: 1
     
 parameters:
-  i: "1..100"
+  i: "1:100"
 jobs:
   - name: "work_{i}"
     command: bash my_script.sh {i}
     resource_requirements: work_resources  
-    use_parameters: {i}
+    use_parameters:
+    - i
 ```
 
 ### Simple Queue-Based Allocation

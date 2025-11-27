@@ -17,6 +17,7 @@ use std::mem::MaybeUninit;
 use std::net::SocketAddr;
 use std::str::FromStr;
 use std::sync::Arc;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::task::{Context, Poll};
 use swagger::EmptyContext;
 use swagger::{Has, XSpanIdString};
@@ -151,7 +152,14 @@ pub async fn create(
     }
 }
 
-/// Background task that periodically processes pending job unblocks
+/// Background task that periodically processes pending job unblocks.
+///
+/// This task uses an optimization to avoid database queries when no jobs have completed:
+/// - The server tracks `last_completion_time` which is updated when any job completes
+/// - This task tracks `last_checked_time` and only queries the database if
+///   `last_completion_time > last_checked_time`
+/// - On first run (or after server restart), `last_completion_time` is initialized to 1
+///   to ensure we process any completions that occurred while the server was down
 async fn background_unblock_task<C>(server: Server<C>, interval_seconds: f64)
 where
     C: Has<XSpanIdString> + Send + Sync,
@@ -162,9 +170,21 @@ where
     );
 
     let mut interval = tokio::time::interval(std::time::Duration::from_secs_f64(interval_seconds));
+    let mut last_checked_time: u64 = 0;
 
     loop {
         interval.tick().await;
+
+        // Check if any jobs have completed since our last check
+        let completion_time = server.last_completion_time.load(Ordering::Acquire);
+        if completion_time <= last_checked_time {
+            // No new completions, skip database query
+            debug!("No new job completions since last check, skipping unblock processing");
+            continue;
+        }
+
+        // Update our checkpoint before processing
+        last_checked_time = completion_time;
 
         if let Err(e) = process_pending_unblocks(&server).await {
             error!("Error processing pending unblocks: {}", e);
@@ -390,6 +410,9 @@ where
 pub struct Server<C> {
     marker: PhantomData<C>,
     pool: Arc<SqlitePool>,
+    /// Timestamp (Unix millis) of the last job completion. Used by the background
+    /// unblock task to skip processing when no new completions have occurred.
+    last_completion_time: Arc<AtomicU64>,
     compute_nodes_api: ComputeNodesApiImpl,
     events_api: EventsApiImpl,
     files_api: FilesApiImpl,
@@ -410,6 +433,9 @@ impl<C> Server<C> {
         Server {
             marker: PhantomData,
             pool: pool_arc,
+            // Initialize to 1 so the background task runs at least once on startup
+            // to process any completions that happened while server was down
+            last_completion_time: Arc::new(AtomicU64::new(1)),
             compute_nodes_api: ComputeNodesApiImpl::new(api_context.clone()),
             events_api: EventsApiImpl::new(api_context.clone()),
             files_api: FilesApiImpl::new(api_context.clone()),
@@ -421,6 +447,15 @@ impl<C> Server<C> {
             workflow_actions_api: WorkflowActionsApiImpl::new(api_context.clone()),
             workflows_api: WorkflowsApiImpl::new(api_context.clone()),
         }
+    }
+
+    /// Signal that a job has completed. This wakes up the background unblock task.
+    fn signal_job_completion(&self) {
+        let now = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis() as u64)
+            .unwrap_or(1);
+        self.last_completion_time.store(now, Ordering::Release);
     }
 
     /// Create an association between a job and a file.
@@ -970,6 +1005,8 @@ impl<C> Server<C> {
                     )));
                 }
             }
+            // Signal that a job completed so the background task knows to check
+            self.signal_job_completion();
             debug!(
                 "Marked job {} as complete, unblocking will be processed by background task",
                 job_id
