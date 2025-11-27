@@ -102,6 +102,6 @@ The `examples/` directory contains many more workflow examples in all supported 
 - Simple workflows and resource monitoring
 - Workflow actions for automation
 - Slurm integration examples
-- Parameterized workflows (YAML/JSON5 only)
+- Parameterized workflows
 
 Browse `examples/yaml/`, `examples/json/`, or `examples/kdl/` to explore the full collection.

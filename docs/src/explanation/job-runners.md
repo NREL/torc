@@ -4,7 +4,7 @@ Job runners are worker processes that execute jobs on compute resources.
 
 ## Job Runner Modes
 
-1. **Local Runner** (`torc run-jobs`) - Runs jobs on local machine with resource tracking
+1. **Local Runner** (`torc run`) - Runs jobs on local machine with resource tracking
 2. **Slurm Runner** (`torc-slurm-job-runner`) - Submits jobs to Slurm clusters
 
 ## Job Allocation Strategies
@@ -55,7 +55,7 @@ tracked by Torc, such as network or storage I/O.
 
 **Example**:
 ```bash
-torc run-jobs $WORKFLOW_ID \
+torc run $WORKFLOW_ID \
   --max-parallel-jobs 10 \
   --output-dir ./results
 ```

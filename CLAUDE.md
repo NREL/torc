@@ -123,8 +123,8 @@ cargo test
 ### Standalone Binaries (for deployment)
 ```bash
 # Build individual binaries
-cargo build --release --bin torc
-cargo build --release --bin torc-server
+cargo build --release -p torc
+cargo build --release -p torc-server
 
 # Use standalone binaries
 ```

@@ -114,7 +114,7 @@ The job runner supports two allocation strategies controlled by the `--max-paral
 **When**: `--max-parallel-jobs` is NOT set
 
 ```bash
-torc run-jobs $WORKFLOW_ID \
+torc run $WORKFLOW_ID \
   --num-cpus 32 \
   --memory-gb 256 \
   --num-gpus 8
@@ -127,7 +127,7 @@ Uses the server's `claim_jobs_based_on_resources` endpoint which filters jobs ba
 **When**: `--max-parallel-jobs` IS set
 
 ```bash
-torc run-jobs $WORKFLOW_ID \
+torc run $WORKFLOW_ID \
   --max-parallel-jobs 10
 ```
 
@@ -139,7 +139,7 @@ Configure via compute node registration or command-line flags:
 
 **Via CLI**:
 ```bash
-torc run-jobs $WORKFLOW_ID \
+torc run $WORKFLOW_ID \
   --num-cpus 32 \
   --memory-gb 256 \
   --num-gpus 8 \
@@ -165,7 +165,7 @@ Job runners poll the server for ready jobs. Configure via `--poll-interval`:
 
 **Example**:
 ```bash
-torc run-jobs $WORKFLOW_ID --poll-interval 30.0
+torc run $WORKFLOW_ID --poll-interval 30.0
 ```
 
 Shorter intervals provide faster job pickup but increase server load.

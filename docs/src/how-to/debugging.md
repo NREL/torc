@@ -394,7 +394,7 @@ Warning: job runner log file does not exist for job 456: output/job_runner_host1
 3. **Logs cleaned up**: Files may have been manually deleted
 4. **Path mismatch**: Output directory moved or renamed after execution
 
-**Solution**: Verify the output directory and ensure it matches what was passed to `torc run-jobs` or `torc slurm schedule-nodes`.
+**Solution**: Verify the output directory and ensure it matches what was passed to `torc run` or `torc slurm schedule-nodes`.
 
 
 ## Output Directory Management
@@ -405,7 +405,7 @@ The `--output-dir` parameter must match the directory used during workflow execu
 
 ```bash
 # Execute workflow with specific output directory
-torc run-jobs <workflow_id> /path/to/my_output
+torc run <workflow_id> /path/to/my_output
 
 # Generate report using the same directory
 torc reports results <workflow_id> --output-dir /path/to/my_output

@@ -80,7 +80,7 @@ Output:
 ## Step 4: Run Workflow
 
 ```bash
-torc run-jobs $WORKFLOW_ID
+torc run $WORKFLOW_ID
 ```
 
 ## Step 5: Observe Data Flow

@@ -44,7 +44,7 @@ Then run the TUI:
 export TORC_API_URL="http://localhost:8080/torc-service/v1"
 
 # Run the TUI
-cargo run --bin torc-tui
+torc tui
 ```
 
 ## Keyboard Controls

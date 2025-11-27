@@ -62,7 +62,7 @@ Torc supports two different strategies for allocating jobs to runners:
 **Configuration**: Run the job runner WITHOUT `--max-parallel-jobs`:
 
 ```bash
-torc run-jobs $WORKFLOW_ID \
+torc run $WORKFLOW_ID \
   --num-cpus 32 \
   --memory-gb 256 \
   --num-gpus 4
@@ -83,7 +83,7 @@ torc run-jobs $WORKFLOW_ID \
 **Configuration**: Run the job runner WITH `--max-parallel-jobs`:
 
 ```bash
-torc run-jobs $WORKFLOW_ID \
+torc run $WORKFLOW_ID \
   --max-parallel-jobs 10 \
   --output-dir ./results
 ```

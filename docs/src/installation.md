@@ -39,16 +39,17 @@ cargo build --workspace --release
 
 ```bash
 # Server
-cargo build --release --bin torc-server
+cargo build --release -p torc-server
 
 # Client CLI
-cargo build --release --bin torc
+cargo build --release -p torc
 
 # Local job runner
 cargo build --release -p torc
 
 # Slurm job runner
-cargo build --release --bin torc-slurm-job-runner
+cargo build --release -p torc-slurm-job-runner
+```
 
 Binaries will be in `target/release/`. We recommend adding this directory
 to your system path so that run all binaries without using the path.
@@ -57,15 +58,15 @@ to your system path so that run all binaries without using the path.
 
 ### Running Tests
 
-```bash
 # Run all tests
+```bash
 cargo test -- --test-threads=1
 
 # Run specific test
-cargo test test_workflow_manager -- --nocapture
+cargo test --test test_workflow_manager test_initialize_files_with_updated_files
 
 # Run with debug logging
-RUST_LOG=info cargo test -- --nocapture
+RUST_LOG=debug cargo test -- --nocapture
 ```
 
 ### Setting Up the Server
@@ -84,3 +85,10 @@ cargo run -p torc-server
 ```
 
 Server will start on `http://localhost:8080`.
+
+When running small workflows for testing and demonstration purposes, we recommend setting this
+option so that the server detects job completions faster than the default value of 60 seconds.
+
+```bash
+./target/release/torc-server --unblock-interval-seconds 5
+```
