@@ -105,7 +105,7 @@ resource_requirements:
 ## Step 2: Create Workflow
 
 ```bash
-WORKFLOW_ID=$(torc workflows create-from-spec grid_search.yaml | jq -r '.id')
+WORKFLOW_ID=$(torc workflows create grid_search.yaml | jq -r '.id')
 torc workflows initialize-jobs $WORKFLOW_ID
 ```
 

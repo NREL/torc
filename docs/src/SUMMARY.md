@@ -24,7 +24,6 @@
   - [Design](./explanation/design/README.md)
     - [Server API Handler](./explanation/design/server.md)
     - [Central Database](./explanation/design/database.md)
-    - [Ready Queue](./explanation/design/ready-queue.md)
 
 # How-To Guides
 

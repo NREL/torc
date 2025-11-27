@@ -36,7 +36,7 @@ The Torc Dashboard provides a web-based interface for monitoring and managing wo
    pip install -e .
    ```
 
-   This installs the `torc` Python package with all dependencies including Dash and the `torc-dash` command-line entry point.
+   This installs the `torc_client` Python package with all dependencies including Dash and the `torc-dash` command-line entry point.
 
 3. **Verify installation**:
 
@@ -74,7 +74,6 @@ Pre-configure the dashboard using environment variables:
 
 ```bash
 export TORC_API_URL="http://localhost:8080/torc-service/v1"
-export USER="your_username"
 torc-dash
 ```
 
@@ -105,7 +104,6 @@ torc-dash
 
 - Set the Torc API URL
 - Configure username for workflow operations
-- Password authentication (planned for future release)
 
 ### View Resources Tab
 

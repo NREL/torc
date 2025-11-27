@@ -76,9 +76,6 @@
     {
       "trigger_type": "on_workflow_start",
       "action_type": "schedule_nodes",
-      "jobs": [
-        "setup"
-      ],
       "scheduler": "setup_scheduler",
       "scheduler_type": "slurm",
       "num_allocations": 1

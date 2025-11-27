@@ -41,8 +41,6 @@ torc/
 │   ├── lib.rs           # Library root
 │   └── models.rs        # Shared data models
 ├── torc-server/         # Standalone server binary
-├── torc-tui/            # Standalone TUI binary
-├── torc-plot-resources/ # Standalone plotting binary
 ├── torc-slurm-job-runner/ # Slurm job runner binary
 ├── python_client/       # Python CLI client and library
 │   ├── src/torc/        # Python package

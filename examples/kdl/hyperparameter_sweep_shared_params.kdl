@@ -1,0 +1,95 @@
+// Machine Learning Hyperparameter Sweep Workflow with Shared Parameters
+// Demonstrates using workflow-level shared parameters to avoid repeating parameter definitions
+// This creates 3 * 3 * 2 = 18 training jobs with different hyperparameter combinations
+//
+// Compare this to hyperparameter_sweep.kdl - same result, but parameters defined only once!
+
+name "hyperparameter_sweep_shared_params"
+user "mluser"
+description "Grid search over learning rate, batch size, and optimizer (using shared parameters)"
+
+// Workflow-level shared parameters - defined once, used by multiple jobs and files
+parameters {
+    lr "[0.0001,0.001,0.01]"
+    batch_size "[16,32,64]"
+    optimizer "['adam','sgd']"
+}
+
+// Resource requirements
+resource_requirements "minimal" {
+    num_cpus 1
+    num_gpus 0
+    num_nodes 1
+    memory "2g"
+    runtime "PT5M"
+}
+
+resource_requirements "data_prep" {
+    num_cpus 4
+    num_gpus 0
+    num_nodes 1
+    memory "8g"
+    runtime "PT30M"
+}
+
+resource_requirements "gpu_training" {
+    num_cpus 8
+    num_gpus 1
+    num_nodes 1
+    memory "32g"
+    runtime "PT2H"
+}
+
+// File specifications
+file "train_data" path="/data/train.pkl"
+file "val_data" path="/data/validation.pkl"
+
+// Model files - one per hyperparameter combination
+file "model_lr{lr:.4f}_bs{batch_size}_opt{optimizer}" {
+    path "/models/model_lr{lr:.4f}_bs{batch_size}_opt{optimizer}.pt"
+    use_parameters "lr" "batch_size" "optimizer"
+}
+
+// Metrics files - one per hyperparameter combination
+file "metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}" {
+    path "/results/metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}.json"
+    use_parameters "lr" "batch_size" "optimizer"
+}
+
+// Prepare datasets (one-time setup jobs)
+job "prepare_train_data" {
+    command "python scripts/prepare_data.py --split=train --output=/data/train.pkl"
+    resource_requirements "data_prep"
+    output_file "train_data"
+}
+
+job "prepare_val_data" {
+    command "python scripts/prepare_data.py --split=validation --output=/data/validation.pkl"
+    resource_requirements "data_prep"
+    output_file "val_data"
+}
+
+// Training jobs - one job per hyperparameter combination
+// This single job spec expands to 18 jobs
+job "train_lr{lr:.4f}_bs{batch_size}_opt{optimizer}" {
+    command "python train.py --learning-rate={lr} --batch-size={batch_size} --optimizer={optimizer} --train-data=/data/train.pkl --val-data=/data/validation.pkl --model-output=/models/model_lr{lr:.4f}_bs{batch_size}_opt{optimizer}.pt --metrics-output=/results/metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}.json"
+    resource_requirements "gpu_training"
+    blocked_by_job "prepare_train_data"
+    blocked_by_job "prepare_val_data"
+    input_file "train_data"
+    input_file "val_data"
+    output_file "model_lr{lr:.4f}_bs{batch_size}_opt{optimizer}"
+    output_file "metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}"
+    use_parameters "lr" "batch_size" "optimizer"
+}
+
+// Aggregate results from all training runs
+job "aggregate_results" {
+    command "python scripts/aggregate_metrics.py --input-dir=/results --output=/results/summary.csv"
+    resource_requirements "minimal"
+    // This will be expanded to wait for all 18 training jobs
+    blocked_by_job "train_lr{lr:.4f}_bs{batch_size}_opt{optimizer}"
+    // Wait for all metrics files
+    input_file "metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}"
+    use_parameters "lr" "batch_size" "optimizer"
+}

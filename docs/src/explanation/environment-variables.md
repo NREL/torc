@@ -53,10 +53,6 @@ curl -X POST "${TORC_API_URL}/files" \
   }"
 ```
 
-## Implementation Details
-
-These environment variables are set by the job runner when spawning job processes. The implementation can be found in `src/client/async_cli_command.rs` in the `start()` method.
-
 ## Complete Example
 
 Here's a complete example of a job that uses all three environment variables:
@@ -83,16 +79,6 @@ jobs:
       # Do some work
       echo "Processing data..." > "${OUTPUT_DIR}/status.txt"
       date >> "${OUTPUT_DIR}/status.txt"
-
-      # Register the output file with Torc
-      curl -X POST "${TORC_API_URL}/files" \
-        -H "Content-Type: application/json" \
-        -d "{
-          \"workflow_id\": ${TORC_WORKFLOW_ID},
-          \"name\": \"job_${TORC_JOB_ID}_output\",
-          \"path\": \"${OUTPUT_DIR}/status.txt\"
-        }"
-
       echo "Job completed successfully!"
 ```
 

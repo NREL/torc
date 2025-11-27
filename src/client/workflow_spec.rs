@@ -23,6 +23,10 @@ pub struct FileSpec {
     /// Supports range notation (e.g., "1:100" or "1:100:5") and lists (e.g., "[1,5,10]")
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parameters: Option<HashMap<String, String>>,
+    /// Names of workflow-level parameters to use for this file
+    /// If set, only these parameters from the workflow will be used
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub use_parameters: Option<Vec<String>>,
 }
 
 impl FileSpec {
@@ -33,6 +37,7 @@ impl FileSpec {
             name,
             path,
             parameters: None,
+            use_parameters: None,
         }
     }
 
@@ -209,6 +214,10 @@ pub struct JobSpec {
     /// Multiple parameters create a Cartesian product of jobs
     #[serde(skip_serializing_if = "Option::is_none")]
     pub parameters: Option<HashMap<String, String>>,
+    /// Names of workflow-level parameters to use for this job
+    /// If set, only these parameters from the workflow will be used
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub use_parameters: Option<Vec<String>>,
 }
 
 impl JobSpec {
@@ -234,6 +243,7 @@ impl JobSpec {
             output_user_data_regexes: None,
             scheduler: None,
             parameters: None,
+            use_parameters: None,
         }
     }
 
@@ -386,6 +396,10 @@ pub struct WorkflowSpec {
     pub user: Option<String>,
     /// Description of the workflow
     pub description: String,
+    /// Shared parameters that can be used by jobs and files
+    /// Jobs/files can reference these by setting use_parameters to parameter names
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub parameters: Option<HashMap<String, String>>,
     /// Inform all compute nodes to shut down this number of seconds before the expiration time
     #[serde(skip_serializing_if = "Option::is_none")]
     pub compute_node_expiration_buffer_seconds: Option<i64>,
@@ -431,6 +445,7 @@ impl WorkflowSpec {
             name,
             user: Some(user),
             description,
+            parameters: None,
             compute_node_expiration_buffer_seconds: None,
             compute_node_wait_for_new_jobs_seconds: None,
             compute_node_ignore_workflow_completion: None,
@@ -448,11 +463,24 @@ impl WorkflowSpec {
 
     /// Expand all parameterized jobs and files in this workflow spec
     /// This modifies the spec in-place, replacing parameterized specs with their expanded versions
+    ///
+    /// Parameter resolution order:
+    /// 1. If job/file has its own `parameters`, use those (local params override workflow params)
+    /// 2. If job/file has `use_parameters`, select only those from workflow-level params
     pub fn expand_parameters(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let workflow_params = self.parameters.clone();
+
         // Expand all jobs
         let mut expanded_jobs = Vec::new();
         for job in &self.jobs {
-            let expanded = job
+            // Resolve parameters for this job
+            let mut job_with_params = job.clone();
+            job_with_params.parameters =
+                Self::resolve_parameters(&job.parameters, &job.use_parameters, &workflow_params);
+            // Clear use_parameters after resolution
+            job_with_params.use_parameters = None;
+
+            let expanded = job_with_params
                 .expand()
                 .map_err(|e| format!("Failed to expand job '{}': {}", job.name, e))?;
             expanded_jobs.extend(expanded);
@@ -463,7 +491,17 @@ impl WorkflowSpec {
         if let Some(ref files) = self.files {
             let mut expanded_files = Vec::new();
             for file in files {
-                let expanded = file
+                // Resolve parameters for this file
+                let mut file_with_params = file.clone();
+                file_with_params.parameters = Self::resolve_parameters(
+                    &file.parameters,
+                    &file.use_parameters,
+                    &workflow_params,
+                );
+                // Clear use_parameters after resolution
+                file_with_params.use_parameters = None;
+
+                let expanded = file_with_params
                     .expand()
                     .map_err(|e| format!("Failed to expand file '{}': {}", file.name, e))?;
                 expanded_files.extend(expanded);
@@ -472,6 +510,49 @@ impl WorkflowSpec {
         }
 
         Ok(())
+    }
+
+    /// Resolve parameters for a job or file
+    ///
+    /// Returns the effective parameters based on:
+    /// 1. If local_params is set, return it (local overrides workflow)
+    /// 2. If use_params is set, filter workflow_params to only those names
+    /// 3. If neither is set, return None (job/file is not parameterized)
+    fn resolve_parameters(
+        local_params: &Option<HashMap<String, String>>,
+        use_params: &Option<Vec<String>>,
+        workflow_params: &Option<HashMap<String, String>>,
+    ) -> Option<HashMap<String, String>> {
+        // If local parameters are defined, use them (they take precedence)
+        if local_params.is_some() {
+            return local_params.clone();
+        }
+
+        // If no use_parameters specified, don't inherit workflow parameters
+        // Jobs must explicitly opt-in via use_parameters
+        let Some(param_names) = use_params else {
+            return None;
+        };
+
+        // If no workflow parameters, nothing to inherit
+        let Some(wf_params) = workflow_params else {
+            return None;
+        };
+
+        // Filter workflow parameters to only those specified in use_parameters
+        let mut filtered = HashMap::new();
+        for name in param_names {
+            if let Some(value) = wf_params.get(name) {
+                filtered.insert(name.clone(), value.clone());
+            }
+            // Silently ignore parameters that don't exist in workflow
+            // (could add validation here if desired)
+        }
+        if filtered.is_empty() {
+            None
+        } else {
+            Some(filtered)
+        }
     }
 
     /// Validate workflow actions
@@ -1305,6 +1386,42 @@ impl WorkflowSpec {
         Ok((job_name_to_id, created_jobs))
     }
 
+    /// Parse parameters from a KDL node's children
+    /// Expects a structure like:
+    /// ```kdl
+    /// parameters {
+    ///     i "1:100"
+    ///     lr "[0.001,0.01,0.1]"
+    /// }
+    /// ```
+    /// Returns a HashMap of parameter name -> value string
+    #[cfg(feature = "client")]
+    fn parse_kdl_parameters(
+        node: &KdlNode,
+    ) -> Result<Option<HashMap<String, String>>, Box<dyn std::error::Error>> {
+        let Some(children) = node.children() else {
+            return Ok(None);
+        };
+
+        let mut params = HashMap::new();
+        for child in children.nodes() {
+            let param_name = child.name().value().to_string();
+            let param_value = child
+                .entries()
+                .first()
+                .and_then(|e| e.value().as_string())
+                .ok_or_else(|| format!("Parameter '{}' must have a string value", param_name))?
+                .to_string();
+            params.insert(param_name, param_value);
+        }
+
+        if params.is_empty() {
+            Ok(None)
+        } else {
+            Ok(Some(params))
+        }
+    }
+
     /// Parse a WorkflowSpec from a KDL string
     #[cfg(feature = "client")]
     fn from_kdl_str(content: &str) -> Result<WorkflowSpec, Box<dyn std::error::Error>> {
@@ -1391,6 +1508,9 @@ impl WorkflowSpec {
                             }
                         };
                     }
+                }
+                "parameters" => {
+                    spec.parameters = Self::parse_kdl_parameters(node)?;
                 }
                 "job" => {
                     let job_spec = Self::parse_kdl_job(node)?;
@@ -1560,6 +1680,20 @@ impl WorkflowSpec {
                             .and_then(|e| e.value().as_string())
                             .map(|s| s.to_string());
                     }
+                    "parameters" => {
+                        job_spec.parameters = Self::parse_kdl_parameters(child)?;
+                    }
+                    "use_parameters" => {
+                        // Parse use_parameters as multiple string arguments: use_parameters "lr" "batch_size"
+                        let param_names: Vec<String> = child
+                            .entries()
+                            .iter()
+                            .filter_map(|e| e.value().as_string().map(|s| s.to_string()))
+                            .collect();
+                        if !param_names.is_empty() {
+                            job_spec.use_parameters = Some(param_names);
+                        }
+                    }
                     _ => {}
                 }
             }
@@ -1577,16 +1711,53 @@ impl WorkflowSpec {
             .ok_or("file must have a name")?
             .to_string();
 
-        let path = node
+        // Path can be specified as a property (file "name" path="/path")
+        // or as a child node for parameterized files
+        let mut path = node
             .get("path")
             .and_then(|e| e.as_string())
-            .ok_or("file must have a path property")?
-            .to_string();
+            .map(|s| s.to_string());
+
+        let mut parameters = None;
+        let mut use_parameters = None;
+
+        // Check for child nodes (path, parameters, use_parameters)
+        if let Some(children) = node.children() {
+            for child in children.nodes() {
+                match child.name().value() {
+                    "path" => {
+                        path = child
+                            .entries()
+                            .first()
+                            .and_then(|e| e.value().as_string())
+                            .map(|s| s.to_string());
+                    }
+                    "parameters" => {
+                        parameters = Self::parse_kdl_parameters(child)?;
+                    }
+                    "use_parameters" => {
+                        // Parse use_parameters as multiple string arguments: use_parameters "lr" "batch_size"
+                        let param_names: Vec<String> = child
+                            .entries()
+                            .iter()
+                            .filter_map(|e| e.value().as_string().map(|s| s.to_string()))
+                            .collect();
+                        if !param_names.is_empty() {
+                            use_parameters = Some(param_names);
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
+        let path = path.ok_or("file must have a path property")?;
 
         Ok(FileSpec {
             name,
             path,
-            parameters: None,
+            parameters,
+            use_parameters,
         })
     }
 
@@ -2026,6 +2197,30 @@ impl WorkflowSpec {
                     }
                 }
             }
+        };
+
+        Ok(workflow_spec)
+    }
+
+    /// Deserialize a WorkflowSpec from string content with a specified format
+    /// Useful for testing or when content is already loaded
+    ///
+    /// # Arguments
+    /// * `content` - The workflow spec content as a string
+    /// * `format` - The format type: "json", "json5", "yaml", "yml", or "kdl"
+    pub fn from_spec_file_content(
+        content: &str,
+        format: &str,
+    ) -> Result<WorkflowSpec, Box<dyn std::error::Error>> {
+        let workflow_spec: WorkflowSpec = match format.to_lowercase().as_str() {
+            "json" => serde_json::from_str(content)?,
+            "json5" => json5::from_str(content)?,
+            "yaml" | "yml" => serde_yaml::from_str(content)?,
+            #[cfg(feature = "client")]
+            "kdl" => Self::from_kdl_str(content)?,
+            #[cfg(not(feature = "client"))]
+            "kdl" => return Err("KDL format requires 'client' feature".into()),
+            _ => return Err(format!("Unknown format: {}", format).into()),
         };
 
         Ok(workflow_spec)

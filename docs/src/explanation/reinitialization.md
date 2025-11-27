@@ -15,7 +15,8 @@ Reinitialization allows workflows to be rerun when inputs change.
 
 The `process_changed_job_inputs` endpoint implements hash-based change detection:
 
-1. For each job, compute SHA256 hash of all inputs (files + user_data).
+1. For each job, compute SHA256 hash of all input parameters. **Note**: files are tracked by
+   modification times, not hashes. User data records are hashed.
 2. Compare to stored hash in the database.
 3. If hash differs, mark job as `uninitialized`.
 4. All updates happen in a single database transaction (all-or-none).
