@@ -28,7 +28,7 @@ Then define an action to schedule the node on workflow start:
 ```yaml
   - trigger_type: "on_workflow_start"
     action_type: "schedule_nodes"
-    scheduler: "setup_scheduler"
+    scheduler: "standard"
     scheduler_type: "slurm"
     num_allocations: 1
 ```

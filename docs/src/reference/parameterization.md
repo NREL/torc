@@ -241,7 +241,7 @@ files:
 
 - **DRY (Don't Repeat Yourself)** - Define parameter ranges once, use everywhere
 - **Consistency** - Ensures all jobs use the same parameter values
-- **Maintainability** - Change parameters in one place, affects all users
+- **Maintainability** - Change parameters in one place, affects all uses
 - **Selective inheritance** - Jobs can choose which parameters to use
 
 ### Selective Parameter Inheritance

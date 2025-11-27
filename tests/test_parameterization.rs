@@ -1,6 +1,6 @@
+use rstest::rstest;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use rstest::rstest;
 use torc::client::workflow_spec::{FileSpec, JobSpec, WorkflowSpec};
 
 #[rstest]
