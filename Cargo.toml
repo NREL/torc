@@ -29,6 +29,7 @@ tracing-appender = "0.2"
 tracing-timing = "0.6"
 hdrhistogram = "7.5"
 signal-hook = "0.3"
+libc = "0.2"
 file-rotate = "0.7"
 clap = { version = "4.4", features = ["derive", "env"] }
 clap_complete = "4.4"
@@ -134,6 +135,8 @@ client = [
     "dep:regex",
     "dep:rusqlite",
     "dep:rpassword",
+    "dep:signal-hook",
+    "dep:libc",
 ]
 tui = [
     "client",
@@ -200,6 +203,8 @@ env_logger = { workspace = true, optional = true }
 tabled = { workspace = true, optional = true }
 rusqlite = { workspace = true, optional = true }
 rpassword = { workspace = true, optional = true }
+signal-hook = { workspace = true, optional = true }
+libc = { workspace = true, optional = true }
 
 # TUI dependencies (optional)
 ratatui = { workspace = true, optional = true }

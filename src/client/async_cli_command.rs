@@ -1,3 +1,29 @@
+//! Asynchronous CLI command execution for workflow jobs.
+//!
+//! This module provides [`AsyncCliCommand`], which wraps a subprocess for executing
+//! workflow jobs. It supports:
+//!
+//! - Non-blocking process execution with status polling
+//! - Graceful termination via SIGTERM (Unix) or immediate kill (Windows)
+//! - Resource monitoring integration
+//! - Exit code capture including signal-based terminations
+//!
+//! # Termination Signals
+//!
+//! On Unix systems, the module supports two termination methods:
+//!
+//! - **`terminate()`** / **`send_sigterm()`**: Sends SIGTERM to the process, allowing it
+//!   to perform cleanup before exiting. The process should handle SIGTERM and exit
+//!   gracefully within a reasonable time.
+//!
+//! - **`cancel()`**: Sends SIGKILL to immediately terminate the process. No cleanup
+//!   is performed.
+//!
+//! On non-Unix systems, both methods result in immediate process termination.
+//!
+//! After calling `terminate()` or `cancel()`, call `wait_for_completion()` to wait
+//! for the process to exit and capture its exit code.
+
 use crate::client::resource_monitor::ResourceMonitor;
 use crate::models::{JobModel, JobStatus, ResultModel};
 use chrono::{DateTime, Utc};
@@ -6,6 +32,9 @@ use std::fs::File;
 use std::io::BufWriter;
 use std::path::Path;
 use std::process::{Child, Stdio};
+
+#[cfg(unix)]
+use std::os::unix::process::ExitStatusExt;
 
 const JOB_STDIO_DIR: &str = "job_stdio";
 
@@ -202,7 +231,21 @@ impl AsyncCliCommand {
         result
     }
 
-    /// Cancel the job. Does not wait to confirm. Call wait_for_completion afterwards.
+    /// Immediately kills the job process using SIGKILL.
+    ///
+    /// This method sends SIGKILL to the process, which cannot be caught or ignored.
+    /// The process will be terminated immediately without any cleanup. Use this for
+    /// jobs that don't support graceful termination.
+    ///
+    /// **Note**: This method does not wait for the process to exit. Call
+    /// [`wait_for_completion()`] afterwards to wait for the process and capture its exit code.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// async_cmd.cancel()?;
+    /// let exit_code = async_cmd.wait_for_completion()?;
+    /// ```
     pub fn cancel(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(ref mut child) = self.handle {
             child.kill()?;
@@ -210,16 +253,84 @@ impl AsyncCliCommand {
         Ok(())
     }
 
-    /// Terminate the command if it is running.
-    pub fn terminate(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        // TODO: need to handle SIGTERM on UNIX systems
+    /// Sends SIGTERM to the process for graceful termination (Unix only).
+    ///
+    /// SIGTERM is a signal that requests the process to terminate gracefully. Well-behaved
+    /// processes should catch this signal and perform cleanup (save state, flush buffers,
+    /// release resources) before exiting.
+    ///
+    /// **Note**: This method does not wait for the process to exit. Call
+    /// [`wait_for_completion()`] afterwards to wait for the process and capture its exit code.
+    ///
+    /// # Platform Behavior
+    ///
+    /// - **Unix**: Sends SIGTERM via `libc::kill()`
+    /// - **Windows/Other**: Falls back to `kill()` (SIGKILL equivalent)
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// async_cmd.send_sigterm()?;
+    /// let exit_code = async_cmd.wait_for_completion()?;
+    /// // exit_code will be negative (-15) if killed by SIGTERM on Unix
+    /// ```
+    #[cfg(unix)]
+    pub fn send_sigterm(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        if let Some(ref child) = self.handle {
+            let pid = child.id();
+            debug!("Sending SIGTERM to job {} (PID {})", self.job_id, pid);
+            // Send SIGTERM using libc
+            unsafe {
+                libc::kill(pid as libc::pid_t, libc::SIGTERM);
+            }
+        }
+        Ok(())
+    }
+
+    /// Sends a termination signal to the process (non-Unix fallback).
+    ///
+    /// On non-Unix systems (Windows, etc.), SIGTERM is not available, so this method
+    /// falls back to immediately killing the process. Jobs running on these platforms
+    /// will not have an opportunity for graceful cleanup.
+    ///
+    /// **Note**: This method does not wait for the process to exit. Call
+    /// [`wait_for_completion()`] afterwards to wait for the process and capture its exit code.
+    #[cfg(not(unix))]
+    pub fn send_sigterm(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         if let Some(ref mut child) = self.handle {
+            debug!(
+                "Sending kill signal to job {} (SIGTERM not available on this platform)",
+                self.job_id
+            );
             child.kill()?;
         }
-        match self.handle_completion(-1, JobStatus::Terminated) {
-            Ok(_) => Ok(()),
-            Err(e) => Err(e),
-        }
+        Ok(())
+    }
+
+    /// Requests graceful termination of the job by sending SIGTERM.
+    ///
+    /// This is an alias for [`send_sigterm()`]. Use this method when you want to give
+    /// the job process an opportunity to clean up before exiting.
+    ///
+    /// **Note**: This method does not wait for the process to exit. Call
+    /// [`wait_for_completion()`] afterwards to wait for the process and capture its exit code.
+    ///
+    /// # Graceful Shutdown Flow
+    ///
+    /// 1. Call `terminate()` to send SIGTERM
+    /// 2. The process catches SIGTERM and performs cleanup
+    /// 3. Call `wait_for_completion()` to wait for exit and get the exit code
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// // Graceful termination
+    /// async_cmd.terminate()?;
+    /// let exit_code = async_cmd.wait_for_completion()?;
+    /// assert!(async_cmd.is_complete);
+    /// ```
+    pub fn terminate(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        self.send_sigterm()
     }
 
     /// Force the job to completion with a return code and status. Does not send anything
@@ -284,17 +395,66 @@ impl AsyncCliCommand {
     //     self.exec_time_s / 60.0
     // }
 
-    /// Wait for the command to complete.
-    pub fn wait_for_completion(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        if let Some(ref mut child) = self.handle {
-            // If we have issues with the process hanging, we could could try_wait
+    /// Waits for the process to exit and returns its exit code.
+    ///
+    /// This method blocks until the process exits. It should be called after
+    /// [`terminate()`] or [`cancel()`] to wait for the process to finish and
+    /// capture its exit code.
+    ///
+    /// After this method returns, the job is marked as complete with status
+    /// `JobStatus::Terminated`.
+    ///
+    /// # Returns
+    ///
+    /// - **Positive value**: Normal exit code from the process
+    /// - **Negative value** (Unix): Signal number that killed the process (e.g., -15 for SIGTERM, -9 for SIGKILL)
+    /// - **-1**: Unknown exit status
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// async_cmd.terminate()?;  // Send SIGTERM
+    /// let exit_code = async_cmd.wait_for_completion()?;
+    ///
+    /// if exit_code == 0 {
+    ///     println!("Job exited normally");
+    /// } else if exit_code < 0 {
+    ///     println!("Job killed by signal {}", -exit_code);
+    /// } else {
+    ///     println!("Job exited with error code {}", exit_code);
+    /// }
+    /// ```
+    pub fn wait_for_completion(&mut self) -> Result<i32, Box<dyn std::error::Error>> {
+        let exit_code = if let Some(ref mut child) = self.handle {
+            // If we have issues with the process hanging, we could try_wait
             // with a timeout.
-            child.wait()?;
-        }
-        match self.handle_completion(-1, JobStatus::Terminated) {
-            Ok(_) => Ok(()),
-            Err(e) => Err(e),
-        }
+            let exit_status = child.wait()?;
+
+            #[cfg(unix)]
+            {
+                // On Unix, check if the process was terminated by a signal
+                if let Some(code) = exit_status.code() {
+                    code
+                } else if let Some(signal) = exit_status.signal() {
+                    // Process was killed by a signal - return negative signal number
+                    // This is a common Unix convention
+                    debug!("Job {} was terminated by signal {}", self.job_id, signal);
+                    -(signal as i32)
+                } else {
+                    -1
+                }
+            }
+            #[cfg(not(unix))]
+            {
+                exit_status.code().unwrap_or(-1)
+            }
+        } else {
+            -1
+        };
+
+        // Mark as terminated with the actual exit code
+        self.handle_completion(exit_code as i64, JobStatus::Terminated)?;
+        Ok(exit_code)
     }
 }
 

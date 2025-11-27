@@ -3,8 +3,12 @@ use clap::Parser;
 use env_logger::Builder;
 use log::{LevelFilter, debug, error, info};
 use serde_json;
+use signal_hook::consts::SIGTERM;
+use signal_hook::iterator::Signals;
 use std::fs::File;
 use std::path::PathBuf;
+use std::sync::atomic::Ordering;
+use std::thread;
 use torc::client::apis::configuration::Configuration;
 use torc::client::apis::default_api;
 use torc::client::commands::slurm::{create_compute_node, create_node_resources};
@@ -201,6 +205,30 @@ fn main() {
         args.is_subtask,
         unique_label,
     );
+
+    // Register SIGTERM signal handler
+    // When Slurm is about to reach walltime, it sends SIGTERM to this process.
+    // The handler sets a flag that the job runner checks in its main loop.
+    let termination_flag = job_runner.get_termination_flag();
+    let mut signals = match Signals::new([SIGTERM]) {
+        Ok(s) => s,
+        Err(e) => {
+            error!("Failed to register SIGTERM handler: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    // Spawn a thread to handle signals
+    thread::spawn(move || {
+        for sig in signals.forever() {
+            if sig == SIGTERM {
+                info!("Received SIGTERM signal from Slurm. Initiating graceful shutdown.");
+                termination_flag.store(true, Ordering::SeqCst);
+                // Exit the signal handler thread after setting the flag
+                break;
+            }
+        }
+    });
 
     match job_runner.run_worker() {
         Ok(_) => {

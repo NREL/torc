@@ -280,9 +280,15 @@ fn test_async_cli_command_terminate() {
         .expect("Failed to start command");
     assert!(async_cmd.is_running);
 
-    // Terminate the job
+    // Terminate the job (sends SIGTERM, doesn't wait)
     let result = async_cmd.terminate();
     assert!(result.is_ok());
+
+    // Wait for the process to actually exit
+    let exit_code = async_cmd.wait_for_completion();
+    assert!(exit_code.is_ok());
+
+    // Now the job should be marked as not running and complete
     assert!(!async_cmd.is_running);
     assert!(async_cmd.is_complete);
 }

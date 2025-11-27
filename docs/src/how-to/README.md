@@ -6,6 +6,7 @@ This section provides problem-oriented guides for accomplishing specific tasks w
 
 - Creating workflows using different methods
 - Working with Slurm clusters
+- Checkpointing jobs during wall-time timeouts
 - Managing compute resources
 - Configuring resource requirements
 - Debugging workflow failures with log files
