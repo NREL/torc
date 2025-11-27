@@ -62,10 +62,7 @@ Torc supports two different strategies for allocating jobs to runners:
 **Configuration**: Run the job runner WITHOUT `--max-parallel-jobs`:
 
 ```bash
-torc run $WORKFLOW_ID \
-  --num-cpus 32 \
-  --memory-gb 256 \
-  --num-gpus 4
+torc run $WORKFLOW_ID
 ```
 
 **Behavior**:
@@ -105,33 +102,3 @@ When using resource-based allocation (default), the job runner tracks available 
 - Number of jobs running per node
 
 When requesting jobs from the server, the runner only accepts jobs that fit within available resources.
-
-## Configuring Compute Nodes
-
-Register compute nodes with the server:
-
-```bash
-torc compute-nodes create \
-  --workflow-id $WORKFLOW_ID \
-  --hostname $(hostname) \
-  --num-cpus 32 \
-  --memory "256g" \
-  --num-gpus 8 \
-  --is-active true
-```
-
-The job runner can automatically detect local resources or use registered nodes for tracking.
-
-## Resource Over-Subscription
-
-By default, Torc prevents resource over-subscription. To allow it:
-
-```yaml
-resource_requirements:
-  - name: oversubscribe
-    num_cpus: 64      # More than physically available
-    memory: 512g
-    allow_oversubscribe: true
-```
-
-Use with caution - may cause performance degradation or out-of-memory errors.

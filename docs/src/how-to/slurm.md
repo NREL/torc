@@ -4,7 +4,7 @@
 - **External server**: A single member of your team allocates a shared server in
   the HPC environment to host a Torc server. This is recommended if your
   operations team provides this capability. The Torc server must be running on a
-  network accessible to compute nodes. There are three ways of running it:
+  network accessible to compute nodes.
 - **Login node**: By default, the server runs single-threaded. If you have small
   job counts and each job runs a long time, the overhead on the login node will
   be minimal. However, if you allocate hundreds of nodes with many thousands of
@@ -14,29 +14,35 @@
 
 ## Basic Slurm Configuration
 
-Define a Slurm scheduler in your workflow spec:
+Define a Slurm scheduler in your workflow spec that matches your jobs' resource requirements:
 
 ```yaml
 slurm_schedulers:
-  - name: my_cluster
-    partition: compute
+  - name: standard
     account: my_project
-    extra_sbatch_args: "--reservation=my_reservation"
+    nodes: 1
+    walltime: 12:00:00
 ```
 
-Then reference it in jobs:
-
+Then define an action to schedule the node on workflow start:
 ```yaml
-jobs:
-  - name: compute_job
-    command: ./run_simulation
-    resource_requirements: gpu_node
-    slurm_scheduler: my_cluster
+  - trigger_type: "on_workflow_start"
+    action_type: "schedule_nodes"
+    scheduler: "setup_scheduler"
+    scheduler_type: "slurm"
+    num_allocations: 1
 ```
+
+Start the workflow with the workflow specification or create it and then pass the ID.
+```bash
+torc submit <workflow_spec>
+```
+
+When Slurm allocates the node, a Torc worker will start pulling appropriate jobs from the database.
 
 ## Scheduling Compute Nodes
 
-Four main approaches for running Torc workers on Slurm:
+Three main approaches for running Torc workers on Slurm:
 
 ### Approach 1: Many Single-Node Allocations
 
@@ -115,47 +121,3 @@ torc slurm schedule-nodes -n 1 $WORKFLOW_ID
 
 **Drawbacks:**
 - Complexity: your code must find all compute nodes and coordinate worker startup.
-
-### Approach 4: Server on Head Node
-
-For HPC environments where a persistent Torc server is not available, you can
-start the server dynamically on the head node of your Slurm allocation:
-
-```yaml
-slurm_schedulers:
-  - name: "work_scheduler"
-    account: "my_account"
-    nodes: 10
-    walltime: "04:00:00"
-```
-
-```bash
-torc slurm schedule-nodes <workflow_id> \
-  --scheduler-config-id <config_id> \
-  --num-hpc-jobs 1 \
-  --start-server-on-head-node \
-  --start-one-worker-per-node
-```
-
-**What happens:**
-1. Torc server starts on the head node (`SLURM_NODEID=0`)
-2. Server listens on `http://$(hostname):8080`
-3. All workers connect to the head node's server
-4. Server and workers run within the same Slurm allocation
-
-**When to use:**
-- No persistent Torc server infrastructure available
-- Self-contained workflow execution needed
-- Running on clusters without external network access
-- Development and testing on HPC systems
-
-**Benefits:**
-- No external server infrastructure required
-- Self-contained execution within allocation
-- Works on air-gapped clusters
-- Server lifecycle matches job allocation
-
-**Drawbacks:**
-- Head node resources used for server
-- Server stops when allocation ends
-- Cannot submit new work from outside the allocation

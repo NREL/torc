@@ -104,7 +104,6 @@ torc submit examples/yaml/workflow_actions_data_pipeline.yaml
 
 **Use KDL when**:
 - You prefer minimal, clean syntax
-- Your workflow doesn't require parameterization
 - You want a more modern configuration language
 
-All three formats support the same core features (jobs, files, user_data, resource requirements, Slurm schedulers, actions, and resource monitoring), with parameterization being the main differentiator.
+All three formats support the same core features (jobs, files, user_data, resource requirements, Slurm schedulers, actions, and resource monitoring).

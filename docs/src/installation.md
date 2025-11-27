@@ -44,9 +44,6 @@ cargo build --release -p torc-server
 # Client CLI
 cargo build --release -p torc
 
-# Local job runner
-cargo build --release -p torc
-
 # Slurm job runner
 cargo build --release -p torc-slurm-job-runner
 ```

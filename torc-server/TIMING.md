@@ -130,7 +130,7 @@ For production monitoring, export to Jaeger or another OpenTelemetry backend:
 2. **Run your workflow with many jobs:**
    ```bash
    # Create workflow
-   torc workflows create-from-spec examples/hundred_jobs.yaml
+   torc workflows create examples/hundred_jobs.yaml
 
    # Get workflow ID from output
    WORKFLOW_ID=<id>

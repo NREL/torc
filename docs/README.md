@@ -76,7 +76,6 @@ src/
 │   ├── job-states.md
 │   ├── reinitialization.md
 │   ├── dependencies.md
-│   └── ready-queue.md
 │
 ├── how-to/                 # Problem-oriented
 │   ├── README.md

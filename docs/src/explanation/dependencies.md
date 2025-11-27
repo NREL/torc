@@ -13,7 +13,7 @@ jobs:
   - name: analyze
     command: analyze.sh
     blocked_by:
-      - job1
+      - preprocess
 ```
 
 ## 2. Implicit Dependencies

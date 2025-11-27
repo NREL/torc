@@ -100,7 +100,7 @@ echo -e "apple red\nbanana yellow\ncherry red\ndate brown" > /tmp/input.txt
 ## Step 3: Create and Initialize Workflow
 
 ```bash
-WORKFLOW_ID=$(torc workflows create-from-spec diamond.yaml | jq -r '.id')
+WORKFLOW_ID=$(torc workflows create diamond.yaml | jq -r '.id')
 
 # Update input file timestamp so it's "ready"
 touch /tmp/input.txt

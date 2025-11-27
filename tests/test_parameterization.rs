@@ -1,5 +1,178 @@
 use std::collections::HashMap;
+use std::path::PathBuf;
 use torc::client::workflow_spec::{FileSpec, JobSpec, WorkflowSpec};
+
+#[test]
+fn test_kdl_job_parameterization() {
+    let kdl_content = r#"
+name "test_parameterized"
+description "Test parameterized jobs in KDL format"
+
+job "job_{i:03d}" {
+    command "echo hello {i}"
+    parameters {
+        i "1:5"
+    }
+}
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(kdl_content, "kdl")
+        .expect("Failed to parse KDL workflow spec");
+
+    // Before expansion, should have 1 job with parameters
+    assert_eq!(spec.jobs.len(), 1);
+    assert!(spec.jobs[0].parameters.is_some());
+
+    // Expand parameters
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // After expansion, should have 5 jobs
+    assert_eq!(spec.jobs.len(), 5);
+    assert_eq!(spec.jobs[0].name, "job_001");
+    assert_eq!(spec.jobs[0].command, "echo hello 1");
+    assert_eq!(spec.jobs[4].name, "job_005");
+    assert_eq!(spec.jobs[4].command, "echo hello 5");
+
+    // Parameters should be removed from expanded jobs
+    for job in &spec.jobs {
+        assert!(job.parameters.is_none());
+    }
+}
+
+#[test]
+fn test_kdl_file_parameterization() {
+    let kdl_content = r#"
+name "test_parameterized_files"
+description "Test parameterized files in KDL format"
+
+file "output_{run_id}" {
+    path "/data/output_{run_id}.txt"
+    parameters {
+        run_id "1:3"
+    }
+}
+
+job "process" {
+    command "echo test"
+}
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(kdl_content, "kdl")
+        .expect("Failed to parse KDL workflow spec");
+
+    // Before expansion, should have 1 file with parameters
+    assert_eq!(spec.files.as_ref().unwrap().len(), 1);
+    assert!(spec.files.as_ref().unwrap()[0].parameters.is_some());
+
+    // Expand parameters
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // After expansion, should have 3 files
+    let files = spec.files.as_ref().unwrap();
+    assert_eq!(files.len(), 3);
+    assert_eq!(files[0].name, "output_1");
+    assert_eq!(files[0].path, "/data/output_1.txt");
+    assert_eq!(files[2].name, "output_3");
+    assert_eq!(files[2].path, "/data/output_3.txt");
+
+    // Parameters should be removed from expanded files
+    for file in files {
+        assert!(file.parameters.is_none());
+    }
+}
+
+#[test]
+fn test_kdl_multi_dimensional_parameterization() {
+    let kdl_content = r#"
+name "test_multi_param"
+description "Test multi-dimensional parameterization in KDL format"
+
+job "train_lr{lr:.4f}_bs{batch_size}" {
+    command "python train.py --lr={lr} --batch-size={batch_size}"
+    parameters {
+        lr "[0.001,0.01]"
+        batch_size "[16,32]"
+    }
+}
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(kdl_content, "kdl")
+        .expect("Failed to parse KDL workflow spec");
+
+    // Expand parameters
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // Should have 2 * 2 = 4 jobs
+    assert_eq!(spec.jobs.len(), 4);
+
+    // Verify all expected combinations exist
+    let names: Vec<&str> = spec.jobs.iter().map(|j| j.name.as_str()).collect();
+    assert!(names.contains(&"train_lr0.0010_bs16"));
+    assert!(names.contains(&"train_lr0.0010_bs32"));
+    assert!(names.contains(&"train_lr0.0100_bs16"));
+    assert!(names.contains(&"train_lr0.0100_bs32"));
+}
+
+#[test]
+fn test_kdl_example_file_hundred_jobs() {
+    // Test parsing the actual KDL example file
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let path = PathBuf::from(manifest_dir).join("examples/kdl/hundred_jobs_parameterized.kdl");
+
+    let mut spec = WorkflowSpec::from_spec_file(&path).expect("Failed to parse KDL example file");
+
+    assert_eq!(spec.name, "hundred_jobs_parameterized");
+    assert_eq!(spec.jobs.len(), 1);
+    assert!(spec.jobs[0].parameters.is_some());
+
+    // Expand parameters
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // Should have 100 jobs after expansion
+    assert_eq!(spec.jobs.len(), 100);
+    assert_eq!(spec.jobs[0].name, "job_001");
+    assert_eq!(spec.jobs[99].name, "job_100");
+}
+
+#[test]
+fn test_kdl_example_file_hyperparameter_sweep() {
+    // Test parsing the actual KDL hyperparameter sweep example
+    let manifest_dir = env!("CARGO_MANIFEST_DIR");
+    let path = PathBuf::from(manifest_dir).join("examples/kdl/hyperparameter_sweep.kdl");
+
+    let mut spec =
+        WorkflowSpec::from_spec_file(&path).expect("Failed to parse KDL hyperparameter sweep file");
+
+    assert_eq!(spec.name, "hyperparameter_sweep");
+
+    // Before expansion: 4 jobs (prepare_train, prepare_val, train template, aggregate template)
+    assert_eq!(spec.jobs.len(), 4);
+
+    // Before expansion: 4 files (train_data, val_data, model template, metrics template)
+    assert_eq!(spec.files.as_ref().unwrap().len(), 4);
+
+    // Expand parameters
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // After expansion:
+    // - 2 prepare jobs (unchanged)
+    // - 18 training jobs (3 lr * 3 batch_size * 2 optimizer)
+    // - 18 aggregate jobs (expanded from template)
+    // Total: 2 + 18 + 18 = 38 jobs
+    assert_eq!(spec.jobs.len(), 38);
+
+    // Files after expansion:
+    // - 2 data files (unchanged)
+    // - 18 model files (parameterized)
+    // - 18 metrics files (parameterized)
+    // Total: 2 + 18 + 18 = 38 files
+    assert_eq!(spec.files.as_ref().unwrap().len(), 38);
+}
 
 #[test]
 fn test_integer_range_expansion() {
@@ -247,6 +420,7 @@ fn test_workflow_spec_expand_parameters() {
         compute_node_ignore_workflow_completion: None,
         compute_node_wait_for_new_jobs_seconds: None,
         jobs_sort_method: None,
+        parameters: None,
         jobs: vec![JobSpec {
             name: "job_{i}".to_string(),
             command: "echo {i}".to_string(),
@@ -270,6 +444,7 @@ fn test_workflow_spec_expand_parameters() {
                 params.insert("i".to_string(), "1:3".to_string());
                 params
             }),
+            use_parameters: None,
         }],
         files: Some(vec![{
             let mut file = FileSpec::new("file_{i}".to_string(), "/data/file_{i}.txt".to_string());
@@ -388,4 +563,322 @@ fn test_user_data_name_substitution() {
         expanded[1].output_user_data,
         Some(vec!["results_test".to_string()])
     );
+}
+
+// ==================== Shared Parameters Tests ====================
+
+#[test]
+fn test_shared_parameters_yaml() {
+    let yaml_content = r#"
+name: shared_params_test
+description: Test workflow-level shared parameters
+
+parameters:
+  i: "1:3"
+  prefix: "['a','b']"
+
+jobs:
+  - name: job_{i}_{prefix}
+    command: echo {i} {prefix}
+    use_parameters:
+      - i
+      - prefix
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(yaml_content, "yaml")
+        .expect("Failed to parse YAML workflow spec");
+
+    // Verify workflow-level parameters were parsed
+    assert!(spec.parameters.is_some());
+    let params = spec.parameters.as_ref().unwrap();
+    assert_eq!(params.get("i").unwrap(), "1:3");
+    assert_eq!(params.get("prefix").unwrap(), "['a','b']");
+
+    // Verify job has use_parameters
+    assert!(spec.jobs[0].use_parameters.is_some());
+    assert_eq!(spec.jobs[0].use_parameters.as_ref().unwrap().len(), 2);
+
+    // Expand parameters
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // Should have 3 * 2 = 6 jobs
+    assert_eq!(spec.jobs.len(), 6);
+
+    // Check that all combinations exist
+    let names: Vec<&str> = spec.jobs.iter().map(|j| j.name.as_str()).collect();
+    assert!(names.contains(&"job_1_a"));
+    assert!(names.contains(&"job_1_b"));
+    assert!(names.contains(&"job_2_a"));
+    assert!(names.contains(&"job_2_b"));
+    assert!(names.contains(&"job_3_a"));
+    assert!(names.contains(&"job_3_b"));
+}
+
+#[test]
+fn test_shared_parameters_kdl() {
+    let kdl_content = r#"
+name "shared_params_test"
+description "Test workflow-level shared parameters in KDL"
+
+parameters {
+    i "1:3"
+    prefix "['a','b']"
+}
+
+job "job_{i}_{prefix}" {
+    command "echo {i} {prefix}"
+    use_parameters "i" "prefix"
+}
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(kdl_content, "kdl")
+        .expect("Failed to parse KDL workflow spec");
+
+    // Verify workflow-level parameters were parsed
+    assert!(spec.parameters.is_some());
+    let params = spec.parameters.as_ref().unwrap();
+    assert_eq!(params.get("i").unwrap(), "1:3");
+    assert_eq!(params.get("prefix").unwrap(), "['a','b']");
+
+    // Verify job has use_parameters
+    assert!(spec.jobs[0].use_parameters.is_some());
+
+    // Expand parameters
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // Should have 3 * 2 = 6 jobs
+    assert_eq!(spec.jobs.len(), 6);
+
+    // Check that all combinations exist
+    let names: Vec<&str> = spec.jobs.iter().map(|j| j.name.as_str()).collect();
+    assert!(names.contains(&"job_1_a"));
+    assert!(names.contains(&"job_3_b"));
+}
+
+#[test]
+fn test_shared_parameters_json5() {
+    let json5_content = r#"
+{
+    name: "shared_params_test",
+    description: "Test workflow-level shared parameters in JSON5",
+
+    parameters: {
+        i: "1:3",
+        prefix: "['a','b']"
+    },
+
+    jobs: [
+        {
+            name: "job_{i}_{prefix}",
+            command: "echo {i} {prefix}",
+            use_parameters: ["i", "prefix"]
+        }
+    ]
+}
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(json5_content, "json5")
+        .expect("Failed to parse JSON5 workflow spec");
+
+    // Verify workflow-level parameters were parsed
+    assert!(spec.parameters.is_some());
+
+    // Expand parameters
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // Should have 3 * 2 = 6 jobs
+    assert_eq!(spec.jobs.len(), 6);
+}
+
+#[test]
+fn test_shared_parameters_selective_inheritance() {
+    // Test that use_parameters only inherits specified parameters
+    let yaml_content = r#"
+name: selective_params_test
+description: Test selective parameter inheritance
+
+parameters:
+  a: "1:2"
+  b: "3:4"
+  c: "5:6"
+
+jobs:
+  # This job should only use parameters a and b (4 jobs)
+  - name: job_{a}_{b}
+    command: echo {a} {b}
+    use_parameters:
+      - a
+      - b
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(yaml_content, "yaml")
+        .expect("Failed to parse YAML workflow spec");
+
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // Should have 2 * 2 = 4 jobs (not using parameter c)
+    assert_eq!(spec.jobs.len(), 4);
+
+    // Check that only a and b were used
+    let names: Vec<&str> = spec.jobs.iter().map(|j| j.name.as_str()).collect();
+    assert!(names.contains(&"job_1_3"));
+    assert!(names.contains(&"job_1_4"));
+    assert!(names.contains(&"job_2_3"));
+    assert!(names.contains(&"job_2_4"));
+}
+
+#[test]
+fn test_shared_parameters_with_files() {
+    let yaml_content = r#"
+name: file_params_test
+description: Test shared parameters with files
+
+parameters:
+  i: "1:2"
+
+files:
+  - name: file_{i}
+    path: /data/file_{i}.txt
+    use_parameters:
+      - i
+
+jobs:
+  - name: job_{i}
+    command: process /data/file_{i}.txt
+    input_files:
+      - file_{i}
+    use_parameters:
+      - i
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(yaml_content, "yaml")
+        .expect("Failed to parse YAML workflow spec");
+
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // Should have 2 files
+    assert_eq!(spec.files.as_ref().unwrap().len(), 2);
+    let file_names: Vec<&str> = spec
+        .files
+        .as_ref()
+        .unwrap()
+        .iter()
+        .map(|f| f.name.as_str())
+        .collect();
+    assert!(file_names.contains(&"file_1"));
+    assert!(file_names.contains(&"file_2"));
+
+    // Should have 2 jobs
+    assert_eq!(spec.jobs.len(), 2);
+}
+
+#[test]
+fn test_local_parameters_override_shared() {
+    // Test that local parameters take precedence over shared parameters
+    let yaml_content = r#"
+name: override_params_test
+description: Test local parameters override shared
+
+parameters:
+  i: "1:5"
+
+jobs:
+  # This job uses local parameters (overrides shared)
+  - name: job_{i}
+    command: echo {i}
+    parameters:
+      i: "10:12"
+"#;
+
+    let mut spec = WorkflowSpec::from_spec_file_content(yaml_content, "yaml")
+        .expect("Failed to parse YAML workflow spec");
+
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // Should have 3 jobs (from local 10:12), not 5 (from shared 1:5)
+    assert_eq!(spec.jobs.len(), 3);
+
+    // Check that local parameters were used
+    let names: Vec<&str> = spec.jobs.iter().map(|j| j.name.as_str()).collect();
+    assert!(names.contains(&"job_10"));
+    assert!(names.contains(&"job_11"));
+    assert!(names.contains(&"job_12"));
+}
+
+#[test]
+fn test_example_file_hyperparameter_sweep_shared_params_yaml() {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("examples/yaml/hyperparameter_sweep_shared_params.yaml");
+
+    let mut spec = WorkflowSpec::from_spec_file(&path)
+        .expect("Failed to load hyperparameter_sweep_shared_params.yaml");
+
+    // Verify workflow-level parameters were parsed
+    assert!(spec.parameters.is_some());
+    let params = spec.parameters.as_ref().unwrap();
+    assert_eq!(params.len(), 3);
+    assert!(params.contains_key("lr"));
+    assert!(params.contains_key("batch_size"));
+    assert!(params.contains_key("optimizer"));
+
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // Should have same structure as non-shared version (hyperparameter_sweep.yaml):
+    // - 2 prepare jobs (no parameters)
+    // - 18 training jobs (3 lr * 3 batch_size * 2 optimizer)
+    // - 18 aggregate jobs (expanded from template)
+    // Total: 2 + 18 + 18 = 38 jobs
+    assert_eq!(spec.jobs.len(), 38);
+
+    // Files after expansion:
+    // - 2 data files (no parameters)
+    // - 18 model files (parameterized)
+    // - 18 metrics files (parameterized)
+    // Total: 2 + 18 + 18 = 38 files
+    assert_eq!(spec.files.as_ref().unwrap().len(), 38);
+}
+
+#[test]
+fn test_example_file_hyperparameter_sweep_shared_params_kdl() {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("examples/kdl/hyperparameter_sweep_shared_params.kdl");
+
+    let mut spec = WorkflowSpec::from_spec_file(&path)
+        .expect("Failed to load hyperparameter_sweep_shared_params.kdl");
+
+    // Verify workflow-level parameters were parsed
+    assert!(spec.parameters.is_some());
+
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // Should have same structure as YAML version: 38 jobs, 38 files
+    assert_eq!(spec.jobs.len(), 38);
+    assert_eq!(spec.files.as_ref().unwrap().len(), 38);
+}
+
+#[test]
+fn test_example_file_hyperparameter_sweep_shared_params_json5() {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+        .join("examples/json5/hyperparameter_sweep_shared_params.json5");
+
+    let mut spec = WorkflowSpec::from_spec_file(&path)
+        .expect("Failed to load hyperparameter_sweep_shared_params.json5");
+
+    // Verify workflow-level parameters were parsed
+    assert!(spec.parameters.is_some());
+
+    spec.expand_parameters()
+        .expect("Failed to expand parameters");
+
+    // Should have same structure as YAML/KDL versions: 38 jobs, 38 files
+    assert_eq!(spec.jobs.len(), 38);
+    assert_eq!(spec.files.as_ref().unwrap().len(), 38);
 }

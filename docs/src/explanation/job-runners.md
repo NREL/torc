@@ -16,16 +16,28 @@ The job runner supports two different strategies for retrieving and executing jo
 **Used when**: `--max-parallel-jobs` is NOT specified
 
 **Behavior**:
-- Retrieves jobs from the server via `GET /workflows/{id}/claim_jobs_based_on_resources`
+- Retrieves jobs from the server via the command `claim_jobs_based_on_resources`
 - Server filters jobs based on available compute node resources (CPU, memory, GPU)
 - Only returns jobs that fit within the current resource capacity
 - Prevents resource over-subscription and ensures jobs have required resources
-- Defaults to requiring one CPU for each job.
+- Defaults to requiring one CPU an 1 MB of memory for each job.
 
-**Use case**: When you have heterogeneous jobs with different resource requirements and want
+**Use cases**:
+- When you want parallelization based on one CPU per job.
+- When you have heterogeneous jobs with different resource requirements and want
 intelligent resource management.
 
-**Example**:
+**Example 1: Run jobs at queue depth of num_cpus**:
+```yaml
+parameters:
+  i: "1..100"
+jobs:
+  - name: "work_{i}"
+    command: bash my_script.sh {i}
+    use_parameters: {i}
+```
+
+**Example 2: Resource-based parallelization**:
 ```yaml
 resource_requirements:
   - name: "work_resources"
@@ -34,10 +46,13 @@ resource_requirements:
     runtime: "PT4H"
     num_nodes: 1
     
+parameters:
+  i: "1..100"
 jobs:
-  - name: "work1"
-    command: bash my_script.sh
+  - name: "work_{i}"
+    command: bash my_script.sh {i}
     resource_requirements: work_resources  
+    use_parameters: {i}
 ```
 
 ### Simple Queue-Based Allocation
@@ -45,13 +60,14 @@ jobs:
 **Used when**: `--max-parallel-jobs` is specified
 
 **Behavior**:
-- Retrieves jobs from the server via `GET /workflows/{id}/claim_next_jobs`
+- Retrieves jobs from the server via the command `claim_next_jobs`
 - Server returns the next N ready jobs from the queue (up to the specified limit)
 - Ignores job resource requirements completely
 - Simply limits the number of concurrent jobs
 
-**Use case**: When all jobs have similar resource needs or when the resource bottleneck is not
-tracked by Torc, such as network or storage I/O.
+**Use cases**: When all jobs have similar resource needs or when the resource bottleneck is not
+tracked by Torc, such as network or storage I/O. This is the only way to run jobs at a queue
+depth higher than the number of CPUs in the worker.
 
 **Example**:
 ```bash
@@ -66,16 +82,17 @@ The job runner executes a continuous loop with these steps:
 
 1. **Check workflow status** - Poll server to check if workflow is complete or canceled
 2. **Monitor running jobs** - Check status of currently executing jobs
-3. **Execute workflow actions** - Check for and execute any pending workflow actions
+3. **Execute workflow actions** - Check for and execute any pending workflow actions, such as
+   scheduling new Slurm allocations.
 4. **Claim new jobs** - Request ready jobs from server based on allocation strategy:
-   - Resource-based: `GET /workflows/{id}/claim_jobs_based_on_resources`
-   - Queue-based: `GET /workflows/{id}/claim_next_jobs`
+   - Resource-based: `claim_jobs_based_on_resources`
+   - Queue-based: `claim_next_jobs`
 5. **Start jobs** - For each claimed job:
-   - Call `POST /jobs/{id}/start_job` to mark job as started in database
-   - Execute job command using `AsyncCliCommand` (non-blocking subprocess)
-   - Track stdout/stderr output to files
+   - Call `start_job` to mark job as started in database
+   - Execute job command in a non-blocking subprocess
+   - Record stdout/stderr output to files
 6. **Complete jobs** - When running jobs finish:
-   - Call `POST /jobs/{id}/complete_job` with exit code and result
+   - Call `complete_job` with exit code and result
    - Server updates job status and automatically marks dependent jobs as ready
 7. **Sleep and repeat** - Wait for job completion poll interval, then repeat loop
 

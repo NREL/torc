@@ -1,0 +1,120 @@
+# Machine Learning Hyperparameter Sweep Workflow with Shared Parameters
+# Demonstrates using workflow-level shared parameters to avoid repeating parameter definitions
+# This creates 3 * 3 * 2 = 18 training jobs with different hyperparameter combinations
+#
+# Compare this to hyperparameter_sweep.yaml - same result, but parameters defined only once!
+
+name: hyperparameter_sweep_shared_params
+user: mluser
+description: Grid search over learning rate, batch size, and optimizer (using shared parameters)
+
+# Workflow-level shared parameters - defined once, used by multiple jobs and files
+parameters:
+  lr: "[0.0001,0.001,0.01]"
+  batch_size: "[16,32,64]"
+  optimizer: "['adam','sgd']"
+
+# Prepare datasets (one-time setup jobs - no parameters needed)
+jobs:
+  - name: prepare_train_data
+    command: python scripts/prepare_data.py --split=train --output=/data/train.pkl
+    resource_requirements: data_prep
+    output_files:
+      - train_data
+
+  - name: prepare_val_data
+    command: python scripts/prepare_data.py --split=validation --output=/data/validation.pkl
+    resource_requirements: data_prep
+    output_files:
+      - val_data
+
+  # Training jobs - uses all shared parameters automatically
+  # This single job spec expands to 18 jobs
+  - name: train_lr{lr:.4f}_bs{batch_size}_opt{optimizer}
+    command: |
+      python train.py \
+        --learning-rate={lr} \
+        --batch-size={batch_size} \
+        --optimizer={optimizer} \
+        --train-data=/data/train.pkl \
+        --val-data=/data/validation.pkl \
+        --model-output=/models/model_lr{lr:.4f}_bs{batch_size}_opt{optimizer}.pt \
+        --metrics-output=/results/metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}.json
+    resource_requirements: gpu_training
+    blocked_by:
+      - prepare_train_data
+      - prepare_val_data
+    input_files:
+      - train_data
+      - val_data
+    output_files:
+      - model_lr{lr:.4f}_bs{batch_size}_opt{optimizer}
+      - metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}
+    # Inherit all workflow parameters - no need to repeat them!
+    use_parameters:
+      - lr
+      - batch_size
+      - optimizer
+
+  # Aggregate results from all training runs
+  - name: aggregate_results
+    command: python scripts/aggregate_metrics.py --input-dir=/results --output=/results/summary.csv
+    resource_requirements: minimal
+    blocked_by:
+      # This will be expanded to wait for all 18 training jobs
+      - train_lr{lr:.4f}_bs{batch_size}_opt{optimizer}
+    input_files:
+      # Wait for all metrics files
+      - metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}
+    # Inherit all workflow parameters
+    use_parameters:
+      - lr
+      - batch_size
+      - optimizer
+
+# File specifications
+files:
+  - name: train_data
+    path: /data/train.pkl
+
+  - name: val_data
+    path: /data/validation.pkl
+
+  # Model files - one per hyperparameter combination
+  - name: model_lr{lr:.4f}_bs{batch_size}_opt{optimizer}
+    path: /models/model_lr{lr:.4f}_bs{batch_size}_opt{optimizer}.pt
+    use_parameters:
+      - lr
+      - batch_size
+      - optimizer
+
+  # Metrics files - one per hyperparameter combination
+  - name: metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}
+    path: /results/metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}.json
+    use_parameters:
+      - lr
+      - batch_size
+      - optimizer
+
+# Resource requirements
+resource_requirements:
+  - name: minimal
+    num_cpus: 1
+    num_gpus: 0
+    num_nodes: 1
+    memory: 2g
+    runtime: PT5M
+
+  - name: data_prep
+    num_cpus: 4
+    num_gpus: 0
+    num_nodes: 1
+    memory: 8g
+    runtime: PT30M
+
+  - name: gpu_training
+    num_cpus: 8
+    num_gpus: 1
+    num_nodes: 1
+    memory: 32g
+    runtime: PT2H

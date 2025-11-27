@@ -1325,6 +1325,7 @@ fn test_json_field_name_compatibility() {
         output_user_data_regexes: None,
         scheduler: Some("sched".to_string()),
         parameters: None,
+        use_parameters: None,
     };
 
     let json = serde_json::to_value(&job).expect("Failed to serialize to JSON value");

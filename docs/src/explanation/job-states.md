@@ -33,13 +33,6 @@ stateDiagram-v2
 - **completed** (5) - Finished successfully (exit code 0)
 - **failed** (6) - Finished with error (exit code != 0)
 - **canceled** (7) - Explicitly canceled by user or system
-- **terminated** (8) - Explicitly terminated by user or system
+- **terminated** (8) - Explicitly terminated by system, such as for checkpointing before
+  wall-time timeout
 - **disabled** (9) - Explicitly disabled by user
-
-## Critical State Transitions
-
-1. **initialize_jobs** - Evaluates all dependencies and sets jobs to `ready` or `blocked`
-2. **manage_status_change** - Updates job status and triggers cascade effects:
-   - When a job completes, checks if blocked jobs become ready
-   - Updates workflow status when all jobs complete
-   - Handles `cancel_on_blocking_job_failure` flag

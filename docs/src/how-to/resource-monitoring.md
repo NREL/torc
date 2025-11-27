@@ -91,7 +91,7 @@ jobs:
 If you want to create a workflow without resource monitoring, use the `--no-resource-monitoring` flag:
 
 ```bash
-torc workflows create-from-spec my_workflow.yaml --no-resource-monitoring
+torc workflows create my_workflow.yaml --no-resource-monitoring
 ```
 
 ## Viewing Resource Metrics
@@ -308,7 +308,7 @@ resource_requirements:
    torc reports check-resource-utilization <workflow_id>
 
    # Then, plot detailed metrics for problematic jobs
-   torc-plot-resources output/resource_utilization/resource_metrics_*.db \
+   torc plot-resources output/resource_utilization/resource_metrics_*.db \
      --job-ids 15,16
    ```
 
@@ -352,7 +352,7 @@ This format is useful for:
 Torc includes a standalone tool for generating interactive HTML visualizations from time series data:
 
 ```bash
-torc-plot-resources <database_path> -o <output_dir>
+torc plot-resources <database_path> -o <output_dir>
 ```
 
 ### What Gets Generated
@@ -381,16 +381,16 @@ The tool creates several types of interactive Plotly visualizations:
 
 ```bash
 # Generate plots from a resource monitoring database
-torc-plot-resources output/resource_utilization/resource_metrics_1_1.db \
+torc plot-resources output/resource_utilization/resource_metrics_1_1.db \
   -o output/plots
 
 # Generate plots for specific jobs only
-torc-plot-resources output/resource_utilization/resource_metrics_1_1.db \
+torc plot-resources output/resource_utilization/resource_metrics_1_1.db \
   -o output/plots \
   --job-ids 1,3,5
 
 # Use custom filename prefix
-torc-plot-resources output/resource_utilization/resource_metrics_1_1.db \
+torc plot-resources output/resource_utilization/resource_metrics_1_1.db \
   -o output/plots \
   --prefix my_experiment
 ```
@@ -550,7 +550,7 @@ After running this workflow:
 
 ```bash
 # Create and run the workflow
-torc workflows create-from-spec ml_pipeline.yaml
+torc workflows create ml_pipeline.yaml
 torc run <workflow_id>
 
 # Check for resource over-utilization
@@ -560,7 +560,7 @@ torc reports check-resource-utilization <workflow_id>
 torc results list <workflow_id>
 
 # Generate interactive plots for problematic jobs
-torc-plot-resources output/resource_utilization/resource_metrics_*.db \
+torc plot-resources output/resource_utilization/resource_metrics_*.db \
   -o plots/ml_pipeline
 ```
 

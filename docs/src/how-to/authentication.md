@@ -93,7 +93,7 @@ torc --username alice workflows list
 Password: ****
 
 # All commands support authentication
-torc --username alice --password mypassword workflows create-from-spec workflow.yaml
+torc --username alice --password mypassword workflows create workflow.yaml
 ```
 
 ### Using Environment Variables
@@ -230,7 +230,7 @@ export TORC_PASSWORD="${TORC_PASSWORD}"
 export TORC_API_URL=https://torc.example.com/torc-service/v1
 
 # Run workflow
-torc workflows create-from-spec pipeline.yaml
+torc workflows create pipeline.yaml
 torc workflows start "${WORKFLOW_ID}"
 ```
 

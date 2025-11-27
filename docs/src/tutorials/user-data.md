@@ -61,7 +61,7 @@ resource_requirements:
 ## Step 2: Create Workflow
 
 ```bash
-WORKFLOW_ID=$(torc workflows create-from-spec user_data_workflow.yaml | jq -r '.id')
+WORKFLOW_ID=$(torc workflows create user_data_workflow.yaml | jq -r '.id')
 torc workflows initialize-jobs $WORKFLOW_ID
 ```
 

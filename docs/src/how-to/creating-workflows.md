@@ -54,7 +54,7 @@ resource_requirements:
 
 Create workflow:
 ```bash
-torc workflows create-from-spec workflow.yaml
+torc workflows create workflow.yaml
 ```
 
 ### JSON5 Format
@@ -153,10 +153,9 @@ job "analyze" {
 
 **Use KDL when:**
 - You prefer minimal, clean syntax
-- Your workflow doesn't require parameterization
 - You want a more modern configuration language
 
-All three formats support the same core features (jobs, files, user_data, resource requirements, Slurm schedulers, actions, and resource monitoring), with **parameterization** being the main differentiator (only available in YAML and JSON5).
+All three formats support the same core features (jobs, files, user_data, resource requirements, Slurm schedulers, actions, and resource monitoring).
 
 ## Example Workflows
 
@@ -164,9 +163,9 @@ The Torc repository includes comprehensive examples in all three formats, organi
 
 ```
 examples/
-├── yaml/     # YAML format examples (all workflows)
-├── json/     # JSON5 format examples (all workflows)
-└── kdl/      # KDL format examples (non-parameterized workflows)
+├── yaml/     # YAML format examples
+├── json/     # JSON and JSON5 format examples
+└── kdl/      # KDL format examples
 ```
 
 Browse the examples directory to find:
@@ -174,7 +173,7 @@ Browse the examples directory to find:
 - **Resource monitoring**: `resource_monitoring_demo`
 - **Workflow actions**: `workflow_actions_*`
 - **Slurm integration**: `slurm_staged_pipeline`, `workflow_actions_simple_slurm`
-- **Parameterized workflows** (YAML/JSON5 only): `hundred_jobs_parameterized`, `hyperparameter_sweep`, `data_pipeline_parameterized`
+- **Parameterized workflows**: `hundred_jobs_parameterized`, `hyperparameter_sweep`, `data_pipeline_parameterized`
 
 Each workflow is available in multiple formats so you can compare syntax and choose your preference.
 

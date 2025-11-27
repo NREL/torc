@@ -1,0 +1,25 @@
+// Simple Workflow with 100 Independent Jobs (Parameterized Version)
+// This demonstrates how parameterization makes it easy to create many parallel jobs
+// Compare this file to hundred_jobs_workflow.kdl - same result, 90% less code!
+
+name "hundred_jobs_parameterized"
+user "testuser"
+description "A workflow with 100 independent jobs using parameterization"
+
+// Resource requirements - minimal resources for simple echo commands
+resource_requirements "minimal" {
+    num_cpus 1
+    num_gpus 0
+    num_nodes 1
+    memory "1g"
+    runtime "P0DT1M"
+}
+
+// Job definitions - ONE job specification expands to 100 jobs
+job "job_{i:03d}" {
+    command "echo hello {i}"
+    resource_requirements "minimal"
+    parameters {
+        i "1:100"
+    }
+}
