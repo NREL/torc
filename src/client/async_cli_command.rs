@@ -279,9 +279,14 @@ impl AsyncCliCommand {
         if let Some(ref child) = self.handle {
             let pid = child.id();
             debug!("Sending SIGTERM to job {} (PID {})", self.job_id, pid);
-            // Send SIGTERM using libc
-            unsafe {
-                libc::kill(pid as libc::pid_t, libc::SIGTERM);
+            let result = unsafe { libc::kill(pid as libc::pid_t, libc::SIGTERM) };
+            if result != 0 {
+                let err = std::io::Error::last_os_error();
+                return Err(format!(
+                    "Failed to send SIGTERM to job {} (PID {}): {}",
+                    self.job_id, pid, err
+                )
+                .into());
             }
         }
         Ok(())
