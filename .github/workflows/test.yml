@@ -88,20 +88,20 @@ jobs:
         env:
           RUST_BACKTRACE: 1
 
-      - name: Install cargo-llvm-cov
-        if: matrix.os == 'ubuntu-latest'
-        run: cargo install cargo-llvm-cov
+      # - name: Install cargo-llvm-cov
+      #   if: matrix.os == 'ubuntu-latest'
+      #   run: cargo install cargo-llvm-cov
 
-      - name: Generate coverage
-        if: matrix.os == 'ubuntu-latest'
-        run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info -- --test-threads 1
-        env:
-          RUST_BACKTRACE: 1
-          DATABASE_URL: sqlite:db/sqlite/dev.db
+      # - name: Generate coverage
+      #   if: matrix.os == 'ubuntu-latest'
+      #   run: cargo llvm-cov --all-features --workspace --lcov --output-path lcov.info -- --test-threads 1
+      #   env:
+      #     RUST_BACKTRACE: 1
+      #     DATABASE_URL: sqlite:db/sqlite/dev.db
 
-      - name: Upload coverage to Codecov
-        if: matrix.os == 'ubuntu-latest'
-        uses: codecov/codecov-action@v4
-        with:
-          files: lcov.info
-          fail_ci_if_error: false
+      # - name: Upload coverage to Codecov
+      #   if: matrix.os == 'ubuntu-latest'
+      #   uses: codecov/codecov-action@v4
+      #   with:
+      #     files: lcov.info
+      #     fail_ci_if_error: false
