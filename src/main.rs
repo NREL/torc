@@ -32,19 +32,19 @@ use torc::tui_runner;
 #[command(author, version, about = "Torc workflow orchestration system", long_about = None)]
 struct Cli {
     /// Log level (error, warn, info, debug, trace)
-    #[arg(long, global = true, env = "RUST_LOG")]
+    #[arg(long, env = "RUST_LOG")]
     log_level: Option<String>,
     /// Output format (table or json)
-    #[arg(short, long, default_value = "table", global = true)]
+    #[arg(short, long, default_value = "table")]
     format: String,
     /// URL of torc server
-    #[arg(long, global = true, env = "TORC_API_URL")]
+    #[arg(long, env = "TORC_API_URL")]
     url: Option<String>,
     /// Username for basic authentication
-    #[arg(long, global = true, env = "TORC_USERNAME")]
+    #[arg(long, env = "TORC_USERNAME")]
     username: Option<String>,
     /// Password for basic authentication (will prompt if username provided but password not)
-    #[arg(long, global = true, env = "TORC_PASSWORD")]
+    #[arg(long, env = "TORC_PASSWORD")]
     password: Option<String>,
     #[command(subcommand)]
     command: Commands,

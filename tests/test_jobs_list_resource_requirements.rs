@@ -55,8 +55,6 @@ fn test_list_resource_requirements_for_workflow(start_server: &ServerProcess) {
         "jobs",
         "list-resource-requirements",
         &workflow_id.to_string(),
-        "-f",
-        "json",
     ];
 
     let json_output = run_cli_with_json(&args, start_server)
@@ -145,8 +143,6 @@ fn test_list_resource_requirements_for_specific_job(start_server: &ServerProcess
         "list-resource-requirements",
         "-j",
         &job_id.to_string(),
-        "-f",
-        "json",
     ];
 
     let json_output = run_cli_with_json(&args, start_server)

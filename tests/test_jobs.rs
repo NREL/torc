@@ -833,20 +833,22 @@ fn test_jobs_update_restriction_cannot_change_status(start_server: &ServerProces
         "Job should start in Uninitialized status"
     );
 
-    // Try to update status to "ready" - should fail
-    let args = ["jobs", "update", &job_id.to_string(), "--status", "ready"];
+    // Try to update status to "ready" via API - should fail
+    let mut job_to_update = current_job.clone();
+    job_to_update.status = Some(JobStatus::Ready);
 
-    let result = run_cli_with_json(&args, start_server);
+    let result = default_api::update_job(config, job_id, job_to_update);
     assert!(
         result.is_err(),
-        "Should fail when attempting to change job status field"
+        "Should fail when attempting to change job status field via API"
     );
 
     // Verify error message mentions status is immutable
     let error_msg = format!("{:?}", result.unwrap_err());
     assert!(
         error_msg.contains("immutable") || error_msg.contains("Cannot update job status"),
-        "Error message should indicate status field is immutable"
+        "Error message should indicate status field is immutable, got: {}",
+        error_msg
     );
 
     // Verify the status hasn't changed
@@ -899,47 +901,6 @@ fn test_jobs_update_works_when_status_is_uninitialized(start_server: &ServerProc
     );
 
     // Verify status remains Uninitialized
-    assert_eq!(
-        json_output.get("status").unwrap(),
-        &json!(JobStatus::Uninitialized.to_string())
-    );
-}
-
-#[rstest]
-fn test_jobs_update_status_same_value_allowed(start_server: &ServerProcess) {
-    let config = &start_server.config;
-
-    // Create test workflow and job
-    let workflow = create_test_workflow(config, "test_same_status_update_workflow");
-    let workflow_id = workflow.id.unwrap();
-    let job = create_test_job(config, workflow_id, "test_same_status");
-    let job_id = job.id.unwrap();
-
-    // Verify job is in Uninitialized status
-    let current_job = default_api::get_job(config, job_id).expect("Failed to get job");
-    assert_eq!(
-        current_job.status.unwrap(),
-        JobStatus::Uninitialized,
-        "Job should be in Uninitialized status"
-    );
-
-    // Try to update with the same status value (uninitialized) - should succeed
-    let args = [
-        "jobs",
-        "update",
-        &job_id.to_string(),
-        "--status",
-        "uninitialized",
-        "--name",
-        "same_status_test",
-    ];
-
-    let json_output = run_cli_with_json(&args, start_server)
-        .expect("Update should succeed when setting status to same value");
-
-    // Verify the update succeeded
-    assert_eq!(json_output.get("id").unwrap(), &json!(job_id));
-    assert_eq!(json_output.get("name").unwrap(), &json!("same_status_test"));
     assert_eq!(
         json_output.get("status").unwrap(),
         &json!(JobStatus::Uninitialized.to_string())

@@ -1233,7 +1233,7 @@ pub fn run_jobs_cli_command(
     server: &ServerProcess,
 ) -> Result<String, Box<dyn std::error::Error>> {
     let mut cmd = Command::new(get_exe_path("./target/debug/torc"));
-    cmd.args(["run", "--url", &server.config.base_path]);
+    cmd.args(["--url", &server.config.base_path, "run"]);
     cmd.args(args);
 
     // Add target/debug to PATH so spawned binaries like torc-slurm-job-runner can be found
