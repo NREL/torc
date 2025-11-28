@@ -1,9 +1,73 @@
+//! Job Runner - Local parallel job execution engine for Torc workflows.
+//!
+//! This module provides the [`JobRunner`] struct which manages the execution of workflow jobs
+//! on a compute node. It handles job scheduling based on available resources, process lifecycle
+//! management, and graceful termination via signal handling.
+//!
+//! # Signal Handling (SIGTERM)
+//!
+//! The JobRunner supports graceful termination when running in HPC environments like Slurm.
+//! When Slurm is about to reach walltime, it sends SIGTERM to the job runner process. The
+//! JobRunner handles this by:
+//!
+//! 1. **Signal Registration**: External code (e.g., `torc-slurm-job-runner`) registers a signal
+//!    handler that sets the termination flag via [`JobRunner::get_termination_flag()`].
+//!
+//! 2. **Graceful Shutdown**: When the flag is set, the main loop detects it and calls
+//!    [`JobRunner::terminate_jobs()`], which:
+//!    - Sends SIGTERM to jobs with `supports_termination = true`, allowing them to clean up
+//!    - Sends SIGKILL to jobs with `supports_termination = false` (immediate termination)
+//!    - Waits for all processes to exit and collects their exit codes
+//!    - Sets job status to `JobStatus::Terminated`
+//!
+//! # Example: Signal Handler Registration
+//!
+//! ```ignore
+//! use signal_hook::consts::SIGTERM;
+//! use signal_hook::iterator::Signals;
+//! use std::sync::atomic::Ordering;
+//! use std::thread;
+//!
+//! let mut job_runner = JobRunner::new(/* ... */);
+//!
+//! // Get the termination flag to share with the signal handler
+//! let termination_flag = job_runner.get_termination_flag();
+//!
+//! // Register SIGTERM handler in a background thread
+//! let mut signals = Signals::new([SIGTERM]).expect("Failed to register signals");
+//! thread::spawn(move || {
+//!     for sig in signals.forever() {
+//!         if sig == SIGTERM {
+//!             termination_flag.store(true, Ordering::SeqCst);
+//!             break;
+//!         }
+//!     }
+//! });
+//!
+//! // Run the job runner - it will check the flag in its main loop
+//! job_runner.run_worker()?;
+//! ```
+//!
+//! # Job Termination Behavior
+//!
+//! Jobs can opt-in to graceful termination by setting `supports_termination = true` in their
+//! job specification. This is useful for jobs that need to:
+//! - Save checkpoints before exiting
+//! - Clean up temporary files
+//! - Flush output buffers
+//! - Release external resources (database connections, locks, etc.)
+//!
+//! Jobs without this flag (or with `supports_termination = false`) will be killed immediately
+//! with SIGKILL, which doesn't allow cleanup but ensures rapid shutdown.
+
 use chrono::{DateTime, Utc};
-use log::{self, debug, error, info};
+use log::{self, debug, error, info, warn};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::Duration;
 
@@ -24,6 +88,22 @@ thread_local! {
     static MEMORY_CACHE: RefCell<HashMap<String, f64>> = RefCell::new(HashMap::new());
 }
 
+/// Manages parallel job execution on a compute node.
+///
+/// The JobRunner claims jobs from the server, executes them locally, and reports results.
+/// It supports resource-based scheduling (CPU, memory, GPU) and graceful termination
+/// via SIGTERM signal handling.
+///
+/// # Termination Support
+///
+/// The JobRunner can be gracefully terminated by setting a shared atomic flag. This is
+/// typically done from a signal handler when SIGTERM is received (e.g., from Slurm
+/// approaching walltime). See the module-level documentation for signal handler setup.
+///
+/// When termination is requested:
+/// - Jobs with `supports_termination = true` receive SIGTERM (graceful shutdown)
+/// - Jobs with `supports_termination = false` receive SIGKILL (immediate kill)
+/// - All jobs are set to `JobStatus::Terminated`
 #[allow(dead_code)]
 pub struct JobRunner {
     config: Configuration,
@@ -47,6 +127,8 @@ pub struct JobRunner {
     job_resources: HashMap<i64, ResourceRequirementsModel>,
     rules: ComputeNodeRules,
     resource_monitor: Option<ResourceMonitor>,
+    /// Flag set when SIGTERM is received. Shared with signal handler.
+    termination_requested: Arc<AtomicBool>,
 }
 
 impl JobRunner {
@@ -138,7 +220,51 @@ impl JobRunner {
             job_resources,
             rules,
             resource_monitor,
+            termination_requested: Arc::new(AtomicBool::new(false)),
         }
+    }
+
+    /// Returns a clone of the termination flag for use with signal handlers.
+    ///
+    /// This method returns an `Arc<AtomicBool>` that can be shared with a signal handler
+    /// running in a separate thread. When the flag is set to `true`, the JobRunner's
+    /// main loop will detect this and initiate graceful termination of running jobs.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// use signal_hook::consts::SIGTERM;
+    /// use signal_hook::iterator::Signals;
+    /// use std::sync::atomic::Ordering;
+    ///
+    /// let job_runner = JobRunner::new(/* ... */);
+    /// let flag = job_runner.get_termination_flag();
+    ///
+    /// // In signal handler thread:
+    /// flag.store(true, Ordering::SeqCst);
+    /// ```
+    pub fn get_termination_flag(&self) -> Arc<AtomicBool> {
+        Arc::clone(&self.termination_requested)
+    }
+
+    /// Checks if termination has been requested.
+    ///
+    /// Returns `true` if the termination flag has been set, indicating that the
+    /// JobRunner should stop accepting new jobs and gracefully terminate running ones.
+    pub fn is_termination_requested(&self) -> bool {
+        self.termination_requested.load(Ordering::SeqCst)
+    }
+
+    /// Requests termination programmatically.
+    ///
+    /// This method sets the termination flag, causing the JobRunner to initiate
+    /// graceful shutdown on its next iteration. This is an alternative to setting
+    /// the flag via the `Arc<AtomicBool>` returned by [`get_termination_flag()`].
+    ///
+    /// Typically, termination is triggered by a signal handler, but this method
+    /// allows programmatic termination for testing or other use cases.
+    pub fn request_termination(&self) {
+        self.termination_requested.store(true, Ordering::SeqCst);
     }
 
     pub fn run_worker(&mut self) -> Result<(), Box<dyn std::error::Error>> {
@@ -221,9 +347,17 @@ impl JobRunner {
 
             thread::sleep(Duration::from_secs_f64(self.job_completion_poll_interval));
 
-            if Utc::now().timestamp() >= end_time {
+            // Check if termination was requested (e.g., via SIGTERM)
+            if self.is_termination_requested() {
+                info!("Termination requested (SIGTERM received). Terminating jobs.");
                 self.terminate_jobs();
-                info!("End time reached. Stopping job runner.");
+                break;
+            }
+
+            if Utc::now().timestamp() >= end_time {
+                info!("End time reached. Terminating jobs and stopping job runner.");
+                self.terminate_jobs();
+                break;
             }
         }
 
@@ -269,37 +403,84 @@ impl JobRunner {
         }
     }
 
-    /// Terminate all running jobs and handle completions.
+    /// Terminates all running jobs and reports results to the server.
+    ///
+    /// This method performs a three-phase termination:
+    ///
+    /// 1. **Signal Phase**: Send termination signals to all running jobs
+    ///    - Jobs with `supports_termination = true` receive SIGTERM, allowing graceful cleanup
+    ///    - Jobs with `supports_termination = false` (or unset) receive SIGKILL for immediate termination
+    ///
+    /// 2. **Wait Phase**: Wait for all jobs to exit and collect their exit codes
+    ///    - Exit codes are captured, including negative values for signal-terminated processes
+    ///
+    /// 3. **Completion Phase**: Report results to the server
+    ///    - All terminated jobs are set to `JobStatus::Terminated`
+    ///    - Results include execution time and resource metrics (if monitoring is enabled)
+    ///
+    /// # Job Termination Behavior
+    ///
+    /// Jobs can opt-in to graceful termination by setting `supports_termination: true` in the
+    /// job specification. This is useful for jobs that need to save checkpoints or clean up
+    /// resources before exiting. Jobs without this flag are killed immediately to ensure
+    /// rapid shutdown when the compute node is about to expire.
+    ///
+    /// # Note
+    ///
+    /// This method is called automatically by `run_worker()` when:
+    /// - The termination flag is set (typically by a SIGTERM signal handler)
+    /// - The compute node's end time is approaching
     fn terminate_jobs(&mut self) {
-        let mut jobs_to_remove = Vec::new();
-        // let mut jobs_that_support_termination = Vec::new();
+        if self.running_jobs.is_empty() {
+            debug!("No running jobs to terminate");
+            return;
+        }
+
+        info!("Terminating {} running job(s)", self.running_jobs.len());
+
+        // First pass: send termination signal to all jobs
+        // Jobs that support termination get SIGTERM, others get killed immediately
+        for (job_id, async_job) in self.running_jobs.iter_mut() {
+            let supports_termination = async_job.job.supports_termination.unwrap_or(false);
+            if supports_termination {
+                info!(
+                    "Sending SIGTERM to job {} (supports_termination=true)",
+                    job_id
+                );
+                if let Err(e) = async_job.terminate() {
+                    warn!("Failed to send SIGTERM to job {}: {}", job_id, e);
+                }
+            } else {
+                info!(
+                    "Sending SIGKILL to job {} (supports_termination=false)",
+                    job_id
+                );
+                if let Err(e) = async_job.cancel() {
+                    warn!("Failed to kill job {}: {}", job_id, e);
+                }
+            }
+        }
+
+        // Second pass: wait for all jobs to complete and collect results
         let mut results = Vec::new();
         for (job_id, async_job) in self.running_jobs.iter_mut() {
-            info!("Terminating job {}", job_id);
-            let _ = async_job.terminate();
-            jobs_to_remove.push(*job_id);
-            // if async_job.job.supports_termination.unwrap_or(false) {
-            //     jobs_that_support_termination.push(*job_id);
-            // }
-        }
-        for (job_id, async_job) in self.running_jobs.iter_mut() {
-            let _ = match async_job.wait_for_completion() {
-                Ok(_) => {
+            match async_job.wait_for_completion() {
+                Ok(exit_code) => {
+                    debug!("Job {} terminated with exit code {}", job_id, exit_code);
                     let result = async_job.get_result(
                         self.run_id,
                         self.compute_node_id,
                         self.resource_monitor.as_ref(),
                     );
                     results.push((*job_id, result));
-                    Ok(())
                 }
                 Err(e) => {
-                    error!("Error waiting for job {}: {}", job_id, e);
-                    // TODO
-                    Err(e)
+                    error!("Error waiting for job {} to complete: {}", job_id, e);
                 }
-            };
+            }
         }
+
+        // Third pass: handle completions (notify server)
         for (job_id, result) in results {
             self.handle_job_completion(job_id, result);
         }

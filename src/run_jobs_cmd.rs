@@ -4,6 +4,7 @@ use crate::client::commands::get_env_user_name;
 use crate::client::commands::select_workflow_interactively;
 use crate::client::job_runner::JobRunner;
 use crate::client::log_paths::get_job_runner_log_file;
+use crate::client::utils::detect_nvidia_gpus;
 use crate::client::workflow_manager::WorkflowManager;
 use crate::models;
 use chrono::{DateTime, Utc};
@@ -219,11 +220,12 @@ pub fn run(args: &Args) {
     system.refresh_all();
     let system_cpus = system.cpus().len() as i64;
     let system_memory_gb = (system.total_memory() as f64) / (1024.0 * 1024.0 * 1024.0);
+    let system_gpus = detect_nvidia_gpus();
 
     let resources = models::ComputeNodesResources::new(
         args.num_cpus.unwrap_or(system_cpus),
         args.memory_gb.unwrap_or(system_memory_gb),
-        args.num_gpus.unwrap_or(0),
+        args.num_gpus.unwrap_or(system_gpus),
         args.num_nodes.unwrap_or(1),
     );
     let pid = 1; // TODO

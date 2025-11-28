@@ -30,6 +30,7 @@
 - [How-To](./how-to/README.md)
   - [Creating Workflows](./how-to/creating-workflows.md)
   - [Working with Slurm](./how-to/slurm.md)
+  - [Job Checkpointing](./how-to/checkpointing.md)
   - [Managing Resources](./how-to/resources.md)
   - [Resource Monitoring](./how-to/resource-monitoring.md)
   - [Web Dashboard](./how-to/dashboard.md)
