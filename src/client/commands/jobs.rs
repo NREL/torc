@@ -161,10 +161,6 @@ pub enum JobCommands {
         /// Command to execute
         #[arg(short, long)]
         command: Option<String>,
-        /// Status of the job (valid values: uninitialized, blocked, canceled, terminated, done, ready, scheduled, running, pending, disabled)
-        #[arg(short, long)]
-        status: Option<String>,
-        // TODO: We don't really want users to be able to update the status of a job
     },
     /// Delete one or more jobs
     Delete {
@@ -406,12 +402,7 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                 std::process::exit(1);
             }
         },
-        JobCommands::Update {
-            id,
-            name,
-            command,
-            status,
-        } => {
+        JobCommands::Update { id, name, command } => {
             // First get the existing job
             match default_api::get_job(config, *id) {
                 Ok(mut job) => {
@@ -421,28 +412,6 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                     }
                     if let Some(new_command) = command {
                         job.command = new_command.clone();
-                    }
-                    if let Some(new_status_str) = status {
-                        let job_status = match new_status_str.to_lowercase().as_str() {
-                            "uninitialized" => models::JobStatus::Uninitialized,
-                            "blocked" => models::JobStatus::Blocked,
-                            "ready" => models::JobStatus::Ready,
-                            "pending" => models::JobStatus::Pending,
-                            "running" => models::JobStatus::Running,
-                            "completed" => models::JobStatus::Completed,
-                            "failed" => models::JobStatus::Failed,
-                            "canceled" | "cancelled" => models::JobStatus::Canceled,
-                            "terminated" => models::JobStatus::Terminated,
-                            "disabled" => models::JobStatus::Disabled,
-                            _ => {
-                                eprintln!(
-                                    "Error: Invalid status '{}'. Valid options are: uninitialized, blocked, ready, pending, running, completed, failed, canceled, terminated, disabled",
-                                    new_status_str
-                                );
-                                std::process::exit(1);
-                            }
-                        };
-                        job.status = Some(job_status);
                     }
 
                     match default_api::update_job(config, *id, job) {
