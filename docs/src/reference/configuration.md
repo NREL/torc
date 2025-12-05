@@ -28,7 +28,7 @@ Logging level for server output.
 RUST_LOG=debug
 ```
 
-### TORC_UNBLOCK_INTERVAL_SECONDS
+### TORC_COMPLETION_CHECK_INTERVAL_SECS
 
 Interval (in seconds) for the background task that processes job completions and unblocks downstream dependent jobs.
 
@@ -41,7 +41,7 @@ Interval (in seconds) for the background task that processes job completions and
 
 **Example**:
 ```bash
-TORC_UNBLOCK_INTERVAL_SECONDS=1.0
+TORC_COMPLETION_CHECK_INTERVAL_SECS=1.0
 ```
 
 **Performance implications**:

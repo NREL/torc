@@ -77,7 +77,7 @@ pub async fn create(
     pool: SqlitePool,
     htpasswd: Option<HtpasswdFile>,
     require_auth: bool,
-    unblock_interval_seconds: f64,
+    completion_check_interval_secs: f64,
 ) {
     // Resolve hostname to socket address (supports both hostnames and IP addresses)
     let addr = tokio::net::lookup_host(addr)
@@ -91,7 +91,7 @@ pub async fn create(
     // Spawn background task for deferred job unblocking
     let server_clone = server.clone();
     tokio::spawn(async move {
-        background_unblock_task(server_clone, unblock_interval_seconds).await;
+        background_unblock_task(server_clone, completion_check_interval_secs).await;
     });
 
     let service = MakeService::new(server);
@@ -165,7 +165,7 @@ where
     C: Has<XSpanIdString> + Send + Sync,
 {
     info!(
-        "Starting background unblock task with interval: {} seconds",
+        "Starting background job completion check with interval: {} seconds",
         interval_seconds
     );
 

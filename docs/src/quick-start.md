@@ -5,11 +5,11 @@ rely on local execution. Refer to the Tutorials for HPC examples.
 
 ## Start the server
 This will create a torc database in the current directory if it doesn't exist.
-Setting `--unblock-interval-seconds` will ensure that the server processes job completions quickly.
+Setting `--completion-check-interval-secs` (or `-c`) will ensure that the server processes job completions quickly.
 This should not be set on a shared server.
 
 ```console
-torc-server --database torc.db --unblock-interval-seconds 5
+torc-server --database torc.db --completion-check-interval-secs 5
 ```
 
 ## Test the client connection
