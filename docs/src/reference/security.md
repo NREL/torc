@@ -54,7 +54,7 @@ API Handler (receives authorization context)
 **Configuration:**
 ```bash
 # Server
-torc-server --https --auth-file /etc/torc/htpasswd
+torc-server run --https --auth-file /etc/torc/htpasswd
 
 # Client
 torc --url https://torc.example.com/torc-service/v1 workflows list
@@ -313,7 +313,7 @@ tail -f /var/log/torc-server.log | grep "WARN.*auth"
 **Configuration:**
 ```bash
 # PCI-DSS compliant setup
-torc-server \
+torc-server run \
   --https \
   --auth-file /etc/torc/htpasswd \
   --require-auth \

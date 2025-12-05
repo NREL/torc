@@ -1100,14 +1100,22 @@ def initialize_debug_tab(config):
     Output("workflow-details-panel", "children"),
     Input("selected-workflow-store", "data"),
     Input("refresh-workflow-details-button", "n_clicks"),
+    Input("main-tabs", "active_tab"),
     State("api-config-store", "data"),
 )
 def show_workflow_details_panel(
     workflow: dict[str, Any] | None,
     n_clicks: int,
+    active_tab: str,
     config: dict[str, str],
 ) -> html.Div:
-    """Show the workflow details panel on the right when a workflow is selected or refresh button is clicked."""
+    """Show the workflow details panel on the right when a workflow is selected, refresh button is clicked, or view-tab is activated."""
+    from dash import ctx
+
+    # Only refresh when switching to view-tab, not when switching away from it
+    if ctx.triggered_id == "main-tabs" and active_tab != "view-tab":
+        raise PreventUpdate
+
     if not workflow:
         return dbc.Alert(
             [

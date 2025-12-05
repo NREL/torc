@@ -50,14 +50,14 @@ bob:$2b$12$zyxwvutsrqponmlkjihgfedcba0987654321ZYXWVUTSRQPONMLK
 
 ```bash
 # Optional authentication (backward compatible mode)
-torc-server --auth-file /path/to/htpasswd
+torc-server run --auth-file /path/to/htpasswd
 
 # Required authentication (all requests must authenticate)
-torc-server --auth-file /path/to/htpasswd --require-auth
+torc-server run --auth-file /path/to/htpasswd --require-auth
 
 # Can also use environment variable
 export TORC_AUTH_FILE=/path/to/htpasswd
-torc-server
+torc-server run
 ```
 
 **Authentication Modes:**
@@ -129,7 +129,7 @@ Basic authentication sends base64-encoded credentials (easily decoded). **Always
 
 ```bash
 # Start server with HTTPS
-torc-server --https --auth-file /path/to/htpasswd --require-auth
+torc-server run --https --auth-file /path/to/htpasswd --require-auth
 
 # Client connects via HTTPS
 torc --url https://torc.example.com/torc-service/v1 --username alice workflows list
@@ -169,10 +169,10 @@ Monitor authentication events in server logs:
 
 ```bash
 # Run server with debug logging for auth events
-torc-server --log-level debug --auth-file /path/to/htpasswd
+torc-server run --log-level debug --auth-file /path/to/htpasswd
 
 # Or use RUST_LOG for granular control
-RUST_LOG=torc::server::auth=debug torc-server --auth-file /path/to/htpasswd
+RUST_LOG=torc::server::auth=debug torc-server run --auth-file /path/to/htpasswd
 ```
 
 ## Common Workflows
@@ -184,7 +184,7 @@ RUST_LOG=torc::server::auth=debug torc-server --auth-file /path/to/htpasswd
 torc-htpasswd add --file dev_htpasswd --password devpass developer
 
 # 2. Start server (auth optional)
-torc-server --auth-file dev_htpasswd --database dev.db
+torc-server run --auth-file dev_htpasswd --database dev.db
 
 # 3. Use client without auth (still works)
 torc workflows list
@@ -205,7 +205,7 @@ chmod 600 /etc/torc/htpasswd
 chown torc-server:torc-server /etc/torc/htpasswd
 
 # 3. Start server with required auth and HTTPS
-torc-server \
+torc-server run \
   --https \
   --auth-file /etc/torc/htpasswd \
   --require-auth \
@@ -238,16 +238,16 @@ torc workflows start "${WORKFLOW_ID}"
 
 ```bash
 # 1. Start: No authentication
-torc-server --database prod.db
+torc-server run --database prod.db
 
 # 2. Add authentication file (optional mode)
-torc-server --auth-file /etc/torc/htpasswd --database prod.db
+torc-server run --auth-file /etc/torc/htpasswd --database prod.db
 
 # 3. Monitor logs, ensure clients are authenticating
 # Look for "User 'X' authenticated successfully" messages
 
 # 4. Once all clients authenticate, enable required auth
-torc-server --auth-file /etc/torc/htpasswd --require-auth --database prod.db
+torc-server run --auth-file /etc/torc/htpasswd --require-auth --database prod.db
 ```
 
 ## Troubleshooting
@@ -284,7 +284,7 @@ torc-htpasswd add --file /path/to/htpasswd alice
 
 **Solution:** This is normal in optional auth mode. To require auth:
 ```bash
-torc-server --auth-file /path/to/htpasswd --require-auth
+torc-server run --auth-file /path/to/htpasswd --require-auth
 ```
 
 ### Password Prompting in Non-Interactive Sessions

@@ -165,7 +165,7 @@ where
     C: Has<XSpanIdString> + Send + Sync,
 {
     info!(
-        "Starting background job completion check with interval: {} seconds",
+        "Starting background job completion checker with interval = {} seconds",
         interval_seconds
     );
 

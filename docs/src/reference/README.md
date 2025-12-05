@@ -4,8 +4,11 @@ This section provides information-oriented technical descriptions of Torc's APIs
 
 **Topics covered:**
 
-- OpenAPI REST API specification and endpoints
-- Job and file parameterization syntax
-- Configuration options for server and client
-- Data formats and conventions
-- Command-line interface reference
+- [CLI Reference](./cli.md) - Command-line interface commands and options
+- [Workflow Specification Formats](./workflow-formats.md) - YAML, JSON5, and KDL syntax
+- [Job Parameterization](./parameterization.md) - Parameter expansion syntax
+- [Resource Requirements](./resources.md) - Memory formats, runtime formats, allocation strategies
+- [Resource Monitoring](./resource-monitoring.md) - Monitoring configuration and database schema
+- [OpenAPI Specification](./openapi.md) - REST API endpoints
+- [Configuration](./configuration.md) - Server and client configuration options
+- [Security](./security.md) - Authentication and authorization

@@ -78,7 +78,7 @@ cd server
 
 # Build and run server (requires DATABASE_URL in .env)
 cargo build --release
-cargo run --bin torc-server
+cargo run --bin torc-server -- run
 
 # Run tests
 cargo test
@@ -291,7 +291,7 @@ List endpoints support `offset` and `limit` query parameters:
 
 **Server SQL Queries**:
 ```bash
-RUST_LOG=sqlx=debug cargo run --bin torc-server
+RUST_LOG=sqlx=debug cargo run --bin torc-server -- run
 ```
 
 **Client Verbose Output**:
@@ -317,13 +317,13 @@ sqlite3 server/db/sqlite/dev.db
 
 ## Development Workflow
 
-1. **Start Server** (standalone binary): `cargo run --bin torc-server`
+1. **Start Server** (standalone binary): `cargo run --bin torc-server -- run`
 2. **Build Unified CLI**: `cargo build --release --bin torc --features "client,tui,plot_resources"`
 3. **Quick Execution**: `torc run examples/sample_workflow.yaml` OR `torc submit examples/sample_workflow.yaml`
 4. **Or Explicit**: `torc workflows create examples/sample_workflow.yaml` → `torc workflows run <id>`
 5. **Monitor**: `torc workflows status <id>` or `torc tui`
 
-**Note**: The server is always run as a standalone binary (`torc-server`), not through the unified CLI.
+**Note**: The server is always run as a standalone binary (`torc-server run`), not through the unified CLI.
 
 ## CLI Commands Quick Reference
 

@@ -54,7 +54,7 @@ TORC_COMPLETION_CHECK_INTERVAL_SECS=1.0
 Set via command-line flag:
 
 ```bash
-torc-server --port 8080
+torc-server run --port 8080
 ```
 
 **Default**: `8080`

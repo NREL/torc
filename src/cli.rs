@@ -3,7 +3,7 @@
 //! This module defines the command-line interface structure using clap.
 //! It is separated from the main binary to allow documentation generation.
 
-use clap::{Parser, Subcommand};
+use clap::{Parser, Subcommand, builder::styling};
 use std::path::PathBuf;
 
 use crate::client::commands::compute_nodes::ComputeNodeCommands;
@@ -20,9 +20,16 @@ use crate::client::commands::workflows::WorkflowCommands;
 use crate::plot_resources_cmd;
 use crate::tui_runner;
 
+const STYLES: styling::Styles = styling::Styles::styled()
+    .header(styling::AnsiColor::Green.on_default().bold())
+    .usage(styling::AnsiColor::Green.on_default().bold())
+    .literal(styling::AnsiColor::Cyan.on_default().bold())
+    .placeholder(styling::AnsiColor::Cyan.on_default());
+
 /// Torc workflow orchestration system
 #[derive(Parser)]
 #[command(author, version, about = "Torc workflow orchestration system", long_about = None)]
+#[command(styles = STYLES)]
 pub struct Cli {
     /// Log level (error, warn, info, debug, trace)
     #[arg(long, env = "RUST_LOG")]
