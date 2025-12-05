@@ -7,7 +7,7 @@ The Torc server has been instrumented with `tracing-timing` to collect performan
 **Quick Answer:** Set the `TORC_TIMING_ENABLED` environment variable and run the server with DEBUG logging:
 
 ```bash
-TORC_TIMING_ENABLED=1 RUST_LOG=debug cargo run -p torc-server
+TORC_TIMING_ENABLED=1 RUST_LOG=debug cargo run -p torc-server -- run
 ```
 
 Look for log lines that show timing information after each instrumented function completes.
@@ -56,7 +56,7 @@ Look for log lines that show timing information after each instrumented function
 Enable timing instrumentation and run the server with DEBUG or TRACE logging:
 
 ```bash
-TORC_TIMING_ENABLED=1 RUST_LOG=debug cargo run -p torc-server 2>&1 | tee server.log
+TORC_TIMING_ENABLED=1 RUST_LOG=debug cargo run -p torc-server -- run 2>&1 | tee server.log
 ```
 
 You'll see output like:
@@ -94,7 +94,7 @@ For real-time performance monitoring with a nice TUI:
 
 4. **Run server:**
    ```bash
-   RUSTFLAGS="--cfg tokio_unstable" cargo run -p torc-server
+   RUSTFLAGS="--cfg tokio_unstable" cargo run -p torc-server -- run
    ```
 
 5. **View in separate terminal:**
@@ -124,7 +124,7 @@ For production monitoring, export to Jaeger or another OpenTelemetry backend:
 
 1. **Start the server with timing enabled:**
    ```bash
-   TORC_TIMING_ENABLED=1 RUST_LOG=debug cargo run -p torc-server 2>&1 | tee server.log
+   TORC_TIMING_ENABLED=1 RUST_LOG=debug cargo run -p torc-server -- run 2>&1 | tee server.log
    ```
 
 2. **Run your workflow with many jobs:**

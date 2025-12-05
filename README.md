@@ -46,9 +46,9 @@ The unified `torc` CLI provides all workflow management, execution, and monitori
 
 ```bash
 # 1. Start the Torc server (standalone binary)
-torc-server
+torc-server run
 # Or with options:
-torc-server --url localhost --port 8080 --threads 8 --database path/to/db.sqlite
+torc-server run --url localhost --port 8080 --threads 8 --database path/to/db.sqlite
 
 # 2. Use the unified CLI for all client operations
 # Create a workflow from a specification file

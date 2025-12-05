@@ -9,7 +9,7 @@ Setting `--completion-check-interval-secs` (or `-c`) will ensure that the server
 This should not be set on a shared server.
 
 ```console
-torc-server --database torc.db --completion-check-interval-secs 5
+torc-server run --database torc.db --completion-check-interval-secs 5
 ```
 
 ## Test the client connection

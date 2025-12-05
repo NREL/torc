@@ -72,13 +72,13 @@ RUST_LOG=debug cargo test -- --nocapture
 
 ```bash
 # Development mode
-cargo run -p torc-server
+cargo run -p torc-server -- run
 
 # Production mode (release build)
-./target/release/torc-server
+./target/release/torc-server run
 
 # Custom port
-./target/release/torc-server --port 8080
+./target/release/torc-server run --port 8080
 ```
 
 Server will start on `http://localhost:8080`.
@@ -87,5 +87,5 @@ When running small workflows for testing and demonstration purposes, we recommen
 option so that the server detects job completions faster than the default value of 60 seconds.
 
 ```bash
-./target/release/torc-server --completion-check-interval-secs 5
+./target/release/torc-server run --completion-check-interval-secs 5
 ```

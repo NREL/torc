@@ -6,7 +6,7 @@
 
 ## Step 1: Start the Torc server
 ```console
-torc-server
+torc-server run
 ```
 By default, the server will listen on port 8080, making the default API URL for the client
 `http://localhost:8080/torc-service/v1`. If you change the port, set the environment variable

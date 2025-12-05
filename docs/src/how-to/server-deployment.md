@@ -2,6 +2,50 @@
 
 This guide covers deploying and operating the Torc server in production environments, including logging configuration, daemonization, and service management.
 
+## Server Subcommands
+
+The `torc-server` binary has two main subcommands:
+
+### `torc-server run`
+
+Use `torc-server run` for:
+- **HPC login nodes** - Run the server in a tmux session while your jobs are running.
+- **Development and testing** - Run the server interactively in a terminal
+- **Manual startup** - When you want to control when the server starts and stops
+- **Custom deployment** - Integration with external process managers (e.g., supervisord, custom scripts)
+- **Debugging** - Running with verbose logging to troubleshoot issues
+
+```bash
+# Basic usage
+torc-server run
+
+# With options
+torc-server run --port 8080 --database ./torc.db --log-level debug
+torc-server run --completion-check-interval-secs 5
+```
+
+### `torc-server service`
+
+Use `torc-server service` for:
+- **Production deployment** - Install as a system service that starts on boot
+- **Reliability** - Automatic restart on failure
+- **Managed lifecycle** - Standard start/stop/status commands
+- **Platform integration** - Uses systemd (Linux), launchd (macOS), or Windows Services
+
+```bash
+# Install and start as a user service
+torc-server service install --user
+torc-server service start --user
+
+# Or as a system service (requires root)
+sudo torc-server service install
+sudo torc-server service start
+```
+
+**Which to choose?**
+- For **HPC login nodes/development/testing**: Use `torc-server run`
+- For **production servers/standalone computers**: Use `torc-server service install`
+
 ## Quick Start
 
 ### User Service (Development)
@@ -22,10 +66,10 @@ For production deployment, install as a system service:
 
 ```bash
 # Install with automatic defaults (logs to /var/log/torc, db at /var/lib/torc/torc.db)
-sudo torc-server service install
+sudo torc-server service install --user
 
 # Start the service
-sudo torc-server service start
+sudo torc-server service start --user
 ```
 
 The service will automatically start on boot and restart on failure. Logs are automatically configured to rotate when they reach 10 MiB (keeping 5 files max). See the [Service Management](#service-management-recommended-for-production) section for customization options.
@@ -39,7 +83,7 @@ Torc-server uses the `tracing` ecosystem for structured, high-performance loggin
 By default, logs are written to stdout/stderr only:
 
 ```bash
-torc-server --log-level info
+torc-server run --log-level info
 ```
 
 ### File Logging with Size-Based Rotation
@@ -47,7 +91,7 @@ torc-server --log-level info
 Enable file logging by specifying a log directory:
 
 ```bash
-torc-server --log-dir /var/log/torc
+torc-server run --log-dir /var/log/torc
 ```
 
 This will:
@@ -61,7 +105,7 @@ This will:
 For structured log aggregation (e.g., ELK stack, Splunk):
 
 ```bash
-torc-server --log-dir /var/log/torc --json-logs
+torc-server run --log-dir /var/log/torc --json-logs
 ```
 
 This writes JSON-formatted logs to the file while keeping human-readable logs on console.
@@ -72,10 +116,10 @@ Control verbosity with the `--log-level` flag or `RUST_LOG` environment variable
 
 ```bash
 # Available levels: error, warn, info, debug, trace
-torc-server --log-level debug --log-dir /var/log/torc
+torc-server run --log-level debug --log-dir /var/log/torc
 
 # Or using environment variable
-RUST_LOG=debug torc-server --log-dir /var/log/torc
+RUST_LOG=debug torc-server run --log-dir /var/log/torc
 ```
 
 ### Environment Variables
@@ -87,7 +131,7 @@ Example:
 ```bash
 export TORC_LOG_DIR=/var/log/torc
 export RUST_LOG=info
-torc-server
+torc-server run
 ```
 
 ## Daemonization (Unix/Linux Only)
@@ -95,7 +139,7 @@ torc-server
 Run torc-server as a background daemon:
 
 ```bash
-torc-server --daemon --log-dir /var/log/torc
+torc-server run --daemon --log-dir /var/log/torc
 ```
 
 **Important:**
@@ -106,7 +150,7 @@ torc-server --daemon --log-dir /var/log/torc
 ### Custom PID File Location
 
 ```bash
-torc-server --daemon --pid-file /var/run/torc/server.pid --log-dir /var/log/torc
+torc-server run --daemon --pid-file /var/run/torc/server.pid --log-dir /var/log/torc
 ```
 
 ### Stopping a Daemon
@@ -139,7 +183,7 @@ sudo chown -R torc:torc /var/run/torc
 sudo chown -R torc:torc /var/lib/torc
 
 # Start server as daemon
-torc-server \
+torc-server run \
     --daemon \
     --log-dir /var/log/torc \
     --log-level info \
@@ -254,7 +298,7 @@ Group=torc
 WorkingDirectory=/var/lib/torc
 Environment="RUST_LOG=info"
 Environment="TORC_LOG_DIR=/var/log/torc"
-ExecStart=/usr/local/bin/torc-server \
+ExecStart=/usr/local/bin/torc-server run \
     --log-dir /var/log/torc \
     --json-logs \
     --database /var/lib/torc/torc.db \
@@ -301,7 +345,7 @@ This ensures predictable disk usage without external tools like `logrotate`.
 For advanced performance monitoring, enable timing instrumentation:
 
 ```bash
-TORC_TIMING_ENABLED=true torc-server --log-dir /var/log/torc
+TORC_TIMING_ENABLED=true torc-server run --log-dir /var/log/torc
 ```
 
 This adds detailed timing information for all instrumented functions. Note that timing instrumentation works with both console and file logging.
@@ -322,7 +366,7 @@ This adds detailed timing information for all instrumented functions. Note that 
 
 3. Try running in foreground first:
    ```bash
-   torc-server --log-dir /var/log/torc
+   torc-server run --log-dir /var/log/torc
    ```
 
 ### No log files created

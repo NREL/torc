@@ -21,7 +21,7 @@ mod service;
 #[derive(Args, Clone, Default)]
 struct ServerConfig {
     /// Log level (error, warn, info, debug, trace)
-    #[arg(long, default_value = "info", env = "RUST_LOG")]
+    #[arg(short, long, default_value = "info", env = "RUST_LOG")]
     log_level: String,
 
     /// Whether to use HTTPS or not
@@ -77,6 +77,8 @@ struct ServerConfig {
 #[derive(Parser)]
 #[command(name = "torc-server")]
 #[command(about = "Torc workflow orchestration server")]
+#[command(after_help = "Use 'torc-server run --help' to see server configuration options.\n\
+Use 'torc-server service --help' to see service management options.")]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
