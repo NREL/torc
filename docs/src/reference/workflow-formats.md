@@ -281,9 +281,11 @@ examples/
 ```
 
 Compare the same workflow in different formats to choose your preference:
-- `examples/yaml/sample_workflow.yaml`
-- `examples/json/sample_workflow.json5`
-- `examples/kdl/sample_workflow.kdl`
+- [sample_workflow.yaml](https://github.com/NREL/torc/blob/main/examples/yaml/sample_workflow.yaml)
+- [sample_workflow.json5](https://github.com/NREL/torc/blob/main/examples/json/sample_workflow.json5)
+- [sample_workflow.kdl](https://github.com/NREL/torc/blob/main/examples/kdl/sample_workflow.kdl)
+
+See the [examples directory](https://github.com/NREL/torc/tree/main/examples) for the complete collection.
 
 ## Creating Workflows
 

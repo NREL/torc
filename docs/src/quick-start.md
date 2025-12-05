@@ -57,9 +57,9 @@ torc-tui
 ## Example: Diamond Workflow
 
 A workflow with fan-out and fan-in dependencies. You can find this example in the repository:
-- `examples/yaml/diamond_workflow.yaml`
-- `examples/json/diamond_workflow.json5`
-- `examples/kdl/diamond_workflow.kdl`
+- [diamond_workflow.yaml](https://github.com/NREL/torc/blob/main/examples/yaml/diamond_workflow.yaml)
+- [diamond_workflow.json5](https://github.com/NREL/torc/blob/main/examples/json/diamond_workflow.json5)
+- [diamond_workflow.kdl](https://github.com/NREL/torc/blob/main/examples/kdl/diamond_workflow.kdl)
 
 ```yaml
 name: diamond_workflow
@@ -100,10 +100,10 @@ Dependencies are automatically inferred:
 
 ## More Examples
 
-The `examples/` directory contains many more workflow examples in all supported formats:
+The [examples directory](https://github.com/NREL/torc/tree/main/examples) contains many more workflow examples in all supported formats:
 - Simple workflows and resource monitoring
 - Workflow actions for automation
 - Slurm integration examples
 - Parameterized workflows
 
-Browse `examples/yaml/`, `examples/json/`, or `examples/kdl/` to explore the full collection.
+Browse [examples/yaml](https://github.com/NREL/torc/tree/main/examples/yaml), [examples/json](https://github.com/NREL/torc/tree/main/examples/json), or [examples/kdl](https://github.com/NREL/torc/tree/main/examples/kdl) to explore the full collection.
