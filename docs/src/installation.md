@@ -87,5 +87,5 @@ When running small workflows for testing and demonstration purposes, we recommen
 option so that the server detects job completions faster than the default value of 60 seconds.
 
 ```bash
-./target/release/torc-server --unblock-interval-seconds 5
+./target/release/torc-server --completion-check-interval-secs 5
 ```

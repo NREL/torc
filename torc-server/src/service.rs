@@ -33,11 +33,16 @@ pub struct ServiceConfig {
     pub require_auth: bool,
     pub log_level: String,
     pub json_logs: bool,
-    pub unblock_interval_seconds: f64,
+    pub completion_check_interval_secs: Option<f64>,
 }
 
 impl ServiceConfig {
+    /// Default completion check interval for services (5 seconds)
+    pub const DEFAULT_SERVICE_INTERVAL_SECS: f64 = 5.0;
+
     /// Create default configuration for system-level service
+    /// Uses a shorter completion check interval (5s) since local services
+    /// typically run jobs on the same machine and benefit from faster feedback.
     fn default_system() -> Self {
         Self {
             log_dir: Some(PathBuf::from("/var/log/torc")),
@@ -49,11 +54,13 @@ impl ServiceConfig {
             require_auth: false,
             log_level: "info".to_string(),
             json_logs: false,
-            unblock_interval_seconds: 60.0,
+            completion_check_interval_secs: None, // Will use DEFAULT_SERVICE_INTERVAL_SECS
         }
     }
 
     /// Create default configuration for user-level service
+    /// Uses a shorter completion check interval (5s) since local services
+    /// typically run jobs on the same machine and benefit from faster feedback.
     fn default_user() -> Self {
         // Get user's home directory
         let home = env::var("HOME").unwrap_or_else(|_| ".".to_string());
@@ -68,12 +75,12 @@ impl ServiceConfig {
             require_auth: false,
             log_level: "info".to_string(),
             json_logs: false,
-            unblock_interval_seconds: 60.0,
+            completion_check_interval_secs: None, // Will use DEFAULT_SERVICE_INTERVAL_SECS
         }
     }
 
     /// Merge user-provided configuration with defaults
-    /// User-provided values (even if None) take precedence, but we fill in sensible defaults
+    /// User-provided values take precedence, but we fill in sensible defaults
     fn merge_with_defaults(user_config: &ServiceConfig, user_level: bool) -> Self {
         let defaults = if user_level {
             Self::default_user()
@@ -92,7 +99,8 @@ impl ServiceConfig {
             require_auth: user_config.require_auth,
             log_level: user_config.log_level.clone(),
             json_logs: user_config.json_logs,
-            unblock_interval_seconds: user_config.unblock_interval_seconds,
+            // Use user-provided interval if set, otherwise None (will use default at install time)
+            completion_check_interval_secs: user_config.completion_check_interval_secs,
         }
     }
 }
@@ -138,7 +146,8 @@ pub fn install_service(config: &ServiceConfig, user_level: bool) -> Result<()> {
     let exe_path = env::current_exe().context("Failed to get current executable path")?;
 
     // Build command-line arguments for the service
-    let mut args: Vec<OsString> = vec![];
+    // Start with "run" subcommand since config options are now scoped to it
+    let mut args: Vec<OsString> = vec!["run".into()];
 
     if let Some(ref log_dir) = config.log_dir {
         args.push("--log-dir".into());
@@ -175,8 +184,11 @@ pub fn install_service(config: &ServiceConfig, user_level: bool) -> Result<()> {
         args.push("--require-auth".into());
     }
 
-    args.push("--unblock-interval-seconds".into());
-    args.push(config.unblock_interval_seconds.to_string().into());
+    let interval = config
+        .completion_check_interval_secs
+        .unwrap_or(ServiceConfig::DEFAULT_SERVICE_INTERVAL_SECS);
+    args.push("--completion-check-interval-secs".into());
+    args.push(interval.to_string().into());
 
     // Create service install context
     let install_ctx = ServiceInstallCtx {

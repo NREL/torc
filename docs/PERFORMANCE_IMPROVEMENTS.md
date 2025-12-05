@@ -30,7 +30,7 @@ With 2000 compute nodes completing ~1-minute jobs simultaneously (33 completions
 **Deferred unblocking with background processing:**
 
 1. `complete_job` API now just updates job status and sets `unblocking_processed = 0` flag (1-5ms)
-2. Background task runs periodically (configurable via `TORC_UNBLOCK_INTERVAL_SECONDS`)
+2. Background task runs periodically (configurable via `TORC_COMPLETION_CHECK_INTERVAL_SECS`)
 3. Background task processes all pending completions in batches per workflow
 4. Multiple completions processed in single transaction for efficiency
 
@@ -47,7 +47,7 @@ With 2000 compute nodes completing ~1-minute jobs simultaneously (33 completions
 - `complete_job` API latency: 1-5ms (100× faster)
 - Throughput: 2000+ completions/second
 - No worker blocking
-- Trade-off: Downstream jobs delayed by up to `TORC_UNBLOCK_INTERVAL_SECONDS` (default: 60 seconds)
+- Trade-off: Downstream jobs delayed by up to `TORC_COMPLETION_CHECK_INTERVAL_SECS` (default: 60 seconds)
 
 ### Configuration
 
@@ -55,13 +55,13 @@ Control unblocking interval via environment variable:
 
 ```bash
 # Production (default) - efficient batching
-export TORC_UNBLOCK_INTERVAL_SECONDS=60
+export TORC_COMPLETION_CHECK_INTERVAL_SECS=60
 
 # Development/demos - faster feedback
-export TORC_UNBLOCK_INTERVAL_SECONDS=1
+export TORC_COMPLETION_CHECK_INTERVAL_SECS=1
 
 # Testing - near-immediate
-export TORC_UNBLOCK_INTERVAL_SECONDS=0.1
+export TORC_COMPLETION_CHECK_INTERVAL_SECS=0.1
 ```
 
 ### HPC Suitability
@@ -96,7 +96,7 @@ WHERE status IN (6, 7, 8) AND unblocking_processed = 0;
 Check background task status in server logs:
 
 ```
-Starting background unblock task with interval: 60 seconds
+Starting background job completion check interval: 60 seconds
 Processing 15 completed jobs for workflow 42
 Processed 15 completions for workflow 42, 8 jobs became ready
 ```

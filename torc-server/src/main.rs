@@ -3,10 +3,11 @@
 #![allow(missing_docs)]
 
 use anyhow::Result;
-use clap::Parser;
+use clap::{Args, Parser};
 use dotenvy::dotenv;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
 use std::env;
+use std::path::PathBuf;
 use std::str::FromStr;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -16,63 +17,78 @@ mod logging;
 mod server;
 mod service;
 
+/// Server configuration options shared between `run` and `service install`
+#[derive(Args, Clone, Default)]
+struct ServerConfig {
+    /// Log level (error, warn, info, debug, trace)
+    #[arg(long, default_value = "info", env = "RUST_LOG")]
+    log_level: String,
+
+    /// Whether to use HTTPS or not
+    #[arg(long)]
+    https: bool,
+
+    /// Defines the URL to use
+    #[arg(short, long, default_value = "localhost")]
+    url: String,
+
+    /// Defines the port to listen on
+    #[arg(short, long, default_value_t = 8080)]
+    port: u16,
+
+    /// Defines the number of threads to use
+    #[arg(short, long, default_value_t = 1)]
+    threads: u32,
+
+    /// Path to the SQLite database file. If not specified, uses DATABASE_URL environment variable
+    #[arg(short, long)]
+    database: Option<String>,
+
+    /// Path to htpasswd file for basic authentication (username:bcrypt_hash format, one per line)
+    #[arg(long, env = "TORC_AUTH_FILE")]
+    auth_file: Option<String>,
+
+    /// Require authentication for all requests (if false, auth is optional for backward compatibility)
+    #[arg(long, default_value_t = false)]
+    require_auth: bool,
+
+    /// Directory for log files (enables file logging with size-based rotation)
+    #[arg(long, env = "TORC_LOG_DIR")]
+    log_dir: Option<PathBuf>,
+
+    /// Use JSON format for log files (useful for log aggregation systems)
+    #[arg(long, default_value_t = false)]
+    json_logs: bool,
+
+    /// Run as daemon (Unix/Linux only)
+    #[arg(long, default_value_t = false)]
+    daemon: bool,
+
+    /// PID file location (Unix only, used when running as daemon)
+    #[arg(long, default_value = "/var/run/torc-server.pid")]
+    pid_file: PathBuf,
+
+    /// Interval in seconds for background task that processes job completions and unblocks dependent jobs.
+    /// Defaults to 60s for `run`, 5s for `service install`
+    #[arg(short, long, env = "TORC_COMPLETION_CHECK_INTERVAL_SECS")]
+    completion_check_interval_secs: Option<f64>,
+}
+
 #[derive(Parser)]
 #[command(name = "torc-server")]
 #[command(about = "Torc workflow orchestration server")]
-struct Args {
+struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
-
-    /// Log level (error, warn, info, debug, trace)
-    #[arg(long, default_value = "info", env = "RUST_LOG", global = true)]
-    log_level: String,
-    /// Whether to use HTTPS or not
-    #[arg(long, global = true)]
-    https: bool,
-    /// Defines the URL to use.
-    #[arg(short, long, default_value = "localhost", global = true)]
-    url: String,
-    /// Defines the port to listen on.
-    #[arg(short, long, default_value_t = 8080, global = true)]
-    port: u16,
-    /// Defines the number of threads to use.
-    #[arg(short, long, default_value_t = 1, global = true)]
-    threads: u32,
-    /// Path to the SQLite database file. If not specified, uses DATABASE_URL environment variable.
-    #[arg(short, long, global = true)]
-    database: Option<String>,
-    /// Path to htpasswd file for basic authentication (username:bcrypt_hash format, one per line)
-    #[arg(long, env = "TORC_AUTH_FILE", global = true)]
-    auth_file: Option<String>,
-    /// Require authentication for all requests (if false, auth is optional for backward compatibility)
-    #[arg(long, default_value_t = false, global = true)]
-    require_auth: bool,
-    /// Directory for log files (enables file logging with size-based rotation)
-    #[arg(long, env = "TORC_LOG_DIR", global = true)]
-    log_dir: Option<std::path::PathBuf>,
-    /// Use JSON format for log files (useful for log aggregation systems)
-    #[arg(long, default_value_t = false, global = true)]
-    json_logs: bool,
-    /// Run as daemon (Unix/Linux only)
-    #[arg(long, default_value_t = false, global = true)]
-    daemon: bool,
-    /// PID file location (Unix only, used when running as daemon)
-    #[arg(long, default_value = "/var/run/torc-server.pid", global = true)]
-    pid_file: std::path::PathBuf,
-    /// Interval in seconds for background task that processes job completions and unblocks dependent jobs
-    #[arg(
-        long,
-        env = "TORC_UNBLOCK_INTERVAL_SECONDS",
-        default_value_t = 60.0,
-        global = true
-    )]
-    unblock_interval_seconds: f64,
 }
 
 #[derive(clap::Subcommand)]
 enum Commands {
     /// Run the server (default if no subcommand specified)
-    Run,
+    Run {
+        #[command(flatten)]
+        config: ServerConfig,
+    },
     /// Manage system service (install, uninstall, start, stop, status)
     Service {
         #[command(subcommand)]
@@ -87,6 +103,9 @@ enum ServiceAction {
         /// Install as user service (no root required)
         #[arg(long)]
         user: bool,
+
+        #[command(flatten)]
+        config: ServerConfig,
     },
     /// Uninstall the system service
     Uninstall {
@@ -136,53 +155,67 @@ fn daemonize_process(_pid_file: &std::path::Path) -> Result<()> {
     anyhow::bail!("Daemon mode is only supported on Unix/Linux systems");
 }
 
+/// Default completion check interval for `run` command (60 seconds)
+const DEFAULT_RUN_INTERVAL_SECS: f64 = 60.0;
+
 /// Create custom server, wire it to the autogenerated router,
 /// and pass it to the web server.
 fn main() -> Result<()> {
     dotenv().ok();
 
-    let args = Args::parse();
+    let cli = Cli::parse();
 
-    // Handle service management commands
-    match args.command.as_ref().unwrap_or(&Commands::Run) {
-        Commands::Service { action } => {
-            let (command, user_level) = match action {
-                ServiceAction::Install { user } => (service::ServiceCommand::Install, *user),
-                ServiceAction::Uninstall { user } => (service::ServiceCommand::Uninstall, *user),
-                ServiceAction::Start { user } => (service::ServiceCommand::Start, *user),
-                ServiceAction::Stop { user } => (service::ServiceCommand::Stop, *user),
-                ServiceAction::Status { user } => (service::ServiceCommand::Status, *user),
-            };
-
-            // For install command, pass the configuration from args
-            let config = if matches!(command, service::ServiceCommand::Install) {
-                Some(service::ServiceConfig {
-                    log_dir: args.log_dir.clone(),
-                    database: args.database.clone(),
-                    url: args.url.clone(),
-                    port: args.port,
-                    threads: args.threads,
-                    auth_file: args.auth_file.clone(),
-                    require_auth: args.require_auth,
-                    log_level: args.log_level.clone(),
-                    json_logs: args.json_logs,
-                    unblock_interval_seconds: args.unblock_interval_seconds,
-                })
-            } else {
-                None
-            };
-
-            return service::execute_service_command(command, config.as_ref(), user_level);
+    // Handle commands - default to Run with default config if no subcommand
+    match cli.command {
+        Some(Commands::Service { action }) => {
+            return handle_service_action(action);
         }
-        Commands::Run => {
-            // Continue with normal server startup
+        Some(Commands::Run { config }) => {
+            return run_server(config);
+        }
+        None => {
+            // Default: run server with default config
+            // We need to re-parse as "run" to get ServerConfig defaults from clap
+            let cli = Cli::parse_from(["torc-server", "run"]);
+            if let Some(Commands::Run { config }) = cli.command {
+                return run_server(config);
+            }
+            unreachable!()
         }
     }
+}
 
+fn handle_service_action(action: ServiceAction) -> Result<()> {
+    let (command, user_level, config) = match action {
+        ServiceAction::Install { user, config } => {
+            let svc_config = service::ServiceConfig {
+                log_dir: config.log_dir,
+                database: config.database,
+                url: config.url,
+                port: config.port,
+                threads: config.threads,
+                auth_file: config.auth_file,
+                require_auth: config.require_auth,
+                log_level: config.log_level,
+                json_logs: config.json_logs,
+                completion_check_interval_secs: config.completion_check_interval_secs,
+            };
+            (service::ServiceCommand::Install, user, Some(svc_config))
+        }
+        ServiceAction::Uninstall { user } => (service::ServiceCommand::Uninstall, user, None),
+        ServiceAction::Start { user } => (service::ServiceCommand::Start, user, None),
+        ServiceAction::Stop { user } => (service::ServiceCommand::Stop, user, None),
+        ServiceAction::Status { user } => (service::ServiceCommand::Status, user, None),
+    };
+
+    service::execute_service_command(command, config.as_ref(), user_level)
+}
+
+fn run_server(config: ServerConfig) -> Result<()> {
     // Handle daemonization BEFORE initializing logging
     // This is important because daemonization forks the process
-    if args.daemon {
-        daemonize_process(&args.pid_file)?;
+    if config.daemon {
+        daemonize_process(&config.pid_file)?;
     }
 
     // Check if timing instrumentation should be enabled
@@ -199,9 +232,9 @@ fn main() -> Result<()> {
             .layer(|| Histogram::new_with_max(60_000_000_000, 2).unwrap());
 
         let env_filter = tracing_subscriber::EnvFilter::try_from_default_env()
-            .unwrap_or_else(|_| args.log_level.clone().into());
+            .unwrap_or_else(|_| config.log_level.clone().into());
 
-        if let Some(ref log_dir) = args.log_dir {
+        if let Some(ref log_dir) = config.log_dir {
             // File logging with timing (size-based rotation: 10 MiB, 5 files)
             let file_writer = logging::create_rotating_writer(log_dir)?;
             let (non_blocking, _guard) = tracing_appender::non_blocking(file_writer);
@@ -240,7 +273,7 @@ fn main() -> Result<()> {
         }
 
         info!("Timing instrumentation enabled - timing data is being collected");
-        if args.log_dir.is_some() {
+        if config.log_dir.is_some() {
             info!(
                 "File logging configured with size-based rotation (10 MiB per file, 5 files max)"
             );
@@ -250,11 +283,15 @@ fn main() -> Result<()> {
         );
     } else {
         // Use the new logging module for standard (non-timing) logging
-        logging::init_logging(args.log_dir.as_deref(), &args.log_level, args.json_logs)?;
+        logging::init_logging(
+            config.log_dir.as_deref(),
+            &config.log_level,
+            config.json_logs,
+        )?;
     }
 
     // Use database path from command line if provided, otherwise fall back to DATABASE_URL env var
-    let database_url = if let Some(db_path) = &args.database {
+    let database_url = if let Some(db_path) = &config.database {
         format!("sqlite:{}", db_path)
     } else {
         env::var("DATABASE_URL").expect("DATABASE_URL must be set or --database must be provided")
@@ -262,7 +299,7 @@ fn main() -> Result<()> {
 
     // Build Tokio runtime with user-specified thread count
     let runtime = tokio::runtime::Builder::new_multi_thread()
-        .worker_threads(args.threads as usize)
+        .worker_threads(config.threads as usize)
         .enable_all()
         .build()?;
 
@@ -290,7 +327,7 @@ fn main() -> Result<()> {
         info!("Database migrations completed successfully");
 
         // Load htpasswd file if provided
-        let htpasswd = if let Some(auth_file_path) = &args.auth_file {
+        let htpasswd = if let Some(auth_file_path) = &config.auth_file {
             info!("Loading htpasswd file from: {}", auth_file_path);
             match torc::server::htpasswd::HtpasswdFile::load(auth_file_path) {
                 Ok(htpasswd) => {
@@ -303,7 +340,7 @@ fn main() -> Result<()> {
                 }
             }
         } else {
-            if args.require_auth {
+            if config.require_auth {
                 eprintln!("Error: --require-auth specified but no --auth-file provided");
                 std::process::exit(1);
             }
@@ -311,26 +348,31 @@ fn main() -> Result<()> {
             None
         };
 
-        if args.require_auth {
+        if config.require_auth {
             info!("Authentication is REQUIRED for all requests");
         } else if htpasswd.is_some() {
             info!("Authentication is OPTIONAL (backward compatible mode)");
         }
 
-        let addr = format!("{}:{}", args.url, args.port);
+        let addr = format!("{}:{}", config.url, config.port);
         info!(
             "Tokio runtime configured with {} worker threads",
-            args.threads
+            config.threads
         );
         info!("Listening on {}", addr);
 
+        // Default to 60s for `run` command
+        let completion_check_interval_secs = config
+            .completion_check_interval_secs
+            .unwrap_or(DEFAULT_RUN_INTERVAL_SECS);
+
         server::create(
             &addr,
-            args.https,
+            config.https,
             pool,
             htpasswd,
-            args.require_auth,
-            args.unblock_interval_seconds,
+            config.require_auth,
+            completion_check_interval_secs,
         )
         .await;
         Ok(())

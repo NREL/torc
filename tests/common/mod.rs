@@ -106,9 +106,10 @@ fn start_process(db_url: &str, db_file: NamedTempFile) -> ServerProcess {
     }
     eprintln!("Starting server on port {}", port);
     let child = Command::new(get_exe_path("./target/debug/torc-server"))
+        .arg("run")
         .arg("--port")
         .arg(port.to_string())
-        .arg("--unblock-interval-seconds")
+        .arg("--completion-check-interval-secs")
         .arg("0.1")
         .env("DATABASE_URL", db_url)
         .env("RUST_LOG", "info")
