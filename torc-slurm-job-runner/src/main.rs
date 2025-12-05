@@ -9,7 +9,7 @@ fn main() {
 #[cfg(unix)]
 mod unix_main {
     use chrono::Duration;
-    use clap::Parser;
+    use clap::{builder::styling, Parser};
     use env_logger::Builder;
     use log::{LevelFilter, debug, error, info};
     use serde_json;
@@ -28,9 +28,16 @@ mod unix_main {
     use torc::client::log_paths::get_slurm_job_runner_log_file;
     use torc::client::utils;
 
+    const STYLES: styling::Styles = styling::Styles::styled()
+        .header(styling::AnsiColor::Green.on_default().bold())
+        .usage(styling::AnsiColor::Green.on_default().bold())
+        .literal(styling::AnsiColor::Cyan.on_default().bold())
+        .placeholder(styling::AnsiColor::Cyan.on_default());
+
     #[derive(Parser, Debug)]
     #[command(name = "torc-slurm-job-runner")]
     #[command(about = "Slurm job runner for Torc workflows", long_about = None)]
+    #[command(styles = STYLES)]
     struct Args {
         /// Server URL
         #[arg()]

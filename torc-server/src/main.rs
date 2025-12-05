@@ -3,7 +3,7 @@
 #![allow(missing_docs)]
 
 use anyhow::Result;
-use clap::{Args, Parser};
+use clap::{Args, Parser, builder::styling};
 use dotenvy::dotenv;
 use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
 use std::env;
@@ -74,11 +74,20 @@ struct ServerConfig {
     completion_check_interval_secs: Option<f64>,
 }
 
+const STYLES: styling::Styles = styling::Styles::styled()
+    .header(styling::AnsiColor::Green.on_default().bold())
+    .usage(styling::AnsiColor::Green.on_default().bold())
+    .literal(styling::AnsiColor::Cyan.on_default().bold())
+    .placeholder(styling::AnsiColor::Cyan.on_default());
+
 #[derive(Parser)]
 #[command(name = "torc-server")]
 #[command(about = "Torc workflow orchestration server")]
-#[command(after_help = "Use 'torc-server run --help' to see server configuration options.\n\
-Use 'torc-server service --help' to see service management options.")]
+#[command(styles = STYLES)]
+#[command(
+    after_help = "Use 'torc-server run --help' to see server configuration options.\n\
+Use 'torc-server service --help' to see service management options."
+)]
 struct Cli {
     #[command(subcommand)]
     command: Option<Commands>,
