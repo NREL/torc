@@ -6,7 +6,7 @@ from dash import dash_table, dcc, html
 
 
 def create_view_tab_layout():
-    """Create the layout for the View Workflows tab."""
+    """Create the layout for the View Details tab."""
     return dbc.Container(
         [
             dbc.Row(
@@ -53,369 +53,466 @@ def create_view_tab_layout():
 
 
 def create_run_tab_layout():
-    """Create the layout for the Run Workflows tab."""
+    """Create the layout for the unified Workflows tab.
+
+    This is a workflow-centric design where:
+    1. Workflow list is always visible with inline status and actions
+    2. "Create New Workflow" opens a modal
+    3. Selecting a row shows the detail panel with contextual actions
+    """
     return dbc.Container(
         [
+            # Header row with title and Create button
             dbc.Row(
                 [
                     dbc.Col(
                         [
-                            html.H3("Manage Workflows", className="mb-3"),
+                            html.H3("Workflows", className="mb-1"),
                             html.P(
-                                "Create, initialize, delete, and execute workflows locally or submit to HPC/Slurm",
-                                className="text-muted"
-                            ),
-                        ]
-                    )
-                ]
-            ),
-
-            dbc.Row(
-                [
-                    # Left column: Workflow selection/upload
-                    dbc.Col(
-                        [
-                            dbc.Card(
-                                [
-                                    dbc.CardHeader(html.H5("Workflow Specification")),
-                                    dbc.CardBody(
-                                        [
-                                            dbc.Tabs(
-                                                [
-                                                    dbc.Tab(
-                                                        [
-                                                            html.Div(
-                                                                [
-                                                                    dbc.Label("Upload Workflow Spec File", className="mt-3"),
-                                                                    dcc.Upload(
-                                                                        id="upload-workflow-spec",
-                                                                        children=html.Div(
-                                                                            [
-                                                                                html.I(className="fas fa-cloud-upload-alt fa-3x mb-3"),
-                                                                                html.Br(),
-                                                                                "Drag and Drop or ",
-                                                                                html.A("Select a File"),
-                                                                            ],
-                                                                            style={
-                                                                                "textAlign": "center",
-                                                                                "padding": "40px",
-                                                                                "borderWidth": "2px",
-                                                                                "borderStyle": "dashed",
-                                                                                "borderRadius": "5px",
-                                                                                "cursor": "pointer",
-                                                                            }
-                                                                        ),
-                                                                        multiple=False,
-                                                                    ),
-                                                                    html.Div(id="upload-status", className="mt-3"),
-
-                                                                    dbc.Label("Or enter file path", className="mt-3"),
-                                                                    dbc.Input(
-                                                                        id="workflow-spec-path-input",
-                                                                        type="text",
-                                                                        placeholder="/path/to/workflow.yaml",
-                                                                    ),
-                                                                ]
-                                                            )
-                                                        ],
-                                                        label="New Workflow",
-                                                        tab_id="new-workflow-tab",
-                                                    ),
-                                                    dbc.Tab(
-                                                        [
-                                                            html.Div(
-                                                                [
-                                                                    dbc.Alert(
-                                                                        [
-                                                                            html.I(className="fas fa-info-circle me-2"),
-                                                                            "Select a workflow from the 'View Resources' tab to run it here."
-                                                                        ],
-                                                                        color="info",
-                                                                        className="mt-3",
-                                                                    ),
-                                                                    html.Div(id="existing-workflow-info", className="mt-3"),
-                                                                ]
-                                                            )
-                                                        ],
-                                                        label="Selected Workflow",
-                                                        tab_id="existing-workflow-tab",
-                                                    ),
-                                                ],
-                                                id="workflow-source-tabs",
-                                                active_tab="existing-workflow-tab",
-                                            ),
-                                        ]
-                                    ),
-                                ],
-                                className="mb-4"
+                                "Create, manage, and execute workflows",
+                                className="text-muted mb-0"
                             ),
                         ],
-                        md=6,
+                        width=8,
                     ),
-
-                    # Right column: Execution options
                     dbc.Col(
                         [
-                            dbc.Card(
-                                [
-                                    dbc.CardHeader(html.H5("Workflow Actions")),
-                                    dbc.CardBody(
-                                        [
-                                            html.Div(id="workflow-creation-section", children=[
-                                                dbc.Label("Step 1: Create Workflow", className="fw-bold mb-2"),
-                                                dbc.Checklist(
-                                                    id="initialize-workflow-checkbox",
-                                                    options=[
-                                                        {"label": " Initialize workflow after creation", "value": "initialize"},
-                                                    ],
-                                                    value=["initialize"],
-                                                    className="mb-3",
-                                                ),
-                                                dbc.Button(
-                                                    [html.I(className="fas fa-plus-circle me-2"), "Create Workflow"],
-                                                    id="create-workflow-button",
-                                                    color="primary",
-                                                    size="lg",
-                                                    className="w-100 mb-3",
-                                                ),
-                                                html.Div(id="workflow-creation-status", className="mb-3"),
-                                            ]),
-
-                                            html.Hr(),
-
-                                            html.Div(id="workflow-management-section", children=[
-                                                dbc.Label("Workflow Management", className="fw-bold mb-2"),
-                                                dbc.Row([
-                                                    dbc.Col(
-                                                        dbc.Button(
-                                                            [html.I(className="fas fa-sync me-2"), "Initialize"],
-                                                            id="initialize-existing-workflow-button",
-                                                            color="primary",
-                                                            className="w-100",
-                                                            disabled=False,
-                                                        ),
-                                                        width=4,
-                                                    ),
-                                                    dbc.Col(
-                                                        dbc.Button(
-                                                            [html.I(className="fas fa-redo me-2"), "Re-initialize"],
-                                                            id="reinitialize-workflow-button",
-                                                            color="warning",
-                                                            className="w-100",
-                                                            disabled=False,
-                                                        ),
-                                                        width=4,
-                                                    ),
-                                                    dbc.Col(
-                                                        dbc.Button(
-                                                            [html.I(className="fas fa-rotate-left me-2"), "Reset"],
-                                                            id="reset-workflow-button",
-                                                            color="info",
-                                                            className="w-100",
-                                                            disabled=False,
-                                                        ),
-                                                        width=4,
-                                                    ),
-                                                ], className="mb-3"),
-                                                html.Div(id="workflow-management-status", className="mb-3"),
-                                            ]),
-
-                                            # Modal for confirming file deletion during initialization
-                                            dbc.Modal(
-                                                [
-                                                    dbc.ModalHeader(dbc.ModalTitle("Confirm Initialization")),
-                                                    dbc.ModalBody([
-                                                        html.Div(id="initialize-modal-message"),
-                                                    ]),
-                                                    dbc.ModalFooter([
-                                                        dbc.Button(
-                                                            "Cancel",
-                                                            id="initialize-modal-cancel",
-                                                            className="me-2",
-                                                            color="secondary",
-                                                        ),
-                                                        dbc.Button(
-                                                            "Delete Files and Initialize",
-                                                            id="initialize-modal-confirm",
-                                                            color="danger",
-                                                        ),
-                                                    ]),
-                                                ],
-                                                id="initialize-confirmation-modal",
-                                                is_open=False,
-                                                backdrop="static",  # Prevent closing by clicking outside
-                                            ),
-
-                                            # Store for initialization check data
-                                            dcc.Store(id="initialize-check-store"),
-
-                                            # Modal for confirming file deletion during reinitialize
-                                            dbc.Modal(
-                                                [
-                                                    dbc.ModalHeader(dbc.ModalTitle("Confirm Re-initialization")),
-                                                    dbc.ModalBody([
-                                                        html.Div(id="reinitialize-modal-message"),
-                                                    ]),
-                                                    dbc.ModalFooter([
-                                                        dbc.Button(
-                                                            "Cancel",
-                                                            id="reinitialize-modal-cancel",
-                                                            className="me-2",
-                                                            color="secondary",
-                                                        ),
-                                                        dbc.Button(
-                                                            "Delete Files and Re-initialize",
-                                                            id="reinitialize-modal-confirm",
-                                                            color="danger",
-                                                        ),
-                                                    ]),
-                                                ],
-                                                id="reinitialize-confirmation-modal",
-                                                is_open=False,
-                                                backdrop="static",
-                                            ),
-
-                                            # Store for reinitialize check data
-                                            dcc.Store(id="reinitialize-check-store"),
-
-                                            html.Hr(),
-
-                                            html.Div(id="workflow-dag-section", children=[
-                                                dbc.Label("Workflow Visualization", className="fw-bold mb-2"),
-                                                dbc.Row([
-                                                    dbc.Col(
-                                                        dbc.Button(
-                                                            [html.I(className="fas fa-project-diagram me-2"), "Show DAG"],
-                                                            id="show-dag-button",
-                                                            color="info",
-                                                            className="w-100",
-                                                            disabled=False,
-                                                        ),
-                                                        width=6,
-                                                    ),
-                                                    dbc.Col(
-                                                        dbc.Button(
-                                                            [html.I(className="fas fa-list-ol me-2"), "Show Execution Plan"],
-                                                            id="show-execution-plan-button",
-                                                            color="info",
-                                                            className="w-100",
-                                                            disabled=False,
-                                                        ),
-                                                        width=6,
-                                                    ),
-                                                ], className="mb-3"),
-                                            ]),
-
-                                            html.Hr(),
-
-                                            html.Div(id="workflow-execution-section", children=[
-                                                dbc.Label("Step 2: Execute Workflow", className="fw-bold mb-2"),
-                                                dbc.RadioItems(
-                                                    id="execution-mode-radio",
-                                                    options=[
-                                                        {"label": " Run Locally", "value": "run"},
-                                                        {"label": " Submit to HPC/Slurm", "value": "submit"},
-                                                    ],
-                                                    value="run",
-                                                    inline=False,
-                                                    className="mb-3",
-                                                ),
-                                                dbc.Button(
-                                                    [html.I(className="fas fa-play me-2"), "Execute Workflow"],
-                                                    id="execute-workflow-button",
-                                                    color="success",
-                                                    size="lg",
-                                                    className="w-100 mb-2",
-                                                    disabled=False,
-                                                ),
-                                                dbc.Button(
-                                                    [html.I(className="fas fa-stop me-2"), "Cancel Execution"],
-                                                    id="cancel-execution-button",
-                                                    color="danger",
-                                                    size="lg",
-                                                    className="w-100",
-                                                    disabled=True,
-                                                ),
-                                            ]),
-
-                                            # Modal for confirming file deletion during execute
-                                            dbc.Modal(
-                                                [
-                                                    dbc.ModalHeader(dbc.ModalTitle("Confirm Workflow Execution")),
-                                                    dbc.ModalBody([
-                                                        html.Div(id="execute-modal-message"),
-                                                    ]),
-                                                    dbc.ModalFooter([
-                                                        dbc.Button(
-                                                            "Cancel",
-                                                            id="execute-modal-cancel",
-                                                            className="me-2",
-                                                            color="secondary",
-                                                        ),
-                                                        dbc.Button(
-                                                            "Delete Files and Execute",
-                                                            id="execute-modal-confirm",
-                                                            color="danger",
-                                                        ),
-                                                    ]),
-                                                ],
-                                                id="execute-confirmation-modal",
-                                                is_open=False,
-                                                backdrop="static",
-                                            ),
-
-                                            # Store for execute check data
-                                            dcc.Store(id="execute-check-store"),
-                                        ]
-                                    ),
-                                ],
-                                className="mb-4"
+                            dbc.Button(
+                                [html.I(className="fas fa-plus me-2"), "Create New Workflow"],
+                                id="open-create-workflow-modal-btn",
+                                color="primary",
+                                size="lg",
+                                className="float-end",
                             ),
                         ],
-                        md=6,
+                        width=4,
+                        className="d-flex align-items-center justify-content-end",
                     ),
                 ],
-                className="mb-4"
+                className="mb-3"
             ),
 
-            # Polling interval for real-time output
-            dcc.Interval(id="execution-poll-interval", interval=1000, disabled=True),
-
-            # Execution output
+            # Workflow list card
             dbc.Row(
                 dbc.Col(
                     dbc.Card(
                         [
                             dbc.CardHeader(
-                                [
-                                    html.I(className="fas fa-terminal me-2"),
-                                    "Execution Output"
-                                ]
+                                dbc.Row(
+                                    [
+                                        dbc.Col(
+                                            [
+                                                html.I(className="fas fa-list me-2"),
+                                                "All Workflows",
+                                            ],
+                                            width="auto",
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                dbc.InputGroup(
+                                                    [
+                                                        dbc.InputGroupText(
+                                                            html.I(className="fas fa-search"),
+                                                        ),
+                                                        dbc.Input(
+                                                            id="workflow-filter-input",
+                                                            type="text",
+                                                            placeholder="Filter workflows...",
+                                                            size="sm",
+                                                        ),
+                                                    ],
+                                                    size="sm",
+                                                ),
+                                            ],
+                                            width=3,
+                                        ),
+                                        dbc.Col(
+                                            [
+                                                dbc.Button(
+                                                    [html.I(className="fas fa-sync-alt me-1"), "Refresh"],
+                                                    id="workflows-refresh-btn",
+                                                    color="secondary",
+                                                    size="sm",
+                                                    outline=True,
+                                                    className="me-2",
+                                                ),
+                                                dbc.Checklist(
+                                                    id="workflows-auto-refresh-toggle",
+                                                    options=[{"label": " Auto", "value": "auto"}],
+                                                    value=[],
+                                                    inline=True,
+                                                    switch=True,
+                                                    style={"display": "inline-block"},
+                                                ),
+                                            ],
+                                            width="auto",
+                                            className="ms-auto d-flex align-items-center",
+                                        ),
+                                    ],
+                                    align="center",
+                                    className="g-2",
+                                ),
                             ),
                             dbc.CardBody(
                                 [
-                                    html.Div(
-                                        id="execution-output",
-                                        style={
-                                            "fontFamily": "monospace",
-                                            "whiteSpace": "pre-wrap",
-                                            "backgroundColor": "#f8f9fa",
-                                            "padding": "15px",
-                                            "borderRadius": "5px",
-                                            "minHeight": "200px",
-                                            "maxHeight": "400px",
-                                            "overflowY": "auto",
-                                        }
-                                    ),
-                                ]
+                                    html.Div(id="unified-workflows-table-container"),
+                                ],
+                                style={"padding": "0"},
                             ),
-                        ]
-                    )
-                )
+                        ],
+                        className="mb-3"
+                    ),
+                ),
+            ),
+
+            # Hidden interval for auto-refresh (reuses existing interval)
+            dcc.Interval(id="workflows-auto-refresh-interval", interval=30000, disabled=True),
+
+            # Selected workflow detail panel (static layout, dynamically shown/hidden)
+            dbc.Row(
+                dbc.Col(
+                    dbc.Card(
+                        [
+                            dbc.CardHeader(
+                                html.H5(
+                                    [
+                                        html.I(className="fas fa-cog me-2"),
+                                        html.Span(id="detail-panel-workflow-name"),
+                                        html.Small(id="detail-panel-workflow-id", className="text-muted ms-2"),
+                                    ],
+                                    className="mb-0"
+                                ),
+                            ),
+                            # Hidden element to keep callback working
+                            html.Span(id="detail-panel-status-badge", style={"display": "none"}),
+                            dbc.CardBody(
+                                [
+                                    # Workflow info
+                                    dbc.Row(
+                                        [
+                                            dbc.Col([html.Strong("User: "), html.Span(id="detail-panel-user")], md=3),
+                                            dbc.Col([html.Strong("Created: "), html.Span(id="detail-panel-timestamp")], md=3),
+                                            dbc.Col([html.Strong("Description: "), html.Span(id="detail-panel-description")], md=6),
+                                        ],
+                                        className="mb-3"
+                                    ),
+
+                                    html.Hr(),
+
+                                    # Action buttons
+                                    dbc.Row(
+                                        [
+                                            # Management actions
+                                            dbc.Col(
+                                                [
+                                                    html.Label("Management", className="fw-bold text-muted small mb-2"),
+                                                    html.Div(
+                                                        [
+                                                            dbc.Button(
+                                                                [html.I(className="fas fa-sync me-1"), "Initialize"],
+                                                                id="initialize-existing-workflow-button",
+                                                                color="primary",
+                                                                size="sm",
+                                                                className="me-2",
+                                                            ),
+                                                            dbc.Button(
+                                                                [html.I(className="fas fa-redo me-1"), "Re-init"],
+                                                                id="reinitialize-workflow-button",
+                                                                color="warning",
+                                                                size="sm",
+                                                                className="me-2",
+                                                            ),
+                                                            dbc.Button(
+                                                                [html.I(className="fas fa-rotate-left me-1"), "Reset"],
+                                                                id="reset-workflow-button",
+                                                                color="info",
+                                                                size="sm",
+                                                            ),
+                                                        ]
+                                                    ),
+                                                ],
+                                                md=4,
+                                            ),
+                                            # Execution actions
+                                            dbc.Col(
+                                                [
+                                                    html.Label("Execution", className="fw-bold text-muted small mb-2"),
+                                                    html.Div(
+                                                        [
+                                                            dbc.Button(
+                                                                [html.I(className="fas fa-play me-1"), "Run Locally"],
+                                                                id="run-workflow-button",
+                                                                color="success",
+                                                                size="sm",
+                                                                className="me-2",
+                                                            ),
+                                                            dbc.Button(
+                                                                [html.I(className="fas fa-paper-plane me-1"), "Submit to HPC"],
+                                                                id="submit-workflow-button",
+                                                                color="success",
+                                                                outline=True,
+                                                                size="sm",
+                                                            ),
+                                                        ]
+                                                    ),
+                                                ],
+                                                md=4,
+                                            ),
+                                            # Visualization actions
+                                            dbc.Col(
+                                                [
+                                                    html.Label("Visualize", className="fw-bold text-muted small mb-2"),
+                                                    html.Div(
+                                                        [
+                                                            dbc.Button(
+                                                                [html.I(className="fas fa-project-diagram me-1"), "DAG"],
+                                                                id="show-dag-button",
+                                                                color="info",
+                                                                outline=True,
+                                                                size="sm",
+                                                                className="me-2",
+                                                            ),
+                                                            dbc.Button(
+                                                                [html.I(className="fas fa-list-ol me-1"), "Plan"],
+                                                                id="show-execution-plan-button",
+                                                                color="info",
+                                                                outline=True,
+                                                                size="sm",
+                                                            ),
+                                                        ]
+                                                    ),
+                                                ],
+                                                md=4,
+                                            ),
+                                        ],
+                                        className="mb-2"
+                                    ),
+
+                                    # Status message area
+                                    html.Div(id="workflow-management-status", className="mt-3"),
+                                ],
+                            ),
+                        ],
+                        id="workflow-detail-card",
+                        className="border-primary",
+                        style={"display": "none"},  # Hidden by default
+                    ),
+                ),
+            ),
+
+            # Placeholder for when no workflow is selected
+            dbc.Row(
+                dbc.Col(
+                    dbc.Alert(
+                        [
+                            html.I(className="fas fa-hand-pointer me-2"),
+                            "Click on a workflow row above to view details and actions"
+                        ],
+                        id="no-workflow-selected-alert",
+                        color="light",
+                        className="text-center",
+                    ),
+                ),
+            ),
+
+            # Create Workflow Modal
+            dbc.Modal(
+                [
+                    dbc.ModalHeader(dbc.ModalTitle([
+                        html.I(className="fas fa-plus-circle me-2"),
+                        "Create New Workflow"
+                    ])),
+                    dbc.ModalBody([
+                        dbc.Tabs(
+                            [
+                                dbc.Tab(
+                                    [
+                                        html.Div(
+                                            [
+                                                dbc.Label("Upload Workflow Spec File", className="mt-3 fw-bold"),
+                                                dcc.Upload(
+                                                    id="upload-workflow-spec",
+                                                    children=html.Div(
+                                                        [
+                                                            html.I(className="fas fa-cloud-upload-alt fa-2x mb-2"),
+                                                            html.Br(),
+                                                            "Drag and Drop or ",
+                                                            html.A("Select a File", className="text-primary"),
+                                                        ],
+                                                        style={
+                                                            "textAlign": "center",
+                                                            "padding": "30px",
+                                                            "borderWidth": "2px",
+                                                            "borderStyle": "dashed",
+                                                            "borderRadius": "5px",
+                                                            "cursor": "pointer",
+                                                            "backgroundColor": "#f8f9fa",
+                                                        }
+                                                    ),
+                                                    multiple=False,
+                                                ),
+                                                html.Div(id="upload-status", className="mt-2"),
+                                            ]
+                                        )
+                                    ],
+                                    label="Upload File",
+                                    tab_id="upload-tab",
+                                ),
+                                dbc.Tab(
+                                    [
+                                        html.Div(
+                                            [
+                                                dbc.Label("Workflow Spec File Path", className="mt-3 fw-bold"),
+                                                dbc.Input(
+                                                    id="workflow-spec-path-input",
+                                                    type="text",
+                                                    placeholder="/path/to/workflow.yaml",
+                                                ),
+                                                dbc.FormText("Enter the full path to a YAML, JSON, or JSON5 workflow spec file."),
+                                            ]
+                                        )
+                                    ],
+                                    label="File Path",
+                                    tab_id="path-tab",
+                                ),
+                            ],
+                            id="create-workflow-source-tabs",
+                            active_tab="upload-tab",
+                        ),
+                        html.Hr(),
+                        dbc.Checklist(
+                            id="create-workflow-options",
+                            options=[
+                                {"label": " Initialize workflow after creation", "value": "initialize"},
+                                {"label": " Run workflow immediately after creation", "value": "run"},
+                            ],
+                            value=["initialize"],
+                            className="mb-3",
+                        ),
+                        html.Div(id="create-workflow-status"),
+                    ]),
+                    dbc.ModalFooter([
+                        dbc.Button(
+                            "Cancel",
+                            id="create-workflow-cancel-btn",
+                            color="secondary",
+                            className="me-2",
+                        ),
+                        dbc.Button(
+                            [html.I(className="fas fa-plus me-2"), "Create"],
+                            id="create-workflow-confirm-btn",
+                            color="primary",
+                        ),
+                    ]),
+                ],
+                id="create-workflow-modal",
+                is_open=False,
+                size="lg",
+                backdrop="static",
             ),
 
             # Store for uploaded file content
             dcc.Store(id="uploaded-spec-store"),
+
+            # Store for the workflow being created (temp)
+            dcc.Store(id="workflows-store"),
+
+            # Hidden elements for backward compatibility with old callbacks
+            html.Div(id="existing-workflow-info", style={"display": "none"}),
+            html.Div(id="workflow-creation-status", style={"display": "none"}),
+            dcc.Store(id="workflow-source-tabs", data="existing-workflow-tab"),
+            html.Div(id="create-workflow-button", style={"display": "none"}),
+            dcc.Checklist(id="initialize-workflow-checkbox", options=[], value=[], style={"display": "none"}),
+            html.Div(id="execute-workflow-button", style={"display": "none"}),
+            dcc.RadioItems(id="execution-mode-radio", options=[], value="run", style={"display": "none"}),
+
+            # Modals for workflow management actions (initialization, reinitialize, execute)
+            # Modal for confirming file deletion during initialization
+            dbc.Modal(
+                [
+                    dbc.ModalHeader(dbc.ModalTitle("Confirm Initialization")),
+                    dbc.ModalBody([
+                        html.Div(id="initialize-modal-message"),
+                    ]),
+                    dbc.ModalFooter([
+                        dbc.Button(
+                            "Cancel",
+                            id="initialize-modal-cancel",
+                            className="me-2",
+                            color="secondary",
+                        ),
+                        dbc.Button(
+                            "Delete Files and Initialize",
+                            id="initialize-modal-confirm",
+                            color="danger",
+                        ),
+                    ]),
+                ],
+                id="initialize-confirmation-modal",
+                is_open=False,
+                backdrop="static",
+            ),
+
+            # Store for initialization check data
+            dcc.Store(id="initialize-check-store"),
+
+            # Modal for confirming file deletion during reinitialize
+            dbc.Modal(
+                [
+                    dbc.ModalHeader(dbc.ModalTitle("Confirm Re-initialization")),
+                    dbc.ModalBody([
+                        html.Div(id="reinitialize-modal-message"),
+                    ]),
+                    dbc.ModalFooter([
+                        dbc.Button(
+                            "Cancel",
+                            id="reinitialize-modal-cancel",
+                            className="me-2",
+                            color="secondary",
+                        ),
+                        dbc.Button(
+                            "Delete Files and Re-initialize",
+                            id="reinitialize-modal-confirm",
+                            color="danger",
+                        ),
+                    ]),
+                ],
+                id="reinitialize-confirmation-modal",
+                is_open=False,
+                backdrop="static",
+            ),
+
+            # Store for reinitialize check data
+            dcc.Store(id="reinitialize-check-store"),
+
+            # Modal for confirming file deletion during execute
+            dbc.Modal(
+                [
+                    dbc.ModalHeader(dbc.ModalTitle("Confirm Workflow Execution")),
+                    dbc.ModalBody([
+                        html.Div(id="execute-modal-message"),
+                    ]),
+                    dbc.ModalFooter([
+                        dbc.Button(
+                            "Cancel",
+                            id="execute-modal-cancel",
+                            className="me-2",
+                            color="secondary",
+                        ),
+                        dbc.Button(
+                            "Delete Files and Execute",
+                            id="execute-modal-confirm",
+                            color="danger",
+                        ),
+                    ]),
+                ],
+                id="execute-confirmation-modal",
+                is_open=False,
+                backdrop="static",
+            ),
+
+            # Store for execute check data
+            dcc.Store(id="execute-check-store"),
 
             # Modal for execution plan
             dbc.Modal(
@@ -431,12 +528,85 @@ def create_run_tab_layout():
                 ],
                 id="execution-plan-modal",
                 is_open=False,
-                size="xl",  # Extra large modal for better visualization
+                size="xl",
                 scrollable=True,
+            ),
+
+            # Polling interval for real-time output
+            dcc.Interval(id="execution-poll-interval", interval=1000, disabled=True),
+
+            # Execution output panel (shown when running)
+            dbc.Row(
+                dbc.Col(
+                    dbc.Collapse(
+                        dbc.Card(
+                            [
+                                dbc.CardHeader(
+                                    dbc.Row(
+                                        [
+                                            dbc.Col(
+                                                [
+                                                    html.I(className="fas fa-terminal me-2"),
+                                                    "Execution Output"
+                                                ],
+                                                width="auto",
+                                            ),
+                                            dbc.Col(
+                                                dbc.Button(
+                                                    [html.I(className="fas fa-stop me-2"), "Cancel"],
+                                                    id="cancel-execution-button",
+                                                    color="danger",
+                                                    size="sm",
+                                                ),
+                                                width="auto",
+                                                className="ms-auto",
+                                            ),
+                                        ],
+                                        align="center",
+                                    ),
+                                ),
+                                dbc.CardBody(
+                                    [
+                                        html.Div(
+                                            id="execution-output",
+                                            style={
+                                                "fontFamily": "monospace",
+                                                "whiteSpace": "pre-wrap",
+                                                "backgroundColor": "#1e1e1e",
+                                                "color": "#d4d4d4",
+                                                "padding": "15px",
+                                                "borderRadius": "5px",
+                                                "minHeight": "200px",
+                                                "maxHeight": "400px",
+                                                "overflowY": "auto",
+                                            }
+                                        ),
+                                    ]
+                                ),
+                            ],
+                            className="mb-3"
+                        ),
+                        id="execution-output-collapse",
+                        is_open=False,
+                    ),
+                ),
             ),
         ],
         fluid=True
     )
+
+
+def _get_status_color(status: str | None) -> str:
+    """Get Bootstrap color for workflow status."""
+    status_colors = {
+        "uninitialized": "secondary",
+        "ready": "primary",
+        "running": "warning",
+        "completed": "success",
+        "failed": "danger",
+        "canceled": "dark",
+    }
+    return status_colors.get(status or "", "secondary")
 
 
 def create_data_table(data, columns, table_id, enable_selection=False, tooltip_data=None):
@@ -547,7 +717,7 @@ def create_monitor_tab_layout():
                                                             dbc.Checklist(
                                                                 id="monitor-use-selected-workflow",
                                                                 options=[
-                                                                    {"label": " Use selected workflow from View Workflows tab", "value": "use_selected"},
+                                                                    {"label": " Use selected workflow from View Details tab", "value": "use_selected"},
                                                                 ],
                                                                 value=[],
                                                                 className="mb-2",

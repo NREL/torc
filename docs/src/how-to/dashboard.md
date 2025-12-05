@@ -93,7 +93,7 @@ torc-dash
    - Click "Save Configuration"
 
 4. **Test the connection**:
-   - Navigate to the "View Resources" tab
+   - Navigate to the "View Details" tab
    - Select "Workflows" from the dropdown
    - Click "Refresh"
    - You should see a list of workflows (if any exist)
@@ -105,7 +105,7 @@ torc-dash
 - Set the Torc API URL
 - Configure username for workflow operations
 
-### View Resources Tab
+### View Details Tab
 
 Browse and monitor Torc resources with interactive tables:
 
@@ -162,14 +162,14 @@ Real-time execution output is displayed in the "Execution Output" section.
 
 ### Monitoring Active Workflows
 
-1. Go to "View Resources" tab
+1. Go to "View Details" tab
 2. Select "Workflows" from the resource type dropdown
 3. Enable "Auto-refresh" for live updates
 4. Use the table's filter boxes to search for specific workflows
 
 ### Viewing Job Status
 
-1. Go to "View Resources" tab
+1. Go to "View Details" tab
 2. Select "Jobs" from the resource type dropdown
 3. Select a workflow from the filter dropdown
 4. Monitor job status changes with auto-refresh enabled
@@ -217,7 +217,7 @@ torc-dash --port 8051
 
 **Solutions**:
 - Ensure the "Auto-refresh" toggle is enabled
-- Verify you're on the "View Resources" tab
+- Verify you're on the "View Details" tab
 - Check that the API connection is working
 - Manually refresh to test connectivity
 
