@@ -7,6 +7,7 @@ pub mod api;
 pub mod api_types;
 pub mod auth;
 pub mod context;
+pub mod dashboard;
 pub mod header;
 pub mod htpasswd;
 pub mod routing;

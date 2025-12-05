@@ -13917,10 +13917,18 @@ where
                 _ if path.matched(paths::ID_WORKFLOWS_ID_RESET_JOB_STATUS) => method_not_allowed(),
                 _ if path.matched(paths::ID_WORKFLOWS_ID_RESET_STATUS) => method_not_allowed(),
                 _ if path.matched(paths::ID_WORKFLOWS_ID_STATUS) => method_not_allowed(),
-                _ => Ok(Response::builder()
-                    .status(StatusCode::NOT_FOUND)
-                    .body(Body::empty())
-                    .expect("Unable to create Not Found response")),
+                // Serve dashboard for non-API routes, 404 otherwise
+                _ => {
+                    // Try to serve dashboard assets for non-API paths
+                    if let Some(response) = crate::server::dashboard::serve_dashboard(uri.path()) {
+                        Ok(response)
+                    } else {
+                        Ok(Response::builder()
+                            .status(StatusCode::NOT_FOUND)
+                            .body(Body::empty())
+                            .expect("Unable to create Not Found response"))
+                    }
+                }
             }
         }
         Box::pin(run(self.api_impl.clone(), req))
