@@ -9,7 +9,7 @@ fn main() {
 #[cfg(unix)]
 mod unix_main {
     use chrono::Duration;
-    use clap::{builder::styling, Parser};
+    use clap::{Parser, builder::styling};
     use env_logger::Builder;
     use log::{LevelFilter, debug, error, info};
     use serde_json;

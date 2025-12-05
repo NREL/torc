@@ -4,15 +4,16 @@ This section contains learning-oriented lessons to help you get started with Tor
 
 **Tutorials:**
 
-1. [Many Independent Jobs](./many-jobs.md) - Create a workflow with 100 parallel jobs
-2. [Diamond Workflow](./diamond.md) - Fan-out and fan-in with file dependencies
-3. [User Data Dependencies](./user-data.md) - Pass JSON data between jobs
-4. [Simple Parameterization](./simple-params.md) - Single parameter dimension sweep
-5. [Advanced Parameterization](./advanced-params.md) - Multi-dimensional hyperparameter grid search
-6. [Multi-Stage Workflows with Barriers](./multi-stage-barrier.md) - Scale to thousands of jobs efficiently
-7. [Map Python Functions](./map_python_function_across_workers.md) - Distribute Python functions across workers
+1. [Dashboard Deployment](./dashboard-deployment.md) - Deploy torc-dash for local, shared, or HPC environments
+2. [Many Independent Jobs](./many-jobs.md) - Create a workflow with 100 parallel jobs
+3. [Diamond Workflow](./diamond.md) - Fan-out and fan-in with file dependencies
+4. [User Data Dependencies](./user-data.md) - Pass JSON data between jobs
+5. [Simple Parameterization](./simple-params.md) - Single parameter dimension sweep
+6. [Advanced Parameterization](./advanced-params.md) - Multi-dimensional hyperparameter grid search
+7. [Multi-Stage Workflows with Barriers](./multi-stage-barrier.md) - Scale to thousands of jobs efficiently
+8. [Map Python Functions](./map_python_function_across_workers.md) - Distribute Python functions across workers
 
-Start with Tutorial 1 if you're new to Torc, then progress through the others to learn more advanced features.
+Start with the Dashboard Deployment tutorial if you want to use the web interface, or Tutorial 2 if you prefer command-line workflows.
 
 ## Example Files
 

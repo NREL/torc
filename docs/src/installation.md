@@ -25,7 +25,7 @@ cargo install sqlx-cli --no-default-features --features sqlite
 sqlx database setup
 ```
 
-**Build everything (server, client, job runners):**
+**Build everything (server, client, dashboard, job runners):**
 
 ```bash
 # Development build
@@ -44,12 +44,15 @@ cargo build --release -p torc-server
 # Client CLI
 cargo build --release -p torc
 
+# Web Dashboard
+cargo build --release -p torc-dash
+
 # Slurm job runner
 cargo build --release -p torc-slurm-job-runner
 ```
 
 Binaries will be in `target/release/`. We recommend adding this directory
-to your system path so that run all binaries without using the path.
+to your system path so that you can run all binaries without specifying the full path.
 
 ## For Developers
 

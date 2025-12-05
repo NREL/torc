@@ -226,20 +226,6 @@ Execution flow:
 3. `aggregate_results` waits for all training jobs, then runs
 4. `select_best_model` runs last
 
-### Running on Slurm
-
-For large grid searches, submit multiple Slurm workers:
-
-```bash
-# Submit 4 workers with 2 GPUs each (can run up to 8 training jobs in parallel)
-for i in {1..4}; do
-  sbatch --nodes=1 --gres=gpu:2 --time=8:00:00 <<EOF
-#!/bin/bash
-torc run $WORKFLOW_ID
-EOF
-done
-```
-
 ## Step 6: Monitor Progress
 
 ```bash

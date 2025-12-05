@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Torc Workflow Manager</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="/static/images/torc_icon_32.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/static/images/apple-touch-icon.png">
+    <link rel="stylesheet" href="/static/css/style.css">
+    <!-- Cytoscape.js for DAG visualization -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cytoscape/3.28.1/cytoscape.min.js"></script>
+    <!-- Plotly.js for charts -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <!-- Dagre layout for Cytoscape -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dagre/0.8.5/dagre.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cytoscape-dagre@2.5.0/cytoscape-dagre.min.js"></script>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <h1><img src="/static/images/torc_icon.png" alt="Torc" class="header-icon"> Torc</h1>
+                <span class="version">Workflow Manager</span>
+            </div>
+            <ul class="nav-menu">
+                <li class="nav-item active" data-tab="workflows">
+                    <span class="nav-icon">&#9634;</span>
+                    Workflows
+                </li>
+                <li class="nav-item" data-tab="details">
+                    <span class="nav-icon">&#9776;</span>
+                    Details
+                </li>
+                <li class="nav-item" data-tab="events">
+                    <span class="nav-icon">&#9673;</span>
+                    Events
+                    <span class="badge" id="event-badge" style="display:none">0</span>
+                </li>
+                <li class="nav-item" data-tab="debugging">
+                    <span class="nav-icon">&#128270;</span>
+                    Debugging
+                </li>
+                <li class="nav-item" data-tab="resource-plots">
+                    <span class="nav-icon">&#128200;</span>
+                    Resource Plots
+                </li>
+                <li class="nav-item" data-tab="config">
+                    <span class="nav-icon">&#9881;</span>
+                    Configuration
+                </li>
+            </ul>
+            <div class="sidebar-footer">
+                <div class="connection-status" id="connection-status">
+                    <span class="status-dot disconnected"></span>
+                    <span class="status-text">Disconnected</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Workflows Tab -->
+            <div class="tab-content active" id="tab-workflows">
+                <div class="tab-header">
+                    <h2>Workflows</h2>
+                    <div class="header-actions">
+                        <button class="btn btn-success btn-create-prominent" id="btn-create-workflow">
+                            + Create Workflow
+                        </button>
+                        <input type="text" id="workflow-filter" class="text-input" placeholder="Filter workflows..." style="width: 200px;">
+                        <button class="btn btn-secondary" id="btn-refresh-workflows">
+                            Refresh
+                        </button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table" id="workflows-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Timestamp</th>
+                                <th>User</th>
+                                <th>Description</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="workflows-body">
+                            <tr>
+                                <td colspan="6" class="loading">Loading workflows...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Details Tab -->
+            <div class="tab-content" id="tab-details">
+                <div class="tab-header">
+                    <h2>Workflow Details</h2>
+                    <div class="header-actions">
+                        <select id="workflow-selector" class="select-input">
+                            <option value="">Select a workflow...</option>
+                        </select>
+                        <button class="btn btn-secondary" id="btn-refresh-details">Refresh</button>
+                    </div>
+                </div>
+                <div class="details-container" id="details-container">
+                    <div class="placeholder-message">
+                        Select a workflow to view details
+                    </div>
+                </div>
+                <!-- Workflow actions panel -->
+                <div class="workflow-actions-panel" id="workflow-actions-panel" style="display:none">
+                    <div class="action-group">
+                        <h4>Management</h4>
+                        <button class="btn btn-primary" id="btn-init-workflow" title="Initialize a workflow, including all job statuses">Initialize</button>
+                        <button class="btn btn-warning" id="btn-reinit-workflow" title="Reinitialize a workflow. This will reinitialize all jobs with a status of canceled, submitting, pending, or terminated. Jobs with a status of done will also be reinitialized if an input_file or user_data record has changed.">Re-initialize</button>
+                        <button class="btn btn-warning" id="btn-reset-workflow" title="Reset workflow and job status">Reset</button>
+                    </div>
+                    <div class="action-group">
+                        <h4>Execution</h4>
+                        <button class="btn btn-success" id="btn-run-workflow-detail" title="Run workflow locally on this machine">Run Locally</button>
+                        <button class="btn btn-success" id="btn-submit-workflow-detail" title="Submit workflow to the HPC scheduler (e.g., Slurm)">Submit to HPC</button>
+                    </div>
+                    <div class="action-group">
+                        <h4>Visualization</h4>
+                        <button class="btn btn-secondary" id="btn-show-dag" title="View the directed acyclic graph of job dependencies">View DAG</button>
+                        <button class="btn btn-secondary" id="btn-show-plan" title="View the execution plan showing job stages">Execution Plan</button>
+                    </div>
+                </div>
+                <!-- Sub-tabs for jobs, files, etc. -->
+                <div class="sub-tabs" id="details-sub-tabs" style="display:none">
+                    <button class="sub-tab active" data-subtab="jobs">Jobs</button>
+                    <button class="sub-tab" data-subtab="results">Results</button>
+                    <button class="sub-tab" data-subtab="events">Events</button>
+                    <button class="sub-tab" data-subtab="files">Files</button>
+                    <button class="sub-tab" data-subtab="user-data">User Data</button>
+                    <button class="sub-tab" data-subtab="resources">Resource Requirements</button>
+                    <button class="sub-tab" data-subtab="schedulers">Schedulers</button>
+                    <button class="sub-tab" data-subtab="compute-nodes">Compute Nodes</button>
+                </div>
+                <div class="sub-tab-content" id="details-content"></div>
+            </div>
+
+            <!-- DAG Tab -->
+            <div class="tab-content" id="tab-dag">
+                <div class="tab-header">
+                    <h2>DAG Visualization</h2>
+                    <div class="header-actions">
+                        <select id="dag-workflow-selector" class="select-input">
+                            <option value="">Select a workflow...</option>
+                        </select>
+                        <select id="dag-type-selector" class="select-input">
+                            <option value="jobs">Job Dependencies</option>
+                            <option value="files">Job-File Relations</option>
+                            <option value="userdata">Job-UserData Relations</option>
+                        </select>
+                        <button class="btn btn-secondary" id="btn-fit-dag">Fit to View</button>
+                    </div>
+                </div>
+                <div class="dag-container" id="dag-container">
+                    <div class="placeholder-message">
+                        Select a workflow to view its DAG
+                    </div>
+                </div>
+                <div class="dag-legend" id="dag-legend" style="display:none">
+                    <div class="legend-item"><span class="legend-color" style="background:#6c757d"></span> Uninitialized</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#ffc107"></span> Blocked</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#17a2b8"></span> Ready</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#fd7e14"></span> Pending</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#007bff"></span> Running</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#28a745"></span> Completed</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#dc3545"></span> Failed</div>
+                    <div class="legend-item"><span class="legend-color" style="background:#6f42c1"></span> Canceled</div>
+                </div>
+            </div>
+
+            <!-- Events Tab -->
+            <div class="tab-content" id="tab-events">
+                <div class="tab-header">
+                    <h2>Events</h2>
+                    <div class="header-actions">
+                        <select id="events-workflow-selector" class="select-input">
+                            <option value="">All Workflows</option>
+                        </select>
+                        <button class="btn btn-secondary" id="btn-clear-events">Clear</button>
+                        <label class="toggle-label">
+                            <input type="checkbox" id="auto-refresh-events" checked>
+                            Auto-refresh
+                        </label>
+                    </div>
+                </div>
+                <div class="events-container" id="events-container">
+                    <div class="events-list" id="events-list">
+                        <div class="placeholder-message">No events yet</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Debugging Tab -->
+            <div class="tab-content" id="tab-debugging">
+                <div class="tab-header">
+                    <h2>Job Debugging</h2>
+                    <div class="header-actions">
+                        <select id="debug-workflow-selector" class="select-input">
+                            <option value="">Select a workflow...</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="debugging-container">
+                    <!-- Job Results Report section -->
+                    <div class="settings-section">
+                        <h3>Job Results Report</h3>
+                        <div class="form-group">
+                            <label for="debug-output-dir">Output Directory</label>
+                            <input type="text" id="debug-output-dir" class="text-input" value="output" placeholder="output">
+                            <small>Directory where job logs are stored</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Options</label>
+                            <label class="toggle-label">
+                                <input type="checkbox" id="debug-all-runs">
+                                Include all runs (not just latest)
+                            </label>
+                            <label class="toggle-label">
+                                <input type="checkbox" id="debug-failed-only" checked>
+                                Show only failed jobs
+                            </label>
+                        </div>
+                        <button class="btn btn-primary" id="btn-generate-report">Generate Report</button>
+                    </div>
+
+                    <!-- Jobs table -->
+                    <div class="settings-section">
+                        <h3>Job Results <span id="debug-job-count"></span></h3>
+                        <div id="debug-jobs-table-container">
+                            <div class="placeholder-message">Generate a report to view job results</div>
+                        </div>
+                    </div>
+
+                    <!-- Log viewer -->
+                    <div class="settings-section">
+                        <h3>Log File Viewer</h3>
+                        <div id="debug-selected-job-info" class="placeholder-message">
+                            Select a job from the table above to view its logs
+                        </div>
+                        <div class="log-tabs" id="log-tabs" style="display:none">
+                            <button class="sub-tab active" data-logtab="stdout">stdout</button>
+                            <button class="sub-tab" data-logtab="stderr">stderr</button>
+                        </div>
+                        <div id="log-viewer" class="log-viewer" style="display:none">
+                            <div class="log-path" id="log-path"></div>
+                            <pre id="log-content" class="log-content"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Resource Plots Tab -->
+            <div class="tab-content" id="tab-resource-plots">
+                <div class="tab-header">
+                    <h2>Resource Plots</h2>
+                </div>
+                <div class="resource-plots-container">
+                    <!-- Database selection section -->
+                    <div class="settings-section">
+                        <h3>Resource Database Selection</h3>
+                        <div class="form-group">
+                            <label for="resource-db-dir">Database Directory</label>
+                            <div style="display: flex; gap: 10px;">
+                                <input type="text" id="resource-db-dir" class="text-input"
+                                       value="output/resource_utilization"
+                                       placeholder="output/resource_utilization">
+                                <button class="btn btn-secondary" id="btn-scan-dbs">Scan</button>
+                            </div>
+                            <small>Directory containing resource monitoring database files (.db)</small>
+                        </div>
+                        <div class="form-group">
+                            <label>Available Databases</label>
+                            <div id="resource-db-list" class="resource-db-list">
+                                <div class="placeholder-message">Click "Scan" to discover database files</div>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="btn-generate-plots" disabled>Generate Plots</button>
+                    </div>
+
+                    <!-- Plot display section -->
+                    <div class="settings-section" id="plots-section" style="display: none;">
+                        <h3>Resource Utilization Plots</h3>
+                        <div class="plot-tabs" id="plot-tabs">
+                            <!-- Tabs will be populated dynamically -->
+                        </div>
+                        <div class="plot-container" id="plot-container">
+                            <div class="placeholder-message">Select a plot to view</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Configuration Tab -->
+            <div class="tab-content" id="tab-config">
+                <div class="tab-header">
+                    <h2>Configuration</h2>
+                </div>
+                <div class="settings-container">
+                    <!-- Server Management Section -->
+                    <div class="settings-section">
+                        <h3>Server Management</h3>
+                        <div class="server-status-panel" id="server-status-panel">
+                            <div class="server-status-indicator">
+                                <span class="status-dot" id="server-status-dot"></span>
+                                <span id="server-status-text">Checking...</span>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="server-port">Server Port</label>
+                            <input type="number" id="server-port" class="text-input"
+                                   value="0" min="0" max="65535">
+                            <small>Port for torc-server to listen on (0 = auto-detect free port)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="server-database">Database Path</label>
+                            <input type="text" id="server-database" class="text-input"
+                                   placeholder="db/sqlite/dev.db">
+                            <small>Path to SQLite database file (leave empty for default)</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="server-completion-interval">Completion Check Interval (seconds)</label>
+                            <input type="number" id="server-completion-interval" class="text-input"
+                                   value="5" min="1" max="300">
+                            <small>How often to check for job completions and unblock dependent jobs</small>
+                        </div>
+                        <div class="form-group">
+                            <label for="server-log-level">Log Level</label>
+                            <select id="server-log-level" class="select-input">
+                                <option value="error">Error</option>
+                                <option value="warn">Warn</option>
+                                <option value="info" selected>Info</option>
+                                <option value="debug">Debug</option>
+                                <option value="trace">Trace</option>
+                            </select>
+                        </div>
+                        <div class="server-actions">
+                            <button class="btn btn-success" id="btn-start-server">Start Server</button>
+                            <button class="btn btn-danger" id="btn-stop-server" disabled>Stop Server</button>
+                        </div>
+                        <div id="server-output" class="server-output" style="display: none;">
+                            <h4>Server Output</h4>
+                            <pre id="server-output-content"></pre>
+                        </div>
+                    </div>
+
+                    <!-- API Configuration Section -->
+                    <div class="settings-section">
+                        <h3>API Configuration</h3>
+                        <div class="form-group">
+                            <label for="api-url">API URL</label>
+                            <input type="text" id="api-url" class="text-input"
+                                   placeholder="http://localhost:8080/torc-service/v1">
+                            <small>The base URL for the Torc API</small>
+                        </div>
+                        <button class="btn btn-primary" id="btn-save-settings">Save Settings</button>
+                        <button class="btn btn-secondary" id="btn-test-connection">Test Connection</button>
+                    </div>
+
+                    <!-- Display Options Section -->
+                    <div class="settings-section">
+                        <h3>Display Options</h3>
+                        <div class="form-group">
+                            <label for="refresh-interval">Auto-refresh interval (seconds)</label>
+                            <input type="number" id="refresh-interval" class="text-input"
+                                   value="30" min="5" max="300">
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" id="dark-mode">
+                                Dark Mode
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Server Info Section -->
+                    <div class="settings-section">
+                        <h3>Connection Info</h3>
+                        <div id="server-info" class="info-box">
+                            <p>Click "Test Connection" to fetch server information</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal for workflow creation -->
+    <div class="modal" id="create-workflow-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create Workflow from Spec</h3>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <!-- Source tabs -->
+                <div class="sub-tabs" id="create-source-tabs">
+                    <button class="sub-tab active" data-createtab="upload">Upload File</button>
+                    <button class="sub-tab" data-createtab="path">File Path</button>
+                    <button class="sub-tab" data-createtab="inline">Inline Spec</button>
+                </div>
+
+                <!-- Upload file panel -->
+                <div class="create-panel active" id="create-panel-upload">
+                    <div class="form-group">
+                        <label>Upload Workflow Spec File</label>
+                        <div class="file-upload-zone" id="file-upload-zone">
+                            <div class="upload-content">
+                                <div class="upload-icon">&#128193;</div>
+                                <p>Drag and drop a file here, or click to select</p>
+                                <p class="upload-hint">Supports YAML, JSON, JSON5, KDL</p>
+                            </div>
+                            <input type="file" id="spec-file-input" accept=".yaml,.yml,.json,.json5,.kdl" style="display:none">
+                        </div>
+                        <div id="upload-status"></div>
+                    </div>
+                </div>
+
+                <!-- File path panel -->
+                <div class="create-panel" id="create-panel-path">
+                    <div class="form-group">
+                        <label for="workflow-spec-path">Spec File Path</label>
+                        <input type="text" id="workflow-spec-path" class="text-input"
+                               placeholder="/path/to/workflow.yaml or workflow.json">
+                        <small>Enter the path to a workflow spec file on the server</small>
+                    </div>
+                </div>
+
+                <!-- Inline spec panel -->
+                <div class="create-panel" id="create-panel-inline">
+                    <div class="form-group">
+                        <label for="workflow-spec-text">Inline Spec (JSON/YAML)</label>
+                        <textarea id="workflow-spec-text" class="text-input" rows="12"
+                                  placeholder="Paste your workflow specification here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Options -->
+                <div class="form-group" style="margin-top: 16px;">
+                    <label>Options</label>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="create-option-initialize" checked>
+                        Initialize workflow after creation
+                    </label>
+                    <label class="toggle-label">
+                        <input type="checkbox" id="create-option-run">
+                        Run workflow immediately
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-cancel-create">Cancel</button>
+                <button class="btn btn-primary" id="btn-submit-workflow">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Execution Plan Modal -->
+    <div class="modal" id="execution-plan-modal">
+        <div class="modal-content" style="max-width: 800px;">
+            <div class="modal-header">
+                <h3>Execution Plan</h3>
+                <button class="modal-close" id="plan-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="execution-plan-content">
+                    <div class="placeholder-message">Loading execution plan...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-close-plan">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Initialize Confirmation Modal -->
+    <div class="modal" id="init-confirm-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Existing Output Files Detected</h3>
+                <button class="modal-close" id="init-confirm-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="init-confirm-content">
+                    <div class="placeholder-message">Loading...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-cancel-init">Cancel</button>
+                <button class="btn btn-danger" id="btn-confirm-init">Delete Files and Initialize</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reinitialize Confirmation Modal -->
+    <div class="modal" id="reinit-confirm-modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3>Existing Output Files Detected</h3>
+                <button class="modal-close" id="reinit-confirm-modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="reinit-confirm-content">
+                    <div class="placeholder-message">Loading...</div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-cancel-reinit">Cancel</button>
+                <button class="btn btn-danger" id="btn-confirm-reinit">Delete Files and Reinitialize</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Viewer Modal -->
+    <div class="modal" id="file-viewer-modal">
+        <div class="modal-content" style="max-width: 900px; max-height: 80vh;">
+            <div class="modal-header">
+                <h3 id="file-viewer-title">File Contents</h3>
+                <button class="modal-close" id="file-viewer-modal-close">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 0;">
+                <div id="file-viewer-path" class="file-viewer-path"></div>
+                <div id="file-viewer-content-wrapper" class="file-viewer-content-wrapper">
+                    <pre id="file-viewer-content" class="file-viewer-content"></pre>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-close-file-viewer">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Job Details Modal -->
+    <div class="modal" id="job-details-modal">
+        <div class="modal-content" style="max-width: 900px; max-height: 85vh;">
+            <div class="modal-header">
+                <h3 id="job-details-title">Job Details</h3>
+                <button class="modal-close" id="job-details-modal-close">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 0; display: flex; flex-direction: column; max-height: calc(85vh - 130px);">
+                <!-- Job summary info -->
+                <div id="job-details-summary" class="job-details-summary"></div>
+                <!-- Sub-tabs for related data -->
+                <div class="sub-tabs job-details-tabs" id="job-details-tabs">
+                    <button class="sub-tab active" data-jobdetailtab="results">Results</button>
+                    <button class="sub-tab" data-jobdetailtab="input-files">Input Files</button>
+                    <button class="sub-tab" data-jobdetailtab="output-files">Output Files</button>
+                    <button class="sub-tab" data-jobdetailtab="input-user-data">Input User Data</button>
+                    <button class="sub-tab" data-jobdetailtab="output-user-data">Output User Data</button>
+                    <button class="sub-tab" data-jobdetailtab="resource-req">Resource Req</button>
+                    <button class="sub-tab" data-jobdetailtab="dependencies">Dependencies</button>
+                </div>
+                <!-- Tab content -->
+                <div id="job-details-content" class="job-details-content"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="btn-close-job-details">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Execution Output Panel (collapsible) -->
+    <div class="execution-output-panel" id="execution-output-panel" style="display:none">
+        <div class="execution-output-header">
+            <span>Execution Output</span>
+            <button class="btn btn-danger btn-sm" id="btn-cancel-execution">Cancel</button>
+            <button class="btn btn-secondary btn-sm" id="btn-close-output">Close</button>
+        </div>
+        <pre id="execution-output" class="execution-output"></pre>
+    </div>
+
+    <!-- Toast notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script src="/static/js/api.js"></script>
+    <script src="/static/js/dag.js"></script>
+    <script src="/static/js/app.js"></script>
+</body>
+</html>

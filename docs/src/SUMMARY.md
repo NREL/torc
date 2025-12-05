@@ -53,6 +53,7 @@
 # Tutorials
 
 - [Tutorials](./tutorials/README.md)
+  - [Dashboard Deployment](./tutorials/dashboard-deployment.md)
   - [Many Independent Jobs](./tutorials/many-jobs.md)
   - [Diamond Workflow](./tutorials/diamond.md)
   - [User Data Dependencies](./tutorials/user-data.md)
