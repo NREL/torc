@@ -78,16 +78,580 @@ def save_configuration(
 
 
 # ============================================================================
-# Global Workflow Selection Callbacks
+# Unified Workflows Tab Callbacks
+# ============================================================================
+
+def _get_status_badge_color(status: str | None) -> str:
+    """Get Bootstrap color for workflow status badge."""
+    status_colors = {
+        "uninitialized": "secondary",
+        "ready": "primary",
+        "running": "warning",
+        "completed": "success",
+        "failed": "danger",
+        "canceled": "dark",
+    }
+    return status_colors.get(status or "", "secondary")
+
+
+@callback(
+    Output("unified-workflows-table-container", "children"),
+    Output("workflows-auto-refresh-interval", "disabled"),
+    Input("workflows-refresh-btn", "n_clicks"),
+    Input("workflows-auto-refresh-interval", "n_intervals"),
+    Input("workflow-filter-input", "value"),
+    State("api-config-store", "data"),
+    State("workflows-auto-refresh-toggle", "value"),
+    State("selected-workflow-store", "data"),
+    prevent_initial_call=False,
+)
+def update_unified_workflows_table(
+    n_clicks: int,
+    n_intervals: int,
+    filter_text: str | None,
+    config: dict[str, str],
+    auto_refresh: list[str],
+    selected_workflow: dict | None,
+) -> tuple[html.Div, bool]:
+    """Update the unified workflows table with inline actions."""
+    from dash import ctx
+
+    # Only update on interval if auto-refresh is enabled
+    if ctx.triggered_id == "workflows-auto-refresh-interval" and "auto" not in auto_refresh:
+        raise PreventUpdate
+
+    if not config:
+        return dbc.Alert("Please configure the API URL first", color="warning"), True
+
+    api_wrapper = TorcApiWrapper(config["url"], config.get("username"))
+    result = api_wrapper.list_workflows(limit=1000)
+
+    if not result["success"]:
+        error_msg = result.get("error", "Unknown error")
+        return dbc.Alert(f"Error: {error_msg}", color="danger"), True
+
+    data = result["data"]
+
+    if not data:
+        return dbc.Alert(
+            [
+                html.I(className="fas fa-inbox me-2"),
+                "No workflows found. Click 'Create New Workflow' to get started."
+            ],
+            color="info"
+        ), True
+
+    # Apply filter if provided
+    if filter_text:
+        filter_lower = filter_text.lower()
+        data = [
+            w for w in data
+            if filter_lower in str(w.get("name", "")).lower()
+            or filter_lower in str(w.get("description", "")).lower()
+            or filter_lower in str(w.get("id", "")).lower()
+            or filter_lower in str(w.get("user", "")).lower()
+        ]
+
+    if not data:
+        return dbc.Alert(f"No workflows match filter: '{filter_text}'", color="info"), True
+
+    # Get selected workflow ID for highlighting
+    selected_id = selected_workflow.get("id") if selected_workflow else None
+
+    # Create table rows with inline actions
+    table_rows = []
+    for w in data:
+        workflow_id = w.get("id")
+        is_selected = workflow_id == selected_id
+        status = w.get("status", "")
+
+        row_cells = [
+            html.Td(workflow_id, style={"fontFamily": "monospace", "fontSize": "0.9em"}),
+            html.Td(
+                html.Strong(w.get("name", "")) if is_selected else w.get("name", ""),
+                style={"fontWeight": "bold"} if is_selected else {}
+            ),
+            html.Td(
+                w.get("description", "")[:50] + ("..." if len(w.get("description", "")) > 50 else ""),
+                style={"maxWidth": "200px", "overflow": "hidden", "textOverflow": "ellipsis"},
+                title=w.get("description", ""),
+            ),
+            html.Td(w.get("user", ""), style={"fontSize": "0.9em"}),
+            html.Td(
+                # Inline action buttons
+                html.Div(
+                    [
+                        dbc.Button(
+                            html.I(className="fas fa-play"),
+                            id={"type": "inline-run-btn", "index": workflow_id},
+                            color="success",
+                            size="sm",
+                            outline=True,
+                            className="me-1",
+                            title="Run locally",
+                        ),
+                        dbc.Button(
+                            html.I(className="fas fa-eye"),
+                            id={"type": "inline-view-btn", "index": workflow_id},
+                            color="info",
+                            size="sm",
+                            outline=True,
+                            className="me-1",
+                            title="View details",
+                        ),
+                        dbc.Button(
+                            html.I(className="fas fa-trash"),
+                            id={"type": "delete-workflow-btn", "index": workflow_id},
+                            color="danger",
+                            size="sm",
+                            outline=True,
+                            title="Delete",
+                        ),
+                    ],
+                    className="d-flex justify-content-end",
+                ),
+                style={"textAlign": "right", "whiteSpace": "nowrap"},
+            ),
+        ]
+
+        row_style = {
+            "cursor": "pointer",
+            "backgroundColor": "#e7f1ff" if is_selected else "inherit",
+        }
+
+        table_rows.append(
+            html.Tr(
+                row_cells,
+                id={"type": "workflow-row", "index": workflow_id},
+                style=row_style,
+                n_clicks=0,
+            )
+        )
+
+    table = dbc.Table(
+        [
+            html.Thead(
+                html.Tr([
+                    html.Th("ID", style={"width": "60px"}),
+                    html.Th("Name"),
+                    html.Th("Description"),
+                    html.Th("User", style={"width": "100px"}),
+                    html.Th("Actions", style={"width": "120px", "textAlign": "right"}),
+                ]),
+                className="table-light",
+            ),
+            html.Tbody(table_rows),
+        ],
+        striped=True,
+        bordered=True,
+        hover=True,
+        responsive=True,
+        className="mb-0",
+        style={"marginBottom": "0"},
+    )
+
+    # Disable auto-refresh interval if auto-refresh is not enabled
+    interval_disabled = "auto" not in auto_refresh
+
+    return table, interval_disabled
+
+
+@callback(
+    Output("workflow-detail-card", "style"),
+    Output("no-workflow-selected-alert", "style"),
+    Output("detail-panel-workflow-name", "children"),
+    Output("detail-panel-workflow-id", "children"),
+    Output("detail-panel-status-badge", "children"),
+    Output("detail-panel-user", "children"),
+    Output("detail-panel-timestamp", "children"),
+    Output("detail-panel-description", "children"),
+    Input("selected-workflow-store", "data"),
+)
+def update_workflow_detail_panel(
+    selected_workflow: dict | None,
+) -> tuple:
+    """Update the workflow detail panel when a workflow is selected."""
+    if not selected_workflow or "id" not in selected_workflow:
+        # Hide detail card, show placeholder
+        return (
+            {"display": "none"},  # Hide detail card
+            {"display": "block"},  # Show placeholder
+            "",  # name
+            "",  # id
+            "",  # status badge
+            "",  # user
+            "",  # timestamp
+            "",  # description
+        )
+
+    # Show detail card, hide placeholder
+    workflow_status = selected_workflow.get("status", "unknown")
+    status_badge = dbc.Badge(
+        workflow_status or "unknown",
+        color=_get_status_badge_color(workflow_status),
+        className="fs-6",
+    )
+
+    return (
+        {"display": "block"},  # Show detail card
+        {"display": "none"},  # Hide placeholder
+        selected_workflow.get("name", "Unknown"),
+        f" (ID: {selected_workflow.get('id')})",
+        status_badge,
+        selected_workflow.get("user", "N/A"),
+        str(selected_workflow.get("timestamp", "N/A")),
+        selected_workflow.get("description", "None"),
+    )
+
+
+@callback(
+    Output("create-workflow-modal", "is_open"),
+    Output("create-workflow-status", "children"),
+    Input("open-create-workflow-modal-btn", "n_clicks"),
+    Input("create-workflow-cancel-btn", "n_clicks"),
+    Input("create-workflow-confirm-btn", "n_clicks"),
+    State("create-workflow-modal", "is_open"),
+    State("create-workflow-source-tabs", "active_tab"),
+    State("uploaded-spec-store", "data"),
+    State("workflow-spec-path-input", "value"),
+    State("create-workflow-options", "value"),
+    State("api-config-store", "data"),
+    prevent_initial_call=True,
+)
+def handle_create_workflow_modal(
+    open_clicks: int,
+    cancel_clicks: int,
+    confirm_clicks: int,
+    is_open: bool,
+    source_tab: str,
+    uploaded_spec: dict | None,
+    spec_path: str | None,
+    options: list[str],
+    config: dict[str, str],
+) -> tuple[bool, html.Div | None]:
+    """Handle the create workflow modal open/close and creation."""
+    from dash import ctx
+
+    if not ctx.triggered:
+        raise PreventUpdate
+
+    trigger_id = ctx.triggered_id
+
+    # Open modal
+    if trigger_id == "open-create-workflow-modal-btn":
+        return True, None
+
+    # Cancel - close modal
+    if trigger_id == "create-workflow-cancel-btn":
+        return False, None
+
+    # Create workflow
+    if trigger_id == "create-workflow-confirm-btn":
+        cli_wrapper = TorcCliWrapper()
+        workflow_spec_path = None
+        temp_file = None
+
+        try:
+            # Determine workflow source
+            if source_tab == "upload-tab":
+                if uploaded_spec:
+                    # Save to temp file
+                    temp_file = tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False)
+                    temp_file.write(uploaded_spec["content"])
+                    temp_file.close()
+                    workflow_spec_path = temp_file.name
+                else:
+                    return True, dbc.Alert("Please upload a workflow spec file", color="warning")
+            elif source_tab == "path-tab":
+                if spec_path:
+                    workflow_spec_path = spec_path
+                else:
+                    return True, dbc.Alert("Please enter a file path", color="warning")
+            else:
+                return True, dbc.Alert("Unknown source tab", color="danger")
+
+            # Create workflow
+            result = cli_wrapper.create_workflow(workflow_spec_path, api_url=config.get("url"))
+
+            if not result["success"]:
+                error_msg = result.get("error", "Unknown error")
+                return True, dbc.Alert(
+                    [
+                        html.Strong("Creation Failed: "),
+                        error_msg,
+                        html.Hr() if result.get("stderr") else None,
+                        html.Small(result.get("stderr", "")) if result.get("stderr") else None,
+                    ],
+                    color="danger",
+                )
+
+            # Extract workflow ID
+            try:
+                output_data = json.loads(result["stdout"])
+                workflow_id = output_data.get("workflow_id")
+            except (json.JSONDecodeError, KeyError) as e:
+                return True, dbc.Alert(f"Could not parse workflow ID: {e}", color="danger")
+
+            if not workflow_id:
+                return True, dbc.Alert("Workflow ID not found in output", color="danger")
+
+            # Initialize if requested
+            if "initialize" in options:
+                init_result = cli_wrapper.initialize_workflow_direct(workflow_id, config.get("url"), force=True)
+                if not init_result["success"]:
+                    return False, dbc.Alert(
+                        f"Workflow created (ID: {workflow_id}) but initialization failed: {init_result.get('error')}",
+                        color="warning"
+                    )
+
+            # Run immediately if requested
+            if "run" in options:
+                cli_wrapper.start_workflow_process(workflow_id, config.get("url"))
+                return False, dbc.Alert(
+                    f"Workflow {workflow_id} created and started!",
+                    color="success"
+                )
+
+            # Success - close modal
+            return False, None
+
+        except Exception as e:
+            return True, dbc.Alert(f"Error: {str(e)}", color="danger")
+
+        finally:
+            if temp_file and os.path.exists(temp_file.name):
+                try:
+                    os.unlink(temp_file.name)
+                except Exception:
+                    pass
+
+    raise PreventUpdate
+
+
+@callback(
+    Output("selected-workflow-store", "data", allow_duplicate=True),
+    Input({"type": "inline-view-btn", "index": ALL}, "n_clicks"),
+    State("api-config-store", "data"),
+    prevent_initial_call=True,
+)
+def handle_inline_view_button(
+    n_clicks: list[int],
+    config: dict[str, str],
+) -> dict | None:
+    """Handle inline view button click - select the workflow."""
+    from dash import ctx
+
+    if not ctx.triggered or not any(n_clicks):
+        raise PreventUpdate
+
+    triggered_id = ctx.triggered_id
+    if not triggered_id or triggered_id.get("type") != "inline-view-btn":
+        raise PreventUpdate
+
+    workflow_id = triggered_id.get("index")
+    if not workflow_id:
+        raise PreventUpdate
+
+    # Fetch workflow details
+    api_wrapper = TorcApiWrapper(config["url"], config.get("username"))
+    result = api_wrapper.list_workflows(limit=10000)
+
+    if result["success"]:
+        for w in result["data"]:
+            if w.get("id") == workflow_id:
+                return {
+                    "id": w.get("id"),
+                    "name": w.get("name", ""),
+                    "description": w.get("description", ""),
+                    "status": w.get("status", ""),
+                    "timestamp": w.get("timestamp", ""),
+                    "user": w.get("user", ""),
+                }
+
+    raise PreventUpdate
+
+
+@callback(
+    Output("execution-output-collapse", "is_open", allow_duplicate=True),
+    Output("execution-output", "children", allow_duplicate=True),
+    Output("execution-poll-interval", "disabled", allow_duplicate=True),
+    Input({"type": "inline-run-btn", "index": ALL}, "n_clicks"),
+    Input("run-workflow-button", "n_clicks"),
+    Input("submit-workflow-button", "n_clicks"),
+    State("selected-workflow-store", "data"),
+    State("api-config-store", "data"),
+    prevent_initial_call=True,
+)
+def handle_workflow_execution(
+    inline_run_clicks: list[int],
+    run_btn_clicks: int,
+    submit_btn_clicks: int,
+    selected_workflow: dict | None,
+    config: dict[str, str],
+) -> tuple[bool, str, bool]:
+    """Handle workflow execution from inline button or detail panel."""
+    from dash import ctx
+
+    if not ctx.triggered:
+        raise PreventUpdate
+
+    trigger_id = ctx.triggered_id
+    cli_wrapper = TorcCliWrapper()
+
+    workflow_id = None
+    execution_mode = "run"
+
+    # Determine which button was clicked and get workflow ID
+    if isinstance(trigger_id, dict) and trigger_id.get("type") == "inline-run-btn":
+        if not any(inline_run_clicks):
+            raise PreventUpdate
+        workflow_id = trigger_id.get("index")
+        execution_mode = "run"
+    elif trigger_id == "run-workflow-button":
+        if not run_btn_clicks or not selected_workflow:
+            raise PreventUpdate
+        workflow_id = selected_workflow.get("id")
+        execution_mode = "run"
+    elif trigger_id == "submit-workflow-button":
+        if not submit_btn_clicks or not selected_workflow:
+            raise PreventUpdate
+        workflow_id = selected_workflow.get("id")
+        execution_mode = "submit"
+    else:
+        raise PreventUpdate
+
+    if not workflow_id:
+        return True, "Error: No workflow ID", True
+
+    try:
+        if execution_mode == "run":
+            # Start local workflow execution
+            cli_wrapper.start_workflow_process(workflow_id, config.get("url"))
+            return True, f"Starting workflow {workflow_id}...\n", False
+        else:
+            # Submit to scheduler
+            result = cli_wrapper.submit_workflow_by_id(workflow_id, config.get("url"))
+            if result["success"]:
+                return True, f"Workflow {workflow_id} submitted to scheduler.\n{result.get('stdout', '')}", True
+            else:
+                return True, f"Error submitting workflow: {result.get('error', 'Unknown error')}\n{result.get('stderr', '')}", True
+    except Exception as e:
+        return True, f"Error: {str(e)}", True
+
+
+@callback(
+    Output("unified-workflows-table-container", "children", allow_duplicate=True),
+    Input("create-workflow-modal", "is_open"),
+    State("api-config-store", "data"),
+    State("workflows-auto-refresh-toggle", "value"),
+    prevent_initial_call=True,
+)
+def refresh_table_after_modal_close(
+    is_open: bool,
+    config: dict[str, str],
+    auto_refresh: list[str],
+) -> html.Div:
+    """Refresh the workflows table when the create modal closes."""
+    if is_open:
+        # Modal just opened, don't refresh
+        raise PreventUpdate
+
+    # Modal closed - refresh the table
+    if not config:
+        raise PreventUpdate
+
+    api_wrapper = TorcApiWrapper(config["url"], config.get("username"))
+    result = api_wrapper.list_workflows(limit=1000)
+
+    if not result["success"]:
+        raise PreventUpdate
+
+    data = result["data"]
+    if not data:
+        return dbc.Alert(
+            [
+                html.I(className="fas fa-inbox me-2"),
+                "No workflows found. Click 'Create New Workflow' to get started."
+            ],
+            color="info"
+        )
+
+    # Recreate table (simplified - full version is in update_unified_workflows_table)
+    table_rows = []
+    for w in data:
+        workflow_id = w.get("id")
+
+        row_cells = [
+            html.Td(workflow_id, style={"fontFamily": "monospace", "fontSize": "0.9em"}),
+            html.Td(w.get("name", "")),
+            html.Td(
+                w.get("description", "")[:50] + ("..." if len(w.get("description", "")) > 50 else ""),
+                style={"maxWidth": "200px"},
+            ),
+            html.Td(w.get("user", ""), style={"fontSize": "0.9em"}),
+            html.Td(
+                html.Div(
+                    [
+                        dbc.Button(
+                            html.I(className="fas fa-play"),
+                            id={"type": "inline-run-btn", "index": workflow_id},
+                            color="success", size="sm", outline=True, className="me-1",
+                        ),
+                        dbc.Button(
+                            html.I(className="fas fa-eye"),
+                            id={"type": "inline-view-btn", "index": workflow_id},
+                            color="info", size="sm", outline=True, className="me-1",
+                        ),
+                        dbc.Button(
+                            html.I(className="fas fa-trash"),
+                            id={"type": "delete-workflow-btn", "index": workflow_id},
+                            color="danger", size="sm", outline=True,
+                        ),
+                    ],
+                    className="d-flex justify-content-end",
+                ),
+            ),
+        ]
+
+        table_rows.append(
+            html.Tr(
+                row_cells,
+                id={"type": "workflow-row", "index": workflow_id},
+                style={"cursor": "pointer"},
+                n_clicks=0,
+            )
+        )
+
+    return dbc.Table(
+        [
+            html.Thead(
+                html.Tr([
+                    html.Th("ID", style={"width": "60px"}),
+                    html.Th("Name"),
+                    html.Th("Description"),
+                    html.Th("User", style={"width": "100px"}),
+                    html.Th("Actions", style={"width": "120px", "textAlign": "right"}),
+                ]),
+                className="table-light",
+            ),
+            html.Tbody(table_rows),
+        ],
+        striped=True, bordered=True, hover=True, responsive=True, className="mb-0",
+    )
+
+
+# ============================================================================
+# Global Workflow Selection Callbacks (Legacy - kept for compatibility)
 # ============================================================================
 
 @callback(
     Output("workflow-selection-collapse", "is_open"),
     Input("workflow-selection-collapse-button", "n_clicks"),
     State("workflow-selection-collapse", "is_open"),
+    prevent_initial_call=True,
 )
 def toggle_workflow_selection_collapse(n_clicks: int, is_open: bool) -> bool:
-    """Toggle the workflow selection panel."""
+    """Toggle the workflow selection panel (legacy - hidden)."""
     if n_clicks:
         return not is_open
     return is_open
@@ -100,7 +664,7 @@ def toggle_workflow_selection_collapse(n_clicks: int, is_open: bool) -> bool:
     Input("global-refresh-interval", "n_intervals"),
     State("api-config-store", "data"),
     State("global-auto-refresh-toggle", "value"),
-    prevent_initial_call=False,
+    prevent_initial_call=True,  # Legacy callback - hidden elements, never runs
 )
 def update_global_workflows_table(
     n_clicks: int,
@@ -1416,7 +1980,7 @@ def manage_workflow(
     if not selected_workflow or "id" not in selected_workflow:
         return (
             dbc.Alert(
-                "Please select a workflow from the 'View Workflows' tab first.",
+                "Please select a workflow from the 'View Details' tab first.",
                 color="warning",
                 dismissable=True,
             ),
@@ -1916,88 +2480,131 @@ def show_dag_tab(n_clicks: int, uploaded_spec: dict | None, selected_workflow: d
 
 @callback(
     Output("job-deps-graph-container", "children"),
-    Output("file-rels-graph-container", "children"),
-    Output("user-data-rels-graph-container", "children"),
     Output("dag-load-status", "children"),
     Input("selected-workflow-store", "data"),
+    Input("main-tabs", "active_tab"),
+    Input("dag-graph-tabs", "active_tab"),
     State("api-config-store", "data"),
     prevent_initial_call=True,
 )
-def load_dag_graphs(
+def load_job_deps_graph(
     workflow_data: dict[str, Any] | None,
+    main_tab: str,
+    dag_tab: str,
     config: dict[str, str]
-) -> tuple[html.Div, html.Div, html.Div, html.Div]:
-    """Load and display the three types of DAG graphs when a workflow is selected."""
+) -> tuple[html.Div, html.Div]:
+    """Load job dependencies graph when its tab is visible."""
     if workflow_data is None:
         raise PreventUpdate
 
-    # Extract workflow ID from the workflow data
+    # Only render when DAG tab is active AND job-deps sub-tab is active
+    if main_tab != "dag-tab" or dag_tab != "job-deps-graph-tab":
+        raise PreventUpdate
+
     workflow_id = workflow_data.get("id")
     if workflow_id is None:
         raise PreventUpdate
 
     try:
         api_wrapper = TorcApiWrapper(config.get("url", ""), config.get("username", ""))
+        result = api_wrapper.list_job_dependencies(workflow_id, limit=1000)
 
-        # Fetch job dependencies
-        job_deps_result = api_wrapper.list_job_dependencies(workflow_id, limit=1000)
-        if not job_deps_result["success"]:
-            error_msg = job_deps_result.get("error", "Unknown error")
+        if not result["success"]:
+            error_msg = result.get("error", "Unknown error")
             return (
-                html.Div(f"Error loading job dependencies: {error_msg}"),
-                html.Div(""),
-                html.Div(""),
+                html.Div(f"Error: {error_msg}"),
                 dbc.Alert(f"Failed to load job dependencies: {error_msg}", color="danger")
             )
 
-        # Fetch file relationships
-        file_rels_result = api_wrapper.list_job_file_relationships(workflow_id, limit=1000)
-        if not file_rels_result["success"]:
-            error_msg = file_rels_result.get("error", "Unknown error")
-            return (
-                html.Div(""),
-                html.Div(f"Error loading file relationships: {error_msg}"),
-                html.Div(""),
-                dbc.Alert(f"Failed to load file relationships: {error_msg}", color="danger")
-            )
-
-        # Fetch user data relationships
-        user_data_rels_result = api_wrapper.list_job_user_data_relationships(workflow_id, limit=1000)
-        if not user_data_rels_result["success"]:
-            error_msg = user_data_rels_result.get("error", "Unknown error")
-            return (
-                html.Div(""),
-                html.Div(""),
-                html.Div(f"Error loading user data relationships: {error_msg}"),
-                dbc.Alert(f"Failed to load user data relationships: {error_msg}", color="danger")
-            )
-
-        # Create graph visualizations using Cytoscape
-        job_deps_graph = create_job_deps_graph(job_deps_result["data"])
-        file_rels_graph = create_file_rels_graph(file_rels_result["data"])
-        user_data_rels_graph = create_user_data_rels_graph(user_data_rels_result["data"])
-
-        status_msg = dbc.Alert(
-            [
-                html.I(className="fas fa-check-circle me-2"),
-                f"Successfully loaded {len(job_deps_result['data'])} job dependencies, "
-                f"{len(file_rels_result['data'])} file relationships, and "
-                f"{len(user_data_rels_result['data'])} user data relationships"
-            ],
-            color="success",
-            dismissable=True,
+        graph = create_job_deps_graph(result["data"])
+        status = dbc.Alert(
+            f"Loaded {len(result['data'])} job dependencies",
+            color="success", dismissable=True, duration=3000
         )
-
-        return job_deps_graph, file_rels_graph, user_data_rels_graph, status_msg
+        return graph, status
 
     except Exception as e:
-        error_msg = f"Unexpected error: {str(e)}"
-        return (
-            html.Div(error_msg),
-            html.Div(error_msg),
-            html.Div(error_msg),
-            dbc.Alert(error_msg, color="danger")
-        )
+        return html.Div(f"Error: {e}"), dbc.Alert(str(e), color="danger")
+
+
+@callback(
+    Output("file-rels-graph-container", "children"),
+    Input("selected-workflow-store", "data"),
+    Input("main-tabs", "active_tab"),
+    Input("dag-graph-tabs", "active_tab"),
+    State("api-config-store", "data"),
+    prevent_initial_call=True,
+)
+def load_file_rels_graph(
+    workflow_data: dict[str, Any] | None,
+    main_tab: str,
+    dag_tab: str,
+    config: dict[str, str]
+) -> html.Div:
+    """Load file relationships graph when its tab is visible."""
+    if workflow_data is None:
+        raise PreventUpdate
+
+    # Only render when DAG tab is active AND file-rels sub-tab is active
+    if main_tab != "dag-tab" or dag_tab != "file-rels-graph-tab":
+        raise PreventUpdate
+
+    workflow_id = workflow_data.get("id")
+    if workflow_id is None:
+        raise PreventUpdate
+
+    try:
+        api_wrapper = TorcApiWrapper(config.get("url", ""), config.get("username", ""))
+        result = api_wrapper.list_job_file_relationships(workflow_id, limit=1000)
+
+        if not result["success"]:
+            error_msg = result.get("error", "Unknown error")
+            return html.Div(f"Error: {error_msg}")
+
+        return create_file_rels_graph(result["data"])
+
+    except Exception as e:
+        return html.Div(f"Error: {e}")
+
+
+@callback(
+    Output("user-data-rels-graph-container", "children"),
+    Input("selected-workflow-store", "data"),
+    Input("main-tabs", "active_tab"),
+    Input("dag-graph-tabs", "active_tab"),
+    State("api-config-store", "data"),
+    prevent_initial_call=True,
+)
+def load_user_data_rels_graph(
+    workflow_data: dict[str, Any] | None,
+    main_tab: str,
+    dag_tab: str,
+    config: dict[str, str]
+) -> html.Div:
+    """Load user data relationships graph when its tab is visible."""
+    if workflow_data is None:
+        raise PreventUpdate
+
+    # Only render when DAG tab is active AND user-data-rels sub-tab is active
+    if main_tab != "dag-tab" or dag_tab != "user-data-rels-graph-tab":
+        raise PreventUpdate
+
+    workflow_id = workflow_data.get("id")
+    if workflow_id is None:
+        raise PreventUpdate
+
+    try:
+        api_wrapper = TorcApiWrapper(config.get("url", ""), config.get("username", ""))
+        result = api_wrapper.list_job_user_data_relationships(workflow_id, limit=1000)
+
+        if not result["success"]:
+            error_msg = result.get("error", "Unknown error")
+            return html.Div(f"Error: {error_msg}")
+
+        return create_user_data_rels_graph(result["data"])
+
+    except Exception as e:
+        return html.Div(f"Error: {e}")
 
 
 def create_job_deps_graph(dependencies: list[dict[str, Any]]) -> html.Div:
@@ -2036,8 +2643,18 @@ def create_job_deps_graph(dependencies: list[dict[str, Any]]) -> html.Div:
     return cyto.Cytoscape(
         id="job-deps-cytoscape",
         elements=elements,
-        layout={"name": "breadthfirst", "directed": True, "fit": True},
+        layout={
+            "name": "breadthfirst",
+            "directed": True,
+            "fit": True,
+            "padding": 200,
+            "spacingFactor": 1.0,
+        },
         style={"width": "100%", "height": "600px"},
+        zoom=0.3,
+        pan={"x": 0, "y": -100},
+        minZoom=0.1,
+        maxZoom=3,
         stylesheet=[
             {
                 "selector": "node",
@@ -2120,8 +2737,18 @@ def create_file_rels_graph(relationships: list[dict[str, Any]]) -> html.Div:
     return cyto.Cytoscape(
         id="file-rels-cytoscape",
         elements=elements,
-        layout={"name": "breadthfirst", "directed": True, "fit": True},
+        layout={
+            "name": "breadthfirst",
+            "directed": True,
+            "fit": True,
+            "padding": 200,
+            "spacingFactor": 1.0,
+        },
         style={"width": "100%", "height": "600px"},
+        zoom=0.3,
+        pan={"x": 0, "y": -100},
+        minZoom=0.1,
+        maxZoom=3,
         stylesheet=[
             {
                 "selector": 'node[type = "job"]',
@@ -2218,8 +2845,18 @@ def create_user_data_rels_graph(relationships: list[dict[str, Any]]) -> html.Div
     return cyto.Cytoscape(
         id="user-data-rels-cytoscape",
         elements=elements,
-        layout={"name": "breadthfirst", "directed": True, "fit": True},
+        layout={
+            "name": "breadthfirst",
+            "directed": True,
+            "fit": True,
+            "padding": 200,
+            "spacingFactor": 1.0,
+        },
         style={"width": "100%", "height": "600px"},
+        zoom=0.3,
+        pan={"x": 0, "y": -100},
+        minZoom=0.1,
+        maxZoom=3,
         stylesheet=[
             {
                 "selector": 'node[type = "job"]',
@@ -2395,14 +3032,14 @@ def display_selected_workflow(
     use_selected: list[str],
     selected_workflow: dict[str, Any] | None,
 ) -> tuple[str, bool]:
-    """Display the selected workflow from View Workflows tab."""
+    """Display the selected workflow from View Details tab."""
     if "use_selected" in use_selected:
         if selected_workflow and "id" in selected_workflow:
             workflow_name = selected_workflow.get("name", "Unknown")
             workflow_id = selected_workflow["id"]
             return f"Using workflow: {workflow_name} (ID: {workflow_id})", True
         else:
-            return "No workflow selected in View Workflows tab", True
+            return "No workflow selected in View Details tab", True
     return "", False
 
 

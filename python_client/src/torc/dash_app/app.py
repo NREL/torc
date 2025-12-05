@@ -1,7 +1,7 @@
 """Main Dash application for Torc workflow management."""
 
 import os
-from dash import Dash, html, dcc
+from dash import Dash, html, dcc, Input, Output, State, clientside_callback
 import dash_bootstrap_components as dbc
 
 # Initialize the Dash app with Bootstrap theme
@@ -28,6 +28,15 @@ app.layout = dbc.Container(
         dcc.Store(id="selected-workflow-store"),
         dcc.Store(id="dag-workflow-id-store"),
         dcc.Store(id="delete-workflow-id-store"),
+
+        # Hidden elements for backward compatibility with old callbacks
+        html.Div(id="selected-workflow-badge", style={"display": "none"}),
+        html.Div(id="global-workflows-table-container", style={"display": "none"}),
+        dcc.Interval(id="global-refresh-interval", interval=30000, disabled=True),
+        dbc.Collapse(id="workflow-selection-collapse", is_open=False),
+        dcc.Checklist(id="global-auto-refresh-toggle", options=[], value=[], style={"display": "none"}),
+        html.Button(id="global-refresh-workflows-button", style={"display": "none"}),
+        html.Button(id="workflow-selection-collapse-button", style={"display": "none"}),
 
         # Confirmation modal for workflow deletion
         dbc.Modal(
@@ -163,85 +172,20 @@ app.layout = dbc.Container(
             )
         ),
 
-        # Workflow Selection panel (collapsible)
-        dbc.Row(
-            dbc.Col(
-                dbc.Card(
-                    [
-                        dbc.CardHeader(
-                            dbc.Button(
-                                [
-                                    html.I(className="fas fa-list me-2"),
-                                    "Workflow Selection",
-                                    html.Span(id="selected-workflow-badge", className="badge bg-primary ms-2"),
-                                ],
-                                id="workflow-selection-collapse-button",
-                                className="w-100 text-start",
-                                color="light",
-                                n_clicks=0,
-                            )
-                        ),
-                        dbc.Collapse(
-                            dbc.CardBody(
-                                [
-                                    dbc.Row(
-                                        [
-                                            dbc.Col(
-                                                [
-                                                    dbc.Button(
-                                                        [html.I(className="fas fa-sync me-2"), "Refresh Workflows"],
-                                                        id="global-refresh-workflows-button",
-                                                        color="primary",
-                                                        size="sm",
-                                                        className="me-2",
-                                                    ),
-                                                    dbc.Checklist(
-                                                        id="global-auto-refresh-toggle",
-                                                        options=[
-                                                            {"label": " Auto-refresh (every 30s)", "value": "auto"},
-                                                        ],
-                                                        value=[],
-                                                        inline=True,
-                                                        switch=True,
-                                                    ),
-                                                ],
-                                                className="mb-3",
-                                            ),
-                                        ]
-                                    ),
-                                    dbc.Row(
-                                        dbc.Col(
-                                            html.Div(id="global-workflows-table-container"),
-                                        )
-                                    ),
-                                ]
-                            ),
-                            id="workflow-selection-collapse",
-                            is_open=True,
-                        ),
-                    ],
-                    className="mb-4"
-                )
-            )
-        ),
-
-        # Hidden interval component for auto-refresh
-        dcc.Interval(id="global-refresh-interval", interval=30000, disabled=True),
-
         # Main tabs
         dbc.Row(
             dbc.Col(
                 dbc.Tabs(
                     [
                         dbc.Tab(
-                            label="View Workflows",
-                            tab_id="view-tab",
+                            label="Manage Workflows",
+                            tab_id="run-tab",
                             label_style={"cursor": "pointer"},
                             active_label_class_name="fw-bold",
                         ),
                         dbc.Tab(
-                            label="Manage Workflows",
-                            tab_id="run-tab",
+                            label="Workflow Details",
+                            tab_id="view-tab",
                             label_style={"cursor": "pointer"},
                             active_label_class_name="fw-bold",
                         ),
@@ -271,7 +215,7 @@ app.layout = dbc.Container(
                         ),
                     ],
                     id="main-tabs",
-                    active_tab="view-tab",
+                    active_tab="run-tab",
                 )
             )
         ),
@@ -296,6 +240,7 @@ app.layout = dbc.Container(
 
 # Import callbacks after layout is defined to avoid circular imports
 from . import callbacks  # noqa: F401
+
 
 if __name__ == "__main__":
     app.run_server(debug=True, host="0.0.0.0", port=8050)
