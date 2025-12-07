@@ -1855,6 +1855,36 @@ textarea.text-input {
     font-size: 11px;
 }
 
+/* Wizard Monitoring Step */
+.wizard-monitoring-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.wizard-monitoring-header h4 {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.wizard-monitoring-options {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.wizard-monitoring-options .form-group {
+    margin-bottom: 16px;
+}
+
+.wizard-monitoring-options .form-group:last-child {
+    margin-bottom: 0;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .sidebar {

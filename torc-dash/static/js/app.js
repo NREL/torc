@@ -3088,13 +3088,18 @@ class TorcDashboard {
     setupWizard() {
         // Wizard state
         this.wizardStep = 1;
-        this.wizardTotalSteps = 5;
+        this.wizardTotalSteps = 6;
         this.wizardJobs = [];
         this.wizardJobIdCounter = 0;
         this.wizardSchedulers = [];
         this.wizardSchedulerIdCounter = 0;
         this.wizardActions = [];
         this.wizardActionIdCounter = 0;
+        this.wizardResourceMonitor = {
+            enabled: true,
+            granularity: 'summary',
+            sample_interval_seconds: 5
+        };
 
         // Resource presets
         this.resourcePresets = {
@@ -3127,6 +3132,28 @@ class TorcDashboard {
         document.getElementById('wizard-add-action')?.addEventListener('click', () => {
             this.wizardAddAction();
         });
+
+        // Resource monitoring checkbox
+        document.getElementById('wizard-monitoring-enabled')?.addEventListener('change', (e) => {
+            this.wizardResourceMonitor.enabled = e.target.checked;
+            const optionsDiv = document.getElementById('wizard-monitoring-options');
+            if (optionsDiv) {
+                optionsDiv.style.display = e.target.checked ? 'block' : 'none';
+            }
+        });
+
+        // Resource monitoring granularity
+        document.getElementById('wizard-monitoring-granularity')?.addEventListener('change', (e) => {
+            this.wizardResourceMonitor.granularity = e.target.value;
+        });
+
+        // Resource monitoring interval
+        document.getElementById('wizard-monitoring-interval')?.addEventListener('change', (e) => {
+            const value = parseInt(e.target.value);
+            if (value >= 1 && value <= 300) {
+                this.wizardResourceMonitor.sample_interval_seconds = value;
+            }
+        });
     }
 
     resetWizard() {
@@ -3137,12 +3164,27 @@ class TorcDashboard {
         this.wizardSchedulerIdCounter = 0;
         this.wizardActions = [];
         this.wizardActionIdCounter = 0;
+        this.wizardResourceMonitor = {
+            enabled: true,
+            granularity: 'summary',
+            sample_interval_seconds: 5
+        };
 
         // Clear form fields
         const nameInput = document.getElementById('wizard-name');
         const descInput = document.getElementById('wizard-description');
         if (nameInput) nameInput.value = '';
         if (descInput) descInput.value = '';
+
+        // Reset resource monitoring form (enabled by default)
+        const monitoringEnabled = document.getElementById('wizard-monitoring-enabled');
+        const monitoringGranularity = document.getElementById('wizard-monitoring-granularity');
+        const monitoringInterval = document.getElementById('wizard-monitoring-interval');
+        const monitoringOptions = document.getElementById('wizard-monitoring-options');
+        if (monitoringEnabled) monitoringEnabled.checked = true;
+        if (monitoringGranularity) monitoringGranularity.value = 'summary';
+        if (monitoringInterval) monitoringInterval.value = '5';
+        if (monitoringOptions) monitoringOptions.style.display = 'block';
 
         // Reset step indicators
         document.querySelectorAll('.wizard-step').forEach((step, i) => {
@@ -4062,6 +4104,19 @@ class TorcDashboard {
 
         if (description) {
             spec.description = description;
+        }
+
+        // Add resource_monitor config (always include to explicitly enable or disable)
+        if (this.wizardResourceMonitor.enabled) {
+            spec.resource_monitor = {
+                enabled: true,
+                granularity: this.wizardResourceMonitor.granularity,
+                sample_interval_seconds: this.wizardResourceMonitor.sample_interval_seconds
+            };
+        } else {
+            spec.resource_monitor = {
+                enabled: false
+            };
         }
 
         // Add slurm_schedulers if any are defined

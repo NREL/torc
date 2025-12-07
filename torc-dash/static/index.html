@@ -466,6 +466,10 @@
                         </div>
                         <div class="wizard-step" data-step="5">
                             <span class="step-number">5</span>
+                            <span class="step-label">Monitoring</span>
+                        </div>
+                        <div class="wizard-step" data-step="6">
+                            <span class="step-number">6</span>
                             <span class="step-label">Review</span>
                         </div>
                     </div>
@@ -519,8 +523,42 @@
                         </div>
                     </div>
 
-                    <!-- Step 5: Review -->
+                    <!-- Step 5: Resource Monitoring -->
                     <div class="wizard-content" id="wizard-step-5">
+                        <div class="wizard-monitoring-header">
+                            <h4>Resource Monitoring</h4>
+                        </div>
+                        <p class="wizard-help-text">Configure resource monitoring to track CPU, memory, and process usage during job execution.</p>
+
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <input type="checkbox" id="wizard-monitoring-enabled" checked>
+                                Enable resource monitoring
+                            </label>
+                            <small>When enabled, resource utilization will be tracked for all jobs</small>
+                        </div>
+
+                        <div id="wizard-monitoring-options" class="wizard-monitoring-options">
+                            <div class="form-group">
+                                <label for="wizard-monitoring-granularity">Granularity</label>
+                                <select id="wizard-monitoring-granularity" class="select-input">
+                                    <option value="summary">Summary (peak and average values only)</option>
+                                    <option value="time_series">Time Series (detailed samples at regular intervals)</option>
+                                </select>
+                                <small>Time series provides more detailed data but uses more storage</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="wizard-monitoring-interval">Sample Interval (seconds)</label>
+                                <input type="number" id="wizard-monitoring-interval" class="text-input"
+                                       value="5" min="1" max="300">
+                                <small>How often to sample resource usage (1-300 seconds)</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Step 6: Review -->
+                    <div class="wizard-content" id="wizard-step-6">
                         <div class="form-group">
                             <label>Generated Workflow Spec</label>
                             <pre id="wizard-preview" class="wizard-preview"></pre>
