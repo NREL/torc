@@ -1632,6 +1632,229 @@ textarea.text-input {
     margin: 8px 0;
 }
 
+/* Scheduler wizard styles */
+.wizard-schedulers-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.wizard-schedulers-header h4 {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.wizard-help-text {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 16px;
+}
+
+.wizard-schedulers-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.wizard-scheduler-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 16px;
+}
+
+.wizard-scheduler-card.expanded {
+    border-color: var(--primary-color);
+}
+
+.wizard-scheduler-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.wizard-scheduler-header h5 {
+    margin: 0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wizard-scheduler-header .scheduler-index {
+    background: #28a745;
+    color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.wizard-scheduler-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.wizard-scheduler-body {
+    margin-top: 16px;
+    display: none;
+}
+
+.wizard-scheduler-card.expanded .wizard-scheduler-body {
+    display: block;
+}
+
+.wizard-scheduler-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.wizard-scheduler-row.full {
+    grid-template-columns: 1fr;
+}
+
+.wizard-scheduler-row .form-group {
+    margin-bottom: 0;
+}
+
+.wizard-scheduler-row label {
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.wizard-scheduler-row .text-input,
+.wizard-scheduler-row .select-input {
+    padding: 8px 10px;
+    font-size: 13px;
+}
+
+.wizard-scheduler-row small {
+    font-size: 11px;
+}
+
+/* Action wizard styles */
+.wizard-actions-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.wizard-actions-header h4 {
+    margin: 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.wizard-actions-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.wizard-action-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 16px;
+}
+
+.wizard-action-card.expanded {
+    border-color: var(--primary-color);
+}
+
+.wizard-action-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+}
+
+.wizard-action-header h5 {
+    margin: 0;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.wizard-action-header .action-index {
+    background: #fd7e14;
+    color: white;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.wizard-action-header .action-scheduler-badge {
+    background: #28a745;
+    color: white;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: normal;
+}
+
+.wizard-action-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.wizard-action-body {
+    margin-top: 16px;
+    display: none;
+}
+
+.wizard-action-card.expanded .wizard-action-body {
+    display: block;
+}
+
+.wizard-action-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.wizard-action-row.full {
+    grid-template-columns: 1fr;
+}
+
+.wizard-action-row .form-group {
+    margin-bottom: 0;
+}
+
+.wizard-action-row label {
+    font-size: 12px;
+    margin-bottom: 4px;
+}
+
+.wizard-action-row .text-input,
+.wizard-action-row .select-input {
+    padding: 8px 10px;
+    font-size: 13px;
+}
+
+.wizard-action-row small {
+    font-size: 11px;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .sidebar {

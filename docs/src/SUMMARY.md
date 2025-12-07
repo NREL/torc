@@ -28,8 +28,8 @@
 # How-To Guides
 
 - [How-To](./how-to/README.md)
-  - [Creating Workflows](./how-to/creating-workflows.md)
   - [Configuration Files](./how-to/configuration-files.md)
+  - [Creating Workflows](./how-to/creating-workflows.md)
   - [Working with Slurm](./how-to/slurm.md)
   - [Job Checkpointing](./how-to/checkpointing.md)
   - [Resource Monitoring](./how-to/resource-monitoring.md)
@@ -56,6 +56,7 @@
 - [Tutorials](./tutorials/README.md)
   - [Configuration Files](./tutorials/configuration.md)
   - [Dashboard Deployment](./tutorials/dashboard-deployment.md)
+  - [Workflow Wizard](./tutorials/workflow-wizard.md)
   - [Many Independent Jobs](./tutorials/many-jobs.md)
   - [Diamond Workflow](./tutorials/diamond.md)
   - [User Data Dependencies](./tutorials/user-data.md)

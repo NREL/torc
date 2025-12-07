@@ -458,6 +458,14 @@
                         </div>
                         <div class="wizard-step" data-step="3">
                             <span class="step-number">3</span>
+                            <span class="step-label">Schedulers</span>
+                        </div>
+                        <div class="wizard-step" data-step="4">
+                            <span class="step-number">4</span>
+                            <span class="step-label">Actions</span>
+                        </div>
+                        <div class="wizard-step" data-step="5">
+                            <span class="step-number">5</span>
                             <span class="step-label">Review</span>
                         </div>
                     </div>
@@ -487,8 +495,32 @@
                         </div>
                     </div>
 
-                    <!-- Step 3: Review -->
+                    <!-- Step 3: Schedulers -->
                     <div class="wizard-content" id="wizard-step-3">
+                        <div class="wizard-schedulers-header">
+                            <h4>Slurm Schedulers</h4>
+                            <button type="button" class="btn btn-sm btn-success" id="wizard-add-scheduler">+ Add Scheduler</button>
+                        </div>
+                        <p class="wizard-help-text">Schedulers define Slurm job allocation settings. Jobs can reference schedulers by name to run on HPC clusters.</p>
+                        <div id="wizard-schedulers-list" class="wizard-schedulers-list">
+                            <!-- Scheduler cards will be added here -->
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Actions -->
+                    <div class="wizard-content" id="wizard-step-4">
+                        <div class="wizard-actions-header">
+                            <h4>Workflow Actions</h4>
+                            <button type="button" class="btn btn-sm btn-success" id="wizard-add-action">+ Add Action</button>
+                        </div>
+                        <p class="wizard-help-text">Actions automatically schedule Slurm nodes when certain events occur (workflow starts, jobs become ready, or jobs complete).</p>
+                        <div id="wizard-actions-list" class="wizard-actions-list">
+                            <!-- Action cards will be added here -->
+                        </div>
+                    </div>
+
+                    <!-- Step 5: Review -->
+                    <div class="wizard-content" id="wizard-step-5">
                         <div class="form-group">
                             <label>Generated Workflow Spec</label>
                             <pre id="wizard-preview" class="wizard-preview"></pre>

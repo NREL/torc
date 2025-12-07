@@ -2372,6 +2372,10 @@ class TorcDashboard {
                 }
                 specContent = textInput;
                 break;
+            case 'wizard':
+                // Use the wizard's create workflow function
+                await this.wizardCreateWorkflow();
+                return;
         }
 
         try {
@@ -3084,8 +3088,13 @@ class TorcDashboard {
     setupWizard() {
         // Wizard state
         this.wizardStep = 1;
+        this.wizardTotalSteps = 5;
         this.wizardJobs = [];
         this.wizardJobIdCounter = 0;
+        this.wizardSchedulers = [];
+        this.wizardSchedulerIdCounter = 0;
+        this.wizardActions = [];
+        this.wizardActionIdCounter = 0;
 
         // Resource presets
         this.resourcePresets = {
@@ -3108,12 +3117,26 @@ class TorcDashboard {
         document.getElementById('wizard-add-job')?.addEventListener('click', () => {
             this.wizardAddJob();
         });
+
+        // Add scheduler button
+        document.getElementById('wizard-add-scheduler')?.addEventListener('click', () => {
+            this.wizardAddScheduler();
+        });
+
+        // Add action button
+        document.getElementById('wizard-add-action')?.addEventListener('click', () => {
+            this.wizardAddAction();
+        });
     }
 
     resetWizard() {
         this.wizardStep = 1;
         this.wizardJobs = [];
         this.wizardJobIdCounter = 0;
+        this.wizardSchedulers = [];
+        this.wizardSchedulerIdCounter = 0;
+        this.wizardActions = [];
+        this.wizardActionIdCounter = 0;
 
         // Clear form fields
         const nameInput = document.getElementById('wizard-name');
@@ -3138,6 +3161,12 @@ class TorcDashboard {
 
         // Clear jobs list
         document.getElementById('wizard-jobs-list').innerHTML = '';
+
+        // Clear schedulers list
+        document.getElementById('wizard-schedulers-list').innerHTML = '';
+
+        // Clear actions list
+        document.getElementById('wizard-actions-list').innerHTML = '';
     }
 
     wizardGoToStep(step) {
@@ -3158,7 +3187,7 @@ class TorcDashboard {
         document.getElementById('wizard-prev').disabled = step === 1;
 
         const nextBtn = document.getElementById('wizard-next');
-        if (step === 3) {
+        if (step === this.wizardTotalSteps) {
             nextBtn.textContent = 'Create Workflow';
             this.wizardGeneratePreview();
         } else {
@@ -3197,12 +3226,38 @@ class TorcDashboard {
                 }
             }
         } else if (this.wizardStep === 3) {
+            // Schedulers step - validate scheduler names and accounts if any exist
+            for (const scheduler of this.wizardSchedulers) {
+                if (!scheduler.name?.trim()) {
+                    this.showToast('All schedulers must have a name', 'warning');
+                    return;
+                }
+                if (!scheduler.account?.trim()) {
+                    this.showToast('All schedulers must have an account', 'warning');
+                    return;
+                }
+            }
+        } else if (this.wizardStep === 4) {
+            // Actions step - validate actions if any exist
+            for (const action of this.wizardActions) {
+                if (!action.scheduler?.trim()) {
+                    this.showToast('All actions must have a scheduler selected', 'warning');
+                    return;
+                }
+                // For on_jobs_ready and on_jobs_complete, jobs must be selected
+                if ((action.trigger_type === 'on_jobs_ready' || action.trigger_type === 'on_jobs_complete')
+                    && (!action.jobs || action.jobs.length === 0)) {
+                    this.showToast('Actions triggered by job events must have at least one job selected', 'warning');
+                    return;
+                }
+            }
+        } else if (this.wizardStep === this.wizardTotalSteps) {
             // Create the workflow
             this.wizardCreateWorkflow();
             return;
         }
 
-        if (this.wizardStep < 3) {
+        if (this.wizardStep < this.wizardTotalSteps) {
             this.wizardGoToStep(this.wizardStep + 1);
         }
     }
@@ -3218,7 +3273,8 @@ class TorcDashboard {
             num_cpus: 1,
             memory: '1g',
             num_gpus: 0,
-            parameters: ''
+            parameters: '',
+            scheduler: ''
         };
         this.wizardJobs.push(job);
         this.wizardRenderJobs();
@@ -3363,6 +3419,22 @@ class TorcDashboard {
                                 <small>Creates multiple jobs. Use {param} in name/command. Formats: "1:10" (range), "[a,b,c]" (list)</small>
                             </div>
                         </div>
+                        <div class="wizard-job-row">
+                            <div class="form-group">
+                                <label>Scheduler</label>
+                                <select class="select-input"
+                                        onchange="app.wizardUpdateJob(${job.id}, 'scheduler', this.value)">
+                                    <option value="" ${!job.scheduler ? 'selected' : ''}>None (local execution)</option>
+                                    ${this.wizardGetSchedulerNames().map(name => `
+                                        <option value="${this.escapeHtml(name)}" ${job.scheduler === name ? 'selected' : ''}>
+                                            ${this.escapeHtml(name)}
+                                        </option>
+                                    `).join('')}
+                                </select>
+                                <small>Optional, assign this job to a Slurm scheduler (define schedulers in step 3)</small>
+                            </div>
+                            <div class="form-group"></div>
+                        </div>
                         <div class="form-group">
                             <label>Resources</label>
                             <div class="resource-presets">
@@ -3422,6 +3494,382 @@ class TorcDashboard {
      */
     wizardJobIsParameterized(job) {
         return job.parameters?.trim()?.length > 0;
+    }
+
+    // ==================== Scheduler Management ====================
+
+    wizardAddScheduler() {
+        const schedulerId = ++this.wizardSchedulerIdCounter;
+        const scheduler = {
+            id: schedulerId,
+            name: '',
+            account: '',
+            nodes: 1,
+            walltime: '01:00:00',
+            partition: '',
+            qos: '',
+            gres: '',
+            mem: '',
+            tmp: '',
+            extra: ''
+        };
+        this.wizardSchedulers.push(scheduler);
+        this.wizardRenderSchedulers();
+
+        // Expand the new scheduler
+        setTimeout(() => {
+            const card = document.querySelector(`[data-scheduler-id="${schedulerId}"]`);
+            if (card) {
+                card.classList.add('expanded');
+                card.querySelector('input[name="scheduler-name"]')?.focus();
+            }
+        }, 50);
+    }
+
+    wizardRemoveScheduler(schedulerId) {
+        this.wizardSchedulers = this.wizardSchedulers.filter(s => s.id !== schedulerId);
+        // Clear scheduler reference from jobs that used this scheduler
+        const scheduler = this.wizardSchedulers.find(s => s.id === schedulerId);
+        if (scheduler) {
+            this.wizardJobs.forEach(job => {
+                if (job.scheduler === scheduler.name) {
+                    job.scheduler = '';
+                }
+            });
+        }
+        this.wizardRenderSchedulers();
+    }
+
+    wizardToggleScheduler(schedulerId) {
+        const card = document.querySelector(`[data-scheduler-id="${schedulerId}"]`);
+        if (card) {
+            card.classList.toggle('expanded');
+        }
+    }
+
+    wizardUpdateScheduler(schedulerId, field, value) {
+        const scheduler = this.wizardSchedulers.find(s => s.id === schedulerId);
+        if (!scheduler) return;
+
+        // If updating name, update any jobs referencing the old name
+        if (field === 'name' && scheduler.name) {
+            const oldName = scheduler.name;
+            this.wizardJobs.forEach(job => {
+                if (job.scheduler === oldName) {
+                    job.scheduler = value;
+                }
+            });
+        }
+
+        scheduler[field] = value;
+
+        // Update scheduler header title
+        if (field === 'name') {
+            const card = document.querySelector(`[data-scheduler-id="${schedulerId}"]`);
+            if (card) {
+                const titleSpan = card.querySelector('.scheduler-title');
+                if (titleSpan) {
+                    titleSpan.textContent = value || 'Untitled Scheduler';
+                }
+            }
+        }
+    }
+
+    wizardRenderSchedulers() {
+        const container = document.getElementById('wizard-schedulers-list');
+        if (!container) return;
+
+        if (this.wizardSchedulers.length === 0) {
+            container.innerHTML = `
+                <div class="wizard-empty-state">
+                    <p>No schedulers defined</p>
+                    <p>Click "+ Add Scheduler" to define a Slurm scheduler configuration.</p>
+                    <p class="wizard-help-text">Schedulers are optional - you can run workflows locally without them.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = this.wizardSchedulers.map((scheduler, index) => {
+            return `
+                <div class="wizard-scheduler-card" data-scheduler-id="${scheduler.id}">
+                    <div class="wizard-scheduler-header" onclick="app.wizardToggleScheduler(${scheduler.id})">
+                        <h5>
+                            <span class="scheduler-index">${index + 1}</span>
+                            <span class="scheduler-title">${this.escapeHtml(scheduler.name) || 'Untitled Scheduler'}</span>
+                        </h5>
+                        <div class="wizard-scheduler-actions">
+                            <button type="button" class="btn btn-sm btn-danger" onclick="event.stopPropagation(); app.wizardRemoveScheduler(${scheduler.id})">Remove</button>
+                        </div>
+                    </div>
+                    <div class="wizard-scheduler-body">
+                        <div class="wizard-scheduler-row">
+                            <div class="form-group">
+                                <label>Scheduler Name *</label>
+                                <input type="text" name="scheduler-name" class="text-input"
+                                       value="${this.escapeHtml(scheduler.name)}"
+                                       placeholder="e.g., compute_scheduler"
+                                       onchange="app.wizardUpdateScheduler(${scheduler.id}, 'name', this.value)">
+                            </div>
+                            <div class="form-group">
+                                <label>Account *</label>
+                                <input type="text" class="text-input"
+                                       value="${this.escapeHtml(scheduler.account)}"
+                                       placeholder="e.g., my_project"
+                                       onchange="app.wizardUpdateScheduler(${scheduler.id}, 'account', this.value)">
+                            </div>
+                        </div>
+                        <div class="wizard-scheduler-row">
+                            <div class="form-group">
+                                <label>Nodes</label>
+                                <input type="number" class="text-input" min="1" value="${scheduler.nodes}"
+                                       onchange="app.wizardUpdateScheduler(${scheduler.id}, 'nodes', parseInt(this.value) || 1)">
+                            </div>
+                            <div class="form-group">
+                                <label>Wall Time</label>
+                                <input type="text" class="text-input"
+                                       value="${this.escapeHtml(scheduler.walltime)}"
+                                       placeholder="HH:MM:SS (e.g., 04:00:00)"
+                                       onchange="app.wizardUpdateScheduler(${scheduler.id}, 'walltime', this.value)">
+                            </div>
+                        </div>
+                        <div class="wizard-scheduler-row">
+                            <div class="form-group">
+                                <label>Partition</label>
+                                <input type="text" class="text-input"
+                                       value="${this.escapeHtml(scheduler.partition)}"
+                                       placeholder="e.g., compute, gpu"
+                                       onchange="app.wizardUpdateScheduler(${scheduler.id}, 'partition', this.value)">
+                            </div>
+                            <div class="form-group">
+                                <label>QoS</label>
+                                <input type="text" class="text-input"
+                                       value="${this.escapeHtml(scheduler.qos)}"
+                                       placeholder="e.g., normal, high"
+                                       onchange="app.wizardUpdateScheduler(${scheduler.id}, 'qos', this.value)">
+                            </div>
+                        </div>
+                        <div class="wizard-scheduler-row">
+                            <div class="form-group">
+                                <label>GRES (GPU Resources)</label>
+                                <input type="text" class="text-input"
+                                       value="${this.escapeHtml(scheduler.gres)}"
+                                       placeholder="e.g., gpu:2"
+                                       onchange="app.wizardUpdateScheduler(${scheduler.id}, 'gres', this.value)">
+                            </div>
+                            <div class="form-group">
+                                <label>Memory</label>
+                                <input type="text" class="text-input"
+                                       value="${this.escapeHtml(scheduler.mem)}"
+                                       placeholder="e.g., 64G"
+                                       onchange="app.wizardUpdateScheduler(${scheduler.id}, 'mem', this.value)">
+                            </div>
+                        </div>
+                        <div class="wizard-scheduler-row">
+                            <div class="form-group">
+                                <label>Temp Storage</label>
+                                <input type="text" class="text-input"
+                                       value="${this.escapeHtml(scheduler.tmp)}"
+                                       placeholder="e.g., 100G"
+                                       onchange="app.wizardUpdateScheduler(${scheduler.id}, 'tmp', this.value)">
+                            </div>
+                            <div class="form-group"></div>
+                        </div>
+                        <div class="wizard-scheduler-row full">
+                            <div class="form-group">
+                                <label>Extra Slurm Options</label>
+                                <input type="text" class="text-input"
+                                       value="${this.escapeHtml(scheduler.extra)}"
+                                       placeholder="e.g., --exclusive --constraint=skylake"
+                                       onchange="app.wizardUpdateScheduler(${scheduler.id}, 'extra', this.value)">
+                                <small>Additional sbatch options passed directly to Slurm</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    /**
+     * Get list of scheduler names for dropdown selection
+     */
+    wizardGetSchedulerNames() {
+        return this.wizardSchedulers
+            .filter(s => s.name?.trim())
+            .map(s => s.name.trim());
+    }
+
+    /**
+     * Get list of job names for dropdown selection
+     */
+    wizardGetJobNames() {
+        return this.wizardJobs
+            .filter(j => j.name?.trim())
+            .map(j => j.name.trim());
+    }
+
+    // ==================== Action Management ====================
+
+    wizardAddAction() {
+        const actionId = ++this.wizardActionIdCounter;
+        const action = {
+            id: actionId,
+            trigger_type: 'on_workflow_start',
+            scheduler: '',
+            jobs: [],
+            num_allocations: 1
+        };
+        this.wizardActions.push(action);
+        this.wizardRenderActions();
+
+        // Expand the new action
+        setTimeout(() => {
+            const card = document.querySelector(`[data-action-id="${actionId}"]`);
+            if (card) {
+                card.classList.add('expanded');
+            }
+        }, 50);
+    }
+
+    wizardRemoveAction(actionId) {
+        this.wizardActions = this.wizardActions.filter(a => a.id !== actionId);
+        this.wizardRenderActions();
+    }
+
+    wizardToggleAction(actionId) {
+        const card = document.querySelector(`[data-action-id="${actionId}"]`);
+        if (card) {
+            card.classList.toggle('expanded');
+        }
+    }
+
+    wizardUpdateAction(actionId, field, value) {
+        const action = this.wizardActions.find(a => a.id === actionId);
+        if (!action) return;
+
+        action[field] = value;
+
+        // If trigger type changed, clear jobs if switching to/from workflow_start
+        if (field === 'trigger_type') {
+            if (value === 'on_workflow_start') {
+                action.jobs = [];
+            }
+            this.wizardRenderActions();
+        }
+    }
+
+    wizardGetTriggerTypeLabel(triggerType) {
+        const labels = {
+            'on_workflow_start': 'When workflow starts',
+            'on_jobs_ready': 'When jobs become ready',
+            'on_jobs_complete': 'When jobs complete'
+        };
+        return labels[triggerType] || triggerType;
+    }
+
+    wizardRenderActions() {
+        const container = document.getElementById('wizard-actions-list');
+        if (!container) return;
+
+        const schedulerNames = this.wizardGetSchedulerNames();
+        const jobNames = this.wizardGetJobNames();
+
+        if (this.wizardActions.length === 0) {
+            container.innerHTML = `
+                <div class="wizard-empty-state">
+                    <p>No actions defined</p>
+                    <p>Click "+ Add Action" to automatically schedule Slurm nodes on workflow events.</p>
+                    <p class="wizard-help-text">Actions are optional - you can manually start workflows without them.</p>
+                </div>
+            `;
+            return;
+        }
+
+        if (schedulerNames.length === 0) {
+            container.innerHTML = `
+                <div class="wizard-empty-state">
+                    <p>No schedulers available</p>
+                    <p>Please define at least one scheduler in step 3 before creating actions.</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = this.wizardActions.map((action, index) => {
+            const showJobSelector = action.trigger_type === 'on_jobs_ready' || action.trigger_type === 'on_jobs_complete';
+
+            return `
+                <div class="wizard-action-card" data-action-id="${action.id}">
+                    <div class="wizard-action-header" onclick="app.wizardToggleAction(${action.id})">
+                        <h5>
+                            <span class="action-index">${index + 1}</span>
+                            <span class="action-title">${this.wizardGetTriggerTypeLabel(action.trigger_type)}</span>
+                            ${action.scheduler ? `<span class="action-scheduler-badge">${this.escapeHtml(action.scheduler)}</span>` : ''}
+                        </h5>
+                        <div class="wizard-action-actions">
+                            <button type="button" class="btn btn-sm btn-danger" onclick="event.stopPropagation(); app.wizardRemoveAction(${action.id})">Remove</button>
+                        </div>
+                    </div>
+                    <div class="wizard-action-body">
+                        <div class="wizard-action-row">
+                            <div class="form-group">
+                                <label>Trigger *</label>
+                                <select class="select-input"
+                                        onchange="app.wizardUpdateAction(${action.id}, 'trigger_type', this.value)">
+                                    <option value="on_workflow_start" ${action.trigger_type === 'on_workflow_start' ? 'selected' : ''}>
+                                        When workflow starts
+                                    </option>
+                                    <option value="on_jobs_ready" ${action.trigger_type === 'on_jobs_ready' ? 'selected' : ''}>
+                                        When jobs become ready
+                                    </option>
+                                    <option value="on_jobs_complete" ${action.trigger_type === 'on_jobs_complete' ? 'selected' : ''}>
+                                        When jobs complete
+                                    </option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Scheduler *</label>
+                                <select class="select-input"
+                                        onchange="app.wizardUpdateAction(${action.id}, 'scheduler', this.value)">
+                                    <option value="">Select scheduler...</option>
+                                    ${schedulerNames.map(name => `
+                                        <option value="${this.escapeHtml(name)}" ${action.scheduler === name ? 'selected' : ''}>
+                                            ${this.escapeHtml(name)}
+                                        </option>
+                                    `).join('')}
+                                </select>
+                            </div>
+                        </div>
+                        ${showJobSelector ? `
+                            <div class="wizard-action-row full">
+                                <div class="form-group">
+                                    <label>Jobs *</label>
+                                    <select class="select-input" multiple size="4"
+                                            onchange="app.wizardUpdateAction(${action.id}, 'jobs', Array.from(this.selectedOptions).map(o => o.value))">
+                                        ${jobNames.map(name => `
+                                            <option value="${this.escapeHtml(name)}" ${action.jobs?.includes(name) ? 'selected' : ''}>
+                                                ${this.escapeHtml(name)}
+                                            </option>
+                                        `).join('')}
+                                    </select>
+                                    <small>Hold Ctrl/Cmd to select multiple jobs. Action triggers when ${action.trigger_type === 'on_jobs_ready' ? 'these jobs become ready' : 'these jobs complete'}.</small>
+                                </div>
+                            </div>
+                        ` : ''}
+                        <div class="wizard-action-row">
+                            <div class="form-group">
+                                <label>Number of Allocations</label>
+                                <input type="number" class="text-input" min="1" value="${action.num_allocations || 1}"
+                                       onchange="app.wizardUpdateAction(${action.id}, 'num_allocations', parseInt(this.value) || 1)">
+                                <small>How many Slurm job allocations to request</small>
+                            </div>
+                            <div class="form-group"></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }).join('');
     }
 
     wizardGenerateSpec() {
@@ -3489,6 +3937,11 @@ class TorcDashboard {
 
             // Add resource requirements
             jobSpec.resource_requirements = resourceReqs[resKey].name;
+
+            // Add scheduler if specified
+            if (job.scheduler?.trim()) {
+                jobSpec.scheduler = job.scheduler.trim();
+            }
 
             // Add parameters if present
             // Format: parameters is an object like {"i": "1:100", "lr": "[0.001,0.01,0.1]"}
@@ -3561,6 +4014,45 @@ class TorcDashboard {
             return jobSpec;
         });
 
+        // Build slurm_schedulers array
+        const slurmSchedulers = this.wizardSchedulers
+            .filter(s => s.name?.trim() && s.account?.trim())
+            .map(s => {
+                const schedulerSpec = {
+                    name: s.name.trim(),
+                    account: s.account.trim(),
+                    nodes: s.nodes || 1,
+                    walltime: s.walltime?.trim() || '01:00:00'
+                };
+                // Add optional fields only if they have values
+                if (s.partition?.trim()) schedulerSpec.partition = s.partition.trim();
+                if (s.qos?.trim()) schedulerSpec.qos = s.qos.trim();
+                if (s.gres?.trim()) schedulerSpec.gres = s.gres.trim();
+                if (s.mem?.trim()) schedulerSpec.mem = s.mem.trim();
+                if (s.tmp?.trim()) schedulerSpec.tmp = s.tmp.trim();
+                if (s.extra?.trim()) schedulerSpec.extra = s.extra.trim();
+                return schedulerSpec;
+            });
+
+        // Build actions array
+        const actions = this.wizardActions
+            .filter(a => a.scheduler?.trim())
+            .map(a => {
+                const actionSpec = {
+                    trigger_type: a.trigger_type,
+                    action_type: 'schedule_nodes',
+                    scheduler: a.scheduler.trim(),
+                    scheduler_type: 'slurm',
+                    num_allocations: a.num_allocations || 1
+                };
+                // Add jobs only for job-based triggers
+                if ((a.trigger_type === 'on_jobs_ready' || a.trigger_type === 'on_jobs_complete')
+                    && a.jobs && a.jobs.length > 0) {
+                    actionSpec.jobs = a.jobs;
+                }
+                return actionSpec;
+            });
+
         // Build the spec
         const spec = {
             name,
@@ -3570,6 +4062,16 @@ class TorcDashboard {
 
         if (description) {
             spec.description = description;
+        }
+
+        // Add slurm_schedulers if any are defined
+        if (slurmSchedulers.length > 0) {
+            spec.slurm_schedulers = slurmSchedulers;
+        }
+
+        // Add actions if any are defined
+        if (actions.length > 0) {
+            spec.actions = actions;
         }
 
         return spec;
