@@ -6,9 +6,9 @@ This tutorial covers three common deployment scenarios for the Torc web dashboar
 
 | Scenario | Environment | Use Case |
 |----------|-------------|----------|
-| 1. Standalone | Local computer | Development, testing, single-user workflows |
-| 2. Shared Server | HPC login node | Multi-user access to central server |
-| 3. All-in-One Login Node | HPC login node | Complete Torc stack on login node |
+| 1. Standalone | Local computer | Single-computer workflows, development, testing |
+| 2. All-in-One Login Node | HPC login node | Small HPC workflows (< 100 jobs) |
+| 3. Shared Server | HPC login node + dedicated server | Large-scale multi-user HPC workflows |
 
 ## Prerequisites
 
@@ -33,23 +33,27 @@ Before starting, ensure you have:
 
 ## Scenario 1: Local Development (Standalone Mode)
 
-**Best for**: Development, testing, learning Torc, single-user workflows on your laptop or workstation.
+**Best for**: Single-computer workflows on your laptop or workstation. Also ideal for development, testing, and learning Torc.
+
+This is the simplest setup - everything runs on one machine with a single command. Use this when you want to run workflows entirely on your local computer without HPC resources.
 
 ### Architecture
 
-```
-┌─────────────────────────────────────────────────────┐
-│                  Your Computer                       │
-│                                                      │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────┐  │
-│  │  torc-dash  │───▶│ torc-server │◀───│  torc   │  │
-│  │  (web UI)   │    │  (managed)  │    │  (CLI)  │  │
-│  └─────────────┘    └─────────────┘    └─────────┘  │
-│        │                   │                         │
-│        ▼                   ▼                         │
-│    Browser             SQLite DB                     │
-│                                                      │
-└─────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+    subgraph computer["Your Computer"]
+        browser["Browser"]
+        dash["torc-dash<br/>(web UI)"]
+        server["torc-server<br/>(managed)"]
+        cli["torc CLI"]
+        db[("SQLite DB")]
+
+        browser --> dash
+        dash -->|"HTTP API"| server
+        dash -->|"executes"| cli
+        cli -->|"HTTP API"| server
+        server --> db
+    end
 ```
 
 ### Setup
@@ -101,29 +105,169 @@ Press `Ctrl+C` in the terminal. This stops both the dashboard and the managed se
 
 ---
 
-## Scenario 2: Shared Server on HPC
+## Scenario 2: All-in-One Login Node
 
-**Best for**: Multi-user environments where a central `torc-server` runs persistently on a shared machine, and users access it via `torc-dash` from login nodes.
+**Best for**: Small HPC workflows (fewer than 100 jobs) where you want the complete Torc stack running on the login node, with jobs submitted to Slurm.
+
+This is the simplest HPC setup - everything runs on the login node. It's ideal for individual users running small HPC workflows without needing a dedicated server infrastructure.
+
+**Important**: Login nodes are shared resources. The torc-dash and torc-server applications consume
+minimal resources when workflows are small (e.g., less than 100 jobs). If you run these applications
+on bigger workflows, especially with faster job completion interval checks, you may impact other
+users.
 
 ### Architecture
 
+```mermaid
+flowchart TB
+    subgraph local["Your Local Machine"]
+        browser["Browser"]
+    end
+
+    subgraph login["Login Node"]
+        dash["torc-dash<br/>(port 8090)"]
+        server["torc-server<br/>(port 8080)"]
+        cli["torc CLI"]
+        db[("SQLite DB")]
+        slurm["sbatch/squeue"]
+
+        dash -->|"HTTP API"| server
+        dash -->|"executes"| cli
+        cli -->|"HTTP API"| server
+        server --> db
+        cli --> slurm
+    end
+
+    subgraph compute["Compute Nodes (Slurm)"]
+        runner1["torc-slurm-job-runner<br/>(job 1)"]
+        runner2["torc-slurm-job-runner<br/>(job 2)"]
+        runnerN["torc-slurm-job-runner<br/>(job N)"]
+
+        runner1 -->|"HTTP API"| server
+        runner2 -->|"HTTP API"| server
+        runnerN -->|"HTTP API"| server
+    end
+
+    browser -->|"SSH tunnel"| dash
+    slurm --> compute
 ```
-┌──────────────────────────┐     ┌──────────────────────────┐
-│     Shared Server        │     │      Login Node          │
-│                          │     │                          │
-│  ┌─────────────┐         │     │  ┌─────────────┐         │
-│  │ torc-server │◀────────│─────│──│  torc-dash  │         │
-│  │  (port 8080)│         │     │  │  (port 8090)│         │
-│  └─────────────┘         │     │  └─────────────┘         │
-│        │                 │     │        │                 │
-│        ▼                 │     │        ▼                 │
-│    SQLite DB             │     │    Browser (SSH tunnel)  │
-│                          │     │                          │
-│                          │     │  ┌─────────────┐         │
-│                          │◀────│──│    torc     │         │
-│                          │     │  │    (CLI)    │         │
-│                          │     │  └─────────────┘         │
-└──────────────────────────┘     └──────────────────────────┘
+
+### Setup
+
+**Step 1: Start torc-server on the login node**
+
+```bash
+# Start server
+torc-server run \
+  --port 8080 \
+  --database $SCRATCH/torc.db \
+  --completion-check-interval-secs 60
+```
+
+Or as a background process:
+
+```bash
+nohup torc-server run \
+  --port 8080 \
+  --database $SCRATCH/torc.db \
+  > $SCRATCH/torc-server.log 2>&1 &
+```
+
+**Step 2: Start torc-dash on the same login node**
+
+```bash
+# Set API URL to local server
+export TORC_API_URL="http://localhost:8080/torc-service/v1"
+
+# Start dashboard
+torc-dash --port 8090
+```
+
+Or in the background:
+
+```bash
+nohup torc-dash --port 8090 > $SCRATCH/torc-dash.log 2>&1 &
+```
+
+**Step 3: Access via SSH tunnel**
+
+From your local machine:
+
+```bash
+ssh -L 8090:localhost:8090 user@login-node
+```
+
+> **Important**: Use `localhost` in the tunnel command, not the login node's hostname.
+> This works because torc-dash binds to 127.0.0.1 by default.
+
+Open http://localhost:8090 in your browser.
+
+### Submitting to Slurm
+
+**Via Dashboard:**
+
+1. Create a workflow with Slurm scheduler configuration
+2. Click **Initialize**
+3. Click **Submit** (not "Run Locally")
+
+**Via CLI:**
+
+```bash
+export TORC_API_URL="http://localhost:8080/torc-service/v1"
+
+# Create workflow with Slurm actions
+torc workflows create my_slurm_workflow.yaml
+
+# Submit to Slurm
+torc submit <workflow_id>
+```
+
+### Monitoring Slurm Jobs
+
+The dashboard shows job status updates as Slurm jobs progress:
+
+1. Go to **Details** tab
+2. Select **Jobs**
+3. Enable **Auto-refresh**
+4. Watch status change from `pending` → `running` → `completed`
+
+You can also monitor via:
+- **Events** tab for state transitions
+- **Debugging** tab for job logs after completion
+
+---
+
+## Scenario 3: Shared Server on HPC
+
+**Best for**: Large-scale multi-user HPC environments where a central `torc-server` runs persistently on a dedicated server, and multiple users access it via `torc-dash` from login nodes.
+
+This is the most scalable setup, suitable for production deployments with many concurrent users and large workflows.
+
+### Architecture
+
+```mermaid
+flowchart TB
+    subgraph local["Your Local Machine"]
+        browser["Browser"]
+    end
+
+    subgraph login["Login Node"]
+        dash["torc-dash<br/>(port 8090)"]
+        cli["torc CLI"]
+
+        dash -->|"executes"| cli
+    end
+
+    subgraph shared["Shared Server"]
+        server["torc-server<br/>(port 8080)"]
+        db[("SQLite DB")]
+
+        server --> db
+    end
+
+    browser -->|"SSH tunnel"| dash
+    dash -->|"HTTP API"| server
+    cli -->|"HTTP API"| server
 ```
 
 ### Setup
@@ -137,7 +281,7 @@ On the shared server (e.g., a dedicated service node):
 torc-server run \
   --port 8080 \
   --database /shared/storage/torc.db \
-  --completion-check-interval-secs 30
+  --completion-check-interval-secs 60
 ```
 
 For production, consider running as a systemd service:
@@ -208,165 +352,16 @@ See [Authentication](../how-to/authentication.md) for details.
 
 ---
 
-## Scenario 3: All-in-One Login Node
-
-**Best for**: HPC environments where you want the complete Torc stack running on the login node, with jobs submitted to Slurm.
-
-### Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                            Login Node                                    │
-│                                                                          │
-│  ┌─────────────┐    ┌─────────────┐    ┌─────────┐                      │
-│  │  torc-dash  │───▶│ torc-server │◀───│  torc   │                      │
-│  │  (port 8090)│    │  (port 8080)│    │  (CLI)  │                      │
-│  └─────────────┘    └─────────────┘    └─────────┘                      │
-│        │                   │                │                            │
-│        ▼                   ▼                ▼                            │
-│    Browser            SQLite DB        sbatch/squeue                     │
-│  (SSH tunnel)                               │                            │
-│                                             │                            │
-└─────────────────────────────────────────────│────────────────────────────┘
-                                              │
-                                              ▼
-┌─────────────────────────────────────────────────────────────────────────┐
-│                         Compute Nodes (Slurm)                            │
-│                                                                          │
-│  ┌────────────────────┐  ┌────────────────────┐  ┌────────────────────┐ │
-│  │ torc-slurm-job-    │  │ torc-slurm-job-    │  │ torc-slurm-job-    │ │
-│  │ runner (job 1)     │  │ runner (job 2)     │  │ runner (job N)     │ │
-│  └────────────────────┘  └────────────────────┘  └────────────────────┘ │
-│                                                                          │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-### Setup
-
-**Step 1: Start torc-server on the login node**
-
-```bash
-# Start server
-torc-server run \
-  --port 8080 \
-  --database $SCRATCH/torc.db \
-  --completion-check-interval-secs 10
-```
-
-Or as a background process:
-
-```bash
-nohup torc-server run \
-  --port 8080 \
-  --database $SCRATCH/torc.db \
-  > $SCRATCH/torc-server.log 2>&1 &
-```
-
-**Step 2: Start torc-dash on the same login node**
-
-```bash
-# Set API URL to local server
-export TORC_API_URL="http://localhost:8080/torc-service/v1"
-
-# Start dashboard
-torc-dash --port 8090
-```
-
-Or in the background:
-
-```bash
-nohup torc-dash --port 8090 > $SCRATCH/torc-dash.log 2>&1 &
-```
-
-**Step 3: Access via SSH tunnel**
-
-From your local machine:
-
-```bash
-ssh -L 8090:localhost:8090 user@login-node
-```
-
-> **Important**: Use `localhost` in the tunnel command, not the login node's hostname.
-> This works because torc-dash binds to 127.0.0.1 by default.
-
-Open http://localhost:8090 in your browser.
-
-### Submitting to Slurm
-
-**Via Dashboard:**
-
-1. Create a workflow with Slurm scheduler configuration
-2. Click **Initialize**
-3. Click **Submit to Scheduler** (not "Run Locally")
-
-**Via CLI:**
-
-```bash
-export TORC_API_URL="http://localhost:8080/torc-service/v1"
-
-# Create workflow with Slurm actions
-torc workflows create my_slurm_workflow.yaml
-
-# Submit to Slurm
-torc submit <workflow_id>
-```
-
-### Example Slurm Workflow
-
-```yaml
-name: slurm_example
-description: Example workflow for Slurm submission
-
-slurm_schedulers:
-  - name: default_scheduler
-    account: myproject
-    partition: compute
-    qos: normal
-    output_dir: output
-
-resource_requirements:
-  - name: standard
-    num_cpus: 4
-    memory: 8g
-    runtime: PT1H
-
-jobs:
-  - name: process_data
-    command: python process.py
-    scheduler: default_scheduler
-    resource_requirements: standard
-
-on_workflow_start:
-  - schedule_nodes:
-      scheduler: default_scheduler
-      num_nodes: 2
-```
-
-### Monitoring Slurm Jobs
-
-The dashboard shows job status updates as Slurm jobs progress:
-
-1. Go to **Details** tab
-2. Select **Jobs**
-3. Enable **Auto-refresh**
-4. Watch status change from `pending` → `running` → `completed`
-
-You can also monitor via:
-- **Events** tab for state transitions
-- **Debugging** tab for job logs after completion
-
----
-
 ## Comparison Summary
 
-| Feature | Standalone | Shared Server | Login Node |
-|---------|------------|---------------|------------|
-| Setup complexity | Low | Medium | Medium |
-| Multi-user support | No | Yes | Yes (single node) |
-| Slurm integration | No | Optional | Yes |
-| Database location | Local | Shared storage | Login node |
-| Persistence | Session only | Persistent | Depends on setup |
-| Best for | Development | Production | HPC workflows |
+| Feature | Standalone | All-in-One Login Node | Shared Server |
+|---------|------------|----------------------|---------------|
+| Setup complexity | Low | Medium | Medium-High |
+| Multi-user support | No | Single user | Yes |
+| Slurm integration | No | Yes | Yes |
+| Database location | Local | Login node | Shared storage |
+| Persistence | Session only | Depends on setup | Persistent |
+| Best for | Single-computer workflows | Small HPC workflows (< 100 jobs) | Large-scale production |
 
 ## Troubleshooting
 

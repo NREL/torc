@@ -73,13 +73,16 @@ fn test_workflow_specification_new() {
     let workflow = WorkflowSpec::new(
         "test_workflow".to_string(),
         "test_user".to_string(),
-        "Test workflow description".to_string(),
+        Some("Test workflow description".to_string()),
         jobs.clone(),
     );
 
     assert_eq!(workflow.name, "test_workflow");
     assert_eq!(workflow.user, Some("test_user".to_string()));
-    assert_eq!(workflow.description, "Test workflow description");
+    assert_eq!(
+        workflow.description,
+        Some("Test workflow description".to_string())
+    );
     assert_eq!(workflow.jobs.len(), 2);
     assert_eq!(workflow.jobs[0].name, "job1");
     assert_eq!(workflow.jobs[1].name, "job2");
@@ -95,7 +98,7 @@ fn test_workflow_specification_minimal_serialization() {
     let workflow = WorkflowSpec::new(
         "minimal_workflow".to_string(),
         "user".to_string(),
-        "Minimal test".to_string(),
+        Some("Minimal test".to_string()),
         jobs,
     );
 
@@ -202,7 +205,7 @@ fn test_workflow_specification_complete_serialization() {
     let mut workflow = WorkflowSpec::new(
         "complex_workflow".to_string(),
         "data_scientist".to_string(),
-        "Complex data processing workflow".to_string(),
+        Some("Complex data processing workflow".to_string()),
         jobs,
     );
 
@@ -265,7 +268,10 @@ fn test_from_json_file() {
 
     assert_eq!(workflow.name, "file_test_workflow");
     assert_eq!(workflow.user, Some("file_user".to_string()));
-    assert_eq!(workflow.description, "Test reading from file");
+    assert_eq!(
+        workflow.description,
+        Some("Test reading from file".to_string())
+    );
     assert_eq!(workflow.jobs.len(), 1);
     assert_eq!(workflow.jobs[0].name, "test_job");
 }
@@ -411,7 +417,7 @@ fn test_workflow_with_complex_dependencies() {
     let workflow = WorkflowSpec::new(
         "dependency_test".to_string(),
         "test_user".to_string(),
-        "Test complex dependencies".to_string(),
+        Some("Test complex dependencies".to_string()),
         jobs,
     );
 
@@ -964,7 +970,7 @@ fn test_from_spec_file_json5_format() {
 
     assert_eq!(spec.name, "test_workflow");
     assert_eq!(spec.user, Some("test_user".to_string()));
-    assert_eq!(spec.description, "JSON5 test");
+    assert_eq!(spec.description, Some("JSON5 test".to_string()));
 }
 
 #[rstest]
@@ -989,7 +995,7 @@ slurm_schedulers: null
 
     assert_eq!(spec.name, "test_workflow");
     assert_eq!(spec.user, Some("test_user".to_string()));
-    assert_eq!(spec.description, "YAML test");
+    assert_eq!(spec.description, Some("YAML test".to_string()));
 }
 
 #[test]
@@ -1044,7 +1050,7 @@ fn test_workflow_specification_with_all_resource_types() {
     let mut workflow = WorkflowSpec::new(
         "comprehensive_workflow".to_string(),
         "comprehensive_user".to_string(),
-        "Uses all resource types".to_string(),
+        Some("Uses all resource types".to_string()),
         vec![job],
     );
 
@@ -1115,7 +1121,7 @@ fn test_workflow_with_large_number_of_jobs() {
     let workflow = WorkflowSpec::new(
         "large_workflow".to_string(),
         "batch_user".to_string(),
-        "Workflow with many jobs".to_string(),
+        Some("Workflow with many jobs".to_string()),
         jobs,
     );
 
@@ -1138,7 +1144,7 @@ fn test_workflow_specification_default_values() {
 
     assert_eq!(default_workflow.name, "");
     assert_eq!(default_workflow.user, None);
-    assert_eq!(default_workflow.description, "");
+    assert_eq!(default_workflow.description, None);
     assert_eq!(default_workflow.jobs.len(), 0);
     assert_eq!(default_workflow.files, None);
     assert_eq!(default_workflow.user_data, None);
@@ -1274,7 +1280,7 @@ fn test_workflow_specification_with_new_structs() {
     let mut workflow = WorkflowSpec::new(
         "data_processing".to_string(),
         "scientist".to_string(),
-        "Process scientific data".to_string(),
+        Some("Process scientific data".to_string()),
         vec![job],
     );
 

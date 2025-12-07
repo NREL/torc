@@ -9,7 +9,7 @@ app = Dash(
     __name__,
     external_stylesheets=[dbc.themes.BOOTSTRAP, dbc.icons.FONT_AWESOME],
     suppress_callback_exceptions=True,
-    title="Torc Workflow Manager",
+    title="Torc",
 )
 
 # Default configuration

@@ -41,6 +41,7 @@ class TorcDashboard {
         this.setupResourcePlotsTab();
         this.setupSettingsTab();
         this.setupModal();
+        this.setupWizard();
         this.setupExecutionPlanModal();
         this.setupInitConfirmModal();
         this.setupReinitConfirmModal();
@@ -2242,10 +2243,12 @@ class TorcDashboard {
     setupModal() {
         document.getElementById('modal-close')?.addEventListener('click', () => {
             this.hideModal('create-workflow-modal');
+            this.resetWizard();
         });
 
         document.getElementById('btn-cancel-create')?.addEventListener('click', () => {
             this.hideModal('create-workflow-modal');
+            this.resetWizard();
         });
 
         document.getElementById('btn-submit-workflow')?.addEventListener('click', async () => {
@@ -2256,6 +2259,7 @@ class TorcDashboard {
         document.getElementById('create-workflow-modal')?.addEventListener('click', (e) => {
             if (e.target.classList.contains('modal')) {
                 this.hideModal('create-workflow-modal');
+                this.resetWizard();
             }
         });
 
@@ -3073,6 +3077,547 @@ class TorcDashboard {
                 </div>
             `).join('')}
         `;
+    }
+
+    // ==================== Workflow Wizard ====================
+
+    setupWizard() {
+        // Wizard state
+        this.wizardStep = 1;
+        this.wizardJobs = [];
+        this.wizardJobIdCounter = 0;
+
+        // Resource presets
+        this.resourcePresets = {
+            'small': { name: 'Small', num_cpus: 1, memory: '1g', num_gpus: 0 },
+            'medium': { name: 'Medium', num_cpus: 8, memory: '50g', num_gpus: 0 },
+            'gpu': { name: 'GPU', num_cpus: 1, memory: '10g', num_gpus: 1 },
+            'custom': { name: 'Custom', num_cpus: 1, memory: '1g', num_gpus: 0 }
+        };
+
+        // Navigation buttons
+        document.getElementById('wizard-prev')?.addEventListener('click', () => {
+            this.wizardPrevStep();
+        });
+
+        document.getElementById('wizard-next')?.addEventListener('click', () => {
+            this.wizardNextStep();
+        });
+
+        // Add job button
+        document.getElementById('wizard-add-job')?.addEventListener('click', () => {
+            this.wizardAddJob();
+        });
+    }
+
+    resetWizard() {
+        this.wizardStep = 1;
+        this.wizardJobs = [];
+        this.wizardJobIdCounter = 0;
+
+        // Clear form fields
+        const nameInput = document.getElementById('wizard-name');
+        const descInput = document.getElementById('wizard-description');
+        if (nameInput) nameInput.value = '';
+        if (descInput) descInput.value = '';
+
+        // Reset step indicators
+        document.querySelectorAll('.wizard-step').forEach((step, i) => {
+            step.classList.toggle('active', i === 0);
+            step.classList.remove('completed');
+        });
+
+        // Reset step content
+        document.querySelectorAll('.wizard-content').forEach((content, i) => {
+            content.classList.toggle('active', i === 0);
+        });
+
+        // Reset navigation buttons
+        document.getElementById('wizard-prev').disabled = true;
+        document.getElementById('wizard-next').textContent = 'Next';
+
+        // Clear jobs list
+        document.getElementById('wizard-jobs-list').innerHTML = '';
+    }
+
+    wizardGoToStep(step) {
+        this.wizardStep = step;
+
+        // Update step indicators
+        document.querySelectorAll('.wizard-step').forEach((el, i) => {
+            el.classList.toggle('active', i === step - 1);
+            el.classList.toggle('completed', i < step - 1);
+        });
+
+        // Update content
+        document.querySelectorAll('.wizard-content').forEach((content, i) => {
+            content.classList.toggle('active', i === step - 1);
+        });
+
+        // Update navigation
+        document.getElementById('wizard-prev').disabled = step === 1;
+
+        const nextBtn = document.getElementById('wizard-next');
+        if (step === 3) {
+            nextBtn.textContent = 'Create Workflow';
+            this.wizardGeneratePreview();
+        } else {
+            nextBtn.textContent = 'Next';
+        }
+    }
+
+    wizardPrevStep() {
+        if (this.wizardStep > 1) {
+            this.wizardGoToStep(this.wizardStep - 1);
+        }
+    }
+
+    wizardNextStep() {
+        // Validate current step
+        if (this.wizardStep === 1) {
+            const name = document.getElementById('wizard-name')?.value?.trim();
+            if (!name) {
+                this.showToast('Please enter a workflow name', 'warning');
+                return;
+            }
+        } else if (this.wizardStep === 2) {
+            if (this.wizardJobs.length === 0) {
+                this.showToast('Please add at least one job', 'warning');
+                return;
+            }
+            // Validate all jobs have names and commands
+            for (const job of this.wizardJobs) {
+                if (!job.name?.trim()) {
+                    this.showToast('All jobs must have a name', 'warning');
+                    return;
+                }
+                if (!job.command?.trim()) {
+                    this.showToast('All jobs must have a command', 'warning');
+                    return;
+                }
+            }
+        } else if (this.wizardStep === 3) {
+            // Create the workflow
+            this.wizardCreateWorkflow();
+            return;
+        }
+
+        if (this.wizardStep < 3) {
+            this.wizardGoToStep(this.wizardStep + 1);
+        }
+    }
+
+    wizardAddJob() {
+        const jobId = ++this.wizardJobIdCounter;
+        const job = {
+            id: jobId,
+            name: '',
+            command: '',
+            blocked_by: [],
+            resource_preset: 'small',
+            num_cpus: 1,
+            memory: '1g',
+            num_gpus: 0,
+            parameters: ''
+        };
+        this.wizardJobs.push(job);
+        this.wizardRenderJobs();
+
+        // Expand the new job
+        setTimeout(() => {
+            const card = document.querySelector(`[data-job-id="${jobId}"]`);
+            if (card) {
+                card.classList.add('expanded');
+                card.querySelector('input[name="job-name"]')?.focus();
+            }
+        }, 50);
+    }
+
+    wizardRemoveJob(jobId) {
+        this.wizardJobs = this.wizardJobs.filter(j => j.id !== jobId);
+        // Remove this job from any blocked_by references
+        this.wizardJobs.forEach(job => {
+            job.blocked_by = job.blocked_by.filter(id => id !== jobId);
+        });
+        this.wizardRenderJobs();
+    }
+
+    wizardToggleJob(jobId) {
+        const card = document.querySelector(`[data-job-id="${jobId}"]`);
+        if (card) {
+            card.classList.toggle('expanded');
+        }
+    }
+
+    wizardUpdateJob(jobId, field, value) {
+        const job = this.wizardJobs.find(j => j.id === jobId);
+        if (!job) return;
+
+        if (field === 'resource_preset') {
+            job.resource_preset = value;
+            if (value !== 'custom') {
+                const preset = this.resourcePresets[value];
+                job.num_cpus = preset.num_cpus;
+                job.memory = preset.memory;
+                job.num_gpus = preset.num_gpus;
+            }
+            // Re-render to update preset buttons and resource fields
+            this.wizardRenderJobs();
+        } else if (field === 'blocked_by') {
+            // Value is an array of job IDs
+            job.blocked_by = value;
+        } else {
+            job[field] = value;
+            // If user modifies resources, switch to custom preset
+            if (['num_cpus', 'memory', 'num_gpus'].includes(field)) {
+                job.resource_preset = 'custom';
+                // Update preset buttons without full re-render
+                const card = document.querySelector(`[data-job-id="${jobId}"]`);
+                if (card) {
+                    card.querySelectorAll('.resource-preset-btn').forEach(btn => {
+                        btn.classList.toggle('selected', btn.dataset.preset === 'custom');
+                    });
+                }
+            }
+        }
+
+        // Update job header title
+        if (field === 'name') {
+            const card = document.querySelector(`[data-job-id="${jobId}"]`);
+            if (card) {
+                const titleSpan = card.querySelector('.job-title');
+                if (titleSpan) {
+                    titleSpan.textContent = value || 'Untitled Job';
+                }
+            }
+        }
+    }
+
+    wizardRenderJobs() {
+        const container = document.getElementById('wizard-jobs-list');
+        if (!container) return;
+
+        if (this.wizardJobs.length === 0) {
+            container.innerHTML = `
+                <div class="wizard-empty-state">
+                    <p>No jobs yet</p>
+                    <p>Click "+ Add Job" to create your first job</p>
+                </div>
+            `;
+            return;
+        }
+
+        container.innerHTML = this.wizardJobs.map((job, index) => {
+            // Get other jobs for blocked_by dropdown
+            const otherJobs = this.wizardJobs.filter(j => j.id !== job.id);
+
+            return `
+                <div class="wizard-job-card" data-job-id="${job.id}">
+                    <div class="wizard-job-header" onclick="app.wizardToggleJob(${job.id})">
+                        <h5>
+                            <span class="job-index">${index + 1}</span>
+                            <span class="job-title">${this.escapeHtml(job.name) || 'Untitled Job'}</span>
+                        </h5>
+                        <div class="wizard-job-actions">
+                            <button type="button" class="btn btn-sm btn-danger" onclick="event.stopPropagation(); app.wizardRemoveJob(${job.id})">Remove</button>
+                        </div>
+                    </div>
+                    <div class="wizard-job-body">
+                        <div class="wizard-job-row">
+                            <div class="form-group">
+                                <label>Job Name *</label>
+                                <input type="text" name="job-name" class="text-input"
+                                       value="${this.escapeHtml(job.name)}"
+                                       placeholder="e.g., process-data"
+                                       onchange="app.wizardUpdateJob(${job.id}, 'name', this.value)">
+                            </div>
+                            <div class="form-group">
+                                <label>Depends On</label>
+                                <select class="select-input" multiple size="2"
+                                        onchange="app.wizardUpdateJob(${job.id}, 'blocked_by', Array.from(this.selectedOptions).map(o => parseInt(o.value)))">
+                                    ${otherJobs.map(j => `
+                                        <option value="${j.id}" ${job.blocked_by.includes(j.id) ? 'selected' : ''}>
+                                            ${this.escapeHtml(j.name) || 'Untitled Job'}
+                                        </option>
+                                    `).join('')}
+                                </select>
+                                <small>Hold Ctrl/Cmd to select multiple</small>
+                            </div>
+                        </div>
+                        <div class="wizard-job-row full">
+                            <div class="form-group">
+                                <label>Command *</label>
+                                <input type="text" class="text-input"
+                                       value="${this.escapeHtml(job.command)}"
+                                       placeholder="e.g., python process.py --input data.csv"
+                                       onchange="app.wizardUpdateJob(${job.id}, 'command', this.value)">
+                            </div>
+                        </div>
+                        <div class="wizard-job-row full">
+                            <div class="form-group">
+                                <label>Parameters (for job expansion)</label>
+                                <input type="text" class="text-input"
+                                       value="${this.escapeHtml(job.parameters)}"
+                                       placeholder='e.g., i: "1:10", lr: "[0.001, 0.01, 0.1]"'
+                                       onchange="app.wizardUpdateJob(${job.id}, 'parameters', this.value)">
+                                <small>Creates multiple jobs. Use {param} in name/command. Formats: "1:10" (range), "[a,b,c]" (list)</small>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Resources</label>
+                            <div class="resource-presets">
+                                ${Object.entries(this.resourcePresets).map(([key, preset]) => `
+                                    <button type="button" class="resource-preset-btn ${job.resource_preset === key ? 'selected' : ''}"
+                                            data-preset="${key}"
+                                            onclick="app.wizardUpdateJob(${job.id}, 'resource_preset', '${key}')">
+                                        ${preset.name}
+                                        ${key !== 'custom' ? `<small>(${preset.num_cpus} CPU, ${preset.memory}${preset.num_gpus ? ', ' + preset.num_gpus + ' GPU' : ''})</small>` : ''}
+                                    </button>
+                                `).join('')}
+                            </div>
+                        </div>
+                        ${job.resource_preset === 'custom' ? `
+                            <div class="wizard-job-row">
+                                <div class="form-group">
+                                    <label>CPUs</label>
+                                    <input type="number" class="text-input" min="1" value="${job.num_cpus}"
+                                           onchange="app.wizardUpdateJob(${job.id}, 'num_cpus', parseInt(this.value))">
+                                </div>
+                                <div class="form-group">
+                                    <label>Memory</label>
+                                    <input type="text" class="text-input" value="${this.escapeHtml(job.memory)}"
+                                           placeholder="e.g., 4g, 512m"
+                                           onchange="app.wizardUpdateJob(${job.id}, 'memory', this.value)">
+                                </div>
+                            </div>
+                            <div class="wizard-job-row">
+                                <div class="form-group">
+                                    <label>GPUs</label>
+                                    <input type="number" class="text-input" min="0" value="${job.num_gpus}"
+                                           onchange="app.wizardUpdateJob(${job.id}, 'num_gpus', parseInt(this.value))">
+                                </div>
+                                <div class="form-group"></div>
+                            </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    /**
+     * Convert a parameterized job name template to a regex pattern.
+     * E.g., "job_{i}" -> "^job_.*$", "train_{lr}_{batch}" -> "^train_.*_.*$"
+     */
+    wizardJobNameToRegex(jobName) {
+        // Escape regex special characters except for our placeholders
+        let pattern = jobName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Replace parameter placeholders like {i}, {i:03d}, {lr:.4f} with .*
+        pattern = pattern.replace(/\\\{[^}]+\\\}/g, '.*');
+        return `^${pattern}$`;
+    }
+
+    /**
+     * Check if a job has parameters (is parameterized)
+     */
+    wizardJobIsParameterized(job) {
+        return job.parameters?.trim()?.length > 0;
+    }
+
+    wizardGenerateSpec() {
+        const name = document.getElementById('wizard-name')?.value?.trim() || 'untitled-workflow';
+        const description = document.getElementById('wizard-description')?.value?.trim();
+
+        // Build job info map for resolving blocked_by references
+        const jobInfoMap = {};
+        this.wizardJobs.forEach(job => {
+            const jobName = job.name?.trim() || `job_${job.id}`;
+            jobInfoMap[job.id] = {
+                name: jobName,
+                isParameterized: this.wizardJobIsParameterized(job),
+                regex: this.wizardJobNameToRegex(jobName)
+            };
+        });
+
+        // Build unique resource requirements
+        const resourceReqs = {};
+        this.wizardJobs.forEach(job => {
+            const key = `${job.num_cpus}_${job.memory}_${job.num_gpus}`;
+            if (!resourceReqs[key]) {
+                resourceReqs[key] = {
+                    name: `res_${job.num_cpus}cpu_${job.memory}${job.num_gpus > 0 ? '_' + job.num_gpus + 'gpu' : ''}`,
+                    num_cpus: job.num_cpus,
+                    memory: job.memory,
+                    num_gpus: job.num_gpus,
+                    num_nodes: 1,
+                    runtime: "PT1H"
+                };
+            }
+        });
+
+        // Build jobs array
+        const jobs = this.wizardJobs.map(job => {
+            const resKey = `${job.num_cpus}_${job.memory}_${job.num_gpus}`;
+            const jobSpec = {
+                name: job.name?.trim() || `job_${job.id}`,
+                command: job.command?.trim() || 'echo "TODO"'
+            };
+
+            // Add blocked_by - separate parameterized deps (use regex) from regular deps
+            if (job.blocked_by.length > 0) {
+                const regularDeps = [];
+                const regexDeps = [];
+
+                job.blocked_by.forEach(depId => {
+                    const depInfo = jobInfoMap[depId];
+                    if (depInfo.isParameterized) {
+                        // Parameterized job - use regex to match all expanded instances
+                        regexDeps.push(depInfo.regex);
+                    } else {
+                        // Regular job - use exact name
+                        regularDeps.push(depInfo.name);
+                    }
+                });
+
+                if (regularDeps.length > 0) {
+                    jobSpec.blocked_by = regularDeps;
+                }
+                if (regexDeps.length > 0) {
+                    jobSpec.blocked_by_regexes = regexDeps;
+                }
+            }
+
+            // Add resource requirements
+            jobSpec.resource_requirements = resourceReqs[resKey].name;
+
+            // Add parameters if present
+            // Format: parameters is an object like {"i": "1:100", "lr": "[0.001,0.01,0.1]"}
+            if (job.parameters?.trim()) {
+                try {
+                    const paramStr = job.parameters.trim();
+                    const params = {};
+
+                    // Parse key: value pairs
+                    // Supports: i: "1:10", lr: "[0.001, 0.01]", name: "['a','b']"
+                    // Use a state machine approach to handle nested brackets/quotes
+                    let i = 0;
+                    while (i < paramStr.length) {
+                        // Skip whitespace and commas
+                        while (i < paramStr.length && (paramStr[i] === ' ' || paramStr[i] === ',')) i++;
+                        if (i >= paramStr.length) break;
+
+                        // Read key (word characters)
+                        let keyStart = i;
+                        while (i < paramStr.length && /\w/.test(paramStr[i])) i++;
+                        const key = paramStr.slice(keyStart, i).trim();
+                        if (!key) break;
+
+                        // Skip whitespace and colon
+                        while (i < paramStr.length && (paramStr[i] === ' ' || paramStr[i] === ':')) i++;
+
+                        // Read value - handle quotes and brackets
+                        let value = '';
+                        if (paramStr[i] === '"' || paramStr[i] === "'") {
+                            // Quoted string
+                            const quote = paramStr[i];
+                            i++; // skip opening quote
+                            let valueStart = i;
+                            while (i < paramStr.length && paramStr[i] !== quote) i++;
+                            value = paramStr.slice(valueStart, i);
+                            i++; // skip closing quote
+                        } else if (paramStr[i] === '[') {
+                            // Array - find matching bracket
+                            let valueStart = i;
+                            let depth = 0;
+                            while (i < paramStr.length) {
+                                if (paramStr[i] === '[') depth++;
+                                else if (paramStr[i] === ']') {
+                                    depth--;
+                                    if (depth === 0) { i++; break; }
+                                }
+                                i++;
+                            }
+                            value = paramStr.slice(valueStart, i);
+                        } else {
+                            // Unquoted value - read until comma or end
+                            let valueStart = i;
+                            while (i < paramStr.length && paramStr[i] !== ',') i++;
+                            value = paramStr.slice(valueStart, i).trim();
+                        }
+
+                        if (key && value) {
+                            params[key] = value;
+                        }
+                    }
+
+                    if (Object.keys(params).length > 0) {
+                        jobSpec.parameters = params;
+                    }
+                } catch (e) {
+                    console.warn('Failed to parse parameters:', e);
+                }
+            }
+
+            return jobSpec;
+        });
+
+        // Build the spec
+        const spec = {
+            name,
+            jobs,
+            resource_requirements: Object.values(resourceReqs)
+        };
+
+        if (description) {
+            spec.description = description;
+        }
+
+        return spec;
+    }
+
+    wizardGeneratePreview() {
+        const spec = this.wizardGenerateSpec();
+        const preview = document.getElementById('wizard-preview');
+        if (preview) {
+            preview.textContent = JSON.stringify(spec, null, 2);
+        }
+    }
+
+    async wizardCreateWorkflow() {
+        const spec = this.wizardGenerateSpec();
+        const specJson = JSON.stringify(spec, null, 2);
+
+        try {
+            const result = await api.cliCreateWorkflow(specJson, false, '.json');
+
+            if (result.success) {
+                this.showToast('Workflow created successfully', 'success');
+                this.hideModal('create-workflow-modal');
+                this.resetWizard();
+                await this.loadWorkflows();
+
+                // Check if we should initialize/run
+                const shouldInit = document.getElementById('create-option-initialize')?.checked;
+                const shouldRun = document.getElementById('create-option-run')?.checked;
+
+                // Try to extract workflow ID from output
+                const idMatch = result.stdout?.match(/workflow[_\s]?id[:\s]+([a-zA-Z0-9-]+)/i);
+                if (idMatch) {
+                    const workflowId = idMatch[1];
+                    if (shouldInit) {
+                        await this.initializeWorkflow(workflowId);
+                    }
+                    if (shouldRun) {
+                        await this.runWorkflow(workflowId);
+                    }
+                }
+            } else {
+                const errorMsg = result.stderr || result.stdout || 'Unknown error';
+                this.showToast('Error: ' + errorMsg, 'error');
+            }
+        } catch (error) {
+            this.showToast('Error creating workflow: ' + error.message, 'error');
+        }
     }
 
     // ==================== Utilities ====================

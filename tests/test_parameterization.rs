@@ -414,7 +414,7 @@ fn test_zero_step_error() {
 fn test_workflow_spec_expand_parameters() {
     let mut spec = WorkflowSpec {
         name: "test_workflow".to_string(),
-        description: "Test workflow with parameters".to_string(),
+        description: Some("Test workflow with parameters".to_string()),
         user: Some("test_user".to_string()),
         compute_node_expiration_buffer_seconds: None,
         compute_node_wait_for_healthy_database_minutes: None,

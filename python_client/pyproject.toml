@@ -44,7 +44,6 @@ dependencies = [
 
 [project.scripts]
 pytorc = "torc.cli.pytorc:cli"
-torc-dash = "torc.dash_app.run:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

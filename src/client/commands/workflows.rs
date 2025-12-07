@@ -308,7 +308,9 @@ fn show_execution_plan_from_spec(file_path: &str, format: &str) {
             } else {
                 // Display in human-readable format
                 println!("\nWorkflow: {}", spec.name);
-                println!("Description: {}", spec.description);
+                if let Some(ref desc) = spec.description {
+                    println!("Description: {}", desc);
+                }
                 println!("Total Jobs: {}", spec.jobs.len());
                 plan.display();
             }

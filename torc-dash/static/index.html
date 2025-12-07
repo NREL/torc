@@ -406,6 +406,7 @@
                     <button class="sub-tab active" data-createtab="upload">Upload File</button>
                     <button class="sub-tab" data-createtab="path">File Path</button>
                     <button class="sub-tab" data-createtab="inline">Inline Spec</button>
+                    <button class="sub-tab" data-createtab="wizard">Wizard</button>
                 </div>
 
                 <!-- Upload file panel -->
@@ -440,6 +441,64 @@
                         <label for="workflow-spec-text">Inline Spec (JSON/YAML)</label>
                         <textarea id="workflow-spec-text" class="text-input" rows="12"
                                   placeholder="Paste your workflow specification here..."></textarea>
+                    </div>
+                </div>
+
+                <!-- Wizard panel -->
+                <div class="create-panel" id="create-panel-wizard">
+                    <!-- Step indicators -->
+                    <div class="wizard-steps">
+                        <div class="wizard-step active" data-step="1">
+                            <span class="step-number">1</span>
+                            <span class="step-label">Basics</span>
+                        </div>
+                        <div class="wizard-step" data-step="2">
+                            <span class="step-number">2</span>
+                            <span class="step-label">Jobs</span>
+                        </div>
+                        <div class="wizard-step" data-step="3">
+                            <span class="step-number">3</span>
+                            <span class="step-label">Review</span>
+                        </div>
+                    </div>
+
+                    <!-- Step 1: Basics -->
+                    <div class="wizard-content active" id="wizard-step-1">
+                        <div class="form-group">
+                            <label for="wizard-name">Workflow Name *</label>
+                            <input type="text" id="wizard-name" class="text-input"
+                                   placeholder="my-data-pipeline">
+                        </div>
+                        <div class="form-group">
+                            <label for="wizard-description">Description</label>
+                            <input type="text" id="wizard-description" class="text-input"
+                                   placeholder="Optional description of what this workflow does">
+                        </div>
+                    </div>
+
+                    <!-- Step 2: Jobs -->
+                    <div class="wizard-content" id="wizard-step-2">
+                        <div class="wizard-jobs-header">
+                            <h4>Jobs</h4>
+                            <button type="button" class="btn btn-sm btn-success" id="wizard-add-job">+ Add Job</button>
+                        </div>
+                        <div id="wizard-jobs-list" class="wizard-jobs-list">
+                            <!-- Job cards will be added here -->
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Review -->
+                    <div class="wizard-content" id="wizard-step-3">
+                        <div class="form-group">
+                            <label>Generated Workflow Spec</label>
+                            <pre id="wizard-preview" class="wizard-preview"></pre>
+                        </div>
+                    </div>
+
+                    <!-- Wizard navigation -->
+                    <div class="wizard-nav">
+                        <button type="button" class="btn btn-secondary" id="wizard-prev" disabled>Back</button>
+                        <button type="button" class="btn btn-primary" id="wizard-next">Next</button>
                     </div>
                 </div>
 
