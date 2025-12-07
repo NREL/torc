@@ -4,16 +4,17 @@ This section contains learning-oriented lessons to help you get started with Tor
 
 **Tutorials:**
 
-1. [Dashboard Deployment](./dashboard-deployment.md) - Deploy torc-dash for local, shared, or HPC environments
-2. [Many Independent Jobs](./many-jobs.md) - Create a workflow with 100 parallel jobs
-3. [Diamond Workflow](./diamond.md) - Fan-out and fan-in with file dependencies
-4. [User Data Dependencies](./user-data.md) - Pass JSON data between jobs
-5. [Simple Parameterization](./simple-params.md) - Single parameter dimension sweep
-6. [Advanced Parameterization](./advanced-params.md) - Multi-dimensional hyperparameter grid search
-7. [Multi-Stage Workflows with Barriers](./multi-stage-barrier.md) - Scale to thousands of jobs efficiently
-8. [Map Python Functions](./map_python_function_across_workers.md) - Distribute Python functions across workers
+1. [Configuration Files](./configuration.md) - Set up configuration files for Torc components
+2. [Dashboard Deployment](./dashboard-deployment.md) - Deploy torc-dash for local, shared, or HPC environments
+3. [Many Independent Jobs](./many-jobs.md) - Create a workflow with 100 parallel jobs
+4. [Diamond Workflow](./diamond.md) - Fan-out and fan-in with file dependencies
+5. [User Data Dependencies](./user-data.md) - Pass JSON data between jobs
+6. [Simple Parameterization](./simple-params.md) - Single parameter dimension sweep
+7. [Advanced Parameterization](./advanced-params.md) - Multi-dimensional hyperparameter grid search
+8. [Multi-Stage Workflows with Barriers](./multi-stage-barrier.md) - Scale to thousands of jobs efficiently
+9. [Map Python Functions](./map_python_function_across_workers.md) - Distribute Python functions across workers
 
-Start with the Dashboard Deployment tutorial if you want to use the web interface, or Tutorial 2 if you prefer command-line workflows.
+Start with the Configuration Files tutorial to set up your environment, then try the Dashboard Deployment tutorial if you want to use the web interface.
 
 ## Example Files
 

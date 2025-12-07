@@ -7,6 +7,10 @@
 pub mod models;
 pub mod time_utils;
 
+// Configuration module (requires config feature, enabled by client)
+#[cfg(feature = "config")]
+pub mod config;
+
 // Server modules (behind feature flag)
 #[cfg(feature = "server")]
 pub mod server;

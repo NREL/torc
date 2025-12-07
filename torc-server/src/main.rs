@@ -9,6 +9,7 @@ use sqlx::sqlite::{SqliteConnectOptions, SqliteJournalMode, SqlitePoolOptions};
 use std::env;
 use std::path::PathBuf;
 use std::str::FromStr;
+use torc::config::TorcConfig;
 use tracing::info;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 use tracing_timing::{Builder, Histogram};
@@ -222,7 +223,53 @@ fn handle_service_action(action: ServiceAction) -> Result<()> {
     service::execute_service_command(command, config.as_ref(), user_level)
 }
 
-fn run_server(config: ServerConfig) -> Result<()> {
+fn run_server(cli_config: ServerConfig) -> Result<()> {
+    // Load configuration from files and merge with CLI arguments
+    // CLI arguments take precedence over file config
+    let file_config = TorcConfig::load().unwrap_or_default();
+    let server_file_config = &file_config.server;
+
+    // Merge CLI config with file config (CLI takes precedence for non-default values)
+    let config = ServerConfig {
+        log_level: if cli_config.log_level != "info" {
+            cli_config.log_level
+        } else {
+            server_file_config.log_level.clone()
+        },
+        https: cli_config.https || server_file_config.https,
+        url: if cli_config.url != "localhost" {
+            cli_config.url
+        } else {
+            server_file_config.url.clone()
+        },
+        port: if cli_config.port != 8080 {
+            cli_config.port
+        } else {
+            server_file_config.port
+        },
+        threads: if cli_config.threads != 1 {
+            cli_config.threads
+        } else {
+            server_file_config.threads
+        },
+        database: cli_config
+            .database
+            .or_else(|| server_file_config.database.clone()),
+        auth_file: cli_config
+            .auth_file
+            .or_else(|| server_file_config.auth_file.clone()),
+        require_auth: cli_config.require_auth || server_file_config.require_auth,
+        log_dir: cli_config
+            .log_dir
+            .or_else(|| server_file_config.logging.log_dir.clone()),
+        json_logs: cli_config.json_logs || server_file_config.logging.json_logs,
+        daemon: cli_config.daemon,
+        pid_file: cli_config.pid_file,
+        completion_check_interval_secs: cli_config
+            .completion_check_interval_secs
+            .or(Some(server_file_config.completion_check_interval_secs)),
+    };
+
     // Handle daemonization BEFORE initializing logging
     // This is important because daemonization forks the process
     if config.daemon {

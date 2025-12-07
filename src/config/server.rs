@@ -1,0 +1,101 @@
+//! Server configuration for torc-server
+
+use serde::{Deserialize, Serialize};
+use std::path::PathBuf;
+
+/// Configuration for the torc-server
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ServerConfig {
+    /// Log level (error, warn, info, debug, trace)
+    pub log_level: String,
+
+    /// Whether to use HTTPS
+    pub https: bool,
+
+    /// URL/hostname to bind to
+    pub url: String,
+
+    /// Port to listen on
+    pub port: u16,
+
+    /// Number of worker threads
+    pub threads: u32,
+
+    /// Path to the SQLite database file
+    pub database: Option<String>,
+
+    /// Path to htpasswd file for basic authentication
+    pub auth_file: Option<String>,
+
+    /// Require authentication for all requests
+    pub require_auth: bool,
+
+    /// Interval in seconds for background job completion processing
+    pub completion_check_interval_secs: f64,
+
+    /// Logging configuration
+    pub logging: ServerLoggingConfig,
+}
+
+impl Default for ServerConfig {
+    fn default() -> Self {
+        Self {
+            log_level: "info".to_string(),
+            https: false,
+            url: "localhost".to_string(),
+            port: 8080,
+            threads: 1,
+            database: None,
+            auth_file: None,
+            require_auth: false,
+            completion_check_interval_secs: 60.0,
+            logging: ServerLoggingConfig::default(),
+        }
+    }
+}
+
+/// Logging configuration for the server
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ServerLoggingConfig {
+    /// Directory for log files (enables file logging with rotation)
+    pub log_dir: Option<PathBuf>,
+
+    /// Use JSON format for log files
+    pub json_logs: bool,
+}
+
+impl Default for ServerLoggingConfig {
+    fn default() -> Self {
+        Self {
+            log_dir: None,
+            json_logs: false,
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_server_config_defaults() {
+        let config = ServerConfig::default();
+        assert_eq!(config.log_level, "info");
+        assert!(!config.https);
+        assert_eq!(config.url, "localhost");
+        assert_eq!(config.port, 8080);
+        assert_eq!(config.threads, 1);
+        assert!(config.database.is_none());
+        assert!(!config.require_auth);
+        assert_eq!(config.completion_check_interval_secs, 60.0);
+    }
+
+    #[test]
+    fn test_logging_config_defaults() {
+        let config = ServerLoggingConfig::default();
+        assert!(config.log_dir.is_none());
+        assert!(!config.json_logs);
+    }
+}

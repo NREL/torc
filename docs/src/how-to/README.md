@@ -5,6 +5,7 @@ This section provides task-oriented guides for accomplishing specific goals with
 **Topics covered:**
 
 - [Creating Workflows](./creating-workflows.md) - Different methods for creating workflows
+- [Configuration Files](./configuration-files.md) - Setting up and using configuration files
 - [Working with Slurm](./slurm.md) - Running workflows on Slurm clusters
 - [Job Checkpointing](./checkpointing.md) - Saving progress during wall-time timeouts
 - [Resource Monitoring](./resource-monitoring.md) - Tracking CPU and memory usage

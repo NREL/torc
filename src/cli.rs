@@ -7,6 +7,7 @@ use clap::{Parser, Subcommand, builder::styling};
 use std::path::PathBuf;
 
 use crate::client::commands::compute_nodes::ComputeNodeCommands;
+use crate::client::commands::config::ConfigCommands;
 use crate::client::commands::events::EventCommands;
 use crate::client::commands::files::FileCommands;
 use crate::client::commands::job_dependencies::JobDependencyCommands;
@@ -141,6 +142,11 @@ pub enum Commands {
     Reports {
         #[command(subcommand)]
         command: ReportCommands,
+    },
+    /// Manage configuration files and settings
+    Config {
+        #[command(subcommand)]
+        command: ConfigCommands,
     },
     /// Interactive terminal UI for managing workflows
     Tui(tui_runner::Args),

@@ -24,6 +24,7 @@ use std::sync::Arc;
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::Command;
 use tokio::sync::Mutex;
+use torc::config::TorcConfig;
 use tower_http::cors::{Any, CorsLayer};
 use tracing::{error, info, warn};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
@@ -127,35 +128,81 @@ async fn main() -> Result<()> {
 
     let cli = Cli::parse();
 
-    info!("Starting torc-dash on {}:{}", cli.host, cli.port);
-    info!("Torc binary: {}", cli.torc_bin);
-    info!("Torc server binary: {}", cli.torc_server_bin);
+    // Load configuration from files and merge with CLI arguments
+    let file_config = TorcConfig::load().unwrap_or_default();
+    let dash_config = &file_config.dash;
 
-    // Track the actual server port (may differ from cli.server_port if using port 0)
-    let mut actual_server_port = cli.server_port;
+    // Merge CLI config with file config (CLI takes precedence for non-default values)
+    let host = if cli.host != "127.0.0.1" {
+        cli.host.clone()
+    } else {
+        dash_config.host.clone()
+    };
+    let port = if cli.port != 8090 {
+        cli.port
+    } else {
+        dash_config.port
+    };
+    let api_url = if cli.api_url != "http://localhost:8080/torc-service/v1" {
+        cli.api_url.clone()
+    } else {
+        dash_config.api_url.clone()
+    };
+    let torc_bin = if cli.torc_bin != "torc" {
+        cli.torc_bin.clone()
+    } else {
+        dash_config.torc_bin.clone()
+    };
+    let torc_server_bin = if cli.torc_server_bin != "torc-server" {
+        cli.torc_server_bin.clone()
+    } else {
+        dash_config.torc_server_bin.clone()
+    };
+    let standalone = cli.standalone || dash_config.standalone;
+    let server_port = if cli.server_port != 0 {
+        cli.server_port
+    } else {
+        dash_config.server_port
+    };
+    let database = cli
+        .database
+        .clone()
+        .or_else(|| dash_config.database.clone());
+    let completion_check_interval_secs = if cli.completion_check_interval_secs != 5 {
+        cli.completion_check_interval_secs
+    } else {
+        dash_config.completion_check_interval_secs
+    };
+
+    info!("Starting torc-dash on {}:{}", host, port);
+    info!("Torc binary: {}", torc_bin);
+    info!("Torc server binary: {}", torc_server_bin);
+
+    // Track the actual server port (may differ from server_port if using port 0)
+    let mut actual_server_port = server_port;
 
     // In standalone mode, start the server first to get the actual port
-    let managed_server = if cli.standalone {
+    let managed_server = if standalone {
         info!(
             "Standalone mode: starting torc-server on port {} (0 = auto-detect)",
-            cli.server_port
+            server_port
         );
 
         let mut args = vec![
             "run".to_string(),
             "--port".to_string(),
-            cli.server_port.to_string(),
+            server_port.to_string(),
             "--completion-check-interval-secs".to_string(),
-            cli.completion_check_interval_secs.to_string(),
+            completion_check_interval_secs.to_string(),
         ];
 
-        if let Some(ref db) = cli.database {
+        if let Some(ref db) = database {
             args.push("--database".to_string());
             args.push(db.clone());
         }
 
         let args_refs: Vec<&str> = args.iter().map(|s| s.as_str()).collect();
-        match Command::new(&cli.torc_server_bin)
+        match Command::new(&torc_server_bin)
             .args(&args_refs)
             .stdout(std::process::Stdio::piped())
             .stderr(std::process::Stdio::piped())
@@ -234,18 +281,18 @@ async fn main() -> Result<()> {
     };
 
     // Determine API URL - if standalone mode, use actual_server_port
-    let api_url = if cli.standalone {
+    let final_api_url = if standalone {
         format!("http://localhost:{}/torc-service/v1", actual_server_port)
     } else {
-        cli.api_url.clone()
+        api_url.clone()
     };
-    info!("API URL: {}", api_url);
+    info!("API URL: {}", final_api_url);
 
     let state = Arc::new(AppState {
-        api_url,
+        api_url: final_api_url,
         client: reqwest::Client::new(),
-        torc_bin: cli.torc_bin,
-        torc_server_bin: cli.torc_server_bin.clone(),
+        torc_bin,
+        torc_server_bin: torc_server_bin.clone(),
         managed_server: Mutex::new(managed_server),
     });
 
@@ -298,7 +345,7 @@ async fn main() -> Result<()> {
         )
         .with_state(state);
 
-    let addr = format!("{}:{}", cli.host, cli.port);
+    let addr = format!("{}:{}", host, port);
     let listener = tokio::net::TcpListener::bind(&addr).await?;
     info!("Dashboard available at http://{}", addr);
 

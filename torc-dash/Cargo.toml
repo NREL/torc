@@ -11,6 +11,9 @@ name = "torc-dash"
 path = "src/main.rs"
 
 [dependencies]
+# Torc library for config
+torc = { path = "..", features = ["config"] }
+
 # Web server
 axum.workspace = true
 tower.workspace = true

@@ -7,6 +7,10 @@ pub mod apis;
 pub mod async_cli_command;
 pub mod commands;
 pub mod errors;
+
+// Re-export config from the top-level module for backwards compatibility
+#[cfg(feature = "config")]
+pub use crate::config;
 pub mod execution_plan;
 pub mod hpc;
 pub mod job_runner;

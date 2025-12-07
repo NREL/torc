@@ -1,4 +1,5 @@
 pub mod compute_nodes;
+pub mod config;
 pub mod events;
 pub mod files;
 pub mod job_dependencies;
