@@ -270,6 +270,7 @@ tempfile = "3.22.0"
 serial_test = "3.0"
 reqwest = { workspace = true }
 clap-markdown = "0.1"
+libc = "0.2"
 
 # CLI documentation generator depends on clap-markdown
 # It's also in dev-dependencies for tests

@@ -5,6 +5,7 @@ use serde_json::{self, Value};
 use std::collections::HashMap;
 use std::net::TcpListener;
 use std::process::{Child, Command};
+use std::sync::Mutex;
 use std::thread;
 use std::time::Duration;
 use tempfile::NamedTempFile;
@@ -14,6 +15,36 @@ use torc::models;
 const PREPROCESS: &str = "tests/scripts/preprocess.sh";
 const WORK: &str = "tests/scripts/work.sh";
 const POSTPROCESS: &str = "tests/scripts/postprocess.sh";
+
+/// Global list of server PIDs to clean up at exit
+static SERVER_PIDS: Mutex<Vec<u32>> = Mutex::new(Vec::new());
+static CLEANUP_REGISTERED: std::sync::Once = std::sync::Once::new();
+
+/// Register the atexit cleanup handler (only once)
+fn register_cleanup() {
+    CLEANUP_REGISTERED.call_once(|| {
+        extern "C" fn cleanup_servers() {
+            if let Ok(pids) = SERVER_PIDS.lock() {
+                for &pid in pids.iter() {
+                    unsafe {
+                        libc::kill(pid as i32, libc::SIGTERM);
+                    }
+                }
+            }
+        }
+        unsafe {
+            libc::atexit(cleanup_servers);
+        }
+    });
+}
+
+/// Track a server PID for cleanup at exit
+fn track_server_pid(pid: u32) {
+    register_cleanup();
+    if let Ok(mut pids) = SERVER_PIDS.lock() {
+        pids.push(pid);
+    }
+}
 
 /// Helper function to get the correct executable path for the current platform
 /// On Windows, appends .exe; on Unix, returns path as-is
@@ -120,6 +151,9 @@ fn start_process(db_url: &str, db_file: NamedTempFile) -> ServerProcess {
 
     let pid = child.id();
 
+    // Track this PID for cleanup at program exit (handles #[once] fixture limitation)
+    track_server_pid(pid);
+
     if let Err(e) = wait_for_server_ready(port, 10) {
         panic!("Server startup failed: {}", e);
     }
@@ -139,39 +173,9 @@ fn start_process(db_url: &str, db_file: NamedTempFile) -> ServerProcess {
 ///
 /// This fixture uses `#[once]` to create a single server per test file for performance.
 ///
-/// ## Known Limitation: Server Cleanup
-///
-/// Due to Rust's handling of statics, the `Drop` implementation for `ServerProcess` is NOT
-/// called when using `#[once]` fixtures. This means test servers will remain running after
-/// tests complete.
-///
-/// ### Solution
-///
-/// After running tests, clean up lingering servers with:
-/// ```bash
-/// killall torc-server
-/// ```
-///
-/// Or run tests with automatic cleanup:
-/// ```bash
-/// cargo test -- --test-threads=1; killall torc-server
-/// ```
-///
-/// ### Why This Happens
-///
-/// The `#[once]` attribute stores the fixture in a static variable for sharing across tests.
-/// Rust does not guarantee Drop is called for static variables at program exit, which is why
-/// the cleanup code in `ServerProcess::drop()` never runs.
-///
-/// ### Alternative Approaches Considered
-///
-/// 1. **Remove `#[once]`**: Would fix cleanup but make tests ~10x slower
-/// 2. **`lazy_static` with Drop guard**: Rust doesn't call Drop on lazy_static either
-/// 3. **libc::atexit**: Requires unsafe code and FFI complexity
-/// 4. **Custom test harness**: Overly complex for this use case
-///
-/// The pragmatic solution is to accept this limitation and clean up servers post-test.
-/// TODO: DT: Let's figure out something better than this.
+/// Server cleanup is handled via `libc::atexit` - all server PIDs are tracked and
+/// terminated when the test process exits, even though `Drop` is not called for
+/// `#[once]` fixtures stored in static variables.
 #[fixture]
 #[once]
 pub fn start_server() -> ServerProcess {
