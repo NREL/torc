@@ -55,7 +55,7 @@ jobs:
   - name: process_data
     command: python process.py ${files.input.raw_data} -o ${files.output.processed_data}
     resource_requirements: small_job
-    blocked_by:
+    depends_on:
       - download_data
 
 # Workflow actions
@@ -120,7 +120,7 @@ actions:
       name: "process_data",
       command: "python process.py ${files.input.raw_data} -o ${files.output.processed_data}",
       resource_requirements: "small_job",
-      blocked_by: ["download_data"],
+      depends_on: ["download_data"],
     },
   ],
 
@@ -183,7 +183,7 @@ job "download_data" {
 job "process_data" {
     command "python process.py ${files.input.raw_data} -o ${files.output.processed_data}"
     resource_requirements "small_job"
-    blocked_by_job "download_data"
+    depends_on_job "download_data"
 }
 
 // Workflow actions

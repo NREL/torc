@@ -16,8 +16,8 @@ DROP INDEX IF EXISTS idx_job_workflow_unblocking;
 DROP INDEX IF EXISTS idx_job_unblocking_pending;
 DROP INDEX IF EXISTS idx_job_workflow_status;
 DROP INDEX IF EXISTS idx_job_status;
-DROP INDEX IF EXISTS idx_job_blocked_by_workflow_blocked_by;
-DROP INDEX IF EXISTS idx_job_blocked_by_blocked_by_job_id;
+DROP INDEX IF EXISTS idx_job_depends_on_workflow_depends_on;
+DROP INDEX IF EXISTS idx_job_depends_on_depends_on_job_id;
 
 -- ============================================================================
 -- DROP AUXILIARY TABLES
@@ -55,7 +55,7 @@ DROP TABLE IF EXISTS job_output_user_data;
 DROP TABLE IF EXISTS job_input_user_data;
 DROP TABLE IF EXISTS job_output_file;
 DROP TABLE IF EXISTS job_input_file;
-DROP TABLE IF EXISTS job_blocked_by;
+DROP TABLE IF EXISTS job_depends_on;
 
 -- ============================================================================
 -- DROP CORE TABLES

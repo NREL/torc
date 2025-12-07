@@ -9,22 +9,22 @@ jobs:
 
   - name: "process1"
     command: "echo 'Processing data...' && sleep 5"
-    blocked_by: ["setup"]
+    depends_on: ["setup"]
     resource_requirements: "medium"
 
   - name: "process2"
     command: "echo 'Processing data...' && sleep 5"
-    blocked_by: ["setup"]
+    depends_on: ["setup"]
     resource_requirements: "medium"
 
   - name: "process3"
     command: "echo 'Processing data...' && sleep 5"
-    blocked_by: ["setup"]
+    depends_on: ["setup"]
     resource_requirements: "medium"
 
   - name: "finalize"
     command: "echo 'Finalizing...' && sleep 2"
-    blocked_by: ["process1", "process2", "process3"]
+    depends_on: ["process1", "process2", "process3"]
     resource_requirements: "small"
 
 resource_requirements:

@@ -123,7 +123,7 @@ Database indexes have been added to significantly improve query performance, par
 ### Relationship Lookups (Phase 2)
 4. `idx_event_workflow_id` - Filter events by workflow
 5. `idx_compute_node_workflow_id` - Filter compute nodes by workflow
-6. `idx_job_blocked_by_blocked_by_job_id` - Reverse dependency lookups
+6. `idx_job_depends_on_depends_on_job_id` - Reverse dependency lookups
 7. `idx_job_input_file_file_id` - Find jobs consuming a file
 8. `idx_job_output_file_file_id` - Find jobs producing a file
 9. `idx_job_input_user_data_user_data_id` - Find jobs consuming user data

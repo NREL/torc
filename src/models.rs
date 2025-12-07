@@ -2670,9 +2670,9 @@ pub struct JobModel {
     pub supports_termination: Option<bool>,
 
     /// Database IDs of jobs that block this job
-    #[serde(rename = "blocked_by_job_ids")]
+    #[serde(rename = "depends_on_job_ids")]
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub blocked_by_job_ids: Option<Vec<i64>>,
+    pub depends_on_job_ids: Option<Vec<i64>>,
 
     /// Database IDs of files that this job needs
     #[serde(rename = "input_file_ids")]
@@ -2718,7 +2718,7 @@ impl JobModel {
             schedule_compute_nodes: None,
             cancel_on_blocking_job_failure: Some(true),
             supports_termination: Some(false),
-            blocked_by_job_ids: None,
+            depends_on_job_ids: None,
             input_file_ids: None,
             output_file_ids: None,
             input_user_data_ids: None,
@@ -2771,10 +2771,10 @@ impl std::string::ToString for JobModel {
                     ]
                     .join(",")
                 }),
-            self.blocked_by_job_ids.as_ref().map(|blocked_by_job_ids| {
+            self.depends_on_job_ids.as_ref().map(|depends_on_job_ids| {
                 [
-                    "blocked_by_job_ids".to_string(),
-                    blocked_by_job_ids
+                    "depends_on_job_ids".to_string(),
+                    depends_on_job_ids
                         .iter()
                         .map(|x| x.to_string())
                         .collect::<Vec<_>>()
@@ -2868,7 +2868,7 @@ impl std::str::FromStr for JobModel {
             pub schedule_compute_nodes: Vec<models::ComputeNodeSchedule>,
             pub cancel_on_blocking_job_failure: Vec<bool>,
             pub supports_termination: Vec<bool>,
-            pub blocked_by_job_ids: Vec<Vec<i64>>,
+            pub depends_on_job_ids: Vec<Vec<i64>>,
             pub input_file_ids: Vec<Vec<i64>>,
             pub output_file_ids: Vec<Vec<i64>>,
             pub input_user_data_ids: Vec<Vec<i64>>,
@@ -2937,7 +2937,7 @@ impl std::str::FromStr for JobModel {
                     "supports_termination" => intermediate_rep.supports_termination.push(
                         <bool as std::str::FromStr>::from_str(val).map_err(|x| x.to_string())?,
                     ),
-                    "blocked_by_job_ids" => {
+                    "depends_on_job_ids" => {
                         return std::result::Result::Err(
                             "Parsing a container in this style is not supported in JobModel"
                                 .to_string(),
@@ -3013,7 +3013,7 @@ impl std::str::FromStr for JobModel {
                 .into_iter()
                 .next(),
             supports_termination: intermediate_rep.supports_termination.into_iter().next(),
-            blocked_by_job_ids: intermediate_rep.blocked_by_job_ids.into_iter().next(),
+            depends_on_job_ids: intermediate_rep.depends_on_job_ids.into_iter().next(),
             input_file_ids: intermediate_rep.input_file_ids.into_iter().next(),
             output_file_ids: intermediate_rep.output_file_ids.into_iter().next(),
             input_user_data_ids: intermediate_rep.input_user_data_ids.into_iter().next(),
@@ -10278,12 +10278,12 @@ pub struct JobDependencyModel {
     pub job_name: String,
 
     /// The job that must complete first
-    #[serde(rename = "blocked_by_job_id")]
-    pub blocked_by_job_id: i64,
+    #[serde(rename = "depends_on_job_id")]
+    pub depends_on_job_id: i64,
 
     /// The name of the job that must complete first
-    #[serde(rename = "blocked_by_job_name")]
-    pub blocked_by_job_name: String,
+    #[serde(rename = "depends_on_job_name")]
+    pub depends_on_job_name: String,
 
     /// The workflow containing both jobs
     #[serde(rename = "workflow_id")]
@@ -10294,15 +10294,15 @@ impl JobDependencyModel {
     pub fn new(
         job_id: i64,
         job_name: String,
-        blocked_by_job_id: i64,
-        blocked_by_job_name: String,
+        depends_on_job_id: i64,
+        depends_on_job_name: String,
         workflow_id: i64,
     ) -> JobDependencyModel {
         JobDependencyModel {
             job_id,
             job_name,
-            blocked_by_job_id,
-            blocked_by_job_name,
+            depends_on_job_id,
+            depends_on_job_name,
             workflow_id,
         }
     }

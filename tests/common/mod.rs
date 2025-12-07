@@ -21,6 +21,8 @@ static SERVER_PIDS: Mutex<Vec<u32>> = Mutex::new(Vec::new());
 static CLEANUP_REGISTERED: std::sync::Once = std::sync::Once::new();
 
 /// Register the atexit cleanup handler (only once)
+/// On Windows, we rely on the Drop implementation of ServerProcess instead
+#[cfg(unix)]
 fn register_cleanup() {
     CLEANUP_REGISTERED.call_once(|| {
         extern "C" fn cleanup_servers() {
@@ -36,6 +38,12 @@ fn register_cleanup() {
             libc::atexit(cleanup_servers);
         }
     });
+}
+
+#[cfg(windows)]
+fn register_cleanup() {
+    // On Windows, we rely on the Drop implementation of ServerProcess
+    // to clean up child processes
 }
 
 /// Track a server PID for cleanup at exit

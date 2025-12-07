@@ -1339,19 +1339,19 @@ where
         let offset_val = offset.unwrap_or(0);
         let limit_val = limit.unwrap_or(100000).min(100000);
 
-        // Query job_blocked_by table with JOIN to get job names
+        // Query job_depends_on table with JOIN to get job names
         let dependencies = match sqlx::query_as!(
             models::JobDependencyModel,
             r#"
             SELECT
                 jb.job_id as job_id,
                 j1.name as job_name,
-                jb.blocked_by_job_id as blocked_by_job_id,
-                j2.name as blocked_by_job_name,
+                jb.depends_on_job_id as depends_on_job_id,
+                j2.name as depends_on_job_name,
                 jb.workflow_id as workflow_id
-            FROM job_blocked_by jb
+            FROM job_depends_on jb
             INNER JOIN job j1 ON jb.job_id = j1.id
-            INNER JOIN job j2 ON jb.blocked_by_job_id = j2.id
+            INNER JOIN job j2 ON jb.depends_on_job_id = j2.id
             WHERE jb.workflow_id = ?
             LIMIT ? OFFSET ?
             "#,
@@ -1370,7 +1370,7 @@ where
 
         // Get total count
         let total_count = match sqlx::query_scalar::<_, i64>(
-            "SELECT COUNT(*) FROM job_blocked_by WHERE workflow_id = ?",
+            "SELECT COUNT(*) FROM job_depends_on WHERE workflow_id = ?",
         )
         .bind(workflow_id)
         .fetch_one(self.context.pool.as_ref())

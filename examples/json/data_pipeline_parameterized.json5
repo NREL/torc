@@ -21,7 +21,7 @@
       "name": "preprocess_{dataset}",
       "command": "python scripts/preprocess.py --input=/data/raw/{dataset}.csv --output=/data/clean/{dataset}.csv",
       "resource_requirements": "cpu_intensive",
-      "blocked_by": [
+      "depends_on": [
         "download_{dataset}"
       ],
       "input_files": [
@@ -38,7 +38,7 @@
       "name": "analyze_{dataset}_{analysis_type}",
       "command": "python scripts/analyze.py \\\n  --input=/data/clean/{dataset}.csv \\\n  --analysis={analysis_type} \\\n  --output=/results/{dataset}_{analysis_type}_results.json\n",
       "resource_requirements": "cpu_intensive",
-      "blocked_by": [
+      "depends_on": [
         "preprocess_{dataset}"
       ],
       "input_files": [
@@ -56,7 +56,7 @@
       "name": "report_{dataset}",
       "command": "python scripts/generate_report.py \\\n  --dataset={dataset} \\\n  --input-dir=/results \\\n  --output=/reports/{dataset}_report.html\n",
       "resource_requirements": "minimal",
-      "blocked_by": [
+      "depends_on": [
         "analyze_{dataset}_{analysis_type}"
       ],
       "input_files": [
@@ -71,7 +71,7 @@
       "name": "executive_summary",
       "command": "python scripts/executive_summary.py --input-dir=/reports --output=/reports/executive_summary.pdf",
       "resource_requirements": "minimal",
-      "blocked_by": [
+      "depends_on": [
         "report_{dataset}"
       ],
       "parameters": {

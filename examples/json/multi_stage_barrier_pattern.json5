@@ -17,7 +17,7 @@
       "name": "barrier_stage1_complete",
       "command": "echo 'Stage 1 complete: 1000 jobs finished' && date",
       "resource_requirements": "tiny",
-      "blocked_by_regexes": [
+      "depends_on_regexes": [
         "^stage1_process_.*"
       ]
     },
@@ -25,7 +25,7 @@
       "name": "stage2_analyze_{i:03d}",
       "command": "python analyze.py --input output/stage1_{i:03d}.dat --output output/stage2_{i:03d}.json",
       "resource_requirements": "large",
-      "blocked_by": [
+      "depends_on": [
         "barrier_stage1_complete"
       ],
       "parameters": {
@@ -36,7 +36,7 @@
       "name": "barrier_stage2_complete",
       "command": "echo 'Stage 2 complete: 1000 analyses finished' && date",
       "resource_requirements": "tiny",
-      "blocked_by_regexes": [
+      "depends_on_regexes": [
         "^stage2_analyze_.*"
       ]
     },
@@ -44,7 +44,7 @@
       "name": "stage3_aggregate_{i:02d}",
       "command": "python aggregate.py --shard {i} --output output/stage3_{i:02d}.csv",
       "resource_requirements": "large",
-      "blocked_by": [
+      "depends_on": [
         "barrier_stage2_complete"
       ],
       "parameters": {
@@ -55,7 +55,7 @@
       "name": "barrier_stage3_complete",
       "command": "echo 'Stage 3 complete: 100 aggregations finished' && date",
       "resource_requirements": "tiny",
-      "blocked_by_regexes": [
+      "depends_on_regexes": [
         "^stage3_aggregate_.*"
       ]
     },
@@ -63,7 +63,7 @@
       "name": "final_report",
       "command": "python generate_report.py --output final_report.html",
       "resource_requirements": "medium",
-      "blocked_by": [
+      "depends_on": [
         "barrier_stage3_complete"
       ]
     }

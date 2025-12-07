@@ -155,7 +155,7 @@ jobs:
   - name: train_model
     command: python train.py --checkpoint-dir /scratch/checkpoints
     supports_termination: true   # Long job, needs checkpointing
-    blocked_by:
+    depends_on:
       - preprocess
     resource_requirements:
       num_cpus: 8
@@ -166,7 +166,7 @@ jobs:
   - name: evaluate
     command: python evaluate.py
     supports_termination: true
-    blocked_by:
+    depends_on:
       - train_model
 
 slurm_schedulers:

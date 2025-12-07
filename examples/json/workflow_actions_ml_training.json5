@@ -15,7 +15,7 @@
       "name": "train_model_{model_id}",
       "command": "python scripts/train.py --model {model_id} --data data/processed --output models/model_{model_id}",
       "resource_requirements": "gpu",
-      "blocked_by": [
+      "depends_on": [
         "preprocess_data"
       ],
       "parameters": {
@@ -26,7 +26,7 @@
       "name": "evaluate",
       "command": "python scripts/evaluate.py --models models/ --output results/evaluation.json",
       "resource_requirements": "medium",
-      "blocked_by_regexes": [
+      "depends_on_regexes": [
         "train_model_.*"
       ]
     }

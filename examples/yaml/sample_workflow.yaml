@@ -13,7 +13,7 @@ jobs:
     cancel_on_blocking_job_failure: false
     supports_termination: true
     resource_requirements: small_job
-    blocked_by: null  # This job has no dependencies
+    depends_on: null  # This job has no dependencies
     input_files: null
     output_files:
       - raw_data
@@ -32,7 +32,7 @@ jobs:
     cancel_on_blocking_job_failure: true
     supports_termination: true
     resource_requirements: small_job
-    blocked_by:
+    depends_on:
       - data_download  # Wait for download to complete
     input_files:
       - raw_data
@@ -51,7 +51,7 @@ jobs:
     cancel_on_blocking_job_failure: true
     supports_termination: false  # Analysis job cannot be safely terminated
     resource_requirements: large_job  # Requires more resources
-    blocked_by:
+    depends_on:
       - data_validation  # Wait for validation
     input_files:
       - validated_data

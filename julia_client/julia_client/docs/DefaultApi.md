@@ -2216,7 +2216,7 @@ No authorization required
 
 Retrieve job blocking relationships for a workflow.
 
-Retrieve all job blocking relationships for one workflow from the job_blocked_by table.
+Retrieve all job blocking relationships for one workflow from the job_depends_on table.
 
 ### Required Parameters
 
@@ -2377,7 +2377,7 @@ Name | Type | Description  | Notes
  **limit** | **Int64** |  | [default to 100000]
  **sort_by** | **String** |  | [default to nothing]
  **reverse_sort** | **Bool** |  | [default to false]
- **include_relationships** | **Bool** | Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance. | [default to false]
+ **include_relationships** | **Bool** | Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance. | [default to false]
 
 ### Return type
 

@@ -27,8 +27,8 @@ This document analyzes the Torc database query patterns and recommends indexes t
    ```
 
 4. **Dependency lookups** - Used for finding blocked/blocking jobs:
-   - `SELECT job_id FROM job_blocked_by WHERE blocked_by_job_id = ?`
-   - `SELECT blocked_by_job_id FROM job_blocked_by WHERE job_id = ?`
+   - `SELECT job_id FROM job_depends_on WHERE depends_on_job_id = ?`
+   - `SELECT depends_on_job_id FROM job_depends_on WHERE job_id = ?`
 
 5. **File relationship lookups** - Used for dependency resolution:
    - `SELECT job_id FROM job_input_file WHERE file_id = ?`
@@ -108,7 +108,7 @@ These indexes address the most common and expensive queries:
 
 These indexes support reverse lookups for dependencies and file relationships:
 
-#### 6. `job_blocked_by(blocked_by_job_id)`
+#### 6. `job_depends_on(depends_on_job_id)`
 **Impact**: High
 **Rationale**: Enables efficient lookup of jobs that depend on a specific job (reverse dependency lookup).
 **Queries affected**:
@@ -116,7 +116,7 @@ These indexes support reverse lookups for dependencies and file relationships:
 - Dependency graph traversal
 - Impact analysis for job failures
 
-Note: `job_blocked_by(job_id)` is already indexed via PRIMARY KEY (job_id, blocked_by_job_id)
+Note: `job_depends_on(job_id)` is already indexed via PRIMARY KEY (job_id, depends_on_job_id)
 
 #### 7. `job_input_file(file_id)`
 **Impact**: Medium
@@ -182,7 +182,7 @@ The following columns are already indexed via primary keys or unique constraints
 
 - All `id` columns (PRIMARY KEY)
 - `result(job_id, run_id)` - UNIQUE constraint provides index
-- `job_blocked_by(job_id, blocked_by_job_id)` - PRIMARY KEY provides index on job_id prefix
+- `job_depends_on(job_id, depends_on_job_id)` - PRIMARY KEY provides index on job_id prefix
 - `job_input_file(job_id, file_id)` - PRIMARY KEY provides index on job_id prefix
 - `job_output_file(job_id, file_id)` - PRIMARY KEY provides index on job_id prefix
 - Similar patterns for `job_input_user_data` and `job_output_user_data`
@@ -194,7 +194,7 @@ For a workflow with 10,000 jobs:
 - `job(workflow_id)`: ~40-80 KB (4-8 bytes per entry)
 - `job(workflow_id, status)`: ~60-120 KB (6-12 bytes per entry)
 - `result(workflow_id)`: ~40-80 KB per run
-- `job_blocked_by(blocked_by_job_id)`: Varies based on dependency graph density
+- `job_depends_on(depends_on_job_id)`: Varies based on dependency graph density
 - `resource_requirements(num_gpus, runtime_s, memory_bytes)`: ~100-200 KB for unique resource specs
 
 Total estimated overhead: ~500 KB - 1 MB per 10,000-job workflow (negligible)
@@ -229,7 +229,7 @@ These three indexes address the most common bottlenecks with minimal overhead.
 ### Phase 2: Relationship Indexes (Short-term)
 4. `event(workflow_id)`
 5. `compute_node(workflow_id)`
-6. `job_blocked_by(blocked_by_job_id)`
+6. `job_depends_on(depends_on_job_id)`
 7. `job_input_file(file_id)`
 8. `job_output_file(file_id)`
 

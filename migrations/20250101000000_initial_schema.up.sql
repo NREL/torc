@@ -125,15 +125,15 @@ CREATE TABLE user_data (
 -- jobs, files, and user data, creating the dependency graph.
 
 -- ----------------------------------------------------------------------------
--- job_blocked_by: Explicit job dependencies
+-- job_depends_on: Explicit job dependencies
 -- ----------------------------------------------------------------------------
-CREATE TABLE job_blocked_by (
+CREATE TABLE job_depends_on (
   job_id INTEGER NOT NULL,
-  blocked_by_job_id INTEGER NOT NULL,
+  depends_on_job_id INTEGER NOT NULL,
   workflow_id INTEGER NOT NULL,
-  PRIMARY KEY (job_id, blocked_by_job_id),
+  PRIMARY KEY (job_id, depends_on_job_id),
   FOREIGN KEY (job_id) REFERENCES job(id) ON DELETE CASCADE,
-  FOREIGN KEY (blocked_by_job_id) REFERENCES job(id) ON DELETE CASCADE,
+  FOREIGN KEY (depends_on_job_id) REFERENCES job(id) ON DELETE CASCADE,
   FOREIGN KEY (workflow_id) REFERENCES workflow(id) ON DELETE CASCADE
 );
 
@@ -344,11 +344,11 @@ CREATE TABLE event (
 -- Dependency Graph Indexes
 -- ----------------------------------------------------------------------------
 -- Index for finding jobs blocked by a specific job (primary unblocking lookup)
-CREATE INDEX idx_job_blocked_by_blocked_by_job_id ON job_blocked_by(blocked_by_job_id);
+CREATE INDEX idx_job_depends_on_depends_on_job_id ON job_depends_on(depends_on_job_id);
 
 -- Composite index for combined workflow + blocking job filtering
 -- Also supports workflow_id-only queries via leftmost prefix
-CREATE INDEX idx_job_blocked_by_workflow_blocked_by ON job_blocked_by(workflow_id, blocked_by_job_id);
+CREATE INDEX idx_job_depends_on_workflow_depends_on ON job_depends_on(workflow_id, depends_on_job_id);
 
 -- ----------------------------------------------------------------------------
 -- Job Status Indexes

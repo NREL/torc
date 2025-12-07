@@ -578,7 +578,7 @@ fn test_workflows_reset_status_command_json(start_server: &ServerProcess) {
 }
 
 #[rstest]
-fn test_workflows_reset_status_blocked_by_submitted_jobs(start_server: &ServerProcess) {
+fn test_workflows_reset_status_depends_on_submitted_jobs(start_server: &ServerProcess) {
     let config = &start_server.config;
 
     // Create test workflow

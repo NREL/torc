@@ -28,7 +28,7 @@ jobs:
         --output=/data/simulation_T{temp}_P{pressure:03d}.xyz \
         --log=/logs/simulation_T{temp}_P{pressure:03d}.log
     resource_requirements: simulation
-    blocked_by:
+    depends_on:
       - generate_config
     input_files:
       - initial_config
@@ -48,7 +48,7 @@ jobs:
         --temperature={temp} \
         --pressure={pressure}
     resource_requirements: analysis
-    blocked_by:
+    depends_on:
       - simulate_T{temp}_P{pressure:03d}
     input_files:
       - simulation_T{temp}_P{pressure:03d}
@@ -62,7 +62,7 @@ jobs:
   - name: generate_phase_diagram
     command: python scripts/phase_diagram.py --input-dir=/analysis --output=/results/phase_diagram.png
     resource_requirements: minimal
-    blocked_by:
+    depends_on:
       - analyze_T{temp}_P{pressure:03d}
     input_files:
       - analysis_T{temp}_P{pressure:03d}

@@ -159,7 +159,7 @@ function build_workflow(
             name = "execute-$i",
             command = cmd,
             resource_requirements = medium._id,
-            blocked_by = [setup._id],
+            depends_on = [setup._id],
             cancel_on_blocking_job_failure = true,
             invocation_script = "bash julia_env.sh",
         )
@@ -182,7 +182,7 @@ function build_workflow(
             name = "join",
             command = teardown_command,
             resource_requirements = small._id,
-            blocked_by = work_jobs,
+            depends_on = work_jobs,
             invocation_script = "bash julia_env.sh",
             cancel_on_blocking_job_failure = true,
         ),

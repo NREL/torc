@@ -18219,7 +18219,7 @@ class DefaultApi:
     ) -> ListJobDependenciesResponse:
         """Retrieve job blocking relationships for a workflow.
 
-        Retrieve all job blocking relationships for one workflow from the job_blocked_by table.
+        Retrieve all job blocking relationships for one workflow from the job_depends_on table.
 
         :param id: Workflow ID (required)
         :type id: int
@@ -18295,7 +18295,7 @@ class DefaultApi:
     ) -> ApiResponse[ListJobDependenciesResponse]:
         """Retrieve job blocking relationships for a workflow.
 
-        Retrieve all job blocking relationships for one workflow from the job_blocked_by table.
+        Retrieve all job blocking relationships for one workflow from the job_depends_on table.
 
         :param id: Workflow ID (required)
         :type id: int
@@ -18371,7 +18371,7 @@ class DefaultApi:
     ) -> RESTResponseType:
         """Retrieve job blocking relationships for a workflow.
 
-        Retrieve all job blocking relationships for one workflow from the job_blocked_by table.
+        Retrieve all job blocking relationships for one workflow from the job_depends_on table.
 
         :param id: Workflow ID (required)
         :type id: int
@@ -19363,7 +19363,7 @@ class DefaultApi:
         limit: Optional[StrictInt] = None,
         sort_by: Optional[StrictStr] = None,
         reverse_sort: Optional[StrictBool] = None,
-        include_relationships: Annotated[Optional[StrictBool], Field(description="Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.")] = None,
+        include_relationships: Annotated[Optional[StrictBool], Field(description="Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -19397,7 +19397,7 @@ class DefaultApi:
         :type sort_by: str
         :param reverse_sort:
         :type reverse_sort: bool
-        :param include_relationships: Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
+        :param include_relationships: Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
         :type include_relationships: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -19463,7 +19463,7 @@ class DefaultApi:
         limit: Optional[StrictInt] = None,
         sort_by: Optional[StrictStr] = None,
         reverse_sort: Optional[StrictBool] = None,
-        include_relationships: Annotated[Optional[StrictBool], Field(description="Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.")] = None,
+        include_relationships: Annotated[Optional[StrictBool], Field(description="Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -19497,7 +19497,7 @@ class DefaultApi:
         :type sort_by: str
         :param reverse_sort:
         :type reverse_sort: bool
-        :param include_relationships: Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
+        :param include_relationships: Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
         :type include_relationships: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
@@ -19563,7 +19563,7 @@ class DefaultApi:
         limit: Optional[StrictInt] = None,
         sort_by: Optional[StrictStr] = None,
         reverse_sort: Optional[StrictBool] = None,
-        include_relationships: Annotated[Optional[StrictBool], Field(description="Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.")] = None,
+        include_relationships: Annotated[Optional[StrictBool], Field(description="Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -19597,7 +19597,7 @@ class DefaultApi:
         :type sort_by: str
         :param reverse_sort:
         :type reverse_sort: bool
-        :param include_relationships: Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
+        :param include_relationships: Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
         :type include_relationships: bool
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request

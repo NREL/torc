@@ -180,8 +180,8 @@ class DAGVisualizer {
                 for (const dep of dependencies) {
                     edges.push({
                         data: {
-                            id: `edge-${dep.blocked_by_job_id}-${dep.job_id}`,
-                            source: `job-${dep.blocked_by_job_id}`,
+                            id: `edge-${dep.depends_on_job_id}-${dep.job_id}`,
+                            source: `job-${dep.depends_on_job_id}`,
                             target: `job-${dep.job_id}`,
                         }
                     });

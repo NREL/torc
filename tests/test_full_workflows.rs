@@ -163,7 +163,7 @@ fn test_uninitialize_blocked_jobs(start_server: &ServerProcess) {
         "job2".to_string(),
         "command".to_string(),
     );
-    job2_pre.blocked_by_job_ids = Some(vec![job1.id.unwrap()]);
+    job2_pre.depends_on_job_ids = Some(vec![job1.id.unwrap()]);
     let mut job2 = default_api::create_job(config, job2_pre).expect("Failed to create job2");
     // let job2_id = job2.id.unwrap();
     let mut bystander = default_api::create_job(

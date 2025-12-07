@@ -13,7 +13,7 @@
       "cancel_on_blocking_job_failure": false,
       "supports_termination": true,
       "resource_requirements": "small_job",
-      "blocked_by": null,
+      "depends_on": null,
       "input_files": null,
       "output_files": [
         "raw_data"
@@ -31,7 +31,7 @@
       "cancel_on_blocking_job_failure": true,
       "supports_termination": true,
       "resource_requirements": "small_job",
-      "blocked_by": [
+      "depends_on": [
         "data_download"
       ],
       "input_files": [
@@ -56,7 +56,7 @@
       "cancel_on_blocking_job_failure": true,
       "supports_termination": false,
       "resource_requirements": "large_job",
-      "blocked_by": [
+      "depends_on": [
         "data_validation"
       ],
       "input_files": [

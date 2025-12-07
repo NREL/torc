@@ -138,7 +138,7 @@ The DAG (Directed Acyclic Graph) view provides a visual representation of job de
 
 ### Current Implementation
 
-The DAG visualization currently displays all jobs as nodes without edges. To enable full DAG visualization with dependency edges, the server needs to expose the `job_blocked_by` table data.
+The DAG visualization currently displays all jobs as nodes without edges. To enable full DAG visualization with dependency edges, the server needs to expose the `job_depends_on` table data.
 
 ### Server-Side Implementation Needed
 
@@ -152,16 +152,16 @@ GET /workflows/{workflow_id}/job-dependencies
 [
   {
     "job_id": 123,
-    "blocked_by_job_id": 456,
+    "depends_on_job_id": 456,
     "workflow_id": 789
   },
   ...
 ]
 ```
 
-This data comes from the `job_blocked_by` table with columns:
+This data comes from the `job_depends_on` table with columns:
 - `job_id`: The job that is blocked
-- `blocked_by_job_id`: The job that must complete first
+- `depends_on_job_id`: The job that must complete first
 - `workflow_id`: The workflow containing both jobs
 
 Once this endpoint is available, update `TorcClient::list_job_dependencies()` in `torc-tui/src/api.rs` and uncomment the edge-building logic in `App::build_dag_from_jobs()`.

@@ -13,7 +13,7 @@ The SQLite database is the heart of Torc's coordination model. All workflow stat
 - `workflow_status` - Workflow execution state (run_id, status)
 - `job` - Individual computational tasks with commands and status
 - `job_internal` - Internal job data (input hashes for change detection)
-- `job_blocked_by` - Explicit and implicit job dependencies
+- `job_depends_on` - Explicit and implicit job dependencies
 - `file` - File artifacts with paths and modification times
 - `user_data` - JSON data artifacts for passing information between jobs
 - `job_input_file`, `job_output_file` - Job-file relationships

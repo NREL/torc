@@ -76,7 +76,7 @@ pub trait JobsApi<C> {
     /// - Jobs can only be updated when their status is `Uninitialized`
     /// - The job status field itself cannot be modified
     /// - Relationship fields (input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids) are immutable after job creation
-    /// - The `blocked_by_job_ids` field can be modified only when the job status is `Uninitialized`
+    /// - The `depends_on_job_ids` field can be modified only when the job status is `Uninitialized`
     async fn update_job(
         &self,
         id: i64,
@@ -197,12 +197,12 @@ impl JobsApiImpl {
         }
     }
 
-    /// Create blocked-by association between two jobs.
-    async fn add_blocked_by_association<'e, E>(
+    /// Create depends-on association between two jobs.
+    async fn add_depends_on_association<'e, E>(
         &self,
         executor: E,
         job_id: i64,
-        blocked_by_job_id: i64,
+        depends_on_job_id: i64,
         workflow_id: i64,
     ) -> Result<(), ApiError>
     where
@@ -210,11 +210,11 @@ impl JobsApiImpl {
     {
         match sqlx::query!(
             r#"
-            INSERT INTO job_blocked_by (job_id, blocked_by_job_id, workflow_id)
+            INSERT INTO job_depends_on (job_id, depends_on_job_id, workflow_id)
             VALUES ($1, $2, $3)
             "#,
             job_id,
-            blocked_by_job_id,
+            depends_on_job_id,
             workflow_id
         )
         .execute(executor)
@@ -262,9 +262,9 @@ impl JobsApiImpl {
             }
         };
 
-        // Get blocked_by relationships
-        let blocked_by_records = match sqlx::query!(
-            "SELECT blocked_by_job_id FROM job_blocked_by WHERE job_id = $1 ORDER BY blocked_by_job_id",
+        // Get depends_on relationships
+        let depends_on_records = match sqlx::query!(
+            "SELECT depends_on_job_id FROM job_depends_on WHERE job_id = $1 ORDER BY depends_on_job_id",
             id
         )
         .fetch_all(self.context.pool.as_ref())
@@ -273,13 +273,13 @@ impl JobsApiImpl {
             Ok(records) => records,
             Err(e) => return Err(database_error(e)),
         };
-        let blocked_by_job_ids = if blocked_by_records.is_empty() {
+        let depends_on_job_ids = if depends_on_records.is_empty() {
             None
         } else {
             Some(
-                blocked_by_records
+                depends_on_records
                     .into_iter()
-                    .map(|r| r.blocked_by_job_id)
+                    .map(|r| r.depends_on_job_id)
                     .collect(),
             )
         };
@@ -369,7 +369,7 @@ impl JobsApiImpl {
             command: record.get("command"),
             cancel_on_blocking_job_failure: record.try_get("cancel_on_blocking_job_failure").ok(),
             supports_termination: record.try_get("supports_termination").ok(),
-            blocked_by_job_ids,
+            depends_on_job_ids,
             input_file_ids,
             output_file_ids,
             input_user_data_ids,
@@ -537,8 +537,8 @@ impl JobsApiImpl {
                 SELECT
                     jbb.job_id,
                     0 as level
-                FROM job_blocked_by jbb
-                WHERE jbb.blocked_by_job_id = ?
+                FROM job_depends_on jbb
+                WHERE jbb.depends_on_job_id = ?
                   AND jbb.workflow_id = ?
 
                 UNION ALL
@@ -548,7 +548,7 @@ impl JobsApiImpl {
                     jbb.job_id,
                     dj.level + 1 as level
                 FROM downstream_jobs dj
-                JOIN job_blocked_by jbb ON jbb.blocked_by_job_id = dj.job_id
+                JOIN job_depends_on jbb ON jbb.depends_on_job_id = dj.job_id
                 WHERE jbb.workflow_id = ?
                   AND dj.level < 100  -- Prevent infinite loops
             )
@@ -610,7 +610,7 @@ impl JobsApiImpl {
     /// - input_file_ids
     /// - output_file_ids
     /// - invocation_script
-    /// - blocked_by_job_ids
+    /// - depends_on_job_ids
     ///
     /// The hash is used to detect if job inputs have changed, requiring re-execution.
     pub async fn compute_job_input_hash(&self, job_id: i64) -> Result<String, ApiError> {
@@ -653,7 +653,7 @@ impl JobsApiImpl {
         let hash_input = serde_json::json!({
             "command": job.command,
             "invocation_script": job.invocation_script,
-            "blocked_by_job_ids": job.blocked_by_job_ids,
+            "depends_on_job_ids": job.depends_on_job_ids,
             "input_file_ids": job.input_file_ids,
             "output_file_ids": job.output_file_ids,
             "input_user_data_ids": job.input_user_data_ids,
@@ -818,10 +818,10 @@ where
         job.id = Some(job_result[0].id);
 
         // Handle job dependencies
-        if let Some(blocked_by_job_ids) = &job.blocked_by_job_ids {
-            for blocking_id in blocked_by_job_ids {
+        if let Some(depends_on_job_ids) = &job.depends_on_job_ids {
+            for blocking_id in depends_on_job_ids {
                 if let Err(e) = self
-                    .add_blocked_by_association(
+                    .add_depends_on_association(
                         &mut *tx,
                         job_result[0].id,
                         *blocking_id,
@@ -1007,11 +1007,11 @@ where
             job.id = Some(job_id);
 
             // Handle job dependencies
-            if let Some(blocked_by_job_ids) = &job.blocked_by_job_ids {
-                for blocking_id in blocked_by_job_ids {
+            if let Some(depends_on_job_ids) = &job.depends_on_job_ids {
+                for blocking_id in depends_on_job_ids {
                     if let Err(e) = sqlx::query!(
                         r#"
-                        INSERT INTO job_blocked_by (job_id, blocked_by_job_id, workflow_id)
+                        INSERT INTO job_depends_on (job_id, depends_on_job_id, workflow_id)
                         VALUES ($1, $2, $3)
                         "#,
                         job_id,
@@ -1286,7 +1286,7 @@ where
 
         if let Some(upstream_id) = upstream_job_id {
             where_conditions.push(
-                "id IN (SELECT job_id FROM job_blocked_by WHERE blocked_by_job_id = ?)".to_string(),
+                "id IN (SELECT job_id FROM job_depends_on WHERE depends_on_job_id = ?)".to_string(),
             );
             bind_values.push(Box::new(upstream_id));
         }
@@ -1364,7 +1364,7 @@ where
                         .try_get("cancel_on_blocking_job_failure")
                         .ok(),
                     supports_termination: record.try_get("supports_termination").ok(),
-                    blocked_by_job_ids: None,
+                    depends_on_job_ids: None,
                     input_file_ids: None,
                     output_file_ids: None,
                     input_user_data_ids: None,
@@ -1433,10 +1433,10 @@ where
     /// - Jobs can only be updated when their status is `Uninitialized`
     /// - The job status field itself cannot be modified
     /// - Relationship fields (input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids) are immutable after job creation
-    /// - The `blocked_by_job_ids` field can be modified only when the job status is `Uninitialized`
+    /// - The `depends_on_job_ids` field can be modified only when the job status is `Uninitialized`
     ///
-    /// When `blocked_by_job_ids` is modified, the function will:
-    /// 1. Delete all existing blocked_by relationships for the job
+    /// When `depends_on_job_ids` is modified, the function will:
+    /// 1. Delete all existing depends_on relationships for the job
     /// 2. Create new relationships based on the provided IDs
     /// 3. Use a database transaction to ensure consistency
     ///
@@ -1501,20 +1501,20 @@ where
             }
         }
 
-        // Check if blocked_by_job_ids is being modified
-        let mut blocked_by_job_ids_modified = false;
-        if let Some(blocked_by_ids) = &body.blocked_by_job_ids {
+        // Check if depends_on_job_ids is being modified
+        let mut depends_on_job_ids_modified = false;
+        if let Some(depends_on_ids) = &body.depends_on_job_ids {
             let empty_vec = vec![];
-            let existing_blocked_by = existing_job
-                .blocked_by_job_ids
+            let existing_depends_on = existing_job
+                .depends_on_job_ids
                 .as_ref()
                 .unwrap_or(&empty_vec);
-            let mut body_sorted = blocked_by_ids.clone();
-            let mut existing_sorted = existing_blocked_by.clone();
+            let mut body_sorted = depends_on_ids.clone();
+            let mut existing_sorted = existing_depends_on.clone();
             body_sorted.sort();
             existing_sorted.sort();
             if body_sorted != existing_sorted {
-                blocked_by_job_ids_modified = true;
+                depends_on_job_ids_modified = true;
             }
         }
 
@@ -1637,16 +1637,16 @@ where
             return Ok(UpdateJobResponse::NotFoundErrorResponse(error_response));
         }
 
-        // If blocked_by_job_ids was modified, update the relationships
-        if blocked_by_job_ids_modified {
+        // If depends_on_job_ids was modified, update the relationships
+        if depends_on_job_ids_modified {
             // Start a transaction for relationship updates
             let mut tx = match self.context.pool.begin().await {
                 Ok(tx) => tx,
                 Err(e) => return Err(database_error(e)),
             };
 
-            // Delete existing blocked_by relationships for this job
-            if let Err(e) = sqlx::query!("DELETE FROM job_blocked_by WHERE job_id = $1", id)
+            // Delete existing depends_on relationships for this job
+            if let Err(e) = sqlx::query!("DELETE FROM job_depends_on WHERE job_id = $1", id)
                 .execute(&mut *tx)
                 .await
             {
@@ -1654,11 +1654,11 @@ where
                 return Err(database_error(e));
             }
 
-            // Add new blocked_by relationships if provided
-            if let Some(blocked_by_ids) = &body.blocked_by_job_ids {
-                for blocking_id in blocked_by_ids {
+            // Add new depends_on relationships if provided
+            if let Some(depends_on_ids) = &body.depends_on_job_ids {
+                for blocking_id in depends_on_ids {
                     if let Err(e) = sqlx::query!(
-                        "INSERT INTO job_blocked_by (job_id, blocked_by_job_id, workflow_id) VALUES ($1, $2, $3)",
+                        "INSERT INTO job_depends_on (job_id, depends_on_job_id, workflow_id) VALUES ($1, $2, $3)",
                         id,
                         *blocking_id,
                         existing_job.workflow_id

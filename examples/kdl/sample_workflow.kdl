@@ -88,7 +88,7 @@ job "data_validation" {
     cancel_on_blocking_job_failure #true
     supports_termination #true
     resource_requirements "small_job"
-    blocked_by_job "data_download"
+    depends_on_job "data_download"
     input_file "raw_data"
     input_file "validation_script"
     output_file "validated_data"
@@ -102,7 +102,7 @@ job "data_analysis" {
     cancel_on_blocking_job_failure #true
     supports_termination #false
     resource_requirements "large_job"
-    blocked_by_job "data_validation"
+    depends_on_job "data_validation"
     input_file "validated_data"
     input_file "analysis_script"
     output_file "analysis_results"

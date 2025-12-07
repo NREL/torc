@@ -51,27 +51,27 @@ job "preprocess_data" {
 job "train_model_1" {
     command "python scripts/train.py --model 1 --data data/processed --output models/model_1"
     resource_requirements "gpu"
-    blocked_by_job "preprocess_data"
+    depends_on_job "preprocess_data"
 }
 
 job "train_model_2" {
     command "python scripts/train.py --model 2 --data data/processed --output models/model_2"
     resource_requirements "gpu"
-    blocked_by_job "preprocess_data"
+    depends_on_job "preprocess_data"
 }
 
 job "train_model_3" {
     command "python scripts/train.py --model 3 --data data/processed --output models/model_3"
     resource_requirements "gpu"
-    blocked_by_job "preprocess_data"
+    depends_on_job "preprocess_data"
 }
 
 job "evaluate" {
     command "python scripts/evaluate.py --models models/ --output results/evaluation.json"
     resource_requirements "medium"
-    blocked_by_job "train_model_1"
-    blocked_by_job "train_model_2"
-    blocked_by_job "train_model_3"
+    depends_on_job "train_model_1"
+    depends_on_job "train_model_2"
+    depends_on_job "train_model_3"
 }
 
 // Actions

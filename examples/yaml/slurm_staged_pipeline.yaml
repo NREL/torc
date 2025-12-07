@@ -176,7 +176,7 @@ jobs:
       echo "Work_001 completed at $(date)"
     scheduler: "work_scheduler"
     resource_requirements: "work_resources"
-    blocked_by: ["setup"]
+    depends_on: ["setup"]
     input_files: ["input_001"]
     output_files: ["output_001"]
 
@@ -190,7 +190,7 @@ jobs:
       echo "Work_002 completed at $(date)"
     scheduler: "work_scheduler"
     resource_requirements: "work_resources"
-    blocked_by: ["setup"]
+    depends_on: ["setup"]
     input_files: ["input_002"]
     output_files: ["output_002"]
 
@@ -204,7 +204,7 @@ jobs:
       echo "Work_003 completed at $(date)"
     scheduler: "work_scheduler"
     resource_requirements: "work_resources"
-    blocked_by: ["setup"]
+    depends_on: ["setup"]
     input_files: ["input_003"]
     output_files: ["output_003"]
 
@@ -218,7 +218,7 @@ jobs:
       echo "Work_004 completed at $(date)"
     scheduler: "work_scheduler"
     resource_requirements: "work_resources"
-    blocked_by: ["setup"]
+    depends_on: ["setup"]
     input_files: ["input_004"]
     output_files: ["output_004"]
 
@@ -232,7 +232,7 @@ jobs:
       echo "Work_005 completed at $(date)"
     scheduler: "work_scheduler"
     resource_requirements: "work_resources"
-    blocked_by: ["setup"]
+    depends_on: ["setup"]
     input_files: ["input_005"]
     output_files: ["output_005"]
 
@@ -246,7 +246,7 @@ jobs:
       echo "Work_006 completed at $(date)"
     scheduler: "work_scheduler"
     resource_requirements: "work_resources"
-    blocked_by: ["setup"]
+    depends_on: ["setup"]
     input_files: ["input_006"]
     output_files: ["output_006"]
 
@@ -260,7 +260,7 @@ jobs:
       echo "Work_007 completed at $(date)"
     scheduler: "work_scheduler"
     resource_requirements: "work_resources"
-    blocked_by: ["setup"]
+    depends_on: ["setup"]
     input_files: ["input_007"]
     output_files: ["output_007"]
 
@@ -274,7 +274,7 @@ jobs:
       echo "Work_008 completed at $(date)"
     scheduler: "work_scheduler"
     resource_requirements: "work_resources"
-    blocked_by: ["setup"]
+    depends_on: ["setup"]
     input_files: ["input_008"]
     output_files: ["output_008"]
 
@@ -288,7 +288,7 @@ jobs:
       echo "Work_009 completed at $(date)"
     scheduler: "work_scheduler"
     resource_requirements: "work_resources"
-    blocked_by: ["setup"]
+    depends_on: ["setup"]
     input_files: ["input_009"]
     output_files: ["output_009"]
 
@@ -302,7 +302,7 @@ jobs:
       echo "Work_010 completed at $(date)"
     scheduler: "work_scheduler"
     resource_requirements: "work_resources"
-    blocked_by: ["setup"]
+    depends_on: ["setup"]
     input_files: ["input_010"]
     output_files: ["output_010"]
 
@@ -338,7 +338,7 @@ jobs:
       echo "Postprocessing completed successfully"
     scheduler: "postprocess_scheduler"
     resource_requirements: "postprocess_resources"
-    blocked_by:
+    depends_on:
       - "work_001"
       - "work_002"
       - "work_003"

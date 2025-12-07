@@ -140,7 +140,7 @@ pub enum JobCommands {
         /// Reverse sort order
         #[arg(long)]
         reverse_sort: bool,
-        /// Include job relationships (blocked_by_job_ids, input/output file/user_data IDs) - slower but more complete
+        /// Include job relationships (depends_on_job_ids, input/output file/user_data IDs) - slower but more complete
         #[arg(long)]
         include_relationships: bool,
     },
@@ -211,7 +211,7 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                 job.resource_requirements_id = Some(*rr_id);
             }
             if !blocking_job_ids.is_empty() {
-                job.blocked_by_job_ids = Some(blocking_job_ids.clone());
+                job.depends_on_job_ids = Some(blocking_job_ids.clone());
             }
             if !input_file_ids.is_empty() {
                 job.input_file_ids = Some(input_file_ids.clone());
@@ -239,7 +239,7 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                         println!(
                             "  Blocking job IDs: {}",
                             created_job
-                                .blocked_by_job_ids
+                                .depends_on_job_ids
                                 .as_ref()
                                 .map(|ids| format!("{:?}", ids))
                                 .unwrap_or_else(|| "None".to_string())
@@ -376,7 +376,7 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                     println!("  Status: {}", status);
                     println!(
                         "  Blocking job IDs: {}",
-                        job.blocked_by_job_ids
+                        job.depends_on_job_ids
                             .as_ref()
                             .map(|ids| format!("{:?}", ids))
                             .unwrap_or_else(|| "None".to_string())
@@ -433,7 +433,7 @@ pub fn handle_job_commands(config: &Configuration, command: &JobCommands, format
                                 println!(
                                     "  Blocking job IDs: {}",
                                     updated_job
-                                        .blocked_by_job_ids
+                                        .depends_on_job_ids
                                         .as_ref()
                                         .map(|ids| format!("{:?}", ids))
                                         .unwrap_or_else(|| "None".to_string())
