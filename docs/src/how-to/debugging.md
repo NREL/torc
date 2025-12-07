@@ -203,22 +203,22 @@ In addition to the standard job logs, Slurm jobs include two additional log file
 **Note**: Slurm job runner logs include the Slurm job ID, node ID, and task PID
 in the filename for correlation with Slurm's own logs.
 
-## Using the torc-dash Debug Tab
+## Using the torc-dash Debugging Tab
 
-The torc-dash web interface provides an interactive Debug tab for visual debugging of workflow jobs. This is often the quickest way to investigate failed jobs without using command-line tools.
+The torc-dash web interface provides an interactive Debugging tab for visual debugging of workflow jobs. This is often the quickest way to investigate failed jobs without using command-line tools.
 
-### Accessing the Debug Tab
+### Accessing the Debugging Tab
 
-1. Start the torc-dash server:
+1. Start torc-dash (standalone mode recommended for quick setup):
    ```bash
-   torc-dash
+   torc-dash --standalone
    ```
 
-2. Open your browser to `http://localhost:8050` (or the configured port)
+2. Open your browser to `http://localhost:8090`
 
-3. Select a workflow from the dropdown
+3. Select a workflow from the dropdown in the sidebar
 
-4. Click the **Debug** tab
+4. Click the **Debugging** tab in the navigation
 
 ### Features
 
@@ -266,8 +266,8 @@ Each tab includes:
 
 ### Quick Debugging Workflow with torc-dash
 
-1. Open torc-dash and select your workflow
-2. Go to the **Debug** tab
+1. Open torc-dash and select your workflow from the sidebar
+2. Go to the **Debugging** tab
 3. Ensure "Show only failed jobs" is checked
 4. Click **Generate Report**
 5. Click on a failed job in the results table
@@ -276,7 +276,7 @@ Each tab includes:
 
 ### When to Use torc-dash vs CLI
 
-**Use torc-dash Debug tab when:**
+**Use torc-dash Debugging tab when:**
 - You want a visual, interactive debugging experience
 - You need to quickly scan multiple failed jobs
 - You're investigating jobs and want to easily switch between stdout/stderr
@@ -492,6 +492,6 @@ torc reports results <workflow_id> --output-dir <correct_path>
 - **`torc workflows status`**: Check overall workflow status
 - **`torc reports check-resource-utilization`**: Analyze resource usage and find over-utilized jobs
 - **`torc jobs list`**: View all jobs and their current status
-- **`torc-dash`**: Launch web interface with interactive Debug tab
+- **`torc-dash`**: Launch web interface with interactive Debugging tab
 
-The `reports results` command and torc-dash Debug tab complement these by providing complete log file paths and content viewing for in-depth debugging when high-level views aren't sufficient.
+The `reports results` command and torc-dash Debugging tab complement these by providing complete log file paths and content viewing for in-depth debugging when high-level views aren't sufficient.

@@ -131,13 +131,26 @@ pub struct ResourceRequirementsSpec {
     /// Number of CPUs required
     pub num_cpus: i64,
     /// Number of GPUs required
+    #[serde(default)]
     pub num_gpus: i64,
-    /// Number of nodes required
+    /// Number of nodes required (defaults to 1)
+    #[serde(default = "ResourceRequirementsSpec::default_num_nodes")]
     pub num_nodes: i64,
     /// Memory requirement
     pub memory: String,
-    /// Runtime limit
+    /// Runtime limit (defaults to 1 hour)
+    #[serde(default = "ResourceRequirementsSpec::default_runtime")]
     pub runtime: String,
+}
+
+impl ResourceRequirementsSpec {
+    fn default_num_nodes() -> i64 {
+        1
+    }
+
+    fn default_runtime() -> String {
+        "PT1H".to_string()
+    }
 }
 
 /// Slurm scheduler specification for JSON serialization (without workflow_id and id)
@@ -151,7 +164,8 @@ pub struct SlurmSchedulerSpec {
     pub gres: Option<String>,
     /// Memory specification
     pub mem: Option<String>,
-    /// Number of nodes
+    /// Number of nodes (defaults to 1)
+    #[serde(default = "SlurmSchedulerSpec::default_nodes")]
     pub nodes: i64,
     /// Number of tasks per node
     pub ntasks_per_node: Option<i64>,
@@ -161,10 +175,21 @@ pub struct SlurmSchedulerSpec {
     pub qos: Option<String>,
     /// Temporary storage
     pub tmp: Option<String>,
-    /// Wall time limit
+    /// Wall time limit (defaults to 1 hour)
+    #[serde(default = "SlurmSchedulerSpec::default_walltime")]
     pub walltime: String,
     /// Extra parameters
     pub extra: Option<String>,
+}
+
+impl SlurmSchedulerSpec {
+    fn default_nodes() -> i64 {
+        1
+    }
+
+    fn default_walltime() -> String {
+        "01:00:00".to_string()
+    }
 }
 
 /// Specification for a job within a workflow
@@ -394,8 +419,9 @@ pub struct WorkflowSpec {
     /// User who owns this workflow (optional - will default to current user)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub user: Option<String>,
-    /// Description of the workflow
-    pub description: String,
+    /// Description of the workflow (optional)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub description: Option<String>,
     /// Shared parameters that can be used by jobs and files
     /// Jobs/files can reference these by setting use_parameters to parameter names
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -438,7 +464,7 @@ impl WorkflowSpec {
     pub fn new(
         name: String,
         user: String,
-        description: String,
+        description: Option<String>,
         jobs: Vec<JobSpec>,
     ) -> WorkflowSpec {
         WorkflowSpec {
@@ -729,7 +755,7 @@ impl WorkflowSpec {
     ) -> Result<i64, Box<dyn std::error::Error>> {
         let user = spec.user.clone().unwrap_or_else(|| "unknown".to_string());
         let mut workflow_model = models::WorkflowModel::new(spec.name.clone(), user);
-        workflow_model.description = Some(spec.description.clone());
+        workflow_model.description = spec.description.clone();
 
         // Set compute node configuration fields if present
         if let Some(value) = spec.compute_node_expiration_buffer_seconds {
@@ -1461,8 +1487,7 @@ impl WorkflowSpec {
                         .entries()
                         .first()
                         .and_then(|e| e.value().as_string())
-                        .ok_or("description must have a string value")?
-                        .to_string();
+                        .map(|s| s.to_string());
                 }
                 "compute_node_expiration_buffer_seconds" => {
                     spec.compute_node_expiration_buffer_seconds = node

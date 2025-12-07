@@ -1,171 +1,255 @@
-# Configuration
+# Configuration Reference
 
-## Server Configuration
+Complete reference for Torc configuration options.
 
-Set via environment variables or `.env` file:
+## Configuration Sources
 
-### DATABASE_URL
+Torc loads configuration from multiple sources in this order (later sources override earlier):
 
-SQLite database path.
+1. **Built-in defaults** (lowest priority)
+2. **System config**: `/etc/torc/config.toml`
+3. **User config**: `~/.config/torc/config.toml` (platform-dependent)
+4. **Project config**: `./torc.toml`
+5. **Environment variables**: `TORC_*` prefix
+6. **CLI arguments** (highest priority)
 
-**Default**: `sqlite:torc.db`
-
-**Example**:
-```bash
-DATABASE_URL=sqlite:torc.db
-```
-
-### RUST_LOG
-
-Logging level for server output.
-
-**Default**: `info`
-
-**Valid values**: `error`, `warn`, `info`, `debug`, `trace`
-
-**Example**:
-```bash
-RUST_LOG=debug
-```
-
-### TORC_COMPLETION_CHECK_INTERVAL_SECS
-
-Interval (in seconds) for the background task that processes job completions and unblocks downstream dependent jobs.
-
-**Default**: `60.0`
-
-**Recommended values**:
-- **Production**: `60` - Efficient batching, minimal overhead
-- **Development/Demos**: `1.0` to `5.0` - Faster feedback for short jobs
-- **Testing**: `0.1` - Near-immediate unblocking for integration tests
-
-**Example**:
-```bash
-TORC_COMPLETION_CHECK_INTERVAL_SECS=1.0
-```
-
-**Performance implications**:
-- Shorter intervals provide faster downstream job propagation but increase database load
-- Longer intervals batch more completions together for higher efficiency
-- For HPC workflows with minute-to-hour long jobs, the default 60 seconds is negligible
-
-### Server Port
-
-Set via command-line flag:
+## Configuration Commands
 
 ```bash
-torc-server run --port 8080
+torc config show              # Show effective configuration
+torc config show --format json # Show as JSON
+torc config paths             # Show configuration file locations
+torc config init --user       # Create user config file
+torc config init --local      # Create project config file
+torc config init --system     # Create system config file
+torc config validate          # Validate current configuration
 ```
-
-**Default**: `8080`
 
 ## Client Configuration
 
-### TORC_API_URL
+Settings for the `torc` CLI.
 
-Torc server URL endpoint.
+### `[client]` Section
 
-**Default**: `http://localhost:8080/torc-service/v1`
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `api_url` | string | `http://localhost:8080/torc-service/v1` | Torc server API URL |
+| `format` | string | `table` | Output format: `table` or `json` |
+| `log_level` | string | `info` | Log level: `error`, `warn`, `info`, `debug`, `trace` |
+| `username` | string | (none) | Username for basic authentication |
 
-**Example**:
-```bash
-export TORC_API_URL="http://my-server:8080/torc-service/v1"
+### `[client.run]` Section
+
+Settings for `torc run` command.
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `poll_interval` | float | `5.0` | Job completion poll interval (seconds) |
+| `output_dir` | path | `output` | Output directory for job logs |
+| `database_poll_interval` | int | `30` | Database poll interval (seconds) |
+| `max_parallel_jobs` | int | (none) | Maximum parallel jobs (overrides resource-based) |
+| `num_cpus` | int | (none) | Available CPUs for resource-based scheduling |
+| `memory_gb` | float | (none) | Available memory (GB) for resource-based scheduling |
+| `num_gpus` | int | (none) | Available GPUs for resource-based scheduling |
+
+### Example
+
+```toml
+[client]
+api_url = "http://localhost:8080/torc-service/v1"
+format = "table"
+log_level = "info"
+username = "myuser"
+
+[client.run]
+poll_interval = 5.0
+output_dir = "output"
+max_parallel_jobs = 4
+num_cpus = 8
+memory_gb = 32.0
+num_gpus = 1
 ```
 
-Can also be set via `--url` flag:
-```bash
-torc --url "http://my-server:8080/torc-service/v1" workflows list
+## Server Configuration
+
+Settings for `torc-server`.
+
+### `[server]` Section
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `log_level` | string | `info` | Log level |
+| `https` | bool | `false` | Enable HTTPS |
+| `url` | string | `localhost` | Hostname/IP to bind to |
+| `port` | int | `8080` | Port to listen on |
+| `threads` | int | `1` | Number of worker threads |
+| `database` | string | (none) | SQLite database path (falls back to `DATABASE_URL` env) |
+| `auth_file` | string | (none) | Path to htpasswd file |
+| `require_auth` | bool | `false` | Require authentication for all requests |
+| `completion_check_interval_secs` | float | `60.0` | Background job processing interval |
+
+### `[server.logging]` Section
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `log_dir` | path | (none) | Directory for log files (enables file logging) |
+| `json_logs` | bool | `false` | Use JSON format for log files |
+
+### Example
+
+```toml
+[server]
+url = "0.0.0.0"
+port = 8080
+threads = 4
+database = "/var/lib/torc/torc.db"
+auth_file = "/etc/torc/htpasswd"
+require_auth = true
+completion_check_interval_secs = 60.0
+log_level = "info"
+https = false
+
+[server.logging]
+log_dir = "/var/log/torc"
+json_logs = false
 ```
 
-### USER / USERNAME
+## Dashboard Configuration
 
-Workflow owner username.
+Settings for `torc-dash`.
 
-**Default**: Auto-detected from environment
+### `[dash]` Section
 
-**Example**:
-```bash
-export USER=alice
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `host` | string | `127.0.0.1` | Hostname/IP to bind to |
+| `port` | int | `8090` | Port to listen on |
+| `api_url` | string | `http://localhost:8080/torc-service/v1` | Torc server API URL |
+| `torc_bin` | string | `torc` | Path to torc CLI binary |
+| `torc_server_bin` | string | `torc-server` | Path to torc-server binary |
+| `standalone` | bool | `false` | Auto-start torc-server |
+| `server_port` | int | `0` | Server port for standalone mode (0 = auto) |
+| `database` | string | (none) | Database path for standalone mode |
+| `completion_check_interval_secs` | int | `5` | Completion check interval (standalone mode) |
+
+### Example
+
+```toml
+[dash]
+host = "0.0.0.0"
+port = 8090
+api_url = "http://localhost:8080/torc-service/v1"
+torc_bin = "/usr/local/bin/torc"
+torc_server_bin = "/usr/local/bin/torc-server"
+standalone = true
+server_port = 0
+completion_check_interval_secs = 5
 ```
 
-## Database Configuration
+## Environment Variables
 
-### WAL Mode
+Environment variables use double underscore (`__`) to separate nested keys.
 
-Torc uses SQLite in WAL (Write-Ahead Logging) mode for better concurrency.
+### Client Variables
 
-This is configured automatically in the migrations.
+| Variable | Maps To |
+|----------|---------|
+| `TORC_CLIENT__API_URL` | `client.api_url` |
+| `TORC_CLIENT__FORMAT` | `client.format` |
+| `TORC_CLIENT__LOG_LEVEL` | `client.log_level` |
+| `TORC_CLIENT__USERNAME` | `client.username` |
+| `TORC_CLIENT__RUN__POLL_INTERVAL` | `client.run.poll_interval` |
+| `TORC_CLIENT__RUN__OUTPUT_DIR` | `client.run.output_dir` |
+| `TORC_CLIENT__RUN__MAX_PARALLEL_JOBS` | `client.run.max_parallel_jobs` |
+| `TORC_CLIENT__RUN__NUM_CPUS` | `client.run.num_cpus` |
+| `TORC_CLIENT__RUN__MEMORY_GB` | `client.run.memory_gb` |
+| `TORC_CLIENT__RUN__NUM_GPUS` | `client.run.num_gpus` |
 
-### Pragma Settings
+### Server Variables
 
-The following SQLite pragmas are set:
-- `journal_mode = WAL`
-- `foreign_keys = ON`
-- `busy_timeout = 5000`
+| Variable | Maps To |
+|----------|---------|
+| `TORC_SERVER__URL` | `server.url` |
+| `TORC_SERVER__PORT` | `server.port` |
+| `TORC_SERVER__THREADS` | `server.threads` |
+| `TORC_SERVER__DATABASE` | `server.database` |
+| `TORC_SERVER__AUTH_FILE` | `server.auth_file` |
+| `TORC_SERVER__REQUIRE_AUTH` | `server.require_auth` |
+| `TORC_SERVER__LOG_LEVEL` | `server.log_level` |
+| `TORC_SERVER__COMPLETION_CHECK_INTERVAL_SECS` | `server.completion_check_interval_secs` |
+| `TORC_SERVER__LOGGING__LOG_DIR` | `server.logging.log_dir` |
+| `TORC_SERVER__LOGGING__JSON_LOGS` | `server.logging.json_logs` |
 
-## Job Runner Configuration
+### Dashboard Variables
 
-### Job Allocation Strategy
+| Variable | Maps To |
+|----------|---------|
+| `TORC_DASH__HOST` | `dash.host` |
+| `TORC_DASH__PORT` | `dash.port` |
+| `TORC_DASH__API_URL` | `dash.api_url` |
+| `TORC_DASH__STANDALONE` | `dash.standalone` |
 
-The job runner supports two allocation strategies controlled by the `--max-parallel-jobs` flag:
+### Legacy Variables
 
-#### Resource-Based Allocation (Default)
+These environment variables are still supported directly by clap:
 
-**When**: `--max-parallel-jobs` is NOT set
+| Variable | Component | Description |
+|----------|-----------|-------------|
+| `TORC_API_URL` | Client | Server API URL (CLI only) |
+| `TORC_USERNAME` | Client | Authentication username (CLI only) |
+| `TORC_PASSWORD` | Client | Authentication password (CLI only) |
+| `TORC_AUTH_FILE` | Server | htpasswd file path |
+| `TORC_LOG_DIR` | Server | Log directory |
+| `TORC_COMPLETION_CHECK_INTERVAL_SECS` | Server | Completion check interval |
+| `DATABASE_URL` | Server | SQLite database URL |
+| `RUST_LOG` | All | Log level filter |
 
-```bash
-torc run $WORKFLOW_ID \
-  --num-cpus 32 \
-  --memory-gb 256 \
-  --num-gpus 8
+## Complete Example
+
+```toml
+# ~/.config/torc/config.toml
+
+[client]
+api_url = "http://localhost:8080/torc-service/v1"
+format = "table"
+log_level = "info"
+username = "developer"
+
+[client.run]
+poll_interval = 5.0
+output_dir = "output"
+database_poll_interval = 30
+num_cpus = 8
+memory_gb = 32.0
+num_gpus = 1
+
+[server]
+log_level = "info"
+https = false
+url = "localhost"
+port = 8080
+threads = 4
+database = "/var/lib/torc/torc.db"
+require_auth = false
+completion_check_interval_secs = 60.0
+
+[server.logging]
+log_dir = "/var/log/torc"
+json_logs = false
+
+[dash]
+host = "127.0.0.1"
+port = 8090
+api_url = "http://localhost:8080/torc-service/v1"
+torc_bin = "torc"
+torc_server_bin = "torc-server"
+standalone = false
+server_port = 0
+completion_check_interval_secs = 5
 ```
 
-Uses the server's `claim_jobs_based_on_resources` endpoint which filters jobs based on available compute resources. Jobs must have resource requirements defined.
+## See Also
 
-#### Simple Queue-Based Allocation
-
-**When**: `--max-parallel-jobs` IS set
-
-```bash
-torc run $WORKFLOW_ID \
-  --max-parallel-jobs 10
-```
-
-Uses the server's `claim_next_jobs` endpoint which returns the next N ready jobs from the queue, ignoring resource requirements. Useful for homogeneous workloads or simple parallelism control.
-
-### Resource Limits
-
-Configure via compute node registration or command-line flags:
-
-**Via CLI**:
-```bash
-torc run $WORKFLOW_ID \
-  --num-cpus 32 \
-  --memory-gb 256 \
-  --num-gpus 8 \
-  --num-nodes 1
-```
-
-**Via compute node registration**:
-```bash
-torc compute-nodes create \
-  --workflow-id $WORKFLOW_ID \
-  --hostname $(hostname) \
-  --num-cpus 32 \
-  --memory "256g" \
-  --num-gpus 8 \
-  --is-active true
-```
-
-### Polling Interval
-
-Job runners poll the server for ready jobs. Configure via `--poll-interval`:
-
-**Default**: 60 seconds
-
-**Example**:
-```bash
-torc run $WORKFLOW_ID --poll-interval 30.0
-```
-
-Shorter intervals provide faster job pickup but increase server load.
+- [Configuration Files How-To](../how-to/configuration-files.md)
+- [Configuration Tutorial](../tutorials/configuration.md)
+- [Server Deployment](../how-to/server-deployment.md)

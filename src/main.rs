@@ -1,12 +1,12 @@
 use clap::{CommandFactory, Parser};
 use clap_complete;
 use rpassword;
-use std::path::PathBuf;
 
 use torc::cli::{Cli, Commands};
 use torc::client::apis::configuration::Configuration;
 use torc::client::apis::default_api;
 use torc::client::commands::compute_nodes::handle_compute_node_commands;
+use torc::client::commands::config::handle_config_commands;
 use torc::client::commands::events::handle_event_commands;
 use torc::client::commands::files::handle_file_commands;
 use torc::client::commands::job_dependencies::handle_job_dependency_commands;
@@ -17,6 +17,7 @@ use torc::client::commands::results::handle_result_commands;
 use torc::client::commands::slurm::handle_slurm_commands;
 use torc::client::commands::user_data::handle_user_data_commands;
 use torc::client::commands::workflows::handle_workflow_commands;
+use torc::client::config::TorcConfig;
 use torc::client::workflow_manager::WorkflowManager;
 use torc::client::workflow_spec::WorkflowSpec;
 
@@ -37,8 +38,15 @@ fn is_spec_file(arg: &str) -> bool {
 fn main() {
     let cli = Cli::parse();
 
-    // Resolve log level with priority: CLI arg > env var > default
-    let log_level = cli.log_level.unwrap_or_else(|| "info".to_string());
+    // Load configuration from files (system, user, local) and environment variables
+    // CLI arguments take precedence over file/env config
+    let file_config = TorcConfig::load().unwrap_or_default();
+
+    // Resolve log level with priority: CLI arg > file config > default
+    let log_level = cli
+        .log_level
+        .clone()
+        .unwrap_or_else(|| file_config.client.log_level.clone());
 
     // Initialize logger with CLI argument or RUST_LOG env var
     // Skip initialization for commands that set up their own logging (e.g., Run, Tui)
@@ -52,23 +60,38 @@ fn main() {
         env_logger::Builder::new().parse_filters(&log_level).init();
     }
 
+    // Resolve format with priority: CLI arg (non-default) > file config > CLI default
+    // Note: clap sets default to "table", so we check if user explicitly provided it
+    let format = if cli.format != "table" {
+        // User explicitly provided a format
+        cli.format.clone()
+    } else {
+        // Use file config if available, otherwise CLI default
+        file_config.client.format.clone()
+    };
+
     // Validate format option for API commands
-    if !matches!(cli.format.as_str(), "table" | "json") {
+    if !matches!(format.as_str(), "table" | "json") {
         eprintln!("Error: format must be either 'table' or 'json'");
         std::process::exit(1);
     }
 
-    // Resolve URL with priority: CLI arg > env var > default
+    // Resolve URL with priority: CLI arg > file config > default
     let url = cli
         .url
-        .unwrap_or_else(|| "http://localhost:8080/torc-service/v1".to_string());
+        .clone()
+        .unwrap_or_else(|| file_config.client.api_url.clone());
 
     // Create configuration for API commands
     let mut config = Configuration::new();
     config.base_path = url.clone();
 
-    // Handle authentication
-    if let Some(username) = cli.username.clone() {
+    // Handle authentication with priority: CLI arg > file config
+    let username = cli
+        .username
+        .clone()
+        .or_else(|| file_config.client.username.clone());
+    if let Some(username) = username {
         let password = match cli.password.clone() {
             Some(pwd) => Some(pwd),
             None => {
@@ -129,21 +152,22 @@ fn main() {
                 }
             };
 
-            // Build args for run_jobs_cmd
+            // Build args for run_jobs_cmd with config file fallbacks
+            let run_config = &file_config.client.run;
             let args = run_jobs_cmd::Args {
                 workflow_id: Some(workflow_id),
                 url: url.clone(),
                 output_dir: output_dir
                     .clone()
-                    .unwrap_or_else(|| PathBuf::from("output")),
-                poll_interval: poll_interval.unwrap_or(5.0),
-                max_parallel_jobs: *max_parallel_jobs,
-                database_poll_interval: 30,
+                    .unwrap_or_else(|| run_config.output_dir.clone()),
+                poll_interval: poll_interval.unwrap_or(run_config.poll_interval),
+                max_parallel_jobs: max_parallel_jobs.or(run_config.max_parallel_jobs),
+                database_poll_interval: run_config.database_poll_interval,
                 time_limit: None,
                 end_time: None,
-                num_cpus: *num_cpus,
-                memory_gb: *memory_gb,
-                num_gpus: *num_gpus,
+                num_cpus: num_cpus.or(run_config.num_cpus),
+                memory_gb: memory_gb.or(run_config.memory_gb),
+                num_gpus: num_gpus.or(run_config.num_gpus),
                 num_nodes: None,
                 scheduler_config_id: None,
                 log_prefix: None,
@@ -272,37 +296,40 @@ fn main() {
             }
         }
         Commands::Workflows { command } => {
-            handle_workflow_commands(&config, command, &cli.format);
+            handle_workflow_commands(&config, command, &format);
         }
         Commands::ComputeNodes { command } => {
-            handle_compute_node_commands(&config, command, &cli.format);
+            handle_compute_node_commands(&config, command, &format);
         }
         Commands::Files { command } => {
-            handle_file_commands(&config, command, &cli.format);
+            handle_file_commands(&config, command, &format);
         }
         Commands::Jobs { command } => {
-            handle_job_commands(&config, command, &cli.format);
+            handle_job_commands(&config, command, &format);
         }
         Commands::JobDependencies { command } => {
-            handle_job_dependency_commands(command, &config, &cli.format);
+            handle_job_dependency_commands(command, &config, &format);
         }
         Commands::ResourceRequirements { command } => {
-            handle_resource_requirements_commands(&config, command, &cli.format);
+            handle_resource_requirements_commands(&config, command, &format);
         }
         Commands::Events { command } => {
-            handle_event_commands(&config, command, &cli.format);
+            handle_event_commands(&config, command, &format);
         }
         Commands::Results { command } => {
-            handle_result_commands(&config, command, &cli.format);
+            handle_result_commands(&config, command, &format);
         }
         Commands::UserData { command } => {
-            handle_user_data_commands(&config, command, &cli.format);
+            handle_user_data_commands(&config, command, &format);
         }
         Commands::Slurm { command } => {
-            handle_slurm_commands(&config, command, &cli.format);
+            handle_slurm_commands(&config, command, &format);
         }
         Commands::Reports { command } => {
-            handle_report_commands(&config, command, &cli.format);
+            handle_report_commands(&config, command, &format);
+        }
+        Commands::Config { command } => {
+            handle_config_commands(command);
         }
         Commands::Tui(args) => {
             if let Err(e) = tui_runner::run(args) {

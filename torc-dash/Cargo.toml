@@ -1,0 +1,52 @@
+[package]
+name = "torc-dash"
+version.workspace = true
+authors.workspace = true
+license.workspace = true
+edition.workspace = true
+description = "Torc workflow dashboard - web UI with CLI integration"
+
+[[bin]]
+name = "torc-dash"
+path = "src/main.rs"
+
+[dependencies]
+# Torc library for config
+torc = { path = "..", features = ["config"] }
+
+# Web server
+axum.workspace = true
+tower.workspace = true
+tower-http.workspace = true
+
+# Async runtime
+tokio = { workspace = true, features = ["rt-multi-thread", "macros", "process", "io-util"] }
+
+# HTTP client for proxying
+reqwest = { workspace = true, features = ["json"] }
+
+# Serialization
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+# Static asset embedding
+rust-embed = { workspace = true }
+
+# CLI and config
+clap = { workspace = true }
+
+# Logging
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+
+# Error handling
+anyhow = { workspace = true }
+
+# Misc
+mime_guess.workspace = true
+
+# Streaming
+async-stream = "0.3"
+
+# Date/time
+chrono = "0.4"

@@ -3,8 +3,7 @@ members = [
     ".",
     "torc-server",
     "torc-slurm-job-runner",
-    
-
+    "torc-dash",
 ]
 resolver = "2"
 
@@ -18,6 +17,11 @@ edition = "2024"
 # Shared dependencies
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
+
+# Configuration management
+config = { version = "0.14", features = ["toml"] }
+dirs = "5"
+toml = "0.8"
 serde_repr = "0.1"
 serde_with = { version = "3.8", default-features = false, features = ["base64", "std", "macros"] }
 chrono = { version = "0.4", features = ["serde"] }
@@ -50,7 +54,12 @@ petgraph = "0.6"
 plotly = { version = "0.10", default-features = false, features = ["kaleido"] }
 
 # Server-specific
+rust-embed = "8.5"
 async-trait = "0.1.24"
+axum = { version = "0.7", features = ["tokio", "http1", "http2"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "fs"] }
+mime_guess = "2.0"
 swagger = { version = "6.1", features = ["serdejson", "server", "client", "tls", "tcp"] }
 hyper = { version = "0.14", features = ["full"] }
 serde_ignored = "0.1.1"
@@ -107,6 +116,11 @@ required-features = ["client", "tui", "plot_resources", "cli-docs"]
 
 [features]
 default = ["client", "tui", "plot_resources"]
+config = [
+    "dep:config",
+    "dep:dirs",
+    "dep:toml",
+]
 server = [
     "dep:async-trait",
     "dep:swagger",
@@ -123,6 +137,7 @@ server = [
     "dep:sha2",
     "dep:tracing",
     "dep:bcrypt",
+    "dep:rust-embed",
 ]
 client = [
     "dep:reqwest",
@@ -144,6 +159,7 @@ client = [
     "dep:signal-hook",
     "dep:libc",
     "dep:nvml-wrapper",
+    "config",
 ]
 tui = [
     "client",
@@ -194,6 +210,7 @@ jsonwebtoken = { workspace = true, optional = true }
 sha2 = { workspace = true, optional = true }
 tracing = { workspace = true, optional = true }
 bcrypt = { workspace = true, optional = true }
+rust-embed = { workspace = true, optional = true }
 
 # Client dependencies (optional)
 reqwest = { workspace = true, optional = true }
@@ -223,6 +240,11 @@ petgraph = { workspace = true, optional = true }
 # Plot-resources dependencies (optional)
 plotly = { workspace = true, optional = true }
 
+# Configuration management
+config = { workspace = true, optional = true }
+dirs = { workspace = true, optional = true }
+toml = { workspace = true, optional = true }
+
 # Conversion feature dependencies
 frunk = { version = "0.4.0", optional = true }
 frunk_derives = { version = "0.4.0", optional = true }
@@ -248,6 +270,7 @@ tempfile = "3.22.0"
 serial_test = "3.0"
 reqwest = { workspace = true }
 clap-markdown = "0.1"
+libc = "0.2"
 
 # CLI documentation generator depends on clap-markdown
 # It's also in dev-dependencies for tests

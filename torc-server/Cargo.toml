@@ -15,7 +15,7 @@ name = "torc-htpasswd"
 path = "src/bin/torc-htpasswd.rs"
 
 [dependencies]
-torc = { path = "..", features = ["server"] }
+torc = { path = "..", features = ["server", "config"] }
 tokio.workspace = true
 env_logger.workspace = true
 dotenvy.workspace = true

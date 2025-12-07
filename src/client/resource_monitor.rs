@@ -12,6 +12,7 @@ const DB_FILENAME_PREFIX: &str = "resource_metrics";
 
 /// Configuration for resource monitoring
 #[derive(Debug, Clone, PartialEq, serde::Deserialize, serde::Serialize)]
+#[serde(default)]
 pub struct ResourceMonitorConfig {
     pub enabled: bool,
     pub granularity: MonitorGranularity,

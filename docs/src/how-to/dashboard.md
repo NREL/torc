@@ -1,326 +1,264 @@
 # Web Dashboard (torc-dash)
 
-The Torc Dashboard provides a web-based interface for monitoring and managing workflows, offering an alternative to the command-line interface.
+The Torc Dashboard (`torc-dash`) provides a modern web-based interface for monitoring and managing workflows, offering an intuitive alternative to the command-line interface.
 
 ## Overview
 
-`torc-dash` is a Dash-based web application that allows you to:
+`torc-dash` is a Rust-based web application that allows you to:
 
-- **Monitor workflows and jobs** with real-time updates
-- **Browse resources** (workflows, jobs, files, events, compute nodes, etc.)
-- **Execute workflows** locally or submit to HPC/Slurm schedulers
-- **Filter and sort** data with interactive tables
-- **Configure** API connection and credentials
+- **Monitor workflows and jobs** with real-time status updates
+- **Create and run workflows** by uploading specification files (YAML, JSON, JSON5, KDL)
+- **Visualize workflow DAGs** with interactive dependency graphs
+- **Debug failed jobs** with integrated log file viewer
+- **Generate resource plots** from time series monitoring data
+- **Manage torc-server** start/stop in standalone mode
+- **View events** with automatic polling for updates
 
 ## Installation
 
+### Building from Source
+
+`torc-dash` is built as part of the Torc workspace:
+
+```bash
+# Build torc-dash
+cargo build --release -p torc-dash
+
+# Binary location
+./target/release/torc-dash
+```
+
 ### Prerequisites
 
-- Python 3.11 or later
-- A running Torc server
+- A running `torc-server` (or use `--standalone` mode to auto-start one)
 - The `torc` CLI binary in your PATH (for workflow execution features)
-
-### Setup
-
-1. **Create a Python virtual environment** (recommended):
-
-   ```bash
-   cd python_client
-   python -m venv .venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   ```
-
-2. **Install the torc package**:
-
-   ```bash
-   pip install -e .
-   ```
-
-   This installs the `torc_client` Python package with all dependencies including Dash and the `torc-dash` command-line entry point.
-
-3. **Verify installation**:
-
-   ```bash
-   torc-dash --help
-   ```
 
 ## Running the Dashboard
 
-### Quick Start
+### Quick Start (Standalone Mode)
 
-Start the dashboard with default settings (http://127.0.0.1:8050):
+The easiest way to get started is standalone mode, which automatically starts `torc-server`:
 
 ```bash
+torc-dash --standalone
+```
+
+This will:
+1. Start `torc-server` on an automatically-detected free port
+2. Start the dashboard on http://127.0.0.1:8090
+3. Configure the dashboard to connect to the managed server
+
+### Connecting to an Existing Server
+
+If you already have `torc-server` running:
+
+```bash
+# Use default API URL (http://localhost:8080/torc-service/v1)
+torc-dash
+
+# Specify custom API URL
+torc-dash --api-url http://myserver:9000/torc-service/v1
+
+# Or use environment variable
+export TORC_API_URL="http://myserver:9000/torc-service/v1"
 torc-dash
 ```
 
-### Custom Configuration
+### Command-Line Options
 
-Run with custom host and port:
-
-```bash
-torc-dash --host 0.0.0.0 --port 8080
 ```
-
-Run in debug mode (auto-reload on code changes):
-
-```bash
-torc-dash --debug
+Options:
+  -p, --port <PORT>           Dashboard port [default: 8090]
+      --host <HOST>           Dashboard host [default: 127.0.0.1]
+  -a, --api-url <API_URL>     Torc server API URL [default: http://localhost:8080/torc-service/v1]
+      --torc-bin <PATH>       Path to torc CLI binary [default: torc]
+      --torc-server-bin       Path to torc-server binary [default: torc-server]
+      --standalone            Auto-start torc-server alongside dashboard
+      --server-port <PORT>    Server port in standalone mode (0 = auto-detect) [default: 0]
+      --database <PATH>       Database path for standalone server
+      --completion-check-interval-secs <SECS>  Server polling interval [default: 5]
 ```
-
-### Environment Variables
-
-Pre-configure the dashboard using environment variables:
-
-```bash
-export TORC_API_URL="http://localhost:8080/torc-service/v1"
-torc-dash
-```
-
-## First-Time Setup
-
-1. **Start the application**:
-   ```bash
-   torc-dash
-   ```
-
-2. **Open your browser** and navigate to http://localhost:8050
-
-3. **Configure the API connection**:
-   - Click the "Configuration" button at the top
-   - Enter your Torc server API URL (e.g., `http://localhost:8080/torc-service/v1`)
-   - Enter your username
-   - Click "Save Configuration"
-
-4. **Test the connection**:
-   - Navigate to the "View Details" tab
-   - Select "Workflows" from the dropdown
-   - Click "Refresh"
-   - You should see a list of workflows (if any exist)
 
 ## Features
 
-### Configuration Panel
+### Workflows Tab
 
-- Set the Torc API URL
-- Configure username for workflow operations
+The main workflows view provides:
 
-### View Details Tab
+- **Workflow list** with ID, name, timestamp, user, and description
+- **Create Workflow** button to upload new workflow specifications
+- **Quick actions** for each workflow:
+  - View details and DAG visualization
+  - Initialize/reinitialize workflow
+  - Run locally or submit to scheduler
+  - Delete workflow
 
-Browse and monitor Torc resources with interactive tables:
+#### Creating Workflows
 
-- **Workflows**: View all workflows with filtering and sorting
-- **Jobs**: View jobs for a specific workflow
-- **Results**: View execution results
-- **Events**: View workflow events
-- **Files**: View input/output files
-- **User Data**: View user-defined data
-- **Compute Nodes**: View available compute resources
-- **Resource Requirements**: View resource specifications
+Click "Create Workflow" to open the creation dialog:
+
+1. **Upload a file**: Drag and drop or click to select a workflow specification file
+   - Supports YAML, JSON, JSON5, and KDL formats
+2. **Or enter a file path**: Specify a path on the server filesystem
+3. Click "Create" to register the workflow
+
+### Details Tab
+
+Explore workflow components with interactive tables:
+
+- **Jobs**: View all jobs with status, name, command, and dependencies
+- **Files**: Input/output files with paths and timestamps
+- **User Data**: Key-value data passed between jobs
+- **Results**: Execution results with return codes and resource metrics
+- **Compute Nodes**: Available compute resources
+- **Resource Requirements**: CPU, memory, GPU specifications
+- **Schedulers**: Slurm scheduler configurations
 
 Features:
-- Interactive tables with filtering and sorting
-- Workflow-based filtering for resource types
-- Auto-refresh every 5 seconds (optional)
-- Manual refresh button
+- **Workflow selector**: Filter by workflow
+- **Column sorting**: Click headers to sort
+- **Row filtering**: Type in filter boxes (supports `column:value` syntax)
+- **Auto-refresh**: Toggle automatic updates
 
-### Run Workflows Tab
+### DAG Visualization
 
-Create and execute workflows through the web interface:
+Click "View" on any workflow to see an interactive dependency graph:
 
-#### Method 1: Upload a Workflow Specification
+- Nodes represent jobs, colored by status
+- Edges show dependencies (file-based and explicit)
+- Zoom, pan, and click nodes for details
+- Legend shows status colors
 
-1. Navigate to the "Run Workflows" tab
-2. Select "New Workflow" tab
-3. Drag and drop a workflow spec file (YAML/JSON) or click to browse
-4. Select execution mode (Run locally or Submit to HPC/Slurm)
-5. Click "Execute Workflow"
+### Debugging Tab
 
-#### Method 2: Specify a File Path
+Investigate failed jobs with the integrated debugger:
 
-1. Navigate to the "Run Workflows" tab
-2. Select "New Workflow" tab
-3. Enter the path to your workflow specification file
-4. Select execution mode
-5. Click "Execute Workflow"
+1. Select a workflow
+2. Configure output directory (where logs are stored)
+3. Toggle "Show only failed jobs" to focus on problems
+4. Click "Generate Report" to fetch results
+5. Click any job row to view its log files:
+   - **stdout**: Standard output from the job
+   - **stderr**: Error output and stack traces
+   - Copy file paths with one click
 
-#### Method 3: Use an Existing Workflow
+### Events Tab
 
-1. Navigate to the "Run Workflows" tab
-2. Select "Existing Workflow" tab
-3. Choose a workflow from the dropdown
-4. Select execution mode
-5. Click "Execute Workflow"
+Monitor workflow activity:
 
-**Execution Modes:**
-- **Run locally**: Executes `torc run <spec>` to create and run the workflow on your local machine
-- **Submit to HPC/Slurm**: Executes `torc submit <spec>` to create and submit the workflow to a scheduler
+- Real-time event stream with automatic polling
+- Filter by workflow
+- View event types, timestamps, and details
+- Useful for tracking job state transitions
 
-Real-time execution output is displayed in the "Execution Output" section.
+### Resource Plots Tab
+
+Visualize CPU and memory usage over time:
+
+1. Enter a base directory containing resource database files
+2. Click "Scan for Databases" to find `.db` files
+3. Select databases to plot
+4. Click "Generate Plots" for interactive Plotly charts
+
+Requires workflows run with `granularity: "time_series"` in `resource_monitor` config.
+
+### Configuration Tab
+
+#### Server Management
+
+Start and stop `torc-server` directly from the dashboard:
+
+- **Server Port**: Port to listen on (0 = auto-detect free port)
+- **Database Path**: SQLite database file location
+- **Completion Check Interval**: How often to check for job completions
+- **Log Level**: Server logging verbosity
+
+Click "Start Server" to launch, "Stop Server" to terminate.
+
+#### API Configuration
+
+- **API URL**: Torc server endpoint
+- **Test Connection**: Verify connectivity
+
+Settings are saved to browser local storage.
 
 ## Common Usage Patterns
 
-### Monitoring Active Workflows
+### Running a Workflow
 
-1. Go to "View Details" tab
-2. Select "Workflows" from the resource type dropdown
-3. Enable "Auto-refresh" for live updates
-4. Use the table's filter boxes to search for specific workflows
+1. Navigate to **Workflows** tab
+2. Click **Create Workflow**
+3. Upload your specification file
+4. Click **Create**
+5. Click **Initialize** on the new workflow
+6. Click **Run Locally** (or **Submit** for Slurm)
+7. Monitor progress in the **Details** tab or **Events** tab
 
-### Viewing Job Status
+### Debugging a Failed Workflow
 
-1. Go to "View Details" tab
-2. Select "Jobs" from the resource type dropdown
-3. Select a workflow from the filter dropdown
-4. Monitor job status changes with auto-refresh enabled
+1. Go to the **Debugging** tab
+2. Select the workflow
+3. Check "Show only failed jobs"
+4. Click **Generate Report**
+5. Click on a failed job row
+6. Review the **stderr** tab for error messages
+7. Check **stdout** for context
 
-### Running a Quick Test
+### Monitoring Active Jobs
 
-1. Go to "Run Workflows" tab
-2. Under "New Workflow" tab, upload a simple workflow specification
-3. Select "Run Locally" execution mode
-4. Click "Execute Workflow"
-5. Monitor the output in the "Execution Output" section
-
-## Troubleshooting
-
-### Connection Errors
-
-**Problem**: Cannot connect to Torc server
-
-**Solutions**:
-- Verify the Torc server is running: `curl http://localhost:8080/torc-service/v1/workflows`
-- Check the API URL in the configuration panel
-- Ensure there are no firewall issues
-- Verify network connectivity
-
-### Execution Errors
-
-**Problem**: Workflow execution fails
-
-**Solutions**:
-- Ensure the `torc` CLI binary is in your PATH: `which torc`
-- Verify workflow specification files are valid YAML/JSON
-- Check that file paths are correct and accessible
-- Review the execution output for specific error messages
-
-### Port Already in Use
-
-**Problem**: Port 8050 is already in use
-
-**Solution**:
-```bash
-torc-dash --port 8051
-```
-
-### Auto-refresh Not Working
-
-**Solutions**:
-- Ensure the "Auto-refresh" toggle is enabled
-- Verify you're on the "View Details" tab
-- Check that the API connection is working
-- Manually refresh to test connectivity
-
-## Production Deployment
-
-### Using Gunicorn
-
-For production deployment, use a production WSGI server:
-
-```bash
-pip install gunicorn
-gunicorn torc.dash_app.app:server -b 0.0.0.0:8050 -w 4
-```
-
-With additional configuration:
-
-```bash
-gunicorn torc.dash_app.app:server \
-    --bind 0.0.0.0:8050 \
-    --workers 4 \
-    --timeout 120 \
-    --access-logfile - \
-    --error-logfile -
-```
-
-### Docker Deployment
-
-Create a `Dockerfile`:
-
-```dockerfile
-FROM python:3.12-slim
-
-WORKDIR /app
-
-COPY python_client /app/python_client
-
-RUN cd python_client && pip install .
-
-EXPOSE 8050
-
-CMD ["torc-dash", "--host", "0.0.0.0", "--port", "8050"]
-```
-
-Build and run:
-
-```bash
-docker build -t torc-dash .
-docker run -p 8050:8050 \
-    -e TORC_API_URL=http://your-server:8080/torc-service/v1 \
-    torc-dash
-```
+1. Open **Details** tab
+2. Select "Jobs" and your workflow
+3. Enable **Auto-refresh**
+4. Watch job statuses update in real-time
 
 ## Security Considerations
 
-1. **Network Access**: By default, the app binds to 127.0.0.1 (localhost only)
-2. **Production Use**: Use `--host 0.0.0.0` with caution in production environments
-3. **Authentication**: Password authentication is planned but not yet implemented
-4. **HTTPS**: For production, run behind a reverse proxy with HTTPS (nginx, Apache, etc.)
+1. **Network Access**: By default, binds to 127.0.0.1 (localhost only)
+2. **Remote Access**: Use `--host 0.0.0.0` with caution; consider a reverse proxy with HTTPS
+3. **Authentication**: Torc server supports htpasswd-based authentication (see [Authentication](./authentication.md))
 
-## Development
+## Troubleshooting
 
-To run in development mode with auto-reload:
+### Cannot Connect to Server
 
-```bash
-cd python_client/src/torc/dash_app
-python run.py --debug --host 127.0.0.1 --port 8050
-```
+- Verify torc-server is running: `curl http://localhost:8080/torc-service/v1/workflows`
+- Check the API URL in Configuration tab
+- In standalone mode, check server output for startup errors
 
-This enables:
-- Hot-reloading on code changes
-- Detailed error messages
-- Debug toolbar in the browser
+### Workflow Creation Fails
+
+- Ensure workflow specification is valid YAML/JSON/KDL
+- Check file paths are accessible from the server
+- Review browser console for error details
+
+### Resource Plots Not Showing
+
+- Verify workflow used `granularity: "time_series"` mode
+- Confirm `.db` files exist in the specified directory
+- Check that database files contain data
+
+### Standalone Mode Server Won't Start
+
+- Verify `torc-server` binary is in PATH or specify `--torc-server-bin`
+- Check if the port is already in use
+- Review console output for error messages
 
 ## Architecture
 
-The dashboard consists of four main components:
+`torc-dash` is a self-contained Rust binary with:
 
-1. **app.py**: Main Dash application with layout and configuration
-2. **layouts.py**: Tab layouts and UI components
-3. **callbacks.py**: Callback functions handling user interactions
-4. **utils.py**: API wrapper and CLI integration utilities
+- **Axum web framework** for HTTP server
+- **Embedded static assets** (HTML, CSS, JavaScript)
+- **API proxy** to forward requests to torc-server
+- **CLI integration** for workflow operations
 
-### API Integration
+The frontend uses vanilla JavaScript with:
+- **Cytoscape.js** for DAG visualization
+- **Plotly.js** for resource charts
+- **Custom components** for tables and forms
 
-The application uses the OpenAPI-generated client to communicate with the Torc server:
-- Synchronous API calls run in a thread pool to prevent UI blocking
-- Periodic updates for auto-refresh functionality
-- Error handling and user feedback
+## Next Steps
 
-### CLI Integration
-
-Workflow execution uses the Rust `torc` CLI binary:
-- `torc run <spec>` - Create and run workflow locally
-- `torc submit <spec>` - Create and submit to HPC/Slurm
-- `torc workflows create <spec>` - Create workflow from specification
-
-## Future Enhancements
-
-Planned features for future releases:
-- Password authentication support
-- Analytics tab with visualizations
-- Workflow monitoring with live updates
-- Job cancellation support
-- Resource usage plots
-- Workflow comparison tools
-- Export data to CSV/JSON
+- [Dashboard Deployment Tutorial](../tutorials/dashboard-deployment.md) - Detailed deployment scenarios
+- [Authentication](./authentication.md) - Secure your deployment
+- [Server Deployment](./server-deployment.md) - Production server configuration

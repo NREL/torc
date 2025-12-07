@@ -71,6 +71,8 @@ fn process_pagination_params(
 }
 
 /// Builds an SSL implementation for Simple HTTPS from some hard-coded file names
+///
+/// Returns the actual port the server bound to (useful when port 0 is specified for auto-detection)
 pub async fn create(
     addr: &str,
     https: bool,
@@ -78,13 +80,26 @@ pub async fn create(
     htpasswd: Option<HtpasswdFile>,
     require_auth: bool,
     completion_check_interval_secs: f64,
-) {
+) -> u16 {
     // Resolve hostname to socket address (supports both hostnames and IP addresses)
     let addr = tokio::net::lookup_host(addr)
         .await
         .expect("Failed to resolve bind address")
         .next()
         .expect("No addresses resolved for bind address");
+
+    // Bind early to get the actual port (especially important when port 0 is used)
+    let tcp_listener = TcpListener::bind(&addr)
+        .await
+        .expect("Failed to bind to address");
+    let actual_addr = tcp_listener
+        .local_addr()
+        .expect("Failed to get local address");
+    let actual_port = actual_addr.port();
+
+    // Print the actual port in a machine-parseable format for tools like torc-dash
+    // This MUST be printed before any other output so it can be reliably parsed
+    println!("TORC_SERVER_PORT={}", actual_port);
 
     let server = Server::new(pool.clone());
 
@@ -121,9 +136,8 @@ pub async fn create(
                 .expect("Failed to check private key");
 
             let tls_acceptor = ssl.build();
-            let tcp_listener = TcpListener::bind(&addr).await.unwrap();
 
-            info!("Starting a server (with https)");
+            info!("Starting a server (with https) on port {}", actual_port);
             loop {
                 if let Ok((tcp, _)) = tcp_listener.accept().await {
                     let ssl = Ssl::new(tls_acceptor.context()).unwrap();
@@ -141,14 +155,26 @@ pub async fn create(
                     });
                 }
             }
+
+            // Note: The loop above never exits, but we need to return the port for API consistency
+            #[allow(unreachable_code)]
+            actual_port
         }
     } else {
-        info!("Starting a server (over http, so no TLS)");
-        // Using HTTP
-        hyper::server::Server::bind(&addr)
+        info!(
+            "Starting a server (over http, so no TLS) on port {}",
+            actual_port
+        );
+        // Using HTTP - convert tokio TcpListener to std for hyper
+        let std_listener = tcp_listener
+            .into_std()
+            .expect("Failed to convert TcpListener");
+        hyper::server::Server::from_tcp(std_listener)
+            .expect("Failed to create server from TCP listener")
             .serve(service)
             .await
-            .unwrap()
+            .unwrap();
+        actual_port
     }
 }
 
