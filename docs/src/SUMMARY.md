@@ -24,6 +24,7 @@
   - [Design](./explanation/design/README.md)
     - [Server API Handler](./explanation/design/server.md)
     - [Central Database](./explanation/design/database.md)
+    - [Web Dashboard](./explanation/design/dashboard.md)
 
 # How-To Guides
 

@@ -6,6 +6,6 @@ This section covers Torc's internal design and implementation details. These top
 
 - **Server API Handler** - Multi-threaded async web service architecture and key endpoints
 - **Central Database** - SQLite schema, concurrency model, and coordination mechanisms
-- **Ready Queue** - Performance optimization for large workflows
+- **Web Dashboard** - Browser-based UI gateway architecture and CLI integration
 
 For user-facing concepts and guides, see the other Explanation chapters.
