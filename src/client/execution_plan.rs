@@ -92,7 +92,7 @@ impl ExecutionPlan {
             job_id_to_name.insert(job_id, job.name.clone());
             job_name_to_id.insert(job.name.clone(), job_id);
 
-            let deps = job.blocked_by_job_ids.clone().unwrap_or_default();
+            let deps = job.depends_on_job_ids.clone().unwrap_or_default();
             dependency_graph_by_id.insert(job_id, deps);
         }
 
@@ -210,13 +210,13 @@ fn build_dependency_graph(
     for job in &spec.jobs {
         let mut job_deps = Vec::new();
 
-        // Add explicit dependencies from blocked_by
-        if let Some(ref names) = job.blocked_by {
+        // Add explicit dependencies from depends_on
+        if let Some(ref names) = job.depends_on {
             job_deps.extend(names.clone());
         }
 
-        // Add dependencies from blocked_by_regexes
-        if let Some(ref regexes) = job.blocked_by_regexes {
+        // Add dependencies from depends_on_regexes
+        if let Some(ref regexes) = job.depends_on_regexes {
             for regex_str in regexes {
                 let re = Regex::new(regex_str)?;
                 for other_job in &spec.jobs {

@@ -4,7 +4,7 @@ Torc supports two types of dependencies:
 
 ## 1. Explicit Dependencies
 
-Declared via `blocked_by`:
+Declared via `depends_on`:
 
 ```yaml
 jobs:
@@ -12,7 +12,7 @@ jobs:
     command: preprocess.sh
   - name: analyze
     command: analyze.sh
-    blocked_by:
+    depends_on:
       - preprocess
 ```
 
@@ -59,7 +59,7 @@ user_data:
 
 During workflow creation, the server:
 1. Resolves all names to IDs
-2. Stores explicit dependencies in `job_blocked_by`
+2. Stores explicit dependencies in `job_depends_on`
 3. Stores file/user_data relationships in junction tables
 4. During `initialize_jobs`, queries junction tables to add implicit dependencies
 

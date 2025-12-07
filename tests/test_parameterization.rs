@@ -353,12 +353,12 @@ fn test_job_with_input_output_files() {
 }
 
 #[rstest]
-fn test_job_with_blocked_by_names() {
+fn test_job_with_depends_on_names() {
     let mut job = JobSpec::new(
         "dependent_{i}".to_string(),
         "echo dependent {i}".to_string(),
     );
-    job.blocked_by = Some(vec!["upstream_{i}".to_string()]);
+    job.depends_on = Some(vec!["upstream_{i}".to_string()]);
 
     let mut params = HashMap::new();
     params.insert("i".to_string(), "1:3".to_string());
@@ -368,9 +368,9 @@ fn test_job_with_blocked_by_names() {
 
     assert_eq!(expanded.len(), 3);
     assert_eq!(expanded[0].name, "dependent_1");
-    assert_eq!(expanded[0].blocked_by, Some(vec!["upstream_1".to_string()]));
+    assert_eq!(expanded[0].depends_on, Some(vec!["upstream_1".to_string()]));
     assert_eq!(expanded[2].name, "dependent_3");
-    assert_eq!(expanded[2].blocked_by, Some(vec!["upstream_3".to_string()]));
+    assert_eq!(expanded[2].depends_on, Some(vec!["upstream_3".to_string()]));
 }
 
 #[rstest]
@@ -430,8 +430,8 @@ fn test_workflow_spec_expand_parameters() {
             supports_termination: Some(false),
             resource_requirements: None,
             scheduler: None,
-            blocked_by: None,
-            blocked_by_regexes: None,
+            depends_on: None,
+            depends_on_regexes: None,
             input_files: None,
             input_file_regexes: None,
             output_files: None,

@@ -731,7 +731,7 @@ List jobs
   Default value: `0`
 * `--sort-by <SORT_BY>` — Field to sort by
 * `--reverse-sort` — Reverse sort order
-* `--include-relationships` — Include job relationships (blocked_by_job_ids, input/output file/user_data IDs) - slower but more complete
+* `--include-relationships` — Include job relationships (depends_on_job_ids, input/output file/user_data IDs) - slower but more complete
 
 
 

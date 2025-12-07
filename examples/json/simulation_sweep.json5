@@ -18,7 +18,7 @@
       "name": "simulate_T{temp}_P{pressure:03d}",
       "command": "./run_simulation \\\n  --config=/configs/initial_config.xyz \\\n  --temperature={temp} \\\n  --pressure={pressure} \\\n  --steps=1000000 \\\n  --output=/data/simulation_T{temp}_P{pressure:03d}.xyz \\\n  --log=/logs/simulation_T{temp}_P{pressure:03d}.log\n",
       "resource_requirements": "simulation",
-      "blocked_by": [
+      "depends_on": [
         "generate_config"
       ],
       "input_files": [
@@ -37,7 +37,7 @@
       "name": "analyze_T{temp}_P{pressure:03d}",
       "command": "python scripts/analyze.py \\\n  --input=/data/simulation_T{temp}_P{pressure:03d}.xyz \\\n  --output=/analysis/analysis_T{temp}_P{pressure:03d}.json \\\n  --temperature={temp} \\\n  --pressure={pressure}\n",
       "resource_requirements": "analysis",
-      "blocked_by": [
+      "depends_on": [
         "simulate_T{temp}_P{pressure:03d}"
       ],
       "input_files": [
@@ -55,7 +55,7 @@
       "name": "generate_phase_diagram",
       "command": "python scripts/phase_diagram.py --input-dir=/analysis --output=/results/phase_diagram.png",
       "resource_requirements": "minimal",
-      "blocked_by": [
+      "depends_on": [
         "analyze_T{temp}_P{pressure:03d}"
       ],
       "input_files": [

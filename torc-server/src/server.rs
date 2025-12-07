@@ -531,25 +531,25 @@ impl<C> Server<C> {
         }
     }
 
-    /// Create a blocked-by association between two jobs.
-    async fn add_blocked_by_association(
+    /// Create a depends-on association between two jobs.
+    async fn add_depends_on_association(
         &self,
         job_id: i64,
-        blocked_by_job_id: i64,
+        depends_on_job_id: i64,
         workflow_id: i64,
     ) -> Result<(), ApiError> {
         match sqlx::query!(
             r#"
-            INSERT INTO job_blocked_by
+            INSERT INTO job_depends_on
             (
                 job_id
-                ,blocked_by_job_id
+                ,depends_on_job_id
                 ,workflow_id
             )
             VALUES ($1, $2, $3)
         "#,
             job_id,
-            blocked_by_job_id,
+            depends_on_job_id,
             workflow_id,
         )
         .execute(self.pool.as_ref())
@@ -563,8 +563,8 @@ impl<C> Server<C> {
         }
     }
 
-    /// Create a blocked-by association between two jobs based on file dependencies.
-    async fn add_blocked_by_associations_from_files<'e, E>(
+    /// Create a depends-on association between two jobs based on file dependencies.
+    async fn add_depends_on_associations_from_files<'e, E>(
         &self,
         executor: E,
         workflow_id: i64,
@@ -573,10 +573,10 @@ impl<C> Server<C> {
         E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
     {
         match sqlx::query!(
-            r#"INSERT OR IGNORE INTO job_blocked_by (job_id, blocked_by_job_id, workflow_id)
+            r#"INSERT OR IGNORE INTO job_depends_on (job_id, depends_on_job_id, workflow_id)
             SELECT
                 i.job_id AS job_id
-                ,o.job_id AS blocked_by_job_id
+                ,o.job_id AS depends_on_job_id
                 ,i.workflow_id AS workflow_id
             FROM job_input_file i
             JOIN job_output_file o ON i.file_id = o.file_id
@@ -595,9 +595,9 @@ impl<C> Server<C> {
         }
     }
 
-    /// Add blocked-by associations based on user_data dependencies.
+    /// Add depends-on associations based on user_data dependencies.
     /// If job A outputs user_data X and job B inputs user_data X, then job B is blocked by job A.
-    async fn add_blocked_by_associations_from_user_data<'e, E>(
+    async fn add_depends_on_associations_from_user_data<'e, E>(
         &self,
         executor: E,
         workflow_id: i64,
@@ -606,10 +606,10 @@ impl<C> Server<C> {
         E: sqlx::Executor<'e, Database = sqlx::Sqlite>,
     {
         match sqlx::query!(
-            r#"INSERT OR IGNORE INTO job_blocked_by (job_id, blocked_by_job_id, workflow_id)
+            r#"INSERT OR IGNORE INTO job_depends_on (job_id, depends_on_job_id, workflow_id)
             SELECT
                 i.job_id AS job_id
-                ,o.job_id AS blocked_by_job_id
+                ,o.job_id AS depends_on_job_id
                 ,j.workflow_id AS workflow_id
             FROM job_input_user_data i
             JOIN job_output_user_data o ON i.user_data_id = o.user_data_id
@@ -653,8 +653,8 @@ impl<C> Server<C> {
 
                 -- Recursive case: find jobs blocked by any job that should be uninitialized
                 SELECT jbb.job_id
-                FROM job_blocked_by jbb
-                JOIN jobs_to_uninitialize jtu ON jbb.blocked_by_job_id = jtu.job_id
+                FROM job_depends_on jbb
+                JOIN jobs_to_uninitialize jtu ON jbb.depends_on_job_id = jtu.job_id
                 WHERE jbb.workflow_id = $1
             )
             UPDATE job
@@ -703,8 +703,8 @@ impl<C> Server<C> {
             AND status = $3
             AND id IN (
                 SELECT DISTINCT jbb.job_id
-                FROM job_blocked_by jbb
-                JOIN job j ON jbb.blocked_by_job_id = j.id
+                FROM job_depends_on jbb
+                JOIN job j ON jbb.depends_on_job_id = j.id
                 WHERE jbb.workflow_id = $2
                 AND j.status NOT IN ($4, $5, $6, $7)
             )
@@ -716,8 +716,8 @@ impl<C> Server<C> {
             WHERE workflow_id = $2
             AND id IN (
                 SELECT DISTINCT jbb.job_id
-                FROM job_blocked_by jbb
-                JOIN job j ON jbb.blocked_by_job_id = j.id
+                FROM job_depends_on jbb
+                JOIN job j ON jbb.depends_on_job_id = j.id
                 WHERE jbb.workflow_id = $2
                 AND j.status NOT IN ($3, $4, $5, $6)
             )
@@ -1127,18 +1127,18 @@ impl<C> Server<C> {
                         ELSE 0
                     END as should_cancel,
                     0 as level
-                FROM job_blocked_by jbb
+                FROM job_depends_on jbb
                 JOIN job j ON jbb.job_id = j.id
-                WHERE jbb.blocked_by_job_id = ?
+                WHERE jbb.depends_on_job_id = ?
                   AND jbb.workflow_id = ?
                   AND j.status = ?
                   -- Only process if no other incomplete blocking jobs exist
                   AND NOT EXISTS (
                       SELECT 1
-                      FROM job_blocked_by jbb2
-                      JOIN job j2 ON jbb2.blocked_by_job_id = j2.id
+                      FROM job_depends_on jbb2
+                      JOIN job j2 ON jbb2.depends_on_job_id = j2.id
                       WHERE jbb2.job_id = jbb.job_id
-                        AND jbb2.blocked_by_job_id != ?
+                        AND jbb2.depends_on_job_id != ?
                         AND j2.status NOT IN (?, ?, ?, ?)
                   )
 
@@ -1154,7 +1154,7 @@ impl<C> Server<C> {
                     END as should_cancel,
                     jtp.level + 1 as level
                 FROM jobs_to_process jtp
-                JOIN job_blocked_by jbb ON jbb.blocked_by_job_id = jtp.job_id
+                JOIN job_depends_on jbb ON jbb.depends_on_job_id = jtp.job_id
                 JOIN job j ON jbb.job_id = j.id
                 WHERE jtp.should_cancel = 1  -- Only cascade from jobs that will be canceled
                   AND jbb.workflow_id = ?
@@ -1163,10 +1163,10 @@ impl<C> Server<C> {
                   -- Only process if no other incomplete blocking jobs exist
                   AND NOT EXISTS (
                       SELECT 1
-                      FROM job_blocked_by jbb2
-                      JOIN job j2 ON jbb2.blocked_by_job_id = j2.id
+                      FROM job_depends_on jbb2
+                      JOIN job j2 ON jbb2.depends_on_job_id = j2.id
                       WHERE jbb2.job_id = jbb.job_id
-                        AND jbb2.blocked_by_job_id != jtp.job_id
+                        AND jbb2.depends_on_job_id != jtp.job_id
                         AND j2.status NOT IN (?, ?, ?, ?)
                   )
             )
@@ -1180,7 +1180,7 @@ impl<C> Server<C> {
             "#,
         )
         .bind(return_code)           // Base case: check return_code for cancellation
-        .bind(completed_job_id)      // Base case: blocked_by_job_id
+        .bind(completed_job_id)      // Base case: depends_on_job_id
         .bind(workflow_id)           // Base case: workflow_id
         .bind(blocked_status)        // Base case: only process blocked jobs
         .bind(completed_job_id)      // Base case: exclude the completed job itself
@@ -1380,9 +1380,9 @@ impl<C> Server<C> {
         let affected_jobs = match sqlx::query!(
             r#"
             SELECT DISTINCT jbb.job_id
-            FROM job_blocked_by jbb
+            FROM job_depends_on jbb
             JOIN job j ON jbb.job_id = j.id
-            WHERE jbb.blocked_by_job_id = ?
+            WHERE jbb.depends_on_job_id = ?
             AND jbb.workflow_id = ?
             AND j.status IN (?, ?)
             "#,
@@ -1500,8 +1500,8 @@ impl<C> Server<C> {
                 SELECT
                     jbb.job_id,
                     0 as level
-                FROM job_blocked_by jbb
-                WHERE jbb.blocked_by_job_id = ?
+                FROM job_depends_on jbb
+                WHERE jbb.depends_on_job_id = ?
                   AND jbb.workflow_id = ?
 
                 UNION ALL
@@ -1511,7 +1511,7 @@ impl<C> Server<C> {
                     jbb.job_id,
                     dj.level + 1 as level
                 FROM downstream_jobs dj
-                JOIN job_blocked_by jbb ON jbb.blocked_by_job_id = dj.job_id
+                JOIN job_depends_on jbb ON jbb.depends_on_job_id = dj.job_id
                 WHERE jbb.workflow_id = ?
                   AND dj.level < 100  -- Prevent infinite loops
             )
@@ -2750,23 +2750,23 @@ where
             }
         };
 
-        // Step 1: Add blocked-by associations based on file dependencies
+        // Step 1: Add depends-on associations based on file dependencies
         if let Err(e) = self
-            .add_blocked_by_associations_from_files(&mut *tx, id)
+            .add_depends_on_associations_from_files(&mut *tx, id)
             .await
         {
-            error!("Failed to add blocked-by associations from files: {}", e);
+            error!("Failed to add depends-on associations from files: {}", e);
             let _ = tx.rollback().await;
             return Err(e);
         }
 
-        // Step 1b: Add blocked-by associations from user_data
+        // Step 1b: Add depends-on associations from user_data
         if let Err(e) = self
-            .add_blocked_by_associations_from_user_data(&mut *tx, id)
+            .add_depends_on_associations_from_user_data(&mut *tx, id)
             .await
         {
             error!(
-                "Failed to add blocked-by associations from user_data: {}",
+                "Failed to add depends-on associations from user_data: {}",
                 e
             );
             let _ = tx.rollback().await;
@@ -2849,7 +2849,7 @@ where
 
         // Commit the transaction
         // Hash computation must happen AFTER this commit so that compute_job_input_hash
-        // can see the job_blocked_by relationships that were inserted in this transaction
+        // can see the job_depends_on relationships that were inserted in this transaction
         if let Err(e) = tx.commit().await {
             error!("Failed to commit transaction for initialize_jobs: {}", e);
             return Err(ApiError("Database error".to_string()));
@@ -2858,7 +2858,7 @@ where
         // Step 7: Compute and store input hashes for all jobs in the workflow
         // This tracks the baseline hash for this run to detect future input changes
         // IMPORTANT: This must happen AFTER the transaction commits so that the hash
-        // computation sees the committed job_blocked_by relationships
+        // computation sees the committed job_depends_on relationships
         let job_ids = match sqlx::query!(
             r#"
             SELECT id
@@ -3364,7 +3364,7 @@ where
                 schedule_compute_nodes: None,
                 cancel_on_blocking_job_failure: Some(row.get("cancel_on_blocking_job_failure")),
                 supports_termination: Some(row.get("supports_termination")),
-                blocked_by_job_ids: None,
+                depends_on_job_ids: None,
                 input_file_ids: None,
                 output_file_ids: None,
                 input_user_data_ids: None,
@@ -4440,7 +4440,7 @@ where
                     schedule_compute_nodes: None,
                     cancel_on_blocking_job_failure: Some(row.get("cancel_on_blocking_job_failure")),
                     supports_termination: Some(row.get("supports_termination")),
-                    blocked_by_job_ids: None,
+                    depends_on_job_ids: None,
                     input_file_ids: None,
                     output_file_ids: None,
                     input_user_data_ids: None,

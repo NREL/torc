@@ -24,14 +24,14 @@ from typing_extensions import Self
 
 class JobDependencyModel(BaseModel):
     """
-    Represents a blocking relationship between two jobs in the job_blocked_by table.
+    Represents a blocking relationship between two jobs in the job_depends_on table.
     """ # noqa: E501
     job_id: StrictInt = Field(description="The job that is blocked")
     job_name: StrictStr = Field(description="The name of the job that is blocked")
-    blocked_by_job_id: StrictInt = Field(description="The job that must complete first")
-    blocked_by_job_name: StrictStr = Field(description="The name of the job that must complete first")
+    depends_on_job_id: StrictInt = Field(description="The job that must complete first")
+    depends_on_job_name: StrictStr = Field(description="The name of the job that must complete first")
     workflow_id: StrictInt = Field(description="The workflow containing both jobs")
-    __properties: ClassVar[List[str]] = ["job_id", "job_name", "blocked_by_job_id", "blocked_by_job_name", "workflow_id"]
+    __properties: ClassVar[List[str]] = ["job_id", "job_name", "depends_on_job_id", "depends_on_job_name", "workflow_id"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -86,8 +86,8 @@ class JobDependencyModel(BaseModel):
         _obj = cls.model_validate({
             "job_id": obj.get("job_id"),
             "job_name": obj.get("job_name"),
-            "blocked_by_job_id": obj.get("blocked_by_job_id"),
-            "blocked_by_job_name": obj.get("blocked_by_job_name"),
+            "depends_on_job_id": obj.get("depends_on_job_id"),
+            "depends_on_job_name": obj.get("depends_on_job_name"),
             "workflow_id": obj.get("workflow_id")
         })
         return _obj

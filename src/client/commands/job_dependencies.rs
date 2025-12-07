@@ -52,9 +52,9 @@ struct JobDependencyTableRow {
     #[tabled(rename = "Job Name")]
     job_name: String,
     #[tabled(rename = "Blocked By Job ID")]
-    blocked_by_job_id: i64,
+    depends_on_job_id: i64,
     #[tabled(rename = "Blocked By Job Name")]
-    blocked_by_job_name: String,
+    depends_on_job_name: String,
 }
 
 #[derive(Tabled)]
@@ -134,8 +134,8 @@ pub fn handle_job_dependency_commands(
                             .map(|dep| JobDependencyTableRow {
                                 job_id: dep.job_id,
                                 job_name: dep.job_name.clone(),
-                                blocked_by_job_id: dep.blocked_by_job_id,
-                                blocked_by_job_name: dep.blocked_by_job_name.clone(),
+                                depends_on_job_id: dep.depends_on_job_id,
+                                depends_on_job_name: dep.depends_on_job_name.clone(),
                             })
                             .collect();
 

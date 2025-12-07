@@ -2715,12 +2715,12 @@ class TorcDashboard {
             // Get job dependencies (jobs this job is blocked by)
             const blockedByJobIds = jobDependencies
                 .filter(d => d.job_id === jobIdNum)
-                .map(d => d.blocked_by_job_id);
+                .map(d => d.depends_on_job_id);
             const blockedByJobs = allJobs.filter(j => blockedByJobIds.includes(j.id));
 
             // Get jobs blocked by this job
             const blocksJobIds = jobDependencies
-                .filter(d => d.blocked_by_job_id === jobIdNum)
+                .filter(d => d.depends_on_job_id === jobIdNum)
                 .map(d => d.job_id);
             const blocksJobs = allJobs.filter(j => blocksJobIds.includes(j.id));
 
@@ -3012,7 +3012,7 @@ class TorcDashboard {
         const blockedBy = {};
         dependencies.forEach(dep => {
             if (!blockedBy[dep.job_id]) blockedBy[dep.job_id] = [];
-            blockedBy[dep.job_id].push(dep.blocked_by_job_id);
+            blockedBy[dep.job_id].push(dep.depends_on_job_id);
         });
 
         // Create job map
@@ -3310,7 +3310,7 @@ class TorcDashboard {
             id: jobId,
             name: '',
             command: '',
-            blocked_by: [],
+            depends_on: [],
             resource_preset: 'small',
             num_cpus: 1,
             memory: '1g',
@@ -3333,9 +3333,9 @@ class TorcDashboard {
 
     wizardRemoveJob(jobId) {
         this.wizardJobs = this.wizardJobs.filter(j => j.id !== jobId);
-        // Remove this job from any blocked_by references
+        // Remove this job from any depends_on references
         this.wizardJobs.forEach(job => {
-            job.blocked_by = job.blocked_by.filter(id => id !== jobId);
+            job.depends_on = job.depends_on.filter(id => id !== jobId);
         });
         this.wizardRenderJobs();
     }
@@ -3361,9 +3361,9 @@ class TorcDashboard {
             }
             // Re-render to update preset buttons and resource fields
             this.wizardRenderJobs();
-        } else if (field === 'blocked_by') {
+        } else if (field === 'depends_on') {
             // Value is an array of job IDs
-            job.blocked_by = value;
+            job.depends_on = value;
         } else {
             job[field] = value;
             // If user modifies resources, switch to custom preset
@@ -3406,7 +3406,7 @@ class TorcDashboard {
         }
 
         container.innerHTML = this.wizardJobs.map((job, index) => {
-            // Get other jobs for blocked_by dropdown
+            // Get other jobs for depends_on dropdown
             const otherJobs = this.wizardJobs.filter(j => j.id !== job.id);
 
             return `
@@ -3432,9 +3432,9 @@ class TorcDashboard {
                             <div class="form-group">
                                 <label>Depends On</label>
                                 <select class="select-input" multiple size="2"
-                                        onchange="app.wizardUpdateJob(${job.id}, 'blocked_by', Array.from(this.selectedOptions).map(o => parseInt(o.value)))">
+                                        onchange="app.wizardUpdateJob(${job.id}, 'depends_on', Array.from(this.selectedOptions).map(o => parseInt(o.value)))">
                                     ${otherJobs.map(j => `
-                                        <option value="${j.id}" ${job.blocked_by.includes(j.id) ? 'selected' : ''}>
+                                        <option value="${j.id}" ${job.depends_on.includes(j.id) ? 'selected' : ''}>
                                             ${this.escapeHtml(j.name) || 'Untitled Job'}
                                         </option>
                                     `).join('')}
@@ -3918,7 +3918,7 @@ class TorcDashboard {
         const name = document.getElementById('wizard-name')?.value?.trim() || 'untitled-workflow';
         const description = document.getElementById('wizard-description')?.value?.trim();
 
-        // Build job info map for resolving blocked_by references
+        // Build job info map for resolving depends_on references
         const jobInfoMap = {};
         this.wizardJobs.forEach(job => {
             const jobName = job.name?.trim() || `job_${job.id}`;
@@ -3953,12 +3953,12 @@ class TorcDashboard {
                 command: job.command?.trim() || 'echo "TODO"'
             };
 
-            // Add blocked_by - separate parameterized deps (use regex) from regular deps
-            if (job.blocked_by.length > 0) {
+            // Add depends_on - separate parameterized deps (use regex) from regular deps
+            if (job.depends_on.length > 0) {
                 const regularDeps = [];
                 const regexDeps = [];
 
-                job.blocked_by.forEach(depId => {
+                job.depends_on.forEach(depId => {
                     const depInfo = jobInfoMap[depId];
                     if (depInfo.isParameterized) {
                         // Parameterized job - use regex to match all expanded instances
@@ -3970,10 +3970,10 @@ class TorcDashboard {
                 });
 
                 if (regularDeps.length > 0) {
-                    jobSpec.blocked_by = regularDeps;
+                    jobSpec.depends_on = regularDeps;
                 }
                 if (regexDeps.length > 0) {
-                    jobSpec.blocked_by_regexes = regexDeps;
+                    jobSpec.depends_on_regexes = regexDeps;
                 }
             }
 

@@ -161,7 +161,7 @@ jobs:
     command: python process.py --input=data_{config}.pkl
     input_files:
       - data_{config}
-    blocked_by:
+    depends_on:
       - generate_{config}
     parameters:
       config: "['A','B','C']"
@@ -221,7 +221,7 @@ jobs:
   # Aggregate results - also uses shared parameters
   - name: aggregate_results
     command: python aggregate.py
-    blocked_by:
+    depends_on:
       - train_lr{lr:.4f}_bs{batch_size}_opt{optimizer}
     use_parameters:
       - lr

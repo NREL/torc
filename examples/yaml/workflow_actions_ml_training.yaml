@@ -10,14 +10,14 @@ jobs:
   - name: "train_model_{model_id}"
     command: "python scripts/train.py --model {model_id} --data data/processed --output models/model_{model_id}"
     resource_requirements: "gpu"
-    blocked_by: ["preprocess_data"]
+    depends_on: ["preprocess_data"]
     parameters:
       model_id: "[1,2,3,4,5,6,7,8]"
 
   - name: "evaluate"
     command: "python scripts/evaluate.py --models models/ --output results/evaluation.json"
     resource_requirements: "medium"
-    blocked_by_regexes: ["train_model_.*"]
+    depends_on_regexes: ["train_model_.*"]
 
 resource_requirements:
   - name: "small"

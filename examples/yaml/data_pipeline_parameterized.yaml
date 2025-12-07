@@ -20,7 +20,7 @@ jobs:
   - name: preprocess_{dataset}
     command: python scripts/preprocess.py --input=/data/raw/{dataset}.csv --output=/data/clean/{dataset}.csv
     resource_requirements: cpu_intensive
-    blocked_by:
+    depends_on:
       - download_{dataset}
     input_files:
       - raw_{dataset}
@@ -37,7 +37,7 @@ jobs:
         --analysis={analysis_type} \
         --output=/results/{dataset}_{analysis_type}_results.json
     resource_requirements: cpu_intensive
-    blocked_by:
+    depends_on:
       - preprocess_{dataset}
     input_files:
       - clean_{dataset}
@@ -55,7 +55,7 @@ jobs:
         --input-dir=/results \
         --output=/reports/{dataset}_report.html
     resource_requirements: minimal
-    blocked_by:
+    depends_on:
       - analyze_{dataset}_{analysis_type}
     input_files:
       - results_{dataset}_{analysis_type}
@@ -67,7 +67,7 @@ jobs:
   - name: executive_summary
     command: python scripts/executive_summary.py --input-dir=/reports --output=/reports/executive_summary.pdf
     resource_requirements: minimal
-    blocked_by:
+    depends_on:
       - report_{dataset}
     parameters:
       dataset: "['sales','inventory','customers','products']"

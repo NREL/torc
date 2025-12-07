@@ -14,12 +14,12 @@ job "setup" {
 
 job "process" {
     command "echo 'Processing data...' && sleep 5"
-    blocked_by_job "setup"
+    depends_on_job "setup"
 }
 
 job "finalize" {
     command "echo 'Finalizing...' && sleep 2"
-    blocked_by_job "process"
+    depends_on_job "process"
 }
 
 // Workflow actions

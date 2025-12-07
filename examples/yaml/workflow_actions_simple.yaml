@@ -8,11 +8,11 @@ jobs:
 
   - name: "process"
     command: "echo 'Processing data...' && sleep 5"
-    blocked_by: ["setup"]
+    depends_on: ["setup"]
 
   - name: "finalize"
     command: "echo 'Finalizing...' && sleep 2"
-    blocked_by: ["process"]
+    depends_on: ["process"]
 
 actions:
   # Run setup commands when the workflow starts

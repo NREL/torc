@@ -76,7 +76,7 @@ fn test_jobs_add_with_blocking_jobs(start_server: &ServerProcess) {
 
     assert_eq!(json_output.get("name").unwrap(), &json!("dependent_job"));
     assert_eq!(
-        json_output.get("blocked_by_job_ids").unwrap(),
+        json_output.get("depends_on_job_ids").unwrap(),
         &json!(vec![blocking_job_id])
     );
 }
@@ -394,7 +394,7 @@ fn test_jobs_update_partial_fields(start_server: &ServerProcess) {
 //     // Verify blocking job IDs are updated
 //     let expected_blocking_ids = vec![blocking_job1_id, blocking_job2_id];
 //     assert_eq!(
-//         json_output.get("blocked_by_job_ids").unwrap(),
+//         json_output.get("depends_on_job_ids").unwrap(),
 //         &json!(expected_blocking_ids)
 //     );
 // }

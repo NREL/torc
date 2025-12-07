@@ -543,7 +543,7 @@ fn test_action_executed_flag_reset_on_reinitialize(start_server: &ServerProcess)
         "postprocess_job".to_string(),
         "echo 'postprocess'".to_string(),
     );
-    postprocess_job.blocked_by_job_ids = Some(vec![job1_id, job2_id]);
+    postprocess_job.depends_on_job_ids = Some(vec![job1_id, job2_id]);
     postprocess_job.cancel_on_blocking_job_failure = Some(false);
     let postprocess_job =
         default_api::create_job(config, postprocess_job).expect("Failed to create postprocess_job");

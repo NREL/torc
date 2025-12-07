@@ -1615,7 +1615,7 @@ fn test_update_jobs_if_output_files_are_missing_with_upstream_jobs_dry_run(
         "echo 'upstream'".to_string(),
     );
     upstream_job.resource_requirements_id = rr.id;
-    upstream_job.blocked_by_job_ids = Some(vec![job1_id]);
+    upstream_job.depends_on_job_ids = Some(vec![job1_id]);
     let created_upstream =
         default_api::create_job(&config, upstream_job).expect("Failed to create upstream job");
     let upstream_job_id = created_upstream.id.unwrap();
@@ -2368,7 +2368,7 @@ fn test_user_data_dependency_chain(start_server: &ServerProcess) {
 /// 4. Reinitialize workflow
 /// 5. Verify work1 is set to Ready (not Blocked), since preprocess is already Completed
 #[rstest]
-fn test_reinitialize_with_file_change_blocked_by_complete_job(start_server: &ServerProcess) {
+fn test_reinitialize_with_file_change_depends_on_complete_job(start_server: &ServerProcess) {
     use common::create_diamond_workflow;
     use std::fs;
     use std::thread;

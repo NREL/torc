@@ -219,9 +219,9 @@ Job status values are stored as INTEGER (0-9) in the database, not strings:
 - **Timestamps**: Unix timestamps as float64 for file modification times
 
 ### Dependencies
-- **Explicit**: Defined in `job_blocked_by` table
+- **Explicit**: Defined in `job_depends_on` table
 - **Implicit**: Derived from file and user_data input/output relationships
-- **Resolution**: Job specifications use names (`blocked_by`), which are resolved to IDs during creation
+- **Resolution**: Job specifications use names (`depends_on`), which are resolved to IDs during creation
 
 ### Job and File Parameterization
 JobSpec and FileSpec support **parameterization** to automatically generate multiple instances from a single specification:

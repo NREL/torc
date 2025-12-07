@@ -35,14 +35,14 @@ job "download_data" {
 job "process_data" {
     command "echo 'Processing data...' && sleep 10"
     resource_requirements "small_job"
-    blocked_by_job "download_data"
+    depends_on_job "download_data"
     scheduler "default_slurm"
 }
 
 job "analyze_data" {
     command "echo 'Analyzing results...' && sleep 5"
     resource_requirements "small_job"
-    blocked_by_job "process_data"
+    depends_on_job "process_data"
     scheduler "default_slurm"
 }
 

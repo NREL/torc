@@ -13,14 +13,14 @@
     {
       "name": "process",
       "command": "echo 'Processing data...' && sleep 5",
-      "blocked_by": [
+      "depends_on": [
         "setup"
       ]
     },
     {
       "name": "finalize",
       "command": "echo 'Finalizing...' && sleep 2",
-      "blocked_by": [
+      "depends_on": [
         "process"
       ]
     }

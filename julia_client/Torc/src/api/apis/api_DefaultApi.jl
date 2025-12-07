@@ -2132,7 +2132,7 @@ end
 
 @doc raw"""Retrieve job blocking relationships for a workflow.
 
-Retrieve all job blocking relationships for one workflow from the job_blocked_by table.
+Retrieve all job blocking relationships for one workflow from the job_depends_on table.
 
 Params:
 - id::Int64 (required)

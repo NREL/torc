@@ -101,7 +101,7 @@ jobs:
         --summary=/results/summary.csv \
         --output=/results/best_config.json
     resource_requirements: minimal
-    blocked_by:
+    depends_on:
       - aggregate_results
 
 files:
@@ -286,7 +286,7 @@ jobs:
   # Parameterized jobs depend on fixed job
   - name: experiment_{i}
     command: ./run.sh {i}
-    blocked_by: [setup]
+    depends_on: [setup]
     parameters:
       i: "1:100"
 ```

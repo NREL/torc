@@ -20,7 +20,7 @@ fn test_job_specification_new() {
     assert_eq!(job.cancel_on_blocking_job_failure, Some(false));
     assert_eq!(job.supports_termination, Some(false));
     assert_eq!(job.resource_requirements, None);
-    assert_eq!(job.blocked_by, None);
+    assert_eq!(job.depends_on, None);
     assert_eq!(job.input_files, None);
     assert_eq!(job.output_files, None);
     assert_eq!(job.input_user_data, None);
@@ -36,7 +36,7 @@ fn test_job_specification_all_fields() {
     job.cancel_on_blocking_job_failure = Some(true);
     job.supports_termination = Some(true);
     job.resource_requirements = Some("large_job".to_string());
-    job.blocked_by = Some(vec!["job1".to_string(), "job2".to_string()]);
+    job.depends_on = Some(vec!["job1".to_string(), "job2".to_string()]);
     job.input_files = Some(vec!["input.csv".to_string()]);
     job.output_files = Some(vec!["output.json".to_string()]);
     job.input_user_data = Some(vec!["config".to_string()]);
@@ -53,7 +53,7 @@ fn test_job_specification_all_fields() {
     assert_eq!(job.supports_termination, Some(true));
     assert_eq!(job.resource_requirements, Some("large_job".to_string()));
     assert_eq!(
-        job.blocked_by,
+        job.depends_on,
         Some(vec!["job1".to_string(), "job2".to_string()])
     );
     assert_eq!(job.input_files, Some(vec!["input.csv".to_string()]));
@@ -195,7 +195,7 @@ fn test_workflow_specification_complete_serialization() {
     job2.cancel_on_blocking_job_failure = Some(true);
     job2.supports_termination = Some(true);
     job2.resource_requirements = Some("large_job".to_string());
-    job2.blocked_by = Some(vec!["preprocess".to_string()]);
+    job2.depends_on = Some(vec!["preprocess".to_string()]);
     job2.input_files = Some(vec!["output.txt".to_string()]);
     job2.input_user_data = Some(vec!["results".to_string()]);
     job2.scheduler = Some("gpu".to_string());
@@ -242,7 +242,7 @@ fn test_from_json_file() {
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
                 "resource_requirements": null,
-                "blocked_by": null,
+                "depends_on": null,
                 "input_files": null,
                 "output_files": null,
                 "input_user_data": null,
@@ -339,7 +339,7 @@ fn test_job_with_all_optional_fields_none() {
         "cancel_on_blocking_job_failure": false,
         "supports_termination": false,
         "resource_requirements": null,
-        "blocked_by": null,
+        "depends_on": null,
         "input_files": null,
         "output_files": null,
         "input_user_data": null,
@@ -355,7 +355,7 @@ fn test_job_with_all_optional_fields_none() {
     assert_eq!(job.cancel_on_blocking_job_failure, Some(false));
     assert_eq!(job.supports_termination, Some(false));
     assert_eq!(job.resource_requirements, None);
-    assert_eq!(job.blocked_by, None);
+    assert_eq!(job.depends_on, None);
     assert_eq!(job.input_files, None);
     assert_eq!(job.output_files, None);
     assert_eq!(job.input_user_data, None);
@@ -372,7 +372,7 @@ fn test_job_with_empty_arrays() {
         "cancel_on_blocking_job_failure": false,
         "supports_termination": false,
         "resource_requirements": null,
-        "blocked_by": [],
+        "depends_on": [],
         "input_files": [],
         "output_files": [],
         "input_user_data": [],
@@ -382,7 +382,7 @@ fn test_job_with_empty_arrays() {
 
     let job: JobSpec = serde_json::from_value(job_data).expect("Failed to deserialize job");
 
-    assert_eq!(job.blocked_by, Some(vec![]));
+    assert_eq!(job.depends_on, Some(vec![]));
     assert_eq!(job.input_files, Some(vec![]));
     assert_eq!(job.output_files, Some(vec![]));
     assert_eq!(job.input_user_data, Some(vec![]));
@@ -406,7 +406,7 @@ fn test_workflow_with_complex_dependencies() {
         },
         {
             let mut job = JobSpec::new("job_c".to_string(), "echo c".to_string());
-            job.blocked_by = Some(vec!["job_a".to_string(), "job_b".to_string()]);
+            job.depends_on = Some(vec!["job_a".to_string(), "job_b".to_string()]);
             job.input_files = Some(vec!["file_a".to_string(), "file_b".to_string()]);
             job.input_user_data = Some(vec!["data_a".to_string(), "data_b".to_string()]);
             job.output_files = Some(vec!["file_c".to_string()]);
@@ -431,7 +431,7 @@ fn test_workflow_with_complex_dependencies() {
     let job_c = &deserialized.jobs[2];
     assert_eq!(job_c.name, "job_c");
     assert_eq!(
-        job_c.blocked_by,
+        job_c.depends_on,
         Some(vec!["job_a".to_string(), "job_b".to_string()])
     );
     assert_eq!(
@@ -458,7 +458,7 @@ fn test_create_workflow_from_json_file_minimal(start_server: &ServerProcess) {
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
                 "resource_requirements": null,
-                "blocked_by": null,
+                "depends_on": null,
                 "input_files": null,
                 "output_files": null,
                 "input_user_data": null,
@@ -515,7 +515,7 @@ fn test_create_workflow_from_json_file_with_files(start_server: &ServerProcess) 
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
                 "resource_requirements": null,
-                "blocked_by": null,
+                "depends_on": null,
                 "input_files": ["input_file"],
                 "output_files": ["output_file"],
                 "input_user_data": null,
@@ -570,7 +570,7 @@ fn test_create_workflow_from_json_file_with_dependencies(start_server: &ServerPr
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
                 "resource_requirements": null,
-                "blocked_by": null,
+                "depends_on": null,
                 "input_files": null,
                 "output_files": null,
                 "input_user_data": null,
@@ -584,7 +584,7 @@ fn test_create_workflow_from_json_file_with_dependencies(start_server: &ServerPr
                 "cancel_on_blocking_job_failure": true,
                 "supports_termination": false,
                 "resource_requirements": null,
-                "blocked_by": ["first_job"],
+                "depends_on": ["first_job"],
                 "input_files": null,
                 "output_files": null,
                 "input_user_data": null,
@@ -630,7 +630,7 @@ fn test_create_workflow_from_json_file_duplicate_file_names(start_server: &Serve
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
                 "resource_requirements": null,
-                "blocked_by": null,
+                "depends_on": null,
                 "input_files": null,
                 "output_files": null,
                 "input_user_data": null,
@@ -690,7 +690,7 @@ fn test_create_workflow_from_json_file_missing_file_reference(start_server: &Ser
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
                 "resource_requirements": null,
-                "blocked_by": null,
+                "depends_on": null,
                 "input_files": ["nonexistent_file"],
                 "output_files": null,
                 "input_user_data": null,
@@ -741,7 +741,7 @@ fn test_create_workflow_from_json_file_missing_job_dependency(start_server: &Ser
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
                 "resource_requirements": null,
-                "blocked_by": ["nonexistent_job"],
+                "depends_on": ["nonexistent_job"],
                 "input_files": null,
                 "output_files": null,
                 "input_user_data": null,
@@ -793,7 +793,7 @@ fn test_create_workflow_from_json5_file(start_server: &ServerProcess) {
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
                 "resource_requirements": null,
-                "blocked_by": null,
+                "depends_on": null,
                 "input_files": null,
                 "output_files": null,
                 "input_user_data": null,
@@ -835,7 +835,7 @@ jobs:
     cancel_on_blocking_job_failure: false
     supports_termination: false
     resource_requirements: null
-    blocked_by: null
+    depends_on: null
     input_files: null
     output_files: null
     input_user_data: null
@@ -875,7 +875,7 @@ jobs:
     cancel_on_blocking_job_failure: false
     supports_termination: false
     resource_requirements: null
-    blocked_by: null
+    depends_on: null
     input_files: null
     output_files: null
     input_user_data: null
@@ -915,7 +915,7 @@ fn test_create_workflow_from_spec_auto_detect_json(start_server: &ServerProcess)
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
                 "resource_requirements": null,
-                "blocked_by": null,
+                "depends_on": null,
                 "input_files": null,
                 "output_files": null,
                 "input_user_data": null,
@@ -1163,7 +1163,7 @@ fn test_job_specification_default_values() {
     assert_eq!(default_job.cancel_on_blocking_job_failure, Some(false));
     assert_eq!(default_job.supports_termination, Some(false));
     assert_eq!(default_job.resource_requirements, None);
-    assert_eq!(default_job.blocked_by, None);
+    assert_eq!(default_job.depends_on, None);
     assert_eq!(default_job.input_files, None);
     assert_eq!(default_job.output_files, None);
     assert_eq!(default_job.input_user_data, None);
@@ -1319,8 +1319,8 @@ fn test_json_field_name_compatibility() {
         cancel_on_blocking_job_failure: Some(true),
         supports_termination: Some(false),
         resource_requirements: Some("req".to_string()),
-        blocked_by: Some(vec!["dep".to_string()]),
-        blocked_by_regexes: None,
+        depends_on: Some(vec!["dep".to_string()]),
+        depends_on_regexes: None,
         input_files: Some(vec!["in.txt".to_string()]),
         input_file_regexes: None,
         output_files: Some(vec!["out.txt".to_string()]),
@@ -1343,7 +1343,7 @@ fn test_json_field_name_compatibility() {
     assert!(json.get("cancel_on_blocking_job_failure").is_some());
     assert!(json.get("supports_termination").is_some());
     assert!(json.get("resource_requirements").is_some());
-    assert!(json.get("blocked_by").is_some());
+    assert!(json.get("depends_on").is_some());
     assert!(json.get("input_files").is_some());
     assert!(json.get("output_files").is_some());
     assert!(json.get("input_user_data").is_some());
@@ -1366,7 +1366,7 @@ fn test_create_workflow_rollback_on_error(start_server: &ServerProcess) {
                 "cancel_on_blocking_job_failure": false,
                 "supports_termination": false,
                 "resource_requirements": "nonexistent_resource", // This should cause failure
-                "blocked_by": null,
+                "depends_on": null,
                 "input_files": null,
                 "output_files": null,
                 "input_user_data": null,
@@ -1441,22 +1441,22 @@ fn test_create_workflow_with_regex_job_dependencies(start_server: &ServerProcess
             {
                 "name": "work_1",
                 "command": "echo 'work 1'",
-                "blocked_by": ["preprocess"],
+                "depends_on": ["preprocess"],
             },
             {
                 "name": "work_2",
                 "command": "echo 'work 2'",
-                "blocked_by": ["preprocess"],
+                "depends_on": ["preprocess"],
             },
             {
                 "name": "work_3",
                 "command": "echo 'work 3'",
-                "blocked_by": ["preprocess"],
+                "depends_on": ["preprocess"],
             },
             {
                 "name": "postprocess",
                 "command": "echo 'postprocess'",
-                "blocked_by_regexes": ["work_.*"],
+                "depends_on_regexes": ["work_.*"],
             }
         ],
         "files": null,
@@ -1504,7 +1504,7 @@ fn test_create_workflow_with_regex_job_dependencies(start_server: &ServerProcess
         .expect("Postprocess job not found");
 
     let deps = postprocess_job
-        .blocked_by_job_ids
+        .depends_on_job_ids
         .as_ref()
         .expect("No dependencies found");
     assert_eq!(
@@ -1705,23 +1705,23 @@ fn test_create_workflow_with_mixed_exact_and_regex_dependencies(start_server: &S
             {
                 "name": "process_1",
                 "command": "echo 'process 1'",
-                "blocked_by": ["init"],
+                "depends_on": ["init"],
             },
             {
                 "name": "process_2",
                 "command": "echo 'process 2'",
-                "blocked_by": ["init"],
+                "depends_on": ["init"],
             },
             {
                 "name": "special",
                 "command": "echo 'special'",
-                "blocked_by": ["init"],
+                "depends_on": ["init"],
             },
             {
                 "name": "finalize",
                 "command": "echo 'finalize'",
-                "blocked_by": ["special"],
-                "blocked_by_regexes": ["process_.*"],
+                "depends_on": ["special"],
+                "depends_on_regexes": ["process_.*"],
             }
         ],
         "files": null,
@@ -1769,7 +1769,7 @@ fn test_create_workflow_with_mixed_exact_and_regex_dependencies(start_server: &S
         .expect("Finalize job not found");
 
     let deps = finalize_job
-        .blocked_by_job_ids
+        .depends_on_job_ids
         .as_ref()
         .expect("No dependencies found");
     assert_eq!(

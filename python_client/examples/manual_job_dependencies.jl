@@ -70,7 +70,7 @@ function build_workflow(api, workflow)
             name="postprocess",
             command="echo hello",
             resource_requirements=small._id,
-            blocked_by = blocking_jobs,
+            depends_on = blocking_jobs,
        ))
 
     @info "Created workflow $workflow"

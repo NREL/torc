@@ -78,7 +78,7 @@ Add one job to the workflow for each set of parameters.
 - `start_index = 1`: Torc will use this index for job names.
 - `name_prefix = "": Torc will use this prefix for job names.
 - `jobs = []: Use these names for jobs. Mutually exclusive with "name_prefix."
-- `blocked_by::Union{Nothing, Vector{String}} = nothing`: Set these job IDs as blocking
+- `depends_on::Union{Nothing, Vector{String}} = nothing`: Set these job IDs as blocking
    the jobs created by this function.
 - `cancel_on_blocking_job_failure::Bool = true`: Cancel each job if a blocking job fails.
 """
@@ -94,7 +94,7 @@ function map_function_to_jobs(
     start_index = 1,
     name_prefix = "",
     jobs::Vector{String} = String[],
-    blocked_by::Union{Nothing, Vector{String}} = nothing,
+    depends_on::Union{Nothing, Vector{String}} = nothing,
     cancel_on_blocking_job_failure = true,
 )
     !isfile(file_path) && error("$file_path does not exist")
@@ -140,7 +140,7 @@ function map_function_to_jobs(
             output_user_data = [output_ud._id],
             resource_requirements = resource_requirements,
             scheduler = scheduler,
-            blocked_by = blocked_by,
+            depends_on = depends_on,
             cancel_on_blocking_job_failure = cancel_on_blocking_job_failure,
         )
         push!(jobs, job)

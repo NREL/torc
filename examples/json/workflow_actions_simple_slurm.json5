@@ -14,7 +14,7 @@
     {
       "name": "process",
       "command": "echo 'Processing data...' && sleep 5",
-      "blocked_by": [
+      "depends_on": [
         "setup"
       ],
       "resource_requirements": "medium"
@@ -22,7 +22,7 @@
     {
       "name": "finalize",
       "command": "echo 'Finalizing...' && sleep 2",
-      "blocked_by": [
+      "depends_on": [
         "process"
       ],
       "resource_requirements": "small"

@@ -125,7 +125,7 @@ When Torc processes the workflow:
 3. It sees `work2` inputs `intermediate2` → dependency created
 4. It sees `postprocess` inputs `result1` and `result2` → dependencies created
 
-This is more maintainable than explicit `blocked_by` declarations because:
+This is more maintainable than explicit `depends_on` declarations because:
 - Dependencies are derived from actual data flow
 - Adding a new intermediate step automatically updates dependencies
 - The workflow specification documents the data flow
@@ -231,7 +231,7 @@ In this tutorial, you learned:
 - Data flow defines the natural ordering
 - You want self-documenting workflows
 
-**Use explicit `blocked_by` when:**
+**Use explicit `depends_on` when:**
 - Dependencies are logical, not data-based
 - Jobs communicate through side effects
 - You need precise control over ordering

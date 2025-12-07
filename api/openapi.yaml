@@ -896,7 +896,7 @@ paths:
           default: false
           type: boolean
         style: form
-        description: Include job relationships (blocked_by_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
+        description: Include job relationships (depends_on_job_ids, input_file_ids, output_file_ids, input_user_data_ids, output_user_data_ids). Default is false for performance.
       responses:
         "200":
           content:
@@ -3656,7 +3656,7 @@ paths:
       x-codegen-request-body-name: body
   /workflows/{id}/job_dependencies:
     get:
-      description: Retrieve all job blocking relationships for one workflow from the job_blocked_by table.
+      description: Retrieve all job blocking relationships for one workflow from the job_depends_on table.
       operationId: list_job_dependencies
       parameters:
       - description: Workflow ID
@@ -4148,7 +4148,7 @@ components:
         output_file_ids:
         - 7
         - 7
-        blocked_by_job_ids:
+        depends_on_job_ids:
         - 5
         - 5
         resource_requirements_id: 2
@@ -4185,7 +4185,7 @@ components:
           description: Informs torc that the job can be terminated gracefully before
             a wall-time timeout.
           type: boolean
-        blocked_by_job_ids:
+        depends_on_job_ids:
           description: Database IDs of jobs that block this job
           items:
             type: integer
@@ -4674,7 +4674,7 @@ components:
           output_files:
           - 7
           - 7
-          blocked_by_job_ids:
+          depends_on_job_ids:
           - 5
           - 5
           resource_requirements_id: 2
@@ -4699,7 +4699,7 @@ components:
           output_files:
           - 7
           - 7
-          blocked_by_job_ids:
+          depends_on_job_ids:
           - 5
           - 5
           resource_requirements_id: 2
@@ -4871,7 +4871,7 @@ components:
           output_files:
           - 7
           - 7
-          blocked_by_job_ids:
+          depends_on_job_ids:
           - 5
           - 5
           resource_requirements_id: 2
@@ -4896,7 +4896,7 @@ components:
           output_files:
           - 7
           - 7
-          blocked_by_job_ids:
+          depends_on_job_ids:
           - 5
           - 5
           resource_requirements_id: 2
@@ -4928,12 +4928,12 @@ components:
       - offset
       - total_count
     job_dependency_model:
-      description: Represents a blocking relationship between two jobs in the job_blocked_by table.
+      description: Represents a blocking relationship between two jobs in the job_depends_on table.
       example:
         job_id: 123
         job_name: "process_data"
-        blocked_by_job_id: 456
-        blocked_by_job_name: "download_data"
+        depends_on_job_id: 456
+        depends_on_job_name: "download_data"
         workflow_id: 789
       properties:
         job_id:
@@ -4942,10 +4942,10 @@ components:
         job_name:
           description: The name of the job that is blocked
           type: string
-        blocked_by_job_id:
+        depends_on_job_id:
           description: The job that must complete first
           type: integer
-        blocked_by_job_name:
+        depends_on_job_name:
           description: The name of the job that must complete first
           type: string
         workflow_id:
@@ -4954,8 +4954,8 @@ components:
       required:
       - job_id
       - job_name
-      - blocked_by_job_id
-      - blocked_by_job_name
+      - depends_on_job_id
+      - depends_on_job_name
       - workflow_id
       type: object
     list_job_dependencies_response:
@@ -4968,13 +4968,13 @@ components:
         items:
         - job_id: 123
           job_name: "process_data"
-          blocked_by_job_id: 456
-          blocked_by_job_name: "download_data"
+          depends_on_job_id: 456
+          depends_on_job_name: "download_data"
           workflow_id: 789
         - job_id: 124
           job_name: "analyze_data"
-          blocked_by_job_id: 456
-          blocked_by_job_name: "download_data"
+          depends_on_job_id: 456
+          depends_on_job_name: "download_data"
           workflow_id: 789
       properties:
         items:
@@ -5565,7 +5565,7 @@ components:
           output_files:
           - 7
           - 7
-          blocked_by_job_ids:
+          depends_on_job_ids:
           - 5
           - 5
           resource_requirements_id: 2
@@ -5590,7 +5590,7 @@ components:
           output_files:
           - 7
           - 7
-          blocked_by_job_ids:
+          depends_on_job_ids:
           - 5
           - 5
           resource_requirements_id: 2
@@ -5625,7 +5625,7 @@ components:
           output_files:
           - 7
           - 7
-          blocked_by_job_ids:
+          depends_on_job_ids:
           - 5
           - 5
           resource_requirements_id: 2
@@ -5650,7 +5650,7 @@ components:
           output_files:
           - 7
           - 7
-          blocked_by_job_ids:
+          depends_on_job_ids:
           - 5
           - 5
           resource_requirements_id: 2

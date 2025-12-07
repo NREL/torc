@@ -241,6 +241,6 @@ $ torc -f json user-data list 342
 
 You could add "normal" jobs to the workflow as well. For example, you might have preprocessing and
 post-processing work to do. You can add those jobs through the API. You could also add multiple
-rounds of mapped functions. `map_function_to_jobs` provides a `blocked_by_job_ids` parameter to specify
+rounds of mapped functions. `map_function_to_jobs` provides a `depends_on_job_ids` parameter to specify
 ordering. You could also define job-job relationships through files or user-data as discussed
 elsewhere in this documentation.

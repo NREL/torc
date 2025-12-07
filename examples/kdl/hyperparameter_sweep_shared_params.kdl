@@ -74,8 +74,8 @@ job "prepare_val_data" {
 job "train_lr{lr:.4f}_bs{batch_size}_opt{optimizer}" {
     command "python train.py --learning-rate={lr} --batch-size={batch_size} --optimizer={optimizer} --train-data=/data/train.pkl --val-data=/data/validation.pkl --model-output=/models/model_lr{lr:.4f}_bs{batch_size}_opt{optimizer}.pt --metrics-output=/results/metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}.json"
     resource_requirements "gpu_training"
-    blocked_by_job "prepare_train_data"
-    blocked_by_job "prepare_val_data"
+    depends_on_job "prepare_train_data"
+    depends_on_job "prepare_val_data"
     input_file "train_data"
     input_file "val_data"
     output_file "model_lr{lr:.4f}_bs{batch_size}_opt{optimizer}"
@@ -88,7 +88,7 @@ job "aggregate_results" {
     command "python scripts/aggregate_metrics.py --input-dir=/results --output=/results/summary.csv"
     resource_requirements "minimal"
     // This will be expanded to wait for all 18 training jobs
-    blocked_by_job "train_lr{lr:.4f}_bs{batch_size}_opt{optimizer}"
+    depends_on_job "train_lr{lr:.4f}_bs{batch_size}_opt{optimizer}"
     // Wait for all metrics files
     input_file "metrics_lr{lr:.4f}_bs{batch_size}_opt{optimizer}"
     use_parameters "lr" "batch_size" "optimizer"

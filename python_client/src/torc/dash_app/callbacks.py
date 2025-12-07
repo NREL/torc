@@ -2629,15 +2629,15 @@ def create_job_deps_graph(dependencies: list[dict[str, Any]]) -> html.Div:
     for dep in dependencies:
         job_id = dep.get("job_id")
         job_name = dep.get("job_name", f"Job {job_id}")
-        blocked_by_id = dep.get("blocked_by_job_id")
-        blocked_by_name = dep.get("blocked_by_job_name", f"Job {blocked_by_id}")
+        depends_on_id = dep.get("depends_on_job_id")
+        depends_on_name = dep.get("depends_on_job_name", f"Job {depends_on_id}")
 
         nodes.add((job_id, job_name))
-        nodes.add((blocked_by_id, blocked_by_name))
+        nodes.add((depends_on_id, depends_on_name))
 
         edges.append({
             "data": {
-                "source": str(blocked_by_id),
+                "source": str(depends_on_id),
                 "target": str(job_id),
                 "label": "blocks"
             }

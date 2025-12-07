@@ -34,14 +34,14 @@ class JobModel(BaseModel):
     status: Optional[Any] = None
     cancel_on_blocking_job_failure: Optional[StrictBool] = Field(default=True, description="Cancel this job if any of its blocking jobs fails.")
     supports_termination: Optional[StrictBool] = Field(default=False, description="Informs torc that the job can be terminated gracefully before a wall-time timeout.")
-    blocked_by_job_ids: Optional[List[StrictInt]] = Field(default=None, description="Database IDs of jobs that block this job")
+    depends_on_job_ids: Optional[List[StrictInt]] = Field(default=None, description="Database IDs of jobs that block this job")
     input_file_ids: Optional[List[StrictInt]] = Field(default=None, description="Database IDs of files that this job needs")
     output_file_ids: Optional[List[StrictInt]] = Field(default=None, description="Database IDs of files that this job produces")
     input_user_data_ids: Optional[List[StrictInt]] = Field(default=None, description="Database IDs of user-data objects that this job needs")
     output_user_data_ids: Optional[List[StrictInt]] = Field(default=None, description="Database IDs of user-data objects that this job produces")
     resource_requirements_id: Optional[StrictInt] = Field(default=None, description="Optional database ID of resources required by this job")
     scheduler_id: Optional[StrictInt] = Field(default=None, description="Optional database ID of scheduler needed by this job")
-    __properties: ClassVar[List[str]] = ["id", "workflow_id", "name", "command", "invocation_script", "status", "cancel_on_blocking_job_failure", "supports_termination", "blocked_by_job_ids", "input_file_ids", "output_file_ids", "input_user_data_ids", "output_user_data_ids", "resource_requirements_id", "scheduler_id"]
+    __properties: ClassVar[List[str]] = ["id", "workflow_id", "name", "command", "invocation_script", "status", "cancel_on_blocking_job_failure", "supports_termination", "depends_on_job_ids", "input_file_ids", "output_file_ids", "input_user_data_ids", "output_user_data_ids", "resource_requirements_id", "scheduler_id"]
 
     model_config = ConfigDict(
         populate_by_name=True,
@@ -107,7 +107,7 @@ class JobModel(BaseModel):
             "status": obj.get("status"),
             "cancel_on_blocking_job_failure": obj.get("cancel_on_blocking_job_failure") if obj.get("cancel_on_blocking_job_failure") is not None else True,
             "supports_termination": obj.get("supports_termination") if obj.get("supports_termination") is not None else False,
-            "blocked_by_job_ids": obj.get("blocked_by_job_ids"),
+            "depends_on_job_ids": obj.get("depends_on_job_ids"),
             "input_file_ids": obj.get("input_file_ids"),
             "output_file_ids": obj.get("output_file_ids"),
             "input_user_data_ids": obj.get("input_user_data_ids"),

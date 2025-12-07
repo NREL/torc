@@ -580,7 +580,7 @@ impl App {
                     // Add edges to graph
                     for dep in dependencies {
                         if let (Some(&from_node), Some(&to_node)) = (
-                            job_id_to_node.get(&dep.blocked_by_job_id),
+                            job_id_to_node.get(&dep.depends_on_job_id),
                             job_id_to_node.get(&dep.job_id),
                         ) {
                             dag.add_edge(from_node, to_node);

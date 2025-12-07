@@ -563,7 +563,7 @@ fn test_list_job_dependencies_for_comparison(start_server: &ServerProcess) {
     // Create job2 blocked by job1
     let mut job2 =
         models::JobModel::new(workflow_id, "job2".to_string(), "echo 'job2'".to_string());
-    job2.blocked_by_job_ids = Some(vec![job1_id]);
+    job2.depends_on_job_ids = Some(vec![job1_id]);
     let job2 = default_api::create_job(config, job2).expect("Failed to create job2");
     let job2_id = job2.id.unwrap();
 
@@ -580,11 +580,11 @@ fn test_list_job_dependencies_for_comparison(start_server: &ServerProcess) {
     assert_eq!(dep.job_id, job2_id, "Blocked job should be job2");
     assert_eq!(dep.job_name, "job2", "Blocked job name should match");
     assert_eq!(
-        dep.blocked_by_job_id, job1_id,
+        dep.depends_on_job_id, job1_id,
         "Blocking job should be job1"
     );
     assert_eq!(
-        dep.blocked_by_job_name, "job1",
+        dep.depends_on_job_name, "job1",
         "Blocking job name should match"
     );
 }

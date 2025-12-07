@@ -187,7 +187,7 @@ The review step shows the generated workflow specification in JSON format. This 
 Examine the generated specification to verify:
 
 - All jobs are included with correct names and commands
-- Dependencies (`blocked_by`) match your intended workflow structure
+- Dependencies (`depends_on`) match your intended workflow structure
 - Resource requirements are correctly assigned
 - Schedulers have the right configuration
 - Actions trigger on the expected events
@@ -240,19 +240,19 @@ The wizard generates a spec like this:
     {
       "name": "work1",
       "command": "./work1.sh",
-      "blocked_by": ["preprocess"],
+      "depends_on": ["preprocess"],
       "resource_requirements": "res_8cpu_50g"
     },
     {
       "name": "work2",
       "command": "./work2.sh",
-      "blocked_by": ["preprocess"],
+      "depends_on": ["preprocess"],
       "resource_requirements": "res_8cpu_50g"
     },
     {
       "name": "postprocess",
       "command": "./postprocess.sh",
-      "blocked_by": ["work1", "work2"],
+      "depends_on": ["work1", "work2"],
       "resource_requirements": "res_1cpu_1g"
     }
   ],

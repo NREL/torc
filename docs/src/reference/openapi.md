@@ -87,7 +87,7 @@ curl -X POST http://localhost:8080/torc-service/v1/jobs \
     "resource_requirements_id": 1,
     "input_file_ids": [],
     "output_file_ids": [],
-    "blocked_by_job_ids": []
+    "depends_on_job_ids": []
   }' | jq '.'
 ```
 

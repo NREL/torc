@@ -208,10 +208,10 @@ pub struct JobSpec {
     /// Name of the resource requirements configuration
     pub resource_requirements: Option<String>,
     /// Names of jobs that must complete before this job can run (exact matches)
-    pub blocked_by: Option<Vec<String>>,
+    pub depends_on: Option<Vec<String>>,
     /// Regex patterns for jobs that must complete before this job can run
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub blocked_by_regexes: Option<Vec<String>>,
+    pub depends_on_regexes: Option<Vec<String>>,
     /// Names of input files required by this job (exact matches)
     pub input_files: Option<Vec<String>>,
     /// Regex patterns for input files required by this job
@@ -256,8 +256,8 @@ impl JobSpec {
             cancel_on_blocking_job_failure: Some(false),
             supports_termination: Some(false),
             resource_requirements: None,
-            blocked_by: None,
-            blocked_by_regexes: None,
+            depends_on: None,
+            depends_on_regexes: None,
             input_files: None,
             input_file_regexes: None,
             output_files: None,
@@ -313,8 +313,8 @@ impl JobSpec {
             }
 
             // Substitute parameters in name vectors
-            if let Some(ref names) = self.blocked_by {
-                new_spec.blocked_by = Some(
+            if let Some(ref names) = self.depends_on {
+                new_spec.depends_on = Some(
                     names
                         .iter()
                         .map(|n| substitute_parameters(n, &combo))
@@ -359,8 +359,8 @@ impl JobSpec {
             }
 
             // Substitute parameters in regex pattern vectors
-            if let Some(ref regexes) = self.blocked_by_regexes {
-                new_spec.blocked_by_regexes = Some(
+            if let Some(ref regexes) = self.depends_on_regexes {
+                new_spec.depends_on_regexes = Some(
                     regexes
                         .iter()
                         .map(|r| substitute_parameters(r, &combo))
@@ -1186,7 +1186,7 @@ impl WorkflowSpec {
     }
 
     /// Create JobModels with proper ID mapping using bulk API in batches of 1000
-    /// Jobs are created in dependency order with blocked_by_job_ids set during initial creation
+    /// Jobs are created in dependency order with depends_on_job_ids set during initial creation
     fn create_jobs(
         config: &Configuration,
         workflow_id: i64,
@@ -1211,7 +1211,7 @@ impl WorkflowSpec {
             let mut deps = Vec::new();
 
             // Add explicit dependencies
-            if let Some(ref names) = job_spec.blocked_by {
+            if let Some(ref names) = job_spec.depends_on {
                 for dep_name in names {
                     // Validate that the dependency exists
                     if !all_job_names.contains(dep_name) {
@@ -1226,7 +1226,7 @@ impl WorkflowSpec {
             }
 
             // Resolve regex dependencies
-            if let Some(ref regexes) = job_spec.blocked_by_regexes {
+            if let Some(ref regexes) = job_spec.depends_on_regexes {
                 for regex_str in regexes {
                     let re = Regex::new(regex_str).map_err(|e| {
                         format!(
@@ -1262,7 +1262,7 @@ impl WorkflowSpec {
         const BATCH_SIZE: usize = 1000;
 
         for level in levels {
-            // Create job models for this level with blocked_by_job_ids resolved
+            // Create job models for this level with depends_on_job_ids resolved
             let mut job_models = Vec::new();
             let mut job_spec_mapping = Vec::new();
 
@@ -1354,10 +1354,10 @@ impl WorkflowSpec {
                     }
                 }
 
-                // NEW: Resolve blocked_by_job_ids using accumulated job_name_to_id
+                // NEW: Resolve depends_on_job_ids using accumulated job_name_to_id
                 let dep_names = dependencies.get(&job_spec.name).unwrap();
                 if !dep_names.is_empty() {
-                    let mut blocked_ids = Vec::new();
+                    let mut depends_on_ids = Vec::new();
                     for dep_name in dep_names {
                         let dep_id = job_name_to_id.get(dep_name).ok_or_else(|| {
                             format!(
@@ -1365,9 +1365,9 @@ impl WorkflowSpec {
                                 dep_name, job_spec.name
                             )
                         })?;
-                        blocked_ids.push(*dep_id);
+                        depends_on_ids.push(*dep_id);
                     }
-                    job_model.blocked_by_job_ids = Some(blocked_ids);
+                    job_model.depends_on_job_ids = Some(depends_on_ids);
                 }
 
                 job_models.push(job_model);
@@ -1483,11 +1483,13 @@ impl WorkflowSpec {
                     );
                 }
                 "description" => {
-                    spec.description = node
-                        .entries()
-                        .first()
-                        .and_then(|e| e.value().as_string())
-                        .map(|s| s.to_string());
+                    spec.description = Some(
+                        node.entries()
+                            .first()
+                            .and_then(|e| e.value().as_string())
+                            .ok_or("description must have a string value")?
+                            .to_string(),
+                    );
                 }
                 "compute_node_expiration_buffer_seconds" => {
                     spec.compute_node_expiration_buffer_seconds = node
@@ -1628,15 +1630,15 @@ impl WorkflowSpec {
                             .and_then(|e| e.value().as_string())
                             .map(|s| s.to_string());
                     }
-                    "blocked_by_job" => {
-                        if job_spec.blocked_by.is_none() {
-                            job_spec.blocked_by = Some(Vec::new());
+                    "depends_on_job" => {
+                        if job_spec.depends_on.is_none() {
+                            job_spec.depends_on = Some(Vec::new());
                         }
                         if let Some(job_name) =
                             child.entries().first().and_then(|e| e.value().as_string())
                         {
                             job_spec
-                                .blocked_by
+                                .depends_on
                                 .as_mut()
                                 .unwrap()
                                 .push(job_name.to_string());
