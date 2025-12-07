@@ -114,7 +114,13 @@ fn test_config_paths_user_config_dir() {
 #[rstest]
 fn test_load_returns_defaults_when_no_files() {
     // Load should return defaults when no config files exist
-    let config = TorcConfig::load().unwrap_or_default();
+    // Use non-existent paths to avoid reading user's actual config
+    let paths = ConfigPaths {
+        system: PathBuf::from("/nonexistent/system/config.toml"),
+        user: Some(PathBuf::from("/nonexistent/user/config.toml")),
+        local: PathBuf::from("/nonexistent/local/torc.toml"),
+    };
+    let config = TorcConfig::load_with_paths(&paths).unwrap_or_default();
     assert_eq!(
         config.client.api_url,
         "http://localhost:8080/torc-service/v1"
